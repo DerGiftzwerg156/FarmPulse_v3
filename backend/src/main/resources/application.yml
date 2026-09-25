@@ -211,6 +211,7 @@ rpsim:
       virtual-wealth-min: 20000
       virtual-wealth-max: 400000
       sell-willing-probability: 0.3
+      npc-owned-share: 0.4
     satisfaction:                 # "Satisfaction-Formel"
       category-weight: 0.25
       multiplier-min: 0.5

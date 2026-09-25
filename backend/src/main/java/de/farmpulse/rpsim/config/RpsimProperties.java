@@ -287,6 +287,8 @@ public class RpsimProperties {
         private double virtualWealthMin = 20000;
         private double virtualWealthMax = 400000;
         private double sellWillingProbability = 0.3;
+        /** Share of unowned map farmlands assigned to dynamic NPCs when the ownership table is first built. */
+        private double npcOwnedShare = 0.4;
     }
 
     /** Technical concept "Satisfaction-Formel". */
