@@ -1,0 +1,89 @@
+<div class="w-full" data-testid="chart">
+  @if (visible().length === 0) {
+    <p class="py-8 text-center text-[12px] text-muted">{{ 'chart.empty' | t }}</p>
+  } @else {
+    <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+      @if (visible().length >= 2) {
+        <ul class="flex flex-wrap gap-3" data-testid="chart-legend">
+          @for (p of paths(); track p.series.key) {
+            <li class="flex items-center gap-1.5 font-body text-[11px] text-text">
+              <span class="inline-block h-0.5 w-4 rounded" [style.background]="p.color"></span>{{ p.series.label }}
+            </li>
+          }
+        </ul>
+      } @else {
+        <span></span>
+      }
+      <button type="button" class="fp-label hover:text-text" (click)="showTable.set(!showTable())" data-testid="chart-toggle">
+        {{ (showTable() ? 'chart.showChart' : 'chart.showTable') | t }}
+      </button>
+    </div>
+    @if (!showTable()) {
+      <div class="relative">
+        <svg
+          [attr.viewBox]="'0 0 ' + width + ' ' + height"
+          class="h-auto w-full"
+          role="img"
+          [attr.aria-label]="ariaLabel()"
+          (mousemove)="onMove($event)"
+          (mouseleave)="hoverX.set(null)"
+        >
+          @for (t of yTicks(); track $index) {
+            <line [attr.x1]="pad.left" [attr.x2]="width - pad.right" [attr.y1]="sy(t)" [attr.y2]="sy(t)" stroke="#222E28" stroke-width="1" />
+            <text [attr.x]="pad.left - 6" [attr.y]="sy(t) + 3" text-anchor="end" class="fill-muted font-mono text-[9px]">{{ yFormat()(t) }}</text>
+          }
+          @for (t of xTicks(); track $index) {
+            <text [attr.x]="sx(t)" [attr.y]="height - 8" text-anchor="middle" class="fill-muted font-mono text-[9px]">{{ xFormat()(t) }}</text>
+          }
+          @for (p of paths(); track p.series.key) {
+            <path [attr.d]="p.d" fill="none" [attr.stroke]="p.color" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" data-testid="chart-line" />
+            <circle [attr.cx]="sx(p.last.x)" [attr.cy]="sy(p.last.y)" r="4" [attr.fill]="p.color" stroke="#141A17" stroke-width="2" />
+            @if (visible().length <= 4) {
+              <text [attr.x]="sx(p.last.x) + 8" [attr.y]="sy(p.last.y) + 3" class="fill-text font-body text-[10px]" data-testid="chart-direct-label">{{ p.series.label }}</text>
+            }
+          }
+          @if (hoverX() !== null) {
+            <line [attr.x1]="sx(hoverX()!)" [attr.x2]="sx(hoverX()!)" [attr.y1]="pad.top" [attr.y2]="height - pad.bottom" stroke="#7C9088" stroke-width="1" stroke-dasharray="3 3" data-testid="chart-crosshair" />
+            @for (h of hoverValues(); track h.label) {
+              <circle [attr.cx]="sx(h.point.x)" [attr.cy]="sy(h.point.y)" r="5" [attr.fill]="h.color" stroke="#141A17" stroke-width="2" />
+            }
+          }
+        </svg>
+        @if (hoverX() !== null && hoverValues().length > 0) {
+          <div class="pointer-events-none absolute right-2 top-2 rounded-sm border border-border bg-bg/95 px-2 py-1.5 text-[11px]" data-testid="chart-tooltip">
+            <div class="font-mono text-[10px] text-muted">{{ xFormat()(hoverValues()[0].point.x) }}</div>
+            @for (h of hoverValues(); track h.label) {
+              <div class="flex items-center gap-1.5 text-text">
+                <span class="inline-block h-2 w-2 rounded-full" [style.background]="h.color"></span>
+                {{ h.label }}: <span class="font-mono">{{ yFormat()(h.point.y) }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="max-h-64 overflow-auto">
+        <table class="w-full text-left text-[11px]" data-testid="chart-table">
+          <thead>
+            <tr class="fp-label">
+              <th class="py-1">{{ 'chart.time' | t }}</th>
+              @for (s of visible(); track s.key) {
+                <th class="py-1">{{ s.label }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of tableRows(); track row.x) {
+              <tr class="border-t border-border">
+                <td class="py-1 font-mono text-muted">{{ xFormat()(row.x) }}</td>
+                @for (v of row.values; track $index) {
+                  <td class="py-1 font-mono text-text">{{ v === null ? '–' : yFormat()(v) }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

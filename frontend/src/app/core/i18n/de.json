@@ -48,5 +48,11 @@
     "error": "Es ist ein Fehler aufgetreten.",
     "yes": "Ja",
     "no": "Nein"
+  },
+  "chart": {
+    "empty": "Noch keine Daten für diesen Zeitraum.",
+    "showTable": "Tabelle",
+    "showChart": "Diagramm",
+    "time": "Zeitpunkt"
   }
 }
