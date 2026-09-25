@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "instructions_ack.schema.json",
+  "title": "instructions_ack.json (FS25_RPSim -> backend)",
+  "type": "object",
+  "required": ["savegameId", "acks", "contractReports"],
+  "properties": {
+    "savegameId": { "type": "string" },
+    "acks": { "type": "array", "items": { "type": "object", "required": ["instructionId", "appliedAtGameTime", "status"],
+      "properties": { "instructionId": { "type": "string" }, "appliedAtGameTime": { "type": "number" },
+        "status": { "enum": ["APPLIED", "REJECTED", "FAILED"] }, "message": { "type": "string" } } } },
+    "contractReports": { "type": "array", "items": { "type": "object",
+      "required": ["instructionId", "deliveredQuantity", "maxQuantity", "endReason"],
+      "properties": { "instructionId": { "type": "string" }, "deliveredQuantity": { "type": "number" },
+        "maxQuantity": { "type": "number" }, "endReason": { "enum": ["DEADLINE_REACHED", "MAX_QUANTITY_REACHED"] } } } }
+  }
+}
