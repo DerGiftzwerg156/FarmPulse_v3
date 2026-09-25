@@ -1,0 +1,172 @@
+<section class="space-y-4">
+  <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.employees' | t }}</h1>
+
+  @if (error(); as err) {
+    <app-page-error [error]="err" />
+  } @else {
+    @if (message()) {
+      <p class="rounded-sm border border-accent/50 px-3 py-2 text-sm text-accent" data-testid="employees-message">{{ message() }}</p>
+    }
+    @if (actionError()) {
+      <p class="rounded-sm border border-danger/50 px-3 py-2 text-sm text-danger" data-testid="employees-error">{{ actionError() }}</p>
+    }
+
+    <app-card [title]="'employees.staff' | t" data-testid="staff">
+      <span card-actions class="fp-label">{{ 'employees.payroll' | t: { amount: (payroll() | money) } }}</span>
+      @if (employees() !== null && active().length === 0) {
+        <p class="text-sm text-muted">{{ 'employees.noStaff' | t }}</p>
+      }
+      <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        @for (e of active(); track e.id) {
+          <article class="rounded-md border border-border bg-bg p-3" data-testid="employee">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="font-display text-[13px] font-bold text-text">{{ e.character.name }}</div>
+                <div class="fp-label">{{ e.jobRole | label: 'jobRole' }} · {{ 'employees.skill' | t }} {{ e.skill }}</div>
+              </div>
+              <div class="text-right">
+                <div class="font-mono text-[13px] text-text">{{ e.monthlySalary | money }}</div>
+                <div class="fp-label">{{ 'employees.perMonth' | t }}</div>
+              </div>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <app-badge [variant]="band(e.needs.satisfaction) === 'high' ? 'positive' : band(e.needs.satisfaction) === 'ok' ? 'neutral' : 'negative'" data-testid="satisfaction">
+                {{ 'employees.band.' + band(e.needs.satisfaction) | t }}
+              </app-badge>
+              @if (e.warningSent) { <app-badge variant="warning" data-testid="warning">{{ 'employees.warning' | t }}</app-badge> }
+              @if (e.salaryOverdue) { <app-badge variant="negative">{{ 'employees.salaryOverdue' | t }}</app-badge> }
+              @if (e.timeOffUntilGameTime) { <app-badge>{{ 'employees.timeOffUntil' | t: { at: (e.timeOffUntilGameTime | gameTime) } }}</app-badge> }
+            </div>
+            <dl class="mt-3 space-y-1.5" data-testid="needs">
+              @for (k of needKeys; track k) {
+                <div class="grid grid-cols-[9rem_1fr] items-center gap-2">
+                  <dt class="fp-label">{{ 'employees.needs.' + k | t }}</dt>
+                  <dd class="h-1.5 rounded-full bg-surface" role="meter" [attr.aria-label]="'employees.needs.' + k | t"
+                    aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="needs(e, k)">
+                    <div class="h-1.5 rounded-full" [style.width.%]="needs(e, k)"
+                      [class.bg-accent]="band(needs(e, k)) === 'high'" [class.bg-muted]="band(needs(e, k)) === 'ok'" [class.bg-danger]="band(needs(e, k)) === 'low'"></div>
+                  </dd>
+                </div>
+              }
+            </dl>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <app-button variant="secondary" (pressed)="openPanel(e, 'raise')" data-testid="raise-open">{{ 'employees.raise' | t }}</app-button>
+              <app-button variant="secondary" (pressed)="openPanel(e, 'timeOff')" data-testid="timeoff-open">{{ 'employees.timeOff' | t }}</app-button>
+              <app-button variant="danger" (pressed)="dismissTarget.set(e)" data-testid="dismiss-open">{{ 'employees.dismiss' | t }}</app-button>
+            </div>
+            @if (panel()?.employeeId === e.id) {
+              <form class="mt-3 flex flex-wrap items-end gap-2 border-t border-border pt-3" (submit)="$event.preventDefault(); submitPanel(e)" data-testid="panel">
+                <label class="space-y-1">
+                  <span class="fp-label">{{ (panel()?.kind === 'raise' ? 'employees.newSalary' : 'employees.days') | t }}</span>
+                  <input class="fp-input w-40 font-mono" type="number" [min]="1" [max]="panel()?.kind === 'raise' ? 1000000 : 30"
+                    [value]="panelValue()" (input)="panelValue.set($any($event.target).valueAsNumber)" data-testid="panel-value" />
+                </label>
+                <app-button type="submit" data-testid="panel-submit">{{ 'common.save' | t }}</app-button>
+              </form>
+            }
+          </article>
+        }
+      </div>
+      @if (former().length > 0) {
+        <button type="button" class="mt-3 fp-label hover:text-text" (click)="showFormer.set(!showFormer())" data-testid="former-toggle">
+          {{ 'employees.former' | t: { n: former().length } }}
+        </button>
+        @if (showFormer()) {
+          <ul class="mt-2 space-y-1" data-testid="former">
+            @for (e of former(); track e.id) {
+              <li class="text-[12px] text-muted">{{ e.character.name }} · {{ e.jobRole | label: 'jobRole' }}</li>
+            }
+          </ul>
+        }
+      }
+    </app-card>
+
+    <app-card [title]="'employees.postings' | t" data-testid="postings">
+      <form class="mb-3 flex flex-wrap items-end gap-2" (submit)="$event.preventDefault(); createPosting()">
+        <label class="space-y-1">
+          <span class="fp-label">{{ 'employees.jobRole' | t }}</span>
+          <select class="fp-input w-56" [value]="newRole()" (change)="newRole.set($any($event.target).value)" data-testid="posting-role">
+            @for (r of roles; track r) {
+              <option [value]="r">{{ r | label: 'jobRole' }}</option>
+            }
+          </select>
+        </label>
+        <app-button type="submit" data-testid="posting-create">{{ 'employees.createPosting' | t }}</app-button>
+      </form>
+      @if (postings()?.length === 0) {
+        <p class="text-sm text-muted">{{ 'employees.noPostings' | t }}</p>
+      }
+      <ul class="space-y-2">
+        @for (p of postings() ?? []; track p.id) {
+          <li class="rounded-md border bg-bg" [class.border-accent]="openPosting() === p.id" [class.border-border]="openPosting() !== p.id" data-testid="posting">
+            <button type="button" class="flex w-full items-center justify-between gap-2 p-3 text-left" (click)="togglePosting(p.id)" data-testid="posting-toggle">
+              <span class="font-display text-[13px] text-text">{{ p.jobRole | label: 'jobRole' }}</span>
+              <span class="flex items-center gap-2">
+                <span class="font-mono text-[10px] text-muted">{{ p.createdAtGameTime | gameTime }}</span>
+                <app-badge [variant]="p.status === 'OPEN' ? 'positive' : 'neutral'">{{ p.status | label: 'postingStatus' }}</app-badge>
+              </span>
+            </button>
+            @if (openPosting() === p.id) {
+              <div class="border-t border-border p-3" data-testid="applications">
+                @if (applications() === null) {
+                  <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
+                } @else if (applications()!.length === 0) {
+                  <p class="text-sm text-muted">{{ 'employees.noApplicants' | t }}</p>
+                } @else {
+                  <p class="mb-2 text-[11px] text-muted">{{ 'employees.factsFixed' | t }}</p>
+                }
+                <ul class="space-y-2">
+                  @for (a of applications() ?? []; track a.id) {
+                    <li class="rounded-md border border-border p-3" data-testid="applicant">
+                      <div class="flex flex-wrap items-start justify-between gap-2">
+                        <div class="min-w-0">
+                          <a [routerLink]="'/village'" [queryParams]="{ character: a.applicant.id }" class="font-display text-[13px] text-text hover:text-accent">{{ a.applicant.name }}</a>
+                          @if (a.description) {
+                            <p class="mt-1 font-body text-[12px] text-muted">{{ a.description }}</p>
+                          }
+                        </div>
+                        <div class="flex gap-4 text-right">
+                          <div><div class="fp-label">{{ 'employees.skill' | t }}</div><div class="font-mono text-[13px] text-text" data-testid="applicant-skill">{{ a.skill }}</div></div>
+                          <div><div class="fp-label">{{ 'employees.expectedSalary' | t }}</div><div class="font-mono text-[13px] text-text" data-testid="applicant-salary">{{ a.expectedSalary | money }}</div></div>
+                        </div>
+                      </div>
+                      @if (a.status === 'PENDING' && p.status === 'OPEN') {
+                        <div class="mt-2 flex flex-wrap gap-2">
+                          <app-button variant="secondary" (pressed)="startInterview(a.id)" data-testid="interview-open">{{ 'employees.interview' | t }}</app-button>
+                          <app-button (pressed)="hire(p.id, a)" data-testid="hire">{{ 'employees.hire' | t }}</app-button>
+                        </div>
+                        @if (interviewFor() === a.id) {
+                          <form class="mt-2 space-y-2" (submit)="$event.preventDefault(); sendInterview(p.id, a)" data-testid="interview-form">
+                            <textarea class="fp-input min-h-16" maxlength="4000" [value]="interviewText()" (input)="interviewText.set($any($event.target).value)"
+                              [placeholder]="'employees.interviewPlaceholder' | t" [attr.aria-label]="'employees.interview' | t" data-testid="interview-text"></textarea>
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                              <div class="flex gap-3 text-[12px] text-text" role="radiogroup" [attr.aria-label]="'employees.channel' | t">
+                                <label class="flex items-center gap-1"><input type="radio" name="ch-{{ a.id }}" [checked]="interviewChannel() === 'MAIL'" (change)="interviewChannel.set('MAIL')" /> {{ 'employees.byMail' | t }}</label>
+                                <label class="flex items-center gap-1"><input type="radio" name="ch-{{ a.id }}" [checked]="interviewChannel() === 'CALL'" (change)="interviewChannel.set('CALL')" data-testid="channel-call" /> {{ 'employees.byCall' | t }}</label>
+                              </div>
+                              <app-button type="submit" [disabled]="!interviewText().trim()" data-testid="interview-send">{{ 'common.send' | t }}</app-button>
+                            </div>
+                          </form>
+                        }
+                      } @else {
+                        <app-badge class="mt-2 inline-block" [variant]="a.status === 'HIRED' ? 'positive' : 'neutral'">{{ a.status | label: 'applicationStatus' }}</app-badge>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    </app-card>
+  }
+
+  <app-modal [open]="dismissTarget() !== null" [title]="'employees.dismissTitle' | t" (closed)="dismissTarget.set(null)">
+    <p class="font-body text-sm text-text" data-testid="dismiss-text">{{ 'employees.dismissText' | t: { name: dismissTarget()?.character?.name } }}</p>
+    <div class="mt-4 flex justify-end gap-2">
+      <app-button variant="secondary" (pressed)="dismissTarget.set(null)">{{ 'common.cancel' | t }}</app-button>
+      <app-button variant="danger" (pressed)="confirmDismiss()" data-testid="dismiss-confirm">{{ 'employees.dismiss' | t }}</app-button>
+    </div>
+  </app-modal>
+</section>
