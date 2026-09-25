@@ -595,5 +595,27 @@
     "noteTitle": "Titel",
     "noteText": "Text",
     "titleRequired": "Bitte einen Titel eingeben."
+  },
+  "home": {
+    "welcomeTitle": "Willkommen bei FarmPulse",
+    "welcomeText": "Noch ist kein Spielstand verknüpft. Erzähle im Onboarding die Vorgeschichte deines Hofs, lerne dein Dorf kennen und verknüpfe anschließend deinen FS25-Spielstand.",
+    "unreadMails": "Ungelesene Mails",
+    "newMessages": "neue Nachrichten",
+    "allRead": "Alles gelesen",
+    "pendingCalls": "Anstehende Anrufe",
+    "ringing": "Es klingelt!",
+    "noCalls": "Keine offenen Anrufe",
+    "openLoans": "Offene Kredite",
+    "debtHint": "Restschuld {amount}",
+    "noLoans": "Schuldenfrei",
+    "negotiations": "Verhandlungen",
+    "negotiationsHint": "laufend",
+    "latest": "Letzte Ereignisse",
+    "noEvents": "Noch nichts passiert – das Dorf meldet sich bald.",
+    "mailbox": "Postfach",
+    "unreadCount": "{n} ungelesen",
+    "openMailbox": "Postfach öffnen",
+    "toMarket": "Zu Warenbestand & Preisen",
+    "callActive": "Gespräch läuft"
   }
 }

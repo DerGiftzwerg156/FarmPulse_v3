@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
           <a [routerLink]="link()" class="fp-label hover:text-accent">→</a>
         }
       </div>
-      <div class="mt-3 font-mono text-2xl font-bold text-text" data-testid="stat-value">{{ value() }}</div>
+      <div class="mt-3 font-mono font-bold text-text" [class.text-2xl]="!compact()" [class.text-lg]="compact()" data-testid="stat-value">{{ value() }}</div>
       @if (hint()) {
         <div
           class="mt-0.5 font-body text-[11px]"
@@ -34,4 +34,6 @@ export class Stat {
   readonly hint = input<string>();
   readonly tone = input<'neutral' | 'positive' | 'warning' | 'negative'>('neutral');
   readonly link = input<string>();
+  /** Smaller value font for word values (e.g. a reputation tier). */
+  readonly compact = input(false);
 }
