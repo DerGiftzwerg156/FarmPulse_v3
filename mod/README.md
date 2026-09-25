@@ -1,0 +1,77 @@
+# FS25_RPSim – Datei-Bridge-Mod
+
+Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
+
+## Was der Mod tut
+
+- Exportiert alle ~60 s (konfigurierbar) `farm_facts.json`: Kontostand, Fahrzeuge (Wert + Zustand), Gebäude,
+  eigene Felder, Tierbestand, **Silo-Warenbestand (nur klassische Silos)**, Vanilla-Kredit, laufende
+  Verkaufspreise je Verkaufsstelle/Fruchtart.
+- Exportiert beim Laden (und nach jeder Feldübertragung) `market_context.json`: Kartenname, Verkaufsstellen,
+  Fruchtarten, alle Farmlands inkl. Besitzer.
+- Liest `instructions.json` und wendet an:
+  - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …)
+  - `PRICE_EVENT` – Preis an **einer** Verkaufsstelle ändern (`MULTIPLIER` mit Ramp-Up/Hold/Decay oder
+    `FIXED`-Sonderkontrakt mit Mengen-Tracking)
+  - `FARMLAND_TRANSFER` – Feldbesitz übertragen
+- Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
+- Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.
+
+## Was der Mod bewusst NICHT tut
+
+- **Keine Spiellogik**: keine Formeln, keine Bonität, keine Preisentscheidungen – das macht das Backend.
+- **Keine KI-Anbindung** und keine HTTP-Aufrufe. Der API-Key liegt nie im Mod-Ordner.
+- Kein Mehrspieler (V1).
+
+## Installation
+
+1. Ordner `FS25_RPSim` zippen (Inhalt, nicht den Ordner selbst: `modDesc.xml` muss im ZIP-Root liegen) oder das
+   Release-ZIP verwenden.
+2. ZIP nach `Dokumente/My Games/FarmingSimulator2025/mods/` kopieren.
+3. Im Spiel beim Anlegen/Laden eines Spielstands den Mod aktivieren.
+
+## Erzeugte Ordnerstruktur
+
+```
+Dokumente/My Games/FarmingSimulator2025/modSettings/FS25_RPSim/
+  rpsim_config.json          (optional, eigene Einstellungen)
+  export/
+    farm_facts.json          (Mod schreibt, ~60 s)
+    market_context.json      (Mod schreibt, beim Laden + nach FARMLAND_TRANSFER)
+  import/
+    instructions.json        (Backend schreibt)
+    instructions_ack.json    (Mod schreibt)
+```
+
+Jede Datei hat genau einen Schreiber. Jede Datei trägt die `savegameId` des aktiven Spielstands;
+Instruktionen für einen anderen Spielstand werden verworfen (mit Warnung im `log.txt`).
+
+## Konfiguration (`rpsim_config.json`)
+
+| Schlüssel | Standard | Bedeutung |
+| --- | --- | --- |
+| `exportIntervalMs` | 60000 | Export-Intervall `farm_facts.json` (Echtzeit-ms) |
+| `importIntervalMs` | 5000 | Abfrage-Intervall `instructions.json` |
+| `processedRetentionGameDays` | 30 | Aufbewahrung erledigter Instruktionen (Spieltage) |
+| `atomicWriteMode` | `auto` | `rename`, `marker` oder `auto` (rename mit Marker-Fallback) |
+| `pricePerLiters` | 1000 | Preiseinheit der exportierten Preise (Preis je 1000 l) |
+
+## Entwicklung & Tests
+
+Voraussetzungen: Lua 5.1, [luaunit](https://github.com/bluebird75/luaunit), [luacheck](https://github.com/lunarmodules/luacheck)
+(`luarocks install luaunit luacheck`).
+
+```bash
+cd mod
+lua5.1 tests/run.lua      # komplette Testsuite
+luacheck .                # Lint
+```
+
+Die Logik liegt in FS25-unabhängigen Modulen (`src/util`, `src/bridge`, `src/export`, `src/import`); nur
+`src/game/GameAdapter.lua` und `src/RPSim.lua` greifen auf FS25-Globals zu. Offene API-Fragen sind mit
+`TODO(offene-frage)` markiert, siehe `docs/dev/offene-technische-punkte.md`. Das Protokoll ist in
+`docs/dev/bridge-protocol.md` beschrieben.
+
+## Versionierung
+
+SemVer, gekoppelt an `CHANGELOG.md`. FS25 erwartet eine vierstellige Version: `MAJOR.MINOR.PATCH.0`.
