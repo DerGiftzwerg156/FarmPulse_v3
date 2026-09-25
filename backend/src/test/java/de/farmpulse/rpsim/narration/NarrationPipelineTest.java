@@ -114,4 +114,13 @@ class NarrationPipelineTest {
         var r = fallbacks.render(NarrationEventType.REPLY, java.util.Map.of("absenceNote", true), "Frau Berger");
         assertThat(r.body()).startsWith("(Automatische Abwesenheitsnotiz: Frau Berger");
     }
+
+    @Test
+    void fillTypesAppearInGermanInFallbackTexts() {
+        var r = fallbacks.render(NarrationEventType.MARKET_PRICE_EVENT,
+                java.util.Map.of("fillType", "OAT", "sellPoint", "Mühle Nord", "changePercent", 12, "durationDays", 5,
+                        "startsInDays", 0), "Herr Meyer");
+        assertThat(r.subject()).isEqualTo("Neuigkeiten vom Markt: Hafer");
+        assertThat(r.body()).contains("Preis für Hafer").doesNotContain("OAT");
+    }
 }
