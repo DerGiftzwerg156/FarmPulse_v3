@@ -214,6 +214,7 @@ rpsim:
       npc-owned-share: 0.4
     satisfaction:                 # "Satisfaction-Formel"
       category-weight: 0.25
+      category-max: 100
       multiplier-min: 0.5
       multiplier-max: 1.2
       baseline-output-value: 1500

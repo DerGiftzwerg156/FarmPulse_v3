@@ -1,0 +1,31 @@
+{
+  "firstNames": ["Anna", "Ben", "Clara", "David", "Elena", "Felix", "Greta", "Hannes", "Ida", "Jonas", "Karla", "Lukas",
+    "Marie", "Niklas", "Olga", "Paul", "Rieke", "Sebastian", "Theresa", "Uwe", "Vera", "Werner", "Yvonne", "Zoe",
+    "Heinrich", "Gisela", "Matthias", "Sabine", "Tobias", "Frieda", "Klaus", "Petra", "Bernd", "Ilse", "Jens", "Maren",
+    "Ole", "Swantje", "Hauke", "Wiebke"],
+  "lastNames": ["Albers", "Brandt", "Claußen", "Dierks", "Ehlers", "Friedrichs", "Gerdes", "Hansen", "Iwersen",
+    "Jansen", "Kuhn", "Lüders", "Meyer", "Nissen", "Oltmanns", "Petersen", "Quast", "Rohde", "Schulte", "Thiessen",
+    "Ulrichs", "Voss", "Wiese", "Zander", "Berger", "Harms", "Kröger", "Martens", "Wendt", "Böhm"],
+  "traits": ["hilfsbereit", "sparsam", "neugierig", "stur", "gesellig", "wortkarg", "humorvoll", "gewissenhaft",
+    "misstrauisch", "großzügig", "traditionsbewusst", "technikbegeistert", "ungeduldig", "geduldig", "stolz",
+    "bescheiden", "ehrgeizig", "gemütlich", "direkt", "diplomatisch", "tratschfreudig", "zuverlässig"],
+  "speechStyles": ["knapp und sachlich", "herzlich und ausschweifend", "förmlich mit Sie-Anrede", "plattdeutsch gefärbt",
+    "trocken-humorvoll", "vorsichtig und höflich", "lebhaft mit vielen Ausrufen", "bedächtig und ruhig"],
+  "roles": {
+    "BANK_ADVISOR": { "title": "Bankberater/in der Raiffeisenbank", "description": "betreut die Konten und Kredite des Hofs" },
+    "COOPERATIVE": { "title": "Vertreter/in der Genossenschaft", "description": "organisiert Absatz, Versteigerungen und Termine im Dorf" },
+    "LAND_AGENT": { "title": "Landhändler/in", "description": "handelt mit Getreide und Betriebsmitteln und kennt die Marktpreise" },
+    "AUTHORITY": { "title": "Sachbearbeiter/in beim Landwirtschaftsamt", "description": "kümmert sich um Förderungen und Anträge" },
+    "NEIGHBOR_FARMER": { "title": "Nachbarlandwirt/in", "description": "bewirtschaftet den Hof nebenan" },
+    "VILLAGER": { "title": "Dorfbewohner/in", "description": "kennt jeden im Dorf und alle Neuigkeiten" },
+    "SUPPLIER": { "title": "Lieferant/in", "description": "liefert Saatgut, Dünger und Ersatzteile" },
+    "EMPLOYEE": { "title": "Mitarbeiter/in", "description": "arbeitet auf dem Hof" },
+    "APPLICANT": { "title": "Bewerber/in", "description": "sucht eine Stelle auf einem Hof" }
+  },
+  "jobRoles": {
+    "MACHINE_OPERATOR": "Maschinenführer/in",
+    "MECHANIC": "Mechaniker/in",
+    "ANIMAL_KEEPER": "Tierpfleger/in",
+    "OFFICE_CLERK": "Bürokraft"
+  }
+}

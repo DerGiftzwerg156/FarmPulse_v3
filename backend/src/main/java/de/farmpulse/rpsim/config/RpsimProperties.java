@@ -295,6 +295,8 @@ public class RpsimProperties {
     @Getter @Setter
     public static class Satisfaction {
         private double categoryWeight = 0.25;
+        /** Upper bound of each need category (0..categoryMax). */
+        private double categoryMax = 100;
         private double multiplierMin = 0.5;
         private double multiplierMax = 1.2;
         /** employeeEffectAmount = baselineOutputValue * (effectMultiplier - 1). */
