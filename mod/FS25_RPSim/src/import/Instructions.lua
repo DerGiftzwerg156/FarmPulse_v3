@@ -85,7 +85,8 @@ function RPSimInstructions.parseDocument(text)
     if doc == nil then
         return nil, err
     end
-    if type(doc) ~= "table" then
+    local mt = type(doc) == "table" and getmetatable(doc) or nil
+    if type(doc) ~= "table" or (mt ~= nil and mt.__jsontype == "array") then
         return nil, "document is not an object"
     end
     if doc.instructions == nil then
