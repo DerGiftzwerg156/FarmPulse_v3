@@ -4,12 +4,13 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideRouter } from '@angular/router';
 import { Shell } from './shell';
 import { NAV_ITEMS } from './nav-items';
+import { FakeEventSource, provideFakeEventSource } from '../../testing/fake-event-source';
 
 describe('Shell', () => {
   function setup() {
     TestBed.configureTestingModule({
       imports: [Shell],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), provideFakeEventSource()],
     });
     const fixture = TestBed.createComponent(Shell);
     const http = TestBed.inject(HttpTestingController);
@@ -46,5 +47,21 @@ describe('Shell', () => {
     (el.querySelector('[data-testid="menu-backdrop"]') as HTMLElement).click();
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="mobile-menu"]')).toBeNull();
+  });
+
+  it('reacts to a live mail event: counter and live indicator update', () => {
+    const { fixture, el, http } = setup();
+    http.expectOne('/api/savegame').flush(null);
+    expect(el.textContent).toContain('Offline');
+    FakeEventSource.last.emit('hello');
+    http.expectOne('/api/savegame').flush(null);
+    FakeEventSource.last.emit('mail', { id: 1 });
+    http.expectOne('/api/savegame').flush({
+      id: 1, savegameId: 'x', mapName: 'Erlengrund', gameTime: 0, gameDay: 3, balance: 1,
+      tonePreset: 'REALISTIC', unreadMails: 1, pendingCalls: 0, reputationTier: 'NEUTRAL',
+    });
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Live');
+    expect(el.querySelector('[data-testid="notification-count"]')?.textContent?.trim()).toBe('1');
   });
 });

@@ -1,6 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '../core/i18n/translate.pipe';
+import { LiveEventsService } from '../core/live/live-events.service';
 import { GameStateStore } from '../core/state/game-state.store';
 import { Icon } from '../shared/ui/icon';
 import { Toasts } from '../shared/ui/toasts';
@@ -16,13 +17,19 @@ import { NAV_ITEMS } from './nav-items';
   imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, Icon, MoneyPipe, Toasts],
   templateUrl: './shell.html',
 })
-export class Shell implements OnInit {
+export class Shell implements OnInit, OnDestroy {
   readonly state = inject(GameStateStore);
+  private readonly live = inject(LiveEventsService);
   readonly items = NAV_ITEMS;
   readonly menuOpen = signal(false);
 
   ngOnInit(): void {
     this.state.refresh();
+    this.live.connect();
+  }
+
+  ngOnDestroy(): void {
+    this.live.disconnect();
   }
 
   toggleMenu(): void {
