@@ -11,4 +11,6 @@ public interface TrustEventRepository extends JpaRepository<TrustEvent, Long> {
     List<TrustEvent> findByCharacterOrderByGameTimeAscIdAsc(Character character);
 
     List<TrustEvent> findTop20ByCharacterOrderByGameTimeDescIdDesc(Character character);
+
+    void deleteByCharacter(Character character);
 }

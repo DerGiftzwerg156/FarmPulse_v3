@@ -21,14 +21,20 @@ public class DetectedSavegameRegistry {
     }
 
     private final Map<String, Detected> detected = new ConcurrentHashMap<>();
+    /** Map names from market_context.json (may arrive before the first farm_facts.json). */
+    private final Map<String, String> mapNames = new ConcurrentHashMap<>();
 
-    public void report(String savegameId, String mapName, long gameTime, long balance) {
+    public void report(String savegameId, String reportedMapName, long gameTime, long balance) {
+        String mapName = reportedMapName != null ? reportedMapName : mapNames.get(savegameId);
         detected.merge(savegameId, new Detected(savegameId, mapName, Instant.now(), Instant.now(), gameTime, balance),
                 (old, now) -> new Detected(savegameId, mapName != null ? mapName : old.mapName(), old.firstSeen(),
                         now.lastSeen(), gameTime, balance));
     }
 
     public void updateMapName(String savegameId, String mapName) {
+        if (mapName != null) {
+            mapNames.put(savegameId, mapName);
+        }
         detected.computeIfPresent(savegameId, (k, d) -> new Detected(k, mapName, d.firstSeen(), d.lastSeen(),
                 d.gameTime(), d.balance()));
     }
@@ -49,5 +55,6 @@ public class DetectedSavegameRegistry {
 
     public void clear() {
         detected.clear();
+        mapNames.clear();
     }
 }
