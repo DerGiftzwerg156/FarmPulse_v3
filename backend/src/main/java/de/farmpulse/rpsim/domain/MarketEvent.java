@@ -85,4 +85,7 @@ public class MarketEvent extends SavegameScoped {
 
     @Column(name = "announced_at_game_time", nullable = false)
     private long announcedAtGameTime;
+
+    @Column(name = "announced", nullable = false)
+    private boolean announced;
 }
