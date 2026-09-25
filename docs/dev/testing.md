@@ -105,3 +105,17 @@ market context), hiring + resignation escalation over 32 game days, village rota
 - Requirements: Node.js ≥ 20 and `npm ci` in `tools/bridge-simulator` (otherwise the test is skipped).
 - Measured runtime: **≈ 6.4 s** for all six scenarios (4-core container, 2026-09-25).
 - The direct-negotiation scenario picks an unclaimed field that is *not* already under a (randomly spawned) auction.
+
+## Continuous integration (AP-11.1)
+
+| Workflow | Trigger | Runs |
+| --- | --- | --- |
+| `.github/workflows/backend.yml` | push to `main` / PR touching `backend/`, the simulator or the config reference | `mvn -B verify` (incl. the backend E2E vs. the simulator, JaCoCo artifact) |
+| `.github/workflows/frontend.yml` | push / PR touching `frontend/` | `npm ci`, `npm run lint`, `npm run build`, `npm test -- --watch=false` |
+| `.github/workflows/mod-lint.yml` | push / PR touching `mod/` | `luacheck .` and the luaunit suite with Lua 5.1 |
+| `.github/workflows/e2e.yml` | every push to `main`, PRs touching backend/frontend/simulator, manual | builds the jar, installs Chromium, `npm run e2e`; uploads the Playwright report on failure |
+
+**Decision – E2E on pull requests, too:** the Playwright suite itself takes ≈ 30 s; with the jar build, `npm ci`
+and the Chromium download the job takes about 3–4 minutes. That is cheap enough to catch broken flows before they
+reach `main`, so it runs on PRs that touch one of the three involved components (docs-only PRs skip it).
+Path filters keep unrelated workflows from running at all.

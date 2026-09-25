@@ -1,6 +1,6 @@
 # FarmPulse – KI-Rollenspiel für Farming Simulator 25
 
-<!-- CI badges: see AP-11.1 -->
+[![backend](https://github.com/DerGiftzwerg156/FarmPulse_v3/actions/workflows/backend.yml/badge.svg)](https://github.com/DerGiftzwerg156/FarmPulse_v3/actions/workflows/backend.yml) [![frontend](https://github.com/DerGiftzwerg156/FarmPulse_v3/actions/workflows/frontend.yml/badge.svg)](https://github.com/DerGiftzwerg156/FarmPulse_v3/actions/workflows/frontend.yml) [![mod](https://github.com/DerGiftzwerg156/FarmPulse_v3/actions/workflows/mod-lint.yml/badge.svg)](https://github.com/DerGiftzwerg156/FarmPulse_v3/actions/workflows/mod-lint.yml) [![e2e](https://github.com/DerGiftzwerg156/FarmPulse_v3/actions/workflows/e2e.yml/badge.svg)](https://github.com/DerGiftzwerg156/FarmPulse_v3/actions/workflows/e2e.yml)
 
 **Dein Hof bekommt ein Dorf.** FarmPulse ergänzt Farming Simulator 25 um eine KI-gestützte Rollenspiel-Simulation:
 Die Bankberaterin prüft deinen Kreditantrag, der Nachbar ruft wegen des Nordfelds an, der Landhändler flüstert dir
