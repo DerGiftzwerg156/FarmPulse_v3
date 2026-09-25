@@ -15,7 +15,7 @@
         <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-3">
           <label class="block space-y-1">
             <span class="fp-label">{{ 'bank.amount' | t }}</span>
-            <input class="fp-input font-mono" type="number" min="1" step="1000" formControlName="amount" data-testid="credit-amount" />
+            <input class="fp-input font-mono" type="number" min="1" step="any" formControlName="amount" data-testid="credit-amount" />
           </label>
           <label class="block space-y-1">
             <span class="fp-label">{{ 'bank.purpose' | t }}</span>
