@@ -285,5 +285,22 @@
     "unknownMap": "Unbekannte Karte",
     "lastSeen": "zuletzt gesehen {at}",
     "confirm": "Bestätigen & verknüpfen"
+  },
+  "mailbox": {
+    "filter": "Filter",
+    "unread": "Ungelesen",
+    "empty": "Keine Mails in diesem Filter.",
+    "villageLife": "Dorfleben",
+    "formRequired": "Formular",
+    "messages": "{n} Nachrichten",
+    "me": "Du",
+    "system": "Hofverwaltung",
+    "select": "Wähle links eine Mail aus.",
+    "formHint": "Hierauf antwortest du über das zugehörige Formular – Beträge werden nie aus Freitext übernommen.",
+    "openForm": "Zum Formular",
+    "reply": "Antwort",
+    "replyPlaceholder": "Schreib frei, wie du antworten möchtest …",
+    "replyHint": "Die Antwort kommt nicht sofort – Charaktere melden sich in Spielzeit zurück.",
+    "noReply": "Auf diese Nachricht kann nicht geantwortet werden."
   }
 }

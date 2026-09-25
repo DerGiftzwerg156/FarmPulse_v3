@@ -12,3 +12,21 @@ export function apiErrorMessage(err: unknown, fallback: string): string {
   }
   return fallback;
 }
+
+/** Backend error code (`ApiError.code`), or null for network/unknown errors. */
+export function apiErrorCode(err: unknown): string | null {
+  if (err instanceof HttpErrorResponse) {
+    const body = err.error as Partial<ApiError> | null;
+    return body && typeof body.code === 'string' ? body.code : null;
+  }
+  return null;
+}
+
+export interface PageError {
+  message: string;
+  code: string | null;
+}
+
+export function toPageError(err: unknown, fallback: string): PageError {
+  return { message: apiErrorMessage(err, fallback), code: apiErrorCode(err) };
+}

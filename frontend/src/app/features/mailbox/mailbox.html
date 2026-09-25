@@ -1,0 +1,105 @@
+<section class="space-y-4">
+  <header class="flex flex-wrap items-center justify-between gap-2">
+    <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.mailbox' | t }}</h1>
+    <div class="flex gap-1" role="group" [attr.aria-label]="'mailbox.filter' | t">
+      <app-button [variant]="filter() === 'all' ? 'primary' : 'secondary'" (pressed)="filter.set('all')" data-testid="filter-all">{{ 'common.all' | t }}</app-button>
+      <app-button [variant]="filter() === 'unread' ? 'primary' : 'secondary'" (pressed)="filter.set('unread')" data-testid="filter-unread">{{ 'mailbox.unread' | t }}</app-button>
+    </div>
+  </header>
+
+  @if (error(); as err) {
+    <app-page-error [error]="err" />
+  } @else {
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <div class="space-y-2" [class.hidden]="openRoot() !== null" [class.lg:block]="true" data-testid="mail-list">
+        @if (mails() === null) {
+          <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
+        } @else if (visibleThreads().length === 0) {
+          <p class="text-sm text-muted" data-testid="mail-empty">{{ 'mailbox.empty' | t }}</p>
+        }
+        @for (t of visibleThreads(); track t.rootId) {
+          <button type="button" class="block w-full text-left" (click)="open(t)" data-testid="mail-thread">
+            <app-list-item
+              [title]="t.subject"
+              [subtitle]="(t.latest.character?.name ?? ('mailbox.system' | t)) + ' · ' + (t.latest.body ?? '')"
+              [meta]="t.latest.gameTime | gameTime"
+              [unread]="t.unreadIds.length > 0"
+              [active]="openRoot() === t.rootId"
+            >
+              <div class="mt-1.5 flex flex-wrap gap-1.5">
+                @if (t.villageLife) {
+                  <app-badge data-testid="village-life-badge">{{ 'mailbox.villageLife' | t }}</app-badge>
+                } @else {
+                  <app-badge>{{ t.latest.category | label: 'communicationCategory' }}</app-badge>
+                }
+                @if (t.formLink) {
+                  <app-badge variant="warning">{{ 'mailbox.formRequired' | t }}</app-badge>
+                }
+                @if (t.count > 1) {
+                  <span class="fp-label">{{ 'mailbox.messages' | t: { n: t.count } }}</span>
+                }
+              </div>
+            </app-list-item>
+          </button>
+        }
+      </div>
+
+      <div [class.hidden]="openRoot() === null" [class.lg:block]="true">
+        @if (thread(); as tv) {
+          <app-card [title]="current()?.subject ?? tv.message.subject ?? ''" data-testid="mail-detail">
+            <div card-actions>
+              <button type="button" class="fp-label hover:text-text lg:hidden" (click)="close()">{{ 'common.back' | t }}</button>
+            </div>
+            <ol class="space-y-3">
+              @for (m of tv.thread; track m.id) {
+                <li class="rounded-md border bg-bg p-3" [class.border-border]="m.initiatedBy === 'CHARACTER'"
+                  [class.border-accent/40]="m.initiatedBy === 'PLAYER'" [class.ml-6]="m.initiatedBy === 'PLAYER'" data-testid="thread-message">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="font-display text-[12px] text-text">{{ sender(m) }}
+                      @if (m.character && m.initiatedBy === 'CHARACTER') {
+                        <span class="fp-label"> · {{ m.character.role | label: 'characterRole' }}</span>
+                      }
+                    </span>
+                    <span class="font-mono text-[10px] text-muted">{{ m.gameTime | gameTime }}</span>
+                  </div>
+                  <p class="mt-2 whitespace-pre-line font-body text-[13px] leading-relaxed text-text">{{ m.body }}</p>
+                </li>
+              }
+            </ol>
+
+            @if (formLink(); as link) {
+              <div class="mt-4 flex items-center justify-between gap-3 rounded-md border border-warn/50 bg-bg p-3" data-testid="form-link">
+                <p class="font-body text-[12px] text-warn">{{ 'mailbox.formHint' | t }}</p>
+                <a [routerLink]="link.path" [queryParams]="link.queryParams"
+                  class="inline-flex shrink-0 items-center gap-1 rounded-sm bg-accent px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-bg">
+                  {{ 'mailbox.openForm' | t }} <app-icon name="arrowRight" size="h-3.5 w-3.5" />
+                </a>
+              </div>
+            } @else if (canReply()) {
+              <form class="mt-4 space-y-2" (ngSubmit)="send()" data-testid="reply-form">
+                <label class="fp-label" for="reply">{{ 'mailbox.reply' | t }}</label>
+                <textarea id="reply" name="reply" class="fp-input min-h-24" maxlength="4000" [ngModel]="replyText()"
+                  (ngModelChange)="replyText.set($event)" [placeholder]="'mailbox.replyPlaceholder' | t" data-testid="reply-text"></textarea>
+                @if (replyError()) {
+                  <p class="text-[12px] text-danger" data-testid="reply-error">{{ replyError() }}</p>
+                }
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-[11px] text-muted">{{ 'mailbox.replyHint' | t }}</span>
+                  <app-button type="submit" [disabled]="sending() || !replyText().trim()" data-testid="reply-send">
+                    <app-icon name="send" size="h-3.5 w-3.5" /> {{ 'common.send' | t }}
+                  </app-button>
+                </div>
+              </form>
+            } @else {
+              <p class="mt-4 text-[12px] text-muted" data-testid="no-reply">{{ 'mailbox.noReply' | t }}</p>
+            }
+          </app-card>
+        } @else if (openRoot() !== null) {
+          <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
+        } @else {
+          <app-card variant="inset"><p class="text-sm text-muted">{{ 'mailbox.select' | t }}</p></app-card>
+        }
+      </div>
+    </div>
+  }
+</section>

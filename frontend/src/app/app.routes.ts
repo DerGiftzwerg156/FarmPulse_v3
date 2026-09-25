@@ -10,6 +10,7 @@ const devRoutes: Routes = environment.styleGuide
 
 /** Feature modules (Phase 8), lazily loaded; areas without an entry show the placeholder. */
 const FEATURES: Record<string, Routes[number]['loadComponent']> = {
+  mailbox: () => import('./features/mailbox/mailbox').then((m) => m.Mailbox),
   onboarding: () => import('./features/onboarding/onboarding-wizard').then((m) => m.OnboardingWizard),
 };
 
