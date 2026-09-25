@@ -128,6 +128,19 @@ describe('ChartWrapper', () => {
     expect(el.querySelector('[data-testid="chart-line"]')?.getAttribute('stroke')).toBe(SERIES_COLORS[0]);
   });
 
+  it('drops direct labels and the middle x tick on narrow widths (legend keeps identity)', () => {
+    const { fixture, el } = render(ChartHost);
+    fixture.componentInstance.series.set(two);
+    fixture.detectChanges();
+    const chart = fixture.debugElement.children[0].componentInstance as ChartWrapper;
+    chart.measured.set(360);
+    fixture.detectChanges();
+    expect(el.querySelectorAll('[data-testid="chart-direct-label"]').length).toBe(0);
+    expect(chart.xTicks().length).toBe(2);
+    expect(chart.padRight()).toBe(16);
+    expect(el.querySelector('[data-testid="chart-legend"]')).not.toBeNull();
+  });
+
   it('has no legend for a single series and an empty state without data', () => {
     const { fixture, el } = render(ChartHost);
     expect(el.textContent).toContain('Noch keine Daten');

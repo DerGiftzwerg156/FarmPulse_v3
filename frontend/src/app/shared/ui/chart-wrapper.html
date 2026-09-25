@@ -30,15 +30,15 @@
         >
           @for (t of yTicks(); track $index) {
             <line [attr.x1]="pad.left" [attr.x2]="width - pad.right" [attr.y1]="sy(t)" [attr.y2]="sy(t)" stroke="#222E28" stroke-width="1" />
-            <text [attr.x]="pad.left - 6" [attr.y]="sy(t) + 3" text-anchor="end" class="fill-muted font-mono text-[9px]">{{ yFormat()(t) }}</text>
+            <text [attr.x]="pad.left - 6" [attr.y]="sy(t) + 3" text-anchor="end" class="fill-muted font-mono text-[10px]">{{ yFormat()(t) }}</text>
           }
           @for (t of xTicks(); track $index) {
-            <text [attr.x]="sx(t)" [attr.y]="height - 8" text-anchor="middle" class="fill-muted font-mono text-[9px]">{{ xFormat()(t) }}</text>
+            <text [attr.x]="sx(t)" [attr.y]="height - 8" [attr.text-anchor]="tickAnchor($index, xTicks().length)" class="fill-muted font-mono text-[10px]">{{ xFormat()(t) }}</text>
           }
           @for (p of paths(); track p.series.key) {
             <path [attr.d]="p.d" fill="none" [attr.stroke]="p.color" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" data-testid="chart-line" />
             <circle [attr.cx]="sx(p.last.x)" [attr.cy]="sy(p.last.y)" r="4" [attr.fill]="p.color" stroke="#141A17" stroke-width="2" />
-            @if (visible().length <= 4) {
+            @if (directLabels()) {
               <text [attr.x]="sx(p.last.x) + 8" [attr.y]="sy(p.last.y) + 3" class="fill-text font-body text-[10px]" data-testid="chart-direct-label">{{ p.series.label }}</text>
             }
           }
