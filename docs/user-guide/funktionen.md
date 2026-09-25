@@ -1,0 +1,121 @@
+# Funktionen im Überblick
+
+FarmPulse läuft neben dem Spiel: Du spielst Farming Simulator wie gewohnt, und im Browser melden sich die Menschen
+aus deinem Dorf. **Alle Zahlen – Kredite, Preise, Gehälter, Vertrauen – berechnet FarmPulse nach festen Regeln.**
+Die KI formuliert nur, *wie* die Charaktere es dir sagen. Deshalb gibst du Beträge immer in Formularen ein, nie im
+Freitext.
+
+Neues erscheint **live** (grüne Anzeige *Live* oben rechts), ohne dass du die Seite neu laden musst. Die Glocke
+zählt ungelesene Mails und anstehende Anrufe.
+
+## Dashboard
+
+![Dashboard](../screenshots/10-dashboard.png)
+
+Kontostand, ungelesene Mails, anstehende Anrufe, offene Kredite, laufende Verhandlungen und dein Ansehen im Dorf auf
+einen Blick – dazu die letzten Ereignisse, eine Vorschau aufs Postfach und dein Silobestand.
+
+## Postfach
+
+![Postfach](../screenshots/11-postfach.png)
+
+Mails sind ohne Zeitdruck: Antworte frei, wann du willst – die Antwort kommt in Spielzeit zurück. Mails, bei denen
+es um Geld geht (Gegenangebot der Bank, Bewerbungen, Gebote, Sonderkontrakte), tragen das Badge **Formular** und
+führen dich mit **Zum Formular** an die richtige Stelle. Glückwünsche, Einladungen und Klatsch erkennst du am Badge
+**Dorfleben**. Wie freundlich du schreibst, merkt sich dein Gegenüber – ein wenig.
+
+## Anrufe
+
+![Eingehender Anruf](../screenshots/19-anruf-eingehend.png)
+
+Anrufe klingeln – in Spielzeit. **Annehmen** öffnet das Gespräch. **Ablehnen** kostet etwas Vertrauen, und das
+Thema bleibt offen, bis du dich selbst meldest. Ignorierst du den Anruf, gilt er nach einer Weile als verpasst.
+
+![Gespräch](../screenshots/20-anruf-gespraech.png)
+
+Im Gespräch zeigt ein Balken, dass dein Gegenüber auf eine Antwort wartet. Das ist nur Stimmung: Nimmst du dir
+länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
+
+## Bank & Finanzen
+
+![Bank](../screenshots/12-bank.png)
+
+- **Kredit beantragen:** Betrag, Zweck, Laufzeit. Die Bank prüft ein bis zwei Spieltage.
+- **Ergebnis:** *Genehmigt*, *Gegenangebot* (geringerer Betrag, kürzere Laufzeit oder höherer Zins – annehmen oder
+  ablehnen) oder *Abgelehnt* mit einer groben Begründung. Die genaue Rechnung verrät die Bank nicht – wie im echten
+  Leben.
+- In die Prüfung fließen dein Vermögen (auch das Getreide im Silo), Liquidität, Einnahmen, Schulden (auch der
+  Kredit aus dem Grundspiel), Zahlungshistorie und – nur als kleiner Zuschlag – dein Vertrauen bei der Bank.
+- **Laufende Kredite:** Rate, Restschuld, Tilgungsplan und Zahlungshistorie. Raten werden automatisch abgebucht.
+- **Zahlungsausfall:** Mahnung → Verzugsgebühr → Vertrauensverlust → bei wiederholtem Ausfall Fälligstellung der
+  Restschuld (das spricht sich im Dorf herum) oder Kreditsperre.
+- **Stundung:** Einmal pro Kredit kannst du um eine Ratenpause bitten; die Bank entscheidet nach festen Regeln.
+
+## Personal
+
+![Personal](../screenshots/13-personal.png)
+
+- **Stelle ausschreiben:** Nach kurzer Zeit bewerben sich 3–5 Leute, mit Können und Gehaltsvorstellung.
+- **Vorstellungsgespräch:** Frag per Mail oder Anruf – Können und Gehalt ändern sich dadurch nicht, du lernst die
+  Person nur kennen.
+- **Team:** Zufriedenheit gesamt und je Bereich (Bezahlung, Arbeitsbelastung, Wertschätzung,
+  Arbeitsbedingungen = Zustand deiner Maschinen). Zufriedene Leute arbeiten besser, das zeigt sich monatlich im
+  Geld.
+- **Gehaltserhöhung, freier Tag, Kündigen.** Bleibt jemand lange unzufrieden, kommt erst eine Warnung, dann die
+  Kündigung.
+
+## Felder & Verhandlung
+
+![Felder](../screenshots/14-felder-verhandlung.png)
+
+Die Feldübersicht zeigt alle Felder der Karte: deine eigenen, die der Dorfbewohner und freie.
+
+- **Versteigerungen** werden per Mail angekündigt; andere bieten mit, du hast bis zu drei Runden.
+- **Direktverhandlung:** Bei Feldern, die jemandem aus dem Dorf gehören, eröffnest du selbst eine Verhandlung.
+  Auf ein zu niedriges Angebot folgt ein Gegenangebot, das du mit einem Klick annehmen kannst.
+- **Eigene Felder verkaufen:** Wunschpreis nennen, Interessenten melden sich mit einem ersten Angebot.
+
+Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebucht.
+
+## Warenbestand & Preise
+
+![Warenbestand](../screenshots/15-warenbestand-preise.png)
+
+Was liegt im Silo, was ist es wert, wo zahlt man gerade am meisten? Der **Preisverlauf** zeigt die Preise je
+Verkaufsstelle über 7, 30, 90 Tage oder den ganzen Spielstand (mit *Tabelle* auch als Zahlen). Im
+**Marktgeschehen** stehen Preisereignisse, Gerüchte (die nicht immer stimmen) und Sonderkontrakte zum Festpreis, an
+denen du teilnehmen kannst. Ein volles Silo zählt übrigens bei der Bank als Vermögen, und Marktereignisse treffen
+bevorzugt die Früchte, die du wirklich lagerst.
+
+## Dorf & Charaktere
+
+![Dorf](../screenshots/16-dorf-charakter.png)
+
+Alle Menschen im Dorf mit Rolle und Vertrauen (fünf Balken und ein Wort statt einer Zahl). In der Detailansicht
+stehen Charakterzüge, Sprachstil und Hintergrund. Mit **Nachricht verfassen** meldest du dich selbst – per Mail oder
+Anruf. Schreibst du jemandem mehrmals kurz hintereinander, antwortet er trotzdem; aufs Vertrauen wirkt nur der
+erste Kontakt des Tages. Dein **Ansehen im Dorf** siehst du oben rechts als Stufe (gut angesehen, neutral,
+umstritten). Gelegentlich ziehen Leute weg oder neu zu.
+
+## Tagebuch
+
+![Tagebuch](../screenshots/17-tagebuch.png)
+
+Die Chronik deines Hofs – beginnend mit der Vorgeschichte. Wichtige Ereignisse trägt FarmPulse selbst ein. Eigene
+Notizen sind reine Erinnerung und haben keinerlei Auswirkung aufs Spiel.
+
+## Einstellungen
+
+![Einstellungen](../screenshots/18-einstellungen.png)
+
+KI-Anbieter, Modell und API-Schlüssel (siehe [Installation](installation.md#5-ki-anbieter-einrichten-optional)) und
+der Ton deines Spielstands (nur Anzeige).
+
+## Auf dem Handy
+
+![Mobil](../screenshots/21-mobil-dashboard.png)
+
+Die Oberfläche passt sich an kleine Bildschirme an – z. B. auf einem Tablet neben dem Spiel. Standardmäßig ist
+FarmPulse nur auf dem eigenen PC erreichbar (`localhost`), weil es keine Anmeldung gibt. Für ein Tablet im
+Heimnetz `server.address: 0.0.0.0` in `application-local.yml` eintragen und am Tablet `http://<IP-des-PCs>:8080`
+öffnen – dann kann allerdings jeder in deinem Netz mitspielen.

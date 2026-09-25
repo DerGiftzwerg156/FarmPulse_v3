@@ -1,0 +1,7 @@
+Sonderkontrakt abgeschlossen
+Hallo,
+
+der Sonderkontrakt für {{fillType}} ist beendet: {{deliveredQuantity}} von {{maxQuantity}} l wurden geliefert.
+
+Grüße
+{{characterName}}

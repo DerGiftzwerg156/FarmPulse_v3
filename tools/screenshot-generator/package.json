@@ -1,0 +1,13 @@
+{
+  "name": "rpsim-screenshot-generator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generates docs/screenshots/*.png from a real backend + bridge simulator + frontend run (AP-10.2)",
+  "type": "module",
+  "scripts": {
+    "screenshots": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

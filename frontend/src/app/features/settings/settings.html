@@ -1,0 +1,67 @@
+<section class="space-y-4">
+  <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.settings' | t }}</h1>
+
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+    <app-card [title]="'settings.ai' | t" data-testid="ai-settings">
+      @if (ai(); as s) {
+        <span card-actions><app-badge variant="positive" [dot]="true">{{ 'settings.active' | t: { name: (s.provider | label: 'aiProvider') } }}</app-badge></span>
+      }
+      <p class="mb-3 font-body text-[12px] text-muted">{{ 'settings.aiIntro' | t }}</p>
+      <form class="space-y-3" (submit)="$event.preventDefault(); save()" autocomplete="off">
+        <label class="block space-y-1">
+          <span class="fp-label">{{ 'settings.provider' | t }}</span>
+          <select class="fp-input" [value]="provider()" (change)="selectProvider($any($event.target).value)" data-testid="provider">
+            @for (p of ai()?.providers ?? []; track p) {
+              <option [value]="p" [selected]="p === provider()">{{ p | label: 'aiProvider' }}</option>
+            }
+          </select>
+        </label>
+        @if (provider() !== 'NONE') {
+          <label class="block space-y-1">
+            <span class="fp-label">{{ 'settings.model' | t }} ({{ 'common.optional' | t }})</span>
+            <input class="fp-input font-mono" type="text" [value]="model()" (input)="model.set($any($event.target).value)"
+              [placeholder]="'settings.modelPlaceholder' | t" data-testid="model" />
+          </label>
+        }
+        @if (needsKey()) {
+          <label class="block space-y-1">
+            <span class="fp-label">{{ 'settings.apiKey' | t }}</span>
+            <input class="fp-input font-mono" type="password" autocomplete="new-password" spellcheck="false" [value]="apiKey()"
+              (input)="apiKey.set($any($event.target).value)" [placeholder]="(keyStored() ? 'settings.keyStored' : 'settings.keyMissing') | t" data-testid="api-key" />
+            <span class="block text-[11px] text-muted">{{ 'settings.keyHint' | t }}</span>
+          </label>
+        }
+        @if (needsUrl()) {
+          <label class="block space-y-1">
+            <span class="fp-label">{{ 'settings.baseUrl' | t }}</span>
+            <input class="fp-input font-mono" type="url" [value]="baseUrl()" (input)="baseUrl.set($any($event.target).value)"
+              placeholder="http://localhost:11434" data-testid="base-url" />
+          </label>
+        }
+        @if (provider() === 'NONE') {
+          <p class="text-[12px] text-muted" data-testid="none-hint">{{ 'settings.noneHint' | t }}</p>
+        }
+        @if (error()) {
+          <p class="text-[12px] text-danger" data-testid="settings-error">{{ error() }}</p>
+        }
+        @if (saved()) {
+          <p class="text-[12px] text-accent" data-testid="settings-saved">{{ 'settings.saved' | t }}</p>
+        }
+        <div class="flex justify-end">
+          <app-button type="submit" [disabled]="saving() || !provider()" data-testid="settings-save">{{ 'common.save' | t }}</app-button>
+        </div>
+      </form>
+    </app-card>
+
+    <app-card [title]="'settings.game' | t" data-testid="game-settings">
+      <div class="fp-label">{{ 'onboarding.tonePreset' | t }}</div>
+      @if (game(); as g) {
+        <div class="mt-1 font-display text-lg font-bold text-text" data-testid="tone">{{ g.tonePreset | label: 'tonePreset' }}</div>
+        <p class="mt-0.5 text-[12px] text-muted">{{ g.toneLabel }}</p>
+      } @else {
+        <div class="mt-1 text-sm text-muted" data-testid="tone">–</div>
+      }
+      <p class="mt-3 text-[11px] text-muted">{{ 'settings.toneFixed' | t }}</p>
+    </app-card>
+  </div>
+</section>

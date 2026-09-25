@@ -1,0 +1,7 @@
+Verzugsgebühr
+Guten Tag,
+
+da Ihre Rate weiterhin offen ist, berechnen wir eine Verzugsgebühr von {{penaltyFee}} €.
+
+Mit freundlichen Grüßen
+{{characterName}}

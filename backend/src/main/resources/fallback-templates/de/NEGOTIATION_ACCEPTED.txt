@@ -1,0 +1,6 @@
+Einigung über Feld {{farmlandId}}
+Hallo,
+
+abgemacht – wir sind uns bei {{finalPrice}} € einig.
+
+{{characterName}}

@@ -1,0 +1,10 @@
+{
+  "injection": ["ignoriere", "ignore previous", "ignore all", "vergiss alle", "vergiss deine", "system prompt",
+    "systemprompt", "du bist jetzt", "you are now", "neue anweisung", "new instruction", "developer mode",
+    "jailbreak", "</spieler_nachricht>", "<spieler_nachricht>", "antworte ab jetzt", "regeln gelten nicht"],
+  "numberManipulation": ["startkapital auf", "unendlich geld", "unbegrenztes geld", "setze mein geld", "setze den kontostand",
+    "eine milliarde", "millionen euro geschenkt", "kredit genehmigt bekommen", "bonität 100", "vertrauen 100",
+    "zinsfrei für immer", "kostenlos alles"],
+  "abuse": ["hitler", "nazi", "vergewaltig", "kinderporno", "terroranschlag", "bombenbau", "ficken", "hurensohn",
+    "untermensch", "rassenlehre"]
+}

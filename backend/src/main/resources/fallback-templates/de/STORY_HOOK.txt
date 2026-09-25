@@ -1,0 +1,9 @@
+{{title}}
+Hallo,
+
+{{premise}}
+
+Melden Sie sich doch mal, wenn Sie Zeit haben.
+
+Beste Grüße
+{{characterName}}

@@ -1,0 +1,59 @@
+package de.farmpulse.rpsim.narration;
+
+/**
+ * Every event the personality layer can narrate. Each type has a fallback template
+ * (fallback-templates/{locale}/{TYPE}.txt) so the game stays fully playable without a working AI.
+ */
+public enum NarrationEventType {
+    // onboarding / story
+    ONBOARDING_WELCOME,
+    STORY_HOOK,
+    // credit
+    CREDIT_APPROVED,
+    CREDIT_COUNTER_OFFER,
+    CREDIT_REJECTED,
+    CREDIT_PAYMENT_REMINDER,
+    CREDIT_PENALTY,
+    CREDIT_TRUST_WARNING,
+    CREDIT_CALLBACK,
+    CREDIT_BLOCKED,
+    CREDIT_DEFERRAL_GRANTED,
+    CREDIT_DEFERRAL_DENIED,
+    CREDIT_PAID_OFF,
+    // market
+    MARKET_PRICE_EVENT,
+    MARKET_SPECIAL_OFFER,
+    MARKET_SUBSIDY,
+    MARKET_RUMOR,
+    MARKET_CONTRACT_ENDED,
+    // negotiation
+    AUCTION_ANNOUNCED,
+    NEGOTIATION_ACCEPTED,
+    NEGOTIATION_COUNTER,
+    NEGOTIATION_REJECTED,
+    AUCTION_WON,
+    AUCTION_LOST,
+    SALE_OFFER_RECEIVED,
+    SALE_NO_INTEREST,
+    // employees
+    JOB_APPLICATION,
+    INTERVIEW_ANSWER,
+    APPLICATION_REJECTED,
+    EMPLOYEE_WELCOME,
+    EMPLOYEE_THANKS,
+    EMPLOYEE_WARNING,
+    EMPLOYEE_RESIGNATION,
+    EMPLOYEE_SALARY_OVERDUE,
+    // village life
+    VILLAGE_CONGRATULATION,
+    VILLAGE_INVITATION,
+    VILLAGE_GOSSIP,
+    // characters
+    CHARACTER_FAREWELL,
+    CHARACTER_INTRODUCTION,
+    ABSENCE_NOTICE,
+    SUBSTITUTE_INTRODUCTION,
+    // conversation
+    REPLY,
+    CALL_CONVERSATION
+}

@@ -1,0 +1,298 @@
+spring:
+  application:
+    name: rpsim-backend
+  profiles:
+    default: dev
+  config:
+    # Local, never committed overrides (API keys etc.), see application-local.yml.example
+    import: optional:file:./application-local.yml
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+server:
+  port: 8080
+
+# ---------------------------------------------------------------------------------------------------
+# rpsim: all tunable values. Every number below is a PLACEHOLDER from the technical concept
+# (chapter "Formeln der Fakten-Ebene") - balancing happens during playtesting. Java defaults in
+# RpsimProperties mirror this file (asserted by RpsimPropertiesDefaultsTest).
+# Full reference: docs/dev/configuration-reference.md
+# ---------------------------------------------------------------------------------------------------
+rpsim:
+  bridge:
+    path: ../tools/bridge-simulator/runtime/modSettings/FS25_RPSim
+    poll-interval-ms: 2000
+    enabled: true
+  web:
+    static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
+  time:
+    game-days-per-month: 1        # TODO(offene-frage): FS25 period field; fixed counter fallback
+    months-per-year: 12
+  ai:
+    provider: NONE                # FAKE | OPENAI | ANTHROPIC | GEMINI | OLLAMA | NONE
+    timeout-seconds: 30
+    max-attempts: 2
+    local-config-file: ./data/local-config/ai-provider.properties
+    locale: de
+    worker-interval-ms: 1500
+    openai:
+      base-url: https://api.openai.com/v1
+      model: gpt-4o-mini
+    anthropic:
+      base-url: https://api.anthropic.com
+      model: claude-opus-5
+    gemini:
+      base-url: https://generativelanguage.googleapis.com/v1beta
+      model: gemini-2.5-flash
+    ollama:
+      base-url: http://localhost:11434
+      model: llama3.1
+  formulas:
+    trust:                        # "TrustScoreService"
+      min: -100
+      max: 100
+      neutral: 0
+      decay-start-days: 10
+      decay-per-day: 0.5
+      on-time-payment: 2
+      missed-payment: -5
+      promise-kept: 3
+      promise-broken: -6
+      call-declined: -3
+      call-missed: -1
+      negotiation-deal: 3
+      village-relation-strained: -10
+      village-relation-connected: 10
+      display-very-good: 50
+      display-good: 15
+      display-strained: -15
+      display-bad: -50
+    credit:                       # "Bonitäts-Score", "Zahlungsausfall-Eskalation"
+      weight-debt-service-coverage: 0.30
+      weight-equity-ratio: 0.25
+      weight-liquidity-buffer: 0.15
+      weight-loan-to-farm-size: 0.15
+      weight-payment-history: 0.15
+      payment-history-neutral: 70
+      trust-divisor: 10
+      trust-cap: 8
+      approve-threshold: 75
+      counter-threshold: 45
+      debt-service-coverage-full: 2.0
+      debt-service-coverage-no-history: 50
+      cashflow-min-history-days: 1
+      liquidity-full-ratio: 0.5
+      loan-to-farm-size-full-ratio: 3.0
+      cashflow-window-days: 30
+      base-interest-rate: 0.05
+      counter-max-amount-reduction: 0.5
+      counter-max-interest-surcharge: 0.04
+      counter-max-term-reduction-months: 12
+      min-term-months: 6
+      max-term-months: 240
+      processing-days-min: 1
+      processing-days-max: 2
+      office-clerk-reduction-hours: 6
+      office-clerk-max-reduction-share: 0.5
+      reminder-after-days: 1
+      penalty-after-days: 3
+      trust-loss-after-days: 5
+      final-stage-after-missed-installments: 3
+      final-stage: CALLBACK       # CALLBACK | BLOCK
+      penalty-rate: 0.05
+      trust-loss-delta: -10
+      public-default-delta: -30
+      deferral-months: 2
+      max-deferrals-per-loan: 1
+      deferral-min-payment-history: 50
+      deferral-max-escalation-level: 1
+      legacy-interest-rate: 0.06
+      legacy-term-months: 60
+      payment-history-missed-penalty: 15
+      payment-history-on-time-gain: 2
+    credit-hard:                  # "Ton-/Genre-Konfigurationsprofile": CreditConfig.HART
+      weight-debt-service-coverage: 0.30
+      weight-equity-ratio: 0.25
+      weight-liquidity-buffer: 0.15
+      weight-loan-to-farm-size: 0.15
+      weight-payment-history: 0.15
+      payment-history-neutral: 70
+      trust-divisor: 10
+      trust-cap: 5
+      approve-threshold: 85
+      counter-threshold: 55
+      debt-service-coverage-full: 2.0
+      debt-service-coverage-no-history: 50
+      cashflow-min-history-days: 1
+      liquidity-full-ratio: 0.5
+      loan-to-farm-size-full-ratio: 3.0
+      cashflow-window-days: 30
+      base-interest-rate: 0.05
+      counter-max-amount-reduction: 0.5
+      counter-max-interest-surcharge: 0.04
+      counter-max-term-reduction-months: 12
+      min-term-months: 6
+      max-term-months: 240
+      processing-days-min: 1
+      processing-days-max: 2
+      office-clerk-reduction-hours: 6
+      office-clerk-max-reduction-share: 0.5
+      reminder-after-days: 1
+      penalty-after-days: 3
+      trust-loss-after-days: 5
+      final-stage-after-missed-installments: 3
+      final-stage: CALLBACK
+      penalty-rate: 0.05
+      trust-loss-delta: -10
+      public-default-delta: -30
+      deferral-months: 2
+      max-deferrals-per-loan: 1
+      deferral-min-payment-history: 50
+      deferral-max-escalation-level: 1
+      legacy-interest-rate: 0.06
+      legacy-term-months: 60
+      payment-history-missed-penalty: 15
+      payment-history-on-time-gain: 2
+    market:                       # "Preis-Events & Sonderkontrakte"
+      daily-spawn-probability: 0.15
+      max-active-events: 3
+      advance-notice-probability: 0.15
+      advance-notice-days-min: 2
+      advance-notice-days-max: 4
+      rumor-accurate-probability: 0.7
+      target-base-weight: 1.0
+      target-stock-weight: 4.0
+      type-weights:
+        DEMAND_SPIKE: 3.0
+        DEMAND_SLUMP: 2.0
+        HARVEST_FAILURE: 1.0
+        HARVEST_SURPLUS: 1.0
+        SPECIAL_OFFER: 1.0
+        SUBSIDY: 0.5
+        RUMOR: 1.5
+      bands:
+        DEMAND_SPIKE:    { multiplier-min: 1.08, multiplier-max: 1.25, ramp-hours-min: 12, ramp-hours-max: 36, hold-hours-min: 72, hold-hours-max: 168, decay-hours-min: 48, decay-hours-max: 120 }
+        DEMAND_SLUMP:    { multiplier-min: 0.75, multiplier-max: 0.92, ramp-hours-min: 12, ramp-hours-max: 36, hold-hours-min: 72, hold-hours-max: 168, decay-hours-min: 48, decay-hours-max: 120 }
+        HARVEST_FAILURE: { multiplier-min: 1.10, multiplier-max: 1.30, ramp-hours-min: 24, ramp-hours-max: 48, hold-hours-min: 96, hold-hours-max: 240, decay-hours-min: 72, decay-hours-max: 168 }
+        HARVEST_SURPLUS: { multiplier-min: 0.70, multiplier-max: 0.90, ramp-hours-min: 24, ramp-hours-max: 48, hold-hours-min: 96, hold-hours-max: 240, decay-hours-min: 72, decay-hours-max: 168 }
+      special-offer-premium-min: 1.10
+      special-offer-premium-max: 1.30
+      special-offer-quantity-min: 5000
+      special-offer-quantity-max: 30000
+      special-offer-days-min: 3
+      special-offer-days-max: 7
+      subsidy-amount-min: 2000
+      subsidy-amount-max: 15000
+      event-call-probability: 0.2
+    negotiation:                  # "Verhandlungs-Preisfindung"
+      max-rounds: 3
+      counter-band: 0.9
+      trust-divisor: 20
+      trust-cap: 0.05
+      stubbornness-discount:
+        NEGOTIABLE: 0.20
+        NEUTRAL: 0.12
+        STUBBORN: 0.05
+      npc-bid-min: 0.90
+      npc-bid-max: 1.15
+      npc-counter-offer-min: 0.85
+      npc-counter-offer-max: 1.0
+      interest-wealth-factor: 1.0
+      max-interested-buyers: 3
+      auction-daily-spawn-probability: 0.05
+      auction-duration-days: 3
+      auction-bidders-min: 1
+      auction-bidders-max: 3
+      auction-bid-increment-ratio: 0.01
+      auction-tie-trust-threshold: 0
+      sale-offer-valid-days: 5
+      virtual-wealth-min: 20000
+      virtual-wealth-max: 400000
+      sell-willing-probability: 0.3
+      npc-owned-share: 0.4
+    satisfaction:                 # "Satisfaction-Formel"
+      category-weight: 0.25
+      category-max: 100
+      multiplier-min: 0.5
+      multiplier-max: 1.2
+      baseline-output-value: 1500
+      start-value: 70
+      pay-fairness-decay-per-day: 0.5
+      workload-decay-per-day: 0.7
+      appreciation-decay-per-day: 1.0
+      raise-points-per-percent: 2
+      raise-max-points: 30
+      time-off-points-per-day: 15
+      conversation-points: 8
+      conversation-cooldown-days: 1
+      salary-overdue-delta: -15
+      warning-threshold: 30
+      warning-after-days: 14
+      termination-after-days: 30
+    hiring:                       # "Kündigung & Bewerbung"
+      candidates-min: 3
+      candidates-max: 5
+      skill-min: 30
+      skill-max: 95
+      base-salary:
+        MACHINE_OPERATOR: 2400.0
+        MECHANIC: 2700.0
+        ANIMAL_KEEPER: 2200.0
+        OFFICE_CLERK: 2300.0
+      salary-skill-factor: 0.3
+    reputation:                   # "Dorf-Ansehen"
+      trust-weight: 0.6
+      public-weight: 0.4
+      public-half-life-days: 60
+      new-character-factor: 0.2
+      new-character-cap: 15
+      good-threshold: 25
+      controversial-threshold: -25
+    rotation:                     # "Dynamische-Charaktere-Rotation"
+      max-per-year: 2
+      daily-probability: 0.02
+      move-away-share: 0.5
+      retirement-share: 0.4
+      min-dynamic-characters: 3
+      max-dynamic-characters: 8
+    absence:                      # "Pflichtrollen-Abwesenheit"
+      daily-probability: 0.01
+      duration-days-min: 2
+      duration-days-max: 6
+      substitute-probability: 0.5
+      delay-hours: 24
+    village-life:                 # "Dorfleben-Modul"
+      congratulation-trend-ratio: 1.25
+      congratulation-min-cashflow: 1000
+      congratulation-cooldown-days: 20
+      invitation-every-days: 6
+      gossip-daily-probability: 0.05
+      gossip-cooldown-days: 3
+    onboarding:
+      dynamic-characters: 5
+      story-hooks-min: 1
+      story-hooks-max: 2
+      story-hook-spread-days-min: 3
+      story-hook-spread-days-max: 21
+      max-free-text-length: 2000
+    calls:
+      ring-timeout-game-minutes: 120
+    messages:
+      pacing-cooldown-days: 1
+    tone:
+      friendly-delta: 1
+      rude-delta: -2
+      cap: 2
+    memory:
+      max-facts: 8
+    storage:
+      price-unit-liters: 1000
+      history-max-points: 500

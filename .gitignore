@@ -36,7 +36,7 @@ tools/bridge-simulator/runtime/
 modSettings/
 
 # --- Release output ---
-release/
+/release/
 
 # --- IDE / OS ---
 .idea/
@@ -46,3 +46,4 @@ release/
 *.swp
 .DS_Store
 Thumbs.db
+tools/screenshot-generator/.runtime/

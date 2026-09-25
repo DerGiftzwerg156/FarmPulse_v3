@@ -1,0 +1,191 @@
+<section class="space-y-4">
+  <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.farmland' | t }}</h1>
+
+  @if (error(); as err) {
+    <app-page-error [error]="err" />
+  } @else {
+    @if (info()) {
+      <p class="rounded-sm border border-accent/50 px-3 py-2 text-sm text-accent" data-testid="farmland-info">{{ info() }}</p>
+    }
+    @if (actionError()) {
+      <p class="rounded-sm border border-danger/50 px-3 py-2 text-sm text-danger" data-testid="farmland-error">{{ actionError() }}</p>
+    }
+
+    <app-card [title]="'farmland.map' | t" data-testid="field-map">
+      <span card-actions class="fp-label">{{ 'farmland.owned' | t: { n: counts().player, total: counts().total } }}</span>
+      <div class="mb-3 flex flex-wrap gap-3 text-[11px] text-muted">
+        <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm border border-accent bg-accent/30"></span>{{ 'PLAYER' | label: 'ownerType' }}</span>
+        <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm border border-border bg-surface"></span>{{ 'CHARACTER' | label: 'ownerType' }}</span>
+        <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm border border-dashed border-border"></span>{{ 'UNCLAIMED' | label: 'ownerType' }}</span>
+        <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm border border-warn"></span>{{ 'farmland.inNegotiation' | t }}</span>
+      </div>
+      @if (fields()?.length === 0) {
+        <p class="text-sm text-muted">{{ 'farmland.noFields' | t }}</p>
+      }
+      <div class="grid grid-cols-4 gap-2 sm:grid-cols-8 lg:grid-cols-12">
+        @for (f of fields() ?? []; track f.farmlandId) {
+          <button type="button" (click)="selectField(f.farmlandId)" data-testid="field-tile" [attr.data-owner]="f.ownerType"
+            class="relative flex aspect-[4/3] flex-col justify-between rounded-sm border p-1.5 text-left transition hover:brightness-125"
+            [class.border-accent]="f.ownerType === 'PLAYER' && !f.inNegotiation"
+            [class.bg-accent/20]="f.ownerType === 'PLAYER'"
+            [class.bg-surface]="f.ownerType === 'CHARACTER'"
+            [class.border-border]="f.ownerType !== 'PLAYER' && !f.inNegotiation"
+            [class.border-dashed]="f.ownerType === 'UNCLAIMED'"
+            [class.border-warn]="f.inNegotiation"
+            [class.ring-1]="selectedField() === f.farmlandId"
+            [class.ring-text]="selectedField() === f.farmlandId"
+            [attr.aria-label]="'farmland.fieldLabel' | t: { id: f.farmlandId }">
+            <span class="font-mono text-[12px] font-bold text-text">{{ f.farmlandId }}</span>
+            <span class="font-mono text-[9px] text-muted">{{ f.hectares | num: 1 }} ha</span>
+          </button>
+        }
+      </div>
+
+      @if (field(); as f) {
+        <div class="mt-4 rounded-md border border-border bg-bg p-3" data-testid="field-detail">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <div class="font-display text-[13px] font-bold text-text">{{ 'farmland.fieldLabel' | t: { id: f.farmlandId } }}</div>
+              <div class="fp-label">{{ f.hectares | num: 2 }} ha · {{ 'farmland.reference' | t }} {{ f.referencePrice | money }}</div>
+            </div>
+            <app-badge [variant]="f.ownerType === 'PLAYER' ? 'positive' : 'neutral'">
+              {{ f.ownerType === 'CHARACTER' && f.owner ? f.owner.name : (f.ownerType | label: 'ownerType') }}
+            </app-badge>
+          </div>
+          @if (negotiationFor(f); as n) {
+            <button type="button" class="mt-2 fp-label text-warn hover:underline" (click)="selectNegotiation(n.id)">{{ 'farmland.toNegotiation' | t }}</button>
+          } @else if (f.ownerType === 'PLAYER') {
+            <form class="mt-3 flex flex-wrap items-end gap-2" (submit)="$event.preventDefault(); sell(f)" data-testid="sell-form">
+              <label class="space-y-1">
+                <span class="fp-label">{{ 'farmland.askingPrice' | t }}</span>
+                <input class="fp-input w-44 font-mono" type="number" min="1" step="any" [value]="askingPrice()"
+                  (input)="askingPrice.set($any($event.target).valueAsNumber)" data-testid="asking-price" />
+              </label>
+              <app-button type="submit" [disabled]="busy()" data-testid="sell-submit">{{ 'farmland.offerForSale' | t }}</app-button>
+            </form>
+          } @else if (f.ownerType === 'CHARACTER' && f.owner) {
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <app-button [disabled]="busy()" (pressed)="startDirect(f)" data-testid="start-direct">{{ 'farmland.startDirect' | t }}</app-button>
+              <a routerLink="/village" [queryParams]="{ character: f.owner.id }" class="fp-label hover:text-accent">{{ 'farmland.toOwner' | t }}</a>
+            </div>
+          } @else {
+            <p class="mt-2 text-[12px] text-muted">{{ 'farmland.unclaimedHint' | t }}</p>
+          }
+        </div>
+      }
+    </app-card>
+
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <app-card [title]="'farmland.negotiations' | t" data-testid="negotiation-list">
+        @if (negotiations() !== null && open().length === 0) {
+          <p class="text-sm text-muted">{{ 'farmland.noNegotiations' | t }}</p>
+        }
+        <ul class="space-y-2">
+          @for (n of open(); track n.id) {
+            <li>
+              <button type="button" class="w-full rounded-md border bg-bg p-3 text-left" (click)="selectNegotiation(n.id)" data-testid="negotiation-row"
+                [class.border-accent]="selectedNegotiation() === n.id" [class.border-border]="selectedNegotiation() !== n.id">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-display text-[12px] text-text">{{ n.kind | label: 'negotiationKind' }} · {{ 'farmland.fieldLabel' | t: { id: n.assetId } }}</span>
+                  <span class="font-mono text-[10px] text-muted">{{ 'farmland.rounds' | t: { used: n.roundsUsed, max: n.maxRounds } }}</span>
+                </div>
+                <div class="fp-label mt-0.5">{{ (n.counterpart ?? n.announcer)?.name }}</div>
+              </button>
+            </li>
+          }
+        </ul>
+        @if (closed().length > 0) {
+          <button type="button" class="mt-3 fp-label hover:text-text" (click)="showClosed.set(!showClosed())" data-testid="closed-toggle">
+            {{ 'farmland.closed' | t: { n: closed().length } }}
+          </button>
+          @if (showClosed()) {
+            <ul class="mt-2 space-y-1">
+              @for (n of closed(); track n.id) {
+                <li>
+                  <button type="button" class="flex w-full justify-between gap-2 text-left text-[12px] text-muted hover:text-text" (click)="selectNegotiation(n.id)" data-testid="closed-row">
+                    <span>{{ n.kind | label: 'negotiationKind' }} · {{ 'farmland.fieldLabel' | t: { id: n.assetId } }}</span>
+                    <span>{{ n.status | label: 'negotiationStatus' }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </app-card>
+
+      @if (current(); as n) {
+        <app-card [title]="(n.kind | label: 'negotiationKind') + ' · ' + ('farmland.fieldLabel' | t: { id: n.assetId })" [highlight]="n.status === 'OPEN'" data-testid="negotiation-detail">
+          <app-badge card-actions [variant]="n.status === 'OPEN' ? 'positive' : n.status === 'ACCEPTED' ? 'positive' : 'negative'" data-testid="negotiation-status">{{ n.status | label: 'negotiationStatus' }}</app-badge>
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div><div class="fp-label">{{ 'farmland.counterpart' | t }}</div><div class="text-[13px] text-text">{{ (n.counterpart ?? n.announcer)?.name ?? '–' }}</div></div>
+            <div><div class="fp-label">{{ 'farmland.reference' | t }}</div><div class="font-mono text-[13px] text-text">{{ n.basePrice | money }}</div></div>
+            <div><div class="fp-label">{{ 'farmland.roundsLabel' | t }}</div><div class="font-mono text-[13px] text-text" data-testid="rounds">{{ n.roundsUsed }} / {{ n.maxRounds }}</div></div>
+            <div><div class="fp-label">{{ 'farmland.closes' | t }}</div><div class="font-mono text-[13px] text-text">{{ n.closesAtGameTime | gameTime }}</div></div>
+          </div>
+          @if (n.askingPrice !== null) {
+            <p class="mt-2 text-[12px] text-muted">{{ 'farmland.yourAsking' | t: { amount: (n.askingPrice | money) } }}</p>
+          }
+          @if (n.kind === 'AUCTION' && highest(n) !== null && n.status === 'OPEN') {
+            <p class="mt-2 text-[12px] text-warn" data-testid="highest-bid">{{ 'farmland.highestBid' | t: { amount: (highest(n) | money) } }}</p>
+          }
+
+          <table class="mt-3 w-full text-left text-[12px]" data-testid="offer-history">
+            <thead><tr class="fp-label"><th class="py-1">{{ 'farmland.round' | t }}</th><th>{{ 'farmland.by' | t }}</th><th class="text-right">{{ 'bank.amountShort' | t }}</th><th class="pl-3">{{ 'farmland.resultLabel' | t }}</th></tr></thead>
+            <tbody>
+              @for (o of n.offers; track $index) {
+                <tr class="border-t border-border">
+                  <td class="py-1 font-mono">{{ o.round }}</td>
+                  <td>{{ o.offeredBy === 'PLAYER' ? ('mailbox.me' | t) : (o.characterName ?? (n.counterpart ?? n.announcer)?.name) }}</td>
+                  <td class="text-right font-mono">{{ o.amount | money }}</td>
+                  <td class="pl-3">{{ o.result | label: 'offerResult' }}@if (o.counterAmount !== null) { · {{ o.counterAmount | money }} }</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="py-1 text-muted">{{ 'farmland.noOffers' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
+
+          @if (n.status === 'OPEN') {
+            @if (n.roundsUsed < n.maxRounds) {
+              <form class="mt-3 flex flex-wrap items-end gap-2" (submit)="$event.preventDefault(); placeOffer(n)" data-testid="offer-form">
+                <label class="space-y-1">
+                  <span class="fp-label">{{ amountLabel(n) }}</span>
+                  <input class="fp-input w-44 font-mono" type="number" min="1" step="any" [value]="amount()"
+                    (input)="amount.set($any($event.target).valueAsNumber)" data-testid="offer-amount" />
+                </label>
+                <app-button type="submit" [disabled]="busy()" data-testid="offer-submit">{{ 'farmland.submitOffer' | t }}</app-button>
+                @if (acceptable(n); as acc) {
+                  <app-button variant="secondary" [disabled]="busy()" (pressed)="placeOffer(n, acc)" data-testid="accept-counter">
+                    {{ 'farmland.acceptAmount' | t: { amount: (acc | money) } }}
+                  </app-button>
+                }
+              </form>
+              <p class="mt-1 text-[11px] text-muted">{{ 'farmland.roundsHint' | t: { left: n.maxRounds - n.roundsUsed } }}</p>
+            }
+            <div class="mt-3 flex justify-end">
+              <app-button variant="danger" [disabled]="busy()" (pressed)="withdraw(n)" data-testid="withdraw">{{ 'farmland.withdraw' | t }}</app-button>
+            </div>
+          } @else if (n.status === 'ACCEPTED') {
+            <p class="mt-3 text-sm text-accent" data-testid="final-price">{{ 'farmland.finalPrice' | t: { amount: (n.finalPrice | money) } }}</p>
+          } @else if (n.status === 'LOST' && n.winner) {
+            <p class="mt-3 text-sm text-danger">{{ 'farmland.lostTo' | t: { name: n.winner.name } }}</p>
+          }
+
+          <div class="mt-4 border-t border-border pt-3" data-testid="narration">
+            <div class="fp-label mb-2">{{ 'farmland.correspondence' | t }}</div>
+            @for (m of narration(); track m.id) {
+              <div class="mb-2 rounded-md border border-border bg-bg p-2.5">
+                <div class="flex justify-between gap-2"><span class="font-display text-[12px] text-text">{{ m.character?.name }}</span><span class="font-mono text-[10px] text-muted">{{ m.gameTime | gameTime }}</span></div>
+                <p class="mt-1 whitespace-pre-line font-body text-[12px] text-text">{{ m.body }}</p>
+              </div>
+            } @empty {
+              <p class="text-[12px] text-muted">{{ 'farmland.noCorrespondence' | t }}</p>
+            }
+          </div>
+        </app-card>
+      } @else {
+        <app-card variant="inset"><p class="text-sm text-muted">{{ 'farmland.select' | t }}</p></app-card>
+      }
+    </div>
+  }
+</section>

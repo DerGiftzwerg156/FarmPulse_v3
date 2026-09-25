@@ -1,0 +1,6 @@
+Versteigerung: Feld {{farmlandId}}
+Guten Tag,
+
+Feld {{farmlandId}} ({{hectares}} ha, Schätzwert {{estimatedValue}} €) kommt zur Versteigerung. Gebote sind {{closesInDays}} Tage lang möglich, {{bidderCount}} weitere Interessenten sind angemeldet. Gebote bitte über das Gebotsformular.
+
+{{characterName}}

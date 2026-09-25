@@ -1,0 +1,7 @@
+Neuigkeiten vom Markt: {{fillType}}
+Hallo,
+
+bei {{sellPoint}} verändert sich der Preis für {{fillType}} um {{changePercent}} % – voraussichtlich für etwa {{durationDays}} Tage (Beginn in {{startsInDays}} Tagen).
+
+Grüße
+{{characterName}}

@@ -1,0 +1,16 @@
+package de.farmpulse.rpsim.domain;
+
+/** reason enum of MONEY_TRANSACTION. */
+public enum MoneyReason {
+    CREDIT_DISBURSEMENT,
+    CREDIT_INSTALLMENT,
+    CREDIT_PENALTY,
+    CREDIT_CALLBACK,
+    SALARY_PAYMENT,
+    EMPLOYEE_EFFECT,
+    SUBSIDY,
+    STARTING_CAPITAL_ADJUSTMENT,
+    FARMLAND_PURCHASE,
+    FARMLAND_SALE,
+    OTHER
+}

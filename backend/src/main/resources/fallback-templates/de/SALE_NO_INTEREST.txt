@@ -1,0 +1,6 @@
+Ihr Feldverkauf
+Hallo,
+
+zum Wunschpreis von {{askingPrice}} € findet sich für Feld {{farmlandId}} derzeit leider niemand.
+
+{{characterName}}

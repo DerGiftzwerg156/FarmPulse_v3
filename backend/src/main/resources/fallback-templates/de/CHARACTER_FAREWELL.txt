@@ -1,0 +1,6 @@
+Auf Wiedersehen
+Hallo,
+
+ich verlasse das Dorf ({{reason}}). Danke für die gemeinsame Zeit und alles Gute!
+
+{{characterName}}

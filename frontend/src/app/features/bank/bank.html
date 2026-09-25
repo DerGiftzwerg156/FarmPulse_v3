@@ -1,0 +1,168 @@
+<section class="space-y-4">
+  <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.bank' | t }}</h1>
+
+  @if (error(); as err) {
+    <app-page-error [error]="err" />
+  } @else {
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <app-stat [label]="'bank.debt' | t" [value]="debt() | money" data-testid="stat-debt" />
+      <app-stat [label]="'bank.monthly' | t" [value]="monthly() | money" />
+      <app-stat [label]="'bank.activeLoans' | t" [value]="activeLoans().length" [hint]="blocked() ? ('bank.blocked' | t) : undefined" [tone]="blocked() ? 'negative' : 'neutral'" />
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <app-card [title]="'bank.apply' | t" data-testid="credit-form">
+        <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-3">
+          <label class="block space-y-1">
+            <span class="fp-label">{{ 'bank.amount' | t }}</span>
+            <input class="fp-input font-mono" type="number" min="1" step="any" formControlName="amount" data-testid="credit-amount" />
+          </label>
+          <label class="block space-y-1">
+            <span class="fp-label">{{ 'bank.purpose' | t }}</span>
+            <input class="fp-input" type="text" maxlength="200" formControlName="purpose" [placeholder]="'bank.purposePlaceholder' | t" data-testid="credit-purpose" />
+          </label>
+          <label class="block space-y-1">
+            <span class="fp-label">{{ 'bank.term' | t }}</span>
+            <input class="fp-input font-mono" type="number" min="1" max="600" step="1" formControlName="termMonths" data-testid="credit-term" />
+          </label>
+          @if (form.invalid && form.touched) {
+            <p class="text-[12px] text-danger" data-testid="credit-invalid">{{ 'bank.invalid' | t }}</p>
+          }
+          @if (formError()) {
+            <p class="text-[12px] text-danger" data-testid="credit-error">{{ formError() }}</p>
+          }
+          <p class="text-[11px] text-muted">{{ 'bank.processingHint' | t }}</p>
+          <div class="flex justify-end">
+            <app-button type="submit" [disabled]="submitting()" data-testid="credit-submit">{{ 'bank.submit' | t }}</app-button>
+          </div>
+        </form>
+      </app-card>
+
+      <app-card [title]="'bank.applications' | t" data-testid="applications">
+        @if (applications()?.length === 0) {
+          <p class="text-sm text-muted">{{ 'bank.noApplications' | t }}</p>
+        }
+        <ul class="space-y-2">
+          @for (a of applications() ?? []; track a.id) {
+            <li class="rounded-md border bg-bg p-3" [class.border-accent]="highlighted() === a.id" [class.border-border]="highlighted() !== a.id"
+              [attr.data-state]="state(a)" data-testid="application">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span class="font-mono text-[13px] text-text">{{ a.amount | money }}</span>
+                  <span class="fp-label"> · {{ 'bank.months' | t: { n: a.termMonths } }} · {{ a.purpose }}</span>
+                </div>
+                <app-badge [variant]="stateBadge[state(a)]" [dot]="state(a) === 'processing'" [pulse]="state(a) === 'processing'">{{ 'bank.state.' + state(a) | t }}</app-badge>
+              </div>
+              @switch (state(a)) {
+                @case ('processing') {
+                  <p class="mt-2 text-[12px] text-muted">{{ 'bank.processingUntil' | t: { at: (a.decisionVisibleAtGameTime | gameTime) } }}</p>
+                }
+                @case ('counter') {
+                  <div class="mt-2 rounded-sm border border-warn/40 p-2">
+                    <p class="text-[12px] text-text" data-testid="counter-offer">
+                      {{ 'bank.counterOffer' | t: { amount: (a.offeredAmount | money), months: a.offeredTermMonths, rate: (a.offeredInterestRatePercent | num: 2) } }}
+                    </p>
+                    @if (a.reasonCategory) {
+                      <p class="mt-1 text-[11px] text-muted">{{ 'bank.reason' | t }}: {{ a.reasonCategory | label: 'creditReason' }}</p>
+                    }
+                    <div class="mt-2 flex gap-2">
+                      <app-button variant="secondary" (pressed)="declineCounter(a)" data-testid="counter-decline">{{ 'bank.declineCounter' | t }}</app-button>
+                      <app-button (pressed)="acceptCounter(a)" data-testid="counter-accept">{{ 'bank.acceptCounter' | t }}</app-button>
+                    </div>
+                  </div>
+                }
+                @case ('rejected') {
+                  <p class="mt-2 text-[12px] text-danger" data-testid="rejection-reason">{{ 'bank.reason' | t }}: {{ a.reasonCategory | label: 'creditReason' }}</p>
+                }
+                @case ('approved') {
+                  <p class="mt-2 text-[12px] text-accent">{{ 'bank.approvedText' | t: { rate: (a.offeredInterestRatePercent | num: 2) } }}</p>
+                }
+                @case ('accepted') {
+                  <p class="mt-2 text-[12px] text-accent">{{ 'bank.acceptedText' | t }}</p>
+                }
+              }
+              @if (actionError()[a.id]) {
+                <p class="mt-1 text-[12px] text-danger">{{ actionError()[a.id] }}</p>
+              }
+            </li>
+          }
+        </ul>
+      </app-card>
+    </div>
+
+    <app-card [title]="'bank.loans' | t" data-testid="loans">
+      @if (loans()?.length === 0) {
+        <p class="text-sm text-muted">{{ 'bank.noLoans' | t }}</p>
+      }
+      <ul class="space-y-3">
+        @for (l of loans() ?? []; track l.id) {
+          <li class="rounded-md border border-border bg-bg p-3" data-testid="loan">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <div class="font-display text-[13px] text-text">{{ l.purpose }}</div>
+                <div class="fp-label">{{ 'bank.loanMeta' | t: { principal: (l.principal | money), rate: (l.interestRatePercent | num: 2), months: l.termMonths } }}</div>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                @if (l.legacy) { <app-badge>{{ 'bank.legacy' | t }}</app-badge> }
+                <app-badge [variant]="l.status === 'ACTIVE' ? 'positive' : (l.status === 'CALLED' ? 'negative' : 'neutral')">{{ l.status | label: 'loanStatus' }}</app-badge>
+                @if (l.overdue) { <app-badge variant="negative" data-testid="loan-overdue">{{ 'bank.overdue' | t }}</app-badge> }
+                @if (l.escalationLevel > 0) { <app-badge variant="warning">{{ 'bank.escalation.' + (l.escalationLevel > 3 ? 3 : l.escalationLevel) | t }}</app-badge> }
+                @if (l.deferredUntilGameTime && l.deferredUntilGameTime > now()) { <app-badge>{{ 'bank.deferredUntil' | t: { at: (l.deferredUntilGameTime | gameTime) } }}</app-badge> }
+              </div>
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div><div class="fp-label">{{ 'bank.remaining' | t }}</div><div class="font-mono text-[13px] text-text" data-testid="loan-remaining">{{ l.remainingAmount | money }}</div></div>
+              <div><div class="fp-label">{{ 'bank.installment' | t }}</div><div class="font-mono text-[13px] text-text">{{ l.monthlyInstallment | money }}</div></div>
+              <div><div class="fp-label">{{ 'bank.nextDue' | t }}</div><div class="font-mono text-[13px] text-text">{{ l.status === 'ACTIVE' ? (l.nextDueGameTime | gameTime) : '–' }}</div></div>
+              <div><div class="fp-label">{{ 'bank.plan' | t }}</div><div class="font-mono text-[13px] text-text" data-testid="loan-plan">{{ 'bank.planValue' | t: { paid: l.paidInstallments, left: remainingInstallments(l) } }}</div></div>
+            </div>
+            <div class="mt-2 h-1 rounded-full bg-surface" [attr.aria-label]="'bank.repaid' | t">
+              <div class="h-1 rounded-full bg-accent" [style.width.%]="progress(l)"></div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <app-button variant="secondary" (pressed)="toggleHistory(l.id)" data-testid="loan-history-toggle">{{ 'bank.history' | t }}</app-button>
+            </div>
+            @if (openHistory() === l.id) {
+              <table class="mt-2 w-full text-left text-[12px]" data-testid="loan-history">
+                <thead><tr class="fp-label"><th class="py-1">{{ 'chart.time' | t }}</th><th>{{ 'bank.type' | t }}</th><th class="text-right">{{ 'bank.amountShort' | t }}</th></tr></thead>
+                <tbody>
+                  @for (p of l.history; track $index) {
+                    <tr class="border-t border-border">
+                      <td class="py-1 font-mono text-muted">{{ p.gameTime | gameTime }}</td>
+                      <td [class.text-danger]="p.type === 'MISSED' || p.type === 'PENALTY' || p.type === 'CALLBACK'">{{ p.type | label: 'loanPaymentType' }}</td>
+                      <td class="text-right font-mono">{{ p.amount | money }}</td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="3" class="py-1 text-muted">{{ 'common.empty' | t }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            }
+            @if (l.status === 'ACTIVE') {
+              <div class="mt-3 space-y-2 border-t border-border pt-3">
+                <label class="block space-y-1">
+                  <span class="fp-label">{{ 'bank.deferral' | t }}</span>
+                  <textarea class="fp-input min-h-16" maxlength="4000" [value]="deferralText()[l.id] ?? ''"
+                    (input)="setDeferralText(l.id, $any($event.target).value)" [placeholder]="'bank.deferralPlaceholder' | t" data-testid="deferral-text"></textarea>
+                </label>
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-[11px] text-muted">{{ 'bank.deferralHint' | t }}</span>
+                  <app-button variant="secondary" (pressed)="requestDeferral(l)" data-testid="deferral-request">{{ 'bank.requestDeferral' | t }}</app-button>
+                </div>
+                @if (deferralResult()[l.id]; as r) {
+                  <p class="text-[12px]" [class.text-accent]="r.granted" [class.text-danger]="!r.granted" data-testid="deferral-result">
+                    {{ (r.granted ? 'bank.deferralGranted' : 'bank.deferralDenied') | t }}
+                    @if (!r.granted && r.reasonCategory) { ({{ r.reasonCategory | label: 'creditReason' }}) }
+                  </p>
+                }
+                @if (actionError()[l.id]) {
+                  <p class="text-[12px] text-danger">{{ actionError()[l.id] }}</p>
+                }
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    </app-card>
+  }
+</section>

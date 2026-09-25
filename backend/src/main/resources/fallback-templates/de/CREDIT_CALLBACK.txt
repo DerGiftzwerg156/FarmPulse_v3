@@ -1,0 +1,6 @@
+Fälligstellung der Restschuld
+Guten Tag,
+
+wegen wiederholten Zahlungsausfalls stellen wir die Restschuld von {{calledAmount}} € sofort fällig.
+
+{{characterName}}

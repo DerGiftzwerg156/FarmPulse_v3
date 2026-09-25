@@ -1,0 +1,6 @@
+Zu Ihrem Gebot
+Hallo,
+
+für {{playerOffer}} € wird das nichts. Mein Vorschlag bzw. das aktuelle Gebot: {{counterOffer}}{{leadingBid}} €. Es bleiben noch {{roundsLeft}} Runden.
+
+{{characterName}}

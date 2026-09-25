@@ -1,0 +1,6 @@
+Vertretung für {{absentName}}
+Guten Tag,
+
+ich vertrete {{absentName}} für etwa {{days}} Tage. Ihre Unterlagen liegen mir vor.
+
+{{characterName}}

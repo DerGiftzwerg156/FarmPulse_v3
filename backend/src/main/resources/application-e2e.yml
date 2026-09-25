@@ -1,0 +1,17 @@
+# e2e: fresh in-memory database, FAKE AI provider and a dedicated bridge folder - used by the Playwright E2E
+# tests (frontend/e2e) and the screenshot generator (tools/screenshot-generator). Never needs an API key.
+spring:
+  datasource:
+    url: jdbc:h2:mem:rpsim-e2e;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+server:
+  port: ${RPSIM_E2E_PORT:8080}
+rpsim:
+  bridge:
+    path: ${RPSIM_BRIDGE_PATH:../frontend/e2e/.runtime/modSettings/FS25_RPSim}
+    poll-interval-ms: 500
+  ai:
+    provider: FAKE
+    worker-interval-ms: 300
+    local-config-file: ${RPSIM_E2E_LOCAL_CONFIG:../frontend/e2e/.runtime/ai-provider.properties}

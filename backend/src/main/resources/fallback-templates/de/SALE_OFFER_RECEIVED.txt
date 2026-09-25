@@ -1,0 +1,6 @@
+Interesse an Ihrem Feld {{farmlandId}}
+Hallo,
+
+ich habe gehört, Sie verkaufen Feld {{farmlandId}}. Ich biete {{offer}} €.
+
+{{characterName}}

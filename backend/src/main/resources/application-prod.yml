@@ -1,0 +1,13 @@
+# prod: real FS25 modSettings folder (Windows default location; adjust in application-local.yml if needed).
+spring:
+  datasource:
+    url: jdbc:h2:file:${user.home}/.rpsim/rpsim;AUTO_SERVER=TRUE
+    username: sa
+    password:
+rpsim:
+  bridge:
+    path: ${user.home}/Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim
+server:
+  # No login in V1: only reachable from this PC. To use a tablet in your home network set
+  # server.address: 0.0.0.0 in application-local.yml (at your own risk - anyone in the network can then play along).
+  address: 127.0.0.1

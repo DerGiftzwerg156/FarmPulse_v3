@@ -1,0 +1,4 @@
+Antwort im Vorstellungsgespräch
+Danke für die Frage! Ich bringe Erfahrung als {{jobRole}} mit und würde mich freuen, auf Ihrem Hof anzufangen.
+
+{{characterName}}

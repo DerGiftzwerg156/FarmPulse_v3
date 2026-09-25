@@ -1,0 +1,17 @@
+{
+  "friendly": ["danke", "dankeschön", "vielen dank", "bitte", "gerne", "freundlich", "schön", "super", "toll", "prima",
+    "klasse", "wunderbar", "herzlich", "liebe grüße", "viele grüße", "beste grüße", "freue mich", "freut mich",
+    "entschuldigung", "entschuldige", "tut mir leid", "verstehe", "sehr nett", "nett von", "hilfreich", "großartig",
+    "alles gute", "wertschätze", "schätze ihre", "schätze deine", "gut gemacht", "respekt", "hallo", "guten tag",
+    "moin"],
+  "rude": ["idiot", "blöd", "dumm", "halt die klappe", "halts maul", "halt's maul", "verpiss", "scheiß", "scheiss",
+    "mist", "unfähig", "lächerlich", "nervig", "nervst", "frechheit", "unverschämt", "betrüger", "abzocke", "abzocker",
+    "sofort!", "gefälligst", "trottel", "depp", "vollidiot", "zum teufel", "schnauze", "inkompetent", "was soll das",
+    "armselig", "wertlos", "lügner", "hau ab"],
+  "mechanicalRequestTopics": ["zins", "zinsen", "zinssatz", "kredit", "darlehen", "rate", "raten", "preis", "gehalt",
+    "lohn", "geld", "rabatt", "nachlass", "schulden", "erlass", "vertrauen", "bonität", "stundung", "gebot",
+    "kaufpreis", "verkaufspreis", "prozent", "euro", "€"],
+  "mechanicalRequestVerbs": ["gib mir", "geben sie mir", "gewähr", "senk", "erhöh", "erlass", "streich", "verdoppel",
+    "besser", "billiger", "günstiger", "mehr", "weniger", "niedriger", "höher", "sofort", "schenk", "überweis",
+    "zahl mir", "zahlen sie mir", "erstatte"]
+}

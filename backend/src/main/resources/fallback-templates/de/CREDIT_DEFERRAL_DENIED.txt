@@ -1,0 +1,7 @@
+Ihre Bitte um Stundung
+Guten Tag,
+
+eine Stundung ist derzeit leider nicht möglich ({{reasonCategory}}).
+
+Mit freundlichen Grüßen
+{{characterName}}

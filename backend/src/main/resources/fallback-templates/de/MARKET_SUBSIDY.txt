@@ -1,0 +1,7 @@
+Förderung bewilligt
+Guten Tag,
+
+Ihrem Betrieb steht eine Förderung über {{amount}} € zu (Auszahlung in {{startsInDays}} Tagen).
+
+Mit freundlichen Grüßen
+{{characterName}}

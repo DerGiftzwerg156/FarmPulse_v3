@@ -1,0 +1,6 @@
+Versteigerung beendet
+Hallo,
+
+den Zuschlag für Feld {{farmlandId}} hat {{winnerName}} erhalten ({{finalPrice}} €).
+
+{{characterName}}

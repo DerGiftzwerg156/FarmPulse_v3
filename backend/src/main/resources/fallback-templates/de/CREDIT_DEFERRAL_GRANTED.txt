@@ -1,0 +1,7 @@
+Stundung gewährt
+Guten Tag,
+
+wir setzen Ihre Raten für {{deferralMonths}} Monate aus. Danach läuft die Tilgung wie gewohnt weiter.
+
+Mit freundlichen Grüßen
+{{characterName}}

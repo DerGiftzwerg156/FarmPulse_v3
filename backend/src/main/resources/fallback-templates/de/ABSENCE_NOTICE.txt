@@ -1,0 +1,4 @@
+Abwesenheitsnotiz: {{absentName}}
+Automatische Antwort:
+
+{{absentName}} ist für etwa {{days}} Tage nicht im Haus. Ihre Nachricht wird nach der Rückkehr bearbeitet.

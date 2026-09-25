@@ -1,0 +1,201 @@
+<section class="mx-auto max-w-3xl space-y-4">
+  <header>
+    <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'onboarding.title' | t }}</h1>
+    <p class="mt-1 font-body text-sm text-muted">{{ 'onboarding.intro' | t }}</p>
+  </header>
+
+  <ol class="flex flex-wrap gap-2" data-testid="wizard-steps">
+    @for (s of stepNumbers; track s) {
+      <li
+        class="flex items-center gap-2 rounded-sm border px-2 py-1 font-display text-[10px] uppercase tracking-[0.14em]"
+        [class.border-accent]="step() === s"
+        [class.text-accent]="step() === s"
+        [class.border-border]="step() !== s"
+        [class.text-muted]="step() !== s"
+      >
+        <span class="font-mono">{{ s }}</span> {{ 'onboarding.steps.' + s | t }}
+      </li>
+    }
+  </ol>
+
+  @if (error()) {
+    <div class="rounded-sm border border-danger/50 bg-bg px-3 py-2 text-sm text-danger" data-testid="wizard-error">{{ error() }}</div>
+  }
+
+  @switch (step()) {
+    @case (1) {
+      <app-card [title]="'onboarding.steps.1' | t" data-testid="step-1">
+        <form [formGroup]="form" class="grid gap-4 sm:grid-cols-2" (ngSubmit)="nextFromBackstory()">
+          <label class="space-y-1">
+            <span class="fp-label">{{ 'onboarding.farmOrigin' | t }}</span>
+            <select class="fp-input" formControlName="farmOrigin" data-testid="farm-origin">
+              @for (o of origins; track o) {
+                <option [value]="o">{{ o | label: 'farmOrigin' }}</option>
+              }
+            </select>
+          </label>
+          <label class="space-y-1">
+            <span class="fp-label">{{ 'onboarding.villageRelation' | t }}</span>
+            <select class="fp-input" formControlName="villageRelation" data-testid="village-relation">
+              @for (r of relations; track r) {
+                <option [value]="r">{{ r | label: 'villageRelation' }}</option>
+              }
+            </select>
+          </label>
+          <label class="space-y-1">
+            <span class="fp-label">{{ 'onboarding.startingCapital' | t }}</span>
+            <input class="fp-input font-mono" type="number" min="0" step="1000" formControlName="startingCapitalTarget" data-testid="starting-capital" />
+            @if (form.controls.startingCapitalTarget.invalid && form.controls.startingCapitalTarget.touched) {
+              <span class="text-[11px] text-danger">{{ 'onboarding.capitalInvalid' | t }}</span>
+            }
+          </label>
+          <label class="space-y-1">
+            <span class="fp-label">{{ 'onboarding.tonePreset' | t }}</span>
+            <select class="fp-input" formControlName="tonePreset" data-testid="tone-preset">
+              @for (tp of tones; track tp) {
+                <option [value]="tp">{{ tp | label: 'tonePreset' }}</option>
+              }
+            </select>
+            <span class="block text-[11px] text-muted">{{ 'onboarding.toneHint' | t }}</span>
+          </label>
+          <div class="space-y-1 sm:col-span-2">
+            <label class="flex items-center gap-2 font-body text-sm text-text">
+              <input type="checkbox" formControlName="withLegacyLoan" data-testid="with-legacy-loan" />
+              {{ 'onboarding.withLegacyLoan' | t }}
+            </label>
+            @if (form.controls.withLegacyLoan.value) {
+              <label class="block max-w-xs space-y-1">
+                <span class="fp-label">{{ 'onboarding.legacyLoanAmount' | t }}</span>
+                <input class="fp-input font-mono" type="number" min="0" step="1000" formControlName="legacyLoanAmount" data-testid="legacy-loan" />
+              </label>
+            }
+          </div>
+          <label class="space-y-1 sm:col-span-2">
+            <span class="fp-label">{{ 'onboarding.freeText' | t }} ({{ 'common.optional' | t }})</span>
+            <textarea class="fp-input min-h-24" formControlName="freeText" maxlength="2000" data-testid="free-text"
+              [placeholder]="'onboarding.freeTextPlaceholder' | t"></textarea>
+            <span class="block text-[11px] text-muted">{{ 'onboarding.freeTextGuardrail' | t }}</span>
+            @if (freeTextEmpty()) {
+              <span class="block text-[11px] text-accent" data-testid="default-hint">{{ 'onboarding.defaultHint' | t }}</span>
+            }
+          </label>
+          <div class="flex justify-end sm:col-span-2">
+            <app-button type="submit" data-testid="next-1">{{ 'common.next' | t }}</app-button>
+          </div>
+        </form>
+      </app-card>
+    }
+    @case (2) {
+      <app-card [title]="'onboarding.steps.2' | t" data-testid="step-2">
+        <p class="mb-3 font-body text-sm text-muted">{{ 'onboarding.staffIntro' | t }}</p>
+        <div class="fp-label mb-2" data-testid="employee-count">{{ 'onboarding.staffCount' | t: { n: employees().length } }}</div>
+        <ul class="space-y-2">
+          @for (role of employees(); track $index) {
+            <li class="flex items-center gap-2">
+              <select class="fp-input max-w-xs" [value]="role" (change)="setEmployeeRole($index, $any($event.target).value)"
+                [attr.aria-label]="'onboarding.staffRole' | t" data-testid="employee-role">
+                @for (r of jobRoles; track r) {
+                  <option [value]="r" [selected]="r === role">{{ r | label: 'jobRole' }}</option>
+                }
+              </select>
+              <app-button variant="secondary" (pressed)="removeEmployee($index)" data-testid="remove-employee">{{ 'onboarding.remove' | t }}</app-button>
+            </li>
+          }
+        </ul>
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <app-button variant="secondary" [disabled]="!canAddEmployee()" (pressed)="addEmployee()" data-testid="add-employee">
+            <app-icon name="plus" size="h-3.5 w-3.5" /> {{ 'onboarding.addEmployee' | t }}
+          </app-button>
+          <div class="flex gap-2">
+            <app-button variant="secondary" (pressed)="toStep(1)">{{ 'common.back' | t }}</app-button>
+            <app-button [disabled]="busy()" (pressed)="generate()" data-testid="generate">{{ (busy() ? 'onboarding.generating' : 'onboarding.generate') | t }}</app-button>
+          </div>
+        </div>
+      </app-card>
+    }
+    @case (3) {
+      <app-card [title]="'onboarding.steps.3' | t" data-testid="step-3">
+        <div card-actions>
+          <app-button variant="secondary" [disabled]="busy()" (pressed)="rerollAll()" data-testid="reroll-all">
+            <app-icon name="refresh" size="h-3.5 w-3.5" /> {{ 'onboarding.rerollAll' | t }}
+          </app-button>
+        </div>
+        @if (draft()?.freeTextRejected) {
+          <p class="mb-3 rounded-sm border border-warn/50 px-3 py-2 text-[12px] text-warn" data-testid="free-text-rejected">{{ 'onboarding.freeTextRejected' | t }}</p>
+        }
+        <ul class="grid gap-3 sm:grid-cols-2" data-testid="cast">
+          @for (c of draft()?.cast ?? []; track c.characterId) {
+            <li class="fp-notch relative rounded-md border border-border bg-bg p-3" data-testid="cast-member">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="font-display text-[13px] font-bold text-text">{{ c.name }}</div>
+                  <div class="fp-label">{{ (c.jobRole ? (c.jobRole | label: 'jobRole') : (c.role | label: 'characterRole')) }}</div>
+                </div>
+                <app-badge>{{ c.category | label: 'characterCategory' }}</app-badge>
+              </div>
+              <p class="mt-2 font-body text-[12px] text-muted">{{ c.description }}</p>
+              <button type="button" class="mt-2 inline-flex items-center gap-1 fp-label hover:text-accent" [disabled]="busy()"
+                (click)="rerollOne(c.characterId)" data-testid="reroll-one">
+                <app-icon name="refresh" size="h-3 w-3" /> {{ 'onboarding.reroll' | t }}
+              </button>
+            </li>
+          }
+        </ul>
+        <div class="mt-4 flex justify-end gap-2">
+          <app-button variant="secondary" (pressed)="toStep(2)">{{ 'common.back' | t }}</app-button>
+          <app-button (pressed)="toStep(4)" data-testid="next-3">{{ 'onboarding.acceptCast' | t }}</app-button>
+        </div>
+      </app-card>
+    }
+    @case (4) {
+      <app-card [title]="'onboarding.steps.4' | t" [highlight]="true" data-testid="step-4">
+        <div class="flex gap-3">
+          <app-icon name="tractor" size="h-8 w-8" class="text-accent" />
+          <div class="space-y-2 font-body text-sm text-text">
+            <p>{{ 'onboarding.fsHint1' | t }}</p>
+            <p class="text-muted">{{ 'onboarding.fsHint2' | t }}</p>
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end gap-2">
+          <app-button variant="secondary" (pressed)="toStep(3)">{{ 'common.back' | t }}</app-button>
+          <app-button (pressed)="toStep(5)" data-testid="next-4">{{ 'onboarding.fsDone' | t }}</app-button>
+        </div>
+      </app-card>
+    }
+    @case (5) {
+      <app-card [title]="'onboarding.steps.5' | t" data-testid="step-5">
+        <div card-actions>
+          <app-button variant="secondary" (pressed)="loadDetected()" data-testid="reload-detected">
+            <app-icon name="refresh" size="h-3.5 w-3.5" /> {{ 'onboarding.reload' | t }}
+          </app-button>
+        </div>
+        @if (detected() === null) {
+          <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
+        } @else if (detected()!.length === 0) {
+          <p class="text-sm text-muted" data-testid="no-detected">{{ 'onboarding.noDetected' | t }}</p>
+        } @else {
+          <ul class="space-y-2" role="radiogroup" [attr.aria-label]="'onboarding.steps.5' | t">
+            @for (d of detected(); track d.savegameId) {
+              <li>
+                <label class="flex cursor-pointer items-center gap-3 rounded-md border bg-bg p-3"
+                  [class.border-accent]="selectedSavegame() === d.savegameId" [class.border-border]="selectedSavegame() !== d.savegameId">
+                  <input type="radio" name="savegame" [value]="d.savegameId" [checked]="selectedSavegame() === d.savegameId"
+                    (change)="selectedSavegame.set(d.savegameId)" data-testid="detected-savegame" />
+                  <div class="min-w-0 flex-1">
+                    <div class="font-display text-[13px] text-text">{{ d.mapName ?? ('onboarding.unknownMap' | t) }}</div>
+                    <div class="fp-label">{{ d.gameTime | gameTime }} · {{ 'onboarding.lastSeen' | t: { at: d.lastSeen.replace('T', ' ').substring(0, 16) } }}</div>
+                  </div>
+                  <span class="font-mono text-[10px] text-muted">{{ d.savegameId }}</span>
+                </label>
+              </li>
+            }
+          </ul>
+        }
+        <div class="mt-4 flex justify-end gap-2">
+          <app-button variant="secondary" (pressed)="toStep(4)">{{ 'common.back' | t }}</app-button>
+          <app-button [disabled]="!selectedSavegame() || busy()" (pressed)="confirm()" data-testid="confirm">{{ 'onboarding.confirm' | t }}</app-button>
+        </div>
+      </app-card>
+    }
+  }
+</section>

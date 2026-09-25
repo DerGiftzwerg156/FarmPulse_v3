@@ -1,0 +1,6 @@
+Wo bleibt mein Gehalt?
+Hallo,
+
+mein Gehalt über {{salary}} € ist nicht angekommen. Bitte kümmern Sie sich darum.
+
+{{characterName}}

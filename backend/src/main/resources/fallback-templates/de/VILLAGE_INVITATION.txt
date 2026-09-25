@@ -1,0 +1,6 @@
+Einladung: {{occasion}}
+Hallo,
+
+wir laden herzlich ein zum {{occasion}} im Dorf. Wir würden uns freuen, Sie zu sehen!
+
+{{characterName}}

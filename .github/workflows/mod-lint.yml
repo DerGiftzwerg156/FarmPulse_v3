@@ -1,0 +1,32 @@
+name: mod
+
+on:
+  push:
+    branches: [main]
+    paths: ['mod/**', '.github/workflows/mod-lint.yml']
+  pull_request:
+    paths: ['mod/**', '.github/workflows/mod-lint.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: mod
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lua 5.1 (FS25 runtime), luarocks, luacheck, luaunit
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1 liblua5.1-0-dev luarocks
+          sudo luarocks install luacheck
+          sudo luarocks install luaunit
+      - name: luacheck
+        run: luacheck .
+      - name: Unit tests
+        run: lua5.1 tests/run.lua
