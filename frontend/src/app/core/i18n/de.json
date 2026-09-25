@@ -275,6 +275,16 @@
       "WOODCHIPS": "Hackschnitzel",
       "FLOUR": "Mehl",
       "BREAD": "Brot"
+    },
+    "diaryCategory": {
+      "BACKSTORY": "Vorgeschichte",
+      "CREDIT": "Bank",
+      "EMPLOYEE": "Personal",
+      "MARKET": "Markt",
+      "NEGOTIATION": "Felder",
+      "ROTATION": "Dorf",
+      "PLAYER_NOTE": "Eigene Notizen",
+      "OTHER": "Sonstiges"
     }
   },
   "onboarding": {
@@ -573,5 +583,17 @@
       "EMPLOYEE": "Personal",
       "OTHER": "Weitere"
     }
+  },
+  "diary": {
+    "chronicle": "Chronik",
+    "filter": "Kategorie",
+    "oldestFirst": "Älteste zuerst",
+    "newestFirst": "Neueste zuerst",
+    "noteBadge": "Notiz",
+    "addNote": "Eigene Notiz",
+    "narrativeOnly": "Rein erzählerisch: Notizen haben keinerlei Auswirkung auf das Spiel, auf Charaktere oder Zahlen.",
+    "noteTitle": "Titel",
+    "noteText": "Text",
+    "titleRequired": "Bitte einen Titel eingeben."
   }
 }

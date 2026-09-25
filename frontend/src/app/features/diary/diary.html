@@ -1,0 +1,78 @@
+<section class="space-y-4">
+  <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.diary' | t }}</h1>
+
+  @if (error(); as err) {
+    <app-page-error [error]="err" />
+  } @else {
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <app-card [title]="'diary.chronicle' | t" data-testid="chronicle">
+        <div card-actions class="flex items-center gap-2">
+          <select class="fp-input !w-auto !py-0.5 text-[12px]" [value]="category()" (change)="category.set($any($event.target).value)"
+            [attr.aria-label]="'diary.filter' | t" data-testid="diary-filter">
+            <option value="">{{ 'common.all' | t }}</option>
+            @for (c of categories(); track c) {
+              <option [value]="c">{{ c | label: 'diaryCategory' }}</option>
+            }
+          </select>
+          <button type="button" class="fp-label hover:text-text" (click)="newestFirst.set(!newestFirst())" data-testid="diary-order">
+            {{ (newestFirst() ? 'diary.newestFirst' : 'diary.oldestFirst') | t }}
+          </button>
+        </div>
+        @if (entries() === null) {
+          <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
+        } @else if (days().length === 0) {
+          <p class="text-sm text-muted">{{ 'common.empty' | t }}</p>
+        }
+        <ol class="space-y-5">
+          @for (d of days(); track d.day) {
+            <li data-testid="diary-day">
+              <div class="mb-2 flex items-center gap-2">
+                <span class="font-display text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{{ 'common.day' | t: { day: d.day } }}</span>
+                <span class="h-px flex-1 bg-border"></span>
+              </div>
+              <ol class="space-y-2 border-l border-border pl-4">
+                @for (e of d.entries; track e.id) {
+                  <li class="relative" data-testid="diary-entry" [attr.data-type]="e.entryType">
+                    <span class="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full" [class.bg-accent]="e.entryType === 'AUTO'" [class.bg-warn]="e.entryType === 'PLAYER_NOTE'"></span>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-display text-[13px] text-text">{{ e.title }}</span>
+                      @if (e.entryType === 'PLAYER_NOTE') {
+                        <app-badge variant="warning" data-testid="note-badge">{{ 'diary.noteBadge' | t }}</app-badge>
+                      } @else if (e.category) {
+                        <app-badge>{{ e.category | label: 'diaryCategory' }}</app-badge>
+                      }
+                      <span class="font-mono text-[10px] text-muted">{{ e.gameTime | gameTime }}</span>
+                    </div>
+                    @if (e.text) {
+                      <p class="mt-1 whitespace-pre-line font-body text-[13px] leading-relaxed text-muted">{{ e.text }}</p>
+                    }
+                  </li>
+                }
+              </ol>
+            </li>
+          }
+        </ol>
+      </app-card>
+
+      <app-card [title]="'diary.addNote' | t" data-testid="note-form">
+        <p class="mb-3 rounded-sm border border-warn/40 px-2 py-1.5 text-[12px] text-warn" data-testid="narrative-hint">{{ 'diary.narrativeOnly' | t }}</p>
+        <form class="space-y-3" (submit)="$event.preventDefault(); save()">
+          <label class="block space-y-1">
+            <span class="fp-label">{{ 'diary.noteTitle' | t }}</span>
+            <input class="fp-input" type="text" maxlength="200" [value]="title()" (input)="title.set($any($event.target).value)" data-testid="note-title" />
+          </label>
+          <label class="block space-y-1">
+            <span class="fp-label">{{ 'diary.noteText' | t }}</span>
+            <textarea class="fp-input min-h-32" maxlength="10000" [value]="text()" (input)="text.set($any($event.target).value)" data-testid="note-text"></textarea>
+          </label>
+          @if (formError()) {
+            <p class="text-[12px] text-danger" data-testid="note-error">{{ formError() }}</p>
+          }
+          <div class="flex justify-end">
+            <app-button type="submit" [disabled]="saving()" data-testid="note-save">{{ 'common.save' | t }}</app-button>
+          </div>
+        </form>
+      </app-card>
+    </div>
+  }
+</section>

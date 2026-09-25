@@ -17,6 +17,7 @@ const FEATURES: Record<string, Routes[number]['loadComponent']> = {
   farmland: () => import('./features/farmland/farmland').then((m) => m.Farmland),
   market: () => import('./features/market/market').then((m) => m.Market),
   village: () => import('./features/village/village').then((m) => m.Village),
+  diary: () => import('./features/diary/diary').then((m) => m.Diary),
   onboarding: () => import('./features/onboarding/onboarding-wizard').then((m) => m.OnboardingWizard),
 };
 
