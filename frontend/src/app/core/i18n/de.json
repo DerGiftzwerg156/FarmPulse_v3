@@ -1,0 +1,15 @@
+{
+  "app": {
+    "name": "FarmPulse",
+    "subtitle": "KI-Rollenspiel für Farming Simulator 25"
+  },
+  "styleGuide": {
+    "title": "Style Guide",
+    "colors": "Farbpalette",
+    "typography": "Typografie",
+    "display": "Chakra Petch – Überschriften & Labels",
+    "body": "Barlow – Fließtext für Mails und Beschreibungen",
+    "mono": "1.234.567 € – Zahlen und Tickerwerte",
+    "components": "Komponenten"
+  }
+}
