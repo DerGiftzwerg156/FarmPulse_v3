@@ -93,4 +93,10 @@ public class Savegame {
 
     @Column(name = "linked_at")
     private Instant linkedAt;
+
+    @Column(name = "last_congratulation_game_time")
+    private Long lastCongratulationGameTime;
+
+    @Column(name = "last_gossip_game_time")
+    private Long lastGossipGameTime;
 }
