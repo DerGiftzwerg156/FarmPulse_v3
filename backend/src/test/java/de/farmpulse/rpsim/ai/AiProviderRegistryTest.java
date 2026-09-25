@@ -50,7 +50,7 @@ class AiProviderRegistryTest {
         assertThat(settings.settings("ANTHROPIC").model()).isEqualTo("claude-sonnet-5");
         assertThat(settings.settings("ANTHROPIC").apiKey()).isEqualTo("sk-ant-x");
         assertThat(settings.settings("OPENAI").model()).isEqualTo(props.getAi().getOpenai().getModel());
-        assertThat(registry.ids()).contains("FAKE", "NONE");
+        assertThat(registry.ids()).contains("OPENAI", "ANTHROPIC", "GEMINI", "OLLAMA", "FAKE", "NONE");
     }
 
     @Test
