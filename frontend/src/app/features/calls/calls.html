@@ -1,0 +1,108 @@
+<section class="space-y-4">
+  <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.calls' | t }}</h1>
+
+  @if (error(); as err) {
+    <app-page-error [error]="err" />
+  } @else {
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <div class="space-y-2" data-testid="call-log">
+        @if (all() === null) {
+          <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
+        } @else if (calls().length === 0) {
+          <p class="text-sm text-muted" data-testid="calls-empty">{{ 'calls.empty' | t }}</p>
+        }
+        @for (c of calls(); track c.id) {
+          <button type="button" class="block w-full text-left" (click)="select(c.id)" data-testid="call-row">
+            <app-list-item [title]="c.character?.name ?? ('mailbox.system' | t)" [subtitle]="c.subject" [meta]="c.gameTime | gameTime"
+              [unread]="!c.read" [active]="selectedRoot() === c.id">
+              <div class="mt-1.5">
+                <app-badge [variant]="badge[c.callStatus ?? 'COMPLETED']" [dot]="c.callStatus === 'RINGING'" [pulse]="c.callStatus === 'RINGING'"
+                  data-testid="call-status">{{ c.callStatus | label: 'callStatus' }}</app-badge>
+              </div>
+            </app-list-item>
+          </button>
+        }
+      </div>
+
+      <div>
+        @if (selected(); as call) {
+          <app-card [title]="(call.character?.name ?? '') + ' · ' + (call.callStatus | label: 'callStatus')" [highlight]="call.callStatus === 'ACCEPTED'" data-testid="call-detail">
+            @switch (call.callStatus) {
+              @case ('RINGING') {
+                <div data-testid="state-ringing">
+                  <p class="font-body text-sm text-text">{{ 'calls.ringingText' | t }}</p>
+                  @if (call.ringDeadlineGameTime) {
+                    <p class="mt-1 font-mono text-[10px] text-muted">{{ 'calls.ringsUntil' | t: { at: (call.ringDeadlineGameTime | gameTime) } }}</p>
+                  }
+                  <p class="mt-3 text-[11px] text-warn">{{ 'calls.declineHint' | t }}</p>
+                  <div class="mt-3 flex gap-2">
+                    <app-button variant="danger" [disabled]="busy()" (pressed)="decline(call)" data-testid="detail-decline">{{ 'calls.decline' | t }}</app-button>
+                    <app-button [disabled]="busy()" (pressed)="accept(call)" data-testid="detail-accept">{{ 'calls.accept' | t }}</app-button>
+                  </div>
+                </div>
+              }
+              @case ('DECLINED') {
+                <p class="font-body text-sm text-danger" data-testid="state-declined">{{ 'calls.declinedText' | t }}</p>
+              }
+              @case ('MISSED') {
+                <p class="font-body text-sm text-warn" data-testid="state-missed">{{ 'calls.missedText' | t }}</p>
+              }
+              @case ('COMPLETED') {
+                <p class="font-body text-sm text-muted" data-testid="state-completed">{{ 'calls.completedText' | t }}</p>
+              }
+            }
+            @if ((call.callStatus === 'DECLINED' || call.callStatus === 'MISSED') && call.character) {
+              <a routerLink="/village" [queryParams]="{ character: call.character.id }" class="mt-2 inline-flex items-center gap-1 fp-label text-accent hover:underline"
+                data-testid="call-back">{{ 'calls.callBack' | t }} <app-icon name="arrowRight" size="h-3 w-3" /></a>
+            }
+
+            @if (call.callStatus !== 'RINGING') {
+              <ol class="mt-3 space-y-2" data-testid="conversation">
+                @for (m of conversation(); track m.id) {
+                  <li class="rounded-md border bg-bg p-2.5" [class.border-border]="m.initiatedBy === 'CHARACTER'"
+                    [class.border-accent/40]="m.initiatedBy === 'PLAYER'" [class.ml-6]="m.initiatedBy === 'PLAYER'" data-testid="call-line">
+                    <div class="flex justify-between gap-2">
+                      <span class="font-display text-[12px] text-text">{{ speaker(m) }}</span>
+                      <span class="font-mono text-[10px] text-muted">{{ m.gameTime | gameTime }}</span>
+                    </div>
+                    <p class="mt-1 whitespace-pre-line font-body text-[13px] text-text">{{ m.body }}</p>
+                  </li>
+                }
+              </ol>
+            }
+
+            @if (call.callStatus === 'ACCEPTED') {
+              <div class="mt-3" data-testid="state-accepted">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="fp-label" data-testid="soft-window">
+                    {{ (windowLeft() > 0 ? 'calls.softWindow' : 'calls.softWindowOver') | t: { s: windowLeft() } }}
+                  </span>
+                </div>
+                <div class="mt-1 h-1 rounded-full bg-bg">
+                  <div class="h-1 rounded-full bg-accent transition-all" [style.width.%]="(windowLeft() / windowSeconds) * 100"></div>
+                </div>
+                <form class="mt-3 space-y-2" (ngSubmit)="say(call)">
+                  <textarea name="say" class="fp-input min-h-20" maxlength="4000" [ngModel]="text()" (ngModelChange)="text.set($event)"
+                    [placeholder]="'calls.sayPlaceholder' | t" [attr.aria-label]="'calls.say' | t" data-testid="call-text"></textarea>
+                  <div class="flex justify-between gap-2">
+                    <app-button variant="danger" [disabled]="busy()" (pressed)="hangUp(call)" data-testid="hang-up">
+                      <app-icon name="phoneOff" size="h-3.5 w-3.5" /> {{ 'calls.hangUp' | t }}
+                    </app-button>
+                    <app-button type="submit" [disabled]="busy() || !text().trim()" data-testid="call-say">
+                      <app-icon name="send" size="h-3.5 w-3.5" /> {{ 'calls.say' | t }}
+                    </app-button>
+                  </div>
+                </form>
+              </div>
+            }
+            @if (actionError()) {
+              <p class="mt-2 text-[12px] text-danger" data-testid="call-error">{{ actionError() }}</p>
+            }
+          </app-card>
+        } @else {
+          <app-card variant="inset"><p class="text-sm text-muted">{{ 'calls.select' | t }}</p></app-card>
+        }
+      </div>
+    </div>
+  }
+</section>

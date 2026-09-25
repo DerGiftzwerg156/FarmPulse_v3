@@ -302,5 +302,24 @@
     "replyPlaceholder": "Schreib frei, wie du antworten möchtest …",
     "replyHint": "Die Antwort kommt nicht sofort – Charaktere melden sich in Spielzeit zurück.",
     "noReply": "Auf diese Nachricht kann nicht geantwortet werden."
+  },
+  "calls": {
+    "incoming": "Eingehender Anruf",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "ringsUntil": "Klingelt bis {at} (Spielzeit)",
+    "declineHint": "Ablehnen kostet etwas Vertrauen – das Thema bleibt offen, bis du dich selbst meldest.",
+    "empty": "Noch keine Anrufe.",
+    "select": "Wähle links einen Anruf aus.",
+    "ringingText": "Das Telefon klingelt.",
+    "declinedText": "Du hast den Anruf abgelehnt. Das hat Vertrauen gekostet – ruf zurück, um das Thema zu klären.",
+    "missedText": "Anruf verpasst. Das Thema bleibt offen, bis du dich meldest.",
+    "completedText": "Gespräch beendet.",
+    "callBack": "Zurückrufen / Nachricht schreiben",
+    "softWindow": "Dein Gegenüber wartet auf eine Antwort … ({s} s)",
+    "softWindowOver": "Lass dir ruhig Zeit – das Gespräch läuft weiter.",
+    "say": "Sagen",
+    "sayPlaceholder": "Was möchtest du sagen?",
+    "hangUp": "Auflegen"
   }
 }

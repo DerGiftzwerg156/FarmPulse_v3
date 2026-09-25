@@ -5,6 +5,7 @@ import { LiveEventsService } from '../core/live/live-events.service';
 import { GameStateStore } from '../core/state/game-state.store';
 import { Icon } from '../shared/ui/icon';
 import { Toasts } from '../shared/ui/toasts';
+import { CallOverlay } from '../features/calls/call-overlay';
 import { MoneyPipe } from '../shared/format/format.pipes';
 import { NAV_ITEMS } from './nav-items';
 
@@ -14,7 +15,7 @@ import { NAV_ITEMS } from './nav-items';
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, Icon, MoneyPipe, Toasts],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, Icon, MoneyPipe, Toasts, CallOverlay],
   templateUrl: './shell.html',
 })
 export class Shell implements OnInit, OnDestroy {
