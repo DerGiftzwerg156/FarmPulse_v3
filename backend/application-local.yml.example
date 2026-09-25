@@ -6,7 +6,7 @@ rpsim:
     provider: ANTHROPIC          # OPENAI | ANTHROPIC | GEMINI | OLLAMA | NONE
     anthropic:
       api-key: sk-ant-...
-      model: claude-haiku-4-5
+      model: claude-opus-5
     openai:
       api-key: sk-...
     gemini:

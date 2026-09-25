@@ -19,6 +19,7 @@
     <properties>
         <java.version>21</java.version>
         <springdoc.version>3.1.1</springdoc.version>
+        <anthropic.version>2.65.0</anthropic.version>
     </properties>
 
     <dependencies>
@@ -53,6 +54,11 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.anthropic</groupId>
+            <artifactId>anthropic-java</artifactId>
+            <version>${anthropic.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

@@ -53,7 +53,7 @@ public class RpsimProperties {
         /** Local, git-ignored file where the settings UI stores provider/key/model. */
         private String localConfigFile = "./data/local-config/ai-provider.properties";
         private Provider openai = new Provider("https://api.openai.com/v1", "gpt-4o-mini");
-        private Provider anthropic = new Provider("https://api.anthropic.com/v1", "claude-haiku-4-5");
+        private Provider anthropic = new Provider("https://api.anthropic.com", "claude-opus-5");
         private Provider gemini = new Provider("https://generativelanguage.googleapis.com/v1beta", "gemini-2.5-flash");
         private Provider ollama = new Provider("http://localhost:11434", "llama3.1");
         /** Locale used for fallback templates and prompts. V1: de only. */

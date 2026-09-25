@@ -45,8 +45,8 @@ rpsim:
       base-url: https://api.openai.com/v1
       model: gpt-4o-mini
     anthropic:
-      base-url: https://api.anthropic.com/v1
-      model: claude-haiku-4-5
+      base-url: https://api.anthropic.com
+      model: claude-opus-5
     gemini:
       base-url: https://generativelanguage.googleapis.com/v1beta
       model: gemini-2.5-flash
