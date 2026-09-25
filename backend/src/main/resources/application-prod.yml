@@ -1,0 +1,9 @@
+# prod: real FS25 modSettings folder (Windows default location; adjust in application-local.yml if needed).
+spring:
+  datasource:
+    url: jdbc:h2:file:${user.home}/.rpsim/rpsim;AUTO_SERVER=TRUE
+    username: sa
+    password:
+rpsim:
+  bridge:
+    path: ${user.home}/Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim

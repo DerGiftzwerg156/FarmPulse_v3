@@ -1,0 +1,18 @@
+# Copy to backend/application-local.yml (git-ignored!) and enter YOUR OWN key. Never commit real keys.
+# The settings page of the web UI can also write the provider configuration to
+# rpsim.ai.local-config-file (./data/local-config/ai-provider.properties, also git-ignored).
+rpsim:
+  ai:
+    provider: ANTHROPIC          # OPENAI | ANTHROPIC | GEMINI | OLLAMA | NONE
+    anthropic:
+      api-key: sk-ant-...
+      model: claude-haiku-4-5
+    openai:
+      api-key: sk-...
+    gemini:
+      api-key: AIza...
+    ollama:
+      base-url: http://localhost:11434
+      model: llama3.1
+  bridge:
+    path: C:/Users/<you>/Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim

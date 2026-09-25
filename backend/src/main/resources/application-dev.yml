@@ -1,0 +1,9 @@
+# dev: H2 file database next to the backend, bridge path points at the bridge simulator.
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/rpsim-dev;AUTO_SERVER=TRUE
+    username: sa
+    password:
+rpsim:
+  bridge:
+    path: ../tools/bridge-simulator/runtime/modSettings/FS25_RPSim
