@@ -12,6 +12,7 @@ const devRoutes: Routes = environment.styleGuide
 const FEATURES: Record<string, Routes[number]['loadComponent']> = {
   mailbox: () => import('./features/mailbox/mailbox').then((m) => m.Mailbox),
   calls: () => import('./features/calls/calls').then((m) => m.Calls),
+  bank: () => import('./features/bank/bank').then((m) => m.Bank),
   onboarding: () => import('./features/onboarding/onboarding-wizard').then((m) => m.OnboardingWizard),
 };
 
