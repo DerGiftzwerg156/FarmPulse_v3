@@ -5,7 +5,6 @@ import { App } from './app';
 describe('App', () => {
   it('creates the root component', async () => {
     await TestBed.configureTestingModule({ imports: [App], providers: [provideRouter([])] }).compileComponents();
-    const fixture = TestBed.createComponent(App);
-    expect(fixture.componentInstance).toBeTruthy();
+    expect(TestBed.createComponent(App).componentInstance).toBeTruthy();
   });
 });

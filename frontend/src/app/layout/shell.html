@@ -1,0 +1,116 @@
+<div class="fp-grid min-h-screen">
+  <!-- Desktop icon rail -->
+  <aside
+    class="fixed inset-y-0 left-0 z-30 hidden w-16 flex-col items-center border-r border-border bg-bg py-4 md:flex"
+    data-testid="icon-rail"
+  >
+    <div
+      class="fp-glow mb-6 flex h-10 w-10 items-center justify-center rounded-md border border-accent/50 bg-surface font-display text-lg font-bold text-accent"
+    >
+      F
+    </div>
+    <nav class="flex flex-1 flex-col items-center gap-2">
+      @for (item of items; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="!border-accent/60 !bg-accent/10 !text-accent fp-glow"
+          [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+          class="group relative flex h-11 w-11 items-center justify-center rounded-md border border-transparent text-muted transition-all hover:border-border hover:bg-surface hover:text-text"
+          [attr.aria-label]="item.label | t"
+        >
+          <app-icon [name]="item.icon" />
+          <span
+            class="pointer-events-none absolute left-14 z-50 whitespace-nowrap rounded-sm border border-border bg-surface px-2 py-1 font-display text-[10px] uppercase tracking-[0.14em] text-text opacity-0 transition-opacity group-hover:opacity-100"
+            >{{ item.label | t }}</span
+          >
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <!-- Mobile slide-over menu -->
+  @if (menuOpen()) {
+    <button
+      type="button"
+      class="fixed inset-0 z-40 cursor-default bg-bg/80 md:hidden"
+      (click)="toggleMenu()"
+      [attr.aria-label]="'nav.closeMenu' | t"
+      data-testid="menu-backdrop"
+    ></button>
+    <nav
+      class="fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-bg p-4 md:hidden"
+      data-testid="mobile-menu"
+    >
+      <button type="button" class="mb-4 flex items-center gap-2 text-muted" (click)="toggleMenu()">
+        <app-icon name="close" /> <span class="fp-label">{{ 'nav.closeMenu' | t }}</span>
+      </button>
+      @for (item of items; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="!text-accent"
+          [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+          class="flex items-center gap-3 rounded-md px-2 py-2 font-display text-[12px] uppercase tracking-[0.12em] text-muted hover:bg-surface hover:text-text"
+          (click)="menuOpen.set(false)"
+        >
+          <app-icon [name]="item.icon" /> {{ item.label | t }}
+        </a>
+      }
+    </nav>
+  }
+
+  <div class="md:pl-16">
+    <header
+      class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-bg/90 px-4 py-2.5 backdrop-blur md:px-6"
+    >
+      <div class="flex items-center gap-3">
+        <button type="button" class="text-muted md:hidden" (click)="toggleMenu()" [attr.aria-label]="'nav.menu' | t" data-testid="menu-toggle">
+          <app-icon name="menu" />
+        </button>
+        <div>
+          <div class="font-display text-sm font-bold uppercase tracking-[0.14em] text-text">{{ 'app.name' | t }}</div>
+          @if (state.savegame(); as sg) {
+            <div class="fp-label" data-testid="savegame-context">
+              {{ sg.mapName }} · {{ 'header.day' | t: { day: sg.gameDay } }}
+            </div>
+          } @else {
+            <div class="fp-label">{{ 'header.noSavegame' | t }}</div>
+          }
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        @if (state.savegame(); as sg) {
+          <div class="text-right">
+            <div class="fp-label">{{ 'header.balance' | t }}</div>
+            <div class="font-mono text-sm text-text" data-testid="balance">{{ sg.balance | money }}</div>
+          </div>
+        }
+        <a
+          routerLink="/mailbox"
+          class="relative flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-muted hover:text-text"
+          [attr.title]="'header.notifications' | t: { mails: state.unreadMails(), calls: state.pendingCalls() }"
+          data-testid="notifications"
+        >
+          <app-icon name="bell" size="h-4 w-4" />
+          @if (state.hasNotifications()) {
+            <span
+              class="fp-pulse-dot absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-mono text-[9px] text-bg"
+              data-testid="notification-count"
+              >{{ state.unreadMails() + state.pendingCalls() }}</span
+            >
+          }
+        </a>
+        <span
+          class="hidden items-center gap-1.5 rounded-sm border border-border bg-bg px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] sm:inline-flex"
+          [class.text-accent]="state.connected()"
+          [class.text-muted]="!state.connected()"
+        >
+          <span class="h-1.5 w-1.5 rounded-full" [class.bg-accent]="state.connected()" [class.fp-pulse-dot]="state.connected()" [class.bg-muted]="!state.connected()"></span>
+          {{ (state.connected() ? 'header.live' : 'header.offline') | t }}
+        </span>
+      </div>
+    </header>
+    <main class="mx-auto max-w-[1500px] px-3 py-4 pb-24 md:px-6 md:pb-8">
+      <router-outlet />
+    </main>
+  </div>
+</div>

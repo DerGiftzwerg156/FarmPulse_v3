@@ -11,5 +11,42 @@
     "body": "Barlow – Fließtext für Mails und Beschreibungen",
     "mono": "1.234.567 € – Zahlen und Tickerwerte",
     "components": "Komponenten"
+  },
+  "nav": {
+    "home": "Dashboard",
+    "mailbox": "Postfach",
+    "calls": "Anrufe",
+    "bank": "Bank & Finanzen",
+    "employees": "Personal",
+    "farmland": "Felder & Verhandlung",
+    "market": "Warenbestand & Preise",
+    "village": "Dorf & Charaktere",
+    "diary": "Tagebuch",
+    "settings": "Einstellungen",
+    "onboarding": "Neuer Spielstand",
+    "menu": "Menü",
+    "closeMenu": "Menü schließen"
+  },
+  "header": {
+    "noSavegame": "Kein Spielstand verknüpft",
+    "day": "Tag {day}",
+    "balance": "Kontostand",
+    "notifications": "{mails} ungelesene Mails, {calls} Anrufe",
+    "live": "Live",
+    "offline": "Offline"
+  },
+  "common": {
+    "loading": "Lädt …",
+    "empty": "Noch keine Einträge.",
+    "comingSoon": "Dieser Bereich wird gerade gebaut.",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "send": "Senden",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "error": "Es ist ein Fehler aufgetreten.",
+    "yes": "Ja",
+    "no": "Nein"
   }
 }
