@@ -7,6 +7,11 @@
 | Bridge simulator | `cd tools/bridge-simulator && npm test` | `node --test` |
 | Frontend unit | `cd frontend && npm test -- --watch=false` | Vitest (jsdom) |
 | Frontend E2E | `cd frontend && npm run e2e` | Playwright vs. backend + simulator |
+| Screenshots (on demand) | `cd tools/screenshot-generator && npm run screenshots` | Playwright, writes `docs/screenshots` |
+
+Related: [`manual-test-plan.md`](manual-test-plan.md) (click-through with the simulator scenarios),
+[`configuration-reference.md`](configuration-reference.md) (kept complete by `ConfigurationReferenceDocTest`),
+[`frontend.md`](frontend.md) (why Vitest + Playwright).
 
 ## Backend coverage (AP-9.1)
 
