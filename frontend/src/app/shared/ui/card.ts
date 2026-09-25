@@ -3,6 +3,7 @@ import { Component, input } from '@angular/core';
 /** Panel in the look of the design reference: surface, border, rounded-md, green notch corners on hover. */
 @Component({
   selector: 'app-card',
+  host: { class: 'block' },
   template: `
     <section
       class="fp-notch group relative rounded-md border p-4"

@@ -547,5 +547,31 @@
     "subsidy": "Förderbetrag: {amount}",
     "until": "Gilt bis {at}",
     "past": "{n} vergangene Ereignisse"
+  },
+  "village": {
+    "reputation": "Ansehen im Dorf",
+    "empty": "Noch keine Charaktere.",
+    "showFormer": "Ehemalige anzeigen ({n})",
+    "hideFormer": "Ehemalige ausblenden ({n})",
+    "traits": "Charakterzüge",
+    "speechStyle": "Sprachstil",
+    "backstory": "Hintergrund",
+    "fields": "Felder im Besitz",
+    "compose": "Nachricht verfassen",
+    "composePlaceholder": "Was möchtest du {name} sagen?",
+    "openTopic": "Da ist noch ein offenes Thema – ein verpasster oder abgelehnter Anruf. Melde dich, um es zu klären.",
+    "pacing": "Du hast dich vor Kurzem schon gemeldet. Die Antwort kommt trotzdem – aufs Vertrauen wirkt sich eine weitere Nachricht heute aber nicht zusätzlich aus.",
+    "sent": "Nachricht an {name} verschickt – die Antwort kommt in Spielzeit.",
+    "sentPaced": "Nachricht an {name} verschickt. (Kurz nach der letzten – zählt nicht zusätzlich fürs Vertrauen.)",
+    "recent": "Letzte Kontakte",
+    "noMessages": "Noch kein Kontakt.",
+    "select": "Wähle links einen Charakter aus.",
+    "groups": {
+      "MANDATORY": "Pflichtrollen",
+      "SUBSTITUTE": "Vertretungen",
+      "DYNAMIC": "Dorfbewohner",
+      "EMPLOYEE": "Personal",
+      "OTHER": "Weitere"
+    }
   }
 }
