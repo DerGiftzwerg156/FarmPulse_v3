@@ -38,7 +38,6 @@
   "common": {
     "loading": "Lädt …",
     "empty": "Noch keine Einträge.",
-    "comingSoon": "Dieser Bereich wird gerade gebaut.",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "send": "Senden",
@@ -617,5 +616,22 @@
     "openMailbox": "Postfach öffnen",
     "toMarket": "Zu Warenbestand & Preisen",
     "callActive": "Gespräch läuft"
+  },
+  "settings": {
+    "ai": "KI-Anbieter",
+    "active": "Aktiv: {name}",
+    "aiIntro": "Die KI schreibt nur die Texte deiner Charaktere – alle Zahlen kommen aus festen Formeln. Ohne KI laufen Textvorlagen.",
+    "provider": "Anbieter",
+    "model": "Modell",
+    "modelPlaceholder": "leer = Standardmodell des Anbieters",
+    "apiKey": "API-Schlüssel",
+    "keyStored": "•••••••• hinterlegt – leer lassen, um ihn zu behalten",
+    "keyMissing": "Schlüssel eingeben",
+    "keyHint": "Wird nur lokal im Backend gespeichert (git-ignorierte Datei), nie im Browser und nie wieder angezeigt.",
+    "baseUrl": "Adresse des lokalen Servers",
+    "noneHint": "Ohne KI-Anbieter verwenden alle Charaktere passende Textvorlagen.",
+    "saved": "Gespeichert.",
+    "game": "Spielstand",
+    "toneFixed": "Der Ton wurde im Onboarding festgelegt und bleibt für diesen Spielstand fest."
   }
 }

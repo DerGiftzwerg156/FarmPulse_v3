@@ -1,44 +1,30 @@
 import { Routes } from '@angular/router';
 import { environment } from '../environments/environment';
 import { Shell } from './layout/shell';
-import { ComingSoon } from './layout/coming-soon';
-import { NAV_ITEMS } from './layout/nav-items';
 
 const devRoutes: Routes = environment.styleGuide
   ? [{ path: 'dev/style-guide', loadComponent: () => import('./dev/style-guide').then((m) => m.StyleGuide) }]
   : [];
 
-/** Feature modules (Phase 8), lazily loaded; areas without an entry show the placeholder. */
-const FEATURES: Record<string, Routes[number]['loadComponent']> = {
-  mailbox: () => import('./features/mailbox/mailbox').then((m) => m.Mailbox),
-  calls: () => import('./features/calls/calls').then((m) => m.Calls),
-  bank: () => import('./features/bank/bank').then((m) => m.Bank),
-  employees: () => import('./features/employees/employees').then((m) => m.Employees),
-  farmland: () => import('./features/farmland/farmland').then((m) => m.Farmland),
-  market: () => import('./features/market/market').then((m) => m.Market),
-  village: () => import('./features/village/village').then((m) => m.Village),
-  diary: () => import('./features/diary/diary').then((m) => m.Diary),
-  home: () => import('./features/home/home').then((m) => m.Home),
-  onboarding: () => import('./features/onboarding/onboarding-wizard').then((m) => m.OnboardingWizard),
-};
-
-const pages: Routes = NAV_ITEMS.map((item) => {
-  const path = item.path === '/' ? '' : item.path.substring(1);
-  const load = FEATURES[path === '' ? 'home' : path];
-  return load
-    ? { path, pathMatch: 'full' as const, loadComponent: load, data: { title: item.label } }
-    : { path, pathMatch: 'full' as const, component: ComingSoon, data: { title: item.label } };
-});
+/** Feature modules (Phase 8), lazily loaded; paths match NAV_ITEMS. Titles are i18n keys (I18nTitleStrategy). */
+const pages: Routes = [
+  { path: '', pathMatch: 'full', loadComponent: () => import('./features/home/home').then((m) => m.Home), title: 'nav.home' },
+  { path: 'mailbox', loadComponent: () => import('./features/mailbox/mailbox').then((m) => m.Mailbox), title: 'nav.mailbox' },
+  { path: 'calls', loadComponent: () => import('./features/calls/calls').then((m) => m.Calls), title: 'nav.calls' },
+  { path: 'bank', loadComponent: () => import('./features/bank/bank').then((m) => m.Bank), title: 'nav.bank' },
+  { path: 'employees', loadComponent: () => import('./features/employees/employees').then((m) => m.Employees), title: 'nav.employees' },
+  { path: 'farmland', loadComponent: () => import('./features/farmland/farmland').then((m) => m.Farmland), title: 'nav.farmland' },
+  { path: 'market', loadComponent: () => import('./features/market/market').then((m) => m.Market), title: 'nav.market' },
+  { path: 'village', loadComponent: () => import('./features/village/village').then((m) => m.Village), title: 'nav.village' },
+  { path: 'diary', loadComponent: () => import('./features/diary/diary').then((m) => m.Diary), title: 'nav.diary' },
+  { path: 'settings', loadComponent: () => import('./features/settings/settings').then((m) => m.Settings), title: 'nav.settings' },
+  {
+    path: 'onboarding',
+    loadComponent: () => import('./features/onboarding/onboarding-wizard').then((m) => m.OnboardingWizard),
+    title: 'nav.onboarding',
+  },
+];
 
 export const routes: Routes = [
-  {
-    path: '',
-    component: Shell,
-    children: [
-      ...devRoutes,
-      ...pages,
-      { path: 'onboarding', loadComponent: FEATURES['onboarding'], data: { title: 'nav.onboarding' } },
-      { path: '**', redirectTo: '' },
-    ],
-  },
+  { path: '', component: Shell, children: [...devRoutes, ...pages, { path: '**', redirectTo: '' }] },
 ];
