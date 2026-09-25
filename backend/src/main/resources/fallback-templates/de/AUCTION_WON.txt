@@ -1,0 +1,6 @@
+Zuschlag erteilt!
+Glückwunsch,
+
+Sie haben den Zuschlag für Feld {{farmlandId}} zum Preis von {{finalPrice}} € erhalten.
+
+{{characterName}}

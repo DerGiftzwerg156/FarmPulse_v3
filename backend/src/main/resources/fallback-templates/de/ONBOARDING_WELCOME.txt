@@ -1,0 +1,7 @@
+Willkommen auf dem Hof!
+Guten Tag,
+
+herzlich willkommen! Ich bin {{characterName}} und Ihre Ansprechperson bei der Bank. Sie erreichen mich jederzeit per Mail oder Telefon – melden Sie sich gern, wenn Sie Fragen zu Finanzen oder Krediten haben.
+
+Viele Grüße
+{{characterName}}

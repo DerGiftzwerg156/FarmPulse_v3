@@ -1,0 +1,7 @@
+Zahlungserinnerung
+Guten Tag,
+
+Ihre Kreditrate über {{installment}} € ist überfällig. Bitte sorgen Sie zeitnah für ausreichende Deckung.
+
+Mit freundlichen Grüßen
+{{characterName}}

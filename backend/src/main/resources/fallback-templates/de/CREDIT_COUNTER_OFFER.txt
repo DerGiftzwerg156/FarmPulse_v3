@@ -1,0 +1,7 @@
+Gegenangebot zu Ihrem Kreditantrag
+Guten Tag,
+
+den beantragten Betrag von {{requestedAmount}} € können wir so nicht bewilligen ({{reasonCategory}}). Wir bieten Ihnen stattdessen {{offeredAmount}} € über {{offeredTermMonths}} Monate zu {{interestRatePercent}} % an. Sie können das Angebot im Bank-Bereich annehmen oder ablehnen.
+
+Mit freundlichen Grüßen
+{{characterName}}

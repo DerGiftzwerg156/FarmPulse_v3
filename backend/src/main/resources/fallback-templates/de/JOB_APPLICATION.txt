@@ -1,0 +1,7 @@
+Bewerbung als {{jobRole}}
+Sehr geehrte Damen und Herren,
+
+hiermit bewerbe ich mich als {{jobRole}}. Meine Gehaltsvorstellung liegt bei {{expectedSalary}} € im Monat.
+
+Mit freundlichen Grüßen
+{{characterName}}

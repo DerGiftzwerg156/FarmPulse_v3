@@ -1,0 +1,7 @@
+Ihr Kreditantrag wurde genehmigt
+Guten Tag,
+
+ich freue mich, Ihnen mitteilen zu können, dass Ihr Kredit über {{requestedAmount}} € für „{{purpose}}“ genehmigt wurde. Zinssatz: {{interestRatePercent}} % p. a., monatliche Rate: {{monthlyInstallment}} €. Der Betrag wird Ihrem Konto gutgeschrieben.
+
+Mit freundlichen Grüßen
+{{characterName}}

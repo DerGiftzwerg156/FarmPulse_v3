@@ -1,0 +1,7 @@
+Kredit vollständig getilgt
+Guten Tag,
+
+herzlichen Glückwunsch – Ihr Kredit für „{{purpose}}“ ist vollständig zurückgezahlt.
+
+Mit freundlichen Grüßen
+{{characterName}}

@@ -1,0 +1,6 @@
+Zu Ihrem Gebot
+Hallo,
+
+{{playerOffer}} € sind mir zu wenig. Verbleibende Runden: {{roundsLeft}}.
+
+{{characterName}}

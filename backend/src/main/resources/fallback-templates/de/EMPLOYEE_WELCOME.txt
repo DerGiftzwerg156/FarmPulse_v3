@@ -1,0 +1,6 @@
+Danke für die Zusage!
+Hallo,
+
+vielen Dank für die Einstellung als {{jobRole}}. Ich freue mich auf die Arbeit!
+
+{{characterName}}

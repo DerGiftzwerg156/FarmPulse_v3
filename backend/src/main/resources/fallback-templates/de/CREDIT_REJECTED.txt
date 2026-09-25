@@ -1,0 +1,7 @@
+Ihr Kreditantrag
+Guten Tag,
+
+leider können wir Ihren Antrag über {{requestedAmount}} € für „{{purpose}}“ nicht bewilligen. Ausschlaggebend war: {{reasonCategory}}.
+
+Mit freundlichen Grüßen
+{{characterName}}

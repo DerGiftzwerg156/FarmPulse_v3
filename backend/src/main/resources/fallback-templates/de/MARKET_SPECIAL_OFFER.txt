@@ -1,0 +1,7 @@
+Sonderkontrakt für {{fillType}}
+Hallo,
+
+ich kann Ihnen einen Festpreis von {{fixedPrice}} € je 1000 l für bis zu {{maxQuantity}} l {{fillType}} bei {{sellPoint}} anbieten – gültig für {{deadlineDays}} Tage. Sagen Sie im Markt-Bereich Bescheid, ob Sie mitmachen.
+
+Grüße
+{{characterName}}

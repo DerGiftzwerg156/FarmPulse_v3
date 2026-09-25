@@ -1,0 +1,6 @@
+Kündigung
+Hallo,
+
+hiermit kündige ich meine Stelle. Es hat sich leider nichts geändert ({{weakestNeed}}). Alles Gute.
+
+{{characterName}}

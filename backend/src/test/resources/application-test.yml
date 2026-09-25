@@ -7,4 +7,5 @@ rpsim:
     path: ./target/test-bridge
   ai:
     provider: NONE
+    worker-enabled: false
     local-config-file: ./target/test-local-config/ai-provider.properties

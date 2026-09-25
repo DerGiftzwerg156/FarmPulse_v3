@@ -1,0 +1,6 @@
+Anhaltender Zahlungsverzug
+Guten Tag,
+
+der anhaltende Zahlungsverzug ({{missedInstallments}} offene Raten) belastet unser Vertrauensverhältnis erheblich. Bitte melden Sie sich umgehend.
+
+{{characterName}}

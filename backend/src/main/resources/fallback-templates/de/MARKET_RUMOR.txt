@@ -1,0 +1,6 @@
+Hast du schon gehört?
+Moin,
+
+man munkelt, dass der Preis für {{fillType}} bald in Bewegung kommt ({{direction}}). Ob da was dran ist? Ich sag’s nur weiter.
+
+{{characterName}}
