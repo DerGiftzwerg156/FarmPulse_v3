@@ -1,0 +1,48 @@
+# --- Secrets / local configuration (NEVER commit API keys) ---
+*.local.yml
+*.local.yaml
+application-local.yml
+application-local.yaml
+.env
+.env.*
+!.env.example
+backend/data/local-config/
+
+# --- Java / Maven ---
+target/
+*.class
+*.jar
+!**/.mvn/wrapper/maven-wrapper.jar
+hs_err_pid*
+backend/data/
+
+# --- Node / Angular ---
+node_modules/
+dist/
+.angular/
+coverage/
+npm-debug.log*
+yarn-error.log*
+test-results/
+playwright-report/
+
+# --- Lua ---
+luacov.stats.out
+luacov.report.out
+*.rock
+
+# --- Bridge simulator runtime output ---
+tools/bridge-simulator/runtime/
+modSettings/
+
+# --- Release output ---
+release/
+
+# --- IDE / OS ---
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.DS_Store
+Thumbs.db
