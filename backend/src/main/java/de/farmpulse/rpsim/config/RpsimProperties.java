@@ -118,6 +118,11 @@ public class RpsimProperties {
         /** Fachkonzept "Vorgeschichte": villageRelation shifts start trust of generated village characters. */
         private double villageRelationStrained = -10;
         private double villageRelationConnected = 10;
+        /** Display abstraction only (UI never shows the raw score): thresholds of the five trust levels. */
+        private double displayVeryGood = 50;
+        private double displayGood = 15;
+        private double displayStrained = -15;
+        private double displayBad = -50;
     }
 
     /** Technical concept "Bonitäts-Score" + "Zahlungsausfall-Eskalation" + "Kreditantrag & Bearbeitungszeit". */

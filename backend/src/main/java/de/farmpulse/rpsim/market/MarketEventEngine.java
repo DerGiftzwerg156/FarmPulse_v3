@@ -200,7 +200,7 @@ public class MarketEventEngine {
         return s;
     }
 
-    Optional<MarketEvent> spawnPriceEvent(Savegame sg, MarketEventType type, MarketContext ctx, FarmFacts f, long start,
+    public Optional<MarketEvent> spawnPriceEvent(Savegame sg, MarketEventType type, MarketContext ctx, FarmFacts f, long start,
                                           boolean announceNow) {
         Optional<Target> t = pickTarget(ctx, f, busyPairs(sg));
         if (t.isEmpty()) {
@@ -227,7 +227,7 @@ public class MarketEventEngine {
         return Optional.of(ev);
     }
 
-    Optional<MarketEvent> spawnSpecialOffer(Savegame sg, MarketContext ctx, FarmFacts f) {
+    public Optional<MarketEvent> spawnSpecialOffer(Savegame sg, MarketContext ctx, FarmFacts f) {
         if (f == null) {
             return Optional.empty();
         }
@@ -269,7 +269,7 @@ public class MarketEventEngine {
         return Optional.of(ev);
     }
 
-    MarketEvent spawnSubsidy(Savegame sg) {
+    public MarketEvent spawnSubsidy(Savegame sg) {
         long start = advanceNoticeStart(sg);
         MarketEvent ev = base(sg, MarketEventType.SUBSIDY, start);
         ev.setSubsidyAmount(Math.round(random.uniform(cfg().getSubsidyAmountMin(), cfg().getSubsidyAmountMax()) / 100.0) * 100);
@@ -289,7 +289,7 @@ public class MarketEventEngine {
      * Rumour mechanic: ~70 % reference a real, already planned event (distorted description), ~30 % are made up.
      * Controlled through the isAccurate flag that is passed to the prompt context.
      */
-    Optional<MarketEvent> spawnRumor(Savegame sg, MarketContext ctx, FarmFacts f) {
+    public Optional<MarketEvent> spawnRumor(Savegame sg, MarketContext ctx, FarmFacts f) {
         long now = sg.getCurrentGameTime();
         MarketEvent rumor = base(sg, MarketEventType.RUMOR, now);
         rumor.setStatus(MarketEventStatus.RUMOR_ONLY);

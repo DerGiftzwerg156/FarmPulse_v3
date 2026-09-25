@@ -69,6 +69,10 @@ rpsim:
       negotiation-deal: 3
       village-relation-strained: -10
       village-relation-connected: 10
+      display-very-good: 50
+      display-good: 15
+      display-strained: -15
+      display-bad: -50
     credit:                       # "Bonitäts-Score", "Zahlungsausfall-Eskalation"
       weight-debt-service-coverage: 0.30
       weight-equity-ratio: 0.25
