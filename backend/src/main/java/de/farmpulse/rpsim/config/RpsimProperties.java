@@ -22,6 +22,16 @@ public class RpsimProperties {
     private Time time = new Time();
     private Ai ai = new Ai();
     private Formulas formulas = new Formulas();
+    private Web web = new Web();
+
+    @Getter @Setter
+    public static class Web {
+        /**
+         * Folder with the built Angular app (release: {@code web/}). When set, the backend serves it on "/" with an
+         * SPA fallback to index.html, so players only start one process. Empty = API only (dev: ng serve).
+         */
+        private String staticDir = "";
+    }
 
     @Getter @Setter
     public static class Bridge {

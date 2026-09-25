@@ -31,6 +31,8 @@ rpsim:
     path: ../tools/bridge-simulator/runtime/modSettings/FS25_RPSim
     poll-interval-ms: 2000
     enabled: true
+  web:
+    static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
   time:
     game-days-per-month: 1        # TODO(offene-frage): FS25 period field; fixed counter fallback
     months-per-year: 12
