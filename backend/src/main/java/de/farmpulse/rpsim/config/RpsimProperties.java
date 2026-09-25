@@ -137,6 +137,10 @@ public class RpsimProperties {
         private double counterThreshold = 45;
         /** Saturation: coverage (monthly cash flow / monthly installment) that yields 100 points. */
         private double debtServiceCoverageFull = 2.0;
+        /** Debt service coverage points used while no cash-flow history exists yet (placeholder). */
+        private double debtServiceCoverageNoHistory = 50;
+        /** Minimum game days of snapshot history before the cash-flow trend is used. */
+        private double cashflowMinHistoryDays = 1;
         /** Saturation: liquidity (balance / requested amount) that yields 100 points. */
         private double liquidityFullRatio = 0.5;
         /** Saturation: farm size (asset value / (debt + requested)) that yields 100 points. */
@@ -154,6 +158,8 @@ public class RpsimProperties {
         private double processingDaysMax = 2;
         /** Office clerk shortens processing time slightly: hours per clerk (scaled by skill/100). */
         private double officeClerkReductionHours = 6;
+        /** Upper bound of the office-clerk reduction as share of the rolled processing time. */
+        private double officeClerkMaxReductionShare = 0.5;
         /** Escalation (days overdue). */
         private double reminderAfterDays = 1;
         private double penaltyAfterDays = 3;

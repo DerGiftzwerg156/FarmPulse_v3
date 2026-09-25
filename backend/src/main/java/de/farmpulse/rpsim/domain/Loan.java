@@ -70,4 +70,7 @@ public class Loan extends SavegameScoped {
 
     @Column(name = "deferred_until_game_time")
     private Long deferredUntilGameTime;
+
+    @Column(name = "last_missed_due_game_time")
+    private Long lastMissedDueGameTime;
 }

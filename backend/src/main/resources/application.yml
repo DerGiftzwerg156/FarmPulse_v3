@@ -81,6 +81,8 @@ rpsim:
       approve-threshold: 75
       counter-threshold: 45
       debt-service-coverage-full: 2.0
+      debt-service-coverage-no-history: 50
+      cashflow-min-history-days: 1
       liquidity-full-ratio: 0.5
       loan-to-farm-size-full-ratio: 3.0
       cashflow-window-days: 30
@@ -93,6 +95,7 @@ rpsim:
       processing-days-min: 1
       processing-days-max: 2
       office-clerk-reduction-hours: 6
+      office-clerk-max-reduction-share: 0.5
       reminder-after-days: 1
       penalty-after-days: 3
       trust-loss-after-days: 5
@@ -121,6 +124,8 @@ rpsim:
       approve-threshold: 85
       counter-threshold: 55
       debt-service-coverage-full: 2.0
+      debt-service-coverage-no-history: 50
+      cashflow-min-history-days: 1
       liquidity-full-ratio: 0.5
       loan-to-farm-size-full-ratio: 3.0
       cashflow-window-days: 30
@@ -133,6 +138,7 @@ rpsim:
       processing-days-min: 1
       processing-days-max: 2
       office-clerk-reduction-hours: 6
+      office-clerk-max-reduction-share: 0.5
       reminder-after-days: 1
       penalty-after-days: 3
       trust-loss-after-days: 5
