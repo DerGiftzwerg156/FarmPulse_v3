@@ -49,3 +49,4 @@ Thumbs.db
 /e2e/.runtime
 /test-results
 /playwright-report
+.mermaid-check.mjs
