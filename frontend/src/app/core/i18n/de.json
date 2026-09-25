@@ -47,12 +47,243 @@
     "next": "Weiter",
     "error": "Es ist ein Fehler aufgetreten.",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "retry": "Erneut versuchen",
+    "noSavegame": "Noch kein Spielstand aktiv. Starte zuerst das Onboarding.",
+    "startOnboarding": "Onboarding starten",
+    "optional": "optional",
+    "details": "Details",
+    "all": "Alle",
+    "from": "von",
+    "day": "Tag {day}"
   },
   "chart": {
     "empty": "Noch keine Daten für diesen Zeitraum.",
     "showTable": "Tabelle",
     "showChart": "Diagramm",
     "time": "Zeitpunkt"
+  },
+  "enums": {
+    "farmOrigin": {
+      "INHERITED": "Geerbt",
+      "BOUGHT_FRESH_START": "Gekauft – Neustart",
+      "RETURNED_HOME": "Rückkehr in die Heimat",
+      "LEASE_TAKEN_OVER": "Pacht übernommen"
+    },
+    "villageRelation": {
+      "UNKNOWN": "Unbekannt",
+      "CONNECTED": "Gut vernetzt",
+      "STRAINED": "Belastet"
+    },
+    "tonePreset": {
+      "IDYLLIC": "Idyllisch",
+      "REALISTIC": "Realistisch",
+      "HARSH": "Hart"
+    },
+    "jobRole": {
+      "MACHINE_OPERATOR": "Maschinenführer:in",
+      "MECHANIC": "Mechaniker:in",
+      "ANIMAL_KEEPER": "Tierpfleger:in",
+      "OFFICE_CLERK": "Bürokraft"
+    },
+    "characterRole": {
+      "BANK_ADVISOR": "Bankberater:in",
+      "COOPERATIVE": "Genossenschaft",
+      "LAND_AGENT": "Landmakler:in",
+      "AUTHORITY": "Amt",
+      "NEIGHBOR_FARMER": "Nachbarbauer/-bäuerin",
+      "VILLAGER": "Dorfbewohner:in",
+      "SUPPLIER": "Lieferant:in",
+      "EMPLOYEE": "Mitarbeiter:in",
+      "APPLICANT": "Bewerber:in"
+    },
+    "characterCategory": {
+      "MANDATORY": "Pflichtrolle",
+      "DYNAMIC": "Dorf",
+      "EMPLOYEE": "Personal",
+      "APPLICANT": "Bewerbung",
+      "SUBSTITUTE": "Vertretung"
+    },
+    "characterStatus": {
+      "ACTIVE": "Aktiv",
+      "ON_LEAVE": "Abwesend",
+      "TERMINATED": "Ausgeschieden"
+    },
+    "communicationCategory": {
+      "CREDIT": "Bank",
+      "MARKET": "Markt",
+      "NEGOTIATION": "Verhandlung",
+      "EMPLOYEE": "Personal",
+      "VILLAGE_LIFE": "Dorfleben",
+      "ONBOARDING": "Willkommen",
+      "STORY": "Geschichte",
+      "ROTATION": "Dorf",
+      "ABSENCE": "Abwesenheit",
+      "PLAYER_MESSAGE": "Eigene Nachricht",
+      "GENERAL": "Allgemein"
+    },
+    "callStatus": {
+      "RINGING": "Klingelt",
+      "ACCEPTED": "Angenommen",
+      "DECLINED": "Abgelehnt",
+      "MISSED": "Verpasst",
+      "COMPLETED": "Beendet"
+    },
+    "creditStatus": {
+      "PROCESSING": "In Bearbeitung",
+      "DECIDED": "Entschieden",
+      "ACCEPTED": "Angenommen",
+      "DECLINED": "Abgelehnt"
+    },
+    "creditDecision": {
+      "APPROVED": "Genehmigt",
+      "COUNTER_OFFER": "Gegenangebot",
+      "REJECTED": "Abgelehnt"
+    },
+    "creditReason": {
+      "SOLID_FINANCES": "Solide Finanzlage",
+      "INSUFFICIENT_EQUITY": "Zu wenig Eigenkapital",
+      "INSUFFICIENT_CASHFLOW": "Zu geringe laufende Einnahmen",
+      "INSUFFICIENT_LIQUIDITY": "Zu wenig Liquidität",
+      "LOAN_TOO_LARGE_FOR_FARM": "Summe zu groß für die Betriebsgröße",
+      "POOR_PAYMENT_HISTORY": "Schwache Zahlungshistorie",
+      "CREDIT_BLOCKED": "Neue Kredite derzeit gesperrt"
+    },
+    "loanStatus": {
+      "ACTIVE": "Laufend",
+      "PAID_OFF": "Abbezahlt",
+      "CALLED": "Gekündigt"
+    },
+    "loanPaymentType": {
+      "DISBURSEMENT": "Auszahlung",
+      "INSTALLMENT": "Rate",
+      "MISSED": "Rate verpasst",
+      "PENALTY": "Mahngebühr",
+      "CALLBACK": "Fälligstellung",
+      "DEFERRAL": "Stundung"
+    },
+    "postingStatus": {
+      "OPEN": "Offen",
+      "FILLED": "Besetzt",
+      "CLOSED": "Geschlossen"
+    },
+    "applicationStatus": {
+      "PENDING": "Offen",
+      "HIRED": "Eingestellt",
+      "REJECTED": "Abgesagt"
+    },
+    "employeeStatus": {
+      "ACTIVE": "Angestellt",
+      "TERMINATED": "Ausgeschieden"
+    },
+    "negotiationKind": {
+      "AUCTION": "Versteigerung",
+      "DIRECT": "Direktverhandlung",
+      "SALE_OFFER": "Verkaufsangebot"
+    },
+    "negotiationStatus": {
+      "OPEN": "Offen",
+      "ACCEPTED": "Abgeschlossen",
+      "REJECTED": "Abgelehnt",
+      "WITHDRAWN": "Zurückgezogen",
+      "LOST": "Verloren",
+      "EXPIRED": "Abgelaufen"
+    },
+    "offerResult": {
+      "ACCEPTED": "Angenommen",
+      "COUNTER": "Gegenangebot",
+      "REJECTED": "Abgelehnt",
+      "BID": "Gebot",
+      "OUTBID": "Überboten",
+      "LEADING": "Höchstgebot"
+    },
+    "ownerType": {
+      "PLAYER": "Eigenes Feld",
+      "CHARACTER": "Im Besitz",
+      "UNCLAIMED": "Frei"
+    },
+    "marketEventType": {
+      "DEMAND_SPIKE": "Nachfragespitze",
+      "DEMAND_SLUMP": "Nachfrageeinbruch",
+      "HARVEST_FAILURE": "Missernte",
+      "HARVEST_SURPLUS": "Überangebot",
+      "SPECIAL_OFFER": "Sonderabnahme",
+      "SUBSIDY": "Förderprogramm",
+      "RUMOR": "Gerücht"
+    },
+    "marketEventStatus": {
+      "PLANNED": "Geplant",
+      "OFFERED": "Angeboten",
+      "ACTIVE": "Aktiv",
+      "ENDED": "Beendet",
+      "DECLINED": "Abgelehnt",
+      "RUMOR_ONLY": "Nur Gerücht"
+    },
+    "trustLevel": {
+      "VERY_GOOD": "Sehr vertraut",
+      "GOOD": "Vertraut",
+      "NEUTRAL": "Neutral",
+      "STRAINED": "Angespannt",
+      "BAD": "Zerrüttet"
+    },
+    "reputationTier": {
+      "GOOD": "Gut angesehen",
+      "NEUTRAL": "Neutral",
+      "CONTROVERSIAL": "Umstritten"
+    },
+    "diaryType": {
+      "AUTO": "Chronik",
+      "PLAYER_NOTE": "Eigene Notiz"
+    },
+    "aiProvider": {
+      "OPENAI": "OpenAI",
+      "ANTHROPIC": "Anthropic",
+      "GEMINI": "Google Gemini",
+      "OLLAMA": "Ollama (lokal)",
+      "FAKE": "Test-Provider",
+      "NONE": "Keine KI (Textvorlagen)"
+    }
+  },
+  "onboarding": {
+    "title": "Neuen Spielstand beginnen",
+    "intro": "Erzähle kurz, wie dein Hof entstanden ist. Die Auswahlfelder setzen echte Startwerte, der Freitext färbt nur die Geschichte.",
+    "steps": {
+      "1": "Vorgeschichte",
+      "2": "Mitarbeiter",
+      "3": "Startbesetzung",
+      "4": "Spielstand in FS25",
+      "5": "Verknüpfen"
+    },
+    "farmOrigin": "Ursprung des Hofs",
+    "villageRelation": "Verhältnis zum Dorf",
+    "startingCapital": "Startkapital (€)",
+    "capitalInvalid": "Bitte einen Betrag ab 0 € eintragen.",
+    "tonePreset": "Ton der Welt",
+    "toneHint": "Wird nach dem Start fest übernommen.",
+    "withLegacyLoan": "Hof startet mit Altlasten (Alt-Kredit)",
+    "legacyLoanAmount": "Höhe des Alt-Kredits (€)",
+    "freeText": "Persönliche Details",
+    "freeTextPlaceholder": "z. B. „Mein Großvater hat den Hof 1962 gegründet …“",
+    "freeTextGuardrail": "Der Freitext beeinflusst nur Stimmung und Details der Charaktere – nie Geld, Bonität oder andere Werte.",
+    "defaultHint": "Ohne Freitext erzeugen wir eine stimmige Standard-Vorgeschichte.",
+    "staffIntro": "Gibt es schon Mitarbeiter auf dem Hof? Lege Anzahl und Rollen fest (optional).",
+    "staffCount": "{n} Mitarbeiter",
+    "staffRole": "Rolle",
+    "addEmployee": "Mitarbeiter hinzufügen",
+    "remove": "Entfernen",
+    "generate": "Startbesetzung erzeugen",
+    "generating": "Wird erzeugt …",
+    "rerollAll": "Alle neu würfeln",
+    "reroll": "Neu würfeln",
+    "freeTextRejected": "Dein Freitext wurde nicht übernommen – es wird eine Standard-Vorgeschichte verwendet.",
+    "acceptCast": "Besetzung übernehmen",
+    "fsHint1": "Erstelle oder lade jetzt deinen Spielstand in Farming Simulator 25 (mit aktivierter FarmPulse-Mod) und speichere einmal.",
+    "fsHint2": "Die Mod meldet den Spielstand automatisch. Danach kannst du ihn im nächsten Schritt verknüpfen.",
+    "fsDone": "Spielstand ist geladen",
+    "reload": "Aktualisieren",
+    "noDetected": "Noch kein unverknüpfter Spielstand erkannt. Lade den Spielstand in FS25 und klicke auf „Aktualisieren“.",
+    "unknownMap": "Unbekannte Karte",
+    "lastSeen": "zuletzt gesehen {at}",
+    "confirm": "Bestätigen & verknüpfen"
   }
 }

@@ -8,11 +8,28 @@ const devRoutes: Routes = environment.styleGuide
   ? [{ path: 'dev/style-guide', loadComponent: () => import('./dev/style-guide').then((m) => m.StyleGuide) }]
   : [];
 
-const pages: Routes = NAV_ITEMS.map((item) => ({
-  path: item.path === '/' ? '' : item.path.substring(1),
-  pathMatch: 'full' as const,
-  component: ComingSoon,
-  data: { title: item.label },
-}));
+/** Feature modules (Phase 8), lazily loaded; areas without an entry show the placeholder. */
+const FEATURES: Record<string, Routes[number]['loadComponent']> = {
+  onboarding: () => import('./features/onboarding/onboarding-wizard').then((m) => m.OnboardingWizard),
+};
 
-export const routes: Routes = [{ path: '', component: Shell, children: [...devRoutes, ...pages] }];
+const pages: Routes = NAV_ITEMS.map((item) => {
+  const path = item.path === '/' ? '' : item.path.substring(1);
+  const load = FEATURES[path === '' ? 'home' : path];
+  return load
+    ? { path, pathMatch: 'full' as const, loadComponent: load, data: { title: item.label } }
+    : { path, pathMatch: 'full' as const, component: ComingSoon, data: { title: item.label } };
+});
+
+export const routes: Routes = [
+  {
+    path: '',
+    component: Shell,
+    children: [
+      ...devRoutes,
+      ...pages,
+      { path: 'onboarding', loadComponent: FEATURES['onboarding'], data: { title: 'nav.onboarding' } },
+      { path: '**', redirectTo: '' },
+    ],
+  },
+];

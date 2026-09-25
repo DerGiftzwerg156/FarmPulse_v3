@@ -73,7 +73,10 @@
               {{ sg.mapName }} · {{ 'header.day' | t: { day: sg.gameDay } }}
             </div>
           } @else {
-            <div class="fp-label">{{ 'header.noSavegame' | t }}</div>
+            <div class="fp-label">
+              {{ 'header.noSavegame' | t }} ·
+              <a routerLink="/onboarding" class="text-accent hover:underline" data-testid="onboarding-link">{{ 'common.startOnboarding' | t }}</a>
+            </div>
           }
         </div>
       </div>
