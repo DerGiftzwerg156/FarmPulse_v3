@@ -74,7 +74,7 @@
               @if (d.speechStyle) {
                 <div><dt class="fp-label">{{ 'village.speechStyle' | t }}</dt><dd class="mt-0.5 font-body italic text-muted" data-testid="speech-style">{{ d.speechStyle }}</dd></div>
               }
-              @if (d.backstory) {
+              @if (d.backstory && d.backstory !== d.shortDescription) {
                 <div><dt class="fp-label">{{ 'village.backstory' | t }}</dt><dd class="mt-0.5 whitespace-pre-line font-body text-text" data-testid="backstory">{{ d.backstory }}</dd></div>
               }
             </dl>

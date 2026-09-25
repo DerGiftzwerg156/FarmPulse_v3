@@ -46,3 +46,4 @@ release/
 *.swp
 .DS_Store
 Thumbs.db
+tools/screenshot-generator/.runtime/

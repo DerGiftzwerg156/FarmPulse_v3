@@ -171,7 +171,7 @@ test.describe.serial('FarmPulse core flows', () => {
     await advanceDays(request, 2);
     await page.goto('/market');
     await expect(page.getByTestId('storage-item').first()).toBeVisible();
-    await expect(page.getByTestId('chart-line').first()).toBeVisible();
+    await expect(page.getByTestId('chart-line').first()).toBeAttached(); // a flat series has a zero-height box
     await page.getByTestId('range-0').locator('button').click();
     await page.getByTestId('chart-toggle').click();
     expect(await page.getByTestId('chart-table').locator('tbody tr').count()).toBeGreaterThan(2);
