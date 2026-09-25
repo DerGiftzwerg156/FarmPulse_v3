@@ -57,7 +57,8 @@ class BridgeSyncIntegrationTest {
         var res = sync.runCycle();
         assertThat(res.factsForUnlinkedSavegame()).isTrue();
         assertThat(detected.list()).extracting(DetectedSavegameRegistry.Detected::savegameId).contains("sg_new");
-        assertThat(snapshots.count()).isZero();
+        assertThat(savegames.findByBridgeSavegameId("sg_new")).isEmpty();
+        assertThat(snapshots.findAll()).noneMatch(s -> s.getRawJson().contains("\"sg_new\""));
     }
 
     @Test
