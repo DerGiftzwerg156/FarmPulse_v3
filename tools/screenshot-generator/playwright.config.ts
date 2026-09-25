@@ -43,7 +43,7 @@ export default defineConfig({
       name: 'backend',
       command:
         '(ls target/rpsim-backend-*.jar >/dev/null 2>&1 || mvn -B -q -DskipTests package) && ' +
-        'java -jar $(ls target/rpsim-backend-*.jar | head -1) --spring.profiles.active=e2e --rpsim.ai.provider=NONE ' +
+        'java -jar $(ls -t target/rpsim-backend-*.jar | head -1) --spring.profiles.active=e2e --rpsim.ai.provider=NONE ' +
         `--rpsim.bridge.path=${BRIDGE_DIR} --rpsim.ai.local-config-file=../tools/screenshot-generator/.runtime/ai.properties`,
       cwd: '../../backend',
       url: 'http://localhost:8080/actuator/health',

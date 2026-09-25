@@ -42,7 +42,7 @@ export default defineConfig({
       name: 'backend',
       command:
         'cd ../backend && (ls target/rpsim-backend-*.jar >/dev/null 2>&1 || mvn -B -q -DskipTests package) && ' +
-        `java -jar $(ls target/rpsim-backend-*.jar | head -1) --spring.profiles.active=e2e --server.port=${BACKEND_PORT} ` +
+        `java -jar $(ls -t target/rpsim-backend-*.jar | head -1) --spring.profiles.active=e2e --server.port=${BACKEND_PORT} ` +
         `--rpsim.bridge.path=../frontend/${BRIDGE_DIR}`,
       url: `http://localhost:${BACKEND_PORT}/actuator/health`,
       reuseExistingServer: false,
