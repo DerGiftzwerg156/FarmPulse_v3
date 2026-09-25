@@ -11,6 +11,7 @@ import de.farmpulse.rpsim.bridge.BridgeFiles;
 import de.farmpulse.rpsim.bridge.BridgeSyncService;
 import de.farmpulse.rpsim.bridge.FactsService;
 import de.farmpulse.rpsim.credit.CreditApplicationService;
+import de.farmpulse.rpsim.domain.AssetType;
 import de.farmpulse.rpsim.domain.CharacterStatus;
 import de.farmpulse.rpsim.domain.CreditApplicationStatus;
 import de.farmpulse.rpsim.domain.Employee;
@@ -195,6 +196,8 @@ class BridgeSimulatorEndToEndTest {
         // direct negotiation with an NPC owner
         FarmlandOwnership target = inTx(sg -> {
             FarmlandOwnership o = ownership.list(sg).stream().filter(x -> x.getOwnerType() == OwnerType.UNCLAIMED)
+                    // a daily auction roll may already have picked a field - never collide with it
+                    .filter(x -> !negotiation.isBlocked(sg, AssetType.FARMLAND, String.valueOf(x.getFarmlandId())))
                     .findFirst().orElseThrow();
             var npc = sg.getId() == null ? null : de.farmpulse.rpsim.support.E2EHelper.firstDynamic(sg);
             ownership.setOwner(sg, o.getFarmlandId(), OwnerType.CHARACTER, npc);

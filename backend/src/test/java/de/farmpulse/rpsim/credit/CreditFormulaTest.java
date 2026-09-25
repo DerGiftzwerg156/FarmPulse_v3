@@ -162,4 +162,24 @@ class CreditFormulaTest {
         assertThat(CreditFormula.paymentHistoryScore(0, 10, def)).isEqualTo(0);
         assertThat(CreditFormula.paymentHistoryScore(0, 1, def)).isEqualTo(55);
     }
+
+    /** AP-9.1: degenerate inputs never divide by zero and land on the documented neutral/extreme values. */
+    @Test
+    void degenerateInputsAreHandled() {
+        // no installments at all -> full coverage; no assets -> equity 0; nothing requested -> liquidity 100
+        var c = CreditFormula.components(new CreditFormula.Inputs(1000, true, 0, 0, 0, 0, 0, 0, 70, 0), def);
+        assertThat(c.debtServiceCoverage()).isEqualTo(100);
+        assertThat(c.equityRatio()).isZero();
+        assertThat(c.liquidityBuffer()).isEqualTo(100);
+        assertThat(c.loanToFarmSize()).isEqualTo(100);
+        // history is clamped into 0..100
+        assertThat(CreditFormula.components(new CreditFormula.Inputs(0, false, 0, 0, 0, 0, 0, 0, 180, 0), def).paymentHistory())
+                .isEqualTo(100);
+    }
+
+    @Test
+    void annuityEdgeCases() {
+        assertThat(CreditFormula.monthlyInstallment(12_000, 0.05, 0)).isEqualTo(12_000);
+        assertThat(CreditFormula.monthlyInstallment(12_000, 0.0, 12)).isEqualTo(1_000);
+    }
 }

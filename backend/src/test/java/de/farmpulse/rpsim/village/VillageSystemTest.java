@@ -86,6 +86,20 @@ class VillageSystemTest {
         assertThat(reputation.baseTrustForNewCharacter(sg)).isBetween(-15.0, 0.0);
     }
 
+    /** AP-9.1: applicants and substitutes are not part of the village - their trust never moves the average. */
+    @Test
+    void applicantsAndSubstitutesDoNotCountForTheVillage() {
+        double before = reputation.trustAverage(sg);
+        Character applicant = fx.character(sg, de.farmpulse.rpsim.domain.CharacterRole.APPLICANT,
+                de.farmpulse.rpsim.domain.CharacterCategory.APPLICANT, "Bewerberin");
+        Character substitute = fx.character(sg, de.farmpulse.rpsim.domain.CharacterRole.BANK_ADVISOR,
+                de.farmpulse.rpsim.domain.CharacterCategory.SUBSTITUTE, "Vertretung");
+        trust.recordEvent(applicant, 100, de.farmpulse.rpsim.domain.TrustReason.PROMISE_KEPT, null);
+        trust.recordEvent(substitute, 100, de.farmpulse.rpsim.domain.TrustReason.PROMISE_KEPT, null);
+        assertThat(reputation.villagers(sg)).doesNotContain(applicant, substitute);
+        assertThat(reputation.trustAverage(sg)).isCloseTo(before, within(1e-9));
+    }
+
     @Test
     void rotationBudgetIsNeverExceededAndCountsArrivalsAndDeparturesTogether() {
         int changes = 0;

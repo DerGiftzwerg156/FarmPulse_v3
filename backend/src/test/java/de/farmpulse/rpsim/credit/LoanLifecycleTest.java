@@ -52,6 +52,23 @@ class LoanLifecycleTest {
     @AfterEach
     void restore() {
         props.getFormulas().getCredit().setFinalStage("CALLBACK");
+        props.getFormulas().getCredit().setFinalStageAfterMissedInstallments(3);
+    }
+
+    /** AP-9.1: every escalation step switches exactly at its configured day, not a moment earlier. */
+    @Test
+    void escalationStagesSwitchExactlyAtTheConfiguredDays() {
+        props.getFormulas().getCredit().setFinalStageAfterMissedInstallments(99); // isolate the day thresholds
+        fx.snapshot(sg, 0);
+        Loan l = loans.create(sg, 12_000, 0.0, 12, "Stall", true, null);
+        long dueAt = l.getNextDueGameTime();
+        double[][] steps = {{0.99, 0}, {1.0, 1}, {2.99, 1}, {3.0, 2}, {4.99, 2}, {5.0, 3}};
+        for (double[] step : steps) {
+            sg.setCurrentGameTime(dueAt + GameTime.days(step[0]));
+            loans.processDueInstallments(sg);
+            assertThat(l.getEscalationLevel()).as("level after %s days overdue", step[0]).isEqualTo((int) step[1]);
+        }
+        assertThat(l.getStatus()).isEqualTo(LoanStatus.ACTIVE);
     }
 
     private List<String> reasons() {

@@ -136,6 +136,21 @@ class EmployeeSystemTest {
         assertThat(jobTypes()).contains("EMPLOYEE_RESIGNATION");
     }
 
+    /** AP-9.1: "< 30 points" is strict - exactly 30 is not low, 29.9 is. */
+    @Test
+    void warningThresholdIsStrict() {
+        Employee e = employee();
+        e.setWorkload(0);
+        e.setAppreciation(0);
+        e.setPayFairness(38); // 0.25 * (38 + 0 + 0 + 82) = 30.0
+        satisfaction.checkEscalation(e);
+        assertThat(satisfaction.needs(e).score()).isEqualTo(30.0);
+        assertThat(e.getLowSatisfactionSinceGameTime()).isNull();
+        e.setPayFairness(37.6); // 29.9
+        satisfaction.checkEscalation(e);
+        assertThat(e.getLowSatisfactionSinceGameTime()).isEqualTo(sg.getCurrentGameTime());
+    }
+
     @Test
     void recoveryResetsEscalation() {
         Employee e = employee();
