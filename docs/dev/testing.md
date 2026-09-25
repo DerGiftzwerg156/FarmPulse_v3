@@ -60,6 +60,36 @@ AI providers, null-safety guards) - they are not part of the formula layer.
    `NegotiationFormulaTest.trustAdjustmentIsCapped` and `trustNeverDistortsBasePriceBeyondCap` check the cap with
    extreme trust values for every character trait.
 
+## Frontend unit tests (AP-9.2)
+
+Every component with logic has a spec next to it (`*.spec.ts`, 115 tests): feature pages are tested against
+`HttpTestingController` (requests, bodies, UI states), live updates through the `GameStateStore` version signals,
+the SSE client with `src/testing/fake-event-source.ts`, pure helpers (thread grouping, credit state mapping,
+negotiation helpers, feed building, chart series) directly.
+
+`npm test -- --watch=false --coverage` (2026-09-25): **94.4 % lines, 84.4 % branches** (`coverage/index.html`).
+
+## Frontend E2E tests (AP-9.2)
+
+`cd frontend && npm run e2e` runs `e2e/core-flows.spec.ts` with Playwright. The config starts three processes:
+
+| Process | Command | Notes |
+| --- | --- | --- |
+| Bridge simulator | `node tools/bridge-simulator/src/cli.js --scenario wohlhabender-hof --reset --control-port 8099` | bridge folder `frontend/e2e/.runtime/…`, 1 tick/s = 10 game minutes |
+| Backend | `java -jar backend/target/rpsim-backend-*.jar --spring.profiles.active=e2e` | in-memory H2, `FAKE` AI provider, no API key; the jar is built if missing |
+| Frontend | `ng serve --port 4201` | proxies `/api` to `:8080` |
+
+Covered flows (one serial story, the backend starts empty): complete onboarding incl. reroll and savegame linking ·
+answering a mail (incl. the character's reply via SSE) · credit application, fast-forwarding the simulator
+(`POST /advance`) until the decision is visible, counter offer acceptance · incoming calls triggered by phone
+interviews: accept (soft time window, talk, hang up) and decline · hiring and dismissing an employee · direct
+negotiation of an NPC-owned field until the deal, incl. the farmland transfer applied by the simulator · the price
+history chart with data.
+
+Requirements: Java 21, Maven, Node ≥ 22.22.3 (24 LTS), a Chromium for Playwright (`npx playwright install chromium`,
+or the pre-installed `/opt/pw-browsers/chromium`, or `CHROMIUM_PATH`). Ports 8080, 8099 and 4201 must be free.
+Measured runtime: **≈ 29 s** for the 7 flows (plus backend start-up), stable in three consecutive runs.
+
 ## Backend end-to-end scenarios (AP-6.4)
 
 `BridgeSimulatorEndToEndTest` drives the complete data flow backend → file bridge → real bridge simulator (Node) →

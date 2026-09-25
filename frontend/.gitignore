@@ -44,3 +44,8 @@ __screenshots__/
 Thumbs.db
 .shot.mjs
 .shot-ref.mjs
+
+# E2E (Playwright) runtime
+/e2e/.runtime
+/test-results
+/playwright-report

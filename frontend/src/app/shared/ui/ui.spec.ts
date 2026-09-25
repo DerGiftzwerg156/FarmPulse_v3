@@ -67,6 +67,20 @@ describe('Modal', () => {
   });
 });
 
+describe('Modal Escape', () => {
+  it('closes on Escape only while open', () => {
+    const { fixture } = render(Modal, { open: true, title: 'Test' });
+    let closed = 0;
+    fixture.componentInstance.closed.subscribe(() => closed++);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(closed).toBe(1);
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(closed).toBe(1);
+  });
+});
+
 describe('Toasts', () => {
   it('shows and dismisses toasts', () => {
     const { fixture, el } = render(Toasts);
