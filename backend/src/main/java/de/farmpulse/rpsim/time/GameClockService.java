@@ -38,13 +38,18 @@ public class GameClockService {
             events.publishEvent(new GameTimeAdvancedEvent(sg.getId(), now, now));
             return;
         }
-        events.publishEvent(new GameTimeAdvancedEvent(sg.getId(), previous, now));
         long from = sg.getLastProcessedGameDay() + 1;
         if (day - from > MAX_CATCH_UP_DAYS) {
             from = day - MAX_CATCH_UP_DAYS;
         }
+        // Catch up day by day: every crossed day is processed at its own game time, so daily checks
+        // (escalations, spawns, payroll) behave the same whether the player plays or skips time.
+        long last = previous;
         for (long d = from; d <= day; d++) {
             long dayStart = d * GameTime.MS_PER_DAY;
+            sg.setCurrentGameTime(dayStart);
+            events.publishEvent(new GameTimeAdvancedEvent(sg.getId(), last, dayStart));
+            last = dayStart;
             long prevMonth = gameTime.monthIndex(dayStart - 1);
             long month = gameTime.monthIndex(dayStart);
             events.publishEvent(new GameDayPassedEvent(sg.getId(), d, dayStart));
@@ -53,5 +58,7 @@ public class GameClockService {
             }
             sg.setLastProcessedGameDay(d);
         }
+        sg.setCurrentGameTime(now);
+        events.publishEvent(new GameTimeAdvancedEvent(sg.getId(), last, now));
     }
 }

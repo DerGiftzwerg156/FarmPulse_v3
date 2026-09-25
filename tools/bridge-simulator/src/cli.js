@@ -16,6 +16,7 @@ const { values } = parseArgs({
     seed: { type: 'string', default: '42' },
     'control-port': { type: 'string', default: '8099' },
     once: { type: 'boolean', default: false },
+    'advance-hours': { type: 'string', default: '0' },
     reset: { type: 'boolean', default: false },
     'list-scenarios': { type: 'boolean', default: false },
     help: { type: 'boolean', default: false },
@@ -32,6 +33,7 @@ if (values.help) {
   --seed <n>                    random seed (default 42)
   --control-port <port>         HTTP control API port, 0 = off (default 8099)
   --once                        export once, process instructions once, exit
+  --advance-hours <n>           with --once: advance game time by n hours first (in 24 h steps)
   --reset                       delete previous simulator state before starting
   --list-scenarios              print scenarios and exit`);
   process.exit(0);
@@ -55,6 +57,12 @@ sim.start();
 console.log(`[sim] scenario=${values.scenario} savegameId=${sim.savegameId} dir=${sim.dir}`);
 
 if (values.once) {
+  let remaining = Number(values['advance-hours']);
+  while (remaining > 0) {
+    const step = Math.min(24, remaining);
+    sim.advance(step * MS_PER_GAME_HOUR);
+    remaining -= step;
+  }
   const res = sim.processInstructions();
   sim.exportFarmFacts();
   console.log(`[sim] processed: ${JSON.stringify(res)}`);
