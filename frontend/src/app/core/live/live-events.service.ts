@@ -19,7 +19,7 @@ export const RECONNECT_DELAYS = [1000, 2000, 5000, 10000, 30000];
 
 /**
  * Consumes the backend SSE stream (`GET /api/events/stream`) and feeds it into {@link GameStateStore}:
- * `mail`/`call`/`diary`/`state` bump the matching version signal (feature pages reload on change) and refresh the
+ * `mail`/`call`/`diary`/`state`/`notice` bump the matching version signal (feature pages reload on change) and refresh the
  * header counters. Reconnects automatically with a stepped backoff when the connection drops.
  */
 @Injectable({ providedIn: 'root' })
@@ -63,6 +63,7 @@ export class LiveEventsService implements OnDestroy {
     src.addEventListener('call', () => this.bump(this.store.callVersion));
     src.addEventListener('diary', () => this.bump(this.store.diaryVersion, false));
     src.addEventListener('state', () => this.bump(this.store.stateVersion));
+    src.addEventListener('notice', () => this.bump(this.store.noticeVersion, false));
     src.onerror = () => this.handleError(src);
   }
 

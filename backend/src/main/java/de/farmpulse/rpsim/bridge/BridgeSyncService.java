@@ -44,6 +44,7 @@ public class BridgeSyncService {
     private final SavegameContext context;
     private final GameClockService clock;
     private final ApplicationEventPublisher events;
+    private final RewindService rewinds;
 
     private String lastFactsRaw;
     private String lastContextRaw;
@@ -53,7 +54,7 @@ public class BridgeSyncService {
     public BridgeSyncService(BridgeFiles files, SavegameRepository savegames, FactsSnapshotRepository snapshots,
                              OutboxInstructionRepository outbox, OutboxService outboxService,
                              DetectedSavegameRegistry detected, SavegameContext context, GameClockService clock,
-                             ApplicationEventPublisher events) {
+                             ApplicationEventPublisher events, RewindService rewinds) {
         this.files = files;
         this.savegames = savegames;
         this.snapshots = snapshots;
@@ -63,6 +64,7 @@ public class BridgeSyncService {
         this.context = context;
         this.clock = clock;
         this.events = events;
+        this.rewinds = rewinds;
     }
 
     /** Result of one cycle (used by tests and logging). */
@@ -128,6 +130,10 @@ public class BridgeSyncService {
         }
         Savegame s = sg.get();
         boolean first = snapshots.countBySavegame(s) == 0;
+        if (!first && f.gameTime() < s.getCurrentGameTime()) {
+            // T-02: older state of the savegame loaded - registered before anyone reacts to the rewound snapshot
+            rewinds.onRewind(s, s.getCurrentGameTime(), f.gameTime());
+        }
         FactsSnapshot snap = new FactsSnapshot();
         snap.setSavegame(s);
         snap.setGameTime(f.gameTime());
@@ -147,7 +153,13 @@ public class BridgeSyncService {
 
     int syncAcks() {
         Optional<BridgeFiles.Read<AckDocument>> read = files.read(files.ack(), AckDocument.class, BridgeValidator::validate);
-        if (read.isEmpty() || read.get().raw().equals(lastAckRaw)) {
+        if (read.isEmpty()) {
+            return 0;
+        }
+        if (read.get().raw().equals(lastAckRaw)) {
+            // T-02: an unchanged ack file still answers a rewind detected after it was read (nothing lost)
+            savegames.findByBridgeSavegameId(read.get().doc().savegameId())
+                    .ifPresent(s -> rewinds.onAckDocument(s, read.get().doc()));
             return 0;
         }
         AckDocument doc = read.get().doc();
@@ -157,6 +169,7 @@ public class BridgeSyncService {
             log.warn("instructions_ack.json belongs to unknown savegameId '{}' - ignored", doc.savegameId());
             return 0;
         }
+        rewinds.onAckDocument(sg.get(), doc);
         int applied = 0;
         for (BridgeDtos.Ack ack : doc.acks()) {
             Optional<OutboxInstruction> o = outbox.findByInstructionId(ack.instructionId());

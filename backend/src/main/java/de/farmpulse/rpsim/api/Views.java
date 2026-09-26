@@ -134,4 +134,9 @@ public final class Views {
 
     public record GameSettingsView(String tonePreset, String toneLabel) {
     }
+
+    /** Dashboard notice (T-02 / T-03): kind + raw details, the frontend renders the text. */
+    public record NoticeView(Long id, String kind, String status, long gameTime, java.util.Map<String, Object> details,
+                             String relatedType, Long relatedId) {
+    }
 }

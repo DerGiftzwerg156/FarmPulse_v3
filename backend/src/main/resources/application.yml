@@ -31,6 +31,8 @@ rpsim:
     path: ../tools/bridge-simulator/runtime/modSettings/FS25_RPSim
     poll-interval-ms: 2000
     enabled: true
+    rewind-auto-resend-max-hours: 24   # T-02: reload without saving up to 1 game day -> re-send lost bookings automatically
+    rewind-lookback-hours: 24          # T-02: bookings acked this long before the reloaded point are checked as well
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
   time:

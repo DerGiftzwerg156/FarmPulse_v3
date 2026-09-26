@@ -32,7 +32,9 @@
     },
     "liabilities": { "type": "object", "required": ["vanillaLoan"], "properties": {
       "vanillaLoan": { "type": "object", "required": ["active", "remainingAmount"],
-        "properties": { "active": { "type": "boolean" }, "remainingAmount": { "type": "number", "minimum": 0 } } } } },
+        "properties": { "active": { "type": "boolean" }, "remainingAmount": { "type": "number", "minimum": 0 } } },
+      "leasing": { "type": "array", "items": { "type": "object", "required": ["uniqueId"],
+        "properties": { "uniqueId": { "type": "string" }, "costPerPeriod": { "type": "number", "minimum": 0 } } } } } },
     "prices": { "type": "array", "items": { "type": "object", "required": ["sellPoint", "fillType", "currentPrice"],
       "properties": { "sellPoint": { "type": "string" }, "fillType": { "type": "string" },
         "currentPrice": { "type": "number", "minimum": 0 } } } }

@@ -58,10 +58,15 @@ public class CreditScoringService {
         RpsimProperties.Credit cfg = configs.forSavegame(sg);
         FarmFacts f = facts.latest(sg).orElse(null);
         double assets = f == null ? 0 : facts.totalAssetValue(f);
-        List<Loan> active = loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE);
+        List<Loan> active = new java.util.ArrayList<>(loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE));
+        // T-03: an uncollected call-back is still debt
+        active.addAll(loans.findBySavegameAndStatus(sg, LoanStatus.DEFAULTED));
         double loanDebt = active.stream().mapToDouble(Loan::getRemainingAmount).sum();
         double vanilla = f == null ? 0 : facts.vanillaLoanRemaining(f);
         double existingInstallments = active.stream().mapToDouble(Loan::getMonthlyInstallment).sum();
+        // T-04: running leasing costs are an obligation like an installment (the game pays them from the balance, so
+        // the operating cash flow below already contains them)
+        existingInstallments += f == null ? 0 : FactsService.leasingCostPerMonth(f);
         double newInstallment = CreditFormula.monthlyInstallment(amount, interestRate, termMonths);
         double balance = f == null ? 0 : f.liquidity().balance();
 

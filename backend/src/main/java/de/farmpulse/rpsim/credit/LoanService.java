@@ -40,6 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
  * still overdue          -> trust loss (negative TrustEvent)                            level 3
  * repeated default       -> CREDIT_CALLBACK of the full remaining debt OR credit block   level 4
  * </pre>
+ * T-03: a booking the mod refuses (FAILED, e.g. INSUFFICIENT_FUNDS) is treated like a missed payment: an installment
+ * is reversed and becomes due again, an unpaid penalty moves on to the next stage, an uncollected call-back leaves the
+ * loan DEFAULTED and the bank collects the debt as soon as liquidity allows.
  */
 @Service
 public class LoanService {
@@ -120,6 +123,24 @@ public class LoanService {
         for (Loan l : loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE)) {
             processLoan(sg, l);
         }
+        for (Loan l : loans.findBySavegameAndStatus(sg, LoanStatus.DEFAULTED)) {
+            collectDefaulted(sg, l);
+        }
+    }
+
+    /** T-03: an uncollected call-back is booked again as soon as the liquidity covers it. */
+    void collectDefaulted(Savegame sg, Loan l) {
+        long remaining = l.getRemainingAmount();
+        if (remaining <= 0 || liquidity.available(sg) < remaining) {
+            return;
+        }
+        var ins = outbox.money(sg, -remaining, MoneyReason.CREDIT_CALLBACK, "Einzug Restschuld",
+                new Related(RELATED, l.getId()));
+        payment(l, remaining, LoanPaymentType.CALLBACK, ins.getInstructionId());
+        l.setRemainingAmount(0);
+        l.setStatus(LoanStatus.CALLED);
+        diary.addAuto(sg, "CREDIT", "Restschuld eingezogen", "Die Bank hat die offene Restschuld von " + remaining
+                + " € eingezogen.", RELATED, l.getId());
     }
 
     void processLoan(Savegame sg, Loan l) {
@@ -163,7 +184,9 @@ public class LoanService {
         l.setNextDueGameTime(l.getNextDueGameTime() + gameTime.msPerMonth());
         var ins = outbox.money(sg, -installment, MoneyReason.CREDIT_INSTALLMENT,
                 "Kreditrate " + l.getPaidInstallments() + "/" + l.getTermMonths(), new Related(RELATED, l.getId()));
-        payment(l, installment, LoanPaymentType.INSTALLMENT, ins.getInstructionId());
+        LoanPayment p = payment(l, installment, LoanPaymentType.INSTALLMENT, ins.getInstructionId());
+        p.setPrincipalPart(principalPart);
+        p.setTrustBonusGiven(!wasOverdue);
         if (!wasOverdue) {
             lookup.bank(sg).ifPresent(b -> trust.recordEvent(b, props.getFormulas().getTrust().getOnTimePayment(),
                     TrustReason.ON_TIME_PAYMENT, "Rate pünktlich"));
@@ -209,11 +232,7 @@ public class LoanService {
                     .put("installment", l.getMonthlyInstallment()).build());
         }
         if (l.getEscalationLevel() < 3 && overdueDays >= cfg.getTrustLossAfterDays()) {
-            l.setEscalationLevel(3);
-            lookup.bank(sg).ifPresent(b -> trust.recordEvent(b, cfg.getTrustLossDelta(), TrustReason.PAYMENT_ESCALATION,
-                    "Anhaltender Zahlungsverzug"));
-            narrate(sg, l, NarrationEventType.CREDIT_TRUST_WARNING, NarrationFacts.builder()
-                    .put("missedInstallments", l.getMissedInstallments()).build());
+            trustLossStage(sg, l, cfg);
         }
         if (l.getEscalationLevel() >= 3 && l.getEscalationLevel() < 4
                 && l.getMissedInstallments() >= cfg.getFinalStageAfterMissedInstallments()) {
@@ -227,6 +246,71 @@ public class LoanService {
                 callBack(sg, l, cfg);
             }
         }
+    }
+
+    private void trustLossStage(Savegame sg, Loan l, RpsimProperties.Credit cfg) {
+        l.setEscalationLevel(3);
+        lookup.bank(sg).ifPresent(b -> trust.recordEvent(b, cfg.getTrustLossDelta(), TrustReason.PAYMENT_ESCALATION,
+                "Anhaltender Zahlungsverzug"));
+        narrate(sg, l, NarrationEventType.CREDIT_TRUST_WARNING, NarrationFacts.builder()
+                .put("missedInstallments", l.getMissedInstallments()).build());
+    }
+
+    /**
+     * T-03: the mod did not execute a loan booking (FAILED / REJECTED ack). Returns true when the loan was adjusted.
+     */
+    @Transactional
+    public boolean onBookingFailed(Savegame sg, Long loanId, String instructionId, String reason) {
+        Loan l = loans.findById(loanId).orElse(null);
+        LoanPayment p = payments.findFirstByInstructionId(instructionId).orElse(null);
+        if (l == null || p == null || p.getType() == LoanPaymentType.REVERSED) {
+            return false;
+        }
+        RpsimProperties.Credit cfg = configs.forSavegame(sg);
+        switch (p.getType()) {
+            case INSTALLMENT -> reverseInstallment(sg, l, p);
+            case PENALTY -> {
+                // unpaid penalty -> next escalation stage right away
+                p.setType(LoanPaymentType.REVERSED);
+                if (l.getStatus() == LoanStatus.ACTIVE && l.getEscalationLevel() < 3) {
+                    trustLossStage(sg, l, cfg);
+                }
+            }
+            case CALLBACK -> {
+                p.setType(LoanPaymentType.REVERSED);
+                l.setRemainingAmount(l.getRemainingAmount() + p.getAmount());
+                l.setStatus(LoanStatus.DEFAULTED);
+                l.setBlocksNewCredit(true);
+                narrate(sg, l, NarrationEventType.CREDIT_BLOCKED, NarrationFacts.builder()
+                        .put("missedInstallments", l.getMissedInstallments()).build());
+                diary.addAuto(sg, "CREDIT", "Restschuld nicht eingezogen", "Die Bank konnte die fällige Restschuld von "
+                        + p.getAmount() + " € nicht einziehen. Sie bucht sie ab, sobald das Konto es zulässt.",
+                        RELATED, l.getId());
+            }
+            default -> {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** The installment was not paid: undo its effects, it is due again and runs into the escalation ladder. */
+    private void reverseInstallment(Savegame sg, Loan l, LoanPayment p) {
+        long principalPart = p.getPrincipalPart() != null ? p.getPrincipalPart()
+                : Math.max(0, p.getAmount() - interest(l));
+        p.setType(LoanPaymentType.REVERSED);
+        l.setRemainingAmount(l.getRemainingAmount() + principalPart);
+        l.setPaidInstallments(Math.max(0, l.getPaidInstallments() - 1));
+        l.setNextDueGameTime(l.getNextDueGameTime() - gameTime.msPerMonth());
+        if (l.getStatus() == LoanStatus.PAID_OFF) {
+            l.setStatus(LoanStatus.ACTIVE);
+        }
+        if (Boolean.TRUE.equals(p.getTrustBonusGiven())) {
+            lookup.bank(sg).ifPresent(b -> trust.recordEvent(b, -props.getFormulas().getTrust().getOnTimePayment(),
+                    TrustReason.ON_TIME_PAYMENT_REVERSED, "Rate nicht gebucht"));
+        }
+        diary.addAuto(sg, "CREDIT", "Kreditrate nicht gebucht", "Die Rate über " + p.getAmount()
+                + " € konnte nicht abgebucht werden und ist wieder fällig.", RELATED, l.getId());
     }
 
     private void callBack(Savegame sg, Loan l, RpsimProperties.Credit cfg) {

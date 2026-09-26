@@ -46,7 +46,15 @@ public final class BridgeDtos {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Liabilities(VanillaLoan vanillaLoan) {
+    public record Liabilities(VanillaLoan vanillaLoan, List<LeasedVehicle> leasing) {
+    }
+
+    /**
+     * T-04: leased vehicle (no asset). costPerPeriod (per FS25 period = game month) is optional until the FS25 API for
+     * leasing costs is verified in the game.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record LeasedVehicle(String uniqueId, Double costPerPeriod) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

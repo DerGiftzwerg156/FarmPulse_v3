@@ -7,5 +7,7 @@ public enum LoanPaymentType {
     MISSED,
     PENALTY,
     CALLBACK,
-    DEFERRAL
+    DEFERRAL,
+    /** T-03: booking the mod could not execute (e.g. insufficient funds) - reversed, no longer counts. */
+    REVERSED
 }

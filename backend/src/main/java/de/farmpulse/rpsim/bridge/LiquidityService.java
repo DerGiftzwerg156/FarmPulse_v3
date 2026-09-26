@@ -1,6 +1,7 @@
 package de.farmpulse.rpsim.bridge;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import de.farmpulse.rpsim.domain.FactsSnapshot;
@@ -45,9 +46,29 @@ public class LiquidityService {
                 .mapToLong(this::amount).sum();
     }
 
-    /** Balance available for new payments. */
+    /** Ack message of the mod when a debit exceeds the farm balance (T-03). */
+    public static final String INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS";
+
+    /**
+     * Balance available for new payments. T-03: after the mod refused a debit for lack of money, the snapshot balance
+     * is not trusted until a newer snapshot arrived - otherwise the same payment would be re-queued every cycle.
+     */
     public long available(Savegame sg) {
-        return latestBalance(sg) + pendingMoney(sg);
+        Optional<FactsSnapshot> latest = snapshots.findFirstBySavegameOrderByGameTimeDescIdDesc(sg);
+        long balance = latest.map(FactsSnapshot::getBalance).orElse(0L);
+        long value = balance + pendingMoney(sg);
+        long refusedAt = lastRefusedForFunds(sg);
+        if (latest.isPresent() && refusedAt >= 0 && latest.get().getGameTime() <= refusedAt) {
+            return Math.min(value, 0);
+        }
+        return value;
+    }
+
+    /** Game time of the latest debit the mod refused with INSUFFICIENT_FUNDS, -1 if none. */
+    long lastRefusedForFunds(Savegame sg) {
+        return outbox.findBySavegameAndStatusOrderByIdAsc(sg, InstructionStatus.FAILED).stream()
+                .filter(o -> INSUFFICIENT_FUNDS.equals(o.getAckMessage()) && o.getAckedAtGameTime() != null)
+                .mapToLong(OutboxInstruction::getAckedAtGameTime).max().orElse(-1);
     }
 
     public long amount(OutboxInstruction o) {

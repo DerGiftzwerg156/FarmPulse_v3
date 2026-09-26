@@ -13,6 +13,7 @@ import { Badge } from '../../shared/ui/badge';
 import { Card } from '../../shared/ui/card';
 import { Icon } from '../../shared/ui/icon';
 import { Stat } from '../../shared/ui/stat';
+import { NoticesCard } from './notices-card';
 
 export interface FeedItem {
   key: string;
@@ -52,7 +53,7 @@ export function buildFeed(mails: MessageView[], calls: MessageView[], diary: Dia
 /** Dashboard home (AP-8.10): pure composition of existing endpoints in the look of the design reference. */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Stat, Card, Badge, Icon],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Stat, Card, Badge, Icon, NoticesCard],
   templateUrl: './home.html',
 })
 export class Home {

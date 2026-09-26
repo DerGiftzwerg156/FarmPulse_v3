@@ -13,6 +13,17 @@ export interface SavegameView {
   reputationTier: string;
 }
 
+/** Dashboard notice of the fact layer (TODO T-02 rewind, T-03 bookings the game did not execute). */
+export interface NoticeView {
+  id: number;
+  kind: 'REWIND_DECISION' | 'REWIND_RESENT' | 'INSTRUCTION_FAILED' | string;
+  status: string;
+  gameTime: number;
+  details: Record<string, unknown>;
+  relatedType: string | null;
+  relatedId: number | null;
+}
+
 export interface PreviewView {
   characterId: number;
   name: string;

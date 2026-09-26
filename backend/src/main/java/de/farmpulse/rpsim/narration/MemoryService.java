@@ -52,6 +52,7 @@ public class MemoryService {
     static String trustText(TrustEvent e) {
         return switch (e.getReason()) {
             case ON_TIME_PAYMENT -> "Rate pünktlich bezahlt";
+            case ON_TIME_PAYMENT_REVERSED -> "Rate konnte nicht abgebucht werden";
             case MISSED_PAYMENT, PAYMENT_ESCALATION -> "Zahlungsverzug beim Kredit";
             case PROMISE_KEPT -> "Zusage eingehalten";
             case PROMISE_BROKEN -> "Zusage gebrochen";

@@ -60,6 +60,24 @@ public class PayrollScheduler {
         paySalaries(sg);
     }
 
+    /**
+     * T-03: the mod could not book a salary (e.g. insufficient funds). The salary stays due and the regular
+     * salary-delay logic applies (payFairness malus once per overdue episode).
+     */
+    @Transactional
+    public boolean onSalaryFailed(Long employeeId) {
+        Employee emp = employees.findById(employeeId).orElse(null);
+        if (emp == null || emp.getStatus() != EmployeeStatus.ACTIVE) {
+            return false;
+        }
+        emp.setNextSalaryDueGameTime(emp.getNextSalaryDueGameTime() - gameTime.msPerMonth());
+        if (!emp.isSalaryOverdue()) {
+            emp.setSalaryOverdue(true);
+            satisfaction.salaryOverdue(emp);
+        }
+        return true;
+    }
+
     @Transactional
     public void paySalaries(Savegame sg) {
         long now = sg.getCurrentGameTime();

@@ -52,6 +52,21 @@ class CreditScoringServiceTest {
         assertThat(in.balance()).isEqualTo(110_000);
     }
 
+    /** TODO T-04: leasing costs are an obligation; leased vehicles are not part of the assets. */
+    @Test
+    void leasingCostsCountAsExistingObligation() {
+        String facts = TestData.farmFacts(sg.getBridgeSavegameId(), now, 50_000).replace(
+                "\"vanillaLoan\": { \"active\": true, \"remainingAmount\": 80000 }",
+                "\"vanillaLoan\": { \"active\": true, \"remainingAmount\": 80000 },"
+                        + " \"leasing\": [{ \"uniqueId\": \"veh_1\", \"costPerPeriod\": 1200 }, { \"uniqueId\": \"veh_2\" }]");
+        fx.snapshot(sg, now, 50_000, facts);
+        CreditFormula.Inputs in = scoring.inputs(sg, 10_000, 12, 0.05);
+        assertThat(in.existingMonthlyInstallments()).isCloseTo(1_200, within(1e-6));
+        String without = TestData.farmFacts(sg.getBridgeSavegameId(), now + 1, 50_000);
+        fx.snapshot(sg, now + 1, 50_000, without);
+        assertThat(scoring.inputs(sg, 10_000, 12, 0.05).existingMonthlyInstallments()).isZero();
+    }
+
     @Test
     void historyShorterThanTheMinimumCountsAsNoHistory() {
         snapshotAt(now - GameTime.hours(12), 100_000);

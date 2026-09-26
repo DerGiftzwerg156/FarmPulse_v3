@@ -55,3 +55,17 @@ test('values drift over time deterministically with the same seed', () => {
 test('unknown scenario is rejected', () => {
   assert.throws(() => new BridgeSimulator({ dir: tmp(), scenario: 'nope' }), /unknown scenario/);
 });
+
+test('leasing-hof exports leased vehicles as liabilities, not as assets (TODO T-04)', () => {
+  const facts = new BridgeSimulator({ dir: tmp(), scenario: 'leasing-hof' }).buildFarmFacts();
+  assert.deepEqual(facts.assets.vehicles.map((v) => v.uniqueId), ['veh_00001']);
+  assert.deepEqual(facts.liabilities.leasing, [{ uniqueId: 'veh_00101' }, { uniqueId: 'veh_00102' }]);
+});
+
+test('market_context is re-written on a regular tick only when it changed (TODO T-01)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
+  sim.start();
+  assert.equal(sim.exportMarketContext(false), null);
+  sim.farmlands[0].ownerFarmId = sim.farmlands[0].ownerFarmId === 1 ? 0 : 1;
+  assert.notEqual(sim.exportMarketContext(false), null);
+});

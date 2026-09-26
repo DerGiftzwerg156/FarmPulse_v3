@@ -39,6 +39,24 @@ Kredit genehmigt, aber das Geld fehlt im Spiel?
 - Jede Anweisung wird genau einmal ausgeführt – auch nach einem Neustart des Spiels. Bereits ausgeführte stehen
   im Spielstand in `FS25_RPSim.xml`.
 - Zusammengehörige Buchungen (z. B. Feld und Kaufpreis) werden nur gemeinsam ausgeführt oder gar nicht.
+- **Zu wenig Geld:** Eine Abbuchung, die dein Kontostand nicht deckt, führt der Mod nicht aus. Das Dashboard zeigt
+  dann unter *Hinweise aus dem Spiel* „Buchung nicht ausgeführt“. FarmPulse behandelt das wie eine verpasste
+  Zahlung: Eine Kreditrate bleibt fällig und läuft in die Mahnstufen, ein Gehalt bleibt offen, ein Feldkauf platzt.
+
+## Spielstand ohne Speichern neu geladen
+
+Hast du FS25 beendet, ohne zu speichern, oder einen älteren Spielstand geladen, fehlen im Spiel die Buchungen, die
+seitdem ausgeführt wurden (z. B. eine Kreditauszahlung), obwohl FarmPulse sie schon kennt. FarmPulse erkennt den
+Zeitsprung zurück:
+
+- **Bis zu einem Spieltag** zurück: Die fehlenden Buchungen werden automatisch erneut gesendet. Das Dashboard
+  zeigt einen Hinweis, wie viele es waren.
+- **Mehr als ein Spieltag** zurück: Das Dashboard fragt dich: **Nachbuchen** (die Buchungen werden im Spiel erneut
+  ausgeführt) oder **Tool-Stand beibehalten** (nichts wird nachgebucht).
+
+Wichtig: Nur die Buchungen im Spiel werden wiederhergestellt. Mails, Vertrauen, Verhandlungen und alle anderen
+Abläufe im Tool werden **nicht** zurückgedreht. Die Schwelle ist einstellbar
+(`rpsim.bridge.rewind-auto-resend-max-hours`).
 
 ## Die KI antwortet nicht (oder klingt nach Vorlage)
 

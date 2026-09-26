@@ -23,6 +23,14 @@ export class ApiService {
     return this.get<M.SavegameView | null>('/savegame');
   }
 
+  // notices (bridge problems / decisions)
+  notices(): Observable<M.NoticeView[]> {
+    return this.get('/notices');
+  }
+  resolveNotice(id: number, action: string): Observable<M.NoticeView> {
+    return this.post(`/notices/${id}/resolve`, { action });
+  }
+
   // onboarding
   createOnboarding(r: M.OnboardingRequest): Observable<M.OnboardingView> {
     return this.post('/onboarding', r);

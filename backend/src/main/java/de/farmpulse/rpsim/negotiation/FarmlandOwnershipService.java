@@ -10,6 +10,7 @@ import de.farmpulse.rpsim.bridge.BridgeDtos.FarmFacts;
 import de.farmpulse.rpsim.bridge.BridgeDtos.MarketContext;
 import de.farmpulse.rpsim.bridge.BridgeEvents;
 import de.farmpulse.rpsim.bridge.FactsService;
+import de.farmpulse.rpsim.bridge.RewindService;
 import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
@@ -42,10 +43,11 @@ public class FarmlandOwnershipService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final JsonMapper json;
+    private final RewindService rewinds;
 
     public FarmlandOwnershipService(FarmlandOwnershipRepository repo, SavegameRepository savegames, FactsService facts,
                                     OutboxInstructionRepository outbox, CharacterLookup lookup, RandomSource random,
-                                    RpsimProperties props, JsonMapper json) {
+                                    RpsimProperties props, JsonMapper json, RewindService rewinds) {
         this.repo = repo;
         this.savegames = savegames;
         this.facts = facts;
@@ -54,6 +56,7 @@ public class FarmlandOwnershipService {
         this.random = random;
         this.props = props;
         this.json = json;
+        this.rewinds = rewinds;
     }
 
     @EventListener
@@ -84,6 +87,8 @@ public class FarmlandOwnershipService {
         Set<Integer> playerOwned = new HashSet<>();
         latest.ifPresent(f -> f.assets().farmland().forEach(fl -> playerOwned.add(fl.farmlandId())));
         Set<Integer> pending = pendingTransfers(sg);
+        // T-02: after a reload the game shows the old owner until the lost transfer is re-sent / decided
+        pending.addAll(rewinds.farmlandsOnHold(sg));
         List<Character> npcs = lookup.activeDynamic(sg);
         if (ctx.isPresent()) {
             for (BridgeDtos.MapFarmland mf : ctx.get().farmlands()) {

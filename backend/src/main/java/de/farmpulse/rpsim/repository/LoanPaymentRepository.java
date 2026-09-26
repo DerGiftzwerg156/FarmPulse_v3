@@ -1,6 +1,7 @@
 package de.farmpulse.rpsim.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import de.farmpulse.rpsim.domain.Loan;
 import de.farmpulse.rpsim.domain.LoanPayment;
@@ -13,4 +14,6 @@ public interface LoanPaymentRepository extends JpaRepository<LoanPayment, Long> 
     List<LoanPayment> findByLoanOrderByGameTimeAscIdAsc(Loan loan);
 
     long countBySavegameAndType(Savegame savegame, LoanPaymentType type);
+
+    Optional<LoanPayment> findFirstByInstructionId(String instructionId);
 }

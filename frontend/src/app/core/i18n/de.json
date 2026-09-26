@@ -151,7 +151,8 @@
     "loanStatus": {
       "ACTIVE": "Laufend",
       "PAID_OFF": "Abbezahlt",
-      "CALLED": "Gekündigt"
+      "CALLED": "Gekündigt",
+      "DEFAULTED": "Nicht eingezogen"
     },
     "loanPaymentType": {
       "DISBURSEMENT": "Auszahlung",
@@ -159,7 +160,8 @@
       "MISSED": "Rate verpasst",
       "PENALTY": "Mahngebühr",
       "CALLBACK": "Fälligstellung",
-      "DEFERRAL": "Stundung"
+      "DEFERRAL": "Stundung",
+      "REVERSED": "Nicht gebucht"
     },
     "postingStatus": {
       "OPEN": "Offen",
@@ -186,7 +188,8 @@
       "REJECTED": "Abgelehnt",
       "WITHDRAWN": "Zurückgezogen",
       "LOST": "Verloren",
-      "EXPIRED": "Abgelaufen"
+      "EXPIRED": "Abgelaufen",
+      "FAILED": "Geplatzt"
     },
     "offerResult": {
       "ACCEPTED": "Angenommen",
@@ -284,6 +287,24 @@
       "ROTATION": "Dorf",
       "PLAYER_NOTE": "Eigene Notizen",
       "OTHER": "Sonstiges"
+    },
+    "moneyReason": {
+      "CREDIT_DISBURSEMENT": "Kreditauszahlung",
+      "CREDIT_INSTALLMENT": "Kreditrate",
+      "CREDIT_PENALTY": "Mahngebühr",
+      "CREDIT_CALLBACK": "Fälligstellung",
+      "SALARY_PAYMENT": "Gehalt",
+      "EMPLOYEE_EFFECT": "Arbeitsleistung",
+      "SUBSIDY": "Förderung",
+      "STARTING_CAPITAL_ADJUSTMENT": "Ausgleich Startkapital",
+      "FARMLAND_PURCHASE": "Feldkauf",
+      "FARMLAND_SALE": "Feldverkauf",
+      "OTHER": "Sonstiges"
+    },
+    "instructionType": {
+      "MONEY_TRANSACTION": "Buchung",
+      "PRICE_EVENT": "Preis-Ereignis",
+      "FARMLAND_TRANSFER": "Feldübertragung"
     }
   },
   "onboarding": {
@@ -633,5 +654,25 @@
     "saved": "Gespeichert.",
     "game": "Spielstand",
     "toneFixed": "Der Ton wurde im Onboarding festgelegt und bleibt für diesen Spielstand fest."
+  },
+  "notices": {
+    "title": "Hinweise aus dem Spiel",
+    "REWIND_DECISION": {
+      "title": "Älterer Spielstand geladen",
+      "text": "Der Spielstand springt von {from} zurück auf {to}. {count} Buchungen über insgesamt {money} fehlen dadurch im Spiel."
+    },
+    "REWIND_RESENT": {
+      "title": "Spielstand ohne Speichern neu geladen",
+      "text": "{count} Buchungen über insgesamt {money} fehlten im Spiel und wurden erneut gesendet."
+    },
+    "INSTRUCTION_FAILED": {
+      "title": "Buchung nicht ausgeführt",
+      "text": "{what} {amount} wurde im Spiel nicht ausgeführt: {reason}."
+    },
+    "insufficientFunds": "zu wenig Geld auf dem Konto",
+    "rewindHint": "Nur die Buchungen im Spiel werden wiederhergestellt – Mails, Vertrauen und Verhandlungen bleiben auf dem Stand des Tools.",
+    "resend": "Nachbuchen",
+    "keep": "Tool-Stand beibehalten",
+    "dismiss": "Verstanden"
   }
 }

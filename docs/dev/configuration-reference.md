@@ -16,6 +16,8 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.bridge.path` | `../tools/bridge-simulator/runtime/modSettings/FS25_RPSim` | Folder `modSettings/FS25_RPSim` (contains `export/` and `import/`). `dev`: simulator runtime folder; `prod`: `~/Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim`. | Datei-Bridge |
 | `rpsim.bridge.poll-interval-ms` | `2000` | Real-time interval (ms) in which the backend reads the bridge files. The only real-time timer - all game logic runs on game time. | Datei-Bridge |
 | `rpsim.bridge.enabled` | `true` | Runs the bridge scheduler; `false` in unit tests. | Datei-Bridge |
+| `rpsim.bridge.rewind-auto-resend-max-hours` | `24` | Savegame reloaded without saving (game time jumps back): bookings lost by a rewind up to this many game hours are re-sent automatically; deeper rewinds show a decision card on the dashboard ("nachbuchen" / "Tool-Stand beibehalten"). | TODO T-02 |
+| `rpsim.bridge.rewind-lookback-hours` | `24` | Bookings acknowledged up to this many game hours before the reloaded point are checked as well (the first export after loading happens slightly after the saved point). Must stay below the mod's `processedRetentionGameDays`. | TODO T-02 |
 
 ## `rpsim.web` – Web
 

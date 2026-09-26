@@ -7,5 +7,7 @@ public enum NegotiationStatus {
     REJECTED,
     WITHDRAWN,
     LOST,
-    EXPIRED
+    EXPIRED,
+    /** T-03: agreed, but the mod could not execute the deal (e.g. insufficient funds) - nothing changed hands. */
+    FAILED
 }

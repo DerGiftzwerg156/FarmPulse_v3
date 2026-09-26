@@ -32,4 +32,12 @@ public class LoanPayment extends SavegameScoped {
 
     @Column(name = "instruction_id", length = 64)
     private String instructionId;
+
+    /** Principal share of an installment (T-03: needed to reverse a payment the mod could not execute). */
+    @Column(name = "principal_part")
+    private Long principalPart;
+
+    /** Whether this installment earned the on-time trust bonus (reversed together with the payment). */
+    @Column(name = "trust_bonus_given")
+    private Boolean trustBonusGiven;
 }

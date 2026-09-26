@@ -40,6 +40,22 @@ export const SCENARIOS = {
       BARLEY: { amount: 90000, capacity: 100000 } },
     drift: { income: 9000, expense: 5000 },
   },
+  'leasing-hof': {
+    description: 'Maschinenpark teils geleast: geleaste Fahrzeuge zählen nicht als Vermögen (TODO T-04).',
+    balance: 150000, vanillaLoan: 0, ownedFarmlands: [2, 3],
+    vehicles: [vehicle(1, 120000, 0.1)],
+    leasedVehicles: [{ uniqueId: 'veh_00101' }, { uniqueId: 'veh_00102' }],
+    placeables: [{ uniqueId: 'plc_00001', value: 60000 }],
+    animals: [], storage: { WHEAT: { amount: 20000, capacity: 50000 } },
+    drift: { income: 2000, expense: 1800 },
+  },
+  'knappe-kasse': {
+    description: 'Fast leeres Konto: Abbuchungen scheitern mit INSUFFICIENT_FUNDS (TODO T-03).',
+    balance: 500, vanillaLoan: 0, ownedFarmlands: [4],
+    vehicles: [vehicle(1, 30000, 0.4)],
+    placeables: [], animals: [], storage: {},
+    drift: { income: 0, expense: 0 },
+  },
   'voller-silobestand': {
     description: 'Fokus Warenbestand: mittlere Liquidität, sehr volle Silos mit mehreren Fruchtarten.',
     balance: 60000, vanillaLoan: 0, ownedFarmlands: [2, 6],

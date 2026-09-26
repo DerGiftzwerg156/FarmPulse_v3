@@ -3,12 +3,23 @@
 Normative description of the four bridge files as implemented. Source: technical concept, chapter
 "Datei-Bridge (Mod ↔ Backend)". All files are UTF-8 JSON and carry `savegameId`.
 
-## Atomic writes
+## Writing and reading
 
-Writers write `<file>.tmp` and rename it over `<file>`. If `os.rename` is unavailable in the FS25 sandbox
-the mod falls back to the marker strategy: `<file>.ready` is deleted, `<file>` written, `<file>.ready`
-created. Readers must tolerate partially written files anyway: every reader validates the JSON and simply
-retries on the next cycle.
+The FS25 Lua sandbox has no `os` module (`os.time`, `os.date`, `os.rename`, `os.remove` are missing - see the
+FS25_UsedPlus AI coding reference, `pitfalls/what-doesnt-work.md`). The mod therefore writes every file directly
+with `io.open` (write mode `direct`, the same approach as the FS25 Farm Dashboard mod) and creates no helper files.
+The modes `rename`, `marker` and `auto` remain for tests/tools only. The backend and the simulator write
+`<file>.tmp` and rename it over `<file>`.
+
+Readers must tolerate partially written files: every reader validates the JSON and simply retries on the next
+cycle (`BridgeFiles.read`).
+
+## Timing
+
+The mod starts the bridge only when the mission has started (`Mission00.onStartMission`; farms, vehicles and
+placeables of the savegame do not exist earlier). The first export writes `market_context.json`,
+`farm_facts.json` and `instructions_ack.json` immediately. The bridge folder is
+`getUserProfileAppPath() .. "modSettings/FS25_RPSim/"` and is written to `log.txt` on load.
 
 ## `export/farm_facts.json` (mod → backend, every ~60 s)
 
@@ -22,16 +33,21 @@ retries on the next cycle.
     "animals":    [{ "husbandryUniqueId": "hus_00003", "type": "COW", "count": 24, "estimatedValue": 96000 }],
     "storage":    [{ "fillType": "WHEAT", "amount": 42000, "capacity": 50000 }]
   },
-  "liabilities": { "vanillaLoan": { "active": true, "remainingAmount": 80000 } },
+  "liabilities": { "vanillaLoan": { "active": true, "remainingAmount": 80000 },
+                   "leasing": [{ "uniqueId": "veh_00077" }] },
   "prices": [{ "sellPoint": "MillNorth", "fillType": "WHEAT", "currentPrice": 215 }] }
 ```
 
 - `gameTime`: in-game milliseconds since savegame start (stops while paused). 1 game day = 86 400 000.
+- `vehicles`: only vehicles the farm **owns** (`VehiclePropertyState.OWNED`); leased vehicles are no assets.
+- `liabilities.leasing`: leased vehicles (`VehiclePropertyState.LEASED`). `costPerPeriod` (per FS25 period) is
+  optional and currently not exported - there is no verified FS25 API for per-vehicle leasing costs yet (manual
+  test plan). The backend counts known costs as an obligation in the credit check.
 - `condition`: 0–100 (100 = no damage).
 - `storage`: classic silos only, aggregated per fill type (liters).
 - `currentPrice`: price per 1000 liters currently paid at the sell point (incl. active RPSim events).
 
-## `export/market_context.json` (mod → backend, on load + after each `FARMLAND_TRANSFER`)
+## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, and on every `farm_facts` cycle when its content changed)
 
 ```json
 { "savegameId": "...", "mapName": "Erlengrund",
@@ -73,7 +89,25 @@ The backend removes instructions from the file once they are acknowledged.
                         "endReason": "DEADLINE_REACHED" }] }
 ```
 
-`status` ∈ `APPLIED`, `REJECTED` (validation failed, `message` explains), `FAILED` (engine call failed).
+`status` ∈ `APPLIED`, `REJECTED` (validation failed, `message` explains), `FAILED` (not executed: engine call failed,
+or `message` = `INSUFFICIENT_FUNDS` when the debits of the batch exceed the farm balance - the whole batch is then
+not executed).
 `endReason` ∈ `DEADLINE_REACHED`, `MAX_QUANTITY_REACHED`. The file always contains every instruction still
 inside the retention window (default 30 game days), so a missed file version never loses information.
 Whether an instruction was executed is decided solely by the mod's persisted `processedInstructions` list.
+
+## Backend reactions
+
+- **FAILED / REJECTED acks** (`FailedInstructionService`): loan installment → reversed and due again (escalation
+  ladder), penalty → next escalation stage, call-back → loan `DEFAULTED` (collected as soon as liquidity allows),
+  salary → stays due (salary delay logic), farmland deal → negotiation `FAILED`, ownership back to the previous
+  owner. Every refused instruction raises a dashboard notice. After an `INSUFFICIENT_FUNDS` ack the snapshot
+  balance is not trusted until a newer `farm_facts.json` arrived.
+- **Savegame reloaded without saving** (`RewindService`): `farm_facts.json` with a game time earlier than the last
+  snapshot is a rewind. The next `instructions_ack.json` rebuilt by the mod from the reloaded savegame shows which
+  acknowledged instructions are missing; an ack file still written before the reload (it contains acks later than
+  the reloaded point with their original time) is skipped. Missing `MONEY_TRANSACTION`, `PRICE_EVENT` and
+  `FARMLAND_TRANSFER` instructions go back to `PENDING` with the **same** `instructionId`; the mod executes them
+  again because they are not in its reloaded `processedInstructions`. Rewinds up to
+  `rpsim.bridge.rewind-auto-resend-max-hours` are handled automatically, deeper ones wait for the player's decision
+  on the dashboard. All other tool state (mails, trust, negotiations) is not rolled back.

@@ -41,6 +41,17 @@ public class RpsimProperties {
         private long pollIntervalMs = 2000;
         /** Whether the bridge scheduler runs (disabled in unit tests). */
         private boolean enabled = true;
+        /**
+         * T-02: a savegame reloaded without saving moves game time backwards. Lost bookings of a rewind up to this
+         * many game hours are re-sent automatically; deeper rewinds ask the player.
+         */
+        private double rewindAutoResendMaxHours = 24;
+        /**
+         * T-02: bookings acknowledged up to this many game hours before the reloaded point are also checked (the
+         * first export after loading happens slightly after the saved point). Must stay below the mod's
+         * processedRetentionGameDays.
+         */
+        private double rewindLookbackHours = 24;
     }
 
     @Getter @Setter

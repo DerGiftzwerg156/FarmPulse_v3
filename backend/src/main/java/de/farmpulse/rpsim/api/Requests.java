@@ -34,6 +34,10 @@ public final class Requests {
     public record RerollRequest(Long characterId) {
     }
 
+    /** Resolution of a dashboard notice: RESEND / KEEP (rewind decision) or DISMISS. */
+    public record NoticeActionRequest(@NotBlank String action) {
+    }
+
     public record ConfirmRequest(@NotBlank String savegameId) {
     }
 

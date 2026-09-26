@@ -25,7 +25,7 @@ node src/cli.js --help
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--dir` | `./runtime/modSettings/FS25_RPSim` | Bridge folder (the backend `dev` profile points here) |
-| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand` |
+| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse` |
 | `--interval` | `5000` | Real-time ms between cycles |
 | `--game-minutes-per-tick` | `60` | Game time advanced per cycle |
 | `--savegame-id` | `map_erlengrund_sim_<scenario>` | Simulated savegame id |
@@ -35,8 +35,9 @@ node src/cli.js --help
 | `--reset` | – | Forget previous simulator state (processed instructions, balances) |
 
 Each cycle: game time advances, balance/prices/vehicle wear drift slightly, `instructions.json` is applied,
-`instructions_ack.json` and `farm_facts.json` are written. `market_context.json` is written on start and
-after every applied `FARMLAND_TRANSFER`. Simulator state (the equivalent of the savegame XML) is kept in
+`instructions_ack.json` and `farm_facts.json` are written. `market_context.json` is written on start, after
+every applied `FARMLAND_TRANSFER` and on every cycle in which its content changed. Like the mod, the simulator
+refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simulator state (the equivalent of the savegame XML) is kept in
 `simulator_savegame.json` inside the bridge folder.
 
 ## Scenarios
@@ -47,6 +48,8 @@ after every applied `FARMLAND_TRANSFER`. Simulator state (the equivalent of the 
 | `verschuldeter-hof` | Active vanilla loan (320 000), little equity, tight liquidity |
 | `wohlhabender-hof` | High liquidity, large machine park, full silos |
 | `voller-silobestand` | Focus on storage valuation: very full silos with several fill types |
+| `leasing-hof` | Part of the machines leased: exported as `liabilities.leasing`, not as assets (TODO T-04) |
+| `knappe-kasse` | Nearly empty account: debits fail with `INSUFFICIENT_FUNDS` (TODO T-03) |
 
 ## Control API (manual testing / E2E)
 
@@ -57,6 +60,8 @@ after every applied `FARMLAND_TRANSFER`. Simulator state (the equivalent of the 
 | `POST /tick {"gameMinutes": 0}` | Run one cycle immediately |
 | `POST /sell {"sellPoint":"MillNorth","fillType":"WHEAT","liters":8000}` | Simulate a sale (fixed-contract tracking) |
 | `POST /balance {"balance": 50000}` | Force the bank balance |
+| `POST /save` | "Save the game" in FS25 (snapshot of the game state incl. the mod's processed list) |
+| `POST /reload-without-saving` | Quit without saving and load the last save: game time, money and processed instructions go back (TODO T-02) |
 
 ## Running the whole tool without FS25
 

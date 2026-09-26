@@ -67,6 +67,13 @@ export function validateInstruction(ins) {
   }
 }
 
+/** Mod parity (RPSimInstructions.checkFunds): the net money change of a batch must not push the balance below 0. */
+export function fundsCover(balance, items) {
+  const net = items.filter((i) => i?.type === 'MONEY_TRANSACTION' && typeof i.amount === 'number')
+    .reduce((s, i) => s + i.amount, 0);
+  return !(net < 0 && balance + net < 0);
+}
+
 export class BridgeSimulator {
   constructor({ dir, scenario = 'wohlhabender-hof', savegameId, seed = 42, startGameTime = MS_PER_GAME_DAY,
     retentionGameDays = 30, log = () => {} } = {}) {
@@ -92,6 +99,7 @@ export class BridgeSimulator {
     this.vanillaLoan = preset.vanillaLoan;
     this.drift = preset.drift;
     this.vehicles = preset.vehicles.map((v) => ({ ...v }));
+    this.leasedVehicles = (preset.leasedVehicles ?? []).map((v) => ({ ...v }));
     this.placeables = preset.placeables.map((p) => ({ ...p }));
     this.animals = preset.animals.map((a) => ({ ...a }));
     this.storage = structuredClone(preset.storage);
@@ -102,7 +110,33 @@ export class BridgeSimulator {
     this.priceEvents = [];
     this.contractReports = [];
     this.moneyLog = [];
+    this.lastMarketContextJson = null;
     this.loadSavegame();
+    this.savedGame = this.gameState();
+  }
+
+  // --------------------------------------------------------------- FS25 "save" / "load without saving" (TODO T-02)
+  /** Everything the FS25 savegame (incl. the mod's FS25_RPSim.xml) would contain. */
+  gameState() {
+    return structuredClone({ gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
+      vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
+      storage: this.storage, farmlands: this.farmlands, processed: this.processed, priceEvents: this.priceEvents,
+      contractReports: this.contractReports });
+  }
+
+  /** The player saves the game in FS25. */
+  saveGame() {
+    this.savedGame = this.gameState();
+    return this.savedGame.gameTime;
+  }
+
+  /** The player quits without saving and loads the last save: game state and the mod's processed list go back. */
+  reloadWithoutSaving() {
+    Object.assign(this, structuredClone(this.savedGame));
+    this.lastMarketContextJson = null;
+    this.start();
+    this.saveSavegame();
+    return this.gameTime;
   }
 
   // --------------------------------------------------------------- persistence (simulated savegame XML)
@@ -113,7 +147,8 @@ export class BridgeSimulator {
       if (s.savegameId !== this.savegameId) return;
       Object.assign(this, { processed: s.processed ?? {}, priceEvents: s.priceEvents ?? [],
         contractReports: s.contractReports ?? [] });
-      for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'placeables', 'animals', 'storage', 'farmlands']) {
+      for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
+        'storage', 'farmlands']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -124,7 +159,8 @@ export class BridgeSimulator {
   saveSavegame() {
     const s = { savegameId: this.savegameId, processed: this.processed, priceEvents: this.priceEvents,
       contractReports: this.contractReports, gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
-      vehicles: this.vehicles, placeables: this.placeables, animals: this.animals, storage: this.storage, farmlands: this.farmlands };
+      vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
+      storage: this.storage, farmlands: this.farmlands };
     this.writeJson(this.paths.savegame, s);
   }
 
@@ -231,7 +267,11 @@ export class BridgeSimulator {
         animals: this.animals.map((a) => ({ ...a })),
         storage,
       },
-      liabilities: { vanillaLoan: { active: this.vanillaLoan > 0, remainingAmount: Math.round(this.vanillaLoan) } },
+      liabilities: { vanillaLoan: { active: this.vanillaLoan > 0, remainingAmount: Math.round(this.vanillaLoan) },
+        // leased vehicles are no assets (TODO T-04); leasing costs stay absent until the FS25 API is verified
+        leasing: this.leasedVehicles.map((v) => ({ uniqueId: v.uniqueId,
+          ...(typeof v.costPerPeriod === 'number' ? { costPerPeriod: v.costPerPeriod } : {}) }))
+          .sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)) },
       prices,
     };
   }
@@ -255,11 +295,15 @@ export class BridgeSimulator {
     return doc;
   }
 
-  exportMarketContext() {
+  /** Like the mod: written on start / after FARMLAND_TRANSFER (force) and otherwise only when its content changed. */
+  exportMarketContext(force = true) {
     const doc = this.buildMarketContext();
     const err = validate('marketContext', doc);
     if (err) throw new Error(`market_context.json does not match schema: ${err}`);
+    const text = JSON.stringify(doc);
+    if (!force && text === this.lastMarketContextJson) return null;
     this.writeJson(this.paths.marketContext, doc);
+    this.lastMarketContextJson = text;
     return doc;
   }
 
@@ -348,6 +392,11 @@ export class BridgeSimulator {
             res.rejected += pending.length;
           } else if (pending.some((ins) => ins.gameTimeEarliest !== undefined && ins.gameTimeEarliest > this.gameTime)) {
             res.deferred += pending.length;
+          } else if (!fundsCover(this.balance, pending)) {
+            // like the mod (TODO T-03): debits the balance does not cover are refused for the whole batch
+            this.log(`WARN batch not executed: INSUFFICIENT_FUNDS`);
+            mark('FAILED', 'INSUFFICIENT_FUNDS');
+            res.rejected += pending.length;
           } else {
             for (const ins of pending) {
               const err = this.applyOne(ins);
@@ -407,6 +456,7 @@ export class BridgeSimulator {
     this.advance(gameMs);
     const res = this.processInstructions();
     this.exportFarmFacts();
+    this.exportMarketContext(false);
     return res;
   }
 
