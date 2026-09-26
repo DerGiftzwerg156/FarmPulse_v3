@@ -1,0 +1,83 @@
+name: release
+
+# Builds the player bundle with tools/release/build-release.sh (see docs/dev/setup.md, "Release build").
+#   - push of a tag v<version> (e.g. v1.1.0): publishes a GitHub Release with FarmPulse-<version>.zip and
+#     FS25_RPSim.zip; the tag must match the project version, the release notes come from CHANGELOG.md
+#   - manual run (workflow_dispatch): build only, the ZIPs are attached to the run as workflow artifact
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # gh release create
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'   # Angular CLI 22 needs Node >= 22.22.3
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            tools/bridge-simulator/package-lock.json
+      # the backend E2E test drives the real bridge simulator (skipped without Node)
+      - name: Bridge simulator dependencies
+        working-directory: tools/bridge-simulator
+        run: npm ci
+      - name: Version
+        id: version
+        run: |
+          VERSION="$(node -p "require('./frontend/package.json').version")"
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$VERSION" ]]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match the project version $VERSION (expected v$VERSION)"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      # also checks that pom.xml, package.json, modDesc.xml and CHANGELOG.md agree on the version
+      - name: Build release (incl. backend tests)
+        run: tools/release/build-release.sh
+      - name: Release notes from CHANGELOG.md
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { f = 1; next }
+            f && /^## \[/ { exit }
+            f { print }
+          ' CHANGELOG.md > release/RELEASE_NOTES.md
+          test -s release/RELEASE_NOTES.md
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: FarmPulse-${{ steps.version.outputs.version }}
+          path: |
+            release/FarmPulse-${{ steps.version.outputs.version }}.zip
+            release/FS25_RPSim.zip
+            release/RELEASE_NOTES.md
+          if-no-files-found: error
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
+            --title "FarmPulse $VERSION" \
+            --notes-file release/RELEASE_NOTES.md \
+            "release/FarmPulse-$VERSION.zip" \
+            release/FS25_RPSim.zip

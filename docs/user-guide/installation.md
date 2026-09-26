@@ -21,7 +21,7 @@ Netzwerkverbindung ins Spiel und dein API-Schlüssel landet nie im Mod-Ordner.
 
 ## 1. Release entpacken
 
-Lade `FarmPulse-<version>.zip` von der Releases-Seite und entpacke es z. B. nach `C:\FarmPulse`. Inhalt:
+Lade `FarmPulse-<version>.zip` von der [Releases-Seite](https://github.com/DerGiftzwerg156/FarmPulse_v3/releases) und entpacke es z. B. nach `C:\FarmPulse`. Inhalt:
 
 ```
 FarmPulse-<version>/
