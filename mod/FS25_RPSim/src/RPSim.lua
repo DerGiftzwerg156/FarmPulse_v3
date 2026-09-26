@@ -18,8 +18,14 @@ local function savegameXmlPath()
 end
 
 local function loadConfig(paths)
-    local text = RPSimFileIO.read(paths.configFile)
-    local overrides = text ~= nil and RPSimJson.tryDecode(text) or nil
+    local text = RPSimFileIO.readPayload(paths.configFile)
+    local overrides = nil
+    if text ~= nil and text ~= "" then
+        overrides = RPSimJson.tryDecode(text)
+        if overrides == nil then
+            RPSimLog.warning("Ignoring unreadable %s, using defaults", paths.configFile)
+        end
+    end
     return RPSimConfig.new(overrides)
 end
 
@@ -28,7 +34,7 @@ local function modSettingsDir()
     return RPSimBridgePaths.resolveModSettingsDir(g_modSettingsDirectory, profile) or "modSettings/"
 end
 
-function RPSim:loadMap(_)
+local function loadMapImpl(self)
     self.adapter = RPSimGameAdapter.new()
     local paths = RPSimBridgePaths.new(modSettingsDir())
     RPSimFileIO.ensureDir(paths.base)
@@ -63,6 +69,16 @@ function RPSim:loadMap(_)
         self.bridge:onSavegameLoaded()
     end
     RPSimLog.info("Loaded, savegameId=%s", state.savegameId)
+end
+
+--- A mod error during loadMap must never block loading the savegame: the engine aborts its load callback and
+-- the loading screen hangs. On failure the mod stays inactive for this session.
+function RPSim:loadMap(name)
+    local ok, err = pcall(loadMapImpl, self, name)
+    if not ok then
+        self.bridge = nil
+        RPSimLog.error("Start failed, RPSim is inactive for this session: %s", tostring(err))
+    end
 end
 
 --- Mission00.onStartMission (appended): the savegame is completely loaded, run the first export.

@@ -50,6 +50,14 @@ public class BridgeFiles {
         return base().resolve("import").resolve("instructions.json");
     }
 
+    /**
+     * The instructions as the mod reads them: FS25 blocks {@code io.open} in read mode, so the mod can only read
+     * XML files (engine XML API). The JSON document is wrapped in {@code <rpsim><json>...</json></rpsim>}.
+     */
+    public Path instructionsXml() {
+        return base().resolve("import").resolve("instructions.xml");
+    }
+
     public Path ack() {
         return base().resolve("import").resolve("instructions_ack.json");
     }
@@ -83,16 +91,36 @@ public class BridgeFiles {
     /** Atomic write (tmp file + atomic move); falls back to a plain replace if atomic moves are unsupported. */
     public void writeAtomic(Path path, Object doc) {
         try {
-            Files.createDirectories(path.getParent());
-            Path tmp = path.resolveSibling(path.getFileName() + ".tmp");
-            Files.writeString(tmp, json.writerWithDefaultPrettyPrinter().writeValueAsString(doc), StandardCharsets.UTF_8);
-            try {
-                Files.move(tmp, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException e) {
-                Files.move(tmp, path, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (IOException e) {
+            writeTextAtomic(path, json.writerWithDefaultPrettyPrinter().writeValueAsString(doc));
+        } catch (IOException | JacksonException e) {
             log.warn("Could not write bridge file {}: {}", path, e.getMessage());
+        }
+    }
+
+    /** Atomically writes the document as compact JSON inside the XML wrapper the mod reads (see instructionsXml). */
+    public void writeAtomicXmlPayload(Path path, Object doc) {
+        try {
+            writeTextAtomic(path, xmlPayload(json.writeValueAsString(doc)));
+        } catch (IOException | JacksonException e) {
+            log.warn("Could not write bridge file {}: {}", path, e.getMessage());
+        }
+    }
+
+    /** Wraps JSON text in {@code <rpsim><json>...</json></rpsim>}; the mod reads it with getString("rpsim.json"). */
+    static String xmlPayload(String jsonText) {
+        String escaped = jsonText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        return "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<rpsim>\n    <json>" + escaped
+                + "</json>\n</rpsim>\n";
+    }
+
+    private static void writeTextAtomic(Path path, String text) throws IOException {
+        Files.createDirectories(path.getParent());
+        Path tmp = path.resolveSibling(path.getFileName() + ".tmp");
+        Files.writeString(tmp, text, StandardCharsets.UTF_8);
+        try {
+            Files.move(tmp, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tmp, path, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 }

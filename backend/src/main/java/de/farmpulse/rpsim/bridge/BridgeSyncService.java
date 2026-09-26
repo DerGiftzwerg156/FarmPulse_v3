@@ -230,7 +230,8 @@ public class BridgeSyncService {
         InstructionsDocument doc = new InstructionsDocument(bridgeId, envelopes);
         String key = bridgeId + envelopes;
         if (!key.equals(lastInstructionsWritten)) {
-            files.writeAtomic(files.instructions(), doc);
+            files.writeAtomic(files.instructions(), doc);         // human-readable, simulator/tooling
+            files.writeAtomicXmlPayload(files.instructionsXml(), doc); // what the FS25 mod reads
             lastInstructionsWritten = key;
         }
         return envelopes.size();

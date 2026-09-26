@@ -10,6 +10,15 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Savegame loading hung (mod):** FS25 blocks `io.open` in read mode ("io.open, only write mode ('w') is allowed")
+  and hands out an object without `read`; reading `rpsim_config.json` in `loadMap` raised, the engine aborted its
+  load callback and the loading screen stopped. The mod now reads only XML files with the engine XML API:
+  `import/instructions.xml` (written by the backend next to `instructions.json`) and `rpsim_config.xml`
+  (replaces `rpsim_config.json`), both wrapping the JSON text in `<rpsim><json>...</json></rpsim>`. Plain reads no
+  longer raise, and an error in `loadMap` is logged and leaves the mod inactive instead of blocking the load.
+
 ## [1.1.0] - 2026-09-26
 
 Result of the FS25 compatibility analysis (`TODO.md`): fixes for the real game and the first P3 features.

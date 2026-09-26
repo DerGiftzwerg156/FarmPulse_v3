@@ -92,11 +92,25 @@ marks the player's own productions. Delivery contracts are only offered at forei
 `g_npcManager:getNPCByIndex`; `title` = name shown in the game, `name` = internal key). The backend lets this NPC own
 the field as a village character (`rpsim.formulas.negotiation.use-game-npc-owners`) instead of inventing one.
 
-## `import/instructions.json` (backend → mod)
+## `import/instructions.json` + `import/instructions.xml` (backend → mod)
 
 ```json
 { "savegameId": "...", "instructions": [ <envelope>, ... ] }
 ```
+
+The FS25 Lua sandbox refuses `io.open` in read mode ("io.open, only write mode ('w') is allowed"), so the mod
+cannot read `instructions.json`. The backend therefore writes the same document a second time, as compact JSON
+wrapped in XML, and the mod reads that file with the engine XML API (`XMLFile.loadIfExists` + `getString("rpsim.json")`):
+
+```xml
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<rpsim>
+    <json>{"savegameId":"...","instructions":[...]}</json>
+</rpsim>
+```
+
+`&`, `<` and `>` in the JSON text are escaped as XML entities. `instructions.json` stays for tooling (bridge
+simulator, manual inspection). The optional mod config uses the same wrapper (`rpsim_config.xml`).
 
 Common envelope fields: `instructionId` (unique), `type`, optional `batchId`, optional `gameTimeEarliest`,
 optional `savegameId`.

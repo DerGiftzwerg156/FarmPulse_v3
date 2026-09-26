@@ -103,6 +103,9 @@ class BridgeSyncIntegrationTest {
         assertThat(env.get("type").asString()).isEqualTo("MONEY_TRANSACTION");
         assertThat(env.get("amount").asLong()).isEqualTo(-1800);
         assertThat(env.get("reason").asString()).isEqualTo("SALARY_PAYMENT");
+        String xml = TestBridge.read(files.instructionsXml());
+        String wrapped = xml.substring(xml.indexOf("<json>") + 6, xml.indexOf("</json>"));
+        assertThat(json.readTree(wrapped)).isEqualTo(doc);
 
         TestBridge.write(files.ack(), """
             {"savegameId":"sg_out","acks":[{"instructionId":"%s","appliedAtGameTime":1500,"status":"APPLIED"}],

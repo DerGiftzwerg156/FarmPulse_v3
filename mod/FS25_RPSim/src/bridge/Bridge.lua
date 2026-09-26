@@ -137,15 +137,16 @@ function RPSimBridge:writeAck()
     return self:writeJson(self.paths.instructionsAck, RPSimProcessor.buildAckDocument(self.state))
 end
 
---- Reads and applies instructions.json. Malformed/partial files are skipped and retried next cycle.
+--- Reads and applies the instructions (instructions.xml wrapping the instructions.json document).
+-- Malformed/partial files are skipped and retried next cycle.
 function RPSimBridge:pollInstructions()
     local gameTime = self.adapter:getGameTime()
-    local text = RPSimFileIO.read(self.paths.instructions)
+    local text = RPSimFileIO.readPayload(self.paths.instructions)
     local result
     if text ~= nil and text ~= "" then
         local doc, err = RPSimInstructions.parseDocument(text)
         if doc == nil then
-            RPSimLog.warning("Skipping unreadable instructions.json (retry next cycle): %s", tostring(err))
+            RPSimLog.warning("Skipping unreadable instructions (retry next cycle): %s", tostring(err))
         else
             local adapter = self.adapter
             result = RPSimProcessor.process(self.state, doc, {
