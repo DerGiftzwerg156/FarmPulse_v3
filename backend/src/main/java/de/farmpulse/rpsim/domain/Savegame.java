@@ -128,6 +128,6 @@ public class Savegame {
     private String calPeriodName;
 
     /** TODO T-21: name of the current season from the game's Season table (e.g. WINTER), null if unknown. */
-    @Column(name = "cal_season", length = 16)
+    @Column(name = "cal_season", length = 64)
     private String calSeason;
 }

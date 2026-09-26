@@ -62,7 +62,7 @@ public class CalendarService {
         sg.setCalDayInPeriod(dayInPeriod);
         sg.setCalYear(c.year());
         sg.setCalPeriodName(c.periodName());
-        sg.setCalSeason(c.season());
+        sg.setCalSeason(c.season() == null ? null : c.season().substring(0, Math.min(64, c.season().length())));
         if (first || n != old.daysPerPeriod()) {
             if (!first) {
                 log.info("Savegame {}: days per period changed {} -> {}, rescheduling monthly dates", sg.getId(),
