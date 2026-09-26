@@ -73,8 +73,10 @@ test('market_context is re-written on a regular tick only when it changed (TODO 
 test('the FS25 calendar is exported and follows a change of days per period (TODO T-08)', () => {
   const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof', daysPerPeriod: 3 });
   sim.gameTime = 40 * MS_PER_GAME_DAY + 1000; // day 40: period index 13 -> period 2 (April) of year 2, day 2
-  assert.deepEqual(sim.buildFarmFacts().calendar, { period: 2, dayInPeriod: 2, daysPerPeriod: 3, year: 2, monotonicDay: 40 });
-  assert.deepEqual(sim.setDaysPerPeriod(5), { period: 2, dayInPeriod: 2, daysPerPeriod: 5, year: 2, monotonicDay: 40 });
+  assert.deepEqual(sim.buildFarmFacts().calendar, { period: 2, dayInPeriod: 2, daysPerPeriod: 3, year: 2, monotonicDay: 40,
+    season: 'SPRING' });
+  assert.deepEqual(sim.setDaysPerPeriod(5), { period: 2, dayInPeriod: 2, daysPerPeriod: 5, year: 2, monotonicDay: 40,
+    season: 'SPRING' });
   sim.gameTime = 44 * MS_PER_GAME_DAY;
   assert.equal(sim.buildFarmFacts().calendar.period, 3);
   assert.equal(validate('farmFacts', sim.buildFarmFacts()), null);

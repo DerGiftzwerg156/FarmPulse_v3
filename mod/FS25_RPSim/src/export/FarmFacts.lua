@@ -21,7 +21,7 @@ end
 --   farmland = { {farmlandId, hectares, price} }, animals = { {husbandryUniqueId, type, count, estimatedValue} },
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
 --   prices = { {sellPoint, fillType, pricePerLiter, trend?} },
---   calendar = { period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName? } | nil }
+--   calendar = { period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName?, season? } | nil }
 function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
     local vehicles = RPSimJson.array({})
@@ -91,6 +91,9 @@ function RPSimFarmFacts.build(raw, cfg)
             year = c.year or 1, monotonicDay = c.monotonicDay or 0 }
         if type(c.periodName) == "string" and c.periodName ~= "" then
             doc.calendar.periodName = c.periodName
+        end
+        if type(c.season) == "string" and c.season ~= "" then
+            doc.calendar.season = c.season -- T-21: name from the game's Season table, e.g. "WINTER"
         end
     end
     return doc

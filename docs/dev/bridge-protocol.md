@@ -37,7 +37,7 @@ placeables of the savegame do not exist earlier). The first export writes `marke
                    "leasing": [{ "uniqueId": "veh_00077" }] },
   "prices": [{ "sellPoint": "MillNorth", "fillType": "WHEAT", "currentPrice": 215, "trend": "CLIMBING" }],
   "calendar": { "period": 8, "dayInPeriod": 2, "daysPerPeriod": 3, "year": 2, "monotonicDay": 40,
-                "periodName": "Oktober" } }
+                "periodName": "Oktober", "season": "AUTUMN" } }
 ```
 
 - `gameTime`: in-game milliseconds since savegame start (stops while paused). 1 game day = 86 400 000.
@@ -56,6 +56,9 @@ placeables of the savegame do not exist earlier). The first export writes `marke
   `periodName` = `g_i18n:formatPeriod()` (localized month name). The backend's game month is this FS25 period:
   the current period started at `(monotonicDay - (dayInPeriod - 1)) * 86 400 000` in `gameTime` terms.
   "Days per period" can change at any time; scheduled dates keep their month.
+  `season` (optional, TODO T-21): name of `environment.currentSeason` in the game's global `Season` table (looked up,
+  not derived; `Season.WINTER` is used by FS25 BeehiveSystem / StonePickMission). The backend gives the narration a
+  German date such as "Ende Oktober, Herbst, Jahr 2".
 - Sell points: only real selling stations (`station:isa(SellingStation)`) that are not hidden from the prices menu
   (`hideFromPricesMenu`), in `farm_facts.json` and in `market_context.json`.
 

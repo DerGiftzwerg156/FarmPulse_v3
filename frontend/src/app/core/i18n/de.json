@@ -343,6 +343,13 @@
       "11": "Januar",
       "12": "Februar"
     },
+    "season": {
+      "SPRING": "Frühling",
+      "SUMMER": "Sommer",
+      "AUTUMN": "Herbst",
+      "FALL": "Herbst",
+      "WINTER": "Winter"
+    },
     "priceTrend": {
       "CLIMBING": "steigend",
       "FALLING": "fallend",

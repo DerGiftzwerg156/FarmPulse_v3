@@ -105,4 +105,14 @@ class PromptBuilderTest {
     void everyEventTypeHasATask(NarrationEventType type) {
         assertThat(builder.task(type)).isNotBlank();
     }
+
+    @Test
+    void calendarReferenceIsOfferedWhenKnown() {
+        AiPrompt with = builder.build(new PromptBuilder.Input(bank(), TonePreset.REALISTIC, NarrationEventType.REPLY,
+                Channel.MAIL, java.util.Map.of(), List.of(), null, false, "Ende Oktober, Herbst, Jahr 2"));
+        assertThat(with.user()).contains("Datum im Spiel: Ende Oktober, Herbst, Jahr 2").contains("keine Termine");
+        AiPrompt without = builder.build(new PromptBuilder.Input(bank(), TonePreset.REALISTIC, NarrationEventType.REPLY,
+                Channel.MAIL, java.util.Map.of(), List.of(), null, false));
+        assertThat(without.user()).doesNotContain("Datum im Spiel");
+    }
 }

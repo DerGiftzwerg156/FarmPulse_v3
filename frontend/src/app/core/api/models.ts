@@ -23,6 +23,8 @@ export interface CalendarView {
   dayInPeriod: number;
   daysPerPeriod: number;
   year: number | null;
+  /** Season name from the game (TODO T-21), e.g. AUTUMN. */
+  season?: string | null;
 }
 
 /** Recurring contract (TODO T-20 insurance, T-22 lease / maintenance). */

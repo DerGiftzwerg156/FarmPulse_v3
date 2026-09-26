@@ -63,6 +63,6 @@ public class SavegameController {
         }
         return new CalendarView(sg.getCalPeriod(), sg.getCalPeriodName(),
                 sg.getCalDayInPeriod() == null ? 1 : sg.getCalDayInPeriod(),
-                sg.getCalDaysPerPeriod() == null ? 1 : sg.getCalDaysPerPeriod(), sg.getCalYear());
+                sg.getCalDaysPerPeriod() == null ? 1 : sg.getCalDaysPerPeriod(), sg.getCalYear(), sg.getCalSeason());
     }
 }

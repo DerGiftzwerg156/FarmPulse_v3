@@ -28,7 +28,7 @@ class CalendarServiceTest {
     }
 
     private static BridgeDtos.Calendar cal(int period, int dayInPeriod, int daysPerPeriod, int year, long monotonicDay) {
-        return new BridgeDtos.Calendar(period, dayInPeriod, daysPerPeriod, year, monotonicDay, null);
+        return new BridgeDtos.Calendar(period, dayInPeriod, daysPerPeriod, year, monotonicDay, null, null);
     }
 
     @Test

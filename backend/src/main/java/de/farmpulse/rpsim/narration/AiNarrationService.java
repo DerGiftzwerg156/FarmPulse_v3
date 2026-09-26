@@ -15,6 +15,7 @@ import de.farmpulse.rpsim.domain.Communication;
 import de.farmpulse.rpsim.domain.CommunicationInitiator;
 import de.farmpulse.rpsim.domain.NarrationJob;
 import de.farmpulse.rpsim.domain.NarrationJobStatus;
+import de.farmpulse.rpsim.time.CalendarText;
 import de.farmpulse.rpsim.tone.ToneClassifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,8 @@ public class AiNarrationService {
         List<String> memoryFacts = job.getCharacter() == null ? List.of() : memory.shortFacts(job.getCharacter());
         boolean mechanical = job.getPlayerMessage() != null && toneClassifier.classify(job.getPlayerMessage()).mechanicalRequest();
         AiPrompt prompt = prompts.build(new PromptBuilder.Input(job.getCharacter(), job.getSavegame().getTonePreset(), type,
-                job.getChannel(), facts, memoryFacts, job.getPlayerMessage(), mechanical));
+                job.getChannel(), facts, memoryFacts, job.getPlayerMessage(), mechanical,
+                CalendarText.describe(job.getSavegame())));
         AiResult result = null;
         boolean fallback = false;
         AiProvider provider = providers.active();

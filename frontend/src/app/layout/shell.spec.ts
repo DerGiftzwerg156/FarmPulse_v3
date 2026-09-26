@@ -42,10 +42,10 @@ describe('Shell', () => {
     http.expectOne('/api/savegame').flush({
       id: 1, savegameId: 'x', mapName: 'Erlengrund', gameTime: 0, gameDay: 12, balance: 1, tonePreset: 'REALISTIC',
       unreadMails: 0, pendingCalls: 0, reputationTier: 'NEUTRAL',
-      calendar: { period: 8, periodName: null, dayInPeriod: 2, daysPerPeriod: 3, year: 2 },
+      calendar: { period: 8, periodName: null, dayInPeriod: 2, daysPerPeriod: 3, year: 2, season: 'AUTUMN' },
     });
     fixture.detectChanges();
-    expect(el.querySelector('[data-testid="calendar"]')?.textContent?.trim()).toBe('Oktober, Jahr 2');
+    expect(el.querySelector('[data-testid="calendar"]')?.textContent?.trim()).toBe('Oktober, Jahr 2 · Herbst');
   });
 
   it('toggles the mobile menu', () => {

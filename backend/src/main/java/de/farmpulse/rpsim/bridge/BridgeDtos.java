@@ -19,7 +19,7 @@ public final class BridgeDtos {
     /** TODO T-08: FS25 calendar of the savegame (game month = FS25 period, period 1 = March). */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Calendar(Integer period, Integer dayInPeriod, Integer daysPerPeriod, Integer year, Long monotonicDay,
-                           String periodName) {
+                           String periodName, String season) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

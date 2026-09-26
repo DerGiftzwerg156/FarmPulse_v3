@@ -8,6 +8,7 @@ import { validate } from './validate.js';
 
 export const MS_PER_GAME_HOUR = 60 * 60 * 1000;
 export const MS_PER_GAME_DAY = 24 * MS_PER_GAME_HOUR;
+const SIM_SEASONS = ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'];
 
 const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CREDIT_PENALTY', 'CREDIT_CALLBACK',
   'SALARY_PAYMENT', 'EMPLOYEE_EFFECT', 'SUBSIDY', 'STARTING_CAPITAL_ADJUSTMENT', 'FARMLAND_PURCHASE',
@@ -145,8 +146,11 @@ export class BridgeSimulator {
     const { daysPerPeriod: n, anchorDay, anchorIndex } = this.calendar;
     const day = this.monotonicDay();
     const index = anchorIndex + Math.floor((day - anchorDay) / n);
-    return { period: (((index % 12) + 12) % 12) + 1, dayInPeriod: (((day - anchorDay) % n) + n) % n + 1,
-      daysPerPeriod: n, year: Math.floor(index / 12) + 1, monotonicDay: day };
+    const period = (((index % 12) + 12) % 12) + 1;
+    return { period, dayInPeriod: (((day - anchorDay) % n) + n) % n + 1,
+      daysPerPeriod: n, year: Math.floor(index / 12) + 1, monotonicDay: day,
+      // simulated season name (the mod exports the name from the game's Season table, TODO T-21)
+      season: SIM_SEASONS[Math.floor((period - 1) / 3)] };
   }
 
   /** The player changes "days per period" in FS25: the current period keeps its start day. */

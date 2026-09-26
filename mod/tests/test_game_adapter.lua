@@ -221,4 +221,17 @@ function T.TestGameAdapter:testEveryMoneyReasonHasATitleInModDesc()
     end
 end
 
+-- T-21: season name looked up in the game's Season table
+function T.TestGameAdapter:testSeasonNameComesFromTheSeasonTable()
+    Season = { SPRING = 0, SUMMER = 1, AUTUMN = 2, WINTER = 3 }
+    lu.assertEquals(RPSimGameAdapter.seasonName(3), "WINTER")
+    lu.assertNil(RPSimGameAdapter.seasonName(9))
+    lu.assertNil(RPSimGameAdapter.seasonName(nil))
+    helpers.fakeGame({ environment = { currentMonotonicDay = 3, dayTime = 0, currentPeriod = 8, currentDayInPeriod = 1,
+        daysPerPeriod = 1, currentYear = 1, currentSeason = 2 } })
+    lu.assertEquals(RPSimGameAdapter.new():collectCalendar().season, "AUTUMN")
+    Season = nil
+    lu.assertNil(RPSimGameAdapter.seasonName(3))
+end
+
 return T

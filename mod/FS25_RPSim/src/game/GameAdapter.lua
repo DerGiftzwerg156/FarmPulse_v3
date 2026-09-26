@@ -2,7 +2,7 @@
 -- so an engine change never crashes the savegame; failures degrade to empty/partial exports.
 -- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager g_npcManager
 -- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
--- luacheck: globals FSBaseMission
+-- luacheck: globals FSBaseMission Season
 -- luacheck: globals g_i18n
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
@@ -152,6 +152,7 @@ function RPSimGameAdapter:collectCalendar()
         end
         local name = safe(function() return g_i18n:formatPeriod() end, nil)
         return {
+            season = RPSimGameAdapter.seasonName(env.currentSeason),
             period = env.currentPeriod,
             dayInPeriod = env.currentDayInPeriod or 1,
             daysPerPeriod = env.daysPerPeriod or 1,
@@ -160,6 +161,21 @@ function RPSimGameAdapter:collectCalendar()
             periodName = name,
         }
     end, nil)
+end
+
+--- Name of the current season (T-21): environment.currentSeason compared with the values of the global Season
+-- table (FS25 BeehiveSystem / StonePickMission: environment.currentSeason == Season.WINTER). The name is looked up
+-- instead of assumed, so only names that really exist in the game are exported.
+function RPSimGameAdapter.seasonName(current)
+    if current == nil or Season == nil or type(Season) ~= "table" then
+        return nil
+    end
+    for name, value in pairs(Season) do
+        if value == current and type(name) == "string" then
+            return name
+        end
+    end
+    return nil
 end
 
 --- Known mods that overlap with RPSim (T-09). Detected via g_modIsLoaded (the mod sandbox hides other mods'

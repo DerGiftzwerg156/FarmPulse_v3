@@ -18,7 +18,8 @@ public final class Views {
     }
 
     /** FS25 calendar: period 1..12 (1 = March), periodName as shown in the game. */
-    public record CalendarView(int period, String periodName, int dayInPeriod, int daysPerPeriod, Integer year) {
+    public record CalendarView(int period, String periodName, int dayInPeriod, int daysPerPeriod, Integer year,
+                               String season) {
     }
 
     public record PreviewView(Long characterId, String name, String role, String category, String jobRole,

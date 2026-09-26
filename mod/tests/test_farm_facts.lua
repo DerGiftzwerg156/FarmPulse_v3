@@ -90,10 +90,11 @@ function T.TestFarmFacts:testCalendarAndTrendAreExported()
     local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
         prices = { { sellPoint = "A", fillType = "WHEAT", pricePerLiter = 0.2, trend = "CLIMBING" },
             { sellPoint = "B", fillType = "WHEAT", pricePerLiter = 0.2 } },
-        calendar = { period = 8, dayInPeriod = 2, daysPerPeriod = 3, year = 2, monotonicDay = 42, periodName = "Oktober" } },
+        calendar = { period = 8, dayInPeriod = 2, daysPerPeriod = 3, year = 2, monotonicDay = 42, periodName = "Oktober",
+            season = "AUTUMN" } },
         RPSimConfig.new())
     lu.assertEquals(doc.calendar, { period = 8, dayInPeriod = 2, daysPerPeriod = 3, year = 2, monotonicDay = 42,
-        periodName = "Oktober" })
+        periodName = "Oktober", season = "AUTUMN" })
     lu.assertEquals(doc.prices[1].trend, "CLIMBING")
     lu.assertNil(doc.prices[2].trend)
 end
