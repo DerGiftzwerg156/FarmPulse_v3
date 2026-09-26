@@ -76,7 +76,7 @@ export function fundsCover(balance, items) {
 
 export class BridgeSimulator {
   constructor({ dir, scenario = 'wohlhabender-hof', savegameId, seed = 42, startGameTime = MS_PER_GAME_DAY,
-    retentionGameDays = 30, log = () => {} } = {}) {
+    retentionGameDays = 30, daysPerPeriod = 1, log = () => {} } = {}) {
     const preset = SCENARIOS[scenario];
     if (!preset) throw new Error(`unknown scenario '${scenario}' (${Object.keys(SCENARIOS).join(', ')})`);
     this.dir = dir;
@@ -104,7 +104,11 @@ export class BridgeSimulator {
     this.animals = preset.animals.map((a) => ({ ...a }));
     this.storage = structuredClone(preset.storage);
     this.farmlands = MAP.farmlands.map((f) => ({ ...f, ownerFarmId: preset.ownedFarmlands.includes(f.farmlandId) ? 1 : 0 }));
+    this.detectedMods = [...(preset.detectedMods ?? [])];
+    // FS25 calendar (TODO T-08): period index counted from monotonic day 0 = period 1 (March) of year 1
+    this.calendar = { daysPerPeriod, anchorDay: 0, anchorIndex: 0 };
     this.priceWalk = {};
+    this.priceTrend = {};
     for (const sp of MAP.sellPoints) for (const ft of sp.acceptedFillTypes) this.priceWalk[`${sp.id}|${ft}`] = 1;
     this.processed = {};
     this.priceEvents = [];
@@ -121,7 +125,30 @@ export class BridgeSimulator {
     return structuredClone({ gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, processed: this.processed, priceEvents: this.priceEvents,
-      contractReports: this.contractReports });
+      contractReports: this.contractReports, calendar: this.calendar });
+  }
+
+  // --------------------------------------------------------------- FS25 calendar (TODO T-08)
+  monotonicDay() {
+    return Math.floor(this.gameTime / MS_PER_GAME_DAY);
+  }
+
+  /** Exported like g_currentMission.environment: currentPeriod, currentDayInPeriod, daysPerPeriod, currentYear. */
+  buildCalendar() {
+    const { daysPerPeriod: n, anchorDay, anchorIndex } = this.calendar;
+    const day = this.monotonicDay();
+    const index = anchorIndex + Math.floor((day - anchorDay) / n);
+    return { period: (((index % 12) + 12) % 12) + 1, dayInPeriod: (((day - anchorDay) % n) + n) % n + 1,
+      daysPerPeriod: n, year: Math.floor(index / 12) + 1, monotonicDay: day };
+  }
+
+  /** The player changes "days per period" in FS25: the current period keeps its start day. */
+  setDaysPerPeriod(n) {
+    const c = this.buildCalendar();
+    const index = this.calendar.anchorIndex + Math.floor((c.monotonicDay - this.calendar.anchorDay) / this.calendar.daysPerPeriod);
+    const dayInPeriod = Math.min(c.dayInPeriod, n);
+    this.calendar = { daysPerPeriod: n, anchorDay: c.monotonicDay - (dayInPeriod - 1), anchorIndex: index };
+    return this.buildCalendar();
   }
 
   /** The player saves the game in FS25. */
@@ -148,7 +175,7 @@ export class BridgeSimulator {
       Object.assign(this, { processed: s.processed ?? {}, priceEvents: s.priceEvents ?? [],
         contractReports: s.contractReports ?? [] });
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
-        'storage', 'farmlands']) {
+        'storage', 'farmlands', 'calendar']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -160,7 +187,7 @@ export class BridgeSimulator {
     const s = { savegameId: this.savegameId, processed: this.processed, priceEvents: this.priceEvents,
       contractReports: this.contractReports, gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
-      storage: this.storage, farmlands: this.farmlands };
+      storage: this.storage, farmlands: this.farmlands, calendar: this.calendar };
     this.writeJson(this.paths.savegame, s);
   }
 
@@ -218,7 +245,11 @@ export class BridgeSimulator {
     this.balance += Math.round((this.drift.income - this.drift.expense) * days + (this.random() - 0.5) * this.drift.income * days);
     for (const k of Object.keys(this.priceWalk)) {
       const step = (this.random() - 0.5) * 0.02 * Math.min(hours, 48) / 24;
-      this.priceWalk[k] = Math.min(1.3, Math.max(0.7, this.priceWalk[k] * (1 + step)));
+      const before = this.priceWalk[k];
+      this.priceWalk[k] = Math.min(1.3, Math.max(0.7, before * (1 + step)));
+      // like SellingStation.getCurrentPricingTrend (TODO T-10)
+      const change = this.priceWalk[k] / before - 1;
+      this.priceTrend[k] = change > 0.002 ? 'CLIMBING' : change < -0.002 ? 'FALLING' : 'STABLE';
     }
     for (const v of this.vehicles) v.damage = Math.min(1, v.damage + 0.001 * days);
     this.collectEnded();
@@ -250,7 +281,8 @@ export class BridgeSimulator {
     const prices = [];
     for (const sp of MAP.sellPoints) {
       for (const ft of sp.acceptedFillTypes) {
-        prices.push({ sellPoint: sp.id, fillType: ft, currentPrice: Math.round(this.effectivePrice(sp.id, ft)) });
+        prices.push({ sellPoint: sp.id, fillType: ft, currentPrice: Math.round(this.effectivePrice(sp.id, ft)),
+          trend: this.priceTrend[`${sp.id}|${ft}`] ?? 'STABLE' });
       }
     }
     return {
@@ -273,6 +305,7 @@ export class BridgeSimulator {
           ...(typeof v.costPerPeriod === 'number' ? { costPerPeriod: v.costPerPeriod } : {}) }))
           .sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)) },
       prices,
+      calendar: this.buildCalendar(),
     };
   }
 
@@ -283,7 +316,9 @@ export class BridgeSimulator {
       mapName: MAP.mapName,
       sellPoints: MAP.sellPoints.map((s) => ({ id: s.id, name: s.name, acceptedFillTypes: [...s.acceptedFillTypes].sort() })),
       fillTypes,
-      farmlands: this.farmlands.map((f) => ({ ...f })),
+      farmlands: this.farmlands.map((f) => ({ ...f, showOnFarmlandsScreen: f.showOnFarmlandsScreen !== false,
+        defaultFarmProperty: f.defaultFarmProperty === true })),
+      detectedMods: [...this.detectedMods].sort(),
     };
   }
 

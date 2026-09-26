@@ -104,6 +104,13 @@ public class NegotiationEngine {
         }
     }
 
+    /** TODO T-11: fields hidden in the vanilla farmland menu (village, roads) are not tradeable. */
+    private static void requireTradeable(FarmlandOwnership field) {
+        if (!field.isTradeable()) {
+            throw new BusinessRuleException("FIELD_NOT_TRADEABLE", "Diese Fläche kann im Spiel nicht gehandelt werden.");
+        }
+    }
+
     private Negotiation newNegotiation(Savegame sg, NegotiationKind kind, NegotiationDirection dir, Initiator by,
                                        FarmlandOwnership field) {
         Negotiation n = new Negotiation();
@@ -156,6 +163,7 @@ public class NegotiationEngine {
                         || (o.getOwnerType() == OwnerType.CHARACTER && o.getOwnerCharacter().isSellWilling()
                         && o.getOwnerCharacter().getStatus() == CharacterStatus.ACTIVE))
                 .filter(o -> o.getReferencePrice() > 0)
+                .filter(FarmlandOwnership::isTradeable)
                 .filter(o -> !isBlocked(sg, AssetType.FARMLAND, String.valueOf(o.getFarmlandId())))
                 .toList();
         Optional<Character> announcer = lookup.firstActive(sg, CharacterRole.LAND_AGENT, CharacterRole.COOPERATIVE);
@@ -194,6 +202,7 @@ public class NegotiationEngine {
     public Negotiation startDirect(Savegame sg, Long characterId, int farmlandId) {
         FarmlandOwnership field = ownership.get(sg, farmlandId)
                 .orElseThrow(() -> new NotFoundException("farmland " + farmlandId));
+        requireTradeable(field);
         if (field.getOwnerType() != OwnerType.CHARACTER || !field.getOwnerCharacter().getId().equals(characterId)) {
             throw new BusinessRuleException("NOT_OWNER", "Dieser Charakter besitzt das Feld nicht.");
         }
@@ -216,6 +225,7 @@ public class NegotiationEngine {
         if (field.getOwnerType() != OwnerType.PLAYER) {
             throw new BusinessRuleException("NOT_PLAYER_FIELD", "Nur eigene Felder können verkauft werden.");
         }
+        requireTradeable(field);
         if (askingPrice <= 0) {
             throw new BusinessRuleException("INVALID_PRICE", "Der Wunschpreis muss positiv sein.");
         }

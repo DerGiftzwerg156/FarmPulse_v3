@@ -25,13 +25,14 @@ node src/cli.js --help
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--dir` | `./runtime/modSettings/FS25_RPSim` | Bridge folder (the backend `dev` profile points here) |
-| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse` |
+| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods` |
 | `--interval` | `5000` | Real-time ms between cycles |
 | `--game-minutes-per-tick` | `60` | Game time advanced per cycle |
 | `--savegame-id` | `map_erlengrund_sim_<scenario>` | Simulated savegame id |
 | `--seed` | `42` | Seed for the deterministic drift of balance/prices/wear |
 | `--control-port` | `8099` | HTTP control API (`0` disables) |
 | `--once` | – | Export once, process instructions once, exit |
+| `--days-per-period` | `1` | FS25 "days per period" of the simulated calendar (exported as `calendar`) |
 | `--reset` | – | Forget previous simulator state (processed instructions, balances) |
 
 Each cycle: game time advances, balance/prices/vehicle wear drift slightly, `instructions.json` is applied,
@@ -50,6 +51,10 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | `voller-silobestand` | Focus on storage valuation: very full silos with several fill types |
 | `leasing-hof` | Part of the machines leased: exported as `liabilities.leasing`, not as assets (TODO T-04) |
 | `knappe-kasse` | Nearly empty account: debits fail with `INSUFFICIENT_FUNDS` (TODO T-03) |
+| `konflikt-mods` | `FS25_UsedPlus` and `FS25_MarketDynamics` reported in `detectedMods` (TODO T-09) |
+
+All scenarios share the map "Erlengrund" with 16 farmlands; farmland 16 is the village area
+(`showOnFarmlandsScreen: false`, TODO T-11). The calendar starts at monotonic day 0 with period 1 (March) of year 1.
 
 ## Control API (manual testing / E2E)
 
@@ -60,6 +65,7 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | `POST /tick {"gameMinutes": 0}` | Run one cycle immediately |
 | `POST /sell {"sellPoint":"MillNorth","fillType":"WHEAT","liters":8000}` | Simulate a sale (fixed-contract tracking) |
 | `POST /balance {"balance": 50000}` | Force the bank balance |
+| `POST /days-per-period {"daysPerPeriod": 3}` | The player changes "days per period" in FS25 (the current period keeps its start day) |
 | `POST /save` | "Save the game" in FS25 (snapshot of the game state incl. the mod's processed list) |
 | `POST /reload-without-saving` | Quit without saving and load the last save: game time, money and processed instructions go back (TODO T-02) |
 

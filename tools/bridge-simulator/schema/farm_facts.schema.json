@@ -37,6 +37,12 @@
         "properties": { "uniqueId": { "type": "string" }, "costPerPeriod": { "type": "number", "minimum": 0 } } } } } },
     "prices": { "type": "array", "items": { "type": "object", "required": ["sellPoint", "fillType", "currentPrice"],
       "properties": { "sellPoint": { "type": "string" }, "fillType": { "type": "string" },
-        "currentPrice": { "type": "number", "minimum": 0 } } } }
+        "currentPrice": { "type": "number", "minimum": 0 },
+        "trend": { "enum": ["CLIMBING", "FALLING", "STABLE"] } } } },
+    "calendar": { "type": "object", "required": ["period", "dayInPeriod", "daysPerPeriod", "year", "monotonicDay"],
+      "properties": { "period": { "type": "integer", "minimum": 1, "maximum": 12 },
+        "dayInPeriod": { "type": "integer", "minimum": 1 }, "daysPerPeriod": { "type": "integer", "minimum": 1 },
+        "year": { "type": "integer" }, "monotonicDay": { "type": "integer", "minimum": 0 },
+        "periodName": { "type": "string" } } }
   }
 }

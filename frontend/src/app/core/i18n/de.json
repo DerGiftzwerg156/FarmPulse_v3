@@ -33,7 +33,8 @@
     "balance": "Kontostand",
     "notifications": "{mails} ungelesene Mails, {calls} Anrufe",
     "live": "Live",
-    "offline": "Offline"
+    "offline": "Offline",
+    "calendar": "{month}, Jahr {year}"
   },
   "common": {
     "loading": "Lädt …",
@@ -305,6 +306,25 @@
       "MONEY_TRANSACTION": "Buchung",
       "PRICE_EVENT": "Preis-Ereignis",
       "FARMLAND_TRANSFER": "Feldübertragung"
+    },
+    "period": {
+      "1": "März",
+      "2": "April",
+      "3": "Mai",
+      "4": "Juni",
+      "5": "Juli",
+      "6": "August",
+      "7": "September",
+      "8": "Oktober",
+      "9": "November",
+      "10": "Dezember",
+      "11": "Januar",
+      "12": "Februar"
+    },
+    "priceTrend": {
+      "CLIMBING": "steigend",
+      "FALLING": "fallend",
+      "STABLE": "stabil"
     }
   },
   "onboarding": {
@@ -544,7 +564,9 @@
       "BID": "Gebot abgegeben.",
       "OUTBID": "Du wurdest überboten. Noch {left} Runde(n).",
       "LEADING": "Du liegst vorn."
-    }
+    },
+    "notTradeable": "Diese Fläche ist im Spiel nicht kaufbar (z. B. Ortschaft oder Straße) und wird nicht gehandelt.",
+    "notTradeableBadge": "nicht handelbar"
   },
   "market": {
     "storageValue": "Wert im Silo",
@@ -653,7 +675,9 @@
     "noneHint": "Ohne KI-Anbieter verwenden alle Charaktere passende Textvorlagen.",
     "saved": "Gespeichert.",
     "game": "Spielstand",
-    "toneFixed": "Der Ton wurde im Onboarding festgelegt und bleibt für diesen Spielstand fest."
+    "toneFixed": "Der Ton wurde im Onboarding festgelegt und bleibt für diesen Spielstand fest.",
+    "detectedMods": "Erkannte Mods mit Überschneidungen",
+    "noDetectedMods": "Keine bekannten Konflikt-Mods aktiv."
   },
   "notices": {
     "title": "Hinweise aus dem Spiel",
@@ -673,6 +697,8 @@
     "rewindHint": "Nur die Buchungen im Spiel werden wiederhergestellt – Mails, Vertrauen und Verhandlungen bleiben auf dem Stand des Tools.",
     "resend": "Nachbuchen",
     "keep": "Tool-Stand beibehalten",
-    "dismiss": "Verstanden"
+    "dismiss": "Verstanden",
+    "conflictTitle": "Mods mit Überschneidungen erkannt",
+    "conflictText": "Diese Mods verändern ebenfalls Preise, Kredite oder Aufträge: {mods}. FarmPulse schaltet nichts ab – Effekte können sich aber überlagern (siehe Fehlerbehebung)."
   }
 }

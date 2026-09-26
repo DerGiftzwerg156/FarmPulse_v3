@@ -11,6 +11,18 @@ export interface SavegameView {
   unreadMails: number;
   pendingCalls: number;
   reputationTier: string;
+  /** FS25 calendar (TODO T-08); null before the first calendar export. */
+  calendar?: CalendarView | null;
+  /** Installed mods with overlapping features (TODO T-09). */
+  detectedMods?: string[];
+}
+
+export interface CalendarView {
+  period: number;
+  periodName: string | null;
+  dayInPeriod: number;
+  daysPerPeriod: number;
+  year: number | null;
 }
 
 /** Dashboard notice of the fact layer (TODO T-02 rewind, T-03 bookings the game did not execute). */
@@ -184,6 +196,8 @@ export interface FarmlandView {
   ownerType: 'PLAYER' | 'CHARACTER' | 'UNCLAIMED';
   owner: CharacterRef | null;
   inNegotiation: boolean;
+  /** false: hidden in the vanilla farmland menu (village, roads) - never traded (TODO T-11). */
+  tradeable?: boolean;
 }
 
 export interface OfferView {
@@ -263,6 +277,8 @@ export interface PriceView {
   sellPointName: string;
   fillType: string;
   currentPrice: number;
+  /** Price trend shown by the game (TODO T-10). */
+  trend?: 'CLIMBING' | 'FALLING' | 'STABLE' | null;
 }
 
 export interface PricePoint {

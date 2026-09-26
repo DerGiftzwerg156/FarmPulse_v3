@@ -37,6 +37,17 @@ describe('Shell', () => {
     expect(el.querySelector('[data-testid="notification-count"]')?.textContent?.trim()).toBe('3');
   });
 
+  it('shows the FS25 month of the savegame (TODO T-08)', () => {
+    const { fixture, el, http } = setup();
+    http.expectOne('/api/savegame').flush({
+      id: 1, savegameId: 'x', mapName: 'Erlengrund', gameTime: 0, gameDay: 12, balance: 1, tonePreset: 'REALISTIC',
+      unreadMails: 0, pendingCalls: 0, reputationTier: 'NEUTRAL',
+      calendar: { period: 8, periodName: null, dayInPeriod: 2, daysPerPeriod: 3, year: 2 },
+    });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="calendar"]')?.textContent?.trim()).toBe('Oktober, Jahr 2');
+  });
+
   it('toggles the mobile menu', () => {
     const { fixture, el, http } = setup();
     http.expectOne('/api/savegame').flush(null);

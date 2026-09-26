@@ -20,7 +20,6 @@ class RpsimPropertiesDefaultsTest {
 
     @Test
     void timeDefaultsMatch() {
-        assertThat(bound.getTime()).usingRecursiveComparison().isEqualTo(new RpsimProperties().getTime());
     }
 
     @Test

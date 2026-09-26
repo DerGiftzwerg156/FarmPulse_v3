@@ -11,7 +11,9 @@ const MAP = {
   farmlands: Array.from({ length: 16 }, (_, i) => ({
     farmlandId: i + 1,
     hectares: Math.round((2 + ((i * 7) % 11) * 0.9) * 100) / 100,
-  })).map((f) => ({ ...f, price: Math.round(f.hectares * 12000) })),
+  })).map((f) => ({ ...f, price: Math.round(f.hectares * 12000),
+    // farmland 16 = village area: hidden in the vanilla farmland menu, never traded (TODO T-11)
+    ...(f.farmlandId === 16 ? { showOnFarmlandsScreen: false } : {}) })),
 };
 
 const vehicle = (n, value, damage) => ({ uniqueId: `veh_${String(n).padStart(5, '0')}`, value, damage });
@@ -55,6 +57,13 @@ export const SCENARIOS = {
     vehicles: [vehicle(1, 30000, 0.4)],
     placeables: [], animals: [], storage: {},
     drift: { income: 0, expense: 0 },
+  },
+  'konflikt-mods': {
+    description: 'Wie wohlhabender-hof, aber mit FS25_UsedPlus und FS25_MarketDynamics aktiv (Warnung, TODO T-09).',
+    balance: 500000, vanillaLoan: 0, ownedFarmlands: [1, 2],
+    vehicles: [vehicle(1, 200000, 0.1)], placeables: [], animals: [], storage: { WHEAT: { amount: 50000, capacity: 80000 } },
+    drift: { income: 4000, expense: 3000 },
+    detectedMods: ['FS25_UsedPlus', 'FS25_MarketDynamics'],
   },
   'voller-silobestand': {
     description: 'Fokus Warenbestand: mittlere Liquidität, sehr volle Silos mit mehreren Fruchtarten.',

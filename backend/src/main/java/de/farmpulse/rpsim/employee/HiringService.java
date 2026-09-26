@@ -184,7 +184,8 @@ public class HiringService {
         e.setAppreciation(start);
         e.setNeedsUpdatedAtGameTime(sg.getCurrentGameTime());
         e.setLastEffectMultiplier(1.0);
-        e.setNextSalaryDueGameTime(sg.getCurrentGameTime() + gameTime.msPerMonth());
+        // T-08: salaries are paid at the start of each FS25 period
+        e.setNextSalaryDueGameTime(gameTime.addMonths(sg, sg.getCurrentGameTime(), 1));
         return employees.save(e);
     }
 

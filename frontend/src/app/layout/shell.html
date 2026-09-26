@@ -71,6 +71,9 @@
           @if (state.savegame(); as sg) {
             <div class="fp-label" data-testid="savegame-context">
               {{ sg.mapName }} · {{ 'header.day' | t: { day: sg.gameDay } }}
+              @if (sg.calendar; as c) {
+                · <span data-testid="calendar">{{ periodLabel(c) }}</span>
+              }
             </div>
           } @else {
             <div class="fp-label">

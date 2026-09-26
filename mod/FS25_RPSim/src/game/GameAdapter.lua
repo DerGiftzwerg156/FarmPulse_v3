@@ -1,7 +1,8 @@
 -- FS25-specific adapter: the only file that touches FS25 globals. Every API call is wrapped in pcall
 -- so an engine change never crashes the savegame; failures degrade to empty/partial exports.
 -- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager
--- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState
+-- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
+-- luacheck: globals g_i18n
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -91,11 +92,27 @@ function RPSimGameAdapter.sellPointId(station)
     end, tostring(station))
 end
 
+--- Selling stations the player can see in the prices menu (T-10). `isa(SellingStation)` and
+-- `hideFromPricesMenu` as in FS25_ProductionDirectSell (PDS_Manager.lua); husbandries set hideFromPricesMenu
+-- (FS25 PlaceableHusbandry.lua).
+function RPSimGameAdapter.isVisibleSellingStation(station)
+    if station == nil or station.isDeleted then
+        return false
+    end
+    local isSelling
+    if SellingStation ~= nil and station.isa ~= nil then
+        isSelling = station:isa(SellingStation)
+    else
+        isSelling = station.isSellingPoint == true
+    end
+    return isSelling and not station.hideFromPricesMenu
+end
+
 local function sellingStations()
     local out = {}
     safe(function()
         for _, station in pairs(g_currentMission.storageSystem:getUnloadingStations()) do
-            if station.isSellingPoint then
+            if RPSimGameAdapter.isVisibleSellingStation(station) then
                 out[#out + 1] = station
             end
         end
@@ -104,10 +121,67 @@ local function sellingStations()
     return out
 end
 
+--- Price trend of a station (T-10): bit flags SellingStation.PRICE_CLIMBING / PRICE_FALLING, read with
+-- Utils.isBitSet as in FS25_ProductionDirectSell (PDS_SellingDialog.lua). Returns CLIMBING, FALLING, STABLE or nil.
+function RPSimGameAdapter.pricingTrend(station, fillTypeIndex)
+    return safe(function()
+        if station.getCurrentPricingTrend == nil or Utils == nil or SellingStation == nil then
+            return nil
+        end
+        local trend = station:getCurrentPricingTrend(fillTypeIndex) or 0
+        if SellingStation.PRICE_CLIMBING ~= nil and Utils.isBitSet(trend, SellingStation.PRICE_CLIMBING) then
+            return "CLIMBING"
+        elseif SellingStation.PRICE_FALLING ~= nil and Utils.isBitSet(trend, SellingStation.PRICE_FALLING) then
+            return "FALLING"
+        end
+        return "STABLE"
+    end, nil)
+end
+
+--- FS25 calendar (T-08): the game month is the FS25 period. Fields as used by FS25_UsedPlus (CreditSystem.lua,
+-- FarmExtension.lua) and the FS25 Farm Dashboard (FarmDashboardDataCollector.lua); dayInPeriod is 1-based
+-- (AbstractMission: endDay = currentMonotonicDay + (daysPerPeriod - dayInPeriod)). periodName is the localized
+-- name of the current period from g_i18n:formatPeriod() (used this way in SowingMachine / TreePlanter).
+function RPSimGameAdapter:collectCalendar()
+    return safe(function()
+        local env = g_currentMission.environment
+        if env == nil or env.currentPeriod == nil then
+            return nil
+        end
+        local name = safe(function() return g_i18n:formatPeriod() end, nil)
+        return {
+            period = env.currentPeriod,
+            dayInPeriod = env.currentDayInPeriod or 1,
+            daysPerPeriod = env.daysPerPeriod or 1,
+            year = env.currentYear or 1,
+            monotonicDay = env.currentMonotonicDay or env.currentDay or 0,
+            periodName = name,
+        }
+    end, nil)
+end
+
+--- Known mods that overlap with RPSim (T-09). Detected via g_modIsLoaded (the mod sandbox hides other mods'
+-- globals; FS25_UsedPlus ModCompatibility.lua uses the same check). Nothing is disabled - the backend only warns.
+function RPSimGameAdapter.detectMods(names)
+    local found = {}
+    safe(function()
+        if g_modIsLoaded == nil then
+            return true
+        end
+        for _, name in ipairs(names or {}) do
+            if g_modIsLoaded[name] then
+                found[#found + 1] = name
+            end
+        end
+        return true
+    end)
+    return found
+end
+
 function RPSimGameAdapter:collectFarmFacts()
     local farmId = self:getFarmId()
     local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, silos = {},
-        prices = {} }
+        prices = {}, calendar = self:collectCalendar() }
     local farm = safe(function() return g_farmManager:getFarmById(farmId) end, nil)
     raw.balance = safe(function() return farm.money end, 0)
     raw.vanillaLoan = safe(function() return farm.loan end, 0)
@@ -196,7 +270,8 @@ function RPSimGameAdapter:collectFarmFacts()
                 if accepted then
                     -- currentPrice = effective price the player gets right now (incl. active RPSim events).
                     local price = station:getEffectiveFillTypePrice(ftIndex)
-                    raw.prices[#raw.prices + 1] = { sellPoint = id, fillType = fillTypeName(ftIndex), pricePerLiter = price }
+                    raw.prices[#raw.prices + 1] = { sellPoint = id, fillType = fillTypeName(ftIndex), pricePerLiter = price,
+                        trend = RPSimGameAdapter.pricingTrend(station, ftIndex) }
                 end
             end
             return true
@@ -205,8 +280,9 @@ function RPSimGameAdapter:collectFarmFacts()
     return raw
 end
 
-function RPSimGameAdapter:collectMarketContext()
-    local raw = { mapName = self:getMapName(), sellPoints = {}, fillTypes = {}, farmlands = {} }
+function RPSimGameAdapter:collectMarketContext(conflictMods)
+    local raw = { mapName = self:getMapName(), sellPoints = {}, fillTypes = {}, farmlands = {},
+        detectedMods = RPSimGameAdapter.detectMods(conflictMods) }
     local seenFillTypes = {}
     for _, station in ipairs(sellingStations()) do
         safe(function()
@@ -228,8 +304,11 @@ function RPSimGameAdapter:collectMarketContext()
     end
     safe(function()
         for _, fl in pairs(g_farmlandManager:getFarmlands()) do
+            -- T-11: showOnFarmlandsScreen / defaultFarmProperty from FS25 Farmland.lua (hidden = village, roads ...)
             raw.farmlands[#raw.farmlands + 1] = { farmlandId = fl.id, hectares = fl.areaInHa or 0, price = fl.price or 0,
-                ownerFarmId = g_farmlandManager:getFarmlandOwner(fl.id) or 0 }
+                ownerFarmId = g_farmlandManager:getFarmlandOwner(fl.id) or 0,
+                showOnFarmlandsScreen = fl.showOnFarmlandsScreen ~= false,
+                defaultFarmProperty = fl.defaultFarmProperty == true }
         end
         return true
     end)

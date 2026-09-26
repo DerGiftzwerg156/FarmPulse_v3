@@ -83,9 +83,13 @@ public class VillageRotationService {
         }
     }
 
-    /** Resets dynamicRotationsThisYear when the (fallback) game year changes. */
+    /**
+     * Resets dynamicRotationsThisYear when the game year changes. T-08: the year is the FS25 year of the calendar
+     * export; before the first calendar, 12 months of the fallback calendar form a year.
+     */
     public void resetBudgetOnYearChange(Savegame sg) {
-        int year = (int) gameTime.yearIndex(sg.getCurrentGameTime());
+        int year = sg.getCalYear() != null ? sg.getCalYear()
+                : (int) Math.floorDiv(gameTime.monthIndex(sg, sg.getCurrentGameTime()), GameTime.PERIODS_PER_YEAR);
         if (year != sg.getRotationYearIndex()) {
             sg.setRotationYearIndex(year);
             sg.setDynamicRotationsThisYear(0);

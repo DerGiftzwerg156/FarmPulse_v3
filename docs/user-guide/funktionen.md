@@ -46,7 +46,10 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
   Leben.
 - In die Prüfung fließen dein Vermögen (auch das Getreide im Silo), Liquidität, Einnahmen, Schulden (auch der
   Kredit aus dem Grundspiel), Zahlungshistorie und – nur als kleiner Zuschlag – dein Vertrauen bei der Bank.
-- **Laufende Kredite:** Rate, Restschuld, Tilgungsplan und Zahlungshistorie. Raten werden automatisch abgebucht.
+- **Laufende Kredite:** Rate, Restschuld, Tilgungsplan und Zahlungshistorie. Raten werden automatisch abgebucht –
+  jeweils zu Beginn eines Spielmonats. Ein Spielmonat ist der Monat im FS25-Kalender; stellst du im Spiel die
+  „Tage pro Monat“ um, verschieben sich alle Termine passend mit.
+- Geleaste Fahrzeuge zählen nicht zum Vermögen.
 - **Zahlungsausfall:** Mahnung → Verzugsgebühr → Vertrauensverlust → bei wiederholtem Ausfall Fälligstellung der
   Restschuld (das spricht sich im Dorf herum) oder Kreditsperre.
 - **Stundung:** Einmal pro Kredit kannst du um eine Ratenpause bitten; die Bank entscheidet nach festen Regeln.
@@ -61,6 +64,7 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
 - **Team:** Zufriedenheit gesamt und je Bereich (Bezahlung, Arbeitsbelastung, Wertschätzung,
   Arbeitsbedingungen = Zustand deiner Maschinen). Zufriedene Leute arbeiten besser, das zeigt sich monatlich im
   Geld.
+- **Gehalt:** wird zu Beginn jedes Spielmonats (FS25-Kalender) überwiesen.
 - **Gehaltserhöhung, freier Tag, Kündigen.** Bleibt jemand lange unzufrieden, kommt erst eine Warnung, dann die
   Kündigung.
 
@@ -75,7 +79,9 @@ Die Feldübersicht zeigt alle Felder der Karte: deine eigenen, die der Dorfbewoh
   Auf ein zu niedriges Angebot folgt ein Gegenangebot, das du mit einem Klick annehmen kannst.
 - **Eigene Felder verkaufen:** Wunschpreis nennen, Interessenten melden sich mit einem ersten Angebot.
 
-Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebucht.
+Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebucht. Reicht dein Kontostand für
+einen Kauf nicht, platzt das Geschäft – das Feld bleibt beim bisherigen Besitzer. Flächen, die das Spiel selbst
+nicht zum Kauf anbietet (Ortschaft, Straßen), sind als „nicht handelbar“ markiert.
 
 ## Warenbestand & Preise
 

@@ -14,4 +14,6 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     List<Loan> findBySavegameAndStatus(Savegame savegame, LoanStatus status);
 
     boolean existsBySavegameAndBlocksNewCreditTrue(Savegame savegame);
+
+    List<Loan> findBySavegame_IdAndStatusIn(Long savegameId, java.util.Collection<LoanStatus> status);
 }

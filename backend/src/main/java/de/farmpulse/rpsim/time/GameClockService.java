@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Turns game-time jumps of incoming snapshots into events: one {@link GameTimeAdvancedEvent} per snapshot plus
- * one {@link GameDayPassedEvent}/{@link GameMonthPassedEvent} per crossed day/month. Time is purely game
- * time: while FS25 is paused nothing happens.
+ * one {@link GameDayPassedEvent}/{@link GameMonthPassedEvent} per crossed day/month (month = FS25 period, TODO T-08).
+ * Time is purely game time: while FS25 is paused nothing happens.
  */
 @Service
 public class GameClockService {
@@ -50,8 +50,8 @@ public class GameClockService {
             sg.setCurrentGameTime(dayStart);
             events.publishEvent(new GameTimeAdvancedEvent(sg.getId(), last, dayStart));
             last = dayStart;
-            long prevMonth = gameTime.monthIndex(dayStart - 1);
-            long month = gameTime.monthIndex(dayStart);
+            long prevMonth = gameTime.monthIndex(sg, dayStart - 1);
+            long month = gameTime.monthIndex(sg, dayStart);
             events.publishEvent(new GameDayPassedEvent(sg.getId(), d, dayStart));
             if (month != prevMonth) {
                 events.publishEvent(new GameMonthPassedEvent(sg.getId(), month, dayStart));

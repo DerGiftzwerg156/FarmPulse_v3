@@ -8,6 +8,9 @@ import { Toasts } from '../shared/ui/toasts';
 import { CallOverlay } from '../features/calls/call-overlay';
 import { MoneyPipe } from '../shared/format/format.pipes';
 import { NAV_ITEMS } from './nav-items';
+import { CalendarView } from '../core/api/models';
+import { TranslationService } from '../core/i18n/translation.service';
+import { calendarLabel } from '../shared/format/calendar';
 
 /**
  * App shell in the look of the design reference: icon rail on desktop (md+), toggleable slide-over menu on narrow
@@ -23,6 +26,7 @@ export class Shell implements OnInit, OnDestroy {
   private readonly live = inject(LiveEventsService);
   readonly items = NAV_ITEMS;
   readonly menuOpen = signal(false);
+  private readonly i18n = inject(TranslationService);
 
   ngOnInit(): void {
     this.state.refresh();
@@ -31,6 +35,10 @@ export class Shell implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.live.disconnect();
+  }
+
+  periodLabel(c: CalendarView): string {
+    return calendarLabel(c, this.i18n);
   }
 
   toggleMenu(): void {

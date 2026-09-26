@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ApiService } from '../../core/api/api.service';
 import { NoticeView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -16,9 +16,15 @@ import { Card } from '../../shared/ui/card';
   selector: 'app-notices-card',
   imports: [TranslatePipe, Card, Button],
   template: `
-    @if (notices().length) {
+    @if (notices().length || mods().length) {
       <app-card [title]="'notices.title' | t" [highlight]="true" data-testid="notices">
         <ul class="space-y-2">
+          @if (mods().length) {
+            <li class="rounded-md border border-warn/40 bg-bg p-3" data-testid="conflict-mods">
+              <div class="font-display text-[12px] font-bold text-text">{{ 'notices.conflictTitle' | t }}</div>
+              <p class="mt-1 text-[12px] text-muted">{{ 'notices.conflictText' | t: { mods: mods().join(', ') } }}</p>
+            </li>
+          }
           @for (n of notices(); track n.id) {
             <li class="rounded-md border border-warn/40 bg-bg p-3" data-testid="notice" [attr.data-kind]="n.kind">
               <div class="font-display text-[12px] font-bold text-text">{{ title(n) }}</div>
@@ -48,6 +54,8 @@ export class NoticesCard {
 
   readonly notices = signal<NoticeView[]>([]);
   readonly busy = signal(false);
+  /** TODO T-09: installed mods with overlapping features (warning only, nothing is disabled). */
+  readonly mods = computed(() => this.store.savegame()?.detectedMods ?? []);
 
   constructor() {
     effect(() => {

@@ -12,6 +12,7 @@ import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.SatisfactionService;
 import de.farmpulse.rpsim.repository.EmployeeRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameTime;
 import de.farmpulse.rpsim.time.GameTimeAdvancedEvent;
 import org.springframework.context.event.EventListener;
@@ -70,12 +71,22 @@ public class PayrollScheduler {
         if (emp == null || emp.getStatus() != EmployeeStatus.ACTIVE) {
             return false;
         }
-        emp.setNextSalaryDueGameTime(emp.getNextSalaryDueGameTime() - gameTime.msPerMonth());
+        emp.setNextSalaryDueGameTime(gameTime.addMonths(emp.getSavegame(), emp.getNextSalaryDueGameTime(), -1));
         if (!emp.isSalaryOverdue()) {
             emp.setSalaryOverdue(true);
             satisfaction.salaryOverdue(emp);
         }
         return true;
+    }
+
+    /** T-08: "days per period" changed - salary dates keep their month. */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent e) {
+        Savegame sg = savegames.findById(e.savegameId()).orElseThrow();
+        for (Employee emp : employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE)) {
+            emp.setNextSalaryDueGameTime(e.remap(emp.getNextSalaryDueGameTime()));
+        }
     }
 
     @Transactional
@@ -92,7 +103,7 @@ public class PayrollScheduler {
                 }
                 outbox.money(sg, -emp.getMonthlySalary(), MoneyReason.SALARY_PAYMENT,
                         "Gehalt " + emp.getCharacter().getName(), new Related(SatisfactionService.RELATED, emp.getId()));
-                emp.setNextSalaryDueGameTime(emp.getNextSalaryDueGameTime() + gameTime.msPerMonth());
+                emp.setNextSalaryDueGameTime(gameTime.addMonths(sg, emp.getNextSalaryDueGameTime(), 1));
                 emp.setSalaryOverdue(false);
             }
         }

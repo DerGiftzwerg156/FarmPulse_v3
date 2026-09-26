@@ -369,6 +369,8 @@ public class MarketEventEngine {
             case RUMOR -> {
                 type = NarrationEventType.MARKET_RUMOR;
                 b.put("isAccurate", ev.getIsAccurate()).put("direction", ev.getPeakMultiplier() >= 1 ? "UP" : "DOWN");
+                // T-10: what the price menu of the game currently shows for this station (a fact, not a prediction)
+                b.put("currentTrend", currentTrend(sg, ev.getSellPoint(), ev.getFillType()));
             }
             default -> {
                 type = NarrationEventType.MARKET_PRICE_EVENT;
@@ -382,6 +384,13 @@ public class MarketEventEngine {
                 .category(CommunicationCategory.MARKET).related(RELATED, ev.getId())
                 .formLink(ev.getEventType() == MarketEventType.SPECIAL_OFFER ? "/market?event=" + ev.getId() : null)
                 .submit();
+    }
+
+    /** Price trend of the game at a sell point (CLIMBING / FALLING / STABLE) from the latest export, or null. */
+    String currentTrend(Savegame sg, String sellPoint, String fillType) {
+        return facts.latest(sg).flatMap(f -> f.prices().stream()
+                .filter(p -> p.sellPoint().equals(sellPoint) && p.fillType().equals(fillType) && p.trend() != null)
+                .findFirst()).map(BridgeDtos.Price::trend).orElse(null);
     }
 
     private String sellPointName(Savegame sg, String id) {

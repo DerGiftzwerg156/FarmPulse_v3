@@ -49,10 +49,12 @@
               <div class="fp-label">{{ f.hectares | num: 2 }} ha · {{ 'farmland.reference' | t }} {{ f.referencePrice | money }}</div>
             </div>
             <app-badge [variant]="f.ownerType === 'PLAYER' ? 'positive' : 'neutral'">
-              {{ f.ownerType === 'CHARACTER' && f.owner ? f.owner.name : (f.ownerType | label: 'ownerType') }}
+              {{ f.tradeable === false ? ('farmland.notTradeableBadge' | t) : (f.ownerType === 'CHARACTER' && f.owner ? f.owner.name : (f.ownerType | label: 'ownerType')) }}
             </app-badge>
           </div>
-          @if (negotiationFor(f); as n) {
+          @if (f.tradeable === false) {
+            <p class="mt-2 text-[12px] text-muted" data-testid="not-tradeable">{{ 'farmland.notTradeable' | t }}</p>
+          } @else if (negotiationFor(f); as n) {
             <button type="button" class="mt-2 fp-label text-warn hover:underline" (click)="selectNegotiation(n.id)">{{ 'farmland.toNegotiation' | t }}</button>
           } @else if (f.ownerType === 'PLAYER') {
             <form class="mt-3 flex flex-wrap items-end gap-2" (submit)="$event.preventDefault(); sell(f)" data-testid="sell-form">

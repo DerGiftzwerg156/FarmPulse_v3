@@ -20,6 +20,9 @@ RPSimConfig.DEFAULTS = {
     schemaVersion = 1,
     -- Price unit used for exported prices: FS25 stores prices per liter; exports use price per 1000 l.
     pricePerLiters = 1000,
+    -- T-09: mods whose features overlap with RPSim (mod folder / zip names). Detected ones are reported in
+    -- market_context.json; the backend shows a warning. Nothing is disabled.
+    conflictMods = { "FS25_MarketDynamics", "FS25_UsedPlus", "FS25_EnhancedLoanSystem", "FS25_BetterContracts" },
 }
 
 function RPSimConfig.new(overrides)

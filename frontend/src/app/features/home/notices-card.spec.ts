@@ -42,6 +42,15 @@ describe('NoticesCard', () => {
     expect(items[1].querySelector('[data-testid="notice-resend"]')).not.toBeNull();
   });
 
+  it('warns about installed mods with overlapping features (TODO T-09)', () => {
+    const { fixture, http, el } = setup();
+    TestBed.inject(GameStateStore).savegame.set(savegame({ detectedMods: ['FS25_UsedPlus'] }));
+    fixture.detectChanges();
+    http.match('/api/notices').forEach((r) => r.flush([]));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="conflict-mods"]')?.textContent).toContain('FS25_UsedPlus');
+  });
+
   it('sends the decision and removes the notice', () => {
     const { fixture, http, el } = setup();
     http.expectOne('/api/notices').flush([{ id: 2, kind: 'REWIND_DECISION', status: 'OPEN', gameTime: DAY, relatedType: 'REWIND',

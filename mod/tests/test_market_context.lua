@@ -14,7 +14,9 @@ function T.TestMarketContext:testBuildSchema()
     lu.assertEquals(doc.sellPoints[1].name, "Mühle Nord")
     lu.assertEquals(doc.sellPoints[1].acceptedFillTypes, { "BARLEY", "WHEAT" })
     lu.assertEquals(doc.fillTypes, { "BARLEY", "WHEAT" })
-    lu.assertEquals(doc.farmlands[1], { farmlandId = 12, hectares = 4.5, price = 54000, ownerFarmId = 1 })
+    lu.assertEquals(doc.farmlands[1], { farmlandId = 12, hectares = 4.5, price = 54000, ownerFarmId = 1,
+        showOnFarmlandsScreen = true, defaultFarmProperty = false })
+    lu.assertEquals(doc.detectedMods, {})
     lu.assertEquals(doc.farmlands[2].ownerFarmId, 0)
 end
 
@@ -32,6 +34,17 @@ function T.TestMarketContext:testNotReExportedOnRegularCycle()
     fs.files[paths.marketContext] = "SENTINEL"
     bridge:update(20)
     lu.assertEquals(fs.files[paths.marketContext], "SENTINEL")
+end
+
+function T.TestMarketContext:testFarmlandFlagsAndDetectedModsAreExported()
+    local doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m",
+        detectedMods = { "FS25_UsedPlus", "FS25_BetterContracts" },
+        farmlands = { { farmlandId = 3, hectares = 1, price = 1, ownerFarmId = 0, showOnFarmlandsScreen = false,
+            defaultFarmProperty = true } } })
+    lu.assertEquals(doc.detectedMods, { "FS25_BetterContracts", "FS25_UsedPlus" })
+    lu.assertFalse(doc.farmlands[1].showOnFarmlandsScreen)
+    lu.assertTrue(doc.farmlands[1].defaultFarmProperty)
+    lu.assertStrContains(RPSimJson.encode(doc), '"detectedMods":["FS25_BetterContracts","FS25_UsedPlus"]')
 end
 
 return T

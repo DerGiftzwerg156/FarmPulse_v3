@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * AP-9.1: debtServiceCoverage uses the cash-flow trend of the FactsSnapshot series (moving window), not a value
- * pre-computed by the mod. Game month = rpsim.time.game-days-per-month (1 in the default config).
+ * pre-computed by the mod. Game month = FS25 period (fallback without calendar export: 1 day per period).
  */
 @SpringBootTest
 @Transactional

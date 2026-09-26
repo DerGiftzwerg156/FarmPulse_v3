@@ -82,12 +82,16 @@ end
 -- context is re-checked on every farm_facts export, T-01). force = true writes unconditionally.
 -- Returns true when the file was written, false when unchanged or on error.
 function RPSimBridge:exportMarketContext(force)
-    local ok, raw = pcall(self.adapter.collectMarketContext, self.adapter)
+    local ok, raw = pcall(self.adapter.collectMarketContext, self.adapter, self.cfg.conflictMods)
     if not ok or raw == nil then
         RPSimLog.warning("Collecting market context failed: %s", tostring(raw))
         return false
     end
     raw.savegameId = self.state.savegameId
+    if raw.detectedMods ~= nil and #raw.detectedMods > 0 and not self.conflictsLogged then
+        self.conflictsLogged = true
+        RPSimLog.warning("Mods with overlapping features detected: %s", table.concat(raw.detectedMods, ", "))
+    end
     local encoded = self:encode(self.paths.marketContext, RPSimMarketContext.build(raw))
     if encoded == nil then
         return false
@@ -120,7 +124,7 @@ end
 --- Logs what the first export saw (manual test plan: verifies that the savegame was fully loaded).
 function RPSimBridge:logFirstExport()
     local ok, facts = pcall(self.adapter.collectFarmFacts, self.adapter)
-    local okCtx, ctx = pcall(self.adapter.collectMarketContext, self.adapter)
+    local okCtx, ctx = pcall(self.adapter.collectMarketContext, self.adapter, self.cfg.conflictMods)
     local vehicles = ok and facts ~= nil and #(facts.vehicles or {}) or -1
     local fields = ok and facts ~= nil and #(facts.farmland or {}) or -1
     local sellPoints = okCtx and ctx ~= nil and #(ctx.sellPoints or {}) or -1

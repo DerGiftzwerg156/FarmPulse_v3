@@ -53,6 +53,14 @@ public final class BridgeValidator {
                 || f.liabilities().vanillaLoan().remainingAmount() == null) {
             e.add("liabilities.vanillaLoan missing");
         }
+        if (f.calendar() != null) {
+            var c = f.calendar();
+            if (c.period() == null || c.period() < 1 || c.period() > 12 || c.daysPerPeriod() == null || c.daysPerPeriod() < 1
+                    || c.monotonicDay() == null || c.monotonicDay() < 0
+                    || (c.dayInPeriod() != null && (c.dayInPeriod() < 1 || c.dayInPeriod() > c.daysPerPeriod()))) {
+                e.add("invalid calendar " + c);
+            }
+        }
         if (f.prices() == null) {
             e.add("prices missing");
         } else {

@@ -35,7 +35,9 @@ placeables of the savegame do not exist earlier). The first export writes `marke
   },
   "liabilities": { "vanillaLoan": { "active": true, "remainingAmount": 80000 },
                    "leasing": [{ "uniqueId": "veh_00077" }] },
-  "prices": [{ "sellPoint": "MillNorth", "fillType": "WHEAT", "currentPrice": 215 }] }
+  "prices": [{ "sellPoint": "MillNorth", "fillType": "WHEAT", "currentPrice": 215, "trend": "CLIMBING" }],
+  "calendar": { "period": 8, "dayInPeriod": 2, "daysPerPeriod": 3, "year": 2, "monotonicDay": 40,
+                "periodName": "Oktober" } }
 ```
 
 - `gameTime`: in-game milliseconds since savegame start (stops while paused). 1 game day = 86 400 000.
@@ -46,6 +48,16 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 - `condition`: 0–100 (100 = no damage).
 - `storage`: classic silos only, aggregated per fill type (liters).
 - `currentPrice`: price per 1000 liters currently paid at the sell point (incl. active RPSim events).
+- `trend` (optional): price trend of the station as the game shows it - `SellingStation:getCurrentPricingTrend`
+  bit flags `PRICE_CLIMBING` / `PRICE_FALLING` (as used by FS25_ProductionDirectSell) → `CLIMBING`, `FALLING`,
+  `STABLE`.
+- `calendar` (optional for older mods): `g_currentMission.environment` → `currentPeriod` (1..12, **period 1 =
+  March**), `currentDayInPeriod` (1-based), `daysPerPeriod`, `currentYear`, `currentMonotonicDay`, plus
+  `periodName` = `g_i18n:formatPeriod()` (localized month name). The backend's game month is this FS25 period:
+  the current period started at `(monotonicDay - (dayInPeriod - 1)) * 86 400 000` in `gameTime` terms.
+  "Days per period" can change at any time; scheduled dates keep their month.
+- Sell points: only real selling stations (`station:isa(SellingStation)`) that are not hidden from the prices menu
+  (`hideFromPricesMenu`), in `farm_facts.json` and in `market_context.json`.
 
 ## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, and on every `farm_facts` cycle when its content changed)
 
@@ -53,10 +65,17 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 { "savegameId": "...", "mapName": "Erlengrund",
   "sellPoints": [{ "id": "MillNorth", "name": "Mühle Nord", "acceptedFillTypes": ["BARLEY", "WHEAT"] }],
   "fillTypes": ["BARLEY", "WHEAT"],
-  "farmlands": [{ "farmlandId": 12, "hectares": 4.5, "price": 54000, "ownerFarmId": 0 }] }
+  "farmlands": [{ "farmlandId": 12, "hectares": 4.5, "price": 54000, "ownerFarmId": 0,
+                  "showOnFarmlandsScreen": true, "defaultFarmProperty": false }],
+  "detectedMods": ["FS25_UsedPlus"] }
 ```
 
 `ownerFarmId`: 0 = no owner in FS25 (unowned or owned by a tool NPC), otherwise the FS farm id.
+`showOnFarmlandsScreen` / `defaultFarmProperty` (FS25 `Farmland.lua`): farmlands hidden in the vanilla farmland
+menu (village, roads) or belonging to the map's default farm property are never given to NPCs, auctioned or
+negotiated by the tool. `detectedMods`: installed mods whose features overlap with RPSim
+(`g_modIsLoaded[...]` for `FS25_MarketDynamics`, `FS25_UsedPlus`, `FS25_EnhancedLoanSystem`,
+`FS25_BetterContracts`; configurable as `conflictMods`) - the tool only warns.
 
 ## `import/instructions.json` (backend → mod)
 

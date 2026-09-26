@@ -85,4 +85,62 @@ function T.TestGameAdapter:testFarmlandSaleCreditCoversNothingButIsAllowed()
     lu.assertEquals(game.farm.money, 30000)
 end
 
+-- T-08
+function T.TestGameAdapter:testCalendarFromEnvironment()
+    helpers.fakeGame()
+    g_i18n = { formatPeriod = function() return "Oktober" end }
+    lu.assertEquals(RPSimGameAdapter.new():collectCalendar(), { period = 8, dayInPeriod = 2, daysPerPeriod = 3, year = 2,
+        monotonicDay = 3, periodName = "Oktober" })
+    g_i18n = nil
+    lu.assertNil(RPSimGameAdapter.new():collectCalendar().periodName)
+end
+
+-- T-09
+function T.TestGameAdapter:testConflictModsAreDetectedViaModIsLoaded()
+    helpers.fakeGame()
+    g_modIsLoaded = { FS25_UsedPlus = true, FS25_Other = true }
+    local raw = RPSimGameAdapter.new():collectMarketContext(RPSimConfig.new().conflictMods)
+    lu.assertEquals(raw.detectedMods, { "FS25_UsedPlus" })
+    g_modIsLoaded = nil
+    lu.assertEquals(RPSimGameAdapter.new():collectMarketContext(RPSimConfig.new().conflictMods).detectedMods, {})
+end
+
+-- T-10
+local function station(name, opts)
+    opts = opts or {}
+    return {
+        isa = function(_, class) return class == SellingStation and not opts.unloadingOnly end,
+        hideFromPricesMenu = opts.hidden,
+        acceptedFillTypes = { [1] = true },
+        getName = function() return name end,
+        getEffectiveFillTypePrice = function() return 0.25 end,
+        getCurrentPricingTrend = function() return opts.trend or 0 end,
+    }
+end
+
+function T.TestGameAdapter:testOnlyVisibleSellingStationsAreExported()
+    SellingStation = { PRICE_CLIMBING = 1, PRICE_FALLING = 2 }
+    Utils = { isBitSet = function(v, bit) return v % (2 * bit) >= bit end }
+    helpers.fakeGame({ stations = { station("Mill", { trend = 1 }), station("Husbandry", { hidden = true }),
+        station("Silo", { unloadingOnly = true }), station("Dairy", { trend = 2 }) } })
+    local a = RPSimGameAdapter.new()
+    local ctx = a:collectMarketContext({})
+    local names = {}
+    for _, sp in ipairs(ctx.sellPoints) do names[#names + 1] = sp.name end
+    lu.assertEquals(names, { "Mill", "Dairy" })
+    local facts = a:collectFarmFacts()
+    lu.assertEquals(facts.prices[1].trend, "CLIMBING")
+    lu.assertEquals(facts.prices[2].trend, "FALLING")
+    SellingStation, Utils = nil, nil
+end
+
+-- T-11
+function T.TestGameAdapter:testFarmlandVisibilityFlags()
+    helpers.fakeGame()
+    local ctx = RPSimGameAdapter.new():collectMarketContext({})
+    lu.assertTrue(ctx.farmlands[1].showOnFarmlandsScreen)
+    lu.assertFalse(ctx.farmlands[2].showOnFarmlandsScreen)
+    lu.assertFalse(ctx.farmlands[2].defaultFarmProperty)
+end
+
 return T

@@ -69,3 +69,28 @@ test('market_context is re-written on a regular tick only when it changed (TODO 
   sim.farmlands[0].ownerFarmId = sim.farmlands[0].ownerFarmId === 1 ? 0 : 1;
   assert.notEqual(sim.exportMarketContext(false), null);
 });
+
+test('the FS25 calendar is exported and follows a change of days per period (TODO T-08)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof', daysPerPeriod: 3 });
+  sim.gameTime = 40 * MS_PER_GAME_DAY + 1000; // day 40: period index 13 -> period 2 (April) of year 2, day 2
+  assert.deepEqual(sim.buildFarmFacts().calendar, { period: 2, dayInPeriod: 2, daysPerPeriod: 3, year: 2, monotonicDay: 40 });
+  assert.deepEqual(sim.setDaysPerPeriod(5), { period: 2, dayInPeriod: 2, daysPerPeriod: 5, year: 2, monotonicDay: 40 });
+  sim.gameTime = 44 * MS_PER_GAME_DAY;
+  assert.equal(sim.buildFarmFacts().calendar.period, 3);
+  assert.equal(validate('farmFacts', sim.buildFarmFacts()), null);
+});
+
+test('konflikt-mods reports detected mods, farmland 16 is not buyable (TODO T-09 / T-11)', () => {
+  const ctx = new BridgeSimulator({ dir: tmp(), scenario: 'konflikt-mods' }).buildMarketContext();
+  assert.deepEqual(ctx.detectedMods, ['FS25_MarketDynamics', 'FS25_UsedPlus']);
+  assert.equal(ctx.farmlands.find((f) => f.farmlandId === 16).showOnFarmlandsScreen, false);
+  assert.equal(ctx.farmlands.find((f) => f.farmlandId === 1).showOnFarmlandsScreen, true);
+  assert.equal(validate('marketContext', ctx), null);
+});
+
+test('prices carry the trend of the price walk (TODO T-10)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
+  sim.advance(24 * 60 * 60 * 1000);
+  const trends = new Set(sim.buildFarmFacts().prices.map((p) => p.trend));
+  for (const t of trends) assert.ok(['CLIMBING', 'FALLING', 'STABLE'].includes(t));
+});

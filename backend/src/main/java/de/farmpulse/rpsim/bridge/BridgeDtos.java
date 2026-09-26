@@ -13,7 +13,13 @@ public final class BridgeDtos {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
-                            Liabilities liabilities, List<Price> prices) {
+                            Liabilities liabilities, List<Price> prices, Calendar calendar) {
+    }
+
+    /** TODO T-08: FS25 calendar of the savegame (game month = FS25 period, period 1 = March). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Calendar(Integer period, Integer dayInPeriod, Integer daysPerPeriod, Integer year, Long monotonicDay,
+                           String periodName) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -62,12 +68,13 @@ public final class BridgeDtos {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Price(String sellPoint, String fillType, Double currentPrice) {
+    /** trend (TODO T-10): CLIMBING / FALLING / STABLE as reported by the selling station, optional. */
+    public record Price(String sellPoint, String fillType, Double currentPrice, String trend) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
-                                List<MapFarmland> farmlands) {
+                                List<MapFarmland> farmlands, List<String> detectedMods) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -75,7 +82,16 @@ public final class BridgeDtos {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record MapFarmland(Integer farmlandId, Double hectares, Double price, Integer ownerFarmId) {
+    /**
+     * showOnFarmlandsScreen / defaultFarmProperty (TODO T-11): farmlands hidden in the vanilla farmland menu (village,
+     * roads) are not buyable and never traded by the tool. Missing values (older mod) count as buyable.
+     */
+    public record MapFarmland(Integer farmlandId, Double hectares, Double price, Integer ownerFarmId,
+                              Boolean showOnFarmlandsScreen, Boolean defaultFarmProperty) {
+
+        public boolean tradeable() {
+            return !Boolean.FALSE.equals(showOnFarmlandsScreen) && !Boolean.TRUE.equals(defaultFarmProperty);
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -25,12 +25,13 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | --- | --- | --- | --- |
 | `rpsim.web.static-dir` | `""` | Folder of the built Angular app. When set (release: `web/`) the backend serves it on `/` with an SPA fallback. Empty = API only. | – |
 
-## `rpsim.time` – Game time
+## Game month = FS25 period
 
-| Key | Default | Meaning | Concept |
-| --- | --- | --- | --- |
-| `rpsim.time.game-days-per-month` | `1` | Game days per game month (credit installments, salaries, monthly effects). `TODO(offene-frage)`: FS25 period field not verified, fixed counter fallback. | Offene technische Fragen |
-| `rpsim.time.months-per-year` | `12` | Game months per game year (rotation budget, invitation calendar). | Dynamische-Charaktere-Rotation |
+There is no `rpsim.time` configuration any more (TODO T-08): the game month is the FS25 period of the savegame.
+The mod exports the calendar (`farm_facts.json` → `calendar`: period, day in period, days per period, year); the
+backend counts months from it. Installments and salaries are due at the start of each period; if the player changes
+"days per period" in FS25, scheduled dates keep their month. Without a calendar export (older mod) one day per
+period is assumed (FS25 default).
 
 ## `rpsim.ai` – AI providers
 
@@ -309,7 +310,7 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.formulas.village-life.congratulation-trend-ratio` | `1.25` | Congratulation when the cash-flow trend exceeds the previous window by this ratio. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.congratulation-min-cashflow` | `1000` | …and the monthly cash flow is at least this amount. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.congratulation-cooldown-days` | `20` | Cool-down between congratulations. | Dorfleben-Modul |
-| `rpsim.formulas.village-life.invitation-every-days` | `6` | Fallback invitation calendar: an invitation every n game days of the year (0 = off). | Dorfleben-Modul |
+| `rpsim.formulas.village-life.invitation-every-periods` | `6` | Invitation calendar: an invitation on the first day of every n-th FS25 period of the year, counted from period 1 = March (6 → March and September; 0 = off). | Dorfleben-Modul |
 | `rpsim.formulas.village-life.gossip-daily-probability` | `0.05` | Daily roll for village gossip. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.gossip-cooldown-days` | `3` | Cool-down between gossip messages. | Dorfleben-Modul |
 

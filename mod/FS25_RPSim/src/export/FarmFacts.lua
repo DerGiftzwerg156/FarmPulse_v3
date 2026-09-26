@@ -19,7 +19,9 @@ end
 --   vehicles = { {uniqueId, value, damage} }, placeables = { {uniqueId, value} },
 --   leasedVehicles = { {uniqueId, costPerPeriod?} },
 --   farmland = { {farmlandId, hectares, price} }, animals = { {husbandryUniqueId, type, count, estimatedValue} },
---   silos = <see RPSimStorage.aggregate>, vanillaLoan = number, prices = { {sellPoint, fillType, pricePerLiter} } }
+--   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
+--   prices = { {sellPoint, fillType, pricePerLiter, trend?} },
+--   calendar = { period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName? } | nil }
 function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
     local vehicles = RPSimJson.array({})
@@ -44,8 +46,12 @@ function RPSimFarmFacts.build(raw, cfg)
     end
     local prices = RPSimJson.array({})
     for _, p in ipairs(raw.prices or {}) do
-        prices[#prices + 1] = { sellPoint = p.sellPoint, fillType = p.fillType,
+        local e = { sellPoint = p.sellPoint, fillType = p.fillType,
             currentPrice = round((p.pricePerLiter or 0) * cfg.pricePerLiters) }
+        if p.trend ~= nil then
+            e.trend = p.trend
+        end
+        prices[#prices + 1] = e
     end
     table.sort(prices, function(a, b)
         if a.sellPoint == b.sellPoint then return a.fillType < b.fillType end
@@ -63,7 +69,7 @@ function RPSimFarmFacts.build(raw, cfg)
     end
     table.sort(leasing, function(a, b) return a.uniqueId < b.uniqueId end)
     local loan = raw.vanillaLoan or 0
-    return {
+    local doc = {
         schemaVersion = cfg.schemaVersion,
         gameTime = round(raw.gameTime),
         savegameId = raw.savegameId,
@@ -78,4 +84,14 @@ function RPSimFarmFacts.build(raw, cfg)
         liabilities = { vanillaLoan = { active = loan > 0, remainingAmount = round(loan) }, leasing = leasing },
         prices = prices,
     }
+    local c = raw.calendar
+    if type(c) == "table" and type(c.period) == "number" then
+        -- T-08: the game month of the backend is the FS25 period
+        doc.calendar = { period = c.period, dayInPeriod = c.dayInPeriod or 1, daysPerPeriod = c.daysPerPeriod or 1,
+            year = c.year or 1, monotonicDay = c.monotonicDay or 0 }
+        if type(c.periodName) == "string" and c.periodName ~= "" then
+            doc.calendar.periodName = c.periodName
+        end
+    end
+    return doc
 end

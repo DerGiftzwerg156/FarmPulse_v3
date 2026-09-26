@@ -86,4 +86,21 @@ function T.TestFarmFacts:testLeasingCostIsExportedOnlyWhenKnown()
     lu.assertEquals(doc.liabilities.leasing, { { uniqueId = "a", costPerPeriod = 1234 }, { uniqueId = "b" } })
 end
 
+function T.TestFarmFacts:testCalendarAndTrendAreExported()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        prices = { { sellPoint = "A", fillType = "WHEAT", pricePerLiter = 0.2, trend = "CLIMBING" },
+            { sellPoint = "B", fillType = "WHEAT", pricePerLiter = 0.2 } },
+        calendar = { period = 8, dayInPeriod = 2, daysPerPeriod = 3, year = 2, monotonicDay = 42, periodName = "Oktober" } },
+        RPSimConfig.new())
+    lu.assertEquals(doc.calendar, { period = 8, dayInPeriod = 2, daysPerPeriod = 3, year = 2, monotonicDay = 42,
+        periodName = "Oktober" })
+    lu.assertEquals(doc.prices[1].trend, "CLIMBING")
+    lu.assertNil(doc.prices[2].trend)
+end
+
+function T.TestFarmFacts:testNoCalendarWithoutEnvironment()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0 }, RPSimConfig.new())
+    lu.assertNil(doc.calendar)
+end
+
 return T

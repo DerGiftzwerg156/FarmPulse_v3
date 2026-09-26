@@ -84,7 +84,7 @@ public class CreditScoringService {
                 long delta = last.getBalance() - first.getBalance();
                 // operating cash flow = balance change without financing/one-off bookings (installments added back)
                 long nonOperating = liquidity.nonOperatingApplied(sg, first.getGameTime(), last.getGameTime());
-                monthlyCashflow = (delta - nonOperating) / (span / (double) gameTime.msPerMonth());
+                monthlyCashflow = (delta - nonOperating) / (span / (double) gameTime.msPerMonth(sg));
             }
         }
         double history = CreditFormula.paymentHistoryScore(
@@ -108,6 +108,6 @@ public class CreditScoringService {
             return 0;
         }
         long nonOperating = liquidity.nonOperatingApplied(sg, first.getGameTime(), last.getGameTime());
-        return (last.getBalance() - first.getBalance() - nonOperating) / (span / (double) gameTime.msPerMonth());
+        return (last.getBalance() - first.getBalance() - nonOperating) / (span / (double) gameTime.msPerMonth(sg));
     }
 }

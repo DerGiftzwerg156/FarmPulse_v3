@@ -19,7 +19,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class RpsimProperties {
 
     private Bridge bridge = new Bridge();
-    private Time time = new Time();
     private Ai ai = new Ai();
     private Formulas formulas = new Formulas();
     private Web web = new Web();
@@ -52,17 +51,6 @@ public class RpsimProperties {
          * processedRetentionGameDays.
          */
         private double rewindLookbackHours = 24;
-    }
-
-    @Getter @Setter
-    public static class Time {
-        /**
-         * Game days per game month. TODO(offene-frage): FS25 period/season field not verified; fallback is this
-         * fixed counter (default 1 = FS25 default "days per period").
-         */
-        private int gameDaysPerMonth = 1;
-        /** Game months per game year (fallback year counter for rotation budget and invitations). */
-        private int monthsPerYear = 12;
     }
 
     @Getter @Setter
@@ -397,8 +385,8 @@ public class RpsimProperties {
         private double congratulationTrendRatio = 1.25;
         private double congratulationMinCashflow = 1000;
         private double congratulationCooldownDays = 20;
-        /** Invitation calendar (fallback): day-of-year offsets (in game days since year start). */
-        private int invitationEveryDays = 6;
+        /** Invitation calendar: every n-th FS25 period of the year (counted from period 1 = March), 0 = never. */
+        private int invitationEveryPeriods = 6;
         private double gossipDailyProbability = 0.05;
         private double gossipCooldownDays = 3;
     }

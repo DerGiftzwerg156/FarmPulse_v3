@@ -35,4 +35,12 @@ public class FarmlandOwnership extends SavegameScoped {
 
     @Column(name = "updated_at_game_time", nullable = false)
     private long updatedAtGameTime;
+
+    /**
+     * TODO T-11: false for farmlands the vanilla farmland menu hides (showOnFarmlandsScreen = false, e.g. village,
+     * roads) or that belong to the map's default farm property. Such fields are never given to NPCs, auctioned or
+     * negotiated.
+     */
+    @Column(name = "tradeable", nullable = false)
+    private boolean tradeable = true;
 }

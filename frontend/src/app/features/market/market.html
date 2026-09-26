@@ -52,7 +52,12 @@
             @for (p of pricesForType(); track p.sellPoint + p.fillType) {
               <tr class="border-t border-border" data-testid="price-row">
                 <td class="py-1.5">{{ p.sellPointName }}</td>
-                <td class="text-right font-mono" [class.text-accent]="p.currentPrice === bestPrice().get(p.fillType)">{{ p.currentPrice | num }} €</td>
+                <td class="text-right font-mono" [class.text-accent]="p.currentPrice === bestPrice().get(p.fillType)">{{ p.currentPrice | num }} €
+                  @if (p.trend === 'CLIMBING' || p.trend === 'FALLING') {
+                    <span data-testid="price-trend" [attr.data-trend]="p.trend" [class.text-accent]="p.trend === 'CLIMBING'" [class.text-danger]="p.trend === 'FALLING'"
+                      [attr.title]="p.trend | label: 'priceTrend'">{{ p.trend === 'CLIMBING' ? '▲' : '▼' }}</span>
+                  }
+                </td>
               </tr>
             } @empty {
               <tr><td colspan="2" class="py-2 text-muted">{{ 'market.noPrices' | t }}</td></tr>

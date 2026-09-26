@@ -67,6 +67,19 @@ describe('Farmland', () => {
     expect(el.textContent).toContain('1 von 3 Feldern');
   });
 
+  it('marks fields that cannot be traded in the game and offers no actions (TODO T-11)', () => {
+    fields[1].tradeable = false;
+    try {
+      const { el, tile } = setup();
+      tile(1);
+      expect(el.querySelector('[data-testid="not-tradeable"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="start-direct"]')).toBeNull();
+      expect(el.querySelector('[data-testid="field-detail"]')?.textContent).toContain('nicht handelbar');
+    } finally {
+      delete fields[1].tradeable;
+    }
+  });
+
   it('offers an own field for sale with a price form', () => {
     const { el, tile, btn, http, fixture, setAmount } = setup();
     tile(0);

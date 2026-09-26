@@ -99,12 +99,19 @@ public class FarmlandOwnershipService {
                     o.setFarmlandId(mf.farmlandId());
                     if (playerOwned.contains(mf.farmlandId())) {
                         o.setOwnerType(OwnerType.PLAYER);
-                    } else if (!npcs.isEmpty() && random.chance(props.getFormulas().getNegotiation().getNpcOwnedShare())) {
+                    } else if (mf.tradeable() && !npcs.isEmpty()
+                            && random.chance(props.getFormulas().getNegotiation().getNpcOwnedShare())) {
                         o.setOwnerType(OwnerType.CHARACTER);
                         o.setOwnerCharacter(random.pick(npcs));
                     } else {
                         o.setOwnerType(OwnerType.UNCLAIMED);
                     }
+                }
+                o.setTradeable(mf.tradeable());
+                if (!o.isTradeable() && o.getOwnerType() == OwnerType.CHARACTER) {
+                    // T-11: not buyable in the game - an NPC must not own it (fields created by older versions)
+                    o.setOwnerType(OwnerType.UNCLAIMED);
+                    o.setOwnerCharacter(null);
                 }
                 o.setHectares(mf.hectares() == null ? 0 : mf.hectares());
                 o.setReferencePrice(mf.price() == null ? 0 : Math.round(mf.price()));

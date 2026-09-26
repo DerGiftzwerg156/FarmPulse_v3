@@ -35,9 +35,6 @@ rpsim:
     rewind-lookback-hours: 24          # T-02: bookings acked this long before the reloaded point are checked as well
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
-  time:
-    game-days-per-month: 1        # TODO(offene-frage): FS25 period field; fixed counter fallback
-    months-per-year: 12
   ai:
     provider: NONE                # FAKE | OPENAI | ANTHROPIC | GEMINI | OLLAMA | NONE
     timeout-seconds: 30
@@ -275,7 +272,7 @@ rpsim:
       congratulation-trend-ratio: 1.25
       congratulation-min-cashflow: 1000
       congratulation-cooldown-days: 20
-      invitation-every-days: 6
+      invitation-every-periods: 6   # T-08: every 6th FS25 period (March, September)
       gossip-daily-probability: 0.05
       gossip-cooldown-days: 3
     onboarding:

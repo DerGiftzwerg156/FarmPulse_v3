@@ -43,6 +43,12 @@ export function startControlServer(sim, port, log = () => {}) {
         sim.exportFarmFacts();
         return send(200, { price, balance: sim.balance });
       }
+      if (req.method === 'POST' && url.pathname === '/days-per-period') {
+        const b = await body(req);
+        const calendar = sim.setDaysPerPeriod(Number(b.daysPerPeriod));
+        sim.exportFarmFacts();
+        return send(200, calendar);
+      }
       if (req.method === 'POST' && url.pathname === '/save') {
         return send(200, { savedAtGameTime: sim.saveGame() });
       }
@@ -62,6 +68,6 @@ export function startControlServer(sim, port, log = () => {}) {
       return send(500, { error: e.message });
     }
   });
-  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/save|/reload-without-saving)`));
+  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/days-per-period|/save|/reload-without-saving)`));
   return server;
 }

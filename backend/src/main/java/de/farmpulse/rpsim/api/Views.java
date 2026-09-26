@@ -8,8 +8,17 @@ public final class Views {
     private Views() {
     }
 
+    /**
+     * Header context. calendar (TODO T-08): FS25 period of the savegame, null before the first calendar export.
+     * detectedMods (TODO T-09): installed mods with overlapping features (warning only).
+     */
     public record SavegameView(Long id, String savegameId, String mapName, long gameTime, long gameDay, long balance,
-                               String tonePreset, long unreadMails, long pendingCalls, String reputationTier) {
+                               String tonePreset, long unreadMails, long pendingCalls, String reputationTier,
+                               CalendarView calendar, List<String> detectedMods) {
+    }
+
+    /** FS25 calendar: period 1..12 (1 = March), periodName as shown in the game. */
+    public record CalendarView(int period, String periodName, int dayInPeriod, int daysPerPeriod, Integer year) {
     }
 
     public record PreviewView(Long characterId, String name, String role, String category, String jobRole,
@@ -68,7 +77,7 @@ public final class Views {
     }
 
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,
-                               boolean inNegotiation) {
+                               boolean inNegotiation, boolean tradeable) {
     }
 
     public record OfferView(int round, String offeredBy, String characterName, long amount, String result, Long counterAmount,
@@ -97,7 +106,8 @@ public final class Views {
     public record StorageOverview(long gameTime, long totalValue, List<StorageView> items) {
     }
 
-    public record PriceView(String sellPoint, String sellPointName, String fillType, double currentPrice) {
+    /** trend (TODO T-10): CLIMBING / FALLING / STABLE as shown by the game, null if unknown. */
+    public record PriceView(String sellPoint, String sellPointName, String fillType, double currentPrice, String trend) {
     }
 
     public record PricePoint(long gameTime, double price) {

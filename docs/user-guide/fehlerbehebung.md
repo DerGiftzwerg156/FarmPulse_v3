@@ -58,6 +58,21 @@ Wichtig: Nur die Buchungen im Spiel werden wiederhergestellt. Mails, Vertrauen, 
 Abläufe im Tool werden **nicht** zurückgedreht. Die Schwelle ist einstellbar
 (`rpsim.bridge.rewind-auto-resend-max-hours`).
 
+## Andere Mods mit Überschneidungen
+
+Das Dashboard zeigt unter *Hinweise aus dem Spiel* „Mods mit Überschneidungen erkannt“, wenn einer dieser Mods
+aktiv ist (Liste auch unter **Einstellungen → Spielstand**). FarmPulse schaltet nichts ab, aber die Effekte können
+sich überlagern:
+
+| Mod | Was sich überschneidet |
+| --- | --- |
+| `FS25_MarketDynamics` | Verändert dieselben Verkaufspreise. Preisfaktoren multiplizieren sich, eigene Markt-Ereignisse doppeln sich mit denen von FarmPulse. |
+| `FS25_UsedPlus` | Eigene Kredite, Bonität und Leasing. Seine Kredite erhöhen den Vanilla-Kredit, den FarmPulse als Verbindlichkeit mitzählt. |
+| `FS25_EnhancedLoanSystem` | Ersetzt den Vanilla-Kredit. |
+| `FS25_BetterContracts` | Ändert Aufträge und Feldpreise. |
+
+Tipp: Nutze die Kredit- bzw. Preisfunktionen nur eines Mods, um doppelte Effekte zu vermeiden.
+
 ## Die KI antwortet nicht (oder klingt nach Vorlage)
 
 FarmPulse funktioniert immer – auch ohne KI. Kann der KI-Anbieter nicht antworten (kein Schlüssel, falscher

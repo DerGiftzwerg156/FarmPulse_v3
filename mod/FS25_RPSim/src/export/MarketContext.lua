@@ -1,8 +1,10 @@
--- Builds market_context.json (exported once on load and again after every applied FARMLAND_TRANSFER).
+-- Builds market_context.json (exported on mission start, after every applied FARMLAND_TRANSFER and whenever its
+-- content changed).
 RPSimMarketContext = {}
 
 --- raw: { savegameId, mapName, sellPoints = { {id, name, acceptedFillTypes = {..}} }, fillTypes = {..},
---         farmlands = { {farmlandId, hectares, price, ownerFarmId} } }
+--         farmlands = { {farmlandId, hectares, price, ownerFarmId, showOnFarmlandsScreen, defaultFarmProperty} },
+--         detectedMods = { "FS25_..." } }
 function RPSimMarketContext.build(raw)
     local sellPoints = RPSimJson.array({})
     for _, sp in ipairs(raw.sellPoints or {}) do
@@ -23,14 +25,22 @@ function RPSimMarketContext.build(raw)
     for _, f in ipairs(raw.farmlands or {}) do
         farmlands[#farmlands + 1] = { farmlandId = f.farmlandId,
             hectares = math.floor((f.hectares or 0) * 100 + 0.5) / 100,
-            price = math.floor((f.price or 0) + 0.5), ownerFarmId = f.ownerFarmId or 0 }
+            price = math.floor((f.price or 0) + 0.5), ownerFarmId = f.ownerFarmId or 0,
+            showOnFarmlandsScreen = f.showOnFarmlandsScreen ~= false,
+            defaultFarmProperty = f.defaultFarmProperty == true }
     end
     table.sort(farmlands, function(a, b) return a.farmlandId < b.farmlandId end)
+    local mods = RPSimJson.array({})
+    for _, m in ipairs(raw.detectedMods or {}) do
+        mods[#mods + 1] = m
+    end
+    table.sort(mods)
     return {
         savegameId = raw.savegameId,
         mapName = raw.mapName,
         sellPoints = sellPoints,
         fillTypes = fillTypes,
         farmlands = farmlands,
+        detectedMods = mods,
     }
 end
