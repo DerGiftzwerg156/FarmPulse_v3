@@ -82,7 +82,8 @@ end
 
 --- Stable sell point identifier.
 -- TODO(offene-frage): FS25 offers no documented stable id for SellingStation objects. Best effort: the
--- uniqueId of the owning placeable, else the station name. See docs/dev/offene-technische-punkte.md.
+-- uniqueId of the owning placeable, else the station name. Whether it survives save + reload is checked in the
+-- manual test plan (docs/dev/manual-test-plan.md, "Erster Test im echten FS25"), see offene-technische-punkte.md #2.
 function RPSimGameAdapter.sellPointId(station)
     return safe(function()
         if station.owningPlaceable ~= nil and station.owningPlaceable.getUniqueId ~= nil then
@@ -340,16 +341,20 @@ function RPSimGameAdapter:addMoney(amount, reason, note)
 end
 
 --- Farmland ownership transfer between the player farm and "no owner" (NPC owners only exist in the tool).
--- TODO(offene-frage): FarmlandManager:setLandOwnership is the API used by vanilla buy/sell and by the
--- "Farmland Marketplace" community mod; the player<->NPC case must be verified on the prototype.
+-- FarmlandManager:setLandOwnership(farmlandId, farmId) - FS25 FarmlandManager.lua:447: returns false for an
+-- invalid farmland id or NOT_BUYABLE_FARM_ID, otherwise sets the owner and publishes FARMLAND_OWNER_CHANGED.
+-- Whether missions and the field menu follow the change is part of the manual test plan.
 function RPSimGameAdapter:transferFarmland(farmlandId, direction)
-    local ok, err = pcall(function()
+    local ok, res = pcall(function()
         local noOwner = (FarmlandManager ~= nil and FarmlandManager.NO_OWNER_FARM_ID) or 0
         local target = direction == "TO_PLAYER" and self:getFarmId() or noOwner
-        g_farmlandManager:setLandOwnership(farmlandId, target)
+        return g_farmlandManager:setLandOwnership(farmlandId, target)
     end)
     if not ok then
-        return false, tostring(err)
+        return false, tostring(res)
+    end
+    if res == false then
+        return false, "setLandOwnership refused farmland " .. tostring(farmlandId)
     end
     return true
 end

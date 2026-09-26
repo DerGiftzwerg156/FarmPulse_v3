@@ -33,8 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Arrival/departure of dynamic characters with a yearly budget cap (functional concept: at most 1-2 changes per
  * game year so the village feels familiar). Mandatory roles and employees are excluded.
- * TODO(offene-frage): year change uses the fixed game-day counter (rpsim.time.*) until the FS25 period field is
- * verified.
+ * The game year is the FS25 year of the calendar export (TODO T-08).
  */
 @Service
 public class VillageRotationService {

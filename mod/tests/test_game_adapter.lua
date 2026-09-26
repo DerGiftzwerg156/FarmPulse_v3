@@ -85,6 +85,21 @@ function T.TestGameAdapter:testFarmlandSaleCreditCoversNothingButIsAllowed()
     lu.assertEquals(game.farm.money, 30000)
 end
 
+function T.TestGameAdapter:testRefusedOwnershipChangeAbortsTheBatch()
+    local game = helpers.fakeGame({ money = 100000 })
+    g_farmlandManager.setLandOwnership = function() return false end -- e.g. NOT_BUYABLE_FARM_ID
+    local bridge, fs, paths = realBridge(game)
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        { instructionId = "t", batchId = "b1", type = "FARMLAND_TRANSFER", farmlandId = 2, direction = "TO_PLAYER" },
+        { instructionId = "m", batchId = "b1", type = "MONEY_TRANSACTION", amount = -5000, reason = "FARMLAND_PURCHASE" } } })
+    bridge:pollInstructions()
+    lu.assertEquals(game.farm.money, 100000)
+    lu.assertEquals(bridge.state.processed.t.status, "FAILED")
+    lu.assertStrContains(bridge.state.processed.t.message, "setLandOwnership refused")
+    lu.assertEquals(bridge.state.processed.m.status, "FAILED")
+    lu.assertStrContains(bridge.state.processed.m.message, "BATCH_ABORTED")
+end
+
 -- T-08
 function T.TestGameAdapter:testCalendarFromEnvironment()
     helpers.fakeGame()

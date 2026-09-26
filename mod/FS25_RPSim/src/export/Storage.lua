@@ -8,7 +8,7 @@ RPSimStorage = {}
 -- TODO(offene-frage): FS25 offers no documented "classic silo" flag. Best effort: a placeable with the
 -- silo specialization (spec_silo) that is not a bunker silo, not an object storage (hall), not part of a
 -- husbandry or production point, and - when the store category is known - is listed in the SILOS
--- category. See docs/dev/offene-technische-punkte.md.
+-- category. Verified in the first real FS25 test (docs/dev/manual-test-plan.md), see offene-technische-punkte.md #8.
 function RPSimStorage.isClassicSilo(d)
     if d == nil or not d.hasSiloSpec then
         return false

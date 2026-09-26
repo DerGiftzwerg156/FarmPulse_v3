@@ -90,9 +90,19 @@ function RPSimProcessor.process(state, doc, ctx)
                 markAll(state, pending, ctx.gameTime, "FAILED", tostring(why))
                 result.rejected = result.rejected + #pending
             else
-                -- 4) apply every member of the batch in the same cycle
+                -- 4) apply every member of the batch in the same cycle; after a failure the remaining members are
+                --    not executed (the backend always puts the FARMLAND_TRANSFER before its MONEY_TRANSACTION)
+                local aborted = nil
                 for _, ins in ipairs(pending) do
-                    local ok, err = RPSimProcessor.applyOne(state, ins, ctx)
+                    local ok, err
+                    if aborted ~= nil then
+                        ok, err = false, "BATCH_ABORTED: " .. aborted
+                    else
+                        ok, err = RPSimProcessor.applyOne(state, ins, ctx)
+                        if not ok and #pending > 1 then
+                            aborted = tostring(ins.instructionId)
+                        end
+                    end
                     if ok then
                         state.processed[ins.instructionId] = { gameTime = ctx.gameTime, status = "APPLIED" }
                         result.applied = result.applied + 1

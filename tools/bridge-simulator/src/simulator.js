@@ -433,8 +433,11 @@ export class BridgeSimulator {
             mark('FAILED', 'INSUFFICIENT_FUNDS');
             res.rejected += pending.length;
           } else {
+            let aborted = null;
             for (const ins of pending) {
-              const err = this.applyOne(ins);
+              // like the mod: after a failed member the rest of the batch is not executed
+              const err = aborted ? `BATCH_ABORTED: ${aborted}` : this.applyOne(ins);
+              if (err && !aborted && pending.length > 1) aborted = ins.instructionId;
               this.processed[ins.instructionId] = err
                 ? { gameTime: this.gameTime, status: 'FAILED', message: err }
                 : { gameTime: this.gameTime, status: 'APPLIED' };
