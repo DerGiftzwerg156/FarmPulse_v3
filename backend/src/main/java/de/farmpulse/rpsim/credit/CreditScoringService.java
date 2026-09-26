@@ -58,10 +58,15 @@ public class CreditScoringService {
         RpsimProperties.Credit cfg = configs.forSavegame(sg);
         FarmFacts f = facts.latest(sg).orElse(null);
         double assets = f == null ? 0 : facts.totalAssetValue(f);
-        List<Loan> active = loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE);
+        List<Loan> active = new java.util.ArrayList<>(loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE));
+        // T-03: an uncollected call-back is still debt
+        active.addAll(loans.findBySavegameAndStatus(sg, LoanStatus.DEFAULTED));
         double loanDebt = active.stream().mapToDouble(Loan::getRemainingAmount).sum();
         double vanilla = f == null ? 0 : facts.vanillaLoanRemaining(f);
         double existingInstallments = active.stream().mapToDouble(Loan::getMonthlyInstallment).sum();
+        // T-04: running leasing costs are an obligation like an installment (the game pays them from the balance, so
+        // the operating cash flow below already contains them)
+        existingInstallments += f == null ? 0 : FactsService.leasingCostPerMonth(f);
         double newInstallment = CreditFormula.monthlyInstallment(amount, interestRate, termMonths);
         double balance = f == null ? 0 : f.liquidity().balance();
 
@@ -79,7 +84,7 @@ public class CreditScoringService {
                 long delta = last.getBalance() - first.getBalance();
                 // operating cash flow = balance change without financing/one-off bookings (installments added back)
                 long nonOperating = liquidity.nonOperatingApplied(sg, first.getGameTime(), last.getGameTime());
-                monthlyCashflow = (delta - nonOperating) / (span / (double) gameTime.msPerMonth());
+                monthlyCashflow = (delta - nonOperating) / (span / (double) gameTime.msPerMonth(sg));
             }
         }
         double history = CreditFormula.paymentHistoryScore(
@@ -103,6 +108,6 @@ public class CreditScoringService {
             return 0;
         }
         long nonOperating = liquidity.nonOperatingApplied(sg, first.getGameTime(), last.getGameTime());
-        return (last.getBalance() - first.getBalance() - nonOperating) / (span / (double) gameTime.msPerMonth());
+        return (last.getBalance() - first.getBalance() - nonOperating) / (span / (double) gameTime.msPerMonth(sg));
     }
 }

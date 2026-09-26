@@ -14,6 +14,25 @@ zuverlässig läuft, plus die Ideen für spätere Funktionen.
   gibt, steht die mit dem Projektinhaber abgestimmte **Entscheidung** oder ein **Im Spiel prüfen**.
 - Pfade sind relativ zum Repo-Root, Zeilennummern beziehen sich auf den Stand von Commit `a99ddf0` (main).
 
+## Stand der Umsetzung
+
+Alle Punkte sind umgesetzt (Branch `claude/inspiring-dirac-i7buk9`). Mehrspieler/Dedicated Server (früher T-23) ist
+auf Wunsch des Projektinhabers **kein** Ziel und wurde aus der Liste entfernt. Was sich nur im Spiel belegen lässt,
+steht als Prüfpunkt in `docs/dev/manual-test-plan.md`, Abschnitt 8:
+
+| Punkt | Umsetzung | Im Spiel prüfen |
+| --- | --- | --- |
+| T-20 Versicherung, Jäger, Tierarzt/Viehhändler/Zuchtverband | Backend-Services unter `backend/.../contract/`, Seite „Verträge & Vorgänge“ | 8.7 (Tier-Export) |
+| T-20 Energieversorger | Festpreis-Kontrakte/Preisschwankungen an Verkaufsstellen mit Biogas-Füllarten | 8.15 |
+| T-21 NPC-Feldbesitzer | `market_context.farmlands[].npc`, `GameNpcService` | 8.16 |
+| T-21 Hinweise im Spiel | Anweisung `NOTIFICATION` | 8.17 |
+| T-21 Finanzkategorien | `MoneyType.register(...)`, Titel in `modDesc.xml` | 8.18 |
+| T-21 Kalenderbezug | `calendar.season`, Datum im KI-Prompt | 8.19 |
+| T-22 Pacht | `LeaseService`, `FARMLAND_TRANSFER` hin und zurück | 8.20 |
+| T-22 Wartungsvertrag | `MaintenanceService`, Anweisung `REPAIR_VEHICLE` | 8.21 |
+| T-22 Lieferverträge mit Produktionen | `sellPoints[].production`, `ProductionSupplyService` (ein Hofladen zählt nur, wenn er als Produktion/Verkaufsstelle auftaucht) | 8.22 |
+| T-22 Vanilla-Aufträge | `farm_facts.missions`, `ContractorService` | 8.23 |
+
 ## Getroffene Entscheidungen
 
 | Thema | Entscheidung |
@@ -34,9 +53,9 @@ zuverlässig läuft, plus die Ideen für spätere Funktionen.
 
 ### T-01 Ersten Export erst nach vollständigem Laden ausführen und `market_context` regelmäßig erneuern
 
-- [ ] Export aus `loadMap` herauslösen
-- [ ] `market_context.json` regelmäßig neu schreiben
-- [ ] Mod-Tests anpassen
+- [x] Export aus `loadMap` herauslösen
+- [x] `market_context.json` regelmäßig neu schreiben
+- [x] Mod-Tests anpassen
 
 **Problem:** `RPSim:loadMap` exportiert sofort (`mod/FS25_RPSim/src/RPSim.lua:52` → `RPSimBridge:onSavegameLoaded`,
 `mod/FS25_RPSim/src/bridge/Bridge.lua:75`). Zu diesem Zeitpunkt sind Farms, Fahrzeuge, Gebäude und Verkaufsstellen
@@ -62,10 +81,10 @@ existieren (`src/main.lua`, Kommentar „farms don't exist yet“). WeezlsModLib
 
 ### T-02 Laden ohne Speichern: verlorene Buchungen erneut senden
 
-- [ ] Rücksprung-Erkennung im Backend
-- [ ] Verlorene Anweisungen wieder auf `PENDING` setzen
-- [ ] Schwelle mit Rückfrage an den Spieler
-- [ ] Tests (Bridge-Simulator-Szenario „Neu laden ohne Speichern“)
+- [x] Rücksprung-Erkennung im Backend
+- [x] Verlorene Anweisungen wieder auf `PENDING` setzen
+- [x] Schwelle mit Rückfrage an den Spieler
+- [x] Tests (Bridge-Simulator-Szenario „Neu laden ohne Speichern“)
 
 **Problem:** Das Backend schreibt nur `PENDING`-Anweisungen in `instructions.json`
 (`backend/.../bridge/BridgeSyncService.java:200-215`). Bestätigte (`APPLIED`) verschwinden daraus. Beendet der
@@ -95,9 +114,9 @@ Ack-Datei aus dem gespeicherten Zustand, idempotente `instructionId`) existieren
 
 ### T-03 Abbuchungen bei zu wenig Geld ablehnen und Fehlschläge im Backend auswerten
 
-- [ ] Mod: Abbuchung ablehnen, wenn das Guthaben nicht reicht
-- [ ] Backend: Reaktion auf `FAILED`/`REJECTED`
-- [ ] Tests für jede `MoneyReason`
+- [x] Mod: Abbuchung ablehnen, wenn das Guthaben nicht reicht
+- [x] Backend: Reaktion auf `FAILED`/`REJECTED`
+- [x] Tests für jede `MoneyReason`
 
 **Problem 1:** `RPSimGameAdapter:addMoney` bucht jeden Betrag (`mod/FS25_RPSim/src/game/GameAdapter.lua:217`). Wie FS25
 auf einen großen negativen Kontostand reagiert, ist nicht belegt (offener Punkt #3). Die Liquiditätsprüfung
@@ -128,10 +147,10 @@ ist Entscheidung und Design.
 
 ### T-04 Leasing-Fahrzeuge aus dem Vermögen nehmen, Leasingkosten als Verpflichtung
 
-- [ ] Mod: nur eigene Fahrzeuge als Vermögen exportieren
-- [ ] Mod: Leasing-Fahrzeuge und deren laufende Kosten separat exportieren (Schema-Erweiterung)
-- [ ] Backend: Leasingkosten in Cashflow und Verpflichtungen der Bonitätsprüfung
-- [ ] Bridge-Protokoll-Doku und Simulator-Szenarien anpassen
+- [x] Mod: nur eigene Fahrzeuge als Vermögen exportieren
+- [x] Mod: Leasing-Fahrzeuge und deren laufende Kosten separat exportieren (Schema-Erweiterung)
+- [x] Backend: Leasingkosten in Cashflow und Verpflichtungen der Bonitätsprüfung
+- [x] Bridge-Protokoll-Doku und Simulator-Szenarien anpassen
 
 **Problem:** `collectFarmFacts` zählt jedes Fahrzeug des Hofs mit `getSellPrice()` als Vermögen
 (`mod/FS25_RPSim/src/game/GameAdapter.lua:95`). `Vehicle:getSellPrice()` ignoriert den Besitzstatus, also zählen
@@ -153,8 +172,8 @@ Kreditsicherheiten genau so (`src/data/CreditSystem.lua`, `src/gui/TakeLoanDialo
 
 ### T-05 Festpreis-Kontrakt: die letzte Teillieferung zum Kontraktpreis abrechnen
 
-- [ ] `sellFillType`-Hook auf `overwrittenFunction` umstellen und erst nach dem Verkauf zählen
-- [ ] Test: Lieferung, die den Kontrakt genau füllt bzw. überschreitet
+- [x] `sellFillType`-Hook auf `overwrittenFunction` umstellen und erst nach dem Verkauf zählen
+- [x] Test: Lieferung, die den Kontrakt genau füllt bzw. überschreitet
 
 **Problem:** Der Hook ist ein `prependedFunction` (`mod/FS25_RPSim/src/RPSim.lua:106`). Er zählt die Menge, **bevor**
 der Spielcode den Preis über `getEffectiveFillTypePrice` berechnet. Die Lieferung, die den Kontrakt voll macht,
@@ -172,8 +191,8 @@ Hinweises, dass der Rückgabewert in FS25 unzuverlässig ist.
 
 ### T-06 Pfad zum `modSettings`-Ordner absichern
 
-- [ ] Pfad über `getUserProfileAppPath()` bilden
-- [ ] Beim Start den vollständigen Bridge-Pfad ins Log schreiben
+- [x] Pfad über `getUserProfileAppPath()` bilden
+- [x] Beim Start den vollständigen Bridge-Pfad ins Log schreiben
 
 **Problem:** `RPSimBridgePaths.new(g_modSettingsDirectory or "./modSettings/")` (`mod/FS25_RPSim/src/RPSim.lua:28`).
 Für `g_modSettingsDirectory` gibt es in FS25 keinen Beleg. Der Fallback `./modSettings/` wäre relativ zum
@@ -190,9 +209,9 @@ Installationsordner des Spiels, dort sucht das Backend nicht.
 
 ### T-07 Dateischreiben ohne `os`-Modul vereinfachen
 
-- [ ] Neuen Schreibmodus `direct` als Standard: Datei direkt schreiben, ohne `.tmp`/`.ready`
-- [ ] `os.time()`-Fallback entfernen
-- [ ] Bridge-Protokoll-Doku anpassen
+- [x] Neuen Schreibmodus `direct` als Standard: Datei direkt schreiben, ohne `.tmp`/`.ready`
+- [x] `os.time()`-Fallback entfernen
+- [x] Bridge-Protokoll-Doku anpassen
 
 **Problem:** In der FS25-Sandbox existiert `os` nicht (`os.time`/`os.date` fehlen, `os.rename`/`os.remove`
 damit auch). Der Modus `auto` (`mod/FS25_RPSim/src/bridge/Config.lua:15`,
@@ -212,10 +231,10 @@ Dashboard produktiv. `getDate(...)` kommt im offiziellen Code vor (`PlayerSystem
 
 ### T-08 Spielmonat = FS25-Periode
 
-- [ ] Mod: Kalenderdaten exportieren
-- [ ] Backend: `GameTime` auf die exportierte Periode umstellen, `rpsim.time.*` entfernen
-- [ ] Geplante Termine (Gehalt, Raten, Rotation, Einladungen) auf Perioden umrechnen
-- [ ] Doku, Konfigurationsreferenz, Tests, Bridge-Simulator
+- [x] Mod: Kalenderdaten exportieren
+- [x] Backend: `GameTime` auf die exportierte Periode umstellen, `rpsim.time.*` entfernen
+- [x] Geplante Termine (Gehalt, Raten, Rotation, Einladungen) auf Perioden umrechnen
+- [x] Doku, Konfigurationsreferenz, Tests, Bridge-Simulator
 
 **Heute:** Fester Zähler `rpsim.time.game-days-per-month: 1` / `months-per-year: 12`
 (`backend/src/main/resources/application.yml:36-38`, `config/RpsimProperties.java:52-54`, `time/GameTime.java:8`,
@@ -238,9 +257,9 @@ Damit ist der offene technische Punkt #4 gelöst.
 
 ### T-09 Konflikt-Mods erkennen und warnen
 
-- [ ] Mod: bekannte Mods beim Laden erkennen und in `market_context.json` melden (z. B. `detectedMods: [...]`)
-- [ ] Backend/Frontend: Hinweis auf Dashboard und Einstellungsseite
-- [ ] Nutzer-Doku (Fehlerbehebung) ergänzen
+- [x] Mod: bekannte Mods beim Laden erkennen und in `market_context.json` melden (z. B. `detectedMods: [...]`)
+- [x] Backend/Frontend: Hinweis auf Dashboard und Einstellungsseite
+- [x] Nutzer-Doku (Fehlerbehebung) ergänzen
 
 **Überschneidungen:**
 
@@ -262,17 +281,17 @@ Mod-Sandbox nicht.
 
 ### T-10 Verkaufsstellen sauberer erkennen und filtern
 
-- [ ] `station:isa(SellingStation)` statt `station.isSellingPoint` (`mod/FS25_RPSim/src/game/GameAdapter.lua:79`)
-- [ ] Stationen mit `station.hideFromPricesMenu` nicht exportieren, sonst plant das Backend Events an Stellen, die der Spieler nicht sieht
-- [ ] Optional: `station:getCurrentPricingTrend(fillType)` mitexportieren (Preistrend für Gerüchte und Diagramme)
+- [x] `station:isa(SellingStation)` statt `station.isSellingPoint` (`mod/FS25_RPSim/src/game/GameAdapter.lua:79`)
+- [x] Stationen mit `station.hideFromPricesMenu` nicht exportieren, sonst plant das Backend Events an Stellen, die der Spieler nicht sieht
+- [x] Optional: `station:getCurrentPricingTrend(fillType)` mitexportieren (Preistrend für Gerüchte und Diagramme)
 
 **Beleg:** FS25_ProductionDirectSell (`scripts/PDS_Manager.lua`: `isa(SellingStation)`, `hideFromPricesMenu`,
 `getCurrentPricingTrend`).
 
 ### T-11 Nicht kaufbare Farmlands kennzeichnen
 
-- [ ] In `market_context.json` je Farmland `showOnFarmlandsScreen` (und `defaultFarmProperty`) mitgeben (`GameAdapter.lua:203`)
-- [ ] Backend: Nicht kaufbare Flächen nicht an NPCs verteilen und nicht zum Kauf oder Verkauf anbieten (`FarmlandOwnershipService`, `NegotiationEngine`)
+- [x] In `market_context.json` je Farmland `showOnFarmlandsScreen` (und `defaultFarmProperty`) mitgeben (`GameAdapter.lua:203`)
+- [x] Backend: Nicht kaufbare Flächen nicht an NPCs verteilen und nicht zum Kauf oder Verkauf anbieten (`FarmlandOwnershipService`, `NegotiationEngine`)
 
 **Hintergrund:** `setLandOwnership` lehnt nur `NOT_BUYABLE_FARM_ID` ab. Flächen, die im Vanilla-Menü ausgeblendet sind
 (Ortschaft, Straßen), würden heute verhandelbar.
@@ -284,41 +303,42 @@ Mod-Sandbox nicht.
 
 In `docs/dev/offene-technische-punkte.md` mit dem Stand dieser Analyse nachziehen:
 
-- [ ] #1 `os.rename`: nicht verfügbar → T-07
-- [ ] #3 Negativer Kontostand: durch Entscheidung T-03 ersetzt
-- [ ] #4 Periode/Saison: gelöst → T-08
-- [ ] #6 `setLandOwnership`: bestätigt im FS25-Code
-- [ ] #10 Hook-Namen: bestätigt (UsedPlus, MarketDynamics); Ladezeitpunkt → T-01
-- [ ] #13 `io.open`: bestätigt (Farm Dashboard)
-- [ ] #2 (Station-ID) und #8 (Silo-Erkennung) bleiben offen → T-13
-- [ ] Die zugehörigen `TODO(offene-frage)`-Kommentare im Code anpassen oder entfernen
+- [x] #1 `os.rename`: nicht verfügbar → T-07
+- [x] #3 Negativer Kontostand: durch Entscheidung T-03 ersetzt
+- [x] #4 Periode/Saison: gelöst → T-08
+- [x] #6 `setLandOwnership`: bestätigt im FS25-Code
+- [x] #10 Hook-Namen: bestätigt (UsedPlus, MarketDynamics); Ladezeitpunkt → T-01
+- [x] #13 `io.open`: bestätigt (Farm Dashboard)
+- [x] #2 (Station-ID) und #8 (Silo-Erkennung) bleiben offen → T-13
+- [x] Die zugehörigen `TODO(offene-frage)`-Kommentare im Code anpassen oder entfernen
 
 ### T-13 Prüfliste für den ersten Test im echten FS25
 
-Diese Punkte lassen sich ohne laufendes Spiel nicht belegen. Sie gehören in `docs/dev/manual-test-plan.md`:
+Diese Punkte lassen sich ohne laufendes Spiel nicht belegen. Sie gehören in `docs/dev/manual-test-plan.md`
+(übernommen in Abschnitt 8 „First test in the real FS25“; die Ausführung im Spiel steht noch aus):
 
-- [ ] Ladezeitpunkt: Was sieht der erste Export (Anzahl Verkaufsstellen, Fahrzeuge, Felder)? → T-01
-- [ ] Existiert `g_modSettingsDirectory`, und wo landen die Bridge-Dateien? → T-06
-- [ ] Preis-Event (Multiplikator): Anhänger verkaufen und prüfen, ob sich die Auszahlung wirklich ändert und ob das Preismenü im Spiel den geänderten Preis zeigt
-- [ ] Festpreis-Kontrakt mit Palettenverkauf → T-05
-- [ ] Bleibt `sellPointId` (uniqueId der Station) nach Speichern und Neuladen gleich? (offener Punkt #2)
-- [ ] Silo-Erkennung: Wie heißt die Shop-Kategorie der Silos in FS25 wirklich (`SILOS`?), und werden Silo-Erweiterungen (`spec_siloExtension`) erfasst? (offener Punkt #8, `mod/FS25_RPSim/src/export/Storage.lua`)
-- [ ] Tier-Export: Liefern `getClusters()`, `cluster:getNumAnimals()` und `cluster:getSellPrice()` in FS25 Werte?
-- [ ] Feld an den Spieler übertragen: Laufen Aufträge und Anzeigen im Feld-Menü danach korrekt?
-- [ ] Neu laden ohne Speichern → T-02
-- [ ] Abbuchung bei zu wenig Geld → T-03
+- [x] Ladezeitpunkt: Was sieht der erste Export (Anzahl Verkaufsstellen, Fahrzeuge, Felder)? → T-01
+- [x] Existiert `g_modSettingsDirectory`, und wo landen die Bridge-Dateien? → T-06
+- [x] Preis-Event (Multiplikator): Anhänger verkaufen und prüfen, ob sich die Auszahlung wirklich ändert und ob das Preismenü im Spiel den geänderten Preis zeigt
+- [x] Festpreis-Kontrakt mit Palettenverkauf → T-05
+- [x] Bleibt `sellPointId` (uniqueId der Station) nach Speichern und Neuladen gleich? (offener Punkt #2)
+- [x] Silo-Erkennung: Wie heißt die Shop-Kategorie der Silos in FS25 wirklich (`SILOS`?), und werden Silo-Erweiterungen (`spec_siloExtension`) erfasst? (offener Punkt #8, `mod/FS25_RPSim/src/export/Storage.lua`)
+- [x] Tier-Export: Liefern `getClusters()`, `cluster:getNumAnimals()` und `cluster:getSellPrice()` in FS25 Werte?
+- [x] Feld an den Spieler übertragen: Laufen Aufträge und Anzeigen im Feld-Menü danach korrekt?
+- [x] Neu laden ohne Speichern → T-02
+- [x] Abbuchung bei zu wenig Geld → T-03
 
 ### T-14 Tests nachziehen
 
-- [ ] Mod-Tests (`mod/tests/`) für T-01, T-03, T-04, T-05, T-07, T-08, T-10, T-11
-- [ ] Backend-Tests für T-02, T-03, T-04, T-08, T-11
-- [ ] Bridge-Simulator-Szenarien: Neuladen ohne Speichern, zu wenig Geld, Leasing-Fahrzeuge, Konflikt-Mod erkannt
+- [x] Mod-Tests (`mod/tests/`) für T-01, T-03, T-04, T-05, T-07, T-08, T-10, T-11
+- [x] Backend-Tests für T-02, T-03, T-04, T-08, T-11
+- [x] Bridge-Simulator-Szenarien: Neuladen ohne Speichern, zu wenig Geld, Leasing-Fahrzeuge, Konflikt-Mod erkannt
 
 ---
 
 ## P3 – Neue Funktionen
 
-Reihenfolge nach Priorität: **neue Charaktere zuerst**, danach Spiel-Integration, Vertragsarten und Mehrspieler.
+Reihenfolge nach Priorität: **neue Charaktere zuerst**, danach Spiel-Integration und Vertragsarten.
 
 ### T-20 Neue Charaktere – höchste Priorität
 
@@ -330,56 +350,47 @@ vorhanden sind“.
 Zum Hintergrund: FS25 hat eine `Twister`-Klasse, dokumentiert sind aber nur Netzwerk-Funktionen. Für Hagel und
 Wildschweine gibt es keine belegte Lua-Schnittstelle.
 
-- [ ] **Versicherung:** Sturm- und Hagelschaden-Ereignisse (FS25 kennt Tornados und Hagel), Versicherungsvertrag
+- [x] **Versicherung:** Sturm- und Hagelschaden-Ereignisse (FS25 kennt Tornados und Hagel), Versicherungsvertrag
   mit Prämie, Schadensmeldung per Mail oder Anruf, Auszahlung als `MONEY_TRANSACTION`. Neue `MoneyReason` nötig,
   z. B. `INSURANCE_PREMIUM` und `INSURANCE_PAYOUT`, in Mod und Backend.
-- [ ] **Jäger / Jagdpächter:** Wildschaden (in FS25 durch Wildschweine aus dem Vredo Pack), Entschädigung
+- [x] **Jäger / Jagdpächter:** Wildschaden (in FS25 durch Wildschweine aus dem Vredo Pack), Entschädigung
   verhandeln, gemeinsame Maßnahmen. Wirkt auf das Dorf-Ansehen.
-- [ ] **Tierarzt / Viehhändler / Zuchtverband:** Nur bei vorhandenen Tieren (`assets.animals`). Routinebesuche,
+- [x] **Tierarzt / Viehhändler / Zuchtverband:** Nur bei vorhandenen Tieren (`assets.animals`). Routinebesuche,
   Rechnungen, Kauf- und Verkaufsangebote, Hinweise zu Gesundheit und Nachwuchs (FS25-Tiere vermehren sich).
-- [ ] **Energieversorger:** Biogas- und Stromabnahme (Biogas-Anlagen seit dem Pumps n'Hoses Pack), Lieferverträge,
+- [x] **Energieversorger:** Biogas- und Stromabnahme (Biogas-Anlagen seit dem Pumps n'Hoses Pack), Lieferverträge,
   Preisschwankungen.
-- [ ] Für jeden Charakter: Rollen-Definition, Persönlichkeitsvorlagen, Fallback-Texte ohne KI (Deutsch),
+- [x] Für jeden Charakter: Rollen-Definition, Persönlichkeitsvorlagen, Fallback-Texte ohne KI (Deutsch),
   Formeln als Konfiguration, Tagebucheinträge, Frontend-Darstellung.
 
 ### T-21 Spiel-Integration
 
-- [ ] **Echte NPC-Feldbesitzer:** FS25 weist jedem Farmland einen NPC zu. `farmland.npcIndex` →
+- [x] **Echte NPC-Feldbesitzer:** FS25 weist jedem Farmland einen NPC zu. `farmland.npcIndex` →
   `g_npcManager:getNPCByIndex(npcIndex)` in `market_context.json` exportieren und als Besitzer-Charakter
   übernehmen, statt eigene zu erfinden. **Beleg:** `Farmland.lua` (FS25-Code), BetterContracts
   (`scripts/options.lua`).
-- [ ] **Hinweise im Spiel:** Neue Mails und eingehende Anrufe als Einblendung im Spiel, damit man nicht in den
+- [x] **Hinweise im Spiel:** Neue Mails und eingehende Anrufe als Einblendung im Spiel, damit man nicht in den
   Browser wechseln muss. Umsetzung: `g_currentMission:addIngameNotification(FSBaseMission.INGAME_NOTIFICATION_INFO, text)`,
   ausgelöst über einen neuen Anweisungstyp (z. B. `NOTIFICATION`) oder eine eigene Datei. **Beleg:**
   MarketDynamics, `BeehiveSystem` (offizieller Code).
-- [ ] **Eigene Kategorien in der Finanzübersicht:** Buchungen statt „Sonstiges“ (`MoneyType.OTHER`) über
+- [x] **Eigene Kategorien in der Finanzübersicht:** Buchungen statt „Sonstiges“ (`MoneyType.OTHER`) über
   `MoneyType.register(statistikName, titelKey)` eigenen Kategorien zuordnen (Kredit, Gehalt, Förderung).
   **Beleg:** `FillTrigger` im offiziellen Code. **Im Spiel prüfen:** gültige Statistik-Namen in FS25.
-- [ ] **Kalenderbezug in Texten:** Mit T-08 können Charaktere echte FS25-Monate und Jahreszeiten nennen
+- [x] **Kalenderbezug in Texten:** Mit T-08 können Charaktere echte FS25-Monate und Jahreszeiten nennen
   („Ende Oktober“, „nach der Ernte“).
 
 ### T-22 Neue Vertragsarten
 
-- [ ] **Pacht:** Felder von NPC-Besitzern pachten statt kaufen (gibt es in Vanilla nicht). Pachtzins als
+- [x] **Pacht:** Felder von NPC-Besitzern pachten statt kaufen (gibt es in Vanilla nicht). Pachtzins als
   wiederkehrende `MONEY_TRANSACTION`; Nutzungsrecht über `FARMLAND_TRANSFER` auf Zeit. Rückgabe bei Vertragsende
   ist neu im Protokoll.
-- [ ] **Wartungsverträge vom Mechaniker:** Der Fahrzeugzustand (`condition`) wird schon exportiert.
+- [x] **Wartungsverträge vom Mechaniker:** Der Fahrzeugzustand (`condition`) wird schon exportiert.
   Wartungsangebote, Pauschalen und Reparaturhinweise. Eine echte Reparatur im Spiel wäre ein neuer Anweisungstyp
   (API im Spiel prüfen).
-- [ ] **Lieferverträge mit Produktionen / Hofladen:** Wie `PRICE_EVENT` (`FIXED`), aber für Produktionen als
+- [x] **Lieferverträge mit Produktionen / Hofladen:** Wie `PRICE_EVENT` (`FIXED`), aber für Produktionen als
   Abnehmer. Dafür müssen Produktionen in `market_context.json` erfasst werden.
-- [ ] **Vanilla-Aufträge über Charaktere:** Feldarbeits-Aufträge des Spiels werden von Dorfbewohnern „vermittelt“
+- [x] **Vanilla-Aufträge über Charaktere:** Feldarbeits-Aufträge des Spiels werden von Dorfbewohnern „vermittelt“
   (Lohnunternehmer-Rolle). Die Contracts/Missions-API ist in der LUADOC vorhanden, im Detail aber noch zu prüfen.
   Kompatibilität mit BetterContracts beachten (T-09).
-
-### T-23 Mehrspieler / Dedicated Server
-
-- [ ] Heute: `<multiplayer supported="false"/>` (`mod/FS25_RPSim/modDesc.xml`)
-- [ ] Mod-Logik nur auf dem Server ausführen (`g_currentMission:getIsServer()`) und Buchungen serverseitig
-  durchführen
-- [ ] Bridge für Dedicated Server: Dateien per FTP lesen und schreiben (so macht es Farm Dashboard) oder
-  Backend auf dem Serverrechner
-- [ ] Mehrere Farmen: `farmId` pro Spielstand-Verknüpfung statt fest der eigenen Farm
 
 ---
 

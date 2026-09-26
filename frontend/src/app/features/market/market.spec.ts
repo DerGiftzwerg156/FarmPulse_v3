@@ -14,7 +14,7 @@ const storage: StorageOverview = {
   ],
 };
 const prices: PriceView[] = [
-  { sellPoint: 'MillNorth', sellPointName: 'Mühle Nord', fillType: 'WHEAT', currentPrice: 230 },
+  { sellPoint: 'MillNorth', sellPointName: 'Mühle Nord', fillType: 'WHEAT', currentPrice: 230, trend: 'CLIMBING' },
   { sellPoint: 'AgriTrade', sellPointName: 'Landhandel', fillType: 'WHEAT', currentPrice: 212 },
   { sellPoint: 'AgriTrade', sellPointName: 'Landhandel', fillType: 'CANOLA', currentPrice: 425 },
 ];
@@ -62,6 +62,15 @@ describe('Market', () => {
     expect(el.querySelector('[data-testid="storage-value"]')?.textContent?.replace(/\s/g, ' ')).toContain('51.600 €');
     expect(el.querySelector('[data-testid="storage-hint"]')?.textContent).toContain('Bonität');
     expect(el.querySelector('[data-testid="storage-hint"]')?.textContent).toContain('Marktereignisse');
+  });
+
+  it('shows the price trend of the game (TODO T-10)', () => {
+    const { el, hist } = setup();
+    hist.flush(history);
+    const trends = el.querySelectorAll('[data-testid="price-trend"]');
+    expect(trends.length).toBe(1);
+    expect(trends[0].getAttribute('data-trend')).toBe('CLIMBING');
+    expect(trends[0].getAttribute('title')).toBe('steigend');
   });
 
   it('defaults to the most valuable stocked fill type and lists its prices', () => {

@@ -27,6 +27,8 @@
         [tone]="(reputation()?.tier ?? store.savegame()?.reputationTier) === 'GOOD' ? 'positive' : 'neutral'" [compact]="true" link="/village" data-testid="kpi-reputation" />
     </div>
 
+    <app-notices-card />
+
     <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <app-card [title]="'home.latest' | t" data-testid="feed">
         <span card-actions class="flex items-center gap-1.5 fp-label" [class.text-accent]="store.connected()">

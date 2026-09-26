@@ -1,0 +1,6 @@
+Schade um den Handel
+Moin,
+
+aus unserem Handel ({{animalType}}) ist leider nichts geworden. Vielleicht beim nächsten Mal.
+
+{{characterName}}

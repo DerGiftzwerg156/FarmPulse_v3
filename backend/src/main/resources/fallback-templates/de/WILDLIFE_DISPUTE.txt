@@ -1,0 +1,6 @@
+Schade um die Nachbarschaft
+Moin,
+
+schade, dass du mein Angebot über {{offer}} € ablehnst. Dann muss das wohl anders geklärt werden.
+
+{{characterName}}

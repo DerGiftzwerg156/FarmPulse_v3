@@ -1,0 +1,7 @@
+Wartungsgebühr offen
+Hallo,
+
+die Wartungsgebühr von {{monthlyFee}} € ist noch offen. Solange sie nicht bezahlt ist, können wir keine Reparaturen übernehmen.
+
+Viele Grüße
+{{characterName}}

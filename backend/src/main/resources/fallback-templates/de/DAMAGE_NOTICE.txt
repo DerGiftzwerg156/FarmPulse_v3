@@ -1,0 +1,6 @@
+Unwetterschaden auf dem Hof
+Hallo,
+
+das Unwetter hat bei euch zugeschlagen ({{damageType}}{{farmlandId}}). Der Schaden liegt bei rund {{damageAmount}} €. Versichert: {{insured}}. Frist für die Schadensmeldung: {{reportDeadlineDays}} Tage.
+
+{{characterName}}

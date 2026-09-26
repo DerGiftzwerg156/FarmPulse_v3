@@ -10,5 +10,15 @@ public enum CharacterRole {
     VILLAGER,
     SUPPLIER,
     EMPLOYEE,
-    APPLICANT
+    APPLICANT,
+    // TODO T-20: service characters (mandatory roles, created when their first occasion arises)
+    INSURANCE_AGENT,
+    HUNTER,
+    VETERINARIAN,
+    LIVESTOCK_TRADER,
+    BREEDING_ADVISOR,
+    ENERGY_SUPPLIER,
+    // TODO T-22: contract partners
+    WORKSHOP,
+    CONTRACTOR
 }

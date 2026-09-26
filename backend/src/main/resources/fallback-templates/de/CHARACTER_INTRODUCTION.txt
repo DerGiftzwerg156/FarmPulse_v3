@@ -1,6 +1,6 @@
 Darf ich mich vorstellen?
 Hallo,
 
-ich bin {{characterName}} und neu hier. Ich freue mich auf eine gute Nachbarschaft!
+ich bin {{characterName}} ({{role}}) und stelle mich kurz vor. Ich freue mich auf eine gute Zusammenarbeit!
 
 {{characterName}}

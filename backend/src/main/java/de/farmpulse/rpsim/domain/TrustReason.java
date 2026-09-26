@@ -3,6 +3,8 @@ package de.farmpulse.rpsim.domain;
 /** Defined, logged trust events (never free AI interpretation). */
 public enum TrustReason {
     ON_TIME_PAYMENT,
+    /** T-03: an installment rewarded as on time was not executed by the mod. */
+    ON_TIME_PAYMENT_REVERSED,
     MISSED_PAYMENT,
     PAYMENT_ESCALATION,
     PROMISE_KEPT,
@@ -12,6 +14,13 @@ public enum TrustReason {
     TONE_FRIENDLY,
     TONE_RUDE,
     NEGOTIATION_DEAL,
+    /** TODO T-20: wildlife damage settled amicably / with a joint measure. */
+    WILDLIFE_AGREEMENT,
+    /** TODO T-20: compensation refused, dispute. */
+    WILDLIFE_DISPUTE,
+    /** TODO T-22: a contract referred by the contractor was completed / failed. */
+    MISSION_COMPLETED,
+    MISSION_FAILED,
     INITIAL,
     OTHER
 }

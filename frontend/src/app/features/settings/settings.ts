@@ -1,3 +1,4 @@
+import { GameStateStore } from '../../core/state/game-state.store';
 import { Component, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
@@ -26,6 +27,7 @@ export const URL_PROVIDERS = ['OLLAMA'];
 export class Settings {
   private readonly api = inject(ApiService);
   private readonly i18n = inject(TranslationService);
+  readonly store = inject(GameStateStore);
 
   readonly ai = signal<AiSettingsView | null>(null);
   readonly game = signal<GameSettingsView | null>(null);

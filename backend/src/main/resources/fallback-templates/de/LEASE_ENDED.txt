@@ -1,0 +1,7 @@
+Feld {{farmlandId}} ist zurück
+Hallo,
+
+die Pacht für Feld {{farmlandId}} ist beendet ({{reason}}), das Feld bewirtschafte ab jetzt wieder ich.
+
+Viele Grüße
+{{characterName}}

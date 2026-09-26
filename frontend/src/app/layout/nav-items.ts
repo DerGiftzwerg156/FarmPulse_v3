@@ -13,6 +13,7 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/employees', label: 'nav.employees', icon: 'users' },
   { path: '/farmland', label: 'nav.farmland', icon: 'map' },
   { path: '/market', label: 'nav.market', icon: 'wheat' },
+  { path: '/contracts', label: 'nav.contracts', icon: 'shield' },
   { path: '/village', label: 'nav.village', icon: 'home' },
   { path: '/diary', label: 'nav.diary', icon: 'book' },
   { path: '/settings', label: 'nav.settings', icon: 'settings' },

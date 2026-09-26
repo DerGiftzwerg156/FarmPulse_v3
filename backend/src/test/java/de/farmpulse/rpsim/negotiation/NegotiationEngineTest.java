@@ -111,6 +111,24 @@ class NegotiationEngineTest {
                 .contains(TrustReason.NEGOTIATION_DEAL);
     }
 
+    /** TODO T-11: fields hidden in the vanilla farmland menu are never given to NPCs, auctioned or negotiated. */
+    @Test
+    void farmlandsHiddenInTheGameAreNotTradeable() {
+        sg.setMarketContextJson(sg.getMarketContextJson().replace(
+                "{ \"farmlandId\": 14, \"hectares\": 8, \"price\": 100000, \"ownerFarmId\": 0 }",
+                "{ \"farmlandId\": 14, \"hectares\": 8, \"price\": 100000, \"ownerFarmId\": 0, \"showOnFarmlandsScreen\": false }"));
+        ownership.reconcile(sg);
+        FarmlandOwnership f14 = ownership.get(sg, 14).orElseThrow();
+        assertThat(f14.isTradeable()).isFalse();
+        assertThat(f14.getOwnerType()).isEqualTo(OwnerType.UNCLAIMED); // the NPC seller lost it
+        assertThatThrownBy(() -> engine.startDirect(sg, seller.getId(), 14))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("nicht gehandelt");
+        ownership.setOwner(sg, 13, OwnerType.PLAYER, null);
+        for (int i = 0; i < 20; i++) {
+            engine.startAuction(sg).ifPresent(n -> assertThat(n.getAssetId()).isNotEqualTo("14"));
+        }
+    }
+
     @Test
     void oneFieldOneNegotiation() {
         engine.startDirect(sg, seller.getId(), 14);

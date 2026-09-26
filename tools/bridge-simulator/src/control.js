@@ -18,7 +18,8 @@ export function startControlServer(sim, port, log = () => {}) {
       const url = new URL(req.url, 'http://localhost');
       if (req.method === 'GET' && url.pathname === '/state') {
         return send(200, { savegameId: sim.savegameId, scenario: sim.scenario, gameTime: sim.gameTime,
-          balance: sim.balance, priceEvents: sim.priceEvents, moneyLog: sim.moneyLog.slice(-50) });
+          balance: sim.balance, priceEvents: sim.priceEvents, moneyLog: sim.moneyLog.slice(-50),
+          notifications: sim.notifications.slice(-50) });
       }
       if (req.method === 'POST' && url.pathname === '/advance') {
         const b = await body(req);
@@ -43,6 +44,26 @@ export function startControlServer(sim, port, log = () => {}) {
         sim.exportFarmFacts();
         return send(200, { price, balance: sim.balance });
       }
+      if (req.method === 'POST' && url.pathname === '/days-per-period') {
+        const b = await body(req);
+        const calendar = sim.setDaysPerPeriod(Number(b.daysPerPeriod));
+        sim.exportFarmFacts();
+        return send(200, calendar);
+      }
+      if (req.method === 'POST' && url.pathname === '/save') {
+        return send(200, { savedAtGameTime: sim.saveGame() });
+      }
+      if (req.method === 'POST' && url.pathname === '/reload-without-saving') {
+        const gameTime = sim.reloadWithoutSaving();
+        log(`reloaded the last save (game time ${gameTime})`);
+        return send(200, { gameTime });
+      }
+      if (req.method === 'POST' && url.pathname === '/mission') {
+        const b = await body(req);
+        const m = sim.setMission(b.uniqueId, b.status, b.success);
+        sim.exportFarmFacts();
+        return send(200, m);
+      }
       if (req.method === 'POST' && url.pathname === '/balance') {
         const b = await body(req);
         sim.balance = Number(b.balance);
@@ -54,6 +75,6 @@ export function startControlServer(sim, port, log = () => {}) {
       return send(500, { error: e.message });
     }
   });
-  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance)`));
+  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving)`));
   return server;
 }

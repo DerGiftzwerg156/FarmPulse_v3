@@ -1,0 +1,6 @@
+Ich hätte da was für dich
+Moin,
+
+ich hab einen Handel für dich ({{direction}}): {{quantity}} Tiere ({{animalType}}). Wenn du das im Spiel innerhalb von {{deadlineMonths}} Monat(en) erledigst, zahle ich dir {{premiumPerAnimal}} € Prämie pro Tier. Sag mir binnen {{answerDays}} Tagen unter „Verträge“ Bescheid.
+
+{{characterName}}

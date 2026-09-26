@@ -2,6 +2,7 @@ import { Component, computed, input } from '@angular/core';
 
 /** Inline SVG icons (paths from the Lucide icon set, ISC license) - no runtime icon dependency. */
 const ICONS: Record<string, string[]> = {
+  shield: ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
   dashboard: ['M3 3h7v9H3z', 'M14 3h7v5h-7z', 'M14 12h7v9h-7z', 'M3 16h7v5H3z'],
   mail: ['M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z', 'm22 6-10 7L2 6'],
   phone: [

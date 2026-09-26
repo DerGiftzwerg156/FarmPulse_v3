@@ -55,3 +55,58 @@ test('values drift over time deterministically with the same seed', () => {
 test('unknown scenario is rejected', () => {
   assert.throws(() => new BridgeSimulator({ dir: tmp(), scenario: 'nope' }), /unknown scenario/);
 });
+
+test('leasing-hof exports leased vehicles as liabilities, not as assets (TODO T-04)', () => {
+  const facts = new BridgeSimulator({ dir: tmp(), scenario: 'leasing-hof' }).buildFarmFacts();
+  assert.deepEqual(facts.assets.vehicles.map((v) => v.uniqueId), ['veh_00001']);
+  assert.deepEqual(facts.liabilities.leasing, [{ uniqueId: 'veh_00101' }, { uniqueId: 'veh_00102' }]);
+});
+
+test('market_context is re-written on a regular tick only when it changed (TODO T-01)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
+  sim.start();
+  assert.equal(sim.exportMarketContext(false), null);
+  sim.farmlands[0].ownerFarmId = sim.farmlands[0].ownerFarmId === 1 ? 0 : 1;
+  assert.notEqual(sim.exportMarketContext(false), null);
+});
+
+test('the FS25 calendar is exported and follows a change of days per period (TODO T-08)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof', daysPerPeriod: 3 });
+  sim.gameTime = 40 * MS_PER_GAME_DAY + 1000; // day 40: period index 13 -> period 2 (April) of year 2, day 2
+  assert.deepEqual(sim.buildFarmFacts().calendar, { period: 2, dayInPeriod: 2, daysPerPeriod: 3, year: 2, monotonicDay: 40,
+    season: 'SPRING' });
+  assert.deepEqual(sim.setDaysPerPeriod(5), { period: 2, dayInPeriod: 2, daysPerPeriod: 5, year: 2, monotonicDay: 40,
+    season: 'SPRING' });
+  sim.gameTime = 44 * MS_PER_GAME_DAY;
+  assert.equal(sim.buildFarmFacts().calendar.period, 3);
+  assert.equal(validate('farmFacts', sim.buildFarmFacts()), null);
+});
+
+test('konflikt-mods reports detected mods, farmland 16 is not buyable (TODO T-09 / T-11)', () => {
+  const ctx = new BridgeSimulator({ dir: tmp(), scenario: 'konflikt-mods' }).buildMarketContext();
+  assert.deepEqual(ctx.detectedMods, ['FS25_MarketDynamics', 'FS25_UsedPlus']);
+  assert.equal(ctx.farmlands.find((f) => f.farmlandId === 16).showOnFarmlandsScreen, false);
+  assert.equal(ctx.farmlands.find((f) => f.farmlandId === 1).showOnFarmlandsScreen, true);
+  assert.equal(validate('marketContext', ctx), null);
+});
+
+test('prices carry the trend of the price walk (TODO T-10)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
+  sim.advance(24 * 60 * 60 * 1000);
+  const trends = new Set(sim.buildFarmFacts().prices.map((p) => p.trend));
+  for (const t of trends) assert.ok(['CLIMBING', 'FALLING', 'STABLE'].includes(t));
+});
+
+test('vanilla contracts are exported and follow the player (TODO T-22)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
+  const before = sim.balance;
+  assert.deepEqual(sim.buildFarmFacts().missions.map((m) => [m.uniqueId, m.status]),
+    [['mission_001', 'AVAILABLE'], ['mission_002', 'AVAILABLE']]);
+  sim.setMission('mission_001', 'RUNNING');
+  sim.setMission('mission_001', 'FINISHED', true);
+  const m = sim.buildFarmFacts().missions[0];
+  assert.equal(m.status, 'FINISHED');
+  assert.equal(m.success, true);
+  assert.equal(sim.balance, before + 5200);
+  assert.equal(validate('farmFacts', sim.buildFarmFacts()), null);
+});

@@ -104,6 +104,13 @@ public class NegotiationEngine {
         }
     }
 
+    /** TODO T-11: fields hidden in the vanilla farmland menu (village, roads) are not tradeable. */
+    private static void requireTradeable(FarmlandOwnership field) {
+        if (!field.isTradeable()) {
+            throw new BusinessRuleException("FIELD_NOT_TRADEABLE", "Diese Fläche kann im Spiel nicht gehandelt werden.");
+        }
+    }
+
     private Negotiation newNegotiation(Savegame sg, NegotiationKind kind, NegotiationDirection dir, Initiator by,
                                        FarmlandOwnership field) {
         Negotiation n = new Negotiation();
@@ -156,6 +163,8 @@ public class NegotiationEngine {
                         || (o.getOwnerType() == OwnerType.CHARACTER && o.getOwnerCharacter().isSellWilling()
                         && o.getOwnerCharacter().getStatus() == CharacterStatus.ACTIVE))
                 .filter(o -> o.getReferencePrice() > 0)
+                .filter(FarmlandOwnership::isTradeable)
+                .filter(o -> !o.isLeasedToPlayer()) // T-22: leased fields are not auctioned
                 .filter(o -> !isBlocked(sg, AssetType.FARMLAND, String.valueOf(o.getFarmlandId())))
                 .toList();
         Optional<Character> announcer = lookup.firstActive(sg, CharacterRole.LAND_AGENT, CharacterRole.COOPERATIVE);
@@ -194,6 +203,10 @@ public class NegotiationEngine {
     public Negotiation startDirect(Savegame sg, Long characterId, int farmlandId) {
         FarmlandOwnership field = ownership.get(sg, farmlandId)
                 .orElseThrow(() -> new NotFoundException("farmland " + farmlandId));
+        requireTradeable(field);
+        if (field.isLeasedToPlayer()) {
+            throw new BusinessRuleException("FIELD_LEASED", "Du pachtest dieses Feld – ein Kaufangebot kommt vor Pachtende.");
+        }
         if (field.getOwnerType() != OwnerType.CHARACTER || !field.getOwnerCharacter().getId().equals(characterId)) {
             throw new BusinessRuleException("NOT_OWNER", "Dieser Charakter besitzt das Feld nicht.");
         }
@@ -216,6 +229,7 @@ public class NegotiationEngine {
         if (field.getOwnerType() != OwnerType.PLAYER) {
             throw new BusinessRuleException("NOT_PLAYER_FIELD", "Nur eigene Felder können verkauft werden.");
         }
+        requireTradeable(field);
         if (askingPrice <= 0) {
             throw new BusinessRuleException("INVALID_PRICE", "Der Wunschpreis muss positiv sein.");
         }
@@ -387,6 +401,34 @@ public class NegotiationEngine {
                 .category(CommunicationCategory.NEGOTIATION).related(RELATED, n.getId()).submit();
         diary.addAuto(sg, "NEGOTIATION", toPlayer ? "Feld " + farmlandId + " gekauft" : "Feld " + farmlandId + " verkauft",
                 (toPlayer ? "Kaufpreis: " : "Verkaufspreis: ") + price + " €", RELATED, n.getId());
+    }
+
+    /**
+     * T-03: the mod refused the FARMLAND_TRANSFER batch of an accepted deal (e.g. not enough money). Ownership in
+     * the tool goes back to the state before the deal; nothing else is booked.
+     */
+    @Transactional
+    public boolean onDealFailed(Savegame sg, Long negotiationId) {
+        Negotiation n = negotiations.findById(negotiationId).orElse(null);
+        if (n == null || n.getStatus() != NegotiationStatus.ACCEPTED) {
+            return false;
+        }
+        int farmlandId = Integer.parseInt(n.getAssetId());
+        long price = n.getFinalPrice() == null ? 0 : n.getFinalPrice();
+        n.setStatus(NegotiationStatus.FAILED);
+        if (n.getDirection() == NegotiationDirection.PLAYER_BUYS) {
+            Character previous = n.getCounterpartCharacter();
+            ownership.setOwner(sg, farmlandId, previous != null ? OwnerType.CHARACTER : OwnerType.UNCLAIMED, previous);
+        } else {
+            ownership.setOwner(sg, farmlandId, OwnerType.PLAYER, null);
+            if (n.getCounterpartCharacter() != null) {
+                n.getCounterpartCharacter().setVirtualWealth(n.getCounterpartCharacter().getVirtualWealth() + price);
+            }
+        }
+        diary.addAuto(sg, "NEGOTIATION", "Geschäft über Feld " + farmlandId + " geplatzt",
+                "Das Spiel konnte den " + (n.getDirection() == NegotiationDirection.PLAYER_BUYS ? "Kauf" : "Verkauf")
+                        + " nicht ausführen (" + price + " €). Das Feld bleibt beim bisherigen Besitzer.", RELATED, n.getId());
+        return true;
     }
 
     private void closeLost(Savegame sg, Negotiation n, Character winner, long price) {

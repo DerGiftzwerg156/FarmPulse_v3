@@ -35,7 +35,7 @@ class VillageLifeServiceTest {
     @BeforeEach
     void setUp() {
         sg = fx.savegame();
-        sg.setCurrentGameTime(GameTime.days(100) + GameTime.hours(8)); // day 100 -> dayOfYear 100 % 12 = 4
+        sg.setCurrentGameTime(GameTime.days(100) + GameTime.hours(8)); // fallback calendar: day 100 = period 5
         fx.character(sg, CharacterRole.COOPERATIVE, CharacterCategory.MANDATORY, "Genossenschaft Rohde");
         fx.character(sg, CharacterRole.NEIGHBOR_FARMER, CharacterCategory.DYNAMIC, "Hauke Petersen");
         fx.character(sg, CharacterRole.VILLAGER, CharacterCategory.DYNAMIC, "Wiebke Nissen");
@@ -79,12 +79,31 @@ class VillageLifeServiceTest {
 
     @Test
     void invitationsFollowTheFallbackCalendar() {
-        assertThat(life.invite(sg)).isFalse(); // dayOfYear 4
-        sg.setCurrentGameTime(GameTime.days(102));  // dayOfYear 6 -> every 6 days
+        assertThat(life.invite(sg)).isFalse(); // not the start of a period
+        sg.setCurrentGameTime(GameTime.days(102));  // fallback (1 day per period): day 102 = period 7 -> every 6 periods
         assertThat(life.invite(sg)).isTrue();
         assertThat(jobs.findBySavegameOrderByIdAsc(sg).getLast().getFactsJson()).contains("season");
-        assertThat(life.season(GameTime.days(0))).isEqualTo(VillageLifeService.Season.SPRING);
-        assertThat(life.season(GameTime.days(11))).isEqualTo(VillageLifeService.Season.WINTER);
+        assertThat(life.season(sg, GameTime.days(0))).isEqualTo(VillageLifeService.Season.SPRING);
+        assertThat(life.season(sg, GameTime.days(11))).isEqualTo(VillageLifeService.Season.WINTER);
+    }
+
+    /** TODO T-08: with the FS25 calendar the invitation comes on the first day of period 1 (March) and 7 (September). */
+    @Test
+    void invitationsFollowTheFs25Periods() {
+        // period 6 (August) started on day 99, 3 days per period -> period 7 starts on day 102, period 8 on day 105
+        sg.setCalMonthIndex(20L);
+        sg.setCalMonthStartGameTime(GameTime.days(99));
+        sg.setCalDaysPerPeriod(3);
+        sg.setCalPeriod(6);
+        sg.setCurrentGameTime(GameTime.days(101));
+        assertThat(life.invite(sg)).isFalse();
+        sg.setCurrentGameTime(GameTime.days(102));
+        assertThat(life.season(sg, sg.getCurrentGameTime())).isEqualTo(VillageLifeService.Season.AUTUMN);
+        assertThat(life.invite(sg)).isTrue();
+        sg.setCurrentGameTime(GameTime.days(105));
+        assertThat(life.invite(sg)).isFalse();
+        assertThat(VillageLifeService.seasonOfPeriod(10)).isEqualTo(VillageLifeService.Season.WINTER);
+        assertThat(VillageLifeService.seasonOfPeriod(1)).isEqualTo(VillageLifeService.Season.SPRING);
     }
 
     @Test

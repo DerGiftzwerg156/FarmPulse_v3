@@ -1,6 +1,10 @@
 package de.farmpulse.rpsim.api;
 
+import java.util.List;
+
+import de.farmpulse.rpsim.api.Views.CalendarView;
 import de.farmpulse.rpsim.api.Views.SavegameView;
+import de.farmpulse.rpsim.bridge.FactsService;
 import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.communication.CallService;
 import de.farmpulse.rpsim.domain.Channel;
@@ -25,14 +29,16 @@ public class SavegameController {
     private final CommunicationRepository communications;
     private final CallService calls;
     private final VillageReputationService reputation;
+    private final FactsService facts;
 
     public SavegameController(SavegameContext context, LiquidityService liquidity, CommunicationRepository communications,
-                              CallService calls, VillageReputationService reputation) {
+                              CallService calls, VillageReputationService reputation, FactsService facts) {
         this.context = context;
         this.liquidity = liquidity;
         this.communications = communications;
         this.calls = calls;
         this.reputation = reputation;
+        this.facts = facts;
     }
 
     @GetMapping
@@ -46,6 +52,17 @@ public class SavegameController {
                 GameTime.dayIndex(sg.getCurrentGameTime()), liquidity.latestBalance(sg), sg.getTonePreset().name(),
                 communications.countBySavegameAndChannelAndReadFlagFalse(sg, Channel.MAIL),
                 calls.pending(sg).stream().filter(c -> c.getCallStatus() == de.farmpulse.rpsim.domain.CallStatus.RINGING).count(),
-                reputation.tier(sg).name());
+                reputation.tier(sg).name(), calendar(sg),
+                facts.marketContext(sg).map(c -> c.detectedMods() == null ? List.<String>of() : c.detectedMods())
+                        .orElse(List.of()));
+    }
+
+    static CalendarView calendar(Savegame sg) {
+        if (sg.getCalPeriod() == null) {
+            return null;
+        }
+        return new CalendarView(sg.getCalPeriod(), sg.getCalPeriodName(),
+                sg.getCalDayInPeriod() == null ? 1 : sg.getCalDayInPeriod(),
+                sg.getCalDaysPerPeriod() == null ? 1 : sg.getCalDaysPerPeriod(), sg.getCalYear(), sg.getCalSeason());
     }
 }

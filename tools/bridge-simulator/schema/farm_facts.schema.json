@@ -32,9 +32,22 @@
     },
     "liabilities": { "type": "object", "required": ["vanillaLoan"], "properties": {
       "vanillaLoan": { "type": "object", "required": ["active", "remainingAmount"],
-        "properties": { "active": { "type": "boolean" }, "remainingAmount": { "type": "number", "minimum": 0 } } } } },
+        "properties": { "active": { "type": "boolean" }, "remainingAmount": { "type": "number", "minimum": 0 } } },
+      "leasing": { "type": "array", "items": { "type": "object", "required": ["uniqueId"],
+        "properties": { "uniqueId": { "type": "string" }, "costPerPeriod": { "type": "number", "minimum": 0 } } } } } },
+    "missions": { "type": "array", "items": { "type": "object", "required": ["uniqueId", "status"],
+      "properties": { "uniqueId": { "type": "string" }, "status": { "enum": ["AVAILABLE", "RUNNING", "FINISHED"] },
+        "title": { "type": "string" }, "typeName": { "type": "string" }, "field": { "type": "string" },
+        "npcIndex": { "type": "integer" }, "npcTitle": { "type": "string" }, "reward": { "type": "number" },
+        "success": { "type": "boolean" } } } },
     "prices": { "type": "array", "items": { "type": "object", "required": ["sellPoint", "fillType", "currentPrice"],
       "properties": { "sellPoint": { "type": "string" }, "fillType": { "type": "string" },
-        "currentPrice": { "type": "number", "minimum": 0 } } } }
+        "currentPrice": { "type": "number", "minimum": 0 },
+        "trend": { "enum": ["CLIMBING", "FALLING", "STABLE"] } } } },
+    "calendar": { "type": "object", "required": ["period", "dayInPeriod", "daysPerPeriod", "year", "monotonicDay"],
+      "properties": { "period": { "type": "integer", "minimum": 1, "maximum": 12 },
+        "dayInPeriod": { "type": "integer", "minimum": 1 }, "daysPerPeriod": { "type": "integer", "minimum": 1 },
+        "year": { "type": "integer" }, "monotonicDay": { "type": "integer", "minimum": 0 },
+        "periodName": { "type": "string" }, "season": { "type": "string" } } }
   }
 }

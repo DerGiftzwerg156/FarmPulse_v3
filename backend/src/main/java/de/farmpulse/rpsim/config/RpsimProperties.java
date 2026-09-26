@@ -1,6 +1,8 @@
 package de.farmpulse.rpsim.config;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
@@ -19,7 +21,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class RpsimProperties {
 
     private Bridge bridge = new Bridge();
-    private Time time = new Time();
     private Ai ai = new Ai();
     private Formulas formulas = new Formulas();
     private Web web = new Web();
@@ -41,17 +42,21 @@ public class RpsimProperties {
         private long pollIntervalMs = 2000;
         /** Whether the bridge scheduler runs (disabled in unit tests). */
         private boolean enabled = true;
-    }
-
-    @Getter @Setter
-    public static class Time {
         /**
-         * Game days per game month. TODO(offene-frage): FS25 period/season field not verified; fallback is this
-         * fixed counter (default 1 = FS25 default "days per period").
+         * T-02: a savegame reloaded without saving moves game time backwards. Lost bookings of a rewind up to this
+         * many game hours are re-sent automatically; deeper rewinds ask the player.
          */
-        private int gameDaysPerMonth = 1;
-        /** Game months per game year (fallback year counter for rotation budget and invitations). */
-        private int monthsPerYear = 12;
+        private double rewindAutoResendMaxHours = 24;
+        /**
+         * T-02: bookings acknowledged up to this many game hours before the reloaded point are also checked (the
+         * first export after loading happens slightly after the saved point). Must stay below the mod's
+         * processedRetentionGameDays.
+         */
+        private double rewindLookbackHours = 24;
+        /** TODO T-21: new mails and incoming calls are shown as in-game notification (NOTIFICATION instruction). */
+        private boolean ingameNotifications = true;
+        /** TODO T-21: a notification is dropped by the mod when it is processed later than this many game hours. */
+        private double notificationMaxAgeHours = 2;
     }
 
     @Getter @Setter
@@ -106,6 +111,14 @@ public class RpsimProperties {
         private Tone tone = new Tone();
         private Memory memory = new Memory();
         private Storage storage = new Storage();
+        private Insurance insurance = new Insurance();
+        private Hunting hunting = new Hunting();
+        private Livestock livestock = new Livestock();
+        private Energy energy = new Energy();
+        private Lease lease = new Lease();
+        private Maintenance maintenance = new Maintenance();
+        private ProductionSupply productionSupply = new ProductionSupply();
+        private Contractor contractor = new Contractor();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -304,6 +317,11 @@ public class RpsimProperties {
         private double sellWillingProbability = 0.3;
         /** Share of unowned map farmlands assigned to dynamic NPCs when the ownership table is first built. */
         private double npcOwnedShare = 0.4;
+        /**
+         * TODO T-21: NPC-owned fields belong to the FS25 NPC of the farmland (market_context farmlands[].npc) instead
+         * of an invented village character. Falls back to village characters when the export has no NPC.
+         */
+        private boolean useGameNpcOwners = true;
     }
 
     /** Technical concept "Satisfaction-Formel". */
@@ -386,8 +404,8 @@ public class RpsimProperties {
         private double congratulationTrendRatio = 1.25;
         private double congratulationMinCashflow = 1000;
         private double congratulationCooldownDays = 20;
-        /** Invitation calendar (fallback): day-of-year offsets (in game days since year start). */
-        private int invitationEveryDays = 6;
+        /** Invitation calendar: every n-th FS25 period of the year (counted from period 1 = March), 0 = never. */
+        private int invitationEveryPeriods = 6;
         private double gossipDailyProbability = 0.05;
         private double gossipCooldownDays = 3;
     }
@@ -437,5 +455,227 @@ public class RpsimProperties {
         private double priceUnitLiters = 1000;
         /** Max points returned by the price history endpoint (down-sampling). */
         private int historyMaxPoints = 500;
+    }
+
+    /**
+     * TODO T-20: storm/hail insurance and the simulated damage events. Damages cost money (DAMAGE); an active
+     * insurance reimburses damage × coverage − deductible after the damage was reported in time. Placeholders.
+     */
+    @Getter @Setter
+    public static class Insurance {
+        /** Chance per game month (= FS25 period) that a storm damages the farm buildings, only in stormPeriods. */
+        private double stormProbabilityPerMonth = 0.15;
+        /** FS25 periods with storms (1 = March): September to February. */
+        private List<Integer> stormPeriods = new ArrayList<>(List.of(7, 8, 9, 10, 11, 12));
+        /** Storm damage as share of the value of the farm buildings (placeables). */
+        private double stormDamageShareMin = 0.005;
+        private double stormDamageShareMax = 0.03;
+        /** Chance per game month that hail hits one of the player's fields, only in hailPeriods. */
+        private double hailProbabilityPerMonth = 0.2;
+        /** FS25 periods with hail: May to August. */
+        private List<Integer> hailPeriods = new ArrayList<>(List.of(3, 4, 5, 6));
+        private double hailDamagePerHectareMin = 200;
+        private double hailDamagePerHectareMax = 900;
+        /** Game days the damage can be reported to the insurance. */
+        private double reportDeadlineDays = 5;
+        /** Game days between report and payout. */
+        private double settlementDelayDaysMin = 1;
+        private double settlementDelayDaysMax = 3;
+        /** Proactive offer of the insurance agent this many game days after the first farm export. */
+        private double firstOfferAfterDays = 3;
+        private double offerValidDays = 7;
+        /** A new offer after an uninsured damage at the earliest after this many game days. */
+        private double reofferCooldownDays = 30;
+        /** Insurance ends after this many missed premiums. */
+        private int cancelAfterMissedPayments = 2;
+        /** Insured value = farmland reference prices + building values; monthly premium = value × premiumRate. */
+        private Map<String, InsuranceLevel> levels = new LinkedHashMap<>(Map.of(
+                "BASIC", new InsuranceLevel(0.6, 2000, 0.00025, 50),
+                "COMFORT", new InsuranceLevel(0.9, 500, 0.00075, 100)));
+    }
+
+    @Getter @Setter
+    public static class InsuranceLevel {
+        private double coverageRate;
+        private long deductible;
+        private double premiumRate;
+        private long minPremium;
+
+        public InsuranceLevel() {
+        }
+
+        public InsuranceLevel(double coverageRate, long deductible, double premiumRate, long minPremium) {
+            this.coverageRate = coverageRate;
+            this.deductible = deductible;
+            this.premiumRate = premiumRate;
+            this.minPremium = minPremium;
+        }
+    }
+
+    /**
+     * TODO T-20 hunter: simulated wild boar damage on an own field (DAMAGE), compensation offered by the hunter
+     * (WILDLIFE_COMPENSATION), counter demands in rounds, joint measures that lower further damage and improve the
+     * village reputation. Placeholders.
+     */
+    @Getter @Setter
+    public static class Hunting {
+        /** Chance per game month of wildlife damage on one own field, only in periods. */
+        private double probabilityPerMonth = 0.15;
+        /** FS25 periods with wild boar damage (1 = March): June to October. */
+        private List<Integer> periods = new ArrayList<>(List.of(4, 5, 6, 7, 8));
+        private double damagePerHectareMin = 150;
+        private double damagePerHectareMax = 600;
+        /** First offer of the hunter as share of the damage (neutral trust). */
+        private double offerShare = 0.5;
+        /** Highest share the hunter accepts (neutral trust). */
+        private double maxShare = 0.9;
+        /** Shift of both shares at trust +100 / −100 (linear). */
+        private double trustInfluence = 0.2;
+        /** Counter demands before the hunter's offer is final. */
+        private int maxRounds = 2;
+        /** Game days to answer; without answer the last offer is paid. */
+        private double decisionDays = 7;
+        /** Contribution of the player to a joint measure (drive hunt / fence), €. */
+        private long measureCost = 400;
+        private double measureReputationDelta = 3;
+        private double measureTrustDelta = 5;
+        /** Damage probability × this factor for measureEffectMonths after a joint measure. */
+        private double measureProbabilityFactor = 0.4;
+        private int measureEffectMonths = 6;
+        private double agreementTrustDelta = 2;
+        private double disputeTrustDelta = -5;
+        private double disputeReputationDelta = -2;
+    }
+
+    /**
+     * TODO T-20 vet / livestock trader / breeding advisor - only active with animals in the export. Animals are bought
+     * and sold by the player in the game; the trader pays a brokerage premium when the exported head count changes
+     * accordingly. Placeholders.
+     */
+    @Getter @Setter
+    public static class Livestock {
+        /** Routine visit of the vet every n game months per animal type. */
+        private int vetVisitEveryMonths = 3;
+        private long vetBaseFee = 80;
+        private long vetFeePerAnimal = 4;
+        /** Chance per game month of a trader offer. */
+        private double traderProbabilityPerMonth = 0.25;
+        /** Share of buy offers (the rest are sell offers). */
+        private double traderBuyShare = 0.3;
+        /** Sell offers: at most this share of the herd, at least traderQuantityMin animals. */
+        private double traderMaxHerdShare = 0.3;
+        private int traderQuantityMin = 2;
+        private int traderQuantityMax = 6;
+        /** Premium per animal as share of the exported value per animal. */
+        private double traderPremiumShareMin = 0.05;
+        private double traderPremiumShareMax = 0.12;
+        /** Game days to answer an offer. */
+        private double traderAnswerDays = 5;
+        /** Game months to carry out an accepted offer in the game. */
+        private int traderDeadlineMonths = 1;
+        /** Breeding advice every n game months per animal type. */
+        private int breedingAdviceEveryMonths = 6;
+    }
+
+    /**
+     * TODO T-20 energy supplier: fixed-price contracts (FIXED) and price fluctuations (MULTIPLIER) for biogas fill types
+     * at sell points of the map that accept them. Only active when the market context contains such a sell point (the
+     * tool never invents a biogas plant). Price bands and contract bounds come from {@code rpsim.formulas.market}.
+     */
+    @Getter @Setter
+    public static class Energy {
+        /** Fill types the energy supplier buys (FS25 fill type names, verified in the game code). */
+        private List<String> fillTypes = new ArrayList<>(List.of("METHANE", "SILAGE", "CHAFF", "MANURE", "LIQUIDMANURE",
+                "DIGESTATE"));
+        /** Chance per game month of a new offer of the energy supplier. */
+        private double probabilityPerMonth = 0.35;
+        /** At most this many open offers / price events of the energy supplier at the same time. */
+        private int maxOpen = 1;
+        /** Share of fixed-price contracts; the rest are price fluctuations. */
+        private double contractShare = 0.6;
+        /** Share of rising prices among the fluctuations (DEMAND_SPIKE, the rest DEMAND_SLUMP). */
+        private double spikeShare = 0.5;
+    }
+
+    /**
+     * TODO T-22 lease of NPC fields (not in vanilla): monthly rent (LEASE_PAYMENT), the field is transferred to the
+     * player for the term (FARMLAND_TRANSFER TO_PLAYER) and goes back automatically at the end (FROM_PLAYER), after a
+     * warning one month before with a renewal and - if the owner sells - a purchase offer. Placeholders.
+     */
+    @Getter @Setter
+    public static class Lease {
+        /** Yearly rent as share of the reference price of the field (neutral trust). */
+        private double annualRentShare = 0.05;
+        /** Rent shift at trust +100 / −100 (−10 % / +10 %). */
+        private double trustInfluence = 0.1;
+        /** Chance that the owner agrees to lease at neutral trust … */
+        private double acceptProbability = 0.8;
+        /** … shifted by this much at trust +100 / −100. */
+        private double acceptTrustInfluence = 0.2;
+        private int termMonths = 12;
+        private double offerValidDays = 7;
+        /** Warning with renewal / purchase offer this many game months before the end. */
+        private int warningMonths = 1;
+        /** Rent of a renewal = current rent × a random factor in [min, max]. */
+        private double renewalFactorMin = 0.95;
+        private double renewalFactorMax = 1.1;
+        /** Purchase offer of a sell-willing owner: reference price × this factor. */
+        private double purchaseFactor = 1.05;
+        /** The lease ends early (field goes back) after this many missed rents. */
+        private int cancelAfterMissedPayments = 2;
+    }
+
+    /**
+     * TODO T-22 maintenance contract of the workshop: monthly fee (MAINTENANCE_FEE); while it is paid, the workshop
+     * repairs the most worn own vehicles every game month (REPAIR_VEHICLE). Without a contract it sends repair hints.
+     * Vehicle condition from farm_facts (0-100). Placeholders.
+     */
+    @Getter @Setter
+    public static class Maintenance {
+        /** Monthly fee = max(minFee, value of the own vehicles × feeRate). */
+        private double feeRate = 0.002;
+        private long minFee = 60;
+        private double offerValidDays = 7;
+        /** Vehicles below this condition are repaired at the monthly service … */
+        private double repairBelowCondition = 70;
+        /** … at most this many per game month (the most worn first). */
+        private int maxRepairsPerMonth = 3;
+        /** Without contract: repair hint for the most worn vehicle below this condition … */
+        private double hintBelowCondition = 50;
+        /** … at most every n game months. */
+        private int hintEveryMonths = 3;
+        /** First unsolicited offer when a vehicle is below this condition and there never was a contract. */
+        private double firstOfferBelowCondition = 75;
+        private int cancelAfterMissedPayments = 2;
+    }
+
+    /**
+     * TODO T-22 delivery contracts with production points of the map (bakery, dairy ...): fixed-price contracts
+     * (PRICE_EVENT FIXED, player decides) at sell points that market_context.json marks as production. Bounds of price
+     * premium, quantity and deadline come from rpsim.formulas.market (special offers). Placeholders.
+     */
+    @Getter @Setter
+    public static class ProductionSupply {
+        /** Chance per game month of a delivery contract offer. */
+        private double probabilityPerMonth = 0.3;
+        /** Open delivery contract offers / contracts with productions at the same time. */
+        private int maxOpen = 1;
+    }
+
+    /**
+     * TODO T-22 contractor: refers vanilla contracts of the game (g_missionManager) by mail; the player takes them in
+     * the game's contracts menu. Completing a referred contract improves trust with the contractor and the client (FS25
+     * NPC, if it is a village character). Placeholders.
+     */
+    @Getter @Setter
+    public static class Contractor {
+        /** Chance that a newly available contract is referred … */
+        private double referralProbability = 0.35;
+        /** … at most this many referrals per game month. */
+        private int maxReferralsPerMonth = 2;
+        private double completedTrustDelta = 3;
+        /** Trust of the client (FS25 NPC as village character) for a completed referred contract. */
+        private double clientTrustDelta = 2;
+        private double failedTrustDelta = -3;
     }
 }

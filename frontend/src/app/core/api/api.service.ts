@@ -23,6 +23,42 @@ export class ApiService {
     return this.get<M.SavegameView | null>('/savegame');
   }
 
+  // contracts & service cases (TODO T-20 / T-22)
+  contracts(): Observable<M.ContractView[]> {
+    return this.get('/contracts');
+  }
+  cases(): Observable<M.CaseView[]> {
+    return this.get('/cases');
+  }
+  insuranceQuotes(): Observable<M.InsuranceQuoteView[]> {
+    return this.get('/insurance/quotes');
+  }
+  requestInsuranceOffer(level: string): Observable<M.ContractView> {
+    return this.post('/insurance/offer', { level });
+  }
+  contractAction(id: number, action: 'accept' | 'decline' | 'cancel' | string, body: unknown = {}): Observable<M.ContractView> {
+    return this.post(`/contracts/${id}/${action}`, body);
+  }
+  /** TODO T-22: ask the workshop for a maintenance contract. */
+  requestMaintenanceOffer(): Observable<M.ContractView> {
+    return this.post('/maintenance/offer', {});
+  }
+  /** TODO T-22: ask the owner of a field for a lease; the answer is an offer or a refusal. */
+  requestLease(farmlandId: number): Observable<M.ContractView> {
+    return this.post(`/farmlands/${farmlandId}/lease-request`, {});
+  }
+  caseAction(id: number, action: string, body: unknown = {}): Observable<M.CaseView> {
+    return this.post(`/cases/${id}/${action}`, body);
+  }
+
+  // notices (bridge problems / decisions)
+  notices(): Observable<M.NoticeView[]> {
+    return this.get('/notices');
+  }
+  resolveNotice(id: number, action: string): Observable<M.NoticeView> {
+    return this.post(`/notices/${id}/resolve`, { action });
+  }
+
   // onboarding
   createOnboarding(r: M.OnboardingRequest): Observable<M.OnboardingView> {
     return this.post('/onboarding', r);

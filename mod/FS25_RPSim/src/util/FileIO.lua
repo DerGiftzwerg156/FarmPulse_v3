@@ -1,5 +1,7 @@
--- File access with injectable backend (real io/os in FS25, fakes in tests).
--- Every bridge file has exactly one writer; writes are atomic via tmp+rename or tmp+marker.
+-- File access with injectable backend (real io in FS25, fakes in tests).
+-- Every bridge file has exactly one writer. The FS25 Lua sandbox has no `os` module (no os.rename/os.remove,
+-- see FS25_UsedPlus AI reference pitfalls/what-doesnt-work.md), so the default mode writes the file directly;
+-- readers (backend) validate every JSON document and retry partially written files on the next cycle.
 RPSimFileIO = {}
 
 -- luacheck: globals createFolder fileExists
@@ -76,12 +78,20 @@ function RPSimFileIO.ensureDir(path)
     return true, nil
 end
 
---- Writes atomically. mode: "rename" | "marker" | "auto". Returns ok, usedMode|err.
--- rename: write <path>.tmp, then rename over <path>. Reader never sees a half-written file.
--- marker: remove <path>.ready, write <path> directly, then create <path>.ready; readers must only
---         read <path> while <path>.ready exists (fallback when os.rename is unavailable).
-function RPSimFileIO.writeAtomic(path, content, mode)
-    mode = mode or "auto"
+--- Writes a bridge file. mode: "direct" (default) | "rename" | "marker" | "auto". Returns ok, usedMode|err.
+-- direct: write <path> directly (io.open, as Farm Dashboard does in FS25). No helper files.
+-- rename: write <path>.tmp, then rename over <path> (needs os.rename - only outside the FS25 sandbox).
+-- marker: remove <path>.ready, write <path> directly, then create <path>.ready.
+-- auto:   rename, falling back to marker.
+function RPSimFileIO.write(path, content, mode)
+    mode = mode or "direct"
+    if mode == "direct" then
+        local ok, err = writePlain(path, content)
+        if not ok then
+            return false, err
+        end
+        return true, "direct"
+    end
     local tmp = path .. ".tmp"
     if mode == "rename" or mode == "auto" then
         local ok, err = writePlain(tmp, content)

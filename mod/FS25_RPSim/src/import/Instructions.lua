@@ -2,16 +2,22 @@
 -- (technical concept "Import-Schema").
 RPSimInstructions = {}
 
-RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLAND_TRANSFER = true }
+RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLAND_TRANSFER = true,
+    NOTIFICATION = true, REPAIR_VEHICLE = true } -- NOTIFICATION: TODO T-21, REPAIR_VEHICLE: TODO T-22
 
 RPSimInstructions.MONEY_REASONS = {
     CREDIT_DISBURSEMENT = true, CREDIT_INSTALLMENT = true, CREDIT_PENALTY = true, CREDIT_CALLBACK = true,
     SALARY_PAYMENT = true, EMPLOYEE_EFFECT = true, SUBSIDY = true, STARTING_CAPITAL_ADJUSTMENT = true,
     FARMLAND_PURCHASE = true, FARMLAND_SALE = true, OTHER = true,
+    -- TODO T-20 / T-22
+    INSURANCE_PREMIUM = true, INSURANCE_PAYOUT = true, DAMAGE = true, WILDLIFE_COMPENSATION = true,
+    VET_INVOICE = true, LIVESTOCK_PREMIUM = true, LEASE_PAYMENT = true, MAINTENANCE_FEE = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
 RPSimInstructions.DIRECTIONS = { TO_PLAYER = true, FROM_PLAYER = true }
+-- FSBaseMission.INGAME_NOTIFICATION_* used by FS25_MarketDynamics (INFO, OK, CRITICAL)
+RPSimInstructions.NOTIFICATION_LEVELS = { INFO = true, OK = true, CRITICAL = true }
 
 local function isNumber(v) return type(v) == "number" and v == v end
 local function isNonEmptyString(v) return type(v) == "string" and v ~= "" end
@@ -74,6 +80,35 @@ function RPSimInstructions.validate(ins)
         if ins.price ~= nil and not isNumber(ins.price) then
             return false, "price must be a number"
         end
+    elseif ins.type == "REPAIR_VEHICLE" then
+        if not isNonEmptyString(ins.vehicleId) then
+            return false, "vehicleId is required"
+        end
+    elseif ins.type == "NOTIFICATION" then
+        if not isNonEmptyString(ins.text) then
+            return false, "text is required"
+        end
+        if ins.level ~= nil and not RPSimInstructions.NOTIFICATION_LEVELS[ins.level] then
+            return false, "unknown level " .. tostring(ins.level)
+        end
+        if ins.expiresAtGameTime ~= nil and not isNumber(ins.expiresAtGameTime) then
+            return false, "expiresAtGameTime must be a number"
+        end
+    end
+    return true
+end
+
+--- Funds check for a batch (T-03): the net money change of the batch must not push the balance below 0.
+-- Credits in the same batch (e.g. a farmland sale) count against its debits. Returns ok, err.
+function RPSimInstructions.checkFunds(balance, items)
+    local net = 0
+    for _, ins in ipairs(items or {}) do
+        if type(ins) == "table" and ins.type == "MONEY_TRANSACTION" and isNumber(ins.amount) then
+            net = net + ins.amount
+        end
+    end
+    if net < 0 and (balance or 0) + net < 0 then
+        return false, "INSUFFICIENT_FUNDS"
     end
     return true
 end

@@ -141,7 +141,65 @@ Restart the simulator with `--scenario verschuldeter-hof --reset` (new savegame 
 | 4.2 | Apply for a loan that `leerer-hof` would never get | noticeably better result than without stock (silo value counts as equity) |
 | 4.3 | Advance ~20 days, watch *Marktgeschehen* | events mostly hit the stored fill types (wheat, corn, …) |
 
-## 5. Finish
+## 5. Scenario `knappe-kasse` – refused bookings (TODO T-03)
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 5.1 | Onboarding with starting capital `500`, hire an employee, advance until the salary is due | the simulator acks the salary `FAILED` / `INSUFFICIENT_FUNDS`; dashboard card *Hinweise aus dem Spiel* → *Buchung nicht ausgeführt*; the employee shows *Gehalt überfällig* |
+| 5.2 | Negotiate a field and accept a price above the balance | card *Buchung nicht ausgeführt* (Feldübertragung), the negotiation shows *Geplatzt*, the field stays with its owner |
+| 5.3 | `POST /balance {"balance": 100000}`, advance 1 day | the salary is booked (no repeated failures in between) |
+
+## 6. Reload without saving (TODO T-02)
+
+Scenario `wohlhabender-hof`, savegame linked.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 6.1 | `POST /save`, get a loan approved (disbursement booked), advance 5 hours, `POST /reload-without-saving` | dashboard card *Spielstand ohne Speichern neu geladen*: 1 booking re-sent; the simulator balance contains the disbursement again (`GET /state`) |
+| 6.2 | `POST /save`, get a loan approved, advance 3 days, `POST /reload-without-saving` | card *Älterer Spielstand geladen* with *Nachbuchen* / *Tool-Stand beibehalten*; *Nachbuchen* books the disbursement again, *Tool-Stand beibehalten* books nothing |
+
+## 7. Scenarios `leasing-hof` / `konflikt-mods` / calendar (TODO T-04, T-08, T-09)
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 7.1 | `leasing-hof`: bank → credit check | only the owned tractor counts as a machine asset; leased vehicles are not part of the equity |
+| 7.2 | `konflikt-mods`: dashboard and *Einstellungen* | warning *Mods mit Überschneidungen erkannt* listing `FS25_MarketDynamics, FS25_UsedPlus` |
+| 7.3 | Start the simulator with `--days-per-period 3`, header | shows the FS25 month (e.g. *März, Jahr 1*); installments and salaries are due at the start of each month (every 3 game days) |
+| 7.4 | `POST /days-per-period {"daysPerPeriod": 5}` | the next due date of a loan moves to the start of the next month under the new length (*Bank* → next installment) |
+| 7.5 | *Felder* → farmland 16 | marked *nicht handelbar*, no actions |
+
+## 8. First test in the real FS25 (TODO T-13)
+
+These points cannot be verified without the game. Load a savegame with `FS25_RPSim` (and, where noted, another mod)
+and check `log.txt` (lines with `[FS25_RPSim]`) and the bridge files.
+
+| # | Check | How | Expected / note result |
+| --- | --- | --- | --- |
+| 8.1 | Load timing (T-01) | load a savegame with machines, fields and sell points | `log.txt`: `First export: <n> sell points, <n> farmlands on the map, <n> own vehicles, <n> own fields` with non-zero numbers; `farm_facts.json` shows the real balance |
+| 8.2 | modSettings path (T-06) | `log.txt` line `Bridge folder: …` | `Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim/`; note whether `g_modSettingsDirectory` exists (if the logged path differs from the profile folder, it does) |
+| 8.3 | Price event (MULTIPLIER) | let the backend send a price event, then unload a trailer at that station | the payout matches the changed price; note whether the in-game prices menu shows the changed price |
+| 8.4 | Fixed-price contract with pallets/bales (T-05) | accept a special contract, sell pallets that exactly fill it | the last pallet is paid at the contract price; `contractReports` in `instructions_ack.json` shows `MAX_QUANTITY_REACHED` |
+| 8.5 | Stable sell point id (open point #2) | note `sellPoints[].id` in `market_context.json`, save, quit, reload | ids identical after reload |
+| 8.6 | Silo detection (open point #8) | build a silo, a silo extension and a bunker silo | `storage` contains the silo (and the extension) but not the bunker silo; note the store category name of silos in FS25 (`storeItem.categoryName`) and whether `spec_siloExtension` placeables are captured |
+| 8.7 | Animal export | own a husbandry with animals | `assets.animals[]` has count and value > 0 (`getClusters`, `getNumAnimals`, `getSellPrice`) |
+| 8.8 | Farmland to the player | buy a field via a negotiation | the field belongs to the player; missions, field menu and map show it correctly |
+| 8.9 | Reload without saving (T-02) | take a loan, quit without saving, reload | the dashboard shows the rewind notice and the disbursement arrives again |
+| 8.10 | Refused debit (T-03) | spend almost all money, let an installment come due | `instructions_ack.json`: `FAILED` / `INSUFFICIENT_FUNDS`; the balance never becomes negative through FarmPulse |
+| 8.11 | Leasing costs (T-04) | lease a vehicle | it appears in `liabilities.leasing`, not in `assets.vehicles`; note where FS25 shows the leasing costs per vehicle (API still unverified) |
+| 8.12 | Calendar (T-08) | change *Days per period* in the game settings | `calendar.daysPerPeriod` follows; `periodName` is the month shown in the game; period 1 = March |
+| 8.13 | Conflict mods (T-09) | activate e.g. `FS25_UsedPlus` | `market_context.json` → `detectedMods` contains it; warning on the dashboard |
+| 8.14 | Hidden sell points / farmlands (T-10, T-11) | compare `sellPoints` with the in-game prices menu, `farmlands` with the farmland menu | no husbandry/production-only stations; village/road farmlands have `showOnFarmlandsScreen: false` |
+| 8.15 | Biogas sell points (T-20 energy supplier) | on a map with a biogas plant (Pumps n' Hoses pack), look at `market_context.json` → `sellPoints` | note whether a sell point accepts one of `rpsim.formulas.energy.fill-types` (`METHANE`, `SILAGE`, `CHAFF`, `MANURE`, `LIQUIDMANURE`, `DIGESTATE`). Biogas plants may be production points without a `SellingStation`; then the energy supplier stays away – adjust the list to the fill types that are really sold |
+| 8.16 | FS25 NPC field owners (T-21) | `market_context.json` → `farmlands[].npc` | every buyable farmland has an `npc` with `index`, `name` and a readable `title` that matches the name shown in the in-game farmland menu; the village in the tool shows these names as field owners |
+| 8.17 | In-game notifications (T-21) | while playing, let a character send a mail and start a call | a notification `FarmPulse: Neue Mail von …` / `… ruft an` appears in the game; after loading an older savegame, old hints are not shown (ack `message: EXPIRED`) |
+| 8.18 | Booking titles / finance statistics (T-21) | let the tool book an installment and a salary, look at the money popup and the finances page | the popup shows the RP Sim title (e.g. *Kreditrate*) instead of a missing-text marker; the amounts appear under *Sonstiges*. Then set `moneyTypeStatistics` in `rpsim_config.json` to a candidate name (e.g. `"SALARY_PAYMENT": "wagePayment"`) and note which names FS25 accepts as own column; `log.txt` warns when `MoneyType.register` fails |
+| 8.19 | Season (T-21) | play through a period change into a new season | `calendar.season` in `farm_facts.json` changes (note the exported names, e.g. `SPRING`, `SUMMER`, `AUTUMN`, `WINTER`); the header of the tool shows the season; mails mention the month/season plausibly |
+| 8.20 | Lease (T-22) | lease an NPC field, play until the end of the term without answering | the field belongs to the player in the farmland menu during the term (missions/field work possible), rent is booked monthly (*Pacht*), one month before the end a mail arrives, at the end the field is back to *no owner* in the game |
+| 8.21 | Maintenance repair (T-22) | take a maintenance contract with a worn vehicle (condition < 70 %), wait for the next month | `instructions_ack.json`: `REPAIR_VEHICLE` `APPLIED`; the vehicle shows 0 % damage in the game; no *Reparatur* booking appears in the finances (only the monthly *Wartungsvertrag* fee) |
+| 8.22 | Productions as buyers (T-22) | map with a production point (e.g. bakery), look at `market_context.json` | the production appears in `sellPoints` with `production: true` (and `ownedByPlayer: true` for an own production); note whether delivering to a foreign production is paid like a sale – only then do delivery contracts make sense |
+| 8.23 | Vanilla contracts (T-22) | open the contracts menu, compare with `farm_facts.json` → `missions`; take a referred contract and finish it | available contracts are listed with title, field, client (`npcTitle`) and a plausible `reward` (subclasses override `getReward()` - note if it stays 0); the taken one turns `RUNNING`, then `FINISHED` with `success: true`; the contractor thanks by mail. Repeat with FS25_BetterContracts active |
+
+## 9. Finish
 
 - Note deviations with scenario, step number and screenshot as an issue (template *Bug report*).
 - Before switching to a real FS25 savegame: [`docs/user-guide/installation.md`](../user-guide/installation.md) and [`offene-technische-punkte.md`](offene-technische-punkte.md).

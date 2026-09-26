@@ -1,0 +1,7 @@
+Feld {{farmlandId}} gehört jetzt dir
+Hallo,
+
+der Kauf ist erledigt: Feld {{farmlandId}} gehört jetzt dir, die Pacht endet damit. Kaufpreis: {{price}} €.
+
+Viele Grüße
+{{characterName}}

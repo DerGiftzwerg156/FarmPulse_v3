@@ -16,6 +16,10 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.bridge.path` | `../tools/bridge-simulator/runtime/modSettings/FS25_RPSim` | Folder `modSettings/FS25_RPSim` (contains `export/` and `import/`). `dev`: simulator runtime folder; `prod`: `~/Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim`. | Datei-Bridge |
 | `rpsim.bridge.poll-interval-ms` | `2000` | Real-time interval (ms) in which the backend reads the bridge files. The only real-time timer - all game logic runs on game time. | Datei-Bridge |
 | `rpsim.bridge.enabled` | `true` | Runs the bridge scheduler; `false` in unit tests. | Datei-Bridge |
+| `rpsim.bridge.rewind-auto-resend-max-hours` | `24` | Savegame reloaded without saving (game time jumps back): bookings lost by a rewind up to this many game hours are re-sent automatically; deeper rewinds show a decision card on the dashboard ("nachbuchen" / "Tool-Stand beibehalten"). | TODO T-02 |
+| `rpsim.bridge.rewind-lookback-hours` | `24` | Bookings acknowledged up to this many game hours before the reloaded point are checked as well (the first export after loading happens slightly after the saved point). Must stay below the mod's `processedRetentionGameDays`. | TODO T-02 |
+| `rpsim.bridge.ingame-notifications` | `true` | New mails and incoming calls are shown in the game (`NOTIFICATION` instruction → `addIngameNotification`). Only for savegames linked to FS25. | TODO T-21 |
+| `rpsim.bridge.notification-max-age-hours` | `2` | The mod acknowledges a notification without showing it (`message: EXPIRED`) when it is processed more than this many game hours after it was created, e.g. after loading an older savegame. | TODO T-21 |
 
 ## `rpsim.web` – Web
 
@@ -23,12 +27,13 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | --- | --- | --- | --- |
 | `rpsim.web.static-dir` | `""` | Folder of the built Angular app. When set (release: `web/`) the backend serves it on `/` with an SPA fallback. Empty = API only. | – |
 
-## `rpsim.time` – Game time
+## Game month = FS25 period
 
-| Key | Default | Meaning | Concept |
-| --- | --- | --- | --- |
-| `rpsim.time.game-days-per-month` | `1` | Game days per game month (credit installments, salaries, monthly effects). `TODO(offene-frage)`: FS25 period field not verified, fixed counter fallback. | Offene technische Fragen |
-| `rpsim.time.months-per-year` | `12` | Game months per game year (rotation budget, invitation calendar). | Dynamische-Charaktere-Rotation |
+There is no `rpsim.time` configuration any more (TODO T-08): the game month is the FS25 period of the savegame.
+The mod exports the calendar (`farm_facts.json` → `calendar`: period, day in period, days per period, year); the
+backend counts months from it. Installments and salaries are due at the start of each period; if the player changes
+"days per period" in FS25, scheduled dates keep their month. Without a calendar export (older mod) one day per
+period is assumed (FS25 default).
 
 ## `rpsim.ai` – AI providers
 
@@ -229,6 +234,7 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.formulas.negotiation.virtual-wealth-max` | `400000` | Hidden `virtualWealth`, upper bound. | Verhandlungs-Preisfindung |
 | `rpsim.formulas.negotiation.sell-willing-probability` | `0.3` | Share of land-owning characters willing to sell in a direct negotiation. | Verhandlungssystem |
 | `rpsim.formulas.negotiation.npc-owned-share` | `0.4` | Share of unowned map fields assigned to village characters when the ownership table is first built. | Verhandlungssystem |
+| `rpsim.formulas.negotiation.use-game-npc-owners` | `true` | TODO T-21: such a field belongs to the FS25 NPC of the farmland (`farmlands[].npc` in `market_context.json`), created once as a village character with the name the game shows; they never move away. `false` or no NPC in the export: a random village character. | Verhandlungssystem |
 
 ## `rpsim.formulas.satisfaction`
 
@@ -307,7 +313,7 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.formulas.village-life.congratulation-trend-ratio` | `1.25` | Congratulation when the cash-flow trend exceeds the previous window by this ratio. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.congratulation-min-cashflow` | `1000` | …and the monthly cash flow is at least this amount. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.congratulation-cooldown-days` | `20` | Cool-down between congratulations. | Dorfleben-Modul |
-| `rpsim.formulas.village-life.invitation-every-days` | `6` | Fallback invitation calendar: an invitation every n game days of the year (0 = off). | Dorfleben-Modul |
+| `rpsim.formulas.village-life.invitation-every-periods` | `6` | Invitation calendar: an invitation on the first day of every n-th FS25 period of the year, counted from period 1 = March (6 → March and September; 0 = off). | Dorfleben-Modul |
 | `rpsim.formulas.village-life.gossip-daily-probability` | `0.05` | Daily roll for village gossip. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.gossip-cooldown-days` | `3` | Cool-down between gossip messages. | Dorfleben-Modul |
 
@@ -354,6 +360,162 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | --- | --- | --- | --- |
 | `rpsim.formulas.storage.price-unit-liters` | `1000` | Price unit of the exported prices (€ per 1000 l). | Warenbestand-Bewertung |
 | `rpsim.formulas.storage.history-max-points` | `500` | Max. points per series of `GET /api/prices/history` (down-sampling). | Silo-Warenbestand |
+
+## `rpsim.formulas.insurance` (TODO T-20)
+
+Storms and hail are simulated (no game event is read). A damage always costs money (`DAMAGE`); with an active,
+paid-up insurance the player reports it within the deadline and receives `round(damage × coverage-rate) − deductible`
+(`INSURANCE_PAYOUT`). Monthly premium = insured value × `premium-rate` (at least `min-premium`); insured value =
+reference prices of the own fields + value of the own buildings.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.insurance.storm-probability-per-month` | `0.15` | Chance per game month (FS25 period) of a storm damage, only in `storm-periods`. | TODO T-20 |
+| `rpsim.formulas.insurance.storm-periods` | `[7, 8, 9, 10, 11, 12]` | FS25 periods with storms (1 = March): September to February. | TODO T-20 |
+| `rpsim.formulas.insurance.storm-damage-share-min` | `0.005` | Storm damage as share of the building value (lower bound). | TODO T-20 |
+| `rpsim.formulas.insurance.storm-damage-share-max` | `0.03` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.insurance.hail-probability-per-month` | `0.2` | Chance per game month of hail on one own field, only in `hail-periods`. | TODO T-20 |
+| `rpsim.formulas.insurance.hail-periods` | `[3, 4, 5, 6]` | FS25 periods with hail: May to August. | TODO T-20 |
+| `rpsim.formulas.insurance.hail-damage-per-hectare-min` | `200` | Hail damage in € per hectare of the hit field (lower bound). | TODO T-20 |
+| `rpsim.formulas.insurance.hail-damage-per-hectare-max` | `900` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.insurance.report-deadline-days` | `5` | Game days to report a damage to the insurance; afterwards no payout. | TODO T-20 |
+| `rpsim.formulas.insurance.settlement-delay-days-min` | `1` | Game days between report and payout (lower bound). | TODO T-20 |
+| `rpsim.formulas.insurance.settlement-delay-days-max` | `3` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.insurance.first-offer-after-days` | `3` | Proactive offer of the insurance agent this many game days after the first farm export. | TODO T-20 |
+| `rpsim.formulas.insurance.offer-valid-days` | `7` | Validity of an insurance offer (game days). | TODO T-20 |
+| `rpsim.formulas.insurance.reoffer-cooldown-days` | `30` | After an uninsured damage the agent offers again at most once per this many game days. | TODO T-20 |
+| `rpsim.formulas.insurance.cancel-after-missed-payments` | `2` | The insurance ends after this many unpaid premiums; while a premium is open the cover is suspended. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.BASIC.coverage-rate` | `0.6` | Tariff *Basis*: reimbursed share of a damage. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.BASIC.deductible` | `2000` | Tariff *Basis*: deductible per damage (€). | TODO T-20 |
+| `rpsim.formulas.insurance.levels.BASIC.premium-rate` | `0.00025` | Tariff *Basis*: monthly premium per € of insured value. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.BASIC.min-premium` | `50` | Tariff *Basis*: minimum monthly premium (€). | TODO T-20 |
+| `rpsim.formulas.insurance.levels.COMFORT.coverage-rate` | `0.9` | Tariff *Komfort*: reimbursed share. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.COMFORT.deductible` | `500` | Tariff *Komfort*: deductible (€). | TODO T-20 |
+| `rpsim.formulas.insurance.levels.COMFORT.premium-rate` | `0.00075` | Tariff *Komfort*: monthly premium per € of insured value. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.COMFORT.min-premium` | `100` | Tariff *Komfort*: minimum monthly premium (€). | TODO T-20 |
+
+## `rpsim.formulas.hunting` (TODO T-20)
+
+Wild boar damage is simulated per game month (`DAMAGE`); the hunter compensates (`WILDLIFE_COMPENSATION`).
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.hunting.probability-per-month` | `0.15` | Chance per game month of wild boar damage on one own field, only in `periods`. | TODO T-20 |
+| `rpsim.formulas.hunting.periods` | `[4, 5, 6, 7, 8]` | FS25 periods with wildlife damage (1 = March): June to October. | TODO T-20 |
+| `rpsim.formulas.hunting.damage-per-hectare-min` | `150` | Damage in € per hectare (lower bound). | TODO T-20 |
+| `rpsim.formulas.hunting.damage-per-hectare-max` | `600` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.hunting.offer-share` | `0.5` | First compensation offer of the hunter as share of the damage (neutral trust). | TODO T-20 |
+| `rpsim.formulas.hunting.max-share` | `0.9` | Highest share the hunter accepts on a counter demand (neutral trust); never shown to the AI. | TODO T-20 |
+| `rpsim.formulas.hunting.trust-influence` | `0.2` | Shift of both shares at trust +100 / −100 (linear, bounded to 10–100 %). | TODO T-20 |
+| `rpsim.formulas.hunting.max-rounds` | `2` | Counter demands before the offer is final. | TODO T-20 |
+| `rpsim.formulas.hunting.decision-days` | `7` | Game days to answer; afterwards the last offer is paid. | TODO T-20 |
+| `rpsim.formulas.hunting.measure-cost` | `400` | Own contribution of the player to a joint measure (drive hunt / fence), €. | TODO T-20 |
+| `rpsim.formulas.hunting.measure-reputation-delta` | `3` | Village reputation (public action) of a joint measure. | TODO T-20 |
+| `rpsim.formulas.hunting.measure-trust-delta` | `5` | Trust of the hunter for a joint measure. | TODO T-20 |
+| `rpsim.formulas.hunting.measure-probability-factor` | `0.4` | Damage probability × this factor after a joint measure … | TODO T-20 |
+| `rpsim.formulas.hunting.measure-effect-months` | `6` | … for this many game months. | TODO T-20 |
+| `rpsim.formulas.hunting.agreement-trust-delta` | `2` | Trust of the hunter when an offer / demand is agreed. | TODO T-20 |
+| `rpsim.formulas.hunting.dispute-trust-delta` | `-5` | Trust of the hunter when the compensation is refused. | TODO T-20 |
+| `rpsim.formulas.hunting.dispute-reputation-delta` | `-2` | Village reputation (public action) of a refused compensation. | TODO T-20 |
+
+## `rpsim.formulas.livestock` (TODO T-20)
+
+Only active while the export contains animals (`assets.animals`). There is no verified mod API to add or remove
+animals: the player trades them in the game; the trader pays a premium (`LIVESTOCK_PREMIUM`) per animal by which the
+exported head count changed in the agreed direction. Vet invoices are booked as `VET_INVOICE`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.livestock.vet-visit-every-months` | `3` | Routine visit of the vet every n game months per animal type. | TODO T-20 |
+| `rpsim.formulas.livestock.vet-base-fee` | `80` | Invoice per visit: base fee (€) … | TODO T-20 |
+| `rpsim.formulas.livestock.vet-fee-per-animal` | `4` | … plus this amount per animal of the type (€). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-probability-per-month` | `0.25` | Chance per game month of an offer of the livestock trader. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-buy-share` | `0.3` | Share of offers where the player should buy animals (the rest are sell offers). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-max-herd-share` | `0.3` | Sell offers: at most this share of the herd; no offer when that is below `trader-quantity-min`. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-quantity-min` | `2` | Animals per offer (lower bound). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-quantity-max` | `6` | Animals per offer (upper bound). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-premium-share-min` | `0.05` | Premium per animal as share of the exported value per animal (lower bound, rounded to 10 €, at least 10 €). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-premium-share-max` | `0.12` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-answer-days` | `5` | Game days to answer an offer, afterwards it expires. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-deadline-months` | `1` | Game months to carry out an accepted offer in the game; afterwards moved animals are paid (partial) or the offer lapses. | TODO T-20 |
+| `rpsim.formulas.livestock.breeding-advice-every-months` | `6` | Advice of the breeding advisor every n game months per animal type (head count development since the last advice). | TODO T-20 |
+
+## `rpsim.formulas.energy` (TODO T-20)
+
+The energy supplier uses the existing market mechanics (fixed-price contract = `PRICE_EVENT FIXED`, price fluctuation =
+`PRICE_EVENT MULTIPLIER`; bands, premiums and quantities from `rpsim.formulas.market`), restricted to sell points of
+the map that accept one of the configured fill types. Without such a sell point in `market_context.json` the energy
+supplier does not appear.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.energy.fill-types` | `[METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]` | Fill types the energy supplier buys (FS25 names). Whether a map sells them at a `SellingStation` is checked in the game (manual test plan 8.15). | TODO T-20 |
+| `rpsim.formulas.energy.probability-per-month` | `0.35` | Chance per game month of a new offer. | TODO T-20 |
+| `rpsim.formulas.energy.max-open` | `1` | Open offers / price events of the energy supplier at the same time. | TODO T-20 |
+| `rpsim.formulas.energy.contract-share` | `0.6` | Share of fixed-price contracts (needs a current price of the pair), the rest are price fluctuations. | TODO T-20 |
+| `rpsim.formulas.energy.spike-share` | `0.5` | Share of rising prices (`DEMAND_SPIKE`) among the fluctuations, the rest `DEMAND_SLUMP`. | TODO T-20 |
+
+## `rpsim.formulas.lease` (TODO T-22)
+
+Lease of NPC fields (not in vanilla): the rent is booked monthly as `LEASE_PAYMENT`; the field is given to the player
+in the game (`FARMLAND_TRANSFER TO_PLAYER`) and goes back automatically at the end (`FROM_PLAYER`). In the tool the
+owner character keeps the field (`leasedToPlayer`).
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.lease.annual-rent-share` | `0.05` | Yearly rent as share of the reference price (monthly rent = price × share / 12, rounded to 10 €). | TODO T-22 |
+| `rpsim.formulas.lease.trust-influence` | `0.1` | Rent −10 % at trust +100, +10 % at −100 (linear). | TODO T-22 |
+| `rpsim.formulas.lease.accept-probability` | `0.8` | Chance that the owner agrees to lease at neutral trust … | TODO T-22 |
+| `rpsim.formulas.lease.accept-trust-influence` | `0.2` | … shifted by this much at trust +100 / −100. | TODO T-22 |
+| `rpsim.formulas.lease.term-months` | `12` | Term of a lease and of a renewal in game months. | TODO T-22 |
+| `rpsim.formulas.lease.offer-valid-days` | `7` | Game days to accept a lease offer. | TODO T-22 |
+| `rpsim.formulas.lease.warning-months` | `1` | The owner writes this many game months before the end (renewal and purchase offer). | TODO T-22 |
+| `rpsim.formulas.lease.renewal-factor-min` | `0.95` | Rent of a renewal = current rent × random factor (lower bound) … | TODO T-22 |
+| `rpsim.formulas.lease.renewal-factor-max` | `1.1` | … upper bound. | TODO T-22 |
+| `rpsim.formulas.lease.purchase-factor` | `1.05` | Purchase offer of a sell-willing owner: reference price × factor (booked as `FARMLAND_PURCHASE`). | TODO T-22 |
+| `rpsim.formulas.lease.cancel-after-missed-payments` | `2` | The field goes back early after this many missed rents. | TODO T-22 |
+
+## `rpsim.formulas.maintenance` (TODO T-22)
+
+Maintenance contract of the workshop: monthly fee `MAINTENANCE_FEE`; while it is paid, the workshop repairs the most
+worn own vehicles at every month start (`REPAIR_VEHICLE` → `Wearable:setDamageAmount(0, true)` in the game). Without a
+contract the workshop sends repair hints and one unsolicited offer.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.maintenance.fee-rate` | `0.002` | Monthly fee = value of the own vehicles × rate (rounded to 10 €) … | TODO T-22 |
+| `rpsim.formulas.maintenance.min-fee` | `60` | … but at least this amount (€). | TODO T-22 |
+| `rpsim.formulas.maintenance.offer-valid-days` | `7` | Game days to accept an offer. | TODO T-22 |
+| `rpsim.formulas.maintenance.repair-below-condition` | `70` | Vehicles below this condition (0-100) are repaired at the monthly service … | TODO T-22 |
+| `rpsim.formulas.maintenance.max-repairs-per-month` | `3` | … at most this many per game month, the most worn first. | TODO T-22 |
+| `rpsim.formulas.maintenance.hint-below-condition` | `50` | Without contract: repair hint for the most worn vehicle below this condition … | TODO T-22 |
+| `rpsim.formulas.maintenance.hint-every-months` | `3` | … at most every n game months. | TODO T-22 |
+| `rpsim.formulas.maintenance.first-offer-below-condition` | `75` | One unsolicited offer when a vehicle is below this condition and there never was a contract. | TODO T-22 |
+| `rpsim.formulas.maintenance.cancel-after-missed-payments` | `2` | The contract ends after this many missed fees (no repairs while a fee is open). | TODO T-22 |
+
+## `rpsim.formulas.production-supply` (TODO T-22)
+
+Delivery contracts with production points of the map: the existing fixed-price contract (`PRICE_EVENT FIXED`, premium,
+quantity and deadline from `rpsim.formulas.market`) at sell points that `market_context.json` marks as `production`
+(not the player's own).
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.production-supply.probability-per-month` | `0.3` | Chance per game month of a delivery contract offer. | TODO T-22 |
+| `rpsim.formulas.production-supply.max-open` | `1` | Open delivery contract offers / contracts with productions at the same time. | TODO T-22 |
+
+## `rpsim.formulas.contractor` (TODO T-22)
+
+The contractor refers vanilla contracts of the game (`farm_facts.missions`, from `g_missionManager:getMissions()`); the
+player takes them in the game's contracts menu. Nothing is started by the tool, so FS25_BetterContracts keeps working.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.contractor.referral-probability` | `0.35` | Chance that a newly available contract is referred (decided once per contract) … | TODO T-22 |
+| `rpsim.formulas.contractor.max-referrals-per-month` | `2` | … at most this many referrals per game month. | TODO T-22 |
+| `rpsim.formulas.contractor.completed-trust-delta` | `3` | Trust of the contractor when a referred contract is completed. | TODO T-22 |
+| `rpsim.formulas.contractor.client-trust-delta` | `2` | Trust of the client (FS25 NPC as village character, T-21) for a completed referred contract. | TODO T-22 |
+| `rpsim.formulas.contractor.failed-trust-delta` | `-3` | Trust of the contractor when a referred contract fails. | TODO T-22 |
 
 ## Profiles
 

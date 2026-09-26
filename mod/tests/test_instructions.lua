@@ -129,4 +129,54 @@ function T.TestInstructions:testProcessedEntriesPrunedAfterRetention()
     lu.assertNil(bridge.state.processed.old)
 end
 
+-- TODO T-21: in-game notifications
+function T.TestInstructions:testNotificationIsShownOnceAndAcked()
+    local bridge, fs, adapter, paths = helpers.newBridge()
+    bridge:bootstrap()
+    local note = { instructionId = "ins_n1", type = "NOTIFICATION", text = "FarmPulse: Neue Mail von Frau Berger",
+        level = "INFO", expiresAtGameTime = 5000 }
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = { note } })
+    lu.assertEquals(bridge:pollInstructions().applied, 1)
+    bridge:pollInstructions()
+    lu.assertEquals(#adapter.notifications, 1)
+    lu.assertEquals(adapter.notifications[1].text, "FarmPulse: Neue Mail von Frau Berger")
+    local ack = RPSimJson.decode(fs.files[paths.instructionsAck])
+    lu.assertEquals(ack.acks[1].status, "APPLIED")
+    lu.assertNil(ack.acks[1].message)
+end
+
+function T.TestInstructions:testExpiredNotificationIsNotShown()
+    local bridge, fs, adapter, paths = helpers.newBridge({ adapter = { gameTime = 9000 } })
+    bridge:bootstrap()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        { instructionId = "ins_n2", type = "NOTIFICATION", text = "alt", expiresAtGameTime = 5000 } } })
+    lu.assertEquals(bridge:pollInstructions().applied, 1)
+    lu.assertEquals(#adapter.notifications, 0)
+    local ack = RPSimJson.decode(fs.files[paths.instructionsAck])
+    lu.assertEquals(ack.acks[1].message, "EXPIRED")
+end
+
+function T.TestInstructions:testNotificationValidation()
+    lu.assertFalse(RPSimInstructions.validate({ instructionId = "x", type = "NOTIFICATION", text = "" }))
+    lu.assertFalse(RPSimInstructions.validate({ instructionId = "x", type = "NOTIFICATION", text = "a", level = "LOUD" }))
+    lu.assertTrue(RPSimInstructions.validate({ instructionId = "x", type = "NOTIFICATION", text = "a", level = "OK" }))
+end
+
+-- TODO T-22: repairs of the maintenance contract
+function T.TestInstructions:testRepairVehicleIsAppliedOrFailed()
+    local bridge, fs, adapter, paths = helpers.newBridge()
+    bridge:bootstrap()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        { instructionId = "ins_r1", type = "REPAIR_VEHICLE", vehicleId = "veh_00042" },
+        { instructionId = "ins_r2", type = "REPAIR_VEHICLE", vehicleId = "veh_gone" } } })
+    local res = bridge:pollInstructions()
+    lu.assertEquals(res.applied, 1)
+    lu.assertEquals(adapter.repairs, { "veh_00042" })
+    local acks = {}
+    for _, a in ipairs(RPSimJson.decode(fs.files[paths.instructionsAck]).acks) do acks[a.instructionId] = a end
+    lu.assertEquals(acks.ins_r2.status, "FAILED")
+    lu.assertEquals(acks.ins_r2.message, "VEHICLE_NOT_FOUND")
+    lu.assertFalse(RPSimInstructions.validate({ instructionId = "x", type = "REPAIR_VEHICLE" }))
+end
+
 return T

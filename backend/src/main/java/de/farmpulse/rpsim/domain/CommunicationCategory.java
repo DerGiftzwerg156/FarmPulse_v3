@@ -12,5 +12,11 @@ public enum CommunicationCategory {
     ROTATION,
     ABSENCE,
     PLAYER_MESSAGE,
+    // TODO T-20 / T-22
+    INSURANCE,
+    HUNTING,
+    LIVESTOCK,
+    ENERGY,
+    CONTRACT,
     GENERAL
 }

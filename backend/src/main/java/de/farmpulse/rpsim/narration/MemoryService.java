@@ -52,6 +52,7 @@ public class MemoryService {
     static String trustText(TrustEvent e) {
         return switch (e.getReason()) {
             case ON_TIME_PAYMENT -> "Rate pünktlich bezahlt";
+            case ON_TIME_PAYMENT_REVERSED -> "Rate konnte nicht abgebucht werden";
             case MISSED_PAYMENT, PAYMENT_ESCALATION -> "Zahlungsverzug beim Kredit";
             case PROMISE_KEPT -> "Zusage eingehalten";
             case PROMISE_BROKEN -> "Zusage gebrochen";
@@ -60,6 +61,10 @@ public class MemoryService {
             case TONE_FRIENDLY -> "freundliche Nachricht erhalten";
             case TONE_RUDE -> "schroffe Nachricht erhalten";
             case NEGOTIATION_DEAL -> "Geschäft per Handschlag abgeschlossen";
+            case WILDLIFE_AGREEMENT -> "Wildschaden gütlich geregelt";
+            case WILDLIFE_DISPUTE -> "Streit um den Wildschaden";
+            case MISSION_COMPLETED -> "vermittelter Auftrag erledigt";
+            case MISSION_FAILED -> "vermittelter Auftrag nicht erledigt";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

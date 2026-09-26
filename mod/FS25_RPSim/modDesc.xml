@@ -18,4 +18,83 @@
     <extraSourceFiles>
         <sourceFile filename="src/loader.lua"/>
     </extraSourceFiles>
+    <!-- T-21: titles of the bookings (MoneyType.register(statistic, "rpsim_money_<REASON>")), one per MoneyReason -->
+    <l10n>
+        <text name="rpsim_money_CREDIT_DISBURSEMENT">
+            <en>Loan payout</en>
+            <de>Kreditauszahlung</de>
+        </text>
+        <text name="rpsim_money_CREDIT_INSTALLMENT">
+            <en>Loan installment</en>
+            <de>Kreditrate</de>
+        </text>
+        <text name="rpsim_money_CREDIT_PENALTY">
+            <en>Late payment fee</en>
+            <de>Mahngebühr</de>
+        </text>
+        <text name="rpsim_money_CREDIT_CALLBACK">
+            <en>Loan called in</en>
+            <de>Kreditkündigung</de>
+        </text>
+        <text name="rpsim_money_SALARY_PAYMENT">
+            <en>Wages</en>
+            <de>Gehälter</de>
+        </text>
+        <text name="rpsim_money_EMPLOYEE_EFFECT">
+            <en>Staff</en>
+            <de>Personal</de>
+        </text>
+        <text name="rpsim_money_SUBSIDY">
+            <en>Subsidy</en>
+            <de>Förderung</de>
+        </text>
+        <text name="rpsim_money_STARTING_CAPITAL_ADJUSTMENT">
+            <en>Starting capital</en>
+            <de>Startkapital</de>
+        </text>
+        <text name="rpsim_money_FARMLAND_PURCHASE">
+            <en>Field purchase (RP Sim)</en>
+            <de>Feldkauf (RP-Sim)</de>
+        </text>
+        <text name="rpsim_money_FARMLAND_SALE">
+            <en>Field sale (RP Sim)</en>
+            <de>Feldverkauf (RP-Sim)</de>
+        </text>
+        <text name="rpsim_money_OTHER">
+            <en>RP Sim</en>
+            <de>RP-Sim</de>
+        </text>
+        <text name="rpsim_money_INSURANCE_PREMIUM">
+            <en>Insurance premium</en>
+            <de>Versicherungsprämie</de>
+        </text>
+        <text name="rpsim_money_INSURANCE_PAYOUT">
+            <en>Insurance payout</en>
+            <de>Versicherungsleistung</de>
+        </text>
+        <text name="rpsim_money_DAMAGE">
+            <en>Damage</en>
+            <de>Schaden</de>
+        </text>
+        <text name="rpsim_money_WILDLIFE_COMPENSATION">
+            <en>Wildlife compensation</en>
+            <de>Wildschadenersatz</de>
+        </text>
+        <text name="rpsim_money_VET_INVOICE">
+            <en>Veterinarian</en>
+            <de>Tierarzt</de>
+        </text>
+        <text name="rpsim_money_LIVESTOCK_PREMIUM">
+            <en>Livestock brokerage</en>
+            <de>Viehvermittlung</de>
+        </text>
+        <text name="rpsim_money_LEASE_PAYMENT">
+            <en>Field lease</en>
+            <de>Pacht</de>
+        </text>
+        <text name="rpsim_money_MAINTENANCE_FEE">
+            <en>Maintenance contract</en>
+            <de>Wartungsvertrag</de>
+        </text>
+    </l10n>
 </modDesc>

@@ -67,6 +67,33 @@ describe('Farmland', () => {
     expect(el.textContent).toContain('1 von 3 Feldern');
   });
 
+  it('marks fields that cannot be traded in the game and offers no actions (TODO T-11)', () => {
+    fields[1].tradeable = false;
+    try {
+      const { el, tile } = setup();
+      tile(1);
+      expect(el.querySelector('[data-testid="not-tradeable"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="start-direct"]')).toBeNull();
+      expect(el.querySelector('[data-testid="field-detail"]')?.textContent).toContain('nicht handelbar');
+    } finally {
+      delete fields[1].tradeable;
+    }
+  });
+
+  it('asks the owner for a lease and marks leased fields (TODO T-22)', () => {
+    const { el, tile, btn, http, fixture } = setup();
+    tile(1);
+    btn('request-lease').click();
+    http.expectOne('/api/farmlands/2/lease-request').flush({ id: 9, kind: 'LEASE', status: 'OFFERED' });
+    http.expectOne('/api/farmlands').flush(fields.map((f) => (f.farmlandId === 2 ? { ...f, leased: true } : f)));
+    http.expectOne('/api/negotiations').flush([]);
+    http.expectOne('/api/mails').flush([]);
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Gerd Albers bietet dir eine Pacht an');
+    expect(el.querySelector('[data-testid="leased"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="start-direct"]')).toBeNull();
+  });
+
   it('offers an own field for sale with a price form', () => {
     const { el, tile, btn, http, fixture, setAmount } = setup();
     tile(0);

@@ -87,6 +87,24 @@ public class OutboxService {
         return enqueue(sg, InstructionType.PRICE_EVENT, p, null, gameTimeEarliest, related);
     }
 
+    /** TODO T-22: repair of an own vehicle (maintenance contract). */
+    @Transactional
+    public OutboxInstruction repairVehicle(Savegame sg, String vehicleId, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("vehicleId", vehicleId);
+        return enqueue(sg, InstructionType.REPAIR_VEHICLE, p, null, null, related);
+    }
+
+    /** TODO T-22: farmland transfer without money (lease start / return). */
+    @Transactional
+    public OutboxInstruction farmlandTransfer(Savegame sg, int farmlandId, boolean toPlayer, String note, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("farmlandId", farmlandId);
+        p.put("direction", toPlayer ? "TO_PLAYER" : "FROM_PLAYER");
+        p.put("price", 0);
+        return enqueue(sg, InstructionType.FARMLAND_TRANSFER, p, null, null, related);
+    }
+
     /**
      * Farmland ownership transfer AND the matching money transaction as two entries of the same batch, so
      * ownership and money never diverge (technical concept "Abschluss").
@@ -103,6 +121,18 @@ public class OutboxService {
         OutboxInstruction money = money(sg, toPlayer ? -price : price,
                 toPlayer ? MoneyReason.FARMLAND_PURCHASE : MoneyReason.FARMLAND_SALE, note, related, batchId, null);
         return List.of(transfer, money);
+    }
+
+    /**
+     * TODO T-21: in-game notification ({@code g_currentMission:addIngameNotification}). The mod skips it without
+     * showing when the game time is past {@code expiresAtGameTime} (e.g. processed late after loading a savegame).
+     */
+    public OutboxInstruction notification(Savegame sg, String text, String level, long expiresAtGameTime, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("text", text);
+        p.put("level", level);
+        p.put("expiresAtGameTime", expiresAtGameTime);
+        return enqueue(sg, InstructionType.NOTIFICATION, p, null, null, related);
     }
 
     private OutboxInstruction enqueue(Savegame sg, InstructionType type, Map<String, Object> payload, String batchId,

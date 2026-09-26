@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * AP-9.1: debtServiceCoverage uses the cash-flow trend of the FactsSnapshot series (moving window), not a value
- * pre-computed by the mod. Game month = rpsim.time.game-days-per-month (1 in the default config).
+ * pre-computed by the mod. Game month = FS25 period (fallback without calendar export: 1 day per period).
  */
 @SpringBootTest
 @Transactional
@@ -50,6 +50,21 @@ class CreditScoringServiceTest {
         // +10,000 over 2 game days = 2 game months -> 5,000 per month (first/last of the window)
         assertThat(in.monthlyOperatingCashflow()).isCloseTo(5_000, within(1e-6));
         assertThat(in.balance()).isEqualTo(110_000);
+    }
+
+    /** TODO T-04: leasing costs are an obligation; leased vehicles are not part of the assets. */
+    @Test
+    void leasingCostsCountAsExistingObligation() {
+        String facts = TestData.farmFacts(sg.getBridgeSavegameId(), now, 50_000).replace(
+                "\"vanillaLoan\": { \"active\": true, \"remainingAmount\": 80000 }",
+                "\"vanillaLoan\": { \"active\": true, \"remainingAmount\": 80000 },"
+                        + " \"leasing\": [{ \"uniqueId\": \"veh_1\", \"costPerPeriod\": 1200 }, { \"uniqueId\": \"veh_2\" }]");
+        fx.snapshot(sg, now, 50_000, facts);
+        CreditFormula.Inputs in = scoring.inputs(sg, 10_000, 12, 0.05);
+        assertThat(in.existingMonthlyInstallments()).isCloseTo(1_200, within(1e-6));
+        String without = TestData.farmFacts(sg.getBridgeSavegameId(), now + 1, 50_000);
+        fx.snapshot(sg, now + 1, 50_000, without);
+        assertThat(scoring.inputs(sg, 10_000, 12, 0.05).existingMonthlyInstallments()).isZero();
     }
 
     @Test

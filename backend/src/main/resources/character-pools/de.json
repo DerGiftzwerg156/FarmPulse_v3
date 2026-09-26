@@ -20,7 +20,15 @@
     "VILLAGER": { "title": "Dorfbewohner/in", "description": "kennt jeden im Dorf und alle Neuigkeiten" },
     "SUPPLIER": { "title": "Lieferant/in", "description": "liefert Saatgut, Dünger und Ersatzteile" },
     "EMPLOYEE": { "title": "Mitarbeiter/in", "description": "arbeitet auf dem Hof" },
-    "APPLICANT": { "title": "Bewerber/in", "description": "sucht eine Stelle auf einem Hof" }
+    "APPLICANT": { "title": "Bewerber/in", "description": "sucht eine Stelle auf einem Hof" },
+    "INSURANCE_AGENT": { "title": "Versicherungsmakler/in", "description": "versichert Höfe gegen Sturm- und Hagelschäden und reguliert Schadensfälle" },
+    "HUNTER": { "title": "Jagdpächter/in", "description": "betreut das Jagdrevier rund um die Felder und regelt Wildschäden" },
+    "VETERINARIAN": { "title": "Tierarzt/Tierärztin", "description": "betreut die Tierbestände der Höfe in der Gegend" },
+    "LIVESTOCK_TRADER": { "title": "Viehhändler/in", "description": "kauft und vermittelt Tiere in der Region" },
+    "BREEDING_ADVISOR": { "title": "Zuchtberater/in des Zuchtverbands", "description": "berät zu Zucht, Nachwuchs und Tiergesundheit" },
+    "ENERGY_SUPPLIER": { "title": "Vertreter/in des Energieversorgers", "description": "kauft Biomasse für Biogas und handelt mit Strom" },
+    "WORKSHOP": { "title": "Meister/in der Landmaschinenwerkstatt", "description": "wartet und repariert Traktoren und Geräte" },
+    "CONTRACTOR": { "title": "Lohnunternehmer/in", "description": "vermittelt Feldarbeiten zwischen den Höfen" }
   },
   "jobRoles": {
     "MACHINE_OPERATOR": "Maschinenführer/in",

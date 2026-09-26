@@ -19,6 +19,7 @@ import de.farmpulse.rpsim.repository.FactsSnapshotRepository;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.savegame.SavegameContext;
+import de.farmpulse.rpsim.time.CalendarService;
 import de.farmpulse.rpsim.time.GameClockService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,8 @@ public class BridgeSyncService {
     private final SavegameContext context;
     private final GameClockService clock;
     private final ApplicationEventPublisher events;
+    private final RewindService rewinds;
+    private final CalendarService calendar;
 
     private String lastFactsRaw;
     private String lastContextRaw;
@@ -53,7 +56,7 @@ public class BridgeSyncService {
     public BridgeSyncService(BridgeFiles files, SavegameRepository savegames, FactsSnapshotRepository snapshots,
                              OutboxInstructionRepository outbox, OutboxService outboxService,
                              DetectedSavegameRegistry detected, SavegameContext context, GameClockService clock,
-                             ApplicationEventPublisher events) {
+                             ApplicationEventPublisher events, RewindService rewinds, CalendarService calendar) {
         this.files = files;
         this.savegames = savegames;
         this.snapshots = snapshots;
@@ -63,6 +66,8 @@ public class BridgeSyncService {
         this.context = context;
         this.clock = clock;
         this.events = events;
+        this.rewinds = rewinds;
+        this.calendar = calendar;
     }
 
     /** Result of one cycle (used by tests and logging). */
@@ -128,6 +133,12 @@ public class BridgeSyncService {
         }
         Savegame s = sg.get();
         boolean first = snapshots.countBySavegame(s) == 0;
+        if (!first && f.gameTime() < s.getCurrentGameTime()) {
+            // T-02: older state of the savegame loaded - registered before anyone reacts to the rewound snapshot
+            rewinds.onRewind(s, s.getCurrentGameTime(), f.gameTime());
+        }
+        // T-08: the game month is the FS25 period - the calendar anchor must be current before time advances
+        calendar.update(s, f.calendar());
         FactsSnapshot snap = new FactsSnapshot();
         snap.setSavegame(s);
         snap.setGameTime(f.gameTime());
@@ -147,7 +158,13 @@ public class BridgeSyncService {
 
     int syncAcks() {
         Optional<BridgeFiles.Read<AckDocument>> read = files.read(files.ack(), AckDocument.class, BridgeValidator::validate);
-        if (read.isEmpty() || read.get().raw().equals(lastAckRaw)) {
+        if (read.isEmpty()) {
+            return 0;
+        }
+        if (read.get().raw().equals(lastAckRaw)) {
+            // T-02: an unchanged ack file still answers a rewind detected after it was read (nothing lost)
+            savegames.findByBridgeSavegameId(read.get().doc().savegameId())
+                    .ifPresent(s -> rewinds.onAckDocument(s, read.get().doc()));
             return 0;
         }
         AckDocument doc = read.get().doc();
@@ -157,6 +174,7 @@ public class BridgeSyncService {
             log.warn("instructions_ack.json belongs to unknown savegameId '{}' - ignored", doc.savegameId());
             return 0;
         }
+        rewinds.onAckDocument(sg.get(), doc);
         int applied = 0;
         for (BridgeDtos.Ack ack : doc.acks()) {
             Optional<OutboxInstruction> o = outbox.findByInstructionId(ack.instructionId());

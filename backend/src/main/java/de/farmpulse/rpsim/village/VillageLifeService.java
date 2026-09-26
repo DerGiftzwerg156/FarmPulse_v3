@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
  * deliberately rare, all through the normal Communication/NarrationJob pipeline and without any money instruction.
  * <ul>
  *   <li>congratulations - fact based: cash-flow trend from the snapshot series (reuses the credit scoring cash flow)</li>
- *   <li>invitations - calendar based (fallback game-day calendar, see TODO below)</li>
+ *   <li>invitations - calendar based (FS25 periods)</li>
  *   <li>gossip - plain daily random roll with minimal facts</li>
  * </ul>
  */
@@ -105,29 +105,34 @@ public class VillageLifeService {
     }
 
     /**
-     * Calendar trigger. TODO(offene-frage): FS25 period/season field not verified - fallback calendar: every
-     * {@code invitationEveryDays} of the (fallback) game year, season derived from the day of year.
+     * Calendar trigger (TODO T-08: FS25 periods): on the first day of every {@code invitationEveryPeriods}-th period of
+     * the year, counted from period 1 (March). The season follows the FS25 period.
      */
     @Transactional
     public boolean invite(Savegame sg) {
-        long dayOfYear = gameTime.dayOfYear(sg.getCurrentGameTime());
-        if (cfg().getInvitationEveryDays() <= 0 || dayOfYear % cfg().getInvitationEveryDays() != 0) {
+        long now = sg.getCurrentGameTime();
+        int every = cfg().getInvitationEveryPeriods();
+        if (every <= 0 || !gameTime.isMonthStart(sg, now) || (gameTime.periodOfYear(sg, now) - 1) % every != 0) {
             return false;
         }
         Optional<Character> from = lookup.firstActive(sg, CharacterRole.COOPERATIVE, CharacterRole.VILLAGER);
         if (from.isEmpty()) {
             return false;
         }
-        Season season = season(sg.getCurrentGameTime());
+        Season season = season(sg, now);
         narration.request(sg, NarrationEventType.VILLAGE_INVITATION).from(from.get())
                 .facts(NarrationFacts.builder().put("season", season).put("occasion", occasion(season)).build())
                 .category(CommunicationCategory.VILLAGE_LIFE).submit();
         return true;
     }
 
-    public Season season(long gameTimeMs) {
-        double share = gameTime.dayOfYear(gameTimeMs) / (double) gameTime.daysPerYear();
-        return Season.values()[Math.min(3, (int) (share * 4))];
+    /** FS25 period 1..3 (March-May) spring, 4..6 summer, 7..9 autumn, 10..12 winter. */
+    public Season season(Savegame sg, long gameTimeMs) {
+        return seasonOfPeriod(gameTime.periodOfYear(sg, gameTimeMs));
+    }
+
+    public static Season seasonOfPeriod(int period) {
+        return Season.values()[Math.min(3, Math.max(0, (period - 1) / 3))];
     }
 
     static String occasion(Season s) {

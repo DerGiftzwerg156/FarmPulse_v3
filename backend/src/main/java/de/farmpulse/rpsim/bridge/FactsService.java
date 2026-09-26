@@ -86,6 +86,20 @@ public class FactsService {
         return v.stream().mapToDouble(BridgeDtos.Vehicle::condition).average().orElse(neutral);
     }
 
+    /** T-04: running leasing costs per game month (sum of the exported costPerPeriod; unknown costs count 0). */
+    public static double leasingCostPerMonth(FarmFacts f) {
+        if (f.liabilities() == null || f.liabilities().leasing() == null) {
+            return 0;
+        }
+        return f.liabilities().leasing().stream().filter(java.util.Objects::nonNull)
+                .mapToDouble(l -> l.costPerPeriod() == null ? 0 : l.costPerPeriod()).sum();
+    }
+
+    /** T-04: number of leased vehicles (not part of the assets). */
+    public static int leasedVehicleCount(FarmFacts f) {
+        return f.liabilities() == null || f.liabilities().leasing() == null ? 0 : f.liabilities().leasing().size();
+    }
+
     public double vanillaLoanRemaining(FarmFacts f) {
         var l = f.liabilities().vanillaLoan();
         return Boolean.TRUE.equals(l.active()) ? l.remainingAmount() : 0;

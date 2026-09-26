@@ -1,0 +1,7 @@
+Routinebesuch im Stall
+Guten Tag,
+
+ich war heute bei Ihren {{animalCount}} Tieren ({{animalType}}). Befund: {{healthNote}}. Die Rechnung über {{invoice}} € wird abgebucht.
+
+Beste Grüße
+{{characterName}}

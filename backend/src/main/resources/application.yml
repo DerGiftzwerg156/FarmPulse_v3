@@ -31,11 +31,12 @@ rpsim:
     path: ../tools/bridge-simulator/runtime/modSettings/FS25_RPSim
     poll-interval-ms: 2000
     enabled: true
+    rewind-auto-resend-max-hours: 24   # T-02: reload without saving up to 1 game day -> re-send lost bookings automatically
+    rewind-lookback-hours: 24          # T-02: bookings acked this long before the reloaded point are checked as well
+    ingame-notifications: true         # TODO T-21: new mails / incoming calls as in-game notification
+    notification-max-age-hours: 2      # TODO T-21: older notifications are dropped by the mod
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
-  time:
-    game-days-per-month: 1        # TODO(offene-frage): FS25 period field; fixed counter fallback
-    months-per-year: 12
   ai:
     provider: NONE                # FAKE | OPENAI | ANTHROPIC | GEMINI | OLLAMA | NONE
     timeout-seconds: 30
@@ -218,6 +219,7 @@ rpsim:
       virtual-wealth-max: 400000
       sell-willing-probability: 0.3
       npc-owned-share: 0.4
+      use-game-npc-owners: true   # TODO T-21: owners are the FS25 NPCs of the farmlands
     satisfaction:                 # "Satisfaction-Formel"
       category-weight: 0.25
       category-max: 100
@@ -273,7 +275,7 @@ rpsim:
       congratulation-trend-ratio: 1.25
       congratulation-min-cashflow: 1000
       congratulation-cooldown-days: 20
-      invitation-every-days: 6
+      invitation-every-periods: 6   # T-08: every 6th FS25 period (March, September)
       gossip-daily-probability: 0.05
       gossip-cooldown-days: 3
     onboarding:
@@ -296,3 +298,99 @@ rpsim:
     storage:
       price-unit-liters: 1000
       history-max-points: 500
+    insurance:                    # TODO T-20: storm/hail insurance (placeholders)
+      storm-probability-per-month: 0.15
+      storm-periods: [7, 8, 9, 10, 11, 12]
+      storm-damage-share-min: 0.005
+      storm-damage-share-max: 0.03
+      hail-probability-per-month: 0.2
+      hail-periods: [3, 4, 5, 6]
+      hail-damage-per-hectare-min: 200
+      hail-damage-per-hectare-max: 900
+      report-deadline-days: 5
+      settlement-delay-days-min: 1
+      settlement-delay-days-max: 3
+      first-offer-after-days: 3
+      offer-valid-days: 7
+      reoffer-cooldown-days: 30
+      cancel-after-missed-payments: 2
+      levels:
+        BASIC:
+          coverage-rate: 0.6
+          deductible: 2000
+          premium-rate: 0.00025
+          min-premium: 50
+        COMFORT:
+          coverage-rate: 0.9
+          deductible: 500
+          premium-rate: 0.00075
+          min-premium: 100
+    hunting:                      # TODO T-20: hunter / wildlife damage (placeholders)
+      probability-per-month: 0.15
+      periods: [4, 5, 6, 7, 8]
+      damage-per-hectare-min: 150
+      damage-per-hectare-max: 600
+      offer-share: 0.5
+      max-share: 0.9
+      trust-influence: 0.2
+      max-rounds: 2
+      decision-days: 7
+      measure-cost: 400
+      measure-reputation-delta: 3
+      measure-trust-delta: 5
+      measure-probability-factor: 0.4
+      measure-effect-months: 6
+      agreement-trust-delta: 2
+      dispute-trust-delta: -5
+      dispute-reputation-delta: -2
+    livestock:                    # TODO T-20: vet / livestock trader / breeding advisor (placeholders)
+      vet-visit-every-months: 3
+      vet-base-fee: 80
+      vet-fee-per-animal: 4
+      trader-probability-per-month: 0.25
+      trader-buy-share: 0.3
+      trader-max-herd-share: 0.3
+      trader-quantity-min: 2
+      trader-quantity-max: 6
+      trader-premium-share-min: 0.05
+      trader-premium-share-max: 0.12
+      trader-answer-days: 5
+      trader-deadline-months: 1
+      breeding-advice-every-months: 6
+    lease:                        # TODO T-22: lease of NPC fields (placeholders)
+      annual-rent-share: 0.05
+      trust-influence: 0.1
+      accept-probability: 0.8
+      accept-trust-influence: 0.2
+      term-months: 12
+      offer-valid-days: 7
+      warning-months: 1
+      renewal-factor-min: 0.95
+      renewal-factor-max: 1.1
+      purchase-factor: 1.05
+      cancel-after-missed-payments: 2
+    maintenance:                  # TODO T-22: maintenance contract of the workshop (placeholders)
+      fee-rate: 0.002
+      min-fee: 60
+      offer-valid-days: 7
+      repair-below-condition: 70
+      max-repairs-per-month: 3
+      hint-below-condition: 50
+      hint-every-months: 3
+      first-offer-below-condition: 75
+      cancel-after-missed-payments: 2
+    production-supply:            # TODO T-22: delivery contracts with production points of the map (placeholders)
+      probability-per-month: 0.3
+      max-open: 1
+    contractor:                   # TODO T-22: contractor refers vanilla contracts (placeholders)
+      referral-probability: 0.35
+      max-referrals-per-month: 2
+      completed-trust-delta: 3
+      client-trust-delta: 2
+      failed-trust-delta: -3
+    energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
+      fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
+      probability-per-month: 0.35
+      max-open: 1
+      contract-share: 0.6
+      spike-share: 0.5

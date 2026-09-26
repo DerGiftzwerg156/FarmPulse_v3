@@ -1,0 +1,7 @@
+Auftrag für dich: {{title}}
+Hallo,
+
+ich hätte da was für dich: {{title}} auf Feld {{field}} für {{client}}, {{reward}} € Lohn. Wenn du Zeit hast, nimm den Auftrag einfach im Auftragsmenü im Spiel an.
+
+Viele Grüße
+{{characterName}}

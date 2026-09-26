@@ -8,8 +8,18 @@ public final class Views {
     private Views() {
     }
 
+    /**
+     * Header context. calendar (TODO T-08): FS25 period of the savegame, null before the first calendar export.
+     * detectedMods (TODO T-09): installed mods with overlapping features (warning only).
+     */
     public record SavegameView(Long id, String savegameId, String mapName, long gameTime, long gameDay, long balance,
-                               String tonePreset, long unreadMails, long pendingCalls, String reputationTier) {
+                               String tonePreset, long unreadMails, long pendingCalls, String reputationTier,
+                               CalendarView calendar, List<String> detectedMods) {
+    }
+
+    /** FS25 calendar: period 1..12 (1 = March), periodName as shown in the game. */
+    public record CalendarView(int period, String periodName, int dayInPeriod, int daysPerPeriod, Integer year,
+                               String season) {
     }
 
     public record PreviewView(Long characterId, String name, String role, String category, String jobRole,
@@ -68,7 +78,7 @@ public final class Views {
     }
 
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,
-                               boolean inNegotiation) {
+                               boolean inNegotiation, boolean tradeable, boolean leased) {
     }
 
     public record OfferView(int round, String offeredBy, String characterName, long amount, String result, Long counterAmount,
@@ -97,7 +107,8 @@ public final class Views {
     public record StorageOverview(long gameTime, long totalValue, List<StorageView> items) {
     }
 
-    public record PriceView(String sellPoint, String sellPointName, String fillType, double currentPrice) {
+    /** trend (TODO T-10): CLIMBING / FALLING / STABLE as shown by the game, null if unknown. */
+    public record PriceView(String sellPoint, String sellPointName, String fillType, double currentPrice, String trend) {
     }
 
     public record PricePoint(long gameTime, double price) {
@@ -133,5 +144,29 @@ public final class Views {
     }
 
     public record GameSettingsView(String tonePreset, String toneLabel) {
+    }
+
+    /** Dashboard notice (T-02 / T-03): kind + raw details, the frontend renders the text. */
+    public record NoticeView(Long id, String kind, String status, long gameTime, java.util.Map<String, Object> details,
+                             String relatedType, Long relatedId) {
+    }
+
+    /** TODO T-20 / T-22: recurring contract (insurance, lease, maintenance). */
+    public record ContractView(Long id, String kind, String status, CharacterRef character, String level, Integer farmlandId,
+                               long monthlyAmount, Integer coveragePercent, Long deductible, Integer termMonths,
+                               Long startedAtGameTime, Long endsAtGameTime, Long nextDueGameTime, Long offerExpiresAtGameTime,
+                               int missedPayments, boolean paymentOverdue, String endReason, Long renewalAmount,
+                               Long purchasePrice) {
+    }
+
+    /** TODO T-20 / T-22: simulated incident or one-off offer of a service character. */
+    public record CaseView(Long id, String kind, String status, CharacterRef character, Integer farmlandId, Double hectares,
+                           Long damageAmount, Long payoutAmount, Long costAmount, Long offerAmount, int roundsUsed,
+                           boolean measureAgreed, String reference, long gameTime, Long deadlineGameTime, String resolution,
+                           Long measureCost, Integer quantity, String direction, Integer baselineCount, String title) {
+    }
+
+    /** Insurance tariff preview for the current farm. */
+    public record InsuranceQuoteView(String level, long monthlyPremium, int coveragePercent, long deductible) {
     }
 }

@@ -96,4 +96,8 @@ public class Character extends SavegameScoped {
 
     @Column(name = "ai_enriched", nullable = false)
     private boolean aiEnriched;
+
+    /** TODO T-21: index of the FS25 NPC this character stands for (farmland owner of the map), null otherwise. */
+    @Column(name = "fs25_npc_index")
+    private Integer fs25NpcIndex;
 }

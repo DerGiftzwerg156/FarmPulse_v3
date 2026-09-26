@@ -67,7 +67,7 @@ public class PriceQueryService {
         Map<String, String> names = sellPointNames(sg);
         return facts.latest(sg).map(f -> f.prices().stream()
                 .map(p -> new PriceView(p.sellPoint(), names.getOrDefault(p.sellPoint(), p.sellPoint()), p.fillType(),
-                        p.currentPrice())).toList()).orElse(List.of());
+                        p.currentPrice(), p.trend())).toList()).orElse(List.of());
     }
 
     /** Price history per sell point/fill type, optional filters, time range in game time. */

@@ -1,0 +1,7 @@
+Ihre Versicherung endet
+Guten Tag,
+
+Ihre Sturm- und Hagelversicherung ist beendet ({{reason}}). Ab sofort besteht kein Versicherungsschutz mehr.
+
+Mit freundlichen Grüßen
+{{characterName}}

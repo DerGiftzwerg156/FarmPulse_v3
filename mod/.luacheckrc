@@ -12,4 +12,4 @@ read_globals = {
     "g_currentModName", "g_currentModDirectory", "g_fillTypeManager",
 }
 files["tests/"] = { std = "+busted", globals = { "TestJson", "lu" } }
-files["tests/**/*.lua"] = { ignore = { "111", "112", "113", "212" } }
+files["tests/**/*.lua"] = { ignore = { "111", "112", "113", "121", "212" } }

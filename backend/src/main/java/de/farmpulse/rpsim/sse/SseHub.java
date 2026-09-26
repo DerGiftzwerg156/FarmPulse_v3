@@ -18,7 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
  * Server-Sent Events hub (technical concept: SSE instead of polling). Event names: {@code mail}, {@code call},
- * {@code diary}, {@code state}. Events are sent after the transaction committed, so a client that reloads data on an
+ * {@code diary}, {@code state}, {@code notice}. Events are sent after the transaction committed, so a client that reloads data on an
  * event always sees it.
  */
 @Component
@@ -73,6 +73,11 @@ public class SseHub {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onFacts(BridgeEvents.FactsIngested ev) {
         broadcast("state", Map.of("savegameId", ev.savegameId(), "gameTime", ev.gameTime()));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onNotice(de.farmpulse.rpsim.notice.NoticeService.NoticeChanged ev) {
+        broadcast("notice", Map.of("id", ev.noticeId(), "savegameId", ev.savegameId()));
     }
 
     /** Keep-alive so proxies/browsers keep the stream open. */

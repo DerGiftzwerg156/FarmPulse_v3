@@ -120,3 +120,73 @@ test('truncated instructions file is skipped without crashing', () => {
   writeFileSync(sim.paths.instructions, '{"savegameId": "x", "instr');
   assert.equal(sim.processInstructions().skipped, true);
 });
+
+// --------------------------------------------------------------- TODO T-02 / T-03 / T-04 parity with the mod
+test('debits the balance does not cover are refused for the whole batch (INSUFFICIENT_FUNDS)', () => {
+  const sim = new BridgeSimulator({ dir: mkdtempSync(join(tmpdir(), 'rpsim-sim-')), scenario: 'knappe-kasse' });
+  sim.start();
+  writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
+    { instructionId: 'rate', type: 'MONEY_TRANSACTION', amount: -2500, reason: 'CREDIT_INSTALLMENT' },
+    { instructionId: 't', batchId: 'b', type: 'FARMLAND_TRANSFER', farmlandId: 1, direction: 'TO_PLAYER' },
+    { instructionId: 'm', batchId: 'b', type: 'MONEY_TRANSACTION', amount: -30000, reason: 'FARMLAND_PURCHASE' },
+    { instructionId: 'ok', type: 'MONEY_TRANSACTION', amount: -200, reason: 'OTHER' },
+  ] }));
+  sim.processInstructions();
+  const acks = Object.fromEntries(JSON.parse(readFileSync(sim.paths.ack, 'utf8')).acks.map((a) => [a.instructionId, a]));
+  assert.equal(acks.rate.status, 'FAILED');
+  assert.equal(acks.rate.message, 'INSUFFICIENT_FUNDS');
+  assert.equal(acks.t.status, 'FAILED');
+  assert.equal(acks.m.status, 'FAILED');
+  assert.equal(acks.ok.status, 'APPLIED');
+  assert.equal(sim.balance, 300);
+  assert.equal(sim.farmlands.find((f) => f.farmlandId === 1).ownerFarmId, 0);
+});
+
+test('reload without saving restores the saved game and forgets later bookings', () => {
+  const sim = new BridgeSimulator({ dir: mkdtempSync(join(tmpdir(), 'rpsim-sim-')), scenario: 'wohlhabender-hof' });
+  sim.start();
+  const savedAt = sim.saveGame();
+  const balance = sim.balance;
+  sim.advance(5 * 60 * 60 * 1000);
+  writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
+    { instructionId: 'lost', type: 'MONEY_TRANSACTION', amount: 25000, reason: 'CREDIT_DISBURSEMENT' }] }));
+  sim.processInstructions();
+  assert.ok(sim.processed.lost);
+  assert.equal(sim.reloadWithoutSaving(), savedAt);
+  assert.equal(sim.balance, balance);
+  assert.equal(sim.processed.lost, undefined);
+  const facts = JSON.parse(readFileSync(sim.paths.farmFacts, 'utf8'));
+  assert.equal(facts.gameTime, savedAt);
+  // the same instructionId is executed again after the reload
+  sim.processInstructions();
+  assert.equal(sim.processed.lost.status, 'APPLIED');
+  assert.equal(sim.balance, balance + 25000);
+});
+
+test('NOTIFICATION is shown once; a late one is acknowledged but not shown (TODO T-21)', () => {
+  const { sim, write } = setup();
+  write([{ instructionId: 'n1', type: 'NOTIFICATION', text: 'FarmPulse: Neue Mail von Frau Berger', level: 'INFO',
+    expiresAtGameTime: sim.gameTime + MS_PER_GAME_HOUR },
+  { instructionId: 'n2', type: 'NOTIFICATION', text: 'alt', expiresAtGameTime: sim.gameTime - 1 }]);
+  sim.processInstructions();
+  sim.processInstructions();
+  assert.deepEqual(sim.notifications.map((n) => n.text), ['FarmPulse: Neue Mail von Frau Berger']);
+  const acks = Object.fromEntries(read(sim.paths.ack).acks.map((a) => [a.instructionId, a]));
+  assert.equal(acks.n1.status, 'APPLIED');
+  assert.equal(acks.n1.message, undefined);
+  assert.equal(acks.n2.message, 'EXPIRED');
+});
+
+test('REPAIR_VEHICLE removes the damage of an own vehicle, unknown vehicles fail (TODO T-22)', () => {
+  const { sim, write } = setup();
+  const v = sim.vehicles[0];
+  v.damage = 0.4;
+  write([{ instructionId: 'r1', type: 'REPAIR_VEHICLE', vehicleId: v.uniqueId },
+    { instructionId: 'r2', type: 'REPAIR_VEHICLE', vehicleId: 'veh_gone' }]);
+  sim.processInstructions();
+  assert.equal(v.damage, 0);
+  const acks = Object.fromEntries(read(sim.paths.ack).acks.map((a) => [a.instructionId, a]));
+  assert.equal(acks.r1.status, 'APPLIED');
+  assert.equal(acks.r2.status, 'FAILED');
+  assert.equal(acks.r2.message, 'VEHICLE_NOT_FOUND');
+});

@@ -6,6 +6,7 @@ import java.util.Optional;
 import de.farmpulse.rpsim.character.CharacterGeneratorService;
 import de.farmpulse.rpsim.character.CharacterGeneratorService.Spec;
 import de.farmpulse.rpsim.character.CharacterLookup;
+import de.farmpulse.rpsim.character.GameNpcService;
 import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.diary.DiaryService;
@@ -33,8 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Arrival/departure of dynamic characters with a yearly budget cap (functional concept: at most 1-2 changes per
  * game year so the village feels familiar). Mandatory roles and employees are excluded.
- * TODO(offene-frage): year change uses the fixed game-day counter (rpsim.time.*) until the FS25 period field is
- * verified.
+ * The game year is the FS25 year of the calendar export (TODO T-08).
  */
 @Service
 public class VillageRotationService {
@@ -83,9 +83,13 @@ public class VillageRotationService {
         }
     }
 
-    /** Resets dynamicRotationsThisYear when the (fallback) game year changes. */
+    /**
+     * Resets dynamicRotationsThisYear when the game year changes. T-08: the year is the FS25 year of the calendar
+     * export; before the first calendar, 12 months of the fallback calendar form a year.
+     */
     public void resetBudgetOnYearChange(Savegame sg) {
-        int year = (int) gameTime.yearIndex(sg.getCurrentGameTime());
+        int year = sg.getCalYear() != null ? sg.getCalYear()
+                : (int) Math.floorDiv(gameTime.monthIndex(sg, sg.getCurrentGameTime()), GameTime.PERIODS_PER_YEAR);
         if (year != sg.getRotationYearIndex()) {
             sg.setRotationYearIndex(year);
             sg.setDynamicRotationsThisYear(0);
@@ -102,7 +106,8 @@ public class VillageRotationService {
         if (!budgetLeft(sg)) {
             return Optional.empty();
         }
-        List<Character> dynamic = lookup.activeDynamic(sg);
+        // T-21: FS25 NPCs of the map (field owners) never move away and do not count against the rotation limits
+        List<Character> dynamic = lookup.activeDynamic(sg).stream().filter(c -> !GameNpcService.isGameNpc(c)).toList();
         boolean depart = dynamic.size() > cfg().getMinDynamicCharacters()
                 && (dynamic.size() >= cfg().getMaxDynamicCharacters() || random.chance(cfg().getMoveAwayShare()));
         Optional<Character> changed = depart ? Optional.of(depart(sg, random.pick(dynamic))) : Optional.of(arrive(sg));

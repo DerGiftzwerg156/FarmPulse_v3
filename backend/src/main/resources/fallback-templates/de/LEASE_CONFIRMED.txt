@@ -1,0 +1,7 @@
+Pacht für Feld {{farmlandId}} vereinbart
+Hallo,
+
+abgemacht: Feld {{farmlandId}} gehört ab sofort für {{termMonths}} Monate dir zur Bewirtschaftung. Die Pacht von {{monthlyRent}} € wird jeweils zum Monatsbeginn fällig.
+
+Viele Grüße
+{{characterName}}

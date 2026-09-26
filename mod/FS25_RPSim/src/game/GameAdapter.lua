@@ -1,7 +1,9 @@
 -- FS25-specific adapter: the only file that touches FS25 globals. Every API call is wrapped in pcall
 -- so an engine change never crashes the savegame; failures degrade to empty/partial exports.
--- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager
--- luacheck: globals MoneyType FarmManager FarmlandManager
+-- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager g_npcManager
+-- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
+-- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
+-- luacheck: globals g_i18n
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -56,13 +58,33 @@ local function vehicleList()
     end, {})
 end
 
+--- Owned (bought) vehicle? Leased, mission and shop-config vehicles are not farm assets (T-04).
+-- VehiclePropertyState.OWNED / LEASED: FS25 Vehicle.lua (addOwnedItem / addLeasedItem); UsedPlus CreditSystem.lua
+-- filters collateral the same way.
+function RPSimGameAdapter.propertyState(v)
+    if VehiclePropertyState == nil then
+        return "OWNED"
+    end
+    local state = v.propertyState
+    if state == nil and v.getPropertyState ~= nil then
+        state = v:getPropertyState()
+    end
+    if state == VehiclePropertyState.OWNED then
+        return "OWNED"
+    elseif state == VehiclePropertyState.LEASED then
+        return "LEASED"
+    end
+    return "OTHER"
+end
+
 local function placeableList()
     return safe(function() return g_currentMission.placeableSystem.placeables end, {})
 end
 
 --- Stable sell point identifier.
 -- TODO(offene-frage): FS25 offers no documented stable id for SellingStation objects. Best effort: the
--- uniqueId of the owning placeable, else the station name. See docs/dev/offene-technische-punkte.md.
+-- uniqueId of the owning placeable, else the station name. Whether it survives save + reload is checked in the
+-- manual test plan (docs/dev/manual-test-plan.md, "Erster Test im echten FS25"), see offene-technische-punkte.md #2.
 function RPSimGameAdapter.sellPointId(station)
     return safe(function()
         if station.owningPlaceable ~= nil and station.owningPlaceable.getUniqueId ~= nil then
@@ -72,11 +94,41 @@ function RPSimGameAdapter.sellPointId(station)
     end, tostring(station))
 end
 
+--- Production point as buyer (TODO T-22): the station belongs to a placeable with spec_productionPoint (FS25
+-- PlaceableProductionPoint.lua: productionPoint.owningPlaceable = self, its unloadingStation can be hidden from the
+-- prices menu - so visible ones are sell points). Returns { production, ownedByPlayer }.
+function RPSimGameAdapter.productionInfo(station, farmId)
+    return safe(function()
+        local p = station.owningPlaceable
+        if p == nil or p.spec_productionPoint == nil then
+            return { production = false, ownedByPlayer = false }
+        end
+        local owner = p.getOwnerFarmId ~= nil and p:getOwnerFarmId() or nil
+        return { production = true, ownedByPlayer = owner == farmId }
+    end, { production = false, ownedByPlayer = false })
+end
+
+--- Selling stations the player can see in the prices menu (T-10). `isa(SellingStation)` and
+-- `hideFromPricesMenu` as in FS25_ProductionDirectSell (PDS_Manager.lua); husbandries set hideFromPricesMenu
+-- (FS25 PlaceableHusbandry.lua).
+function RPSimGameAdapter.isVisibleSellingStation(station)
+    if station == nil or station.isDeleted then
+        return false
+    end
+    local isSelling
+    if SellingStation ~= nil and station.isa ~= nil then
+        isSelling = station:isa(SellingStation)
+    else
+        isSelling = station.isSellingPoint == true
+    end
+    return isSelling and not station.hideFromPricesMenu
+end
+
 local function sellingStations()
     local out = {}
     safe(function()
         for _, station in pairs(g_currentMission.storageSystem:getUnloadingStations()) do
-            if station.isSellingPoint then
+            if RPSimGameAdapter.isVisibleSellingStation(station) then
                 out[#out + 1] = station
             end
         end
@@ -85,9 +137,135 @@ local function sellingStations()
     return out
 end
 
+--- Price trend of a station (T-10): bit flags SellingStation.PRICE_CLIMBING / PRICE_FALLING, read with
+-- Utils.isBitSet as in FS25_ProductionDirectSell (PDS_SellingDialog.lua). Returns CLIMBING, FALLING, STABLE or nil.
+function RPSimGameAdapter.pricingTrend(station, fillTypeIndex)
+    return safe(function()
+        if station.getCurrentPricingTrend == nil or Utils == nil or SellingStation == nil then
+            return nil
+        end
+        local trend = station:getCurrentPricingTrend(fillTypeIndex) or 0
+        if SellingStation.PRICE_CLIMBING ~= nil and Utils.isBitSet(trend, SellingStation.PRICE_CLIMBING) then
+            return "CLIMBING"
+        elseif SellingStation.PRICE_FALLING ~= nil and Utils.isBitSet(trend, SellingStation.PRICE_FALLING) then
+            return "FALLING"
+        end
+        return "STABLE"
+    end, nil)
+end
+
+--- FS25 calendar (T-08): the game month is the FS25 period. Fields as used by FS25_UsedPlus (CreditSystem.lua,
+-- FarmExtension.lua) and the FS25 Farm Dashboard (FarmDashboardDataCollector.lua); dayInPeriod is 1-based
+-- (AbstractMission: endDay = currentMonotonicDay + (daysPerPeriod - dayInPeriod)). periodName is the localized
+-- name of the current period from g_i18n:formatPeriod() (used this way in SowingMachine / TreePlanter).
+function RPSimGameAdapter:collectCalendar()
+    return safe(function()
+        local env = g_currentMission.environment
+        if env == nil or env.currentPeriod == nil then
+            return nil
+        end
+        local name = safe(function() return g_i18n:formatPeriod() end, nil)
+        return {
+            season = RPSimGameAdapter.seasonName(env.currentSeason),
+            period = env.currentPeriod,
+            dayInPeriod = env.currentDayInPeriod or 1,
+            daysPerPeriod = env.daysPerPeriod or 1,
+            year = env.currentYear or 1,
+            monotonicDay = env.currentMonotonicDay or env.currentDay or 0,
+            periodName = name,
+        }
+    end, nil)
+end
+
+--- Vanilla contracts (TODO T-22): g_missionManager:getMissions() with mission.status (MissionStatus.CREATED /
+-- PREPARING / RUNNING / FINISHED / DISMISSED), mission.farmId, mission.finishState == MissionFinishState.SUCCESS,
+-- getUniqueId(), getTitle(), getReward() - FS25 AbstractMission.lua / MissionManager.lua; mission.field:getName() and
+-- mission:getNPC().title as used by FS25_BetterContracts (scripts/gui.lua). Only missions the player can take
+-- (CREATED) or that belong to the player farm; at most maxMissions entries.
+function RPSimGameAdapter:collectMissions(maxMissions)
+    local out = {}
+    safe(function()
+        if g_missionManager == nil or MissionStatus == nil then
+            return true
+        end
+        local farmId = self:getFarmId()
+        for _, m in ipairs(g_missionManager:getMissions() or {}) do
+            if #out >= (maxMissions or 50) then
+                break
+            end
+            safe(function()
+                local status
+                if m.status == MissionStatus.CREATED then
+                    status = "AVAILABLE"
+                elseif m.farmId == farmId and (m.status == MissionStatus.PREPARING or m.status == MissionStatus.RUNNING) then
+                    status = "RUNNING"
+                elseif m.farmId == farmId and m.status == MissionStatus.FINISHED then
+                    status = "FINISHED"
+                end
+                if status == nil then
+                    return true
+                end
+                local npc = safe(function() return m:getNPC() end, nil)
+                local success
+                if status == "FINISHED" then
+                    success = MissionFinishState ~= nil and m.finishState == MissionFinishState.SUCCESS
+                end
+                out[#out + 1] = {
+                    uniqueId = m:getUniqueId(),
+                    title = safe(function() return m:getTitle() end, nil),
+                    typeName = safe(function() return m.type.name end, nil),
+                    field = safe(function() return m.field:getName() end, nil),
+                    npcIndex = npc ~= nil and npc.index or nil,
+                    npcTitle = npc ~= nil and npc.title or nil,
+                    reward = safe(function() return m:getReward() end, nil),
+                    status = status,
+                    success = success,
+                }
+                return true
+            end)
+        end
+        return true
+    end)
+    return out
+end
+
+--- Name of the current season (T-21): environment.currentSeason compared with the values of the global Season
+-- table (FS25 BeehiveSystem / StonePickMission: environment.currentSeason == Season.WINTER). The name is looked up
+-- instead of assumed, so only names that really exist in the game are exported.
+function RPSimGameAdapter.seasonName(current)
+    if current == nil or Season == nil or type(Season) ~= "table" then
+        return nil
+    end
+    for name, value in pairs(Season) do
+        if value == current and type(name) == "string" then
+            return name
+        end
+    end
+    return nil
+end
+
+--- Known mods that overlap with RPSim (T-09). Detected via g_modIsLoaded (the mod sandbox hides other mods'
+-- globals; FS25_UsedPlus ModCompatibility.lua uses the same check). Nothing is disabled - the backend only warns.
+function RPSimGameAdapter.detectMods(names)
+    local found = {}
+    safe(function()
+        if g_modIsLoaded == nil then
+            return true
+        end
+        for _, name in ipairs(names or {}) do
+            if g_modIsLoaded[name] then
+                found[#found + 1] = name
+            end
+        end
+        return true
+    end)
+    return found
+end
+
 function RPSimGameAdapter:collectFarmFacts()
     local farmId = self:getFarmId()
-    local raw = { vehicles = {}, placeables = {}, farmland = {}, animals = {}, silos = {}, prices = {} }
+    local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, silos = {},
+        prices = {}, calendar = self:collectCalendar(), missions = self:collectMissions(50) }
     local farm = safe(function() return g_farmManager:getFarmById(farmId) end, nil)
     raw.balance = safe(function() return farm.money end, 0)
     raw.vanillaLoan = safe(function() return farm.loan end, 0)
@@ -95,8 +273,15 @@ function RPSimGameAdapter:collectFarmFacts()
     for _, v in pairs(vehicleList()) do
         safe(function()
             if v:getOwnerFarmId() == farmId and v.getSellPrice ~= nil then
-                local damage = v.getDamageAmount ~= nil and v:getDamageAmount() or 0
-                raw.vehicles[#raw.vehicles + 1] = { uniqueId = v:getUniqueId(), value = v:getSellPrice(), damage = damage }
+                local state = RPSimGameAdapter.propertyState(v)
+                if state == "OWNED" then
+                    local damage = v.getDamageAmount ~= nil and v:getDamageAmount() or 0
+                    raw.vehicles[#raw.vehicles + 1] = { uniqueId = v:getUniqueId(), value = v:getSellPrice(),
+                        damage = damage }
+                elseif state == "LEASED" then
+                    -- Leasing costs per vehicle have no documented API yet (manual test plan) - list only.
+                    raw.leasedVehicles[#raw.leasedVehicles + 1] = { uniqueId = v:getUniqueId() }
+                end
             end
             return true
         end)
@@ -169,7 +354,8 @@ function RPSimGameAdapter:collectFarmFacts()
                 if accepted then
                     -- currentPrice = effective price the player gets right now (incl. active RPSim events).
                     local price = station:getEffectiveFillTypePrice(ftIndex)
-                    raw.prices[#raw.prices + 1] = { sellPoint = id, fillType = fillTypeName(ftIndex), pricePerLiter = price }
+                    raw.prices[#raw.prices + 1] = { sellPoint = id, fillType = fillTypeName(ftIndex), pricePerLiter = price,
+                        trend = RPSimGameAdapter.pricingTrend(station, ftIndex) }
                 end
             end
             return true
@@ -178,8 +364,23 @@ function RPSimGameAdapter:collectFarmFacts()
     return raw
 end
 
-function RPSimGameAdapter:collectMarketContext()
-    local raw = { mapName = self:getMapName(), sellPoints = {}, fillTypes = {}, farmlands = {} }
+--- FS25 NPC of a farmland (T-21). Farmland.lua sets self.npcIndex (g_npcManager:getRandomIndex() or the NPC named
+-- in the map XML); BetterContracts (scripts/options.lua) resolves it with g_npcManager:getNPCByIndex(npcIndex) and
+-- shows npc.title. npc.name is the key of getNPCByName.
+function RPSimGameAdapter.farmlandNpc(fl)
+    if fl.npcIndex == nil or g_npcManager == nil or g_npcManager.getNPCByIndex == nil then
+        return nil
+    end
+    local npc = g_npcManager:getNPCByIndex(fl.npcIndex)
+    if npc == nil then
+        return nil
+    end
+    return { index = npc.index or fl.npcIndex, name = npc.name, title = npc.title }
+end
+
+function RPSimGameAdapter:collectMarketContext(conflictMods)
+    local raw = { mapName = self:getMapName(), sellPoints = {}, fillTypes = {}, farmlands = {},
+        detectedMods = RPSimGameAdapter.detectMods(conflictMods) }
     local seenFillTypes = {}
     for _, station in ipairs(sellingStations()) do
         safe(function()
@@ -194,27 +395,68 @@ function RPSimGameAdapter:collectMarketContext()
                     end
                 end
             end
+            local info = RPSimGameAdapter.productionInfo(station, self:getFarmId())
             raw.sellPoints[#raw.sellPoints + 1] = { id = RPSimGameAdapter.sellPointId(station),
-                name = station:getName(), acceptedFillTypes = accepted }
+                name = station:getName(), acceptedFillTypes = accepted, production = info.production,
+                ownedByPlayer = info.ownedByPlayer }
             return true
         end)
     end
     safe(function()
         for _, fl in pairs(g_farmlandManager:getFarmlands()) do
+            -- T-11: showOnFarmlandsScreen / defaultFarmProperty from FS25 Farmland.lua (hidden = village, roads ...)
             raw.farmlands[#raw.farmlands + 1] = { farmlandId = fl.id, hectares = fl.areaInHa or 0, price = fl.price or 0,
-                ownerFarmId = g_farmlandManager:getFarmlandOwner(fl.id) or 0 }
+                ownerFarmId = g_farmlandManager:getFarmlandOwner(fl.id) or 0,
+                showOnFarmlandsScreen = fl.showOnFarmlandsScreen ~= false,
+                defaultFarmProperty = fl.defaultFarmProperty == true,
+                npc = safe(function() return RPSimGameAdapter.farmlandNpc(fl) end, nil) }
         end
         return true
     end)
     return raw
 end
 
+--- Current balance of the player farm (farm.money, as read in collectFarmFacts and by FS25_UsedPlus).
+function RPSimGameAdapter:getBalance()
+    local farmId = self:getFarmId()
+    return safe(function() return g_farmManager:getFarmById(farmId).money end, nil)
+end
+
+--- Batch pre-check (T-03): debits are refused when the balance does not cover them, so the farm never goes
+-- into the red through a tool booking. Unknown balance => refuse debits (never book blindly).
+function RPSimGameAdapter:checkBatchFunds(items)
+    return RPSimInstructions.checkFunds(self:getBalance() or 0, items)
+end
+
+--- Money type of a booking reason (T-21): MoneyType.register(statistic, "rpsim_money_<REASON>") - FS25
+-- FillTrigger.lua registers MoneyType.register("other", "finance_purchaseFuel") the same way. The statistic defaults
+-- to "other" (the only name verified in the FS25 code); cfg.moneyTypeStatistics may name another one. Registered
+-- once per reason; any failure falls back to MoneyType.OTHER.
+function RPSimGameAdapter:moneyTypeFor(reason)
+    self.moneyTypes = self.moneyTypes or {}
+    if self.moneyTypes[reason] ~= nil then
+        return self.moneyTypes[reason]
+    end
+    local moneyType = MoneyType ~= nil and MoneyType.OTHER or nil
+    local cfg = self.config or {}
+    if cfg.moneyTypeTitles ~= false and type(reason) == "string" and MoneyType ~= nil and MoneyType.register ~= nil then
+        local statistic = (cfg.moneyTypeStatistics or {})[reason] or "other"
+        local ok, registered = pcall(MoneyType.register, statistic, "rpsim_money_" .. reason)
+        if ok and registered ~= nil then
+            moneyType = registered
+        else
+            RPSimLog.warning("MoneyType.register(%s, rpsim_money_%s) failed - booking as OTHER", statistic, reason)
+        end
+    end
+    if moneyType ~= nil then
+        self.moneyTypes[reason] = moneyType
+    end
+    return moneyType
+end
+
 function RPSimGameAdapter:addMoney(amount, reason, note)
     local ok, err = pcall(function()
-        local moneyType = MoneyType ~= nil and MoneyType.OTHER or nil
-        -- TODO(offene-frage): whether a large negative booking (CREDIT_PENALTY/CREDIT_CALLBACK) triggers FS25's
-        -- own bankruptcy/warning logic is unverified. See docs/dev/offene-technische-punkte.md.
-        g_currentMission:addMoney(amount, self:getFarmId(), moneyType, true, true)
+        g_currentMission:addMoney(amount, self:getFarmId(), self:moneyTypeFor(reason), true, true)
     end)
     if not ok then
         return false, tostring(err)
@@ -223,17 +465,69 @@ function RPSimGameAdapter:addMoney(amount, reason, note)
     return true
 end
 
---- Farmland ownership transfer between the player farm and "no owner" (NPC owners only exist in the tool).
--- TODO(offene-frage): FarmlandManager:setLandOwnership is the API used by vanilla buy/sell and by the
--- "Farmland Marketplace" community mod; the player<->NPC case must be verified on the prototype.
-function RPSimGameAdapter:transferFarmland(farmlandId, direction)
+--- Repair of an own vehicle paid by the maintenance contract (TODO T-22): Wearable:setDamageAmount(0, true) - the
+-- part of FS25 Wearable:repairVehicle() that removes the damage; repairVehicle() itself would also book the repair
+-- price (addMoney(-getRepairPrice(), ..., MoneyType.VEHICLE_REPAIR)), which the contract already covers.
+function RPSimGameAdapter:repairVehicle(uniqueId)
+    local farmId = self:getFarmId()
+    local target
+    for _, v in pairs(vehicleList()) do
+        local ok, id = pcall(function() return v:getUniqueId() end)
+        if ok and id == uniqueId then
+            target = v
+            break
+        end
+    end
+    if target == nil then
+        return false, "VEHICLE_NOT_FOUND"
+    end
     local ok, err = pcall(function()
-        local noOwner = (FarmlandManager ~= nil and FarmlandManager.NO_OWNER_FARM_ID) or 0
-        local target = direction == "TO_PLAYER" and self:getFarmId() or noOwner
-        g_farmlandManager:setLandOwnership(farmlandId, target)
+        if target:getOwnerFarmId() ~= farmId then
+            error("NOT_OWN_VEHICLE")
+        end
+        if target.setDamageAmount == nil then
+            error("NOT_WEARABLE")
+        end
+        target:setDamageAmount(0, true)
+    end)
+    if not ok then
+        local msg = tostring(err)
+        return false, msg:match("NOT_OWN_VEHICLE") and "NOT_OWN_VEHICLE" or msg:match("NOT_WEARABLE") and "NOT_WEARABLE" or msg
+    end
+    RPSimLog.info("Vehicle %s repaired (maintenance contract)", tostring(uniqueId))
+    return true
+end
+
+--- In-game notification (TODO T-21): g_currentMission:addIngameNotification(FSBaseMission.INGAME_NOTIFICATION_*, text),
+-- the pattern of FS25_MarketDynamics (MarketDynamics.lua, FuturesMarket.lua).
+function RPSimGameAdapter:notify(text, level)
+    local ok, err = pcall(function()
+        local kind = FSBaseMission ~= nil
+            and (FSBaseMission["INGAME_NOTIFICATION_" .. tostring(level or "INFO")] or FSBaseMission.INGAME_NOTIFICATION_INFO)
+            or nil
+        g_currentMission:addIngameNotification(kind, text)
     end)
     if not ok then
         return false, tostring(err)
+    end
+    return true
+end
+
+--- Farmland ownership transfer between the player farm and "no owner" (NPC owners only exist in the tool).
+-- FarmlandManager:setLandOwnership(farmlandId, farmId) - FS25 FarmlandManager.lua:447: returns false for an
+-- invalid farmland id or NOT_BUYABLE_FARM_ID, otherwise sets the owner and publishes FARMLAND_OWNER_CHANGED.
+-- Whether missions and the field menu follow the change is part of the manual test plan.
+function RPSimGameAdapter:transferFarmland(farmlandId, direction)
+    local ok, res = pcall(function()
+        local noOwner = (FarmlandManager ~= nil and FarmlandManager.NO_OWNER_FARM_ID) or 0
+        local target = direction == "TO_PLAYER" and self:getFarmId() or noOwner
+        return g_farmlandManager:setLandOwnership(farmlandId, target)
+    end)
+    if not ok then
+        return false, tostring(res)
+    end
+    if res == false then
+        return false, "setLandOwnership refused farmland " .. tostring(farmlandId)
     end
     return true
 end

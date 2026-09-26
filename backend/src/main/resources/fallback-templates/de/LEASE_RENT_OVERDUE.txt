@@ -1,0 +1,7 @@
+Pacht für Feld {{farmlandId}} offen
+Hallo,
+
+die Pacht von {{monthlyRent}} € für Feld {{farmlandId}} ist noch offen. Bitte sorg für genug Geld auf dem Konto, sonst muss ich das Feld zurücknehmen.
+
+Viele Grüße
+{{characterName}}

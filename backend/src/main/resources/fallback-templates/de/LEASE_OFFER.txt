@@ -1,0 +1,7 @@
+Pachtangebot für Feld {{farmlandId}}
+Hallo,
+
+du möchtest Feld {{farmlandId}} ({{hectares}} ha) pachten – einverstanden. Mein Angebot: {{monthlyRent}} € Pacht pro Monat, Laufzeit {{termMonths}} Monate. Das Angebot gilt {{validDays}} Tage, annehmen kannst du es unter „Verträge“.
+
+Viele Grüße
+{{characterName}}

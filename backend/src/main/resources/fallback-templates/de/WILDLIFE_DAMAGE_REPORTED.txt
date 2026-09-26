@@ -1,0 +1,6 @@
+Wildschweine auf deinem Feld
+Moin,
+
+die Wildschweine waren wieder unterwegs und haben auf Feld {{farmlandId}} ordentlich gewühlt. Ich schätze den Schaden auf {{damageAmount}} €. Als Jagdpächter biete ich dir {{offer}} € Ersatz an. Gib mir bitte innerhalb von {{decisionDays}} Tagen Bescheid – unter „Verträge“ kannst du annehmen, mehr fordern oder eine gemeinsame Maßnahme vorschlagen.
+
+{{characterName}}

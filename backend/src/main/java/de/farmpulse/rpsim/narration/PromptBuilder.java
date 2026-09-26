@@ -37,7 +37,12 @@ public class PromptBuilder {
     /** Everything the builder needs - facts are already validated by {@link NarrationFacts}. */
     public record Input(Character character, TonePreset tone, NarrationEventType type, Channel channel,
                         Map<String, Object> facts, List<String> memoryFacts, String playerMessage,
-                        boolean mechanicalRequest) {
+                        boolean mechanicalRequest, String calendar) {
+
+        public Input(Character character, TonePreset tone, NarrationEventType type, Channel channel,
+                     Map<String, Object> facts, List<String> memoryFacts, String playerMessage, boolean mechanicalRequest) {
+            this(character, tone, type, channel, facts, memoryFacts, playerMessage, mechanicalRequest, null);
+        }
     }
 
     private final Properties tasks = new Properties();
@@ -112,6 +117,11 @@ public class PromptBuilder {
         StringBuilder user = new StringBuilder();
         user.append("Fakten (bindend): ").append(json.writeValueAsString(in.facts())).append('\n');
         user.append("Anlass: ").append(in.type().name()).append('\n');
+        if (in.calendar() != null) {
+            // T-21: real FS25 month / season - may be mentioned, but no invented dates
+            user.append("Datum im Spiel: ").append(in.calendar()).append(". Du darfst Monat und Jahreszeit nennen "
+                    + "(z. B. \"Ende Oktober\", \"nach der Ernte\"), aber keine Termine, die nicht in den Fakten stehen.\n");
+        }
         user.append("Aufgabe: ").append(task(in.type())).append('\n');
         if (in.channel() == Channel.CALL) {
             user.append("Kanal: Telefonanruf - formuliere gesprochene, kurze Sätze; subject ist ein kurzer Gesprächsanlass.\n");

@@ -17,6 +17,7 @@ const { values } = parseArgs({
     'control-port': { type: 'string', default: '8099' },
     once: { type: 'boolean', default: false },
     'advance-hours': { type: 'string', default: '0' },
+    'days-per-period': { type: 'string', default: '1' },
     reset: { type: 'boolean', default: false },
     'list-scenarios': { type: 'boolean', default: false },
     help: { type: 'boolean', default: false },
@@ -34,6 +35,7 @@ if (values.help) {
   --control-port <port>         HTTP control API port, 0 = off (default 8099)
   --once                        export once, process instructions once, exit
   --advance-hours <n>           with --once: advance game time by n hours first (in 24 h steps)
+  --days-per-period <n>         FS25 "days per period" of the simulated calendar (default 1)
   --reset                       delete previous simulator state before starting
   --list-scenarios              print scenarios and exit`);
   process.exit(0);
@@ -48,6 +50,7 @@ const sim = new BridgeSimulator({
   scenario: values.scenario,
   savegameId: values['savegame-id'],
   seed: Number(values.seed),
+  daysPerPeriod: Number(values['days-per-period']),
   log: (m) => console.log(`[sim] ${m}`),
 });
 if (values.reset) {

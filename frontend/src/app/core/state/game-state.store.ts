@@ -20,6 +20,7 @@ export class GameStateStore {
   readonly callVersion = signal(0);
   readonly diaryVersion = signal(0);
   readonly stateVersion = signal(0);
+  readonly noticeVersion = signal(0);
   readonly connected = signal(false);
 
   refresh(): void {

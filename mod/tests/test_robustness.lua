@@ -62,8 +62,8 @@ function T.TestRobustness:testFileReadErrorsNeverRaise()
     local content, err = RPSimFileIO.read("/x")
     lu.assertNil(content)
     lu.assertStrContains(err, "sandbox says no")
-    local ok = RPSimFileIO.writeAtomic("/x", "y", "auto")
-    lu.assertFalse(ok)
+    lu.assertFalse(RPSimFileIO.write("/x", "y", "auto"))
+    lu.assertFalse(RPSimFileIO.write("/x", "y", "direct"))
 end
 
 return T

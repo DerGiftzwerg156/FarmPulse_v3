@@ -1,0 +1,7 @@
+Deine Pacht für Feld {{farmlandId}} läuft aus
+Hallo,
+
+die Pacht für Feld {{farmlandId}} endet in {{endsInDays}} Tagen. Wenn du verlängern möchtest, würde ich {{renewalRent}} € pro Monat verlangen. Kaufpreis, falls du das Feld übernehmen willst: {{purchasePrice}} €. Ohne Antwort geht das Feld zum Ende der Laufzeit an mich zurück.
+
+Viele Grüße
+{{characterName}}

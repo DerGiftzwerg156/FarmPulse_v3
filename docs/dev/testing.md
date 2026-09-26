@@ -106,6 +106,12 @@ market context), hiring + resignation escalation over 32 game days, village rota
 - Measured runtime: **≈ 6.4 s** for all six scenarios (4-core container, 2026-09-25).
 - The direct-negotiation scenario picks an unclaimed field that is *not* already under a (randomly spawned) auction.
 
+`SimulatorScenariosEndToEndTest` (TODO T-14) runs the robustness scenarios against the real simulator:
+`knappe-kasse` (a debit the balance does not cover is acked `FAILED` / `INSUFFICIENT_FUNDS` and raises a dashboard
+notice), `leasing-hof` (leased vehicles arrive as `liabilities.leasing`, not as assets) and `konflikt-mods`
+(`detectedMods` in the header context). "Reload without saving" is covered by `RewindIntegrationTest` (backend)
+and by the simulator's own tests (`POST /save`, `POST /reload-without-saving`).
+
 ## Continuous integration (AP-11.1)
 
 | Workflow | Trigger | Runs |

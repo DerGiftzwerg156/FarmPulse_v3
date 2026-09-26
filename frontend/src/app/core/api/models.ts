@@ -11,6 +11,93 @@ export interface SavegameView {
   unreadMails: number;
   pendingCalls: number;
   reputationTier: string;
+  /** FS25 calendar (TODO T-08); null before the first calendar export. */
+  calendar?: CalendarView | null;
+  /** Installed mods with overlapping features (TODO T-09). */
+  detectedMods?: string[];
+}
+
+export interface CalendarView {
+  period: number;
+  periodName: string | null;
+  dayInPeriod: number;
+  daysPerPeriod: number;
+  year: number | null;
+  /** Season name from the game (TODO T-21), e.g. AUTUMN. */
+  season?: string | null;
+}
+
+/** Recurring contract (TODO T-20 insurance, T-22 lease / maintenance). */
+export interface ContractView {
+  id: number;
+  kind: 'INSURANCE' | 'LEASE' | 'MAINTENANCE' | string;
+  status: 'OFFERED' | 'ACTIVE' | 'DECLINED' | 'CANCELLED' | 'ENDED' | string;
+  character: CharacterRef | null;
+  level: string | null;
+  farmlandId: number | null;
+  monthlyAmount: number;
+  coveragePercent: number | null;
+  deductible: number | null;
+  termMonths: number | null;
+  startedAtGameTime: number | null;
+  endsAtGameTime: number | null;
+  nextDueGameTime: number | null;
+  offerExpiresAtGameTime: number | null;
+  missedPayments: number;
+  paymentOverdue: boolean;
+  endReason: string | null;
+  /** Lease (TODO T-22): new monthly rent offered for a renewal. */
+  renewalAmount?: number | null;
+  /** Lease (TODO T-22): price at which the owner sells the leased field. */
+  purchasePrice?: number | null;
+}
+
+/** Simulated incident or one-off offer of a service character (TODO T-20 / T-22). */
+export interface CaseView {
+  id: number;
+  kind: string;
+  status: 'AWAITING_PLAYER' | 'IN_PROGRESS' | 'SETTLED' | 'DECLINED' | 'EXPIRED' | string;
+  character: CharacterRef | null;
+  farmlandId: number | null;
+  hectares: number | null;
+  damageAmount: number | null;
+  payoutAmount: number | null;
+  costAmount: number | null;
+  offerAmount: number | null;
+  roundsUsed: number;
+  measureAgreed: boolean;
+  reference: string | null;
+  gameTime: number;
+  deadlineGameTime: number | null;
+  resolution: string | null;
+  /** Own contribution of a joint measure (wildlife damage). */
+  measureCost?: number | null;
+  /** Animals of a vet visit / trader offer (TODO T-20). */
+  quantity?: number | null;
+  /** Trader offer: SELL (player sells) or BUY (player buys). */
+  direction?: 'SELL' | 'BUY' | string | null;
+  /** Head count when the trader offer was accepted. */
+  baselineCount?: number | null;
+  /** Title of a referred vanilla contract (TODO T-22). */
+  title?: string | null;
+}
+
+export interface InsuranceQuoteView {
+  level: string;
+  monthlyPremium: number;
+  coveragePercent: number;
+  deductible: number;
+}
+
+/** Dashboard notice of the fact layer (TODO T-02 rewind, T-03 bookings the game did not execute). */
+export interface NoticeView {
+  id: number;
+  kind: 'REWIND_DECISION' | 'REWIND_RESENT' | 'INSTRUCTION_FAILED' | string;
+  status: string;
+  gameTime: number;
+  details: Record<string, unknown>;
+  relatedType: string | null;
+  relatedId: number | null;
 }
 
 export interface PreviewView {
@@ -173,6 +260,10 @@ export interface FarmlandView {
   ownerType: 'PLAYER' | 'CHARACTER' | 'UNCLAIMED';
   owner: CharacterRef | null;
   inNegotiation: boolean;
+  /** false: hidden in the vanilla farmland menu (village, roads) - never traded (TODO T-11). */
+  tradeable?: boolean;
+  /** Leased to the player (TODO T-22): the game shows it as the player's, the owner stays the character. */
+  leased?: boolean;
 }
 
 export interface OfferView {
@@ -252,6 +343,8 @@ export interface PriceView {
   sellPointName: string;
   fillType: string;
   currentPrice: number;
+  /** Price trend shown by the game (TODO T-10). */
+  trend?: 'CLIMBING' | 'FALLING' | 'STABLE' | null;
 }
 
 export interface PricePoint {
