@@ -162,3 +162,17 @@ test('reload without saving restores the saved game and forgets later bookings',
   assert.equal(sim.processed.lost.status, 'APPLIED');
   assert.equal(sim.balance, balance + 25000);
 });
+
+test('NOTIFICATION is shown once; a late one is acknowledged but not shown (TODO T-21)', () => {
+  const { sim, write } = setup();
+  write([{ instructionId: 'n1', type: 'NOTIFICATION', text: 'FarmPulse: Neue Mail von Frau Berger', level: 'INFO',
+    expiresAtGameTime: sim.gameTime + MS_PER_GAME_HOUR },
+  { instructionId: 'n2', type: 'NOTIFICATION', text: 'alt', expiresAtGameTime: sim.gameTime - 1 }]);
+  sim.processInstructions();
+  sim.processInstructions();
+  assert.deepEqual(sim.notifications.map((n) => n.text), ['FarmPulse: Neue Mail von Frau Berger']);
+  const acks = Object.fromEntries(read(sim.paths.ack).acks.map((a) => [a.instructionId, a]));
+  assert.equal(acks.n1.status, 'APPLIED');
+  assert.equal(acks.n1.message, undefined);
+  assert.equal(acks.n2.message, 'EXPIRED');
+});

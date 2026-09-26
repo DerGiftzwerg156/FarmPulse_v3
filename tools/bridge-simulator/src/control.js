@@ -18,7 +18,8 @@ export function startControlServer(sim, port, log = () => {}) {
       const url = new URL(req.url, 'http://localhost');
       if (req.method === 'GET' && url.pathname === '/state') {
         return send(200, { savegameId: sim.savegameId, scenario: sim.scenario, gameTime: sim.gameTime,
-          balance: sim.balance, priceEvents: sim.priceEvents, moneyLog: sim.moneyLog.slice(-50) });
+          balance: sim.balance, priceEvents: sim.priceEvents, moneyLog: sim.moneyLog.slice(-50),
+          notifications: sim.notifications.slice(-50) });
       }
       if (req.method === 'POST' && url.pathname === '/advance') {
         const b = await body(req);

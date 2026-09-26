@@ -53,6 +53,10 @@ public class RpsimProperties {
          * processedRetentionGameDays.
          */
         private double rewindLookbackHours = 24;
+        /** TODO T-21: new mails and incoming calls are shown as in-game notification (NOTIFICATION instruction). */
+        private boolean ingameNotifications = true;
+        /** TODO T-21: a notification is dropped by the mod when it is processed later than this many game hours. */
+        private double notificationMaxAgeHours = 2;
     }
 
     @Getter @Setter

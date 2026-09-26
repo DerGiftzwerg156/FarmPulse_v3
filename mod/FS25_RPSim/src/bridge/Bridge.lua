@@ -156,6 +156,7 @@ function RPSimBridge:pollInstructions()
                         and function(items) return adapter:checkBatchFunds(items) end or nil,
                     money = function(ins) return adapter:addMoney(ins.amount, ins.reason, ins.note) end,
                     farmlandTransfer = function(ins) return adapter:transferFarmland(ins.farmlandId, ins.direction) end,
+                    notify = adapter.notify ~= nil and function(ins) return adapter:notify(ins.text, ins.level) end or nil,
                 },
             })
             if result.marketContextDirty then

@@ -2,7 +2,8 @@
 -- (technical concept "Import-Schema").
 RPSimInstructions = {}
 
-RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLAND_TRANSFER = true }
+RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLAND_TRANSFER = true,
+    NOTIFICATION = true } -- NOTIFICATION: TODO T-21
 
 RPSimInstructions.MONEY_REASONS = {
     CREDIT_DISBURSEMENT = true, CREDIT_INSTALLMENT = true, CREDIT_PENALTY = true, CREDIT_CALLBACK = true,
@@ -15,6 +16,8 @@ RPSimInstructions.MONEY_REASONS = {
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
 RPSimInstructions.DIRECTIONS = { TO_PLAYER = true, FROM_PLAYER = true }
+-- FSBaseMission.INGAME_NOTIFICATION_* used by FS25_MarketDynamics (INFO, OK, CRITICAL)
+RPSimInstructions.NOTIFICATION_LEVELS = { INFO = true, OK = true, CRITICAL = true }
 
 local function isNumber(v) return type(v) == "number" and v == v end
 local function isNonEmptyString(v) return type(v) == "string" and v ~= "" end
@@ -76,6 +79,16 @@ function RPSimInstructions.validate(ins)
         end
         if ins.price ~= nil and not isNumber(ins.price) then
             return false, "price must be a number"
+        end
+    elseif ins.type == "NOTIFICATION" then
+        if not isNonEmptyString(ins.text) then
+            return false, "text is required"
+        end
+        if ins.level ~= nil and not RPSimInstructions.NOTIFICATION_LEVELS[ins.level] then
+            return false, "unknown level " .. tostring(ins.level)
+        end
+        if ins.expiresAtGameTime ~= nil and not isNumber(ins.expiresAtGameTime) then
+            return false, "expiresAtGameTime must be a number"
         end
     end
     return true

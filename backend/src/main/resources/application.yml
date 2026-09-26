@@ -33,6 +33,8 @@ rpsim:
     enabled: true
     rewind-auto-resend-max-hours: 24   # T-02: reload without saving up to 1 game day -> re-send lost bookings automatically
     rewind-lookback-hours: 24          # T-02: bookings acked this long before the reloaded point are checked as well
+    ingame-notifications: true         # TODO T-21: new mails / incoming calls as in-game notification
+    notification-max-age-hours: 2      # TODO T-21: older notifications are dropped by the mod
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
   ai:

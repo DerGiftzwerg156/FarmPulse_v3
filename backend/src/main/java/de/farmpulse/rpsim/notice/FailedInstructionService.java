@@ -72,6 +72,9 @@ public class FailedInstructionService {
         if (ins == null) {
             return;
         }
+        if (ins.getType() == InstructionType.NOTIFICATION) {
+            return; // T-21: a missed in-game hint is no problem for the player - the mail is in the browser anyway
+        }
         Savegame sg = savegames.findById(e.savegameId()).orElseThrow();
         JsonNode p = json.readTree(ins.getPayloadJson());
         String reason = p.path("reason").asString("");

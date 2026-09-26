@@ -63,6 +63,11 @@ export function validateInstruction(ins) {
       if (!num(ins.farmlandId)) return 'farmlandId must be a number';
       if (!['TO_PLAYER', 'FROM_PLAYER'].includes(ins.direction)) return `unknown direction ${ins.direction}`;
       return null;
+    case 'NOTIFICATION': // TODO T-21
+      if (typeof ins.text !== 'string' || !ins.text) return 'text is required';
+      if (ins.level !== undefined && !['INFO', 'OK', 'CRITICAL'].includes(ins.level)) return `unknown level ${ins.level}`;
+      if (ins.expiresAtGameTime !== undefined && !num(ins.expiresAtGameTime)) return 'expiresAtGameTime must be a number';
+      return null;
     default:
       return `unknown type ${ins.type}`;
   }
@@ -115,6 +120,7 @@ export class BridgeSimulator {
     this.priceEvents = [];
     this.contractReports = [];
     this.moneyLog = [];
+    this.notifications = []; // TODO T-21: in-game notifications shown to the "player"
     this.lastMarketContextJson = null;
     this.loadSavegame();
     this.savedGame = this.gameState();
@@ -369,6 +375,15 @@ export class BridgeSimulator {
         this.priceEvents.push(ev);
         return null;
       }
+      case 'NOTIFICATION':
+        // like the mod: a hint processed too late is acknowledged but not shown
+        if (ins.expiresAtGameTime !== undefined && this.gameTime > ins.expiresAtGameTime) {
+          this.applyNote = 'EXPIRED';
+          return null;
+        }
+        this.notifications.push({ id: ins.instructionId, text: ins.text, level: ins.level ?? 'INFO', gameTime: this.gameTime });
+        this.log(`in-game notification: ${ins.text}`);
+        return null;
       default:
         return 'unsupported type';
     }
@@ -437,11 +452,12 @@ export class BridgeSimulator {
             let aborted = null;
             for (const ins of pending) {
               // like the mod: after a failed member the rest of the batch is not executed
+              this.applyNote = null;
               const err = aborted ? `BATCH_ABORTED: ${aborted}` : this.applyOne(ins);
               if (err && !aborted && pending.length > 1) aborted = ins.instructionId;
               this.processed[ins.instructionId] = err
                 ? { gameTime: this.gameTime, status: 'FAILED', message: err }
-                : { gameTime: this.gameTime, status: 'APPLIED' };
+                : { gameTime: this.gameTime, status: 'APPLIED', ...(this.applyNote ? { message: this.applyNote } : {}) };
               if (err) res.rejected++; else res.applied++;
               if (!err && ins.type === 'FARMLAND_TRANSFER') res.marketContextDirty = true;
             }

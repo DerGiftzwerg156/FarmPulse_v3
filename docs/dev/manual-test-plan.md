@@ -191,6 +191,7 @@ and check `log.txt` (lines with `[FS25_RPSim]`) and the bridge files.
 | 8.14 | Hidden sell points / farmlands (T-10, T-11) | compare `sellPoints` with the in-game prices menu, `farmlands` with the farmland menu | no husbandry/production-only stations; village/road farmlands have `showOnFarmlandsScreen: false` |
 | 8.15 | Biogas sell points (T-20 energy supplier) | on a map with a biogas plant (Pumps n' Hoses pack), look at `market_context.json` → `sellPoints` | note whether a sell point accepts one of `rpsim.formulas.energy.fill-types` (`METHANE`, `SILAGE`, `CHAFF`, `MANURE`, `LIQUIDMANURE`, `DIGESTATE`). Biogas plants may be production points without a `SellingStation`; then the energy supplier stays away – adjust the list to the fill types that are really sold |
 | 8.16 | FS25 NPC field owners (T-21) | `market_context.json` → `farmlands[].npc` | every buyable farmland has an `npc` with `index`, `name` and a readable `title` that matches the name shown in the in-game farmland menu; the village in the tool shows these names as field owners |
+| 8.17 | In-game notifications (T-21) | while playing, let a character send a mail and start a call | a notification `FarmPulse: Neue Mail von …` / `… ruft an` appears in the game; after loading an older savegame, old hints are not shown (ack `message: EXPIRED`) |
 
 ## 9. Finish
 

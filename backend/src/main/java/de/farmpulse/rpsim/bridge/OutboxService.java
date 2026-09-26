@@ -105,6 +105,18 @@ public class OutboxService {
         return List.of(transfer, money);
     }
 
+    /**
+     * TODO T-21: in-game notification ({@code g_currentMission:addIngameNotification}). The mod skips it without
+     * showing when the game time is past {@code expiresAtGameTime} (e.g. processed late after loading a savegame).
+     */
+    public OutboxInstruction notification(Savegame sg, String text, String level, long expiresAtGameTime, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("text", text);
+        p.put("level", level);
+        p.put("expiresAtGameTime", expiresAtGameTime);
+        return enqueue(sg, InstructionType.NOTIFICATION, p, null, null, related);
+    }
+
     private OutboxInstruction enqueue(Savegame sg, InstructionType type, Map<String, Object> payload, String batchId,
                                       Long gameTimeEarliest, Related related) {
         OutboxInstruction o = new OutboxInstruction();

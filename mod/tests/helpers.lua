@@ -130,6 +130,11 @@ function helpers.fakeAdapter(overrides)
         self.moneyLog[#self.moneyLog + 1] = { amount = amount, reason = reason, note = note }
         return true
     end
+    a.notifications = {}
+    function a:notify(text, level)
+        self.notifications[#self.notifications + 1] = { text = text, level = level }
+        return true
+    end
     function a:transferFarmland(id, direction)
         self.transfers[#self.transfers + 1] = { farmlandId = id, direction = direction }
         for _, f in ipairs(self.allFarmlands) do

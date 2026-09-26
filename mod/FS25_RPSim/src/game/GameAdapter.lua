@@ -2,6 +2,7 @@
 -- so an engine change never crashes the savegame; failures degrade to empty/partial exports.
 -- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager g_npcManager
 -- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
+-- luacheck: globals FSBaseMission
 -- luacheck: globals g_i18n
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
@@ -352,6 +353,21 @@ function RPSimGameAdapter:addMoney(amount, reason, note)
         return false, tostring(err)
     end
     RPSimLog.info("Money %s %d (%s)", reason, amount, tostring(note or ""))
+    return true
+end
+
+--- In-game notification (TODO T-21): g_currentMission:addIngameNotification(FSBaseMission.INGAME_NOTIFICATION_*, text),
+-- the pattern of FS25_MarketDynamics (MarketDynamics.lua, FuturesMarket.lua).
+function RPSimGameAdapter:notify(text, level)
+    local ok, err = pcall(function()
+        local kind = FSBaseMission ~= nil
+            and (FSBaseMission["INGAME_NOTIFICATION_" .. tostring(level or "INFO")] or FSBaseMission.INGAME_NOTIFICATION_INFO)
+            or nil
+        g_currentMission:addIngameNotification(kind, text)
+    end)
+    if not ok then
+        return false, tostring(err)
+    end
     return true
 end
 

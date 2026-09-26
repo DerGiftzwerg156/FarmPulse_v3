@@ -18,6 +18,8 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.bridge.enabled` | `true` | Runs the bridge scheduler; `false` in unit tests. | Datei-Bridge |
 | `rpsim.bridge.rewind-auto-resend-max-hours` | `24` | Savegame reloaded without saving (game time jumps back): bookings lost by a rewind up to this many game hours are re-sent automatically; deeper rewinds show a decision card on the dashboard ("nachbuchen" / "Tool-Stand beibehalten"). | TODO T-02 |
 | `rpsim.bridge.rewind-lookback-hours` | `24` | Bookings acknowledged up to this many game hours before the reloaded point are checked as well (the first export after loading happens slightly after the saved point). Must stay below the mod's `processedRetentionGameDays`. | TODO T-02 |
+| `rpsim.bridge.ingame-notifications` | `true` | New mails and incoming calls are shown in the game (`NOTIFICATION` instruction → `addIngameNotification`). Only for savegames linked to FS25. | TODO T-21 |
+| `rpsim.bridge.notification-max-age-hours` | `2` | The mod acknowledges a notification without showing it (`message: EXPIRED`) when it is processed more than this many game hours after it was created, e.g. after loading an older savegame. | TODO T-21 |
 
 ## `rpsim.web` – Web
 

@@ -169,4 +169,16 @@ function T.TestGameAdapter:testFarmlandNpcIsExported()
     lu.assertNil(doc.farmlands[2].npc)
 end
 
+-- T-21: addIngameNotification with the FSBaseMission level constant
+function T.TestGameAdapter:testNotifyUsesTheIngameNotification()
+    local game = helpers.fakeGame()
+    FSBaseMission = { INGAME_NOTIFICATION_INFO = 11, INGAME_NOTIFICATION_OK = 12 }
+    local a = RPSimGameAdapter.new()
+    lu.assertTrue(a:notify("Hallo", "OK"))
+    lu.assertTrue(a:notify("Hallo2", "WHATEVER"))
+    lu.assertEquals(game.notifications[1], { kind = 12, text = "Hallo" })
+    lu.assertEquals(game.notifications[2].kind, 11)
+    FSBaseMission = nil
+end
+
 return T

@@ -24,6 +24,9 @@ es um Geld geht (Gegenangebot der Bank, Bewerbungen, Gebote, Sonderkontrakte), t
 führen dich mit **Zum Formular** an die richtige Stelle. Glückwünsche, Einladungen und Klatsch erkennst du am Badge
 **Dorfleben**. Wie freundlich du schreibst, merkt sich dein Gegenüber – ein wenig.
 
+Während du spielst, blendet FS25 neue Mails und eingehende Anrufe kurz ein („FarmPulse: Neue Mail von …“), damit du
+nicht ständig in den Browser schauen musst. Abschalten lässt sich das mit `rpsim.bridge.ingame-notifications: false`.
+
 ## Anrufe
 
 ![Eingehender Anruf](../screenshots/19-anruf-eingehend.png)

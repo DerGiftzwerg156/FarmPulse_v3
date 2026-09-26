@@ -104,7 +104,9 @@ function RPSimProcessor.process(state, doc, ctx)
                         end
                     end
                     if ok then
-                        state.processed[ins.instructionId] = { gameTime = ctx.gameTime, status = "APPLIED" }
+                        -- err doubles as an optional note on success (e.g. NOTIFICATION "EXPIRED")
+                        state.processed[ins.instructionId] = { gameTime = ctx.gameTime, status = "APPLIED",
+                            message = err }
                         result.applied = result.applied + 1
                         if ins.type == "FARMLAND_TRANSFER" then
                             result.marketContextDirty = true
@@ -147,6 +149,15 @@ function RPSimProcessor.applyOne(state, ins, ctx)
         local start = ins.gameTimeEarliest or ctx.gameTime
         state.priceEvents:addFromInstruction(ins, start)
         return true
+    elseif ins.type == "NOTIFICATION" then
+        -- TODO T-21: a hint that arrives too late (e.g. after loading an older savegame) is not shown
+        if ins.expiresAtGameTime ~= nil and ctx.gameTime > ins.expiresAtGameTime then
+            return true, "EXPIRED"
+        end
+        if ctx.actions.notify == nil then
+            return true, "NOT_SUPPORTED"
+        end
+        return ctx.actions.notify(ins)
     end
     return false, "unsupported type"
 end
