@@ -34,6 +34,7 @@ function RPSim:loadMap(_)
     RPSimFileIO.ensureDir(paths.base)
     RPSimLog.info("Bridge folder: %s", paths.base)
     local cfg = loadConfig(paths)
+    self.adapter.config = cfg
     local state = RPSimProcessor.newState(cfg)
 
     local xmlPath = savegameXmlPath()

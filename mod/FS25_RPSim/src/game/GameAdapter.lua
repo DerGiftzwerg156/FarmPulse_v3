@@ -344,10 +344,35 @@ function RPSimGameAdapter:checkBatchFunds(items)
     return RPSimInstructions.checkFunds(self:getBalance() or 0, items)
 end
 
+--- Money type of a booking reason (T-21): MoneyType.register(statistic, "rpsim_money_<REASON>") - FS25
+-- FillTrigger.lua registers MoneyType.register("other", "finance_purchaseFuel") the same way. The statistic defaults
+-- to "other" (the only name verified in the FS25 code); cfg.moneyTypeStatistics may name another one. Registered
+-- once per reason; any failure falls back to MoneyType.OTHER.
+function RPSimGameAdapter:moneyTypeFor(reason)
+    self.moneyTypes = self.moneyTypes or {}
+    if self.moneyTypes[reason] ~= nil then
+        return self.moneyTypes[reason]
+    end
+    local moneyType = MoneyType ~= nil and MoneyType.OTHER or nil
+    local cfg = self.config or {}
+    if cfg.moneyTypeTitles ~= false and type(reason) == "string" and MoneyType ~= nil and MoneyType.register ~= nil then
+        local statistic = (cfg.moneyTypeStatistics or {})[reason] or "other"
+        local ok, registered = pcall(MoneyType.register, statistic, "rpsim_money_" .. reason)
+        if ok and registered ~= nil then
+            moneyType = registered
+        else
+            RPSimLog.warning("MoneyType.register(%s, rpsim_money_%s) failed - booking as OTHER", statistic, reason)
+        end
+    end
+    if moneyType ~= nil then
+        self.moneyTypes[reason] = moneyType
+    end
+    return moneyType
+end
+
 function RPSimGameAdapter:addMoney(amount, reason, note)
     local ok, err = pcall(function()
-        local moneyType = MoneyType ~= nil and MoneyType.OTHER or nil
-        g_currentMission:addMoney(amount, self:getFarmId(), moneyType, true, true)
+        g_currentMission:addMoney(amount, self:getFarmId(), self:moneyTypeFor(reason), true, true)
     end)
     if not ok then
         return false, tostring(err)

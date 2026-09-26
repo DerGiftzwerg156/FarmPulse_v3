@@ -23,6 +23,13 @@ RPSimConfig.DEFAULTS = {
     -- T-09: mods whose features overlap with RPSim (mod folder / zip names). Detected ones are reported in
     -- market_context.json; the backend shows a warning. Nothing is disabled.
     conflictMods = { "FS25_MarketDynamics", "FS25_UsedPlus", "FS25_EnhancedLoanSystem", "FS25_BetterContracts" },
+    -- T-21: bookings get their own title (modDesc l10n "rpsim_money_<REASON>") via MoneyType.register(statistic,
+    -- titleKey), the pattern of FS25 FillTrigger.lua (MoneyType.register("other", "finance_purchaseFuel")).
+    -- false = everything is booked as MoneyType.OTHER like before.
+    moneyTypeTitles = true,
+    -- T-21: finance statistic per reason, e.g. { "SALARY_PAYMENT": "wagePayment" }. Only "other" is verified in
+    -- the FS25 code; other names must be checked in the game first (manual test plan). Empty = "other".
+    moneyTypeStatistics = {},
 }
 
 function RPSimConfig.new(overrides)

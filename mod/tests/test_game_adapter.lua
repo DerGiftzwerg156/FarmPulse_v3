@@ -181,4 +181,44 @@ function T.TestGameAdapter:testNotifyUsesTheIngameNotification()
     FSBaseMission = nil
 end
 
+-- T-21: own booking titles via MoneyType.register(statistic, titleKey)
+function T.TestGameAdapter:testBookingsGetTheirOwnMoneyType()
+    local game = helpers.fakeGame()
+    local calls = {}
+    MoneyType.register = function(statistic, title)
+        calls[#calls + 1] = statistic .. "|" .. title
+        return { statistic = statistic, title = title }
+    end
+    local a = RPSimGameAdapter.new()
+    a.config = RPSimConfig.new({ moneyTypeStatistics = { SALARY_PAYMENT = "wagePayment" } })
+    lu.assertTrue(a:addMoney(-100, "CREDIT_INSTALLMENT", "Rate"))
+    lu.assertTrue(a:addMoney(-100, "CREDIT_INSTALLMENT", "Rate"))
+    lu.assertTrue(a:addMoney(-50, "SALARY_PAYMENT", "Gehalt"))
+    lu.assertEquals(calls, { "other|rpsim_money_CREDIT_INSTALLMENT", "wagePayment|rpsim_money_SALARY_PAYMENT" })
+    lu.assertEquals(game.moneyLog[1].moneyType.title, "rpsim_money_CREDIT_INSTALLMENT")
+    lu.assertEquals(game.moneyLog[3].moneyType.statistic, "wagePayment")
+end
+
+function T.TestGameAdapter:testMoneyTypeFallsBackToOther()
+    local game = helpers.fakeGame()
+    MoneyType.register = function() error("unknown statistic") end
+    local a = RPSimGameAdapter.new()
+    lu.assertTrue(a:addMoney(10, "SUBSIDY"))
+    lu.assertIs(game.moneyLog[1].moneyType, MoneyType.OTHER)
+    local b = RPSimGameAdapter.new()
+    b.config = RPSimConfig.new({ moneyTypeTitles = false })
+    MoneyType.register = function() error("must not be called") end
+    lu.assertTrue(b:addMoney(10, "SUBSIDY"))
+    lu.assertIs(game.moneyLog[2].moneyType, MoneyType.OTHER)
+end
+
+function T.TestGameAdapter:testEveryMoneyReasonHasATitleInModDesc()
+    local f = assert(io.open((os.getenv("RPSIM_SRC") or "FS25_RPSim/src/") .. "../modDesc.xml", "r"))
+    local xml = f:read("*a")
+    f:close()
+    for reason in pairs(RPSimInstructions.MONEY_REASONS) do
+        lu.assertStrContains(xml, 'name="rpsim_money_' .. reason .. '"', false)
+    end
+end
+
 return T
