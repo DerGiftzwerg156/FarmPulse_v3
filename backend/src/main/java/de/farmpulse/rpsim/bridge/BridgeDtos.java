@@ -78,7 +78,17 @@ public final class BridgeDtos {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record SellPoint(String id, String name, List<String> acceptedFillTypes) {
+    public record SellPoint(String id, String name, List<String> acceptedFillTypes, Boolean production,
+                            Boolean ownedByPlayer) {
+
+        public SellPoint(String id, String name, List<String> acceptedFillTypes) {
+            this(id, name, acceptedFillTypes, null, null);
+        }
+
+        /** TODO T-22: a production point of the map (not the player's own) that buys goods. */
+        public boolean foreignProduction() {
+            return Boolean.TRUE.equals(production) && !Boolean.TRUE.equals(ownedByPlayer);
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -328,7 +328,8 @@ export class BridgeSimulator {
     return {
       savegameId: this.savegameId,
       mapName: MAP.mapName,
-      sellPoints: MAP.sellPoints.map((s) => ({ id: s.id, name: s.name, acceptedFillTypes: [...s.acceptedFillTypes].sort() })),
+      sellPoints: MAP.sellPoints.map((s) => ({ id: s.id, name: s.name, acceptedFillTypes: [...s.acceptedFillTypes].sort(),
+        ...(s.production ? { production: true, ownedByPlayer: s.ownedByPlayer === true } : {}) })),
       fillTypes,
       farmlands: this.farmlands.map((f) => ({ ...f, showOnFarmlandsScreen: f.showOnFarmlandsScreen !== false,
         defaultFarmProperty: f.defaultFarmProperty === true })),

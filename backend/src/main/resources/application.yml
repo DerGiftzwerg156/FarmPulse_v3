@@ -379,6 +379,9 @@ rpsim:
       hint-every-months: 3
       first-offer-below-condition: 75
       cancel-after-missed-payments: 2
+    production-supply:            # TODO T-22: delivery contracts with production points of the map (placeholders)
+      probability-per-month: 0.3
+      max-open: 1
     energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
       fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
       probability-per-month: 0.35

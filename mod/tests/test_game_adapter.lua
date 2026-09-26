@@ -130,6 +130,7 @@ local function station(name, opts)
         getName = function() return name end,
         getEffectiveFillTypePrice = function() return 0.25 end,
         getCurrentPricingTrend = function() return opts.trend or 0 end,
+        owningPlaceable = opts.placeable,
     }
 end
 
@@ -250,6 +251,30 @@ function T.TestGameAdapter:testRepairVehicleSetsTheDamageToZero()
     lu.assertFalse(ok)
     lu.assertEquals(err, "NOT_OWN_VEHICLE")
     lu.assertEquals(game.vehicles[2].damage, 0.4)
+end
+
+-- T-22: production points as buyers are marked (spec_productionPoint of the owning placeable)
+function T.TestGameAdapter:testProductionSellPointsAreMarked()
+    SellingStation = { PRICE_CLIMBING = 1, PRICE_FALLING = 2 }
+    Utils = { isBitSet = function(v, bit) return v % (2 * bit) >= bit end }
+    local function placeable(id, owner)
+        return { spec_productionPoint = {}, getUniqueId = function() return id end, getOwnerFarmId = function() return owner end }
+    end
+    helpers.fakeGame({ stations = { station("Mill"), station("Bakery", { placeable = placeable("plc_bakery", 0) }),
+        station("OwnDairy", { placeable = placeable("plc_dairy", 1) }) } })
+    local ctx = RPSimGameAdapter.new():collectMarketContext({})
+    lu.assertFalse(ctx.sellPoints[1].production)
+    lu.assertTrue(ctx.sellPoints[2].production)
+    lu.assertFalse(ctx.sellPoints[2].ownedByPlayer)
+    lu.assertTrue(ctx.sellPoints[3].ownedByPlayer)
+    local doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m", sellPoints = ctx.sellPoints })
+    local byId = {}
+    for _, sp in ipairs(doc.sellPoints) do byId[sp.id] = sp end
+    lu.assertNil(byId.Mill.production)
+    lu.assertTrue(byId.plc_bakery.production)
+    lu.assertFalse(byId.plc_bakery.ownedByPlayer)
+    lu.assertTrue(byId.plc_dairy.ownedByPlayer)
+    SellingStation, Utils = nil, nil
 end
 
 return T

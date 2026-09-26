@@ -13,7 +13,8 @@ const MAP = {
     { id: 'MillNorth', name: 'Mühle Nord', acceptedFillTypes: ['WHEAT', 'BARLEY', 'OAT'] },
     { id: 'MillSouth', name: 'Mühle Süd', acceptedFillTypes: ['WHEAT', 'BARLEY', 'CANOLA'] },
     { id: 'AgriTrade', name: 'Landhandel Erlengrund', acceptedFillTypes: ['WHEAT', 'BARLEY', 'CANOLA', 'CORN', 'SUNFLOWER', 'SOYBEAN'] },
-    { id: 'Dairy', name: 'Molkerei Talblick', acceptedFillTypes: ['MILK'] },
+    // a production point of the map as buyer (TODO T-22 delivery contracts)
+    { id: 'Dairy', name: 'Molkerei Talblick', acceptedFillTypes: ['MILK'], production: true, ownedByPlayer: false },
   ],
   basePrices: { WHEAT: 215, BARLEY: 190, OAT: 260, CANOLA: 430, CORN: 205, SUNFLOWER: 390, SOYBEAN: 450, MILK: 520 },
   farmlands: Array.from({ length: 16 }, (_, i) => ({

@@ -132,6 +132,9 @@ findest du unter **Verträge & Vorgänge**.
   Werkstatt zu jedem Monatsbeginn die am stärksten abgenutzten Fahrzeuge instand – direkt im Spiel, ohne weitere
   Kosten. Ohne Vertrag meldet sie sich ab und zu mit einem Hinweis, wenn eine Maschine stark abgenutzt ist. Das
   Angebot forderst du unter **Verträge** an; kündigen kannst du jederzeit.
+- **Lieferverträge mit Produktionen.** Gibt es auf der Karte Produktionen, die Waren ankaufen (z. B. Bäckerei oder
+  Molkerei), bietet die Genossenschaft gelegentlich einen Liefervertrag zum Festpreis an. Er erscheint wie ein
+  Sonderkontrakt unter **Warenbestand & Preise**; du entscheidest, ob du mitmachst.
 
 ## Dorf & Charaktere
 

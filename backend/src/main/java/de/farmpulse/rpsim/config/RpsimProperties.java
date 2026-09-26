@@ -117,6 +117,7 @@ public class RpsimProperties {
         private Energy energy = new Energy();
         private Lease lease = new Lease();
         private Maintenance maintenance = new Maintenance();
+        private ProductionSupply productionSupply = new ProductionSupply();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -645,5 +646,18 @@ public class RpsimProperties {
         /** First unsolicited offer when a vehicle is below this condition and there never was a contract. */
         private double firstOfferBelowCondition = 75;
         private int cancelAfterMissedPayments = 2;
+    }
+
+    /**
+     * TODO T-22 delivery contracts with production points of the map (bakery, dairy ...): fixed-price contracts
+     * (PRICE_EVENT FIXED, player decides) at sell points that market_context.json marks as production. Bounds of price
+     * premium, quantity and deadline come from rpsim.formulas.market (special offers). Placeholders.
+     */
+    @Getter @Setter
+    public static class ProductionSupply {
+        /** Chance per game month of a delivery contract offer. */
+        private double probabilityPerMonth = 0.3;
+        /** Open delivery contract offers / contracts with productions at the same time. */
+        private int maxOpen = 1;
     }
 }

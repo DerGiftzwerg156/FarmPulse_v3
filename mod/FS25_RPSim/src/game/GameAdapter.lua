@@ -94,6 +94,20 @@ function RPSimGameAdapter.sellPointId(station)
     end, tostring(station))
 end
 
+--- Production point as buyer (TODO T-22): the station belongs to a placeable with spec_productionPoint (FS25
+-- PlaceableProductionPoint.lua: productionPoint.owningPlaceable = self, its unloadingStation can be hidden from the
+-- prices menu - so visible ones are sell points). Returns { production, ownedByPlayer }.
+function RPSimGameAdapter.productionInfo(station, farmId)
+    return safe(function()
+        local p = station.owningPlaceable
+        if p == nil or p.spec_productionPoint == nil then
+            return { production = false, ownedByPlayer = false }
+        end
+        local owner = p.getOwnerFarmId ~= nil and p:getOwnerFarmId() or nil
+        return { production = true, ownedByPlayer = owner == farmId }
+    end, { production = false, ownedByPlayer = false })
+end
+
 --- Selling stations the player can see in the prices menu (T-10). `isa(SellingStation)` and
 -- `hideFromPricesMenu` as in FS25_ProductionDirectSell (PDS_Manager.lua); husbandries set hideFromPricesMenu
 -- (FS25 PlaceableHusbandry.lua).
@@ -329,8 +343,10 @@ function RPSimGameAdapter:collectMarketContext(conflictMods)
                     end
                 end
             end
+            local info = RPSimGameAdapter.productionInfo(station, self:getFarmId())
             raw.sellPoints[#raw.sellPoints + 1] = { id = RPSimGameAdapter.sellPointId(station),
-                name = station:getName(), acceptedFillTypes = accepted }
+                name = station:getName(), acceptedFillTypes = accepted, production = info.production,
+                ownedByPlayer = info.ownedByPlayer }
             return true
         end)
     end

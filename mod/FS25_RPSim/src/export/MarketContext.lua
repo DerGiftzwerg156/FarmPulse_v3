@@ -22,7 +22,13 @@ function RPSimMarketContext.build(raw)
             accepted[#accepted + 1] = ft
         end
         table.sort(accepted)
-        sellPoints[#sellPoints + 1] = { id = sp.id, name = sp.name, acceptedFillTypes = accepted }
+        local entry = { id = sp.id, name = sp.name, acceptedFillTypes = accepted }
+        if sp.production then
+            -- TODO T-22: production point as buyer (delivery contracts); ownedByPlayer = the player's own production
+            entry.production = true
+            entry.ownedByPlayer = sp.ownedByPlayer == true
+        end
+        sellPoints[#sellPoints + 1] = entry
     end
     table.sort(sellPoints, function(a, b) return a.id < b.id end)
     local fillTypes = RPSimJson.array({})

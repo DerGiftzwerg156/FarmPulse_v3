@@ -493,6 +493,17 @@ contract the workshop sends repair hints and one unsolicited offer.
 | `rpsim.formulas.maintenance.first-offer-below-condition` | `75` | One unsolicited offer when a vehicle is below this condition and there never was a contract. | TODO T-22 |
 | `rpsim.formulas.maintenance.cancel-after-missed-payments` | `2` | The contract ends after this many missed fees (no repairs while a fee is open). | TODO T-22 |
 
+## `rpsim.formulas.production-supply` (TODO T-22)
+
+Delivery contracts with production points of the map: the existing fixed-price contract (`PRICE_EVENT FIXED`, premium,
+quantity and deadline from `rpsim.formulas.market`) at sell points that `market_context.json` marks as `production`
+(not the player's own).
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.production-supply.probability-per-month` | `0.3` | Chance per game month of a delivery contract offer. | TODO T-22 |
+| `rpsim.formulas.production-supply.max-open` | `1` | Open delivery contract offers / contracts with productions at the same time. | TODO T-22 |
+
 ## Profiles
 
 | Profile | Purpose | Overrides |
