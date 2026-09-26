@@ -103,6 +103,10 @@ findest du unter **Verträge & Vorgänge**.
   Versicherung (Tarif *Basis* oder *Komfort*, Prämie zu jedem Monatsbeginn) meldest du den Schaden per Mail oder
   Anruf innerhalb der Frist und bekommst einen Teil erstattet (abzüglich Selbstbehalt). Ist eine Prämie offen, ruht
   der Schutz; nach zwei offenen Prämien endet der Vertrag.
+- **Jagdpächter:in – Wildschäden.** Im Sommer und Herbst wühlen Wildschweine auf deinen Feldern (simuliert, der
+  Schaden kostet Geld). Der Jagdpächter bietet Ersatz an. Du kannst annehmen, mehr fordern (bis zu zwei Runden),
+  eine **gemeinsame Maßnahme** vereinbaren (eigener Beitrag, danach für einige Monate seltener Schäden, besseres
+  Ansehen im Dorf) oder ablehnen – ein Streit spricht sich herum. Antwortest du nicht, zahlt er sein letztes Angebot.
 
 ## Dorf & Charaktere
 

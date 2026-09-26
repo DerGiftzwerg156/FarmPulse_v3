@@ -160,7 +160,8 @@ public final class Views {
     /** TODO T-20 / T-22: simulated incident or one-off offer of a service character. */
     public record CaseView(Long id, String kind, String status, CharacterRef character, Integer farmlandId, Double hectares,
                            Long damageAmount, Long payoutAmount, Long costAmount, Long offerAmount, int roundsUsed,
-                           boolean measureAgreed, String reference, long gameTime, Long deadlineGameTime, String resolution) {
+                           boolean measureAgreed, String reference, long gameTime, Long deadlineGameTime, String resolution,
+                           Long measureCost) {
     }
 
     /** Insurance tariff preview for the current farm. */

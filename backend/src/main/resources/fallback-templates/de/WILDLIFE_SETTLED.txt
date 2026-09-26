@@ -1,0 +1,6 @@
+Wildschaden geregelt
+Moin,
+
+abgemacht: Du bekommst {{payout}} € für den Schaden auf Feld {{farmlandId}}. Gemeinsame Maßnahme: {{measure}}.
+
+{{characterName}}

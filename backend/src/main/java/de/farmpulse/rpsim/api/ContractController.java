@@ -4,15 +4,16 @@ import java.util.List;
 
 import de.farmpulse.rpsim.api.Requests.ChannelRequest;
 import de.farmpulse.rpsim.api.Requests.InsuranceOfferRequest;
+import de.farmpulse.rpsim.api.Requests.OfferRequest;
 import de.farmpulse.rpsim.api.Views.CaseView;
 import de.farmpulse.rpsim.api.Views.ContractView;
 import de.farmpulse.rpsim.api.Views.InsuranceQuoteView;
 import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.contract.HuntingService;
 import de.farmpulse.rpsim.contract.InsuranceService;
 import de.farmpulse.rpsim.domain.Contract;
-import de.farmpulse.rpsim.domain.ContractKind;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
 import de.farmpulse.rpsim.repository.ContractRepository;
@@ -34,15 +35,18 @@ public class ContractController {
     private final ContractRepository contracts;
     private final ServiceCaseRepository cases;
     private final InsuranceService insurance;
+    private final HuntingService hunting;
     private final ApiMapper mapper;
     private final RpsimProperties props;
 
     public ContractController(SavegameContext context, ContractRepository contracts, ServiceCaseRepository cases,
-                              InsuranceService insurance, ApiMapper mapper, RpsimProperties props) {
+                              InsuranceService insurance, HuntingService hunting, ApiMapper mapper,
+                              RpsimProperties props) {
         this.context = context;
         this.contracts = contracts;
         this.cases = cases;
         this.insurance = insurance;
+        this.hunting = hunting;
         this.mapper = mapper;
         this.props = props;
     }
@@ -114,6 +118,51 @@ public class ContractController {
         return view(insurance.report(context.requireActive(), id, r == null ? null : r.channel()));
     }
 
+    @PostMapping("/api/cases/{id}/accept")
+    @Transactional
+    public CaseView acceptCase(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return view(switch (serviceCase(sg, id).getKind()) {
+            case WILDLIFE_DAMAGE -> hunting.accept(sg, id);
+            default -> throw unsupported();
+        });
+    }
+
+    @PostMapping("/api/cases/{id}/counter")
+    @Transactional
+    public CaseView counterCase(@PathVariable Long id, @Valid @RequestBody OfferRequest r) {
+        Savegame sg = context.requireActive();
+        return view(switch (serviceCase(sg, id).getKind()) {
+            case WILDLIFE_DAMAGE -> hunting.counter(sg, id, r.amount());
+            default -> throw unsupported();
+        });
+    }
+
+    @PostMapping("/api/cases/{id}/measure")
+    @Transactional
+    public CaseView measureCase(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return view(switch (serviceCase(sg, id).getKind()) {
+            case WILDLIFE_DAMAGE -> hunting.measure(sg, id);
+            default -> throw unsupported();
+        });
+    }
+
+    @PostMapping("/api/cases/{id}/decline")
+    @Transactional
+    public CaseView declineCase(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return view(switch (serviceCase(sg, id).getKind()) {
+            case WILDLIFE_DAMAGE -> hunting.decline(sg, id);
+            default -> throw unsupported();
+        });
+    }
+
+    private ServiceCase serviceCase(Savegame sg, Long id) {
+        return cases.findById(id).filter(c -> c.getSavegame().getId().equals(sg.getId()))
+                .orElseThrow(() -> new NotFoundException("case " + id));
+    }
+
     private static BusinessRuleException unsupported() {
         return new BusinessRuleException("UNSUPPORTED_ACTION", "Diese Aktion ist für diesen Vertrag nicht möglich.");
     }
@@ -135,10 +184,7 @@ public class ContractController {
         return new CaseView(s.getId(), s.getKind().name(), s.getStatus().name(), mapper.ref(s.getCharacter()), s.getFarmlandId(),
                 s.getHectares(), s.getDamageAmount(), s.getPayoutAmount(), s.getCostAmount(), s.getOfferAmount(),
                 s.getRoundsUsed(), s.isMeasureAgreed(), s.getReference(), s.getGameTime(), s.getDeadlineGameTime(),
-                s.getResolution());
-    }
-
-    static boolean is(Contract c, ContractKind k) {
-        return c.getKind() == k;
+                s.getResolution(), s.getKind() == de.farmpulse.rpsim.domain.CaseKind.WILDLIFE_DAMAGE
+                        ? props.getFormulas().getHunting().getMeasureCost() : null);
     }
 }

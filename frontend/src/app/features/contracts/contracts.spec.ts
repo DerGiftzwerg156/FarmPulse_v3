@@ -15,7 +15,7 @@ const contract = (over: Partial<ContractView> = {}): ContractView => ({
 const damage = (over: Partial<CaseView> = {}): CaseView => ({
   id: 7, kind: 'HAIL_DAMAGE', status: 'AWAITING_PLAYER', character: null, farmlandId: 12, hectares: 4.5, damageAmount: 3600,
   payoutAmount: null, costAmount: null, offerAmount: null, roundsUsed: 0, measureAgreed: false, reference: null,
-  gameTime: 10 * DAY, deadlineGameTime: 15 * DAY, resolution: null, ...over,
+  gameTime: 10 * DAY, deadlineGameTime: 15 * DAY, resolution: null, measureCost: null, ...over,
 });
 
 describe('Contracts', () => {
@@ -48,6 +48,21 @@ describe('Contracts', () => {
     http.expectOne('/api/cases').flush([]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="insurance-active"]')?.textContent).toContain('Aktiv');
+  });
+
+  it('negotiates a wildlife damage: counter demand from the form field', () => {
+    const { fixture, http, el } = setup([], [damage({ kind: 'WILDLIFE_DAMAGE', offerAmount: 900, measureCost: 400 })]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="wildlife-offer"]')?.textContent).toContain('900');
+    expect(el.querySelector('[data-testid="case-measure"]')?.textContent).toContain('400');
+    const input = el.querySelector('[data-testid="demand-input"]') as HTMLInputElement;
+    input.value = '1500';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="case-counter"] button') as HTMLButtonElement).click();
+    const req = http.expectOne('/api/cases/7/counter');
+    expect(req.request.body).toEqual({ amount: 1500 });
   });
 
   it('reports a damage by phone', () => {

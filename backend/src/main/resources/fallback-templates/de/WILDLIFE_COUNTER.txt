@@ -1,0 +1,6 @@
+Zum Wildschaden
+Moin,
+
+{{playerDemand}} € ist mir zu viel. Ich kann dir {{offer}} € anbieten.
+
+{{characterName}}

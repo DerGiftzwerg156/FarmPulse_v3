@@ -45,6 +45,8 @@ export class Contracts {
   readonly error = signal<PageError | null>(null);
   readonly actionError = signal<string | null>(null);
   readonly busy = signal(false);
+  /** Counter demand per case (form field; numbers only via inputs). */
+  readonly demand = signal<Record<number, number>>({});
 
   readonly insurance = computed(() => (this.contracts() ?? []).filter((c) => c.kind === 'INSURANCE'));
   readonly activeInsurance = computed(() => this.insurance().find((c) => c.status === 'ACTIVE') ?? null);
@@ -105,6 +107,10 @@ export class Contracts {
 
   caseAction(c: CaseView, action: string, body: unknown = {}): void {
     this.run(this.api.caseAction(c.id, action, body));
+  }
+
+  setDemand(id: number, value: number): void {
+    this.demand.update((d) => ({ ...d, [id]: Number.isFinite(value) ? value : 0 }));
   }
 
   isInsuranceCase(c: CaseView): boolean {

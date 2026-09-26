@@ -108,6 +108,7 @@ public class RpsimProperties {
         private Memory memory = new Memory();
         private Storage storage = new Storage();
         private Insurance insurance = new Insurance();
+        private Hunting hunting = new Hunting();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -494,5 +495,40 @@ public class RpsimProperties {
             this.premiumRate = premiumRate;
             this.minPremium = minPremium;
         }
+    }
+
+    /**
+     * TODO T-20 hunter: simulated wild boar damage on an own field (DAMAGE), compensation offered by the hunter
+     * (WILDLIFE_COMPENSATION), counter demands in rounds, joint measures that lower further damage and improve the
+     * village reputation. Placeholders.
+     */
+    @Getter @Setter
+    public static class Hunting {
+        /** Chance per game month of wildlife damage on one own field, only in periods. */
+        private double probabilityPerMonth = 0.15;
+        /** FS25 periods with wild boar damage (1 = March): June to October. */
+        private List<Integer> periods = new ArrayList<>(List.of(4, 5, 6, 7, 8));
+        private double damagePerHectareMin = 150;
+        private double damagePerHectareMax = 600;
+        /** First offer of the hunter as share of the damage (neutral trust). */
+        private double offerShare = 0.5;
+        /** Highest share the hunter accepts (neutral trust). */
+        private double maxShare = 0.9;
+        /** Shift of both shares at trust +100 / −100 (linear). */
+        private double trustInfluence = 0.2;
+        /** Counter demands before the hunter's offer is final. */
+        private int maxRounds = 2;
+        /** Game days to answer; without answer the last offer is paid. */
+        private double decisionDays = 7;
+        /** Contribution of the player to a joint measure (drive hunt / fence), €. */
+        private long measureCost = 400;
+        private double measureReputationDelta = 3;
+        private double measureTrustDelta = 5;
+        /** Damage probability × this factor for measureEffectMonths after a joint measure. */
+        private double measureProbabilityFactor = 0.4;
+        private int measureEffectMonths = 6;
+        private double agreementTrustDelta = 2;
+        private double disputeTrustDelta = -5;
+        private double disputeReputationDelta = -2;
     }
 }

@@ -391,6 +391,30 @@ reference prices of the own fields + value of the own buildings.
 | `rpsim.formulas.insurance.levels.COMFORT.premium-rate` | `0.00075` | Tariff *Komfort*: monthly premium per € of insured value. | TODO T-20 |
 | `rpsim.formulas.insurance.levels.COMFORT.min-premium` | `100` | Tariff *Komfort*: minimum monthly premium (€). | TODO T-20 |
 
+## `rpsim.formulas.hunting` (TODO T-20)
+
+Wild boar damage is simulated per game month (`DAMAGE`); the hunter compensates (`WILDLIFE_COMPENSATION`).
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.hunting.probability-per-month` | `0.15` | Chance per game month of wild boar damage on one own field, only in `periods`. | TODO T-20 |
+| `rpsim.formulas.hunting.periods` | `[4, 5, 6, 7, 8]` | FS25 periods with wildlife damage (1 = March): June to October. | TODO T-20 |
+| `rpsim.formulas.hunting.damage-per-hectare-min` | `150` | Damage in € per hectare (lower bound). | TODO T-20 |
+| `rpsim.formulas.hunting.damage-per-hectare-max` | `600` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.hunting.offer-share` | `0.5` | First compensation offer of the hunter as share of the damage (neutral trust). | TODO T-20 |
+| `rpsim.formulas.hunting.max-share` | `0.9` | Highest share the hunter accepts on a counter demand (neutral trust); never shown to the AI. | TODO T-20 |
+| `rpsim.formulas.hunting.trust-influence` | `0.2` | Shift of both shares at trust +100 / −100 (linear, bounded to 10–100 %). | TODO T-20 |
+| `rpsim.formulas.hunting.max-rounds` | `2` | Counter demands before the offer is final. | TODO T-20 |
+| `rpsim.formulas.hunting.decision-days` | `7` | Game days to answer; afterwards the last offer is paid. | TODO T-20 |
+| `rpsim.formulas.hunting.measure-cost` | `400` | Own contribution of the player to a joint measure (drive hunt / fence), €. | TODO T-20 |
+| `rpsim.formulas.hunting.measure-reputation-delta` | `3` | Village reputation (public action) of a joint measure. | TODO T-20 |
+| `rpsim.formulas.hunting.measure-trust-delta` | `5` | Trust of the hunter for a joint measure. | TODO T-20 |
+| `rpsim.formulas.hunting.measure-probability-factor` | `0.4` | Damage probability × this factor after a joint measure … | TODO T-20 |
+| `rpsim.formulas.hunting.measure-effect-months` | `6` | … for this many game months. | TODO T-20 |
+| `rpsim.formulas.hunting.agreement-trust-delta` | `2` | Trust of the hunter when an offer / demand is agreed. | TODO T-20 |
+| `rpsim.formulas.hunting.dispute-trust-delta` | `-5` | Trust of the hunter when the compensation is refused. | TODO T-20 |
+| `rpsim.formulas.hunting.dispute-reputation-delta` | `-2` | Village reputation (public action) of a refused compensation. | TODO T-20 |
+
 ## Profiles
 
 | Profile | Purpose | Overrides |

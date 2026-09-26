@@ -14,6 +14,10 @@ public enum TrustReason {
     TONE_FRIENDLY,
     TONE_RUDE,
     NEGOTIATION_DEAL,
+    /** TODO T-20: wildlife damage settled amicably / with a joint measure. */
+    WILDLIFE_AGREEMENT,
+    /** TODO T-20: compensation refused, dispute. */
+    WILDLIFE_DISPUTE,
     INITIAL,
     OTHER
 }

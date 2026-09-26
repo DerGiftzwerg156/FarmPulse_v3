@@ -64,6 +64,8 @@ export interface CaseView {
   gameTime: number;
   deadlineGameTime: number | null;
   resolution: string | null;
+  /** Own contribution of a joint measure (wildlife damage). */
+  measureCost?: number | null;
 }
 
 export interface InsuranceQuoteView {

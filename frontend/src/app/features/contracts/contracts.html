@@ -63,6 +63,21 @@
               @if (c.damageAmount !== null) { {{ 'contracts.damage' | t: { amount: (c.damageAmount | money) } }} }
               @if (c.deadlineGameTime !== null) { · {{ 'contracts.deadline' | t: { time: (c.deadlineGameTime | gameTime) } }} }
             </div>
+            @if (c.kind === 'WILDLIFE_DAMAGE') {
+              <div class="mt-1 text-[12px] text-text" data-testid="wildlife-offer">{{ 'contracts.offer' | t: { amount: (c.offerAmount | money) } }}</div>
+              <div class="mt-2 flex flex-wrap items-end gap-2">
+                <app-button [disabled]="busy()" (pressed)="caseAction(c, 'accept')" data-testid="case-accept">{{ 'contracts.accept' | t }}</app-button>
+                <label class="space-y-1">
+                  <span class="fp-label">{{ 'contracts.demand' | t }}</span>
+                  <input class="fp-input w-32 font-mono" type="number" min="1" step="any" [value]="demand()[c.id] ?? ''"
+                    (input)="setDemand(c.id, $any($event.target).valueAsNumber)" data-testid="demand-input" />
+                </label>
+                <app-button variant="secondary" [disabled]="busy() || !demand()[c.id]" (pressed)="caseAction(c, 'counter', { amount: demand()[c.id] })" data-testid="case-counter">{{ 'contracts.counter' | t }}</app-button>
+                <app-button variant="secondary" [disabled]="busy()" (pressed)="caseAction(c, 'measure')" data-testid="case-measure">{{ 'contracts.measure' | t: { amount: (c.measureCost ?? 0) | money } }}</app-button>
+                <app-button variant="danger" [disabled]="busy()" (pressed)="caseAction(c, 'decline')" data-testid="case-decline">{{ 'contracts.dispute' | t }}</app-button>
+              </div>
+              <p class="mt-1 text-[11px] text-muted">{{ 'contracts.measureHint' | t }}</p>
+            }
             @if (isInsuranceCase(c)) {
               <div class="mt-2 flex flex-wrap gap-2">
                 <app-button [disabled]="busy()" (pressed)="caseAction(c, 'report', { channel: 'MAIL' })" data-testid="report-mail">{{ 'contracts.reportMail' | t }}</app-button>

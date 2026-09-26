@@ -322,3 +322,21 @@ rpsim:
           deductible: 500
           premium-rate: 0.00075
           min-premium: 100
+    hunting:                      # TODO T-20: hunter / wildlife damage (placeholders)
+      probability-per-month: 0.15
+      periods: [4, 5, 6, 7, 8]
+      damage-per-hectare-min: 150
+      damage-per-hectare-max: 600
+      offer-share: 0.5
+      max-share: 0.9
+      trust-influence: 0.2
+      max-rounds: 2
+      decision-days: 7
+      measure-cost: 400
+      measure-reputation-delta: 3
+      measure-trust-delta: 5
+      measure-probability-factor: 0.4
+      measure-effect-months: 6
+      agreement-trust-delta: 2
+      dispute-trust-delta: -5
+      dispute-reputation-delta: -2

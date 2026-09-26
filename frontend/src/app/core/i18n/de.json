@@ -384,7 +384,12 @@
       "PAID": "Ausgezahlt",
       "UNINSURED": "Nicht versichert",
       "COVER_SUSPENDED": "Schutz ruhte (Prämie offen)",
-      "DEADLINE_MISSED": "Meldefrist verpasst"
+      "DEADLINE_MISSED": "Meldefrist verpasst",
+      "ACCEPTED": "Angebot angenommen",
+      "DEMAND_ACCEPTED": "Forderung angenommen",
+      "MEASURE": "Mit gemeinsamer Maßnahme",
+      "DISPUTE": "Streit",
+      "OFFER_PAID_BY_DEFAULT": "Angebot ohne Antwort ausgezahlt"
     },
     "endReason": {
       "PLAYER": "auf eigenen Wunsch",
@@ -792,6 +797,12 @@
     "deadline": "Frist bis {time}",
     "field": "Feld {id}",
     "contractsTitle": "Verträge",
-    "noContracts": "Keine Verträge."
+    "noContracts": "Keine Verträge.",
+    "offer": "Angebot: {amount}",
+    "demand": "Deine Forderung (€)",
+    "counter": "Mehr fordern",
+    "measure": "Gemeinsame Maßnahme (Beitrag {amount})",
+    "dispute": "Ablehnen",
+    "measureHint": "Gemeinsame Maßnahme: Du beteiligst dich an Drückjagd oder Zaun, bekommst den angebotenen Ersatz, und für einige Monate gibt es seltener Wildschäden. Das Dorf rechnet es dir an – ein Streit dagegen spricht sich herum."
   }
 }

@@ -61,6 +61,8 @@ public class MemoryService {
             case TONE_FRIENDLY -> "freundliche Nachricht erhalten";
             case TONE_RUDE -> "schroffe Nachricht erhalten";
             case NEGOTIATION_DEAL -> "Geschäft per Handschlag abgeschlossen";
+            case WILDLIFE_AGREEMENT -> "Wildschaden gütlich geregelt";
+            case WILDLIFE_DISPUTE -> "Streit um den Wildschaden";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };
