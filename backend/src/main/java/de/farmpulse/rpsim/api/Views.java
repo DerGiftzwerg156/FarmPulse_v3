@@ -149,4 +149,21 @@ public final class Views {
     public record NoticeView(Long id, String kind, String status, long gameTime, java.util.Map<String, Object> details,
                              String relatedType, Long relatedId) {
     }
+
+    /** TODO T-20 / T-22: recurring contract (insurance, lease, maintenance). */
+    public record ContractView(Long id, String kind, String status, CharacterRef character, String level, Integer farmlandId,
+                               long monthlyAmount, Integer coveragePercent, Long deductible, Integer termMonths,
+                               Long startedAtGameTime, Long endsAtGameTime, Long nextDueGameTime, Long offerExpiresAtGameTime,
+                               int missedPayments, boolean paymentOverdue, String endReason) {
+    }
+
+    /** TODO T-20 / T-22: simulated incident or one-off offer of a service character. */
+    public record CaseView(Long id, String kind, String status, CharacterRef character, Integer farmlandId, Double hectares,
+                           Long damageAmount, Long payoutAmount, Long costAmount, Long offerAmount, int roundsUsed,
+                           boolean measureAgreed, String reference, long gameTime, Long deadlineGameTime, String resolution) {
+    }
+
+    /** Insurance tariff preview for the current farm. */
+    public record InsuranceQuoteView(String level, long monthlyPremium, int coveragePercent, long deductible) {
+    }
 }

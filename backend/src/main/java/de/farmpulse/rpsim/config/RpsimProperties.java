@@ -1,6 +1,8 @@
 package de.farmpulse.rpsim.config;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
@@ -105,6 +107,7 @@ public class RpsimProperties {
         private Tone tone = new Tone();
         private Memory memory = new Memory();
         private Storage storage = new Storage();
+        private Insurance insurance = new Insurance();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -436,5 +439,60 @@ public class RpsimProperties {
         private double priceUnitLiters = 1000;
         /** Max points returned by the price history endpoint (down-sampling). */
         private int historyMaxPoints = 500;
+    }
+
+    /**
+     * TODO T-20: storm/hail insurance and the simulated damage events. Damages cost money (DAMAGE); an active
+     * insurance reimburses damage × coverage − deductible after the damage was reported in time. Placeholders.
+     */
+    @Getter @Setter
+    public static class Insurance {
+        /** Chance per game month (= FS25 period) that a storm damages the farm buildings, only in stormPeriods. */
+        private double stormProbabilityPerMonth = 0.15;
+        /** FS25 periods with storms (1 = March): September to February. */
+        private List<Integer> stormPeriods = new ArrayList<>(List.of(7, 8, 9, 10, 11, 12));
+        /** Storm damage as share of the value of the farm buildings (placeables). */
+        private double stormDamageShareMin = 0.005;
+        private double stormDamageShareMax = 0.03;
+        /** Chance per game month that hail hits one of the player's fields, only in hailPeriods. */
+        private double hailProbabilityPerMonth = 0.2;
+        /** FS25 periods with hail: May to August. */
+        private List<Integer> hailPeriods = new ArrayList<>(List.of(3, 4, 5, 6));
+        private double hailDamagePerHectareMin = 200;
+        private double hailDamagePerHectareMax = 900;
+        /** Game days the damage can be reported to the insurance. */
+        private double reportDeadlineDays = 5;
+        /** Game days between report and payout. */
+        private double settlementDelayDaysMin = 1;
+        private double settlementDelayDaysMax = 3;
+        /** Proactive offer of the insurance agent this many game days after the first farm export. */
+        private double firstOfferAfterDays = 3;
+        private double offerValidDays = 7;
+        /** A new offer after an uninsured damage at the earliest after this many game days. */
+        private double reofferCooldownDays = 30;
+        /** Insurance ends after this many missed premiums. */
+        private int cancelAfterMissedPayments = 2;
+        /** Insured value = farmland reference prices + building values; monthly premium = value × premiumRate. */
+        private Map<String, InsuranceLevel> levels = new LinkedHashMap<>(Map.of(
+                "BASIC", new InsuranceLevel(0.6, 2000, 0.00025, 50),
+                "COMFORT", new InsuranceLevel(0.9, 500, 0.00075, 100)));
+    }
+
+    @Getter @Setter
+    public static class InsuranceLevel {
+        private double coverageRate;
+        private long deductible;
+        private double premiumRate;
+        private long minPremium;
+
+        public InsuranceLevel() {
+        }
+
+        public InsuranceLevel(double coverageRate, long deductible, double premiumRate, long minPremium) {
+            this.coverageRate = coverageRate;
+            this.deductible = deductible;
+            this.premiumRate = premiumRate;
+            this.minPremium = minPremium;
+        }
     }
 }

@@ -34,6 +34,14 @@ public final class Requests {
     public record RerollRequest(Long characterId) {
     }
 
+    /** TODO T-20: insurance tariff to be offered (BASIC / COMFORT). */
+    public record InsuranceOfferRequest(@NotBlank String level) {
+    }
+
+    /** Channel of a report or answer (MAIL / CALL). */
+    public record ChannelRequest(Channel channel) {
+    }
+
     /** Resolution of a dashboard notice: RESEND / KEEP (rewind decision) or DISMISS. */
     public record NoticeActionRequest(@NotBlank String action) {
     }

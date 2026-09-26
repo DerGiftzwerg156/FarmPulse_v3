@@ -1,0 +1,7 @@
+Keine Leistung für Ihren Schaden
+Guten Tag,
+
+leider können wir für den Schaden ({{damageType}}) nichts erstatten: {{reason}}.
+
+Mit freundlichen Grüßen
+{{characterName}}

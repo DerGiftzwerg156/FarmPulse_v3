@@ -19,10 +19,6 @@ class RpsimPropertiesDefaultsTest {
     }
 
     @Test
-    void timeDefaultsMatch() {
-    }
-
-    @Test
     void hardCreditProfileIsStricter() {
         var f = bound.getFormulas();
         assertThat(f.getCreditHard().getApproveThreshold()).isEqualTo(85);

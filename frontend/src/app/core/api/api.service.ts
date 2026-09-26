@@ -23,6 +23,26 @@ export class ApiService {
     return this.get<M.SavegameView | null>('/savegame');
   }
 
+  // contracts & service cases (TODO T-20 / T-22)
+  contracts(): Observable<M.ContractView[]> {
+    return this.get('/contracts');
+  }
+  cases(): Observable<M.CaseView[]> {
+    return this.get('/cases');
+  }
+  insuranceQuotes(): Observable<M.InsuranceQuoteView[]> {
+    return this.get('/insurance/quotes');
+  }
+  requestInsuranceOffer(level: string): Observable<M.ContractView> {
+    return this.post('/insurance/offer', { level });
+  }
+  contractAction(id: number, action: 'accept' | 'decline' | 'cancel' | string, body: unknown = {}): Observable<M.ContractView> {
+    return this.post(`/contracts/${id}/${action}`, body);
+  }
+  caseAction(id: number, action: string, body: unknown = {}): Observable<M.CaseView> {
+    return this.post(`/cases/${id}/${action}`, body);
+  }
+
   // notices (bridge problems / decisions)
   notices(): Observable<M.NoticeView[]> {
     return this.get('/notices');

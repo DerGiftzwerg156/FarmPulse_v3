@@ -15,6 +15,7 @@ const pages: Routes = [
   { path: 'employees', loadComponent: () => import('./features/employees/employees').then((m) => m.Employees), title: 'nav.employees' },
   { path: 'farmland', loadComponent: () => import('./features/farmland/farmland').then((m) => m.Farmland), title: 'nav.farmland' },
   { path: 'market', loadComponent: () => import('./features/market/market').then((m) => m.Market), title: 'nav.market' },
+  { path: 'contracts', loadComponent: () => import('./features/contracts/contracts').then((m) => m.Contracts), title: 'nav.contracts' },
   { path: 'village', loadComponent: () => import('./features/village/village').then((m) => m.Village), title: 'nav.village' },
   { path: 'diary', loadComponent: () => import('./features/diary/diary').then((m) => m.Diary), title: 'nav.diary' },
   { path: 'settings', loadComponent: () => import('./features/settings/settings').then((m) => m.Settings), title: 'nav.settings' },

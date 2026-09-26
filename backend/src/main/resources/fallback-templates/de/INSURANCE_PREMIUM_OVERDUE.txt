@@ -1,0 +1,7 @@
+Prämie nicht bezahlt
+Guten Tag,
+
+die Versicherungsprämie von {{monthlyPremium}} € konnte nicht abgebucht werden. Solange sie offen ist, ruht Ihr Versicherungsschutz. Bitte sorgen Sie für ausreichende Deckung.
+
+Mit freundlichen Grüßen
+{{characterName}}

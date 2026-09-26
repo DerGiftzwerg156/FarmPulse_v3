@@ -1,0 +1,7 @@
+Ihr Versicherungsschutz beginnt
+Guten Tag,
+
+vielen Dank für Ihr Vertrauen. Ihre Versicherung im Tarif {{level}} ist ab sofort aktiv, die Prämie von {{monthlyPremium}} € wird zu jedem Monatsbeginn abgebucht.
+
+Mit freundlichen Grüßen
+{{characterName}}

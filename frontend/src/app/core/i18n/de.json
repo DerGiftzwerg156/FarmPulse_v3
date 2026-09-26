@@ -25,7 +25,8 @@
     "settings": "Einstellungen",
     "onboarding": "Neuer Spielstand",
     "menu": "Menü",
-    "closeMenu": "Menü schließen"
+    "closeMenu": "Menü schließen",
+    "contracts": "Verträge & Vorgänge"
   },
   "header": {
     "noSavegame": "Kein Spielstand verknüpft",
@@ -95,7 +96,15 @@
       "VILLAGER": "Dorfbewohner:in",
       "SUPPLIER": "Lieferant:in",
       "EMPLOYEE": "Mitarbeiter:in",
-      "APPLICANT": "Bewerber:in"
+      "APPLICANT": "Bewerber:in",
+      "INSURANCE_AGENT": "Versicherungsmakler:in",
+      "HUNTER": "Jagdpächter:in",
+      "VETERINARIAN": "Tierarzt/Tierärztin",
+      "LIVESTOCK_TRADER": "Viehhändler:in",
+      "BREEDING_ADVISOR": "Zuchtverband",
+      "ENERGY_SUPPLIER": "Energieversorger",
+      "WORKSHOP": "Landmaschinenwerkstatt",
+      "CONTRACTOR": "Lohnunternehmer:in"
     },
     "characterCategory": {
       "MANDATORY": "Pflichtrolle",
@@ -120,7 +129,12 @@
       "ROTATION": "Dorf",
       "ABSENCE": "Abwesenheit",
       "PLAYER_MESSAGE": "Eigene Nachricht",
-      "GENERAL": "Allgemein"
+      "GENERAL": "Allgemein",
+      "INSURANCE": "Versicherung",
+      "HUNTING": "Jagd",
+      "LIVESTOCK": "Tiere",
+      "ENERGY": "Energie",
+      "CONTRACT": "Vertrag"
     },
     "callStatus": {
       "RINGING": "Klingelt",
@@ -300,7 +314,15 @@
       "STARTING_CAPITAL_ADJUSTMENT": "Ausgleich Startkapital",
       "FARMLAND_PURCHASE": "Feldkauf",
       "FARMLAND_SALE": "Feldverkauf",
-      "OTHER": "Sonstiges"
+      "OTHER": "Sonstiges",
+      "INSURANCE_PREMIUM": "Versicherungsprämie",
+      "INSURANCE_PAYOUT": "Versicherungsleistung",
+      "DAMAGE": "Unwetterschaden",
+      "WILDLIFE_COMPENSATION": "Wildschadenersatz",
+      "VET_INVOICE": "Tierarztrechnung",
+      "LIVESTOCK_PREMIUM": "Vermittlungsprämie",
+      "LEASE_PAYMENT": "Pacht",
+      "MAINTENANCE_FEE": "Wartungsvertrag"
     },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
@@ -325,6 +347,51 @@
       "CLIMBING": "steigend",
       "FALLING": "fallend",
       "STABLE": "stabil"
+    },
+    "contractKind": {
+      "INSURANCE": "Sturm- und Hagelversicherung",
+      "LEASE": "Pacht",
+      "MAINTENANCE": "Wartungsvertrag"
+    },
+    "contractStatus": {
+      "OFFERED": "Angebot",
+      "ACTIVE": "Aktiv",
+      "DECLINED": "Abgelehnt",
+      "CANCELLED": "Gekündigt",
+      "ENDED": "Beendet"
+    },
+    "insuranceLevel": {
+      "BASIC": "Basis",
+      "COMFORT": "Komfort"
+    },
+    "caseKind": {
+      "STORM_DAMAGE": "Sturmschaden",
+      "HAIL_DAMAGE": "Hagelschaden",
+      "WILDLIFE_DAMAGE": "Wildschaden",
+      "VET_VISIT": "Tierarztbesuch",
+      "LIVESTOCK_OFFER": "Angebot Viehhandel",
+      "BREEDING_ADVICE": "Zuchtberatung",
+      "REPAIR": "Reparatur",
+      "MISSION_REFERRAL": "Vermittelter Auftrag"
+    },
+    "caseStatus": {
+      "AWAITING_PLAYER": "Wartet auf dich",
+      "SETTLED": "Erledigt",
+      "DECLINED": "Abgelehnt",
+      "EXPIRED": "Verfallen"
+    },
+    "caseResolution": {
+      "PAID": "Ausgezahlt",
+      "UNINSURED": "Nicht versichert",
+      "COVER_SUSPENDED": "Schutz ruhte (Prämie offen)",
+      "DEADLINE_MISSED": "Meldefrist verpasst"
+    },
+    "endReason": {
+      "PLAYER": "auf eigenen Wunsch",
+      "MISSED_PAYMENTS": "wegen unbezahlter Beträge",
+      "EXPIRED": "abgelaufen",
+      "REPLACED": "durch neues Angebot ersetzt",
+      "TERM_ENDED": "Laufzeit beendet"
     }
   },
   "onboarding": {
@@ -700,5 +767,31 @@
     "dismiss": "Verstanden",
     "conflictTitle": "Mods mit Überschneidungen erkannt",
     "conflictText": "Diese Mods verändern ebenfalls Preise, Kredite oder Aufträge: {mods}. FarmPulse schaltet nichts ab – Effekte können sich aber überlagern (siehe Fehlerbehebung)."
+  },
+  "contracts": {
+    "insurance": "Sturm- und Hagelversicherung",
+    "insuranceIntro": "Unwetter werden simuliert: Ein Schaden kostet immer Geld. Mit Versicherung erstattet der Makler einen Anteil abzüglich Selbstbehalt – wenn du den Schaden rechtzeitig meldest.",
+    "perMonth": "{amount} / Monat",
+    "coverage": "{percent} % Erstattung, {deductible} Selbstbehalt",
+    "requestOffer": "Angebot anfordern",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "cancel": "Kündigen",
+    "validUntil": "gültig bis {time}",
+    "nextDue": "nächste Zahlung {time}",
+    "overdue": "Zahlung offen – Schutz ruht",
+    "noInsurance": "Keine Versicherung abgeschlossen.",
+    "openCases": "Offene Vorgänge",
+    "noOpenCases": "Nichts zu tun.",
+    "history": "Verlauf",
+    "noHistory": "Noch keine Vorgänge.",
+    "reportMail": "Per Mail melden",
+    "reportCall": "Anrufen und melden",
+    "damage": "Schaden {amount}",
+    "payout": "Erstattung {amount}",
+    "deadline": "Frist bis {time}",
+    "field": "Feld {id}",
+    "contractsTitle": "Verträge",
+    "noContracts": "Keine Verträge."
   }
 }

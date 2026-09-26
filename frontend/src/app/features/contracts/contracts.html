@@ -1,0 +1,108 @@
+<section class="space-y-4">
+  @if (error(); as e) {
+    <app-page-error [error]="e" />
+  }
+  @if (actionError(); as msg) {
+    <p class="rounded-md border border-danger/40 bg-danger/10 p-2 text-[12px] text-danger" data-testid="action-error">{{ msg }}</p>
+  }
+
+  <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <app-card [title]="'contracts.insurance' | t" data-testid="insurance">
+      <p class="mb-3 text-[12px] text-muted">{{ 'contracts.insuranceIntro' | t }}</p>
+      @if (activeInsurance(); as c) {
+        <div class="rounded-md border border-accent/40 bg-bg p-3" data-testid="insurance-active" [class.ring-1]="highlightedContract() === c.id">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-display text-[13px] font-bold text-text">{{ c.level | label: 'insuranceLevel' }}</span>
+            <app-badge [variant]="c.paymentOverdue ? 'negative' : 'positive'">{{ (c.paymentOverdue ? 'contracts.overdue' : 'enums.contractStatus.ACTIVE') | t }}</app-badge>
+          </div>
+          <div class="mt-1 text-[12px] text-muted">{{ 'contracts.perMonth' | t: { amount: (c.monthlyAmount | money) } }} ·
+            {{ 'contracts.coverage' | t: { percent: c.coveragePercent, deductible: (c.deductible | money) } }}</div>
+          @if (c.nextDueGameTime !== null) {
+            <div class="mt-1 fp-label">{{ 'contracts.nextDue' | t: { time: (c.nextDueGameTime | gameTime) } }}</div>
+          }
+          <div class="mt-2"><app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'cancel')" data-testid="insurance-cancel">{{ 'contracts.cancel' | t }}</app-button></div>
+        </div>
+      } @else {
+        @for (o of insuranceOffers(); track o.id) {
+          <div class="mb-2 rounded-md border border-warn/50 bg-bg p-3" data-testid="insurance-offer" [class.ring-1]="highlightedContract() === o.id">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-display text-[13px] font-bold text-text">{{ o.level | label: 'insuranceLevel' }} · {{ 'contracts.perMonth' | t: { amount: (o.monthlyAmount | money) } }}</span>
+              <app-badge variant="warning">{{ o.status | label: 'contractStatus' }}</app-badge>
+            </div>
+            <div class="mt-1 text-[12px] text-muted">{{ 'contracts.coverage' | t: { percent: o.coveragePercent, deductible: (o.deductible | money) } }}
+              @if (o.offerExpiresAtGameTime !== null) { · {{ 'contracts.validUntil' | t: { time: (o.offerExpiresAtGameTime | gameTime) } }} }</div>
+            <div class="mt-2 flex gap-2">
+              <app-button [disabled]="busy()" (pressed)="contractAction(o, 'accept')" data-testid="offer-accept">{{ 'contracts.accept' | t }}</app-button>
+              <app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(o, 'decline')" data-testid="offer-decline">{{ 'contracts.decline' | t }}</app-button>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-sm text-muted">{{ 'contracts.noInsurance' | t }}</p>
+        }
+        <ul class="mt-3 space-y-2">
+          @for (q of quotes(); track q.level) {
+            <li class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-bg p-2" data-testid="insurance-quote">
+              <span class="text-[12px] text-text"><b>{{ q.level | label: 'insuranceLevel' }}</b> · {{ 'contracts.perMonth' | t: { amount: (q.monthlyPremium | money) } }} ·
+                {{ 'contracts.coverage' | t: { percent: q.coveragePercent, deductible: (q.deductible | money) } }}</span>
+              <app-button variant="secondary" [disabled]="busy()" (pressed)="requestOffer(q.level)" data-testid="request-offer">{{ 'contracts.requestOffer' | t }}</app-button>
+            </li>
+          }
+        </ul>
+      }
+    </app-card>
+
+    <app-card [title]="'contracts.openCases' | t" data-testid="open-cases">
+      <ul class="space-y-2">
+        @for (c of openCases(); track c.id) {
+          <li class="rounded-md border border-warn/50 bg-bg p-3" data-testid="case" [attr.data-kind]="c.kind" [class.ring-1]="highlightedCase() === c.id">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-display text-[12px] font-bold text-text">{{ c.kind | label: 'caseKind' }}@if (c.farmlandId !== null) { · {{ 'contracts.field' | t: { id: c.farmlandId } }} }</span>
+              <span class="fp-label">{{ c.character?.name }}</span>
+            </div>
+            <div class="mt-1 text-[12px] text-muted">
+              @if (c.damageAmount !== null) { {{ 'contracts.damage' | t: { amount: (c.damageAmount | money) } }} }
+              @if (c.deadlineGameTime !== null) { · {{ 'contracts.deadline' | t: { time: (c.deadlineGameTime | gameTime) } }} }
+            </div>
+            @if (isInsuranceCase(c)) {
+              <div class="mt-2 flex flex-wrap gap-2">
+                <app-button [disabled]="busy()" (pressed)="caseAction(c, 'report', { channel: 'MAIL' })" data-testid="report-mail">{{ 'contracts.reportMail' | t }}</app-button>
+                <app-button variant="secondary" [disabled]="busy()" (pressed)="caseAction(c, 'report', { channel: 'CALL' })" data-testid="report-call">{{ 'contracts.reportCall' | t }}</app-button>
+              </div>
+            }
+          </li>
+        } @empty {
+          <li class="text-sm text-muted">{{ 'contracts.noOpenCases' | t }}</li>
+        }
+      </ul>
+    </app-card>
+  </div>
+
+  <app-card [title]="'contracts.contractsTitle' | t" data-testid="other-contracts">
+    <ul class="space-y-2">
+      @for (c of otherContracts(); track c.id) {
+        <li class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-bg p-2" data-testid="contract" [attr.data-kind]="c.kind">
+          <span class="text-[12px] text-text">{{ c.kind | label: 'contractKind' }}@if (c.farmlandId !== null) { · {{ 'contracts.field' | t: { id: c.farmlandId } }} } ·
+            {{ 'contracts.perMonth' | t: { amount: (c.monthlyAmount | money) } }}</span>
+          <app-badge [variant]="badge(c.status)">{{ c.status | label: 'contractStatus' }}</app-badge>
+        </li>
+      } @empty {
+        <li class="text-sm text-muted">{{ 'contracts.noContracts' | t }}</li>
+      }
+    </ul>
+  </app-card>
+
+  <app-card [title]="'contracts.history' | t" data-testid="case-history">
+    <ul class="space-y-1">
+      @for (c of closedCases(); track c.id) {
+        <li class="flex flex-wrap items-center justify-between gap-2 border-t border-border py-1.5 text-[12px]" data-testid="closed-case">
+          <span class="text-text">{{ c.kind | label: 'caseKind' }}@if (c.farmlandId !== null) { · {{ 'contracts.field' | t: { id: c.farmlandId } }} }
+            @if (c.damageAmount !== null) { · {{ 'contracts.damage' | t: { amount: (c.damageAmount | money) } }} }
+            @if (c.payoutAmount !== null) { · {{ 'contracts.payout' | t: { amount: (c.payoutAmount | money) } }} }</span>
+          <span class="fp-label">{{ c.resolution | label: 'caseResolution' }} · {{ c.gameTime | gameTime }}</span>
+        </li>
+      } @empty {
+        <li class="text-sm text-muted">{{ 'contracts.noHistory' | t }}</li>
+      }
+    </ul>
+  </app-card>
+</section>

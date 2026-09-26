@@ -295,3 +295,30 @@ rpsim:
     storage:
       price-unit-liters: 1000
       history-max-points: 500
+    insurance:                    # TODO T-20: storm/hail insurance (placeholders)
+      storm-probability-per-month: 0.15
+      storm-periods: [7, 8, 9, 10, 11, 12]
+      storm-damage-share-min: 0.005
+      storm-damage-share-max: 0.03
+      hail-probability-per-month: 0.2
+      hail-periods: [3, 4, 5, 6]
+      hail-damage-per-hectare-min: 200
+      hail-damage-per-hectare-max: 900
+      report-deadline-days: 5
+      settlement-delay-days-min: 1
+      settlement-delay-days-max: 3
+      first-offer-after-days: 3
+      offer-valid-days: 7
+      reoffer-cooldown-days: 30
+      cancel-after-missed-payments: 2
+      levels:
+        BASIC:
+          coverage-rate: 0.6
+          deductible: 2000
+          premium-rate: 0.00025
+          min-premium: 50
+        COMFORT:
+          coverage-rate: 0.9
+          deductible: 500
+          premium-rate: 0.00075
+          min-premium: 100

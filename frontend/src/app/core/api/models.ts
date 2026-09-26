@@ -25,6 +25,54 @@ export interface CalendarView {
   year: number | null;
 }
 
+/** Recurring contract (TODO T-20 insurance, T-22 lease / maintenance). */
+export interface ContractView {
+  id: number;
+  kind: 'INSURANCE' | 'LEASE' | 'MAINTENANCE' | string;
+  status: 'OFFERED' | 'ACTIVE' | 'DECLINED' | 'CANCELLED' | 'ENDED' | string;
+  character: CharacterRef | null;
+  level: string | null;
+  farmlandId: number | null;
+  monthlyAmount: number;
+  coveragePercent: number | null;
+  deductible: number | null;
+  termMonths: number | null;
+  startedAtGameTime: number | null;
+  endsAtGameTime: number | null;
+  nextDueGameTime: number | null;
+  offerExpiresAtGameTime: number | null;
+  missedPayments: number;
+  paymentOverdue: boolean;
+  endReason: string | null;
+}
+
+/** Simulated incident or one-off offer of a service character (TODO T-20 / T-22). */
+export interface CaseView {
+  id: number;
+  kind: string;
+  status: 'AWAITING_PLAYER' | 'SETTLED' | 'DECLINED' | 'EXPIRED' | string;
+  character: CharacterRef | null;
+  farmlandId: number | null;
+  hectares: number | null;
+  damageAmount: number | null;
+  payoutAmount: number | null;
+  costAmount: number | null;
+  offerAmount: number | null;
+  roundsUsed: number;
+  measureAgreed: boolean;
+  reference: string | null;
+  gameTime: number;
+  deadlineGameTime: number | null;
+  resolution: string | null;
+}
+
+export interface InsuranceQuoteView {
+  level: string;
+  monthlyPremium: number;
+  coveragePercent: number;
+  deductible: number;
+}
+
 /** Dashboard notice of the fact layer (TODO T-02 rewind, T-03 bookings the game did not execute). */
 export interface NoticeView {
   id: number;

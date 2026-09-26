@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.farmpulse.rpsim.bridge.BridgeEvents;
+import de.farmpulse.rpsim.contract.ContractBillingService;
 import de.farmpulse.rpsim.credit.LoanService;
 import de.farmpulse.rpsim.domain.InstructionType;
 import de.farmpulse.rpsim.domain.NoticeKind;
@@ -45,17 +46,19 @@ public class FailedInstructionService {
     private final PayrollScheduler payroll;
     private final NegotiationEngine negotiations;
     private final NoticeService notices;
+    private final ContractBillingService billing;
     private final JsonMapper json;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
-                                    JsonMapper json) {
+                                    ContractBillingService billing, JsonMapper json) {
         this.outbox = outbox;
         this.savegames = savegames;
         this.loans = loans;
         this.payroll = payroll;
         this.negotiations = negotiations;
         this.notices = notices;
+        this.billing = billing;
         this.json = json;
     }
 
@@ -86,6 +89,8 @@ public class FailedInstructionService {
             handled = loans.onBookingFailed(sg, relatedId, ins.getInstructionId(), reason);
         } else if (SatisfactionService.RELATED.equals(related) && relatedId != null && "SALARY_PAYMENT".equals(reason)) {
             handled = payroll.onSalaryFailed(relatedId);
+        } else if (ContractBillingService.RELATED.equals(related) && relatedId != null) {
+            handled = billing.onPaymentFailed(relatedId);
         } else if (NegotiationEngine.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.FARMLAND_TRANSFER) {
             handled = negotiations.onDealFailed(sg, relatedId);

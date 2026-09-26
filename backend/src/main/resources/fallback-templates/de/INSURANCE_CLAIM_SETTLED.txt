@@ -1,0 +1,7 @@
+Ihr Schaden ist reguliert
+Guten Tag,
+
+wir haben Ihren Schaden über {{damageAmount}} € aufgenommen. Wir erstatten {{coveragePercent}} % abzüglich {{deductible}} € Selbstbehalt, also {{payout}} €. Die Auszahlung erfolgt in etwa {{payoutInDays}} Tagen.
+
+Mit freundlichen Grüßen
+{{characterName}}

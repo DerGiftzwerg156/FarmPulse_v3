@@ -1,0 +1,144 @@
+package de.farmpulse.rpsim.api;
+
+import java.util.List;
+
+import de.farmpulse.rpsim.api.Requests.ChannelRequest;
+import de.farmpulse.rpsim.api.Requests.InsuranceOfferRequest;
+import de.farmpulse.rpsim.api.Views.CaseView;
+import de.farmpulse.rpsim.api.Views.ContractView;
+import de.farmpulse.rpsim.api.Views.InsuranceQuoteView;
+import de.farmpulse.rpsim.common.BusinessRuleException;
+import de.farmpulse.rpsim.common.NotFoundException;
+import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.contract.InsuranceService;
+import de.farmpulse.rpsim.domain.Contract;
+import de.farmpulse.rpsim.domain.ContractKind;
+import de.farmpulse.rpsim.domain.Savegame;
+import de.farmpulse.rpsim.domain.ServiceCase;
+import de.farmpulse.rpsim.repository.ContractRepository;
+import de.farmpulse.rpsim.repository.ServiceCaseRepository;
+import de.farmpulse.rpsim.savegame.SavegameContext;
+import jakarta.validation.Valid;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+/** TODO T-20 / T-22: contracts (insurance, lease, maintenance) and service cases of the service characters. */
+@RestController
+public class ContractController {
+
+    private final SavegameContext context;
+    private final ContractRepository contracts;
+    private final ServiceCaseRepository cases;
+    private final InsuranceService insurance;
+    private final ApiMapper mapper;
+    private final RpsimProperties props;
+
+    public ContractController(SavegameContext context, ContractRepository contracts, ServiceCaseRepository cases,
+                              InsuranceService insurance, ApiMapper mapper, RpsimProperties props) {
+        this.context = context;
+        this.contracts = contracts;
+        this.cases = cases;
+        this.insurance = insurance;
+        this.mapper = mapper;
+        this.props = props;
+    }
+
+    @GetMapping("/api/contracts")
+    @Transactional(readOnly = true)
+    public List<ContractView> contracts() {
+        return context.findActive().map(sg -> contracts.findBySavegameOrderByIdDesc(sg).stream().map(this::view).toList())
+                .orElse(List.of());
+    }
+
+    @GetMapping("/api/cases")
+    @Transactional(readOnly = true)
+    public List<CaseView> cases() {
+        return context.findActive().map(sg -> cases.findBySavegameOrderByIdDesc(sg).stream().map(this::view).toList())
+                .orElse(List.of());
+    }
+
+    @GetMapping("/api/insurance/quotes")
+    @Transactional(readOnly = true)
+    public List<InsuranceQuoteView> quotes() {
+        Savegame sg = context.requireActive();
+        return props.getFormulas().getInsurance().getLevels().entrySet().stream()
+                .sorted(java.util.Map.Entry.comparingByKey())
+                .map(e -> new InsuranceQuoteView(e.getKey(), insurance.monthlyPremium(sg, e.getKey()),
+                        (int) Math.round(e.getValue().getCoverageRate() * 100), e.getValue().getDeductible()))
+                .toList();
+    }
+
+    @PostMapping("/api/insurance/offer")
+    @Transactional
+    public ContractView requestInsuranceOffer(@Valid @RequestBody InsuranceOfferRequest r) {
+        return view(insurance.offer(context.requireActive(), r.level()));
+    }
+
+    @PostMapping("/api/contracts/{id}/accept")
+    @Transactional
+    public ContractView accept(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return view(switch (contract(sg, id).getKind()) {
+            case INSURANCE -> insurance.accept(sg, id);
+            default -> throw unsupported();
+        });
+    }
+
+    @PostMapping("/api/contracts/{id}/decline")
+    @Transactional
+    public ContractView decline(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return view(switch (contract(sg, id).getKind()) {
+            case INSURANCE -> insurance.decline(sg, id);
+            default -> throw unsupported();
+        });
+    }
+
+    @PostMapping("/api/contracts/{id}/cancel")
+    @Transactional
+    public ContractView cancel(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return view(switch (contract(sg, id).getKind()) {
+            case INSURANCE -> insurance.cancel(sg, id);
+            default -> throw unsupported();
+        });
+    }
+
+    @PostMapping("/api/cases/{id}/report")
+    @Transactional
+    public CaseView report(@PathVariable Long id, @RequestBody(required = false) ChannelRequest r) {
+        return view(insurance.report(context.requireActive(), id, r == null ? null : r.channel()));
+    }
+
+    private static BusinessRuleException unsupported() {
+        return new BusinessRuleException("UNSUPPORTED_ACTION", "Diese Aktion ist für diesen Vertrag nicht möglich.");
+    }
+
+    private Contract contract(Savegame sg, Long id) {
+        return contracts.findById(id).filter(c -> c.getSavegame().getId().equals(sg.getId()))
+                .orElseThrow(() -> new NotFoundException("contract " + id));
+    }
+
+    ContractView view(Contract c) {
+        return new ContractView(c.getId(), c.getKind().name(), c.getStatus().name(), mapper.ref(c.getCharacter()), c.getLevel(),
+                c.getFarmlandId(), c.getMonthlyAmount(),
+                c.getCoverageRate() == null ? null : (int) Math.round(c.getCoverageRate() * 100), c.getDeductible(),
+                c.getTermMonths(), c.getStartedAtGameTime(), c.getEndsAtGameTime(), c.getNextDueGameTime(),
+                c.getOfferExpiresAtGameTime(), c.getMissedPayments(), c.isPaymentOverdue(), c.getEndReason());
+    }
+
+    CaseView view(ServiceCase s) {
+        return new CaseView(s.getId(), s.getKind().name(), s.getStatus().name(), mapper.ref(s.getCharacter()), s.getFarmlandId(),
+                s.getHectares(), s.getDamageAmount(), s.getPayoutAmount(), s.getCostAmount(), s.getOfferAmount(),
+                s.getRoundsUsed(), s.isMeasureAgreed(), s.getReference(), s.getGameTime(), s.getDeadlineGameTime(),
+                s.getResolution());
+    }
+
+    static boolean is(Contract c, ContractKind k) {
+        return c.getKind() == k;
+    }
+}

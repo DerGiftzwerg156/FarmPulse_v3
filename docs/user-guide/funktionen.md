@@ -93,6 +93,17 @@ Verkaufsstelle über 7, 30, 90 Tage oder den ganzen Spielstand (mit *Tabelle* au
 denen du teilnehmen kannst. Ein volles Silo zählt übrigens bei der Bank als Vermögen, und Marktereignisse treffen
 bevorzugt die Früchte, die du wirklich lagerst.
 
+## Verträge & Vorgänge
+
+Neue Ansprechpartner stellen sich vor, sobald es für sie etwas zu tun gibt. Ihre Verträge und offenen Vorgänge
+findest du unter **Verträge & Vorgänge**.
+
+- **Versicherungsmakler:in – Sturm- und Hagelversicherung.** Unwetter werden simuliert: Hagel trifft im Frühjahr
+  und Sommer eines deiner Felder, Stürme im Herbst und Winter deine Gebäude. Ein Schaden kostet immer Geld. Mit
+  Versicherung (Tarif *Basis* oder *Komfort*, Prämie zu jedem Monatsbeginn) meldest du den Schaden per Mail oder
+  Anruf innerhalb der Frist und bekommst einen Teil erstattet (abzüglich Selbstbehalt). Ist eine Prämie offen, ruht
+  der Schutz; nach zwei offenen Prämien endet der Vertrag.
+
 ## Dorf & Charaktere
 
 ![Dorf](../screenshots/16-dorf-charakter.png)

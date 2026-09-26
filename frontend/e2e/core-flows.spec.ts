@@ -174,6 +174,7 @@ test.describe.serial('FarmPulse core flows', () => {
     await expect(page.getByTestId('chart-line').first()).toBeAttached(); // a flat series has a zero-height box
     await page.getByTestId('range-0').locator('button').click();
     await page.getByTestId('chart-toggle').click();
-    expect(await page.getByTestId('chart-table').locator('tbody tr').count()).toBeGreaterThan(2);
+    // the table re-renders after the range reload - wait for it instead of counting once
+    await expect.poll(() => page.getByTestId('chart-table').locator('tbody tr').count()).toBeGreaterThan(2);
   });
 });

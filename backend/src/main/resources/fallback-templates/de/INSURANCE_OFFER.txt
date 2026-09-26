@@ -1,0 +1,7 @@
+Ihr Angebot: Sturm- und Hagelversicherung
+Guten Tag,
+
+gerne biete ich Ihnen unsere Sturm- und Hagelversicherung im Tarif {{level}} an: {{monthlyPremium}} € Prämie pro Monat, wir erstatten {{coveragePercent}} % eines Schadens abzüglich {{deductible}} € Selbstbehalt. Das Angebot gilt {{validDays}} Tage – Sie können es unter „Verträge“ annehmen.
+
+Mit freundlichen Grüßen
+{{characterName}}

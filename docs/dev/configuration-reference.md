@@ -358,6 +358,39 @@ period is assumed (FS25 default).
 | `rpsim.formulas.storage.price-unit-liters` | `1000` | Price unit of the exported prices (€ per 1000 l). | Warenbestand-Bewertung |
 | `rpsim.formulas.storage.history-max-points` | `500` | Max. points per series of `GET /api/prices/history` (down-sampling). | Silo-Warenbestand |
 
+## `rpsim.formulas.insurance` (TODO T-20)
+
+Storms and hail are simulated (no game event is read). A damage always costs money (`DAMAGE`); with an active,
+paid-up insurance the player reports it within the deadline and receives `round(damage × coverage-rate) − deductible`
+(`INSURANCE_PAYOUT`). Monthly premium = insured value × `premium-rate` (at least `min-premium`); insured value =
+reference prices of the own fields + value of the own buildings.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.insurance.storm-probability-per-month` | `0.15` | Chance per game month (FS25 period) of a storm damage, only in `storm-periods`. | TODO T-20 |
+| `rpsim.formulas.insurance.storm-periods` | `[7, 8, 9, 10, 11, 12]` | FS25 periods with storms (1 = March): September to February. | TODO T-20 |
+| `rpsim.formulas.insurance.storm-damage-share-min` | `0.005` | Storm damage as share of the building value (lower bound). | TODO T-20 |
+| `rpsim.formulas.insurance.storm-damage-share-max` | `0.03` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.insurance.hail-probability-per-month` | `0.2` | Chance per game month of hail on one own field, only in `hail-periods`. | TODO T-20 |
+| `rpsim.formulas.insurance.hail-periods` | `[3, 4, 5, 6]` | FS25 periods with hail: May to August. | TODO T-20 |
+| `rpsim.formulas.insurance.hail-damage-per-hectare-min` | `200` | Hail damage in € per hectare of the hit field (lower bound). | TODO T-20 |
+| `rpsim.formulas.insurance.hail-damage-per-hectare-max` | `900` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.insurance.report-deadline-days` | `5` | Game days to report a damage to the insurance; afterwards no payout. | TODO T-20 |
+| `rpsim.formulas.insurance.settlement-delay-days-min` | `1` | Game days between report and payout (lower bound). | TODO T-20 |
+| `rpsim.formulas.insurance.settlement-delay-days-max` | `3` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.insurance.first-offer-after-days` | `3` | Proactive offer of the insurance agent this many game days after the first farm export. | TODO T-20 |
+| `rpsim.formulas.insurance.offer-valid-days` | `7` | Validity of an insurance offer (game days). | TODO T-20 |
+| `rpsim.formulas.insurance.reoffer-cooldown-days` | `30` | After an uninsured damage the agent offers again at most once per this many game days. | TODO T-20 |
+| `rpsim.formulas.insurance.cancel-after-missed-payments` | `2` | The insurance ends after this many unpaid premiums; while a premium is open the cover is suspended. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.BASIC.coverage-rate` | `0.6` | Tariff *Basis*: reimbursed share of a damage. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.BASIC.deductible` | `2000` | Tariff *Basis*: deductible per damage (€). | TODO T-20 |
+| `rpsim.formulas.insurance.levels.BASIC.premium-rate` | `0.00025` | Tariff *Basis*: monthly premium per € of insured value. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.BASIC.min-premium` | `50` | Tariff *Basis*: minimum monthly premium (€). | TODO T-20 |
+| `rpsim.formulas.insurance.levels.COMFORT.coverage-rate` | `0.9` | Tariff *Komfort*: reimbursed share. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.COMFORT.deductible` | `500` | Tariff *Komfort*: deductible (€). | TODO T-20 |
+| `rpsim.formulas.insurance.levels.COMFORT.premium-rate` | `0.00075` | Tariff *Komfort*: monthly premium per € of insured value. | TODO T-20 |
+| `rpsim.formulas.insurance.levels.COMFORT.min-premium` | `100` | Tariff *Komfort*: minimum monthly premium (€). | TODO T-20 |
+
 ## Profiles
 
 | Profile | Purpose | Overrides |
