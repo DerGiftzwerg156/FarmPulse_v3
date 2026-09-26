@@ -43,24 +43,37 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 
 ```
 Dokumente/My Games/FarmingSimulator2025/modSettings/FS25_RPSim/
-  rpsim_config.json          (optional, eigene Einstellungen)
+  rpsim_config.xml           (optional, eigene Einstellungen)
   export/
     farm_facts.json          (Mod schreibt, ~60 s)
     market_context.json      (Mod schreibt, beim Spielstart + nach FARMLAND_TRANSFER + bei Änderung)
   import/
-    instructions.json        (Backend schreibt)
+    instructions.json        (Backend schreibt, lesbare Fassung für Tools/Simulator)
+    instructions.xml         (Backend schreibt, dieselben Daten - diese Datei liest der Mod)
     instructions_ack.json    (Mod schreibt)
 ```
 
 Jede Datei hat genau einen Schreiber. Jede Datei trägt die `savegameId` des aktiven Spielstands;
 Instruktionen für einen anderen Spielstand werden verworfen (mit Warnung im `log.txt`).
 
-## Konfiguration (`rpsim_config.json`)
+FS25 erlaubt `io.open` nur zum Schreiben. Alles, was der Mod **liest**, ist deshalb eine XML-Datei, die das
+JSON-Dokument in `<rpsim><json>…</json></rpsim>` einpackt und über die XML-API des Spiels gelesen wird.
+
+## Konfiguration (`rpsim_config.xml`)
+
+Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.json` kann FS25 nicht lesen):
+
+```xml
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<rpsim>
+    <json>{ "exportIntervalMs": 30000, "importIntervalMs": 5000 }</json>
+</rpsim>
+```
 
 | Schlüssel | Standard | Bedeutung |
 | --- | --- | --- |
 | `exportIntervalMs` | 60000 | Export-Intervall `farm_facts.json` (Echtzeit-ms) |
-| `importIntervalMs` | 5000 | Abfrage-Intervall `instructions.json` |
+| `importIntervalMs` | 5000 | Abfrage-Intervall `instructions.xml` |
 | `processedRetentionGameDays` | 30 | Aufbewahrung erledigter Instruktionen (Spieltage) |
 | `startFallbackMs` | 30000 | Sicherheitsnetz: Start der Bridge nach so vielen ms, falls der Spielstart-Hook nicht feuert |
 | `atomicWriteMode` | `direct` | `direct` (Standard, Datei direkt schreiben). `rename`, `marker`, `auto` brauchen das `os`-Modul, das es in FS25 nicht gibt – nur für Tests |

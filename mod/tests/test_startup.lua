@@ -106,4 +106,32 @@ function T.TestStartup:testLoadMapUsesUserProfilePathAndLogsIt()
     RPSim.bridge = nil
 end
 
+function T.TestStartup:testLoadMapReadsTheConfigFromTheXmlWrapper()
+    helpers.fakeGame()
+    local fs = helpers.fakeFs()
+    helpers.loadGameModules()
+    getUserProfileAppPath = function() return "/profile/" end
+    Mission00 = { onStartMission = function() end }
+    fs.files["/profile/modSettings/FS25_RPSim/rpsim_config.xml"] = helpers.xmlPayload('{"exportIntervalMs": 1234}')
+    RPSim:loadMap(nil)
+    lu.assertEquals(RPSim.bridge.cfg.exportIntervalMs, 1234)
+    getUserProfileAppPath = nil
+    Mission00 = nil
+    RPSim.bridge = nil
+end
+
+function T.TestStartup:testLoadMapErrorNeverBlocksTheSavegameLoad()
+    helpers.fakeGame()
+    helpers.fakeFs()
+    helpers.loadGameModules()
+    local new = RPSimGameAdapter.new
+    RPSimGameAdapter.new = function() error("engine exploded", 0) end
+    helpers.logs = {}
+    RPSim:loadMap(nil)
+    lu.assertNil(RPSim.bridge)
+    lu.assertEquals(helpers.countLogs("error", "Start failed, RPSim is inactive for this session: engine exploded"), 1)
+    RPSim:update(16)
+    RPSimGameAdapter.new = new
+end
+
 return T

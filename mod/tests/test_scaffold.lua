@@ -14,7 +14,8 @@ function T.TestScaffold:testBridgePaths()
     local p = RPSimBridgePaths.new("/docs/modSettings")
     lu.assertEquals(p.farmFacts, "/docs/modSettings/FS25_RPSim/export/farm_facts.json")
     lu.assertEquals(p.marketContext, "/docs/modSettings/FS25_RPSim/export/market_context.json")
-    lu.assertEquals(p.instructions, "/docs/modSettings/FS25_RPSim/import/instructions.json")
+    lu.assertEquals(p.instructions, "/docs/modSettings/FS25_RPSim/import/instructions.xml")
+    lu.assertEquals(p.configFile, "/docs/modSettings/FS25_RPSim/rpsim_config.xml")
     lu.assertEquals(p.instructionsAck, "/docs/modSettings/FS25_RPSim/import/instructions_ack.json")
 end
 

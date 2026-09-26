@@ -82,6 +82,14 @@ function helpers.fakeFs(opts)
     function backend.exists(path)
         return fs.files[path] ~= nil or fs.dirs[path] == true
     end
+    -- Mimics the engine XML API for the wrapper files <rpsim><json>...</json></rpsim>.
+    function backend.readXmlText(path, key)
+        local xml = fs.files[path]
+        if xml == nil then
+            return nil, "no such file"
+        end
+        return helpers.xmlElementText(xml, key)
+    end
     fs.backend = backend
     RPSimFileIO.backend = backend
     return fs
@@ -164,8 +172,31 @@ function helpers.newBridge(opts)
     return bridge, fs, adapter, paths
 end
 
+local XML_ENTITIES = { lt = "<", gt = ">", amp = "&", quot = '"', apos = "'" }
+
+--- Wraps text like the backend does: <rpsim><json>escaped text</json></rpsim>.
+function helpers.xmlPayload(text)
+    local escaped = text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+    return '<?xml version="1.0" encoding="utf-8" standalone="no"?>\n<rpsim>\n  <json>' .. escaped
+        .. "</json>\n</rpsim>\n"
+end
+
+--- Text of element "root.child" (one level, as used by RPSimFileIO.PAYLOAD_KEY); nil when absent.
+function helpers.xmlElementText(xml, key)
+    local root, child = key:match("^([%w_]+)%.([%w_]+)$")
+    local inner = xml:match("<" .. root .. ">(.*)</" .. root .. ">")
+    if inner == nil then
+        return nil, "cannot load XML"
+    end
+    local text = inner:match("<" .. child .. ">(.-)</" .. child .. ">")
+    if text == nil then
+        return nil
+    end
+    return (text:gsub("&(%a+);", XML_ENTITIES))
+end
+
 function helpers.writeInstructions(fs, paths, doc)
-    fs.files[paths.instructions] = RPSimJson.encode(doc)
+    fs.files[paths.instructions] = helpers.xmlPayload(RPSimJson.encode(doc))
 end
 
 --- Loads the FS25-facing files (GameAdapter.lua, RPSim.lua) against the fake engine globals of fakeGame().

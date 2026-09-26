@@ -2,9 +2,15 @@
 -- Every bridge file has exactly one writer. The FS25 Lua sandbox has no `os` module (no os.rename/os.remove,
 -- see FS25_UsedPlus AI reference pitfalls/what-doesnt-work.md), so the default mode writes the file directly;
 -- readers (backend) validate every JSON document and retry partially written files on the next cycle.
+-- The sandbox also refuses io.open in read mode ("io.open, only write mode ('w') is allowed" - it returns an
+-- object without :read). Files the mod has to READ (instructions, config) are therefore XML files that wrap the
+-- JSON text in one element and are read with the engine's XML API, see RPSimFileIO.readPayload.
 RPSimFileIO = {}
 
--- luacheck: globals createFolder fileExists
+-- Root element and payload element of the XML wrapper files: <rpsim><json>{...}</json></rpsim>.
+RPSimFileIO.PAYLOAD_KEY = "rpsim.json"
+
+-- luacheck: globals createFolder fileExists XMLFile loadXMLFile getXMLString delete
 RPSimFileIO.backend = {
     open = function(path, mode) return io.open(path, mode) end,
     rename = function(from, to)
@@ -37,20 +43,69 @@ RPSimFileIO.backend = {
         end
         return false
     end,
+    -- Returns the text of element `key` of the XML file at `path`, or nil, err (missing file/element).
+    readXmlText = function(path, key)
+        if XMLFile ~= nil and XMLFile.loadIfExists ~= nil then
+            local xml = XMLFile.loadIfExists("RPSimPayload", path)
+            if xml == nil then
+                return nil, "no such file"
+            end
+            local text = xml:getString(key)
+            xml:delete()
+            return text, nil
+        end
+        if loadXMLFile ~= nil and getXMLString ~= nil then
+            if fileExists ~= nil and not fileExists(path) then
+                return nil, "no such file"
+            end
+            local id = loadXMLFile("RPSimPayload", path)
+            if id == nil or id == 0 then
+                return nil, "cannot load XML"
+            end
+            local text = getXMLString(id, key)
+            delete(id)
+            return text, nil
+        end
+        return nil, "XML API unavailable"
+    end,
 }
 
---- Reads a whole file; returns content or nil, err. Never raises.
-function RPSimFileIO.read(path)
-    local ok, f, err = pcall(RPSimFileIO.backend.open, path, "r")
+--- Reads the JSON payload of an XML wrapper file (<rpsim><json>...</json></rpsim>).
+-- Returns the text or nil, err. Never raises. This is the only way the mod reads files inside FS25.
+function RPSimFileIO.readPayload(path)
+    local ok, text, err = pcall(RPSimFileIO.backend.readXmlText, path, RPSimFileIO.PAYLOAD_KEY)
     if not ok then
-        return nil, tostring(f)
+        return nil, tostring(text)
     end
-    if f == nil then
-        return nil, err or "cannot open"
+    if text == nil then
+        return nil, err or "no payload"
     end
-    local content = f:read("*a")
-    f:close()
-    return content, nil
+    return text, nil
+end
+
+--- Reads a whole plain-text file; returns content or nil, err. Never raises.
+-- Not usable inside FS25 (read mode is blocked, see header) - tooling/tests only; the mod uses readPayload.
+function RPSimFileIO.read(path)
+    local ok, content, err = pcall(function()
+        local f, openErr = RPSimFileIO.backend.open(path, "r")
+        if f == nil then
+            return nil, openErr or "cannot open"
+        end
+        if type(f.read) ~= "function" then
+            -- FS25 hands out a write-only stand-in object for read mode.
+            if type(f.close) == "function" then
+                f:close()
+            end
+            return nil, "read mode not supported"
+        end
+        local text = f:read("*a")
+        f:close()
+        return text, nil
+    end)
+    if not ok then
+        return nil, tostring(content)
+    end
+    return content, err
 end
 
 local function writePlain(path, content)

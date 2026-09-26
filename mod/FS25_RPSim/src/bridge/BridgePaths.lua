@@ -32,8 +32,9 @@ function RPSimBridgePaths.new(modSettingsDir)
         importDir = base .. "import/",
         farmFacts = base .. "export/farm_facts.json",
         marketContext = base .. "export/market_context.json",
-        instructions = base .. "import/instructions.json",
+        -- Files the mod reads are XML wrappers around the JSON text: FS25 blocks io.open in read mode.
+        instructions = base .. "import/instructions.xml",
         instructionsAck = base .. "import/instructions_ack.json",
-        configFile = base .. "rpsim_config.json",
+        configFile = base .. "rpsim_config.xml",
     }
 end
