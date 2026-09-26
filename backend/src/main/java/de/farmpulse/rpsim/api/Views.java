@@ -78,7 +78,7 @@ public final class Views {
     }
 
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,
-                               boolean inNegotiation, boolean tradeable) {
+                               boolean inNegotiation, boolean tradeable, boolean leased) {
     }
 
     public record OfferView(int round, String offeredBy, String characterName, long amount, String result, Long counterAmount,
@@ -155,7 +155,8 @@ public final class Views {
     public record ContractView(Long id, String kind, String status, CharacterRef character, String level, Integer farmlandId,
                                long monthlyAmount, Integer coveragePercent, Long deductible, Integer termMonths,
                                Long startedAtGameTime, Long endsAtGameTime, Long nextDueGameTime, Long offerExpiresAtGameTime,
-                               int missedPayments, boolean paymentOverdue, String endReason) {
+                               int missedPayments, boolean paymentOverdue, String endReason, Long renewalAmount,
+                               Long purchasePrice) {
     }
 
     /** TODO T-20 / T-22: simulated incident or one-off offer of a service character. */

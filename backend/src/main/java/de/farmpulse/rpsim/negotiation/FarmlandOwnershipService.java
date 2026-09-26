@@ -131,6 +131,9 @@ public class FarmlandOwnershipService {
                 continue;
             }
             boolean ownedInGame = playerOwned.contains(o.getFarmlandId());
+            if (o.isLeasedToPlayer()) {
+                continue; // T-22: leased - the game shows the player farm, the tool keeps the owner character
+            }
             if (ownedInGame && o.getOwnerType() != OwnerType.PLAYER) {
                 // vanilla purchase in the field menu -> follow up silently
                 o.setOwnerType(OwnerType.PLAYER);

@@ -122,6 +122,12 @@ findest du unter **Verträge & Vorgänge**.
   Silage, Gärreste oder Methan an (Biogas-Anlage), bietet der Energieversorger Festpreis-Kontrakte an (du entscheidest
   unter **Warenbestand & Preise**, ob du mitmachst) oder kündigt Preisschwankungen an dieser Stelle an. Gibt es keine
   solche Verkaufsstelle, meldet er sich nicht.
+- **Pacht.** Felder, die jemandem aus dem Dorf gehören, kannst du auf der Feldseite mit **Pacht anfragen** pachten
+  statt kaufen. Sagt der Besitzer zu, nimmst du das Angebot unter **Verträge** an: Im Spiel gehört dir das Feld dann
+  für die Laufzeit (du kannst es ganz normal bewirtschaften), die Pacht wird zu jedem Monatsbeginn abgebucht. Einen
+  Monat vor dem Ende meldet sich der Besitzer mit einer Verlängerung zum neuen Pachtpreis und – wenn er verkaufen
+  würde – einem Kaufangebot. Antwortest du nicht, geht das Feld zum Ende automatisch zurück. Bleibt die Pacht zweimal
+  offen, nimmt er das Feld vorzeitig zurück.
 
 ## Dorf & Charaktere
 

@@ -99,4 +99,19 @@ describe('Contracts', () => {
     expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Läuft');
     expect(el.querySelector('[data-testid="case-accept"]')).toBeNull();
   });
+
+  it('shows a lease with renewal and purchase offer', () => {
+    const lease = contract({ id: 5, kind: 'LEASE', status: 'ACTIVE', level: null, farmlandId: 13, monthlyAmount: 300,
+      coveragePercent: null, deductible: null, termMonths: 12, endsAtGameTime: 40 * DAY, offerExpiresAtGameTime: null,
+      renewalAmount: 320, purchasePrice: 75600 });
+    const { fixture, http, el } = setup([lease], []);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    const row = el.querySelector('[data-testid="contract"][data-kind="LEASE"]')!;
+    expect(row.textContent).toContain('Feld 13');
+    expect(el.querySelector('[data-testid="lease-renew"]')?.textContent).toContain('320');
+    expect(el.querySelector('[data-testid="lease-buy"]')?.textContent).toContain('75.600');
+    (el.querySelector('[data-testid="lease-buy"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/contracts/5/buy').flush({ ...lease, status: 'ENDED', endReason: 'PURCHASED' });
+  });
 });

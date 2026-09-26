@@ -1,0 +1,7 @@
+Feld {{farmlandId}} bleibt bei mir
+Hallo,
+
+danke für die Anfrage, aber Feld {{farmlandId}} möchte ich im Moment nicht verpachten.
+
+Viele Grüße
+{{characterName}}

@@ -357,6 +357,18 @@ rpsim:
       trader-answer-days: 5
       trader-deadline-months: 1
       breeding-advice-every-months: 6
+    lease:                        # TODO T-22: lease of NPC fields (placeholders)
+      annual-rent-share: 0.05
+      trust-influence: 0.1
+      accept-probability: 0.8
+      accept-trust-influence: 0.2
+      term-months: 12
+      offer-valid-days: 7
+      warning-months: 1
+      renewal-factor-min: 0.95
+      renewal-factor-max: 1.1
+      purchase-factor: 1.05
+      cancel-after-missed-payments: 2
     energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
       fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
       probability-per-month: 0.35

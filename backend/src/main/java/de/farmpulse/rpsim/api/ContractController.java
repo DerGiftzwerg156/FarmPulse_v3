@@ -13,6 +13,7 @@ import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.contract.HuntingService;
 import de.farmpulse.rpsim.contract.InsuranceService;
+import de.farmpulse.rpsim.contract.LeaseService;
 import de.farmpulse.rpsim.contract.LivestockService;
 import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.Savegame;
@@ -38,11 +39,13 @@ public class ContractController {
     private final InsuranceService insurance;
     private final HuntingService hunting;
     private final LivestockService livestock;
+    private final LeaseService lease;
     private final ApiMapper mapper;
     private final RpsimProperties props;
 
     public ContractController(SavegameContext context, ContractRepository contracts, ServiceCaseRepository cases,
-                              InsuranceService insurance, HuntingService hunting, LivestockService livestock, ApiMapper mapper,
+                              InsuranceService insurance, HuntingService hunting, LivestockService livestock, LeaseService lease,
+                              ApiMapper mapper,
                               RpsimProperties props) {
         this.context = context;
         this.contracts = contracts;
@@ -50,6 +53,7 @@ public class ContractController {
         this.insurance = insurance;
         this.hunting = hunting;
         this.livestock = livestock;
+        this.lease = lease;
         this.mapper = mapper;
         this.props = props;
     }
@@ -91,6 +95,7 @@ public class ContractController {
         Savegame sg = context.requireActive();
         return view(switch (contract(sg, id).getKind()) {
             case INSURANCE -> insurance.accept(sg, id);
+            case LEASE -> lease.accept(sg, id);
             default -> throw unsupported();
         });
     }
@@ -101,6 +106,7 @@ public class ContractController {
         Savegame sg = context.requireActive();
         return view(switch (contract(sg, id).getKind()) {
             case INSURANCE -> insurance.decline(sg, id);
+            case LEASE -> lease.decline(sg, id);
             default -> throw unsupported();
         });
     }
@@ -111,8 +117,38 @@ public class ContractController {
         Savegame sg = context.requireActive();
         return view(switch (contract(sg, id).getKind()) {
             case INSURANCE -> insurance.cancel(sg, id);
+            case LEASE -> lease.cancel(sg, id);
             default -> throw unsupported();
         });
+    }
+
+    /** TODO T-22: renew a lease at the rent offered one month before the end. */
+    @PostMapping("/api/contracts/{id}/renew")
+    @Transactional
+    public ContractView renew(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return view(switch (contract(sg, id).getKind()) {
+            case LEASE -> lease.renew(sg, id);
+            default -> throw unsupported();
+        });
+    }
+
+    /** TODO T-22: buy the leased field at the owner's offer. */
+    @PostMapping("/api/contracts/{id}/buy")
+    @Transactional
+    public ContractView buy(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return view(switch (contract(sg, id).getKind()) {
+            case LEASE -> lease.buy(sg, id);
+            default -> throw unsupported();
+        });
+    }
+
+    /** TODO T-22: ask the owner of a field for a lease (answer: offer or refusal). */
+    @PostMapping("/api/farmlands/{farmlandId}/lease-request")
+    @Transactional
+    public ContractView requestLease(@PathVariable int farmlandId) {
+        return view(lease.requestOffer(context.requireActive(), farmlandId));
     }
 
     @PostMapping("/api/cases/{id}/report")
@@ -182,7 +218,8 @@ public class ContractController {
                 c.getFarmlandId(), c.getMonthlyAmount(),
                 c.getCoverageRate() == null ? null : (int) Math.round(c.getCoverageRate() * 100), c.getDeductible(),
                 c.getTermMonths(), c.getStartedAtGameTime(), c.getEndsAtGameTime(), c.getNextDueGameTime(),
-                c.getOfferExpiresAtGameTime(), c.getMissedPayments(), c.isPaymentOverdue(), c.getEndReason());
+                c.getOfferExpiresAtGameTime(), c.getMissedPayments(), c.isPaymentOverdue(), c.getEndReason(),
+                c.getRenewalAmount(), c.getPurchasePrice());
     }
 
     CaseView view(ServiceCase s) {

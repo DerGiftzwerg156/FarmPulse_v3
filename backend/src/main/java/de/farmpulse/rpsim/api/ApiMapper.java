@@ -102,7 +102,7 @@ public class ApiMapper {
     public FarmlandView farmland(Savegame sg, FarmlandOwnership o) {
         return new FarmlandView(o.getFarmlandId(), o.getHectares(), o.getReferencePrice(), o.getOwnerType().name(),
                 ref(o.getOwnerCharacter()), negotiations.isBlocked(sg, AssetType.FARMLAND, String.valueOf(o.getFarmlandId())),
-                o.isTradeable());
+                o.isTradeable(), o.isLeasedToPlayer());
     }
 
     public NegotiationView negotiation(Negotiation n) {

@@ -422,7 +422,12 @@
       "MISSED_PAYMENTS": "wegen unbezahlter Beträge",
       "EXPIRED": "abgelaufen",
       "REPLACED": "durch neues Angebot ersetzt",
-      "TERM_ENDED": "Laufzeit beendet"
+      "TERM_ENDED": "Laufzeit beendet",
+      "OWNER_REFUSED": "vom Besitzer abgelehnt",
+      "PURCHASED": "Feld gekauft",
+      "EARLY_RETURN": "vorzeitig zurückgegeben",
+      "RENT_MISSED": "wegen unbezahlter Pacht",
+      "TRANSFER_FAILED": "Übergabe im Spiel fehlgeschlagen"
     }
   },
   "onboarding": {
@@ -621,6 +626,11 @@
     "askingPrice": "Wunschpreis (€)",
     "offerForSale": "Zum Verkauf anbieten",
     "startDirect": "Direktverhandlung starten",
+    "requestLease": "Pacht anfragen",
+    "leaseOffered": "{name} bietet dir eine Pacht an – das Angebot findest du unter „Verträge“.",
+    "leaseRefused": "{name} möchte das Feld gerade nicht verpachten.",
+    "leasedHint": "Von dir gepachtet – im Spiel bewirtschaftest du das Feld, es gehört aber weiter dem Besitzer.",
+    "toContracts": "Zum Pachtvertrag",
     "toOwner": "Zum Besitzer",
     "unclaimedHint": "Freie Felder kommen gelegentlich unter den Hammer – Versteigerungen werden per Mail angekündigt.",
     "negotiations": "Laufende Verhandlungen",
@@ -823,6 +833,11 @@
     "deadline": "Frist bis {time}",
     "field": "Feld {id}",
     "contractsTitle": "Verträge",
+    "leaseEnds": "läuft bis {time}",
+    "renew": "Verlängern ({amount} / Monat)",
+    "buy": "Kaufen für {amount}",
+    "endLease": "Pacht vorzeitig beenden",
+    "leaseHint": "Eine Pacht fragst du auf der Feldseite beim Besitzer an. Einen Monat vor dem Ende meldet er sich mit Verlängerung und – wenn er verkauft – einem Kaufangebot; sonst geht das Feld zum Ende automatisch zurück.",
     "noContracts": "Keine Verträge.",
     "offer": "Angebot: {amount}",
     "demand": "Deine Forderung (€)",

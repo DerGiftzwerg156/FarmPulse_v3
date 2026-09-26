@@ -105,12 +105,35 @@
   </div>
 
   <app-card [title]="'contracts.contractsTitle' | t" data-testid="other-contracts">
+    <p class="mb-3 text-[12px] text-muted">{{ 'contracts.leaseHint' | t }}</p>
     <ul class="space-y-2">
       @for (c of otherContracts(); track c.id) {
-        <li class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-bg p-2" data-testid="contract" [attr.data-kind]="c.kind">
-          <span class="text-[12px] text-text">{{ c.kind | label: 'contractKind' }}@if (c.farmlandId !== null) { · {{ 'contracts.field' | t: { id: c.farmlandId } }} } ·
-            {{ 'contracts.perMonth' | t: { amount: (c.monthlyAmount | money) } }}</span>
-          <app-badge [variant]="badge(c.status)">{{ c.status | label: 'contractStatus' }}</app-badge>
+        <li class="rounded-md border border-border bg-bg p-2" data-testid="contract" [attr.data-kind]="c.kind" [class.ring-1]="highlightedContract() === c.id">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-[12px] text-text">{{ c.kind | label: 'contractKind' }}@if (c.farmlandId !== null) { · {{ 'contracts.field' | t: { id: c.farmlandId } }} } ·
+              {{ 'contracts.perMonth' | t: { amount: (c.monthlyAmount | money) } }}@if (c.character) { · {{ c.character.name }} }
+              @if (c.status === 'ACTIVE' && c.endsAtGameTime !== null) { · {{ 'contracts.leaseEnds' | t: { time: (c.endsAtGameTime | gameTime) } }} }
+              @if (c.status === 'OFFERED' && c.offerExpiresAtGameTime !== null) { · {{ 'contracts.validUntil' | t: { time: (c.offerExpiresAtGameTime | gameTime) } }} }
+              @if (c.endReason) { · {{ c.endReason | label: 'endReason' }} }</span>
+            <app-badge [variant]="c.paymentOverdue ? 'negative' : badge(c.status)">{{ (c.paymentOverdue ? 'contracts.overdue' : 'enums.contractStatus.' + c.status) | t }}</app-badge>
+          </div>
+          @if (c.kind === 'LEASE' && c.status === 'OFFERED') {
+            <div class="mt-2 flex gap-2">
+              <app-button [disabled]="busy()" (pressed)="contractAction(c, 'accept')" data-testid="lease-accept">{{ 'contracts.accept' | t }}</app-button>
+              <app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'decline')" data-testid="lease-decline">{{ 'contracts.decline' | t }}</app-button>
+            </div>
+          }
+          @if (c.kind === 'LEASE' && c.status === 'ACTIVE') {
+            <div class="mt-2 flex flex-wrap gap-2">
+              @if (c.renewalAmount) {
+                <app-button [disabled]="busy()" (pressed)="contractAction(c, 'renew')" data-testid="lease-renew">{{ 'contracts.renew' | t: { amount: (c.renewalAmount | money) } }}</app-button>
+              }
+              @if (c.purchasePrice) {
+                <app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'buy')" data-testid="lease-buy">{{ 'contracts.buy' | t: { amount: (c.purchasePrice | money) } }}</app-button>
+              }
+              <app-button variant="danger" [disabled]="busy()" (pressed)="contractAction(c, 'cancel')" data-testid="lease-cancel">{{ 'contracts.endLease' | t }}</app-button>
+            </div>
+          }
         </li>
       } @empty {
         <li class="text-sm text-muted">{{ 'contracts.noContracts' | t }}</li>

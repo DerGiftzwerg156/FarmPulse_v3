@@ -46,6 +46,10 @@ export interface ContractView {
   missedPayments: number;
   paymentOverdue: boolean;
   endReason: string | null;
+  /** Lease (TODO T-22): new monthly rent offered for a renewal. */
+  renewalAmount?: number | null;
+  /** Lease (TODO T-22): price at which the owner sells the leased field. */
+  purchasePrice?: number | null;
 }
 
 /** Simulated incident or one-off offer of a service character (TODO T-20 / T-22). */
@@ -256,6 +260,8 @@ export interface FarmlandView {
   inNegotiation: boolean;
   /** false: hidden in the vanilla farmland menu (village, roads) - never traded (TODO T-11). */
   tradeable?: boolean;
+  /** Leased to the player (TODO T-22): the game shows it as the player's, the owner stays the character. */
+  leased?: boolean;
 }
 
 export interface OfferView {

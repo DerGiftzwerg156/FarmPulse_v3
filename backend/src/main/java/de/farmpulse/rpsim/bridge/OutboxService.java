@@ -87,6 +87,16 @@ public class OutboxService {
         return enqueue(sg, InstructionType.PRICE_EVENT, p, null, gameTimeEarliest, related);
     }
 
+    /** TODO T-22: farmland transfer without money (lease start / return). */
+    @Transactional
+    public OutboxInstruction farmlandTransfer(Savegame sg, int farmlandId, boolean toPlayer, String note, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("farmlandId", farmlandId);
+        p.put("direction", toPlayer ? "TO_PLAYER" : "FROM_PLAYER");
+        p.put("price", 0);
+        return enqueue(sg, InstructionType.FARMLAND_TRANSFER, p, null, null, related);
+    }
+
     /**
      * Farmland ownership transfer AND the matching money transaction as two entries of the same batch, so
      * ownership and money never diverge (technical concept "Abschluss").

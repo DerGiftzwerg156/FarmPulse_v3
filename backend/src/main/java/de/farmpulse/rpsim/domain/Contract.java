@@ -79,6 +79,14 @@ public class Contract extends SavegameScoped {
     @Column(name = "end_reason", length = 64)
     private String endReason;
 
+    /** TODO T-22 lease: new monthly rent offered for a renewal (one month before the end). */
+    @Column(name = "renewal_amount")
+    private Long renewalAmount;
+
+    /** TODO T-22 lease: price at which the owner offers to sell the leased field (null = not for sale). */
+    @Column(name = "purchase_price")
+    private Long purchasePrice;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }

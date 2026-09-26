@@ -455,6 +455,26 @@ supplier does not appear.
 | `rpsim.formulas.energy.contract-share` | `0.6` | Share of fixed-price contracts (needs a current price of the pair), the rest are price fluctuations. | TODO T-20 |
 | `rpsim.formulas.energy.spike-share` | `0.5` | Share of rising prices (`DEMAND_SPIKE`) among the fluctuations, the rest `DEMAND_SLUMP`. | TODO T-20 |
 
+## `rpsim.formulas.lease` (TODO T-22)
+
+Lease of NPC fields (not in vanilla): the rent is booked monthly as `LEASE_PAYMENT`; the field is given to the player
+in the game (`FARMLAND_TRANSFER TO_PLAYER`) and goes back automatically at the end (`FROM_PLAYER`). In the tool the
+owner character keeps the field (`leasedToPlayer`).
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.lease.annual-rent-share` | `0.05` | Yearly rent as share of the reference price (monthly rent = price × share / 12, rounded to 10 €). | TODO T-22 |
+| `rpsim.formulas.lease.trust-influence` | `0.1` | Rent −10 % at trust +100, +10 % at −100 (linear). | TODO T-22 |
+| `rpsim.formulas.lease.accept-probability` | `0.8` | Chance that the owner agrees to lease at neutral trust … | TODO T-22 |
+| `rpsim.formulas.lease.accept-trust-influence` | `0.2` | … shifted by this much at trust +100 / −100. | TODO T-22 |
+| `rpsim.formulas.lease.term-months` | `12` | Term of a lease and of a renewal in game months. | TODO T-22 |
+| `rpsim.formulas.lease.offer-valid-days` | `7` | Game days to accept a lease offer. | TODO T-22 |
+| `rpsim.formulas.lease.warning-months` | `1` | The owner writes this many game months before the end (renewal and purchase offer). | TODO T-22 |
+| `rpsim.formulas.lease.renewal-factor-min` | `0.95` | Rent of a renewal = current rent × random factor (lower bound) … | TODO T-22 |
+| `rpsim.formulas.lease.renewal-factor-max` | `1.1` | … upper bound. | TODO T-22 |
+| `rpsim.formulas.lease.purchase-factor` | `1.05` | Purchase offer of a sell-willing owner: reference price × factor (booked as `FARMLAND_PURCHASE`). | TODO T-22 |
+| `rpsim.formulas.lease.cancel-after-missed-payments` | `2` | The field goes back early after this many missed rents. | TODO T-22 |
+
 ## Profiles
 
 | Profile | Purpose | Overrides |

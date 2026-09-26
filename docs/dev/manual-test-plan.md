@@ -194,6 +194,7 @@ and check `log.txt` (lines with `[FS25_RPSim]`) and the bridge files.
 | 8.17 | In-game notifications (T-21) | while playing, let a character send a mail and start a call | a notification `FarmPulse: Neue Mail von …` / `… ruft an` appears in the game; after loading an older savegame, old hints are not shown (ack `message: EXPIRED`) |
 | 8.18 | Booking titles / finance statistics (T-21) | let the tool book an installment and a salary, look at the money popup and the finances page | the popup shows the RP Sim title (e.g. *Kreditrate*) instead of a missing-text marker; the amounts appear under *Sonstiges*. Then set `moneyTypeStatistics` in `rpsim_config.json` to a candidate name (e.g. `"SALARY_PAYMENT": "wagePayment"`) and note which names FS25 accepts as own column; `log.txt` warns when `MoneyType.register` fails |
 | 8.19 | Season (T-21) | play through a period change into a new season | `calendar.season` in `farm_facts.json` changes (note the exported names, e.g. `SPRING`, `SUMMER`, `AUTUMN`, `WINTER`); the header of the tool shows the season; mails mention the month/season plausibly |
+| 8.20 | Lease (T-22) | lease an NPC field, play until the end of the term without answering | the field belongs to the player in the farmland menu during the term (missions/field work possible), rent is booked monthly (*Pacht*), one month before the end a mail arrives, at the end the field is back to *no owner* in the game |
 
 ## 9. Finish
 

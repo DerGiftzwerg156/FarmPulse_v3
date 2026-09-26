@@ -115,6 +115,7 @@ public class RpsimProperties {
         private Hunting hunting = new Hunting();
         private Livestock livestock = new Livestock();
         private Energy energy = new Energy();
+        private Lease lease = new Lease();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -591,5 +592,33 @@ public class RpsimProperties {
         private double contractShare = 0.6;
         /** Share of rising prices among the fluctuations (DEMAND_SPIKE, the rest DEMAND_SLUMP). */
         private double spikeShare = 0.5;
+    }
+
+    /**
+     * TODO T-22 lease of NPC fields (not in vanilla): monthly rent (LEASE_PAYMENT), the field is transferred to the
+     * player for the term (FARMLAND_TRANSFER TO_PLAYER) and goes back automatically at the end (FROM_PLAYER), after a
+     * warning one month before with a renewal and - if the owner sells - a purchase offer. Placeholders.
+     */
+    @Getter @Setter
+    public static class Lease {
+        /** Yearly rent as share of the reference price of the field (neutral trust). */
+        private double annualRentShare = 0.05;
+        /** Rent shift at trust +100 / −100 (−10 % / +10 %). */
+        private double trustInfluence = 0.1;
+        /** Chance that the owner agrees to lease at neutral trust … */
+        private double acceptProbability = 0.8;
+        /** … shifted by this much at trust +100 / −100. */
+        private double acceptTrustInfluence = 0.2;
+        private int termMonths = 12;
+        private double offerValidDays = 7;
+        /** Warning with renewal / purchase offer this many game months before the end. */
+        private int warningMonths = 1;
+        /** Rent of a renewal = current rent × a random factor in [min, max]. */
+        private double renewalFactorMin = 0.95;
+        private double renewalFactorMax = 1.1;
+        /** Purchase offer of a sell-willing owner: reference price × this factor. */
+        private double purchaseFactor = 1.05;
+        /** The lease ends early (field goes back) after this many missed rents. */
+        private int cancelAfterMissedPayments = 2;
     }
 }

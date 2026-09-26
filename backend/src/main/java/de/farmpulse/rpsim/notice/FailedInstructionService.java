@@ -5,6 +5,7 @@ import java.util.Map;
 
 import de.farmpulse.rpsim.bridge.BridgeEvents;
 import de.farmpulse.rpsim.contract.ContractBillingService;
+import de.farmpulse.rpsim.contract.LeaseService;
 import de.farmpulse.rpsim.credit.LoanService;
 import de.farmpulse.rpsim.domain.InstructionType;
 import de.farmpulse.rpsim.domain.NoticeKind;
@@ -47,11 +48,12 @@ public class FailedInstructionService {
     private final NegotiationEngine negotiations;
     private final NoticeService notices;
     private final ContractBillingService billing;
+    private final LeaseService lease;
     private final JsonMapper json;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
-                                    ContractBillingService billing, JsonMapper json) {
+                                    ContractBillingService billing, LeaseService lease, JsonMapper json) {
         this.outbox = outbox;
         this.savegames = savegames;
         this.loans = loans;
@@ -59,6 +61,7 @@ public class FailedInstructionService {
         this.negotiations = negotiations;
         this.notices = notices;
         this.billing = billing;
+        this.lease = lease;
         this.json = json;
     }
 
@@ -94,6 +97,9 @@ public class FailedInstructionService {
             handled = payroll.onSalaryFailed(relatedId);
         } else if (ContractBillingService.RELATED.equals(related) && relatedId != null) {
             handled = billing.onPaymentFailed(relatedId);
+        } else if (LeaseService.RELATED.equals(related) && relatedId != null) {
+            handled = lease.onInstructionFailed(relatedId, ins.getType(),
+                    "TO_PLAYER".equals(p.path("direction").asString("")), reason);
         } else if (NegotiationEngine.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.FARMLAND_TRANSFER) {
             handled = negotiations.onDealFailed(sg, relatedId);

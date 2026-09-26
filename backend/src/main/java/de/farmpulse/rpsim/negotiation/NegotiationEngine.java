@@ -164,6 +164,7 @@ public class NegotiationEngine {
                         && o.getOwnerCharacter().getStatus() == CharacterStatus.ACTIVE))
                 .filter(o -> o.getReferencePrice() > 0)
                 .filter(FarmlandOwnership::isTradeable)
+                .filter(o -> !o.isLeasedToPlayer()) // T-22: leased fields are not auctioned
                 .filter(o -> !isBlocked(sg, AssetType.FARMLAND, String.valueOf(o.getFarmlandId())))
                 .toList();
         Optional<Character> announcer = lookup.firstActive(sg, CharacterRole.LAND_AGENT, CharacterRole.COOPERATIVE);
@@ -203,6 +204,9 @@ public class NegotiationEngine {
         FarmlandOwnership field = ownership.get(sg, farmlandId)
                 .orElseThrow(() -> new NotFoundException("farmland " + farmlandId));
         requireTradeable(field);
+        if (field.isLeasedToPlayer()) {
+            throw new BusinessRuleException("FIELD_LEASED", "Du pachtest dieses Feld – ein Kaufangebot kommt vor Pachtende.");
+        }
         if (field.getOwnerType() != OwnerType.CHARACTER || !field.getOwnerCharacter().getId().equals(characterId)) {
             throw new BusinessRuleException("NOT_OWNER", "Dieser Charakter besitzt das Feld nicht.");
         }

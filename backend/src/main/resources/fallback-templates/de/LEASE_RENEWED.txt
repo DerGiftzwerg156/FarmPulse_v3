@@ -1,0 +1,7 @@
+Pacht für Feld {{farmlandId}} verlängert
+Hallo,
+
+schön, dass du weitermachst: Die Pacht für Feld {{farmlandId}} läuft weitere {{termMonths}} Monate, künftig {{monthlyRent}} € pro Monat.
+
+Viele Grüße
+{{characterName}}

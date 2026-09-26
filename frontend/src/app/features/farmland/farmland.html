@@ -65,9 +65,13 @@
               </label>
               <app-button type="submit" [disabled]="busy()" data-testid="sell-submit">{{ 'farmland.offerForSale' | t }}</app-button>
             </form>
+          } @else if (f.leased) {
+            <p class="mt-2 text-[12px] text-muted" data-testid="leased">{{ 'farmland.leasedHint' | t }}
+              <a routerLink="/contracts" class="fp-label hover:text-accent">{{ 'farmland.toContracts' | t }}</a></p>
           } @else if (f.ownerType === 'CHARACTER' && f.owner) {
             <div class="mt-3 flex flex-wrap items-center gap-2">
               <app-button [disabled]="busy()" (pressed)="startDirect(f)" data-testid="start-direct">{{ 'farmland.startDirect' | t }}</app-button>
+              <app-button variant="secondary" [disabled]="busy()" (pressed)="requestLease(f)" data-testid="request-lease">{{ 'farmland.requestLease' | t }}</app-button>
               <a routerLink="/village" [queryParams]="{ character: f.owner.id }" class="fp-label hover:text-accent">{{ 'farmland.toOwner' | t }}</a>
             </div>
           } @else {

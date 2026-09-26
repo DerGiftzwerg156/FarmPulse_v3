@@ -43,4 +43,8 @@ public class FarmlandOwnership extends SavegameScoped {
      */
     @Column(name = "tradeable", nullable = false)
     private boolean tradeable = true;
+
+    /** TODO T-22: leased to the player - owned by the character in the tool, by the player farm in the game. */
+    @Column(name = "leased_to_player", nullable = false)
+    private boolean leasedToPlayer;
 }

@@ -146,6 +146,15 @@ export class Farmland {
     });
   }
 
+  /** TODO T-22: lease request to the owner; the offer (or refusal) arrives by mail and under "Verträge". */
+  requestLease(f: FarmlandView): void {
+    if (!f.owner) return;
+    this.run(this.api.requestLease(f.farmlandId), (c) => {
+      this.info.set(this.i18n.t(c.status === 'OFFERED' ? 'farmland.leaseOffered' : 'farmland.leaseRefused', { name: f.owner!.name }));
+      this.load();
+    });
+  }
+
   sell(f: FarmlandView): void {
     const price = Number(this.askingPrice());
     if (!Number.isFinite(price) || price <= 0) {
