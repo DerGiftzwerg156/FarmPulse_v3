@@ -13,7 +13,25 @@ public final class BridgeDtos {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
-                            Liabilities liabilities, List<Price> prices, Calendar calendar) {
+                            Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions) {
+
+        public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
+                         Liabilities liabilities, List<Price> prices, Calendar calendar) {
+            this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, null);
+        }
+
+        public List<Mission> missionList() {
+            return missions == null ? List.of() : missions;
+        }
+    }
+
+    /**
+     * TODO T-22: vanilla contract (g_missionManager:getMissions): AVAILABLE (can be taken), RUNNING / FINISHED (the
+     * player's own; success only for FINISHED). field = field number as shown in the game, npc = the client.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Mission(String uniqueId, String status, String title, String typeName, String field, Integer npcIndex,
+                          String npcTitle, Double reward, Boolean success) {
     }
 
     /** TODO T-08: FS25 calendar of the savegame (game month = FS25 period, period 1 = March). */

@@ -18,6 +18,9 @@ public enum TrustReason {
     WILDLIFE_AGREEMENT,
     /** TODO T-20: compensation refused, dispute. */
     WILDLIFE_DISPUTE,
+    /** TODO T-22: a contract referred by the contractor was completed / failed. */
+    MISSION_COMPLETED,
+    MISSION_FAILED,
     INITIAL,
     OTHER
 }

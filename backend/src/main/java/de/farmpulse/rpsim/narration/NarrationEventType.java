@@ -88,6 +88,10 @@ public enum NarrationEventType {
     MAINTENANCE_FEE_OVERDUE,
     MAINTENANCE_CANCELLED,
     REPAIR_HINT,
+    // TODO T-22 contractor
+    MISSION_REFERRAL,
+    MISSION_THANKS,
+    MISSION_FAILED,
     // conversation
     REPLY,
     CALL_CONVERSATION

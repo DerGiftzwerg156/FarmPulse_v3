@@ -96,3 +96,17 @@ test('prices carry the trend of the price walk (TODO T-10)', () => {
   const trends = new Set(sim.buildFarmFacts().prices.map((p) => p.trend));
   for (const t of trends) assert.ok(['CLIMBING', 'FALLING', 'STABLE'].includes(t));
 });
+
+test('vanilla contracts are exported and follow the player (TODO T-22)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
+  const before = sim.balance;
+  assert.deepEqual(sim.buildFarmFacts().missions.map((m) => [m.uniqueId, m.status]),
+    [['mission_001', 'AVAILABLE'], ['mission_002', 'AVAILABLE']]);
+  sim.setMission('mission_001', 'RUNNING');
+  sim.setMission('mission_001', 'FINISHED', true);
+  const m = sim.buildFarmFacts().missions[0];
+  assert.equal(m.status, 'FINISHED');
+  assert.equal(m.success, true);
+  assert.equal(sim.balance, before + 5200);
+  assert.equal(validate('farmFacts', sim.buildFarmFacts()), null);
+});

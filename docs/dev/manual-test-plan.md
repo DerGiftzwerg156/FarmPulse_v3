@@ -197,6 +197,7 @@ and check `log.txt` (lines with `[FS25_RPSim]`) and the bridge files.
 | 8.20 | Lease (T-22) | lease an NPC field, play until the end of the term without answering | the field belongs to the player in the farmland menu during the term (missions/field work possible), rent is booked monthly (*Pacht*), one month before the end a mail arrives, at the end the field is back to *no owner* in the game |
 | 8.21 | Maintenance repair (T-22) | take a maintenance contract with a worn vehicle (condition < 70 %), wait for the next month | `instructions_ack.json`: `REPAIR_VEHICLE` `APPLIED`; the vehicle shows 0 % damage in the game; no *Reparatur* booking appears in the finances (only the monthly *Wartungsvertrag* fee) |
 | 8.22 | Productions as buyers (T-22) | map with a production point (e.g. bakery), look at `market_context.json` | the production appears in `sellPoints` with `production: true` (and `ownedByPlayer: true` for an own production); note whether delivering to a foreign production is paid like a sale – only then do delivery contracts make sense |
+| 8.23 | Vanilla contracts (T-22) | open the contracts menu, compare with `farm_facts.json` → `missions`; take a referred contract and finish it | available contracts are listed with title, field, client (`npcTitle`) and a plausible `reward` (subclasses override `getReward()` - note if it stays 0); the taken one turns `RUNNING`, then `FINISHED` with `success: true`; the contractor thanks by mail. Repeat with FS25_BetterContracts active |
 
 ## 9. Finish
 

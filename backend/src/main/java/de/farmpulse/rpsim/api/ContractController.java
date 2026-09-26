@@ -71,7 +71,9 @@ public class ContractController {
     @GetMapping("/api/cases")
     @Transactional(readOnly = true)
     public List<CaseView> cases() {
-        return context.findActive().map(sg -> cases.findBySavegameOrderByIdDesc(sg).stream().map(this::view).toList())
+        // contracts the contractor decided not to refer are internal bookkeeping (TODO T-22)
+        return context.findActive().map(sg -> cases.findBySavegameOrderByIdDesc(sg).stream()
+                        .filter(c -> !"NOT_REFERRED".equals(c.getResolution())).map(this::view).toList())
                 .orElse(List.of());
     }
 
@@ -241,6 +243,6 @@ public class ContractController {
                 s.getRoundsUsed(), s.isMeasureAgreed(), s.getReference(), s.getGameTime(), s.getDeadlineGameTime(),
                 s.getResolution(), s.getKind() == de.farmpulse.rpsim.domain.CaseKind.WILDLIFE_DAMAGE
                         ? props.getFormulas().getHunting().getMeasureCost() : null,
-                s.getQuantity(), s.getDirection(), s.getBaselineCount());
+                s.getQuantity(), s.getDirection(), s.getBaselineCount(), s.getTitle());
     }
 }

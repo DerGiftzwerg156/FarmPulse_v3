@@ -1,0 +1,7 @@
+Schade um den Auftrag
+Hallo,
+
+der Auftrag {{title}} auf Feld {{field}} ist leider nicht fertig geworden. {{client}} war nicht begeistert – beim nächsten Mal klappt es hoffentlich.
+
+Viele Grüße
+{{characterName}}

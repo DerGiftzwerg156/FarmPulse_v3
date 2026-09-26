@@ -277,4 +277,37 @@ function T.TestGameAdapter:testProductionSellPointsAreMarked()
     SellingStation, Utils = nil, nil
 end
 
+-- T-22: vanilla contracts - available ones and the player's own
+function T.TestGameAdapter:testMissionsAreExported()
+    helpers.fakeGame()
+    MissionStatus = { CREATED = 0, PREPARING = 1, RUNNING = 2, FINISHED = 3, DISMISSED = 4 }
+    MissionFinishState = { NONE = 0, SUCCESS = 1, FAILED = 2 }
+    local function mission(id, status, farmId, finishState)
+        return { status = status, farmId = farmId, finishState = finishState, type = { name = "harvestMission" },
+            field = { getName = function() return 12 end },
+            getUniqueId = function() return id end, getTitle = function() return "Ernte" end,
+            getReward = function() return 4500.4 end,
+            getNPC = function() return { index = 3, title = "Otto Wendler" } end }
+    end
+    g_missionManager = { getMissions = function() return {
+        mission("m1", MissionStatus.CREATED), mission("m2", MissionStatus.RUNNING, 1),
+        mission("m3", MissionStatus.RUNNING, 2), mission("m4", MissionStatus.FINISHED, 1, MissionFinishState.SUCCESS),
+        mission("m5", MissionStatus.FINISHED, 1, MissionFinishState.FAILED) } end }
+    local list = RPSimGameAdapter.new():collectMissions(50)
+    local byId = {}
+    for _, m in ipairs(list) do byId[m.uniqueId] = m end
+    lu.assertEquals(byId.m1.status, "AVAILABLE")
+    lu.assertEquals(byId.m1.field, 12)
+    lu.assertEquals(byId.m1.npcTitle, "Otto Wendler")
+    lu.assertEquals(byId.m2.status, "RUNNING")
+    lu.assertNil(byId.m3) -- another farm's contract
+    lu.assertTrue(byId.m4.success)
+    lu.assertFalse(byId.m5.success)
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, missions = list }, RPSimConfig.new())
+    lu.assertEquals(doc.missions[1], { uniqueId = "m1", status = "AVAILABLE", title = "Ernte", typeName = "harvestMission",
+        field = "12", npcIndex = 3, npcTitle = "Otto Wendler", reward = 4500 })
+    lu.assertEquals(#doc.missions, 4)
+    g_missionManager, MissionStatus, MissionFinishState = nil, nil, nil
+end
+
 return T

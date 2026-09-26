@@ -1,0 +1,7 @@
+Danke für den Auftrag
+Hallo,
+
+{{client}} war zufrieden mit deiner Arbeit ({{title}} auf Feld {{field}}). So etwas spricht sich herum – ich melde mich, wenn wieder etwas ansteht.
+
+Viele Grüße
+{{characterName}}

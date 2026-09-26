@@ -78,6 +78,13 @@
               </div>
               <p class="mt-1 text-[11px] text-muted">{{ 'contracts.measureHint' | t }}</p>
             }
+            @if (c.kind === 'MISSION_REFERRAL') {
+              <div class="mt-1 text-[12px] text-text" data-testid="mission-referral">{{ 'contracts.mission' | t: { title: c.title ?? '–', amount: (c.offerAmount | money) } }}</div>
+              @if (c.status === 'IN_PROGRESS') {
+                <app-badge variant="positive">{{ c.status | label: 'caseStatus' }}</app-badge>
+              }
+              <p class="mt-1 text-[11px] text-muted">{{ 'contracts.missionHint' | t }}</p>
+            }
             @if (c.kind === 'LIVESTOCK_OFFER') {
               <div class="mt-1 text-[12px] text-text" data-testid="livestock-offer">{{ 'contracts.livestockOffer' | t: { direction: (c.direction | label: 'tradeDirection'), quantity: c.quantity, animal: (c.reference | label: 'animalType'), amount: (c.offerAmount | money) } }}</div>
               @if (c.status === 'AWAITING_PLAYER') {
@@ -154,6 +161,7 @@
         <li class="flex flex-wrap items-center justify-between gap-2 border-t border-border py-1.5 text-[12px]" data-testid="closed-case">
           <span class="text-text">{{ c.kind | label: 'caseKind' }}@if (c.farmlandId !== null) { · {{ 'contracts.field' | t: { id: c.farmlandId } }} }
             @if (c.damageAmount !== null) { · {{ 'contracts.damage' | t: { amount: (c.damageAmount | money) } }} }
+            @if (c.kind === 'MISSION_REFERRAL' && c.title) { · {{ c.title }} }
             @if (c.kind === 'REPAIR' && c.reference) { · {{ 'contracts.vehicle' | t: { id: c.reference, condition: c.quantity } }} }
             @if (c.kind !== 'REPAIR' && c.quantity && c.reference) { · {{ 'contracts.animals' | t: { quantity: c.quantity, animal: (c.reference | label: 'animalType') } }} }
             @if (c.costAmount !== null) { · {{ 'contracts.invoice' | t: { amount: (c.costAmount | money) } }} }

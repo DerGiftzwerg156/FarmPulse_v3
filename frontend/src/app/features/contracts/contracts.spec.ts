@@ -135,4 +135,15 @@ describe('Contracts', () => {
     (el.querySelector('[data-testid="contract-accept"] button') as HTMLButtonElement).click();
     http.expectOne('/api/contracts/6/accept').flush({ ...offer, status: 'ACTIVE' });
   });
+
+  it('shows a referred vanilla contract with the hint to take it in the game', () => {
+    const ref = damage({ id: 12, kind: 'MISSION_REFERRAL', farmlandId: 7, damageAmount: null, offerAmount: 5200, title: 'Ernte',
+      reference: 'm1', deadlineGameTime: null });
+    const { fixture, http, el } = setup([], [ref, { ...ref, id: 13, status: 'SETTLED', resolution: 'COMPLETED' }]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="mission-referral"]')?.textContent).toContain('Ernte');
+    expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Feld 7');
+    expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Erledigt');
+  });
 });

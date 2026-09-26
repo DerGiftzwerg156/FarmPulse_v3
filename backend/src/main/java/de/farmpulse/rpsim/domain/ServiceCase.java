@@ -68,6 +68,10 @@ public class ServiceCase extends SavegameScoped {
     @Column(name = "contract_id")
     private Long contractId;
 
+    /** TODO T-22: title of a referred vanilla contract. */
+    @Column(name = "title", length = 255)
+    private String title;
+
     /** Livestock offers: number of animals, direction SELL / BUY and the head count when the offer was accepted. */
     @Column(name = "quantity")
     private Integer quantity;

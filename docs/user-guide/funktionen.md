@@ -135,6 +135,10 @@ findest du unter **Verträge & Vorgänge**.
 - **Lieferverträge mit Produktionen.** Gibt es auf der Karte Produktionen, die Waren ankaufen (z. B. Bäckerei oder
   Molkerei), bietet die Genossenschaft gelegentlich einen Liefervertrag zum Festpreis an. Er erscheint wie ein
   Sonderkontrakt unter **Warenbestand & Preise**; du entscheidest, ob du mitmachst.
+- **Lohnunternehmer – Aufträge aus dem Spiel.** Der Lohnunternehmer macht dich ab und zu per Mail auf einen Auftrag
+  aufmerksam, der gerade im Auftragsmenü des Spiels verfügbar ist (Titel, Feld, Auftraggeber, Lohn). Annehmen und
+  erledigen tust du ihn wie gewohnt im Spiel. Schaffst du ihn, steigt dein Ansehen beim Lohnunternehmer und beim
+  Auftraggeber; das Tool selbst startet nie einen Auftrag.
 
 ## Dorf & Charaktere
 

@@ -63,6 +63,8 @@ public class MemoryService {
             case NEGOTIATION_DEAL -> "Geschäft per Handschlag abgeschlossen";
             case WILDLIFE_AGREEMENT -> "Wildschaden gütlich geregelt";
             case WILDLIFE_DISPUTE -> "Streit um den Wildschaden";
+            case MISSION_COMPLETED -> "vermittelter Auftrag erledigt";
+            case MISSION_FAILED -> "vermittelter Auftrag nicht erledigt";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

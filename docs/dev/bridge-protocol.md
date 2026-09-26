@@ -51,6 +51,11 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 - `trend` (optional): price trend of the station as the game shows it - `SellingStation:getCurrentPricingTrend`
   bit flags `PRICE_CLIMBING` / `PRICE_FALLING` (as used by FS25_ProductionDirectSell) → `CLIMBING`, `FALLING`,
   `STABLE`.
+- `missions` (optional, TODO T-22): vanilla contracts from `g_missionManager:getMissions()` - `AVAILABLE`
+  (`MissionStatus.CREATED`, can be taken by anyone) and the player farm's own `RUNNING` (`PREPARING`/`RUNNING`) and
+  `FINISHED` ones (`success` = `finishState == MissionFinishState.SUCCESS`), at most 50. Fields: `uniqueId`, `title`,
+  `typeName` (`mission.type.name`), `field` (`mission.field:getName()`), `npcIndex` / `npcTitle` (`mission:getNPC()`,
+  as used by FS25_BetterContracts), `reward` (`getReward()`). Read only - the tool never starts a contract.
 - `calendar` (optional for older mods): `g_currentMission.environment` → `currentPeriod` (1..12, **period 1 =
   March**), `currentDayInPeriod` (1-based), `daysPerPeriod`, `currentYear`, `currentMonotonicDay`, plus
   `periodName` = `g_i18n:formatPeriod()` (localized month name). The backend's game month is this FS25 period:

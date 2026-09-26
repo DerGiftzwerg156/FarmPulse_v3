@@ -407,7 +407,11 @@
       "PLAYER": "Von dir abgelehnt",
       "INCLUDED": "Im Wartungsvertrag repariert",
       "HINT": "Reparaturhinweis",
-      "NOT_REPAIRED": "Nicht repariert (Fahrzeug nicht gefunden)"
+      "NOT_REPAIRED": "Nicht repariert (Fahrzeug nicht gefunden)",
+      "COMPLETED": "Erledigt",
+      "FAILED": "Nicht geschafft",
+      "NOT_TAKEN": "Nicht angenommen",
+      "GONE": "Im Spiel beendet"
     },
     "animalType": {
       "COW": "Rinder",
@@ -842,7 +846,9 @@
     "renew": "Verlängern ({amount} / Monat)",
     "buy": "Kaufen für {amount}",
     "endLease": "Pacht vorzeitig beenden",
-"maintenanceHint": "Mit einem Wartungsvertrag setzt die Werkstatt zu jedem Monatsbeginn die am stärksten abgenutzten Maschinen instand – die Reparatur passiert direkt im Spiel und ist in der Monatsgebühr enthalten.",
+    "mission": "{title} · Lohn {amount}",
+    "missionHint": "Den Auftrag nimmst du wie gewohnt im Auftragsmenü des Spiels an. Erledigst du ihn, freut sich der Lohnunternehmer – und der Auftraggeber.",
+    "maintenanceHint": "Mit einem Wartungsvertrag setzt die Werkstatt zu jedem Monatsbeginn die am stärksten abgenutzten Maschinen instand – die Reparatur passiert direkt im Spiel und ist in der Monatsgebühr enthalten.",
     "requestMaintenance": "Wartungsangebot anfordern",
     "vehicle": "Fahrzeug {id} ({condition} %)",
     "leaseHint": "Eine Pacht fragst du auf der Feldseite beim Besitzer an. Einen Monat vor dem Ende meldet er sich mit Verlängerung und – wenn er verkauft – einem Kaufangebot; sonst geht das Feld zum Ende automatisch zurück.",

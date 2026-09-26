@@ -68,6 +68,22 @@ function RPSimFarmFacts.build(raw, cfg)
         leasing[#leasing + 1] = e
     end
     table.sort(leasing, function(a, b) return a.uniqueId < b.uniqueId end)
+    -- TODO T-22: vanilla contracts (available ones and the player's own)
+    local missions = RPSimJson.array({})
+    for _, m in ipairs(raw.missions or {}) do
+        if m.uniqueId ~= nil and m.status ~= nil then
+            local e = { uniqueId = tostring(m.uniqueId), status = m.status }
+            if type(m.title) == "string" then e.title = m.title end
+            if type(m.typeName) == "string" then e.typeName = m.typeName end
+            if m.field ~= nil then e.field = tostring(m.field) end
+            if type(m.npcIndex) == "number" then e.npcIndex = m.npcIndex end
+            if type(m.npcTitle) == "string" then e.npcTitle = m.npcTitle end
+            if type(m.reward) == "number" then e.reward = round(m.reward) end
+            if m.success ~= nil then e.success = m.success == true end
+            missions[#missions + 1] = e
+        end
+    end
+    table.sort(missions, function(a, b) return a.uniqueId < b.uniqueId end)
     local loan = raw.vanillaLoan or 0
     local doc = {
         schemaVersion = cfg.schemaVersion,
@@ -83,6 +99,7 @@ function RPSimFarmFacts.build(raw, cfg)
         },
         liabilities = { vanillaLoan = { active = loan > 0, remainingAmount = round(loan) }, leasing = leasing },
         prices = prices,
+        missions = missions,
     }
     local c = raw.calendar
     if type(c) == "table" and type(c.period) == "number" then

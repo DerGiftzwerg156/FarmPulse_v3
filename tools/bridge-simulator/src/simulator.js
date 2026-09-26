@@ -3,7 +3,7 @@
 // (see mod/FS25_RPSim/src/import/Processor.lua and docs/dev/bridge-protocol.md).
 import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCENARIOS, MAP } from './scenarios.js';
+import { SCENARIOS, MAP, MISSIONS } from './scenarios.js';
 import { validate } from './validate.js';
 
 export const MS_PER_GAME_HOUR = 60 * 60 * 1000;
@@ -125,6 +125,7 @@ export class BridgeSimulator {
     this.contractReports = [];
     this.moneyLog = [];
     this.notifications = []; // TODO T-21: in-game notifications shown to the "player"
+    this.missions = MISSIONS.map((m) => ({ ...m })); // TODO T-22: vanilla contracts
     this.lastMarketContextJson = null;
     this.loadSavegame();
     this.savedGame = this.gameState();
@@ -320,7 +321,22 @@ export class BridgeSimulator {
           .sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)) },
       prices,
       calendar: this.buildCalendar(),
+      missions: this.missions.map((m) => ({ ...m })).sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)),
     };
+  }
+
+  /** The "player" takes / finishes a vanilla contract in the game (TODO T-22). */
+  setMission(uniqueId, status, success) {
+    const m = this.missions.find((x) => x.uniqueId === uniqueId);
+    if (!m) throw new Error(`unknown mission ${uniqueId}`);
+    m.status = status;
+    if (status === 'FINISHED') {
+      m.success = success !== false;
+      if (m.success) this.balance += m.reward;
+    } else {
+      delete m.success;
+    }
+    return m;
   }
 
   buildMarketContext() {

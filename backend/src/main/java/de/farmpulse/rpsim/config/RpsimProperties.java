@@ -118,6 +118,7 @@ public class RpsimProperties {
         private Lease lease = new Lease();
         private Maintenance maintenance = new Maintenance();
         private ProductionSupply productionSupply = new ProductionSupply();
+        private Contractor contractor = new Contractor();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -659,5 +660,22 @@ public class RpsimProperties {
         private double probabilityPerMonth = 0.3;
         /** Open delivery contract offers / contracts with productions at the same time. */
         private int maxOpen = 1;
+    }
+
+    /**
+     * TODO T-22 contractor: refers vanilla contracts of the game (g_missionManager) by mail; the player takes them in
+     * the game's contracts menu. Completing a referred contract improves trust with the contractor and the client (FS25
+     * NPC, if it is a village character). Placeholders.
+     */
+    @Getter @Setter
+    public static class Contractor {
+        /** Chance that a newly available contract is referred … */
+        private double referralProbability = 0.35;
+        /** … at most this many referrals per game month. */
+        private int maxReferralsPerMonth = 2;
+        private double completedTrustDelta = 3;
+        /** Trust of the client (FS25 NPC as village character) for a completed referred contract. */
+        private double clientTrustDelta = 2;
+        private double failedTrustDelta = -3;
     }
 }

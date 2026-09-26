@@ -382,6 +382,12 @@ rpsim:
     production-supply:            # TODO T-22: delivery contracts with production points of the map (placeholders)
       probability-per-month: 0.3
       max-open: 1
+    contractor:                   # TODO T-22: contractor refers vanilla contracts (placeholders)
+      referral-probability: 0.35
+      max-referrals-per-month: 2
+      completed-trust-delta: 3
+      client-trust-delta: 2
+      failed-trust-delta: -3
     energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
       fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
       probability-per-month: 0.35

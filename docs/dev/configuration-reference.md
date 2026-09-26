@@ -504,6 +504,19 @@ quantity and deadline from `rpsim.formulas.market`) at sell points that `market_
 | `rpsim.formulas.production-supply.probability-per-month` | `0.3` | Chance per game month of a delivery contract offer. | TODO T-22 |
 | `rpsim.formulas.production-supply.max-open` | `1` | Open delivery contract offers / contracts with productions at the same time. | TODO T-22 |
 
+## `rpsim.formulas.contractor` (TODO T-22)
+
+The contractor refers vanilla contracts of the game (`farm_facts.missions`, from `g_missionManager:getMissions()`); the
+player takes them in the game's contracts menu. Nothing is started by the tool, so FS25_BetterContracts keeps working.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.contractor.referral-probability` | `0.35` | Chance that a newly available contract is referred (decided once per contract) … | TODO T-22 |
+| `rpsim.formulas.contractor.max-referrals-per-month` | `2` | … at most this many referrals per game month. | TODO T-22 |
+| `rpsim.formulas.contractor.completed-trust-delta` | `3` | Trust of the contractor when a referred contract is completed. | TODO T-22 |
+| `rpsim.formulas.contractor.client-trust-delta` | `2` | Trust of the client (FS25 NPC as village character, T-21) for a completed referred contract. | TODO T-22 |
+| `rpsim.formulas.contractor.failed-trust-delta` | `-3` | Trust of the contractor when a referred contract fails. | TODO T-22 |
+
 ## Profiles
 
 | Profile | Purpose | Overrides |

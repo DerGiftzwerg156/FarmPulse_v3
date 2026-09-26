@@ -2,7 +2,7 @@
 -- so an engine change never crashes the savegame; failures degrade to empty/partial exports.
 -- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager g_npcManager
 -- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
--- luacheck: globals FSBaseMission Season
+-- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
 -- luacheck: globals g_i18n
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
@@ -177,6 +177,58 @@ function RPSimGameAdapter:collectCalendar()
     end, nil)
 end
 
+--- Vanilla contracts (TODO T-22): g_missionManager:getMissions() with mission.status (MissionStatus.CREATED /
+-- PREPARING / RUNNING / FINISHED / DISMISSED), mission.farmId, mission.finishState == MissionFinishState.SUCCESS,
+-- getUniqueId(), getTitle(), getReward() - FS25 AbstractMission.lua / MissionManager.lua; mission.field:getName() and
+-- mission:getNPC().title as used by FS25_BetterContracts (scripts/gui.lua). Only missions the player can take
+-- (CREATED) or that belong to the player farm; at most maxMissions entries.
+function RPSimGameAdapter:collectMissions(maxMissions)
+    local out = {}
+    safe(function()
+        if g_missionManager == nil or MissionStatus == nil then
+            return true
+        end
+        local farmId = self:getFarmId()
+        for _, m in ipairs(g_missionManager:getMissions() or {}) do
+            if #out >= (maxMissions or 50) then
+                break
+            end
+            safe(function()
+                local status
+                if m.status == MissionStatus.CREATED then
+                    status = "AVAILABLE"
+                elseif m.farmId == farmId and (m.status == MissionStatus.PREPARING or m.status == MissionStatus.RUNNING) then
+                    status = "RUNNING"
+                elseif m.farmId == farmId and m.status == MissionStatus.FINISHED then
+                    status = "FINISHED"
+                end
+                if status == nil then
+                    return true
+                end
+                local npc = safe(function() return m:getNPC() end, nil)
+                local success
+                if status == "FINISHED" then
+                    success = MissionFinishState ~= nil and m.finishState == MissionFinishState.SUCCESS
+                end
+                out[#out + 1] = {
+                    uniqueId = m:getUniqueId(),
+                    title = safe(function() return m:getTitle() end, nil),
+                    typeName = safe(function() return m.type.name end, nil),
+                    field = safe(function() return m.field:getName() end, nil),
+                    npcIndex = npc ~= nil and npc.index or nil,
+                    npcTitle = npc ~= nil and npc.title or nil,
+                    reward = safe(function() return m:getReward() end, nil),
+                    status = status,
+                    success = success,
+                }
+                return true
+            end)
+        end
+        return true
+    end)
+    return out
+end
+
 --- Name of the current season (T-21): environment.currentSeason compared with the values of the global Season
 -- table (FS25 BeehiveSystem / StonePickMission: environment.currentSeason == Season.WINTER). The name is looked up
 -- instead of assumed, so only names that really exist in the game are exported.
@@ -213,7 +265,7 @@ end
 function RPSimGameAdapter:collectFarmFacts()
     local farmId = self:getFarmId()
     local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, silos = {},
-        prices = {}, calendar = self:collectCalendar() }
+        prices = {}, calendar = self:collectCalendar(), missions = self:collectMissions(50) }
     local farm = safe(function() return g_farmManager:getFarmById(farmId) end, nil)
     raw.balance = safe(function() return farm.money end, 0)
     raw.vanillaLoan = safe(function() return farm.loan end, 0)

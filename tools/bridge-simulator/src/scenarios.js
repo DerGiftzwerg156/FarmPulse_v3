@@ -88,4 +88,12 @@ export const SCENARIOS = {
   },
 };
 
+// Simulated vanilla contracts (TODO T-22); the mod reads them from g_missionManager:getMissions().
+export const MISSIONS = [
+  { uniqueId: 'mission_001', title: 'Ernte', typeName: 'harvestMission', field: '7', npcIndex: 3, npcTitle: 'Otto Wendler',
+    reward: 5200, status: 'AVAILABLE' },
+  { uniqueId: 'mission_002', title: 'Mähen', typeName: 'mowMission', field: '9', npcIndex: 2, npcTitle: 'Greta Lindner',
+    reward: 1800, status: 'AVAILABLE' },
+];
+
 export { MAP };

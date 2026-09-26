@@ -78,6 +78,8 @@ export interface CaseView {
   direction?: 'SELL' | 'BUY' | string | null;
   /** Head count when the trader offer was accepted. */
   baselineCount?: number | null;
+  /** Title of a referred vanilla contract (TODO T-22). */
+  title?: string | null;
 }
 
 export interface InsuranceQuoteView {

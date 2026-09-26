@@ -58,6 +58,12 @@ export function startControlServer(sim, port, log = () => {}) {
         log(`reloaded the last save (game time ${gameTime})`);
         return send(200, { gameTime });
       }
+      if (req.method === 'POST' && url.pathname === '/mission') {
+        const b = await body(req);
+        const m = sim.setMission(b.uniqueId, b.status, b.success);
+        sim.exportFarmFacts();
+        return send(200, m);
+      }
       if (req.method === 'POST' && url.pathname === '/balance') {
         const b = await body(req);
         sim.balance = Number(b.balance);
@@ -69,6 +75,6 @@ export function startControlServer(sim, port, log = () => {}) {
       return send(500, { error: e.message });
     }
   });
-  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/days-per-period|/save|/reload-without-saving)`));
+  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving)`));
   return server;
 }
