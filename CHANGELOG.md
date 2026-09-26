@@ -10,6 +10,8 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-26
+
 Result of the FS25 compatibility analysis (`TODO.md`): fixes for the real game and the first P3 features.
 
 ### Fixed
@@ -43,6 +45,9 @@ Result of the FS25 compatibility analysis (`TODO.md`): fixes for the real game a
 - **Docs and tests (T-12 – T-14):** open technical points updated, checklist for the first test in the real FS25
   (`docs/dev/manual-test-plan.md`, section 8), new simulator scenarios (`leasing-hof`, `knappe-kasse`,
   `konflikt-mods`, reload without saving).
+- **Release workflow:** `.github/workflows/release.yml` builds the player bundle on a pushed tag `v<version>` and
+  publishes `FarmPulse-<version>.zip` and `FS25_RPSim.zip` as GitHub Release (notes from this changelog); a manual
+  run only builds and keeps the ZIPs as workflow artifact.
 
 ### Removed
 

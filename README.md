@@ -59,8 +59,8 @@ Entscheidungen, die KI formuliert nur. Details: [Architektur-Überblick](docs/ar
 
 ## Schnellstart
 
-**Spielen** (Release): ZIP entpacken, `FS25_RPSim.zip` in den FS25-`mods`-Ordner kopieren, `start.bat` ausführen,
-<http://localhost:8080> öffnen – Schritt für Schritt in der [Installationsanleitung](docs/user-guide/installation.md).
+**Spielen** ([Release](https://github.com/DerGiftzwerg156/FarmPulse_v3/releases)): `FarmPulse-<version>.zip` entpacken,
+`FS25_RPSim.zip` in den FS25-`mods`-Ordner kopieren, `start.bat` ausführen, <http://localhost:8080> öffnen – Schritt für Schritt in der [Installationsanleitung](docs/user-guide/installation.md).
 
 **Entwickeln** (ohne FS25, mit Bridge-Simulator; Java 21, Maven, Node ≥ 22.22.3):
 

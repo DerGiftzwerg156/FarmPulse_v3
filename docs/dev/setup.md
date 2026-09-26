@@ -99,6 +99,18 @@ player bundle `FarmPulse-<v>/` + `.zip` (jar, `web/`, mod ZIP, `start.bat`/`star
 `application-local.yml.example`). The script checks that `pom.xml`, `frontend/package.json`, `modDesc.xml`
 (`<v>.0`) and `CHANGELOG.md` agree on the version.
 
+**Publishing (GitHub Actions, `.github/workflows/release.yml`):** the workflow runs the same script (with tests)
+on GitHub.
+
+1. Set the new version in `backend/pom.xml`, `frontend/package.json` (+ `package-lock.json`),
+   `mod/FS25_RPSim/modDesc.xml` (`<v>.0`) and rename `## [Unreleased]` in `CHANGELOG.md` to `## [<v>] - <date>`.
+2. Merge to `main`, then tag and push: `git tag v<v> && git push origin v<v>`.
+3. The workflow checks that the tag matches the project version, builds, and publishes the GitHub Release
+   `v<v>` with `FarmPulse-<v>.zip` and `FS25_RPSim.zip`; the release notes are the `CHANGELOG.md` section of `<v>`.
+
+A manual run (Actions → release → *Run workflow*) only builds and attaches the ZIPs to the run as workflow
+artifact – useful to try a build without publishing.
+
 **Decision – the backend serves the frontend:** the start scripts run
 `java -jar rpsim-backend.jar --spring.profiles.active=prod --rpsim.web.static-dir=web`; the backend delivers the
 built Angular app on `/` (SPA fallback to `index.html`, `/api/**` untouched, `WebConfig`). Players start one
