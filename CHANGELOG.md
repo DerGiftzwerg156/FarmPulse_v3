@@ -10,6 +10,8 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-09-26
+
 ### Fixed
 
 - **Savegame loading hung (mod):** FS25 blocks `io.open` in read mode ("io.open, only write mode ('w') is allowed")
