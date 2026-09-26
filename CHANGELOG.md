@@ -10,6 +10,44 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+Result of the FS25 compatibility analysis (`TODO.md`): fixes for the real game and the first P3 features.
+
+### Fixed
+
+- **Mod start (T-01):** first export in `Mission00.onStartMission` (fallback after `startFallbackMs`), log line with
+  the counts of the first export; `market_context.json` is refreshed whenever its content changes.
+- **Refused debits (T-03):** the mod refuses a batch whose net debit exceeds the balance (`FAILED` /
+  `INSUFFICIENT_FUNDS`); the backend treats it as a missed payment (loan, salary, contract) or a failed deal.
+- **Leasing (T-04):** leased vehicles are no assets; they are exported as `liabilities.leasing` and count as an
+  obligation in the credit check.
+- **Fixed-price contracts (T-05):** sales are counted after pricing (`overwrittenFunction`), so the delivery that fills
+  a contract is still paid at the contract price.
+- **modSettings path (T-06):** built from `getUserProfileAppPath()`; the bridge folder is logged.
+- **File writing (T-07):** new default `atomicWriteMode = "direct"` (the FS25 sandbox has no `os` module).
+
+### Added
+
+- **Reload without saving (T-02):** the backend detects the game-time rewind and re-sends lost bookings
+  automatically up to a threshold, deeper rewinds ask the player (dashboard notice).
+- **Game month = FS25 period (T-08):** calendar export, all monthly dates follow the periods and "days per period";
+  `rpsim.time.*` removed.
+- **Conflict mods (T-09), visible sell points and price trend (T-10), non-tradeable farmlands (T-11).**
+- **New characters (T-20):** insurance agent (storm/hail insurance, damage reports), hunter (wildlife damage,
+  compensation negotiation, joint measures), vet / livestock trader / breeding advisor (only with animals), energy
+  supplier (fixed-price contracts and price swings at biogas sell points). New page "Verträge & Vorgänge".
+- **Game integration (T-21):** the FS25 NPCs of the farmlands own the NPC fields, in-game notifications for new mails
+  and calls (`NOTIFICATION`), own booking titles (`MoneyType.register`), real month and season in the texts.
+- **Contract types (T-22):** lease of NPC fields (automatic return with warning, renewal or purchase), maintenance
+  contract with in-game repairs (`REPAIR_VEHICLE`), delivery contracts with production points, vanilla contracts
+  referred by the contractor.
+- **Docs and tests (T-12 – T-14):** open technical points updated, checklist for the first test in the real FS25
+  (`docs/dev/manual-test-plan.md`, section 8), new simulator scenarios (`leasing-hof`, `knappe-kasse`,
+  `konflikt-mods`, reload without saving).
+
+### Removed
+
+- Multiplayer / dedicated server is not a goal (removed from `TODO.md`).
+
 ## [1.0.0] - 2026-09-25
 
 First complete version of the V1 scope of the functional and technical concept.

@@ -1,6 +1,7 @@
 # Domain model
 
-All 21 JPA entities of `de.farmpulse.rpsim.domain` (AP-3.2, Flyway `V1`–`V5`). Every entity except `Savegame`
+All 25 JPA entities of `de.farmpulse.rpsim.domain` (AP-3.2, Flyway `V1`–`V14`; `V6`–`V14` from the FS25 analysis,
+`TODO.md` T-02 – T-22). Every entity except `Savegame`
 belongs to exactly one savegame (`SavegameScoped` → column `savegame_id`); the diagram shows that relation once per
 entity. Only the most important columns are listed. Relations drawn dashed are logical references by id
 (no foreign key), e.g. from generic `relatedEntityType/relatedEntityId` pairs.
@@ -22,6 +23,10 @@ erDiagram
     SAVEGAME ||--o{ DIARY_ENTRY : "has"
     SAVEGAME ||--o{ PUBLIC_ACTION_EVENT : "has"
     SAVEGAME ||--o{ STORY_HOOK : "has"
+    SAVEGAME ||--o{ NOTICE : "has"
+    SAVEGAME ||--o{ BRIDGE_REWIND : "has"
+    SAVEGAME ||--o{ CONTRACT : "has"
+    SAVEGAME ||--o{ SERVICE_CASE : "has"
 
     GAME_CHARACTER ||--o{ TRUST_EVENT : "trust log"
     GAME_CHARACTER |o--o{ COMMUNICATION : "writes / calls"
@@ -33,6 +38,10 @@ erDiagram
     GAME_CHARACTER ||--o{ JOB_APPLICATION : "applies"
     GAME_CHARACTER |o--o{ NEGOTIATION : "counterpart / announcer / winner"
     GAME_CHARACTER |o--o{ NEGOTIATION_OFFER : "bids"
+    GAME_CHARACTER |o--o{ CONTRACT : "insurer / lessor / workshop"
+    GAME_CHARACTER |o--o{ SERVICE_CASE : "handles"
+    CONTRACT |o..o{ SERVICE_CASE : "contractId"
+    BRIDGE_REWIND |o..o{ OUTBOX_INSTRUCTION : "lostInstructionIds"
 
     JOB_POSTING ||--o{ JOB_APPLICATION : "receives"
     EMPLOYEE ||--o{ SATISFACTION_EVENT : "needs log"
@@ -240,10 +249,52 @@ erDiagram
         long scheduledGameTime
         boolean fired
     }
+    NOTICE {
+        long id PK
+        string kind "REWIND_DECISION REWIND_RESENT INSTRUCTION_FAILED"
+        string status "OPEN RESOLVED"
+        string detailsJson
+        string resolution
+    }
+    BRIDGE_REWIND {
+        long id PK
+        long previousGameTime
+        long rewoundToGameTime
+        string status "AWAITING_ACK AWAITING_PLAYER RESENT KEPT NOTHING_LOST"
+        string lostInstructionIds
+    }
+    CONTRACT {
+        long id PK
+        string kind "INSURANCE LEASE MAINTENANCE"
+        string status "OFFERED ACTIVE DECLINED CANCELLED ENDED"
+        long characterId FK
+        int farmlandId "lease"
+        long monthlyAmount
+        long nextDueGameTime
+        long endsAtGameTime
+        int missedPayments
+        long renewalAmount "lease"
+        long purchasePrice "lease"
+    }
+    SERVICE_CASE {
+        long id PK
+        string kind "STORM_DAMAGE HAIL_DAMAGE WILDLIFE_DAMAGE VET_VISIT LIVESTOCK_OFFER BREEDING_ADVICE REPAIR MISSION_REFERRAL"
+        string status "AWAITING_PLAYER IN_PROGRESS SETTLED DECLINED EXPIRED"
+        long characterId FK
+        string reference "animal type / vehicle / contract id"
+        long offerAmount
+        long payoutAmount
+        string resolution
+    }
 ```
 
 Notes:
 
 - The JPA entity `Character` is stored in table `game_character` (`CHARACTER` is reserved in SQL).
+  `fs25NpcIndex` marks characters that stand for an FS25 NPC of the map (field owners, T-21).
+- `FARMLAND_OWNERSHIP.tradeable` (T-11) and `leasedToPlayer` (T-22: the game shows the player farm, the tool keeps the
+  owner). `SAVEGAME.cal*` holds the FS25 calendar (T-08, season T-21).
+- Contract payments are booked by `ContractBillingService`; service cases are the one-off incidents and offers of the
+  service characters (T-20 / T-22).
 - Hidden fact values (`finalScore`, `hiddenMaxBid`, `virtualWealth`, the exact `trustScore`) stay in the backend;
   the REST API only exposes categories and tiers (see [`two-tier-principle.md`](two-tier-principle.md)).
