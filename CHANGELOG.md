@@ -10,6 +10,8 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-26
+
 Result of the FS25 compatibility analysis (`TODO.md`): fixes for the real game and the first P3 features.
 
 ### Fixed

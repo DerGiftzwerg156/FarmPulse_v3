@@ -3,7 +3,7 @@
      Version follows SemVer and is coupled to CHANGELOG.md in the repository root. -->
 <modDesc descVersion="92">
     <author>Keno</author>
-    <version>1.0.0.0</version>
+    <version>1.1.0.0</version>
     <title>
         <en>RP Sim Bridge</en>
         <de>RP-Sim-Bridge</de>

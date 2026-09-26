@@ -12,7 +12,7 @@
 
     <groupId>de.farmpulse</groupId>
     <artifactId>rpsim-backend</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>rpsim-backend</name>
     <description>FS25 AI role-play simulation - fact layer, file bridge and AI narration backend</description>
 
