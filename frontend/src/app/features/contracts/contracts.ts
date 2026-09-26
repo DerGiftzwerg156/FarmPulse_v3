@@ -6,7 +6,7 @@ import { CaseView, ContractView, InsuranceQuoteView } from '../../core/api/model
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
-import { GameTimePipe, MoneyPipe, NumberPipe } from '../../shared/format/format.pipes';
+import { GameTimePipe, MoneyPipe } from '../../shared/format/format.pipes';
 import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge, BadgeVariant } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
@@ -21,13 +21,16 @@ export const CONTRACT_BADGE: Record<string, BadgeVariant> = {
   ENDED: 'neutral',
 };
 
+/** Cases still shown under "open": waiting for an answer, or accepted and running (trader offer). */
+const OPEN_CASE = ['AWAITING_PLAYER', 'IN_PROGRESS'];
+
 /**
  * Contracts & service cases (TODO T-20 / T-22): insurance (offer, accept, cancel), damage reports, and the cases and
  * contracts of the other service characters. All amounts come from the backend formulas.
  */
 @Component({
   selector: 'app-contracts',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView],
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, PageErrorView],
   templateUrl: './contracts.html',
 })
 export class Contracts {
@@ -52,8 +55,8 @@ export class Contracts {
   readonly activeInsurance = computed(() => this.insurance().find((c) => c.status === 'ACTIVE') ?? null);
   readonly insuranceOffers = computed(() => this.insurance().filter((c) => c.status === 'OFFERED'));
   readonly otherContracts = computed(() => (this.contracts() ?? []).filter((c) => c.kind !== 'INSURANCE'));
-  readonly openCases = computed(() => (this.cases() ?? []).filter((c) => c.status === 'AWAITING_PLAYER'));
-  readonly closedCases = computed(() => (this.cases() ?? []).filter((c) => c.status !== 'AWAITING_PLAYER'));
+  readonly openCases = computed(() => (this.cases() ?? []).filter((c) => OPEN_CASE.includes(c.status)));
+  readonly closedCases = computed(() => (this.cases() ?? []).filter((c) => !OPEN_CASE.includes(c.status)));
   readonly highlightedContract = computed(() => Number(this.contract()) || null);
   readonly highlightedCase = computed(() => Number(this.case()) || null);
 

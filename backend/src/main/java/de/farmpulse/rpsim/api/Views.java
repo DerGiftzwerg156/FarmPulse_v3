@@ -161,7 +161,7 @@ public final class Views {
     public record CaseView(Long id, String kind, String status, CharacterRef character, Integer farmlandId, Double hectares,
                            Long damageAmount, Long payoutAmount, Long costAmount, Long offerAmount, int roundsUsed,
                            boolean measureAgreed, String reference, long gameTime, Long deadlineGameTime, String resolution,
-                           Long measureCost) {
+                           Long measureCost, Integer quantity, String direction, Integer baselineCount) {
     }
 
     /** Insurance tariff preview for the current farm. */

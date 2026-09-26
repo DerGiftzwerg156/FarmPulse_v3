@@ -50,7 +50,7 @@ export interface ContractView {
 export interface CaseView {
   id: number;
   kind: string;
-  status: 'AWAITING_PLAYER' | 'SETTLED' | 'DECLINED' | 'EXPIRED' | string;
+  status: 'AWAITING_PLAYER' | 'IN_PROGRESS' | 'SETTLED' | 'DECLINED' | 'EXPIRED' | string;
   character: CharacterRef | null;
   farmlandId: number | null;
   hectares: number | null;
@@ -66,6 +66,12 @@ export interface CaseView {
   resolution: string | null;
   /** Own contribution of a joint measure (wildlife damage). */
   measureCost?: number | null;
+  /** Animals of a vet visit / trader offer (TODO T-20). */
+  quantity?: number | null;
+  /** Trader offer: SELL (player sells) or BUY (player buys). */
+  direction?: 'SELL' | 'BUY' | string | null;
+  /** Head count when the trader offer was accepted. */
+  baselineCount?: number | null;
 }
 
 export interface InsuranceQuoteView {

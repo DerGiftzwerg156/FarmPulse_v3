@@ -1,0 +1,6 @@
+Deine Prämie
+Moin,
+
+hat geklappt: {{quantity}} Tiere ({{animalType}}). Deine Prämie über {{premium}} € ist unterwegs.
+
+{{characterName}}

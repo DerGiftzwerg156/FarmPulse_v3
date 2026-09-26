@@ -79,4 +79,24 @@ describe('Contracts', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="case"]')).toBeNull();
   });
+  it('accepts a trader offer and lists vet invoices in the history', () => {
+    const offer = damage({ id: 9, kind: 'LIVESTOCK_OFFER', farmlandId: null, damageAmount: null, reference: 'COW', quantity: 3,
+      direction: 'SELL', offerAmount: 400 });
+    const vet = damage({ id: 10, kind: 'VET_VISIT', status: 'SETTLED', farmlandId: null, damageAmount: null, reference: 'COW',
+      quantity: 24, costAmount: 176, resolution: 'INVOICED' });
+    const { fixture, http, el } = setup([], [offer, vet]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="livestock-offer"]')?.textContent).toContain('Verkaufen: 3 Rinder');
+    expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('24 Rinder');
+    expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Abgerechnet');
+    (el.querySelector('[data-testid="case-accept"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/cases/9/accept').flush({ ...offer, status: 'IN_PROGRESS' });
+    http.expectOne('/api/contracts').flush([]);
+    http.expectOne('/api/cases').flush([{ ...offer, status: 'IN_PROGRESS', baselineCount: 24 }]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Läuft');
+    expect(el.querySelector('[data-testid="case-accept"]')).toBeNull();
+  });
 });

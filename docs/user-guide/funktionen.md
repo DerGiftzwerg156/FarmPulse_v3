@@ -107,6 +107,12 @@ findest du unter **Verträge & Vorgänge**.
   Schaden kostet Geld). Der Jagdpächter bietet Ersatz an. Du kannst annehmen, mehr fordern (bis zu zwei Runden),
   eine **gemeinsame Maßnahme** vereinbaren (eigener Beitrag, danach für einige Monate seltener Schäden, besseres
   Ansehen im Dorf) oder ablehnen – ein Streit spricht sich herum. Antwortest du nicht, zahlt er sein letztes Angebot.
+- **Tierarzt, Viehhändler:in und Zuchtberatung – nur wenn du Tiere hältst.** Der Tierarzt kommt alle paar Monate zur
+  Routineuntersuchung je Tierart und schickt eine Rechnung (Grundgebühr plus Betrag je Tier). Die Zuchtberatung
+  kommentiert, wie sich dein Bestand entwickelt hat. Der Viehhändler bietet ab und zu an, eine Anzahl Tiere zu kaufen
+  oder zu verkaufen, und zahlt dafür eine **Prämie je Tier**. Den Handel selbst erledigst du im Spiel wie gewohnt:
+  Nimmst du das Angebot an, zählt bis zur Frist, um wie viele Tiere sich dein Bestand in die vereinbarte Richtung
+  verändert hat – für jedes davon gibt es die Prämie (höchstens für die vereinbarte Anzahl).
 
 ## Dorf & Charaktere
 

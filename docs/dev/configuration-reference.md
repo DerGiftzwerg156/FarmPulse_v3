@@ -415,6 +415,28 @@ Wild boar damage is simulated per game month (`DAMAGE`); the hunter compensates 
 | `rpsim.formulas.hunting.dispute-trust-delta` | `-5` | Trust of the hunter when the compensation is refused. | TODO T-20 |
 | `rpsim.formulas.hunting.dispute-reputation-delta` | `-2` | Village reputation (public action) of a refused compensation. | TODO T-20 |
 
+## `rpsim.formulas.livestock` (TODO T-20)
+
+Only active while the export contains animals (`assets.animals`). There is no verified mod API to add or remove
+animals: the player trades them in the game; the trader pays a premium (`LIVESTOCK_PREMIUM`) per animal by which the
+exported head count changed in the agreed direction. Vet invoices are booked as `VET_INVOICE`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.livestock.vet-visit-every-months` | `3` | Routine visit of the vet every n game months per animal type. | TODO T-20 |
+| `rpsim.formulas.livestock.vet-base-fee` | `80` | Invoice per visit: base fee (€) … | TODO T-20 |
+| `rpsim.formulas.livestock.vet-fee-per-animal` | `4` | … plus this amount per animal of the type (€). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-probability-per-month` | `0.25` | Chance per game month of an offer of the livestock trader. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-buy-share` | `0.3` | Share of offers where the player should buy animals (the rest are sell offers). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-max-herd-share` | `0.3` | Sell offers: at most this share of the herd; no offer when that is below `trader-quantity-min`. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-quantity-min` | `2` | Animals per offer (lower bound). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-quantity-max` | `6` | Animals per offer (upper bound). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-premium-share-min` | `0.05` | Premium per animal as share of the exported value per animal (lower bound, rounded to 10 €, at least 10 €). | TODO T-20 |
+| `rpsim.formulas.livestock.trader-premium-share-max` | `0.12` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-answer-days` | `5` | Game days to answer an offer, afterwards it expires. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-deadline-months` | `1` | Game months to carry out an accepted offer in the game; afterwards moved animals are paid (partial) or the offer lapses. | TODO T-20 |
+| `rpsim.formulas.livestock.breeding-advice-every-months` | `6` | Advice of the breeding advisor every n game months per animal type (head count development since the last advice). | TODO T-20 |
+
 ## Profiles
 
 | Profile | Purpose | Overrides |

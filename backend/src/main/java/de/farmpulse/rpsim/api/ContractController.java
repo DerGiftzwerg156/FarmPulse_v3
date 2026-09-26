@@ -13,6 +13,7 @@ import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.contract.HuntingService;
 import de.farmpulse.rpsim.contract.InsuranceService;
+import de.farmpulse.rpsim.contract.LivestockService;
 import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
@@ -36,17 +37,19 @@ public class ContractController {
     private final ServiceCaseRepository cases;
     private final InsuranceService insurance;
     private final HuntingService hunting;
+    private final LivestockService livestock;
     private final ApiMapper mapper;
     private final RpsimProperties props;
 
     public ContractController(SavegameContext context, ContractRepository contracts, ServiceCaseRepository cases,
-                              InsuranceService insurance, HuntingService hunting, ApiMapper mapper,
+                              InsuranceService insurance, HuntingService hunting, LivestockService livestock, ApiMapper mapper,
                               RpsimProperties props) {
         this.context = context;
         this.contracts = contracts;
         this.cases = cases;
         this.insurance = insurance;
         this.hunting = hunting;
+        this.livestock = livestock;
         this.mapper = mapper;
         this.props = props;
     }
@@ -124,6 +127,7 @@ public class ContractController {
         Savegame sg = context.requireActive();
         return view(switch (serviceCase(sg, id).getKind()) {
             case WILDLIFE_DAMAGE -> hunting.accept(sg, id);
+            case LIVESTOCK_OFFER -> livestock.accept(sg, id);
             default -> throw unsupported();
         });
     }
@@ -154,6 +158,7 @@ public class ContractController {
         Savegame sg = context.requireActive();
         return view(switch (serviceCase(sg, id).getKind()) {
             case WILDLIFE_DAMAGE -> hunting.decline(sg, id);
+            case LIVESTOCK_OFFER -> livestock.decline(sg, id);
             default -> throw unsupported();
         });
     }
@@ -185,6 +190,7 @@ public class ContractController {
                 s.getHectares(), s.getDamageAmount(), s.getPayoutAmount(), s.getCostAmount(), s.getOfferAmount(),
                 s.getRoundsUsed(), s.isMeasureAgreed(), s.getReference(), s.getGameTime(), s.getDeadlineGameTime(),
                 s.getResolution(), s.getKind() == de.farmpulse.rpsim.domain.CaseKind.WILDLIFE_DAMAGE
-                        ? props.getFormulas().getHunting().getMeasureCost() : null);
+                        ? props.getFormulas().getHunting().getMeasureCost() : null,
+                s.getQuantity(), s.getDirection(), s.getBaselineCount());
     }
 }

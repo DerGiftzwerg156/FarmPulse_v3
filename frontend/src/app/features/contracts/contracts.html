@@ -78,6 +78,18 @@
               </div>
               <p class="mt-1 text-[11px] text-muted">{{ 'contracts.measureHint' | t }}</p>
             }
+            @if (c.kind === 'LIVESTOCK_OFFER') {
+              <div class="mt-1 text-[12px] text-text" data-testid="livestock-offer">{{ 'contracts.livestockOffer' | t: { direction: (c.direction | label: 'tradeDirection'), quantity: c.quantity, animal: (c.reference | label: 'animalType'), amount: (c.offerAmount | money) } }}</div>
+              @if (c.status === 'AWAITING_PLAYER') {
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <app-button [disabled]="busy()" (pressed)="caseAction(c, 'accept')" data-testid="case-accept">{{ 'contracts.accept' | t }}</app-button>
+                  <app-button variant="secondary" [disabled]="busy()" (pressed)="caseAction(c, 'decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+                </div>
+              } @else {
+                <app-badge variant="positive">{{ c.status | label: 'caseStatus' }}</app-badge>
+              }
+              <p class="mt-1 text-[11px] text-muted">{{ 'contracts.livestockHint' | t }}</p>
+            }
             @if (isInsuranceCase(c)) {
               <div class="mt-2 flex flex-wrap gap-2">
                 <app-button [disabled]="busy()" (pressed)="caseAction(c, 'report', { channel: 'MAIL' })" data-testid="report-mail">{{ 'contracts.reportMail' | t }}</app-button>
@@ -112,6 +124,8 @@
         <li class="flex flex-wrap items-center justify-between gap-2 border-t border-border py-1.5 text-[12px]" data-testid="closed-case">
           <span class="text-text">{{ c.kind | label: 'caseKind' }}@if (c.farmlandId !== null) { · {{ 'contracts.field' | t: { id: c.farmlandId } }} }
             @if (c.damageAmount !== null) { · {{ 'contracts.damage' | t: { amount: (c.damageAmount | money) } }} }
+            @if (c.quantity && c.reference) { · {{ 'contracts.animals' | t: { quantity: c.quantity, animal: (c.reference | label: 'animalType') } }} }
+            @if (c.costAmount !== null) { · {{ 'contracts.invoice' | t: { amount: (c.costAmount | money) } }} }
             @if (c.payoutAmount !== null) { · {{ 'contracts.payout' | t: { amount: (c.payoutAmount | money) } }} }</span>
           <span class="fp-label">{{ c.resolution | label: 'caseResolution' }} · {{ c.gameTime | gameTime }}</span>
         </li>

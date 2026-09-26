@@ -1,0 +1,7 @@
+Zuchtberatung
+Guten Tag,
+
+Ihr Bestand ({{animalType}}) liegt bei {{animalCount}} Tieren ({{herdTrend}}). Achten Sie weiter auf gutes Futter und Platz im Stall, dann klappt es auch mit dem Nachwuchs.
+
+Beste Grüße
+{{characterName}}

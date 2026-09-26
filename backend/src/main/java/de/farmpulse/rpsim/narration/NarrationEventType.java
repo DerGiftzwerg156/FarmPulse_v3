@@ -66,6 +66,12 @@ public enum NarrationEventType {
     WILDLIFE_COUNTER,
     WILDLIFE_SETTLED,
     WILDLIFE_DISPUTE,
+    // livestock (TODO T-20)
+    VET_VISIT,
+    LIVESTOCK_OFFER,
+    LIVESTOCK_PREMIUM_PAID,
+    LIVESTOCK_OFFER_LAPSED,
+    BREEDING_ADVICE,
     // conversation
     REPLY,
     CALL_CONVERSATION

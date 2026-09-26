@@ -376,6 +376,7 @@
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
+      "IN_PROGRESS": "Läuft",
       "SETTLED": "Erledigt",
       "DECLINED": "Abgelehnt",
       "EXPIRED": "Verfallen"
@@ -389,7 +390,25 @@
       "DEMAND_ACCEPTED": "Forderung angenommen",
       "MEASURE": "Mit gemeinsamer Maßnahme",
       "DISPUTE": "Streit",
-      "OFFER_PAID_BY_DEFAULT": "Angebot ohne Antwort ausgezahlt"
+      "OFFER_PAID_BY_DEFAULT": "Angebot ohne Antwort ausgezahlt",
+      "INVOICED": "Abgerechnet",
+      "ADVICE": "Beraten",
+      "FULFILLED": "Vollständig erfüllt",
+      "PARTIAL": "Teilweise erfüllt",
+      "LAPSED": "Nicht erfüllt",
+      "NO_ANSWER": "Ohne Antwort verfallen",
+      "PLAYER": "Von dir abgelehnt"
+    },
+    "animalType": {
+      "COW": "Rinder",
+      "PIG": "Schweine",
+      "SHEEP": "Schafe",
+      "CHICKEN": "Hühner",
+      "HORSE": "Pferde"
+    },
+    "tradeDirection": {
+      "SELL": "Verkaufen",
+      "BUY": "Kaufen"
     },
     "endReason": {
       "PLAYER": "auf eigenen Wunsch",
@@ -803,6 +822,10 @@
     "counter": "Mehr fordern",
     "measure": "Gemeinsame Maßnahme (Beitrag {amount})",
     "dispute": "Ablehnen",
+    "livestockOffer": "{direction}: {quantity} {animal} · Prämie {amount} je Tier",
+    "livestockHint": "Der Handel selbst läuft im Spiel: Kaufe oder verkaufe die Tiere wie gewohnt. Die Prämie zahlt der Händler für jedes Tier, um das sich dein Bestand bis zur Frist in die vereinbarte Richtung ändert.",
+    "animals": "{quantity} {animal}",
+    "invoice": "Rechnung {amount}",
     "measureHint": "Gemeinsame Maßnahme: Du beteiligst dich an Drückjagd oder Zaun, bekommst den angebotenen Ersatz, und für einige Monate gibt es seltener Wildschäden. Das Dorf rechnet es dir an – ein Streit dagegen spricht sich herum."
   }
 }

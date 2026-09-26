@@ -340,3 +340,17 @@ rpsim:
       agreement-trust-delta: 2
       dispute-trust-delta: -5
       dispute-reputation-delta: -2
+    livestock:                    # TODO T-20: vet / livestock trader / breeding advisor (placeholders)
+      vet-visit-every-months: 3
+      vet-base-fee: 80
+      vet-fee-per-animal: 4
+      trader-probability-per-month: 0.25
+      trader-buy-share: 0.3
+      trader-max-herd-share: 0.3
+      trader-quantity-min: 2
+      trader-quantity-max: 6
+      trader-premium-share-min: 0.05
+      trader-premium-share-max: 0.12
+      trader-answer-days: 5
+      trader-deadline-months: 1
+      breeding-advice-every-months: 6

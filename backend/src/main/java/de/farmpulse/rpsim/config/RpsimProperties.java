@@ -109,6 +109,7 @@ public class RpsimProperties {
         private Storage storage = new Storage();
         private Insurance insurance = new Insurance();
         private Hunting hunting = new Hunting();
+        private Livestock livestock = new Livestock();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -530,5 +531,35 @@ public class RpsimProperties {
         private double agreementTrustDelta = 2;
         private double disputeTrustDelta = -5;
         private double disputeReputationDelta = -2;
+    }
+
+    /**
+     * TODO T-20 vet / livestock trader / breeding advisor - only active with animals in the export. Animals are bought
+     * and sold by the player in the game; the trader pays a brokerage premium when the exported head count changes
+     * accordingly. Placeholders.
+     */
+    @Getter @Setter
+    public static class Livestock {
+        /** Routine visit of the vet every n game months per animal type. */
+        private int vetVisitEveryMonths = 3;
+        private long vetBaseFee = 80;
+        private long vetFeePerAnimal = 4;
+        /** Chance per game month of a trader offer. */
+        private double traderProbabilityPerMonth = 0.25;
+        /** Share of buy offers (the rest are sell offers). */
+        private double traderBuyShare = 0.3;
+        /** Sell offers: at most this share of the herd, at least traderQuantityMin animals. */
+        private double traderMaxHerdShare = 0.3;
+        private int traderQuantityMin = 2;
+        private int traderQuantityMax = 6;
+        /** Premium per animal as share of the exported value per animal. */
+        private double traderPremiumShareMin = 0.05;
+        private double traderPremiumShareMax = 0.12;
+        /** Game days to answer an offer. */
+        private double traderAnswerDays = 5;
+        /** Game months to carry out an accepted offer in the game. */
+        private int traderDeadlineMonths = 1;
+        /** Breeding advice every n game months per animal type. */
+        private int breedingAdviceEveryMonths = 6;
     }
 }

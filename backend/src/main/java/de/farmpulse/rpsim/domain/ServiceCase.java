@@ -68,6 +68,16 @@ public class ServiceCase extends SavegameScoped {
     @Column(name = "contract_id")
     private Long contractId;
 
+    /** Livestock offers: number of animals, direction SELL / BUY and the head count when the offer was accepted. */
+    @Column(name = "quantity")
+    private Integer quantity;
+
+    @Column(name = "direction", length = 8)
+    private String direction;
+
+    @Column(name = "baseline_count")
+    private Integer baselineCount;
+
     @Column(name = "game_time", nullable = false)
     private long gameTime;
 
