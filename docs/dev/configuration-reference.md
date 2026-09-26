@@ -475,6 +475,24 @@ owner character keeps the field (`leasedToPlayer`).
 | `rpsim.formulas.lease.purchase-factor` | `1.05` | Purchase offer of a sell-willing owner: reference price × factor (booked as `FARMLAND_PURCHASE`). | TODO T-22 |
 | `rpsim.formulas.lease.cancel-after-missed-payments` | `2` | The field goes back early after this many missed rents. | TODO T-22 |
 
+## `rpsim.formulas.maintenance` (TODO T-22)
+
+Maintenance contract of the workshop: monthly fee `MAINTENANCE_FEE`; while it is paid, the workshop repairs the most
+worn own vehicles at every month start (`REPAIR_VEHICLE` → `Wearable:setDamageAmount(0, true)` in the game). Without a
+contract the workshop sends repair hints and one unsolicited offer.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.maintenance.fee-rate` | `0.002` | Monthly fee = value of the own vehicles × rate (rounded to 10 €) … | TODO T-22 |
+| `rpsim.formulas.maintenance.min-fee` | `60` | … but at least this amount (€). | TODO T-22 |
+| `rpsim.formulas.maintenance.offer-valid-days` | `7` | Game days to accept an offer. | TODO T-22 |
+| `rpsim.formulas.maintenance.repair-below-condition` | `70` | Vehicles below this condition (0-100) are repaired at the monthly service … | TODO T-22 |
+| `rpsim.formulas.maintenance.max-repairs-per-month` | `3` | … at most this many per game month, the most worn first. | TODO T-22 |
+| `rpsim.formulas.maintenance.hint-below-condition` | `50` | Without contract: repair hint for the most worn vehicle below this condition … | TODO T-22 |
+| `rpsim.formulas.maintenance.hint-every-months` | `3` | … at most every n game months. | TODO T-22 |
+| `rpsim.formulas.maintenance.first-offer-below-condition` | `75` | One unsolicited offer when a vehicle is below this condition and there never was a contract. | TODO T-22 |
+| `rpsim.formulas.maintenance.cancel-after-missed-payments` | `2` | The contract ends after this many missed fees (no repairs while a fee is open). | TODO T-22 |
+
 ## Profiles
 
 | Profile | Purpose | Overrides |

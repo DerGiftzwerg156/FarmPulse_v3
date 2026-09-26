@@ -1,0 +1,7 @@
+Wartungsvertrag läuft
+Hallo,
+
+der Wartungsvertrag ist abgeschlossen: {{monthlyFee}} € pro Monat, ab dem nächsten Monatsbeginn kümmern wir uns um deine Maschinen.
+
+Viele Grüße
+{{characterName}}

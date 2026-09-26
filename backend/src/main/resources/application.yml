@@ -369,6 +369,16 @@ rpsim:
       renewal-factor-max: 1.1
       purchase-factor: 1.05
       cancel-after-missed-payments: 2
+    maintenance:                  # TODO T-22: maintenance contract of the workshop (placeholders)
+      fee-rate: 0.002
+      min-fee: 60
+      offer-valid-days: 7
+      repair-below-condition: 70
+      max-repairs-per-month: 3
+      hint-below-condition: 50
+      hint-every-months: 3
+      first-offer-below-condition: 75
+      cancel-after-missed-payments: 2
     energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
       fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
       probability-per-month: 0.35

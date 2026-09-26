@@ -114,4 +114,25 @@ describe('Contracts', () => {
     (el.querySelector('[data-testid="lease-buy"] button') as HTMLButtonElement).click();
     http.expectOne('/api/contracts/5/buy').flush({ ...lease, status: 'ENDED', endReason: 'PURCHASED' });
   });
+
+  it('requests and accepts a maintenance contract, repairs appear in the history', () => {
+    const repair = damage({ id: 11, kind: 'REPAIR', status: 'SETTLED', farmlandId: null, damageAmount: null, reference: 'veh_a',
+      quantity: 30, resolution: 'INCLUDED' });
+    const { fixture, http, el } = setup([], [repair]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Fahrzeug veh_a (30 %)');
+    expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Im Wartungsvertrag repariert');
+    (el.querySelector('[data-testid="request-maintenance"] button') as HTMLButtonElement).click();
+    const offer = contract({ id: 6, kind: 'MAINTENANCE', status: 'OFFERED', level: null, monthlyAmount: 600, coveragePercent: null,
+      deductible: null });
+    http.expectOne('/api/maintenance/offer').flush(offer);
+    http.expectOne('/api/contracts').flush([offer]);
+    http.expectOne('/api/cases').flush([repair]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="request-maintenance"]')).toBeNull();
+    (el.querySelector('[data-testid="contract-accept"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/contracts/6/accept').flush({ ...offer, status: 'ACTIVE' });
+  });
 });

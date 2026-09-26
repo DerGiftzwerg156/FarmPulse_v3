@@ -100,6 +100,14 @@ export class Contracts {
     });
   }
 
+  readonly hasMaintenance = computed(() =>
+    (this.contracts() ?? []).some((c) => c.kind === 'MAINTENANCE' && (c.status === 'ACTIVE' || c.status === 'OFFERED')),
+  );
+
+  requestMaintenance(): void {
+    this.run(this.api.requestMaintenanceOffer());
+  }
+
   requestOffer(level: string): void {
     this.run(this.api.requestInsuranceOffer(level));
   }

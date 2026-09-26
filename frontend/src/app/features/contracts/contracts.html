@@ -106,6 +106,10 @@
 
   <app-card [title]="'contracts.contractsTitle' | t" data-testid="other-contracts">
     <p class="mb-3 text-[12px] text-muted">{{ 'contracts.leaseHint' | t }}</p>
+    <p class="mb-3 text-[12px] text-muted">{{ 'contracts.maintenanceHint' | t }}</p>
+    @if (!hasMaintenance()) {
+      <div class="mb-3"><app-button variant="secondary" [disabled]="busy()" (pressed)="requestMaintenance()" data-testid="request-maintenance">{{ 'contracts.requestMaintenance' | t }}</app-button></div>
+    }
     <ul class="space-y-2">
       @for (c of otherContracts(); track c.id) {
         <li class="rounded-md border border-border bg-bg p-2" data-testid="contract" [attr.data-kind]="c.kind" [class.ring-1]="highlightedContract() === c.id">
@@ -117,11 +121,14 @@
               @if (c.endReason) { · {{ c.endReason | label: 'endReason' }} }</span>
             <app-badge [variant]="c.paymentOverdue ? 'negative' : badge(c.status)">{{ (c.paymentOverdue ? 'contracts.overdue' : 'enums.contractStatus.' + c.status) | t }}</app-badge>
           </div>
-          @if (c.kind === 'LEASE' && c.status === 'OFFERED') {
+          @if (c.status === 'OFFERED') {
             <div class="mt-2 flex gap-2">
-              <app-button [disabled]="busy()" (pressed)="contractAction(c, 'accept')" data-testid="lease-accept">{{ 'contracts.accept' | t }}</app-button>
-              <app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'decline')" data-testid="lease-decline">{{ 'contracts.decline' | t }}</app-button>
+              <app-button [disabled]="busy()" (pressed)="contractAction(c, 'accept')" data-testid="contract-accept">{{ 'contracts.accept' | t }}</app-button>
+              <app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'decline')" data-testid="contract-decline">{{ 'contracts.decline' | t }}</app-button>
             </div>
+          }
+          @if (c.kind === 'MAINTENANCE' && c.status === 'ACTIVE') {
+            <div class="mt-2"><app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'cancel')" data-testid="maintenance-cancel">{{ 'contracts.cancel' | t }}</app-button></div>
           }
           @if (c.kind === 'LEASE' && c.status === 'ACTIVE') {
             <div class="mt-2 flex flex-wrap gap-2">
@@ -147,7 +154,8 @@
         <li class="flex flex-wrap items-center justify-between gap-2 border-t border-border py-1.5 text-[12px]" data-testid="closed-case">
           <span class="text-text">{{ c.kind | label: 'caseKind' }}@if (c.farmlandId !== null) { · {{ 'contracts.field' | t: { id: c.farmlandId } }} }
             @if (c.damageAmount !== null) { · {{ 'contracts.damage' | t: { amount: (c.damageAmount | money) } }} }
-            @if (c.quantity && c.reference) { · {{ 'contracts.animals' | t: { quantity: c.quantity, animal: (c.reference | label: 'animalType') } }} }
+            @if (c.kind === 'REPAIR' && c.reference) { · {{ 'contracts.vehicle' | t: { id: c.reference, condition: c.quantity } }} }
+            @if (c.kind !== 'REPAIR' && c.quantity && c.reference) { · {{ 'contracts.animals' | t: { quantity: c.quantity, animal: (c.reference | label: 'animalType') } }} }
             @if (c.costAmount !== null) { · {{ 'contracts.invoice' | t: { amount: (c.costAmount | money) } }} }
             @if (c.payoutAmount !== null) { · {{ 'contracts.payout' | t: { amount: (c.payoutAmount | money) } }} }</span>
           <span class="fp-label">{{ c.resolution | label: 'caseResolution' }} · {{ c.gameTime | gameTime }}</span>

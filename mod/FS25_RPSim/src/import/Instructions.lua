@@ -3,7 +3,7 @@
 RPSimInstructions = {}
 
 RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLAND_TRANSFER = true,
-    NOTIFICATION = true } -- NOTIFICATION: TODO T-21
+    NOTIFICATION = true, REPAIR_VEHICLE = true } -- NOTIFICATION: TODO T-21, REPAIR_VEHICLE: TODO T-22
 
 RPSimInstructions.MONEY_REASONS = {
     CREDIT_DISBURSEMENT = true, CREDIT_INSTALLMENT = true, CREDIT_PENALTY = true, CREDIT_CALLBACK = true,
@@ -79,6 +79,10 @@ function RPSimInstructions.validate(ins)
         end
         if ins.price ~= nil and not isNumber(ins.price) then
             return false, "price must be a number"
+        end
+    elseif ins.type == "REPAIR_VEHICLE" then
+        if not isNonEmptyString(ins.vehicleId) then
+            return false, "vehicleId is required"
         end
     elseif ins.type == "NOTIFICATION" then
         if not isNonEmptyString(ins.text) then

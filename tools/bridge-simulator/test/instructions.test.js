@@ -176,3 +176,17 @@ test('NOTIFICATION is shown once; a late one is acknowledged but not shown (TODO
   assert.equal(acks.n1.message, undefined);
   assert.equal(acks.n2.message, 'EXPIRED');
 });
+
+test('REPAIR_VEHICLE removes the damage of an own vehicle, unknown vehicles fail (TODO T-22)', () => {
+  const { sim, write } = setup();
+  const v = sim.vehicles[0];
+  v.damage = 0.4;
+  write([{ instructionId: 'r1', type: 'REPAIR_VEHICLE', vehicleId: v.uniqueId },
+    { instructionId: 'r2', type: 'REPAIR_VEHICLE', vehicleId: 'veh_gone' }]);
+  sim.processInstructions();
+  assert.equal(v.damage, 0);
+  const acks = Object.fromEntries(read(sim.paths.ack).acks.map((a) => [a.instructionId, a]));
+  assert.equal(acks.r1.status, 'APPLIED');
+  assert.equal(acks.r2.status, 'FAILED');
+  assert.equal(acks.r2.message, 'VEHICLE_NOT_FOUND');
+});

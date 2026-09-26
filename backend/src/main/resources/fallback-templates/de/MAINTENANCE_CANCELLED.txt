@@ -1,0 +1,7 @@
+Wartungsvertrag beendet
+Hallo,
+
+der Wartungsvertrag ist beendet ({{reason}}). Reparaturen laufen ab jetzt wieder ganz normal über den Werkstatt-Shop im Spiel.
+
+Viele Grüße
+{{characterName}}

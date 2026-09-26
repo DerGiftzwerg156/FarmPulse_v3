@@ -15,6 +15,7 @@ import de.farmpulse.rpsim.contract.HuntingService;
 import de.farmpulse.rpsim.contract.InsuranceService;
 import de.farmpulse.rpsim.contract.LeaseService;
 import de.farmpulse.rpsim.contract.LivestockService;
+import de.farmpulse.rpsim.contract.MaintenanceService;
 import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
@@ -40,12 +41,13 @@ public class ContractController {
     private final HuntingService hunting;
     private final LivestockService livestock;
     private final LeaseService lease;
+    private final MaintenanceService maintenance;
     private final ApiMapper mapper;
     private final RpsimProperties props;
 
     public ContractController(SavegameContext context, ContractRepository contracts, ServiceCaseRepository cases,
                               InsuranceService insurance, HuntingService hunting, LivestockService livestock, LeaseService lease,
-                              ApiMapper mapper,
+                              MaintenanceService maintenance, ApiMapper mapper,
                               RpsimProperties props) {
         this.context = context;
         this.contracts = contracts;
@@ -54,6 +56,7 @@ public class ContractController {
         this.hunting = hunting;
         this.livestock = livestock;
         this.lease = lease;
+        this.maintenance = maintenance;
         this.mapper = mapper;
         this.props = props;
     }
@@ -96,6 +99,7 @@ public class ContractController {
         return view(switch (contract(sg, id).getKind()) {
             case INSURANCE -> insurance.accept(sg, id);
             case LEASE -> lease.accept(sg, id);
+            case MAINTENANCE -> maintenance.accept(sg, id);
             default -> throw unsupported();
         });
     }
@@ -107,6 +111,7 @@ public class ContractController {
         return view(switch (contract(sg, id).getKind()) {
             case INSURANCE -> insurance.decline(sg, id);
             case LEASE -> lease.decline(sg, id);
+            case MAINTENANCE -> maintenance.decline(sg, id);
             default -> throw unsupported();
         });
     }
@@ -118,8 +123,16 @@ public class ContractController {
         return view(switch (contract(sg, id).getKind()) {
             case INSURANCE -> insurance.cancel(sg, id);
             case LEASE -> lease.cancel(sg, id);
+            case MAINTENANCE -> maintenance.cancel(sg, id);
             default -> throw unsupported();
         });
+    }
+
+    /** TODO T-22: ask the workshop for a maintenance contract offer. */
+    @PostMapping("/api/maintenance/offer")
+    @Transactional
+    public ContractView requestMaintenanceOffer() {
+        return view(maintenance.offer(context.requireActive()));
     }
 
     /** TODO T-22: renew a lease at the rent offered one month before the end. */

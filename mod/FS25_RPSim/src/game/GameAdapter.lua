@@ -397,6 +397,39 @@ function RPSimGameAdapter:addMoney(amount, reason, note)
     return true
 end
 
+--- Repair of an own vehicle paid by the maintenance contract (TODO T-22): Wearable:setDamageAmount(0, true) - the
+-- part of FS25 Wearable:repairVehicle() that removes the damage; repairVehicle() itself would also book the repair
+-- price (addMoney(-getRepairPrice(), ..., MoneyType.VEHICLE_REPAIR)), which the contract already covers.
+function RPSimGameAdapter:repairVehicle(uniqueId)
+    local farmId = self:getFarmId()
+    local target
+    for _, v in pairs(vehicleList()) do
+        local ok, id = pcall(function() return v:getUniqueId() end)
+        if ok and id == uniqueId then
+            target = v
+            break
+        end
+    end
+    if target == nil then
+        return false, "VEHICLE_NOT_FOUND"
+    end
+    local ok, err = pcall(function()
+        if target:getOwnerFarmId() ~= farmId then
+            error("NOT_OWN_VEHICLE")
+        end
+        if target.setDamageAmount == nil then
+            error("NOT_WEARABLE")
+        end
+        target:setDamageAmount(0, true)
+    end)
+    if not ok then
+        local msg = tostring(err)
+        return false, msg:match("NOT_OWN_VEHICLE") and "NOT_OWN_VEHICLE" or msg:match("NOT_WEARABLE") and "NOT_WEARABLE" or msg
+    end
+    RPSimLog.info("Vehicle %s repaired (maintenance contract)", tostring(uniqueId))
+    return true
+end
+
 --- In-game notification (TODO T-21): g_currentMission:addIngameNotification(FSBaseMission.INGAME_NOTIFICATION_*, text),
 -- the pattern of FS25_MarketDynamics (MarketDynamics.lua, FuturesMarket.lua).
 function RPSimGameAdapter:notify(text, level)

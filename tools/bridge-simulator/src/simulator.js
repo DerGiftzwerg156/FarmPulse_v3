@@ -64,6 +64,9 @@ export function validateInstruction(ins) {
       if (!num(ins.farmlandId)) return 'farmlandId must be a number';
       if (!['TO_PLAYER', 'FROM_PLAYER'].includes(ins.direction)) return `unknown direction ${ins.direction}`;
       return null;
+    case 'REPAIR_VEHICLE': // TODO T-22
+      if (typeof ins.vehicleId !== 'string' || !ins.vehicleId) return 'vehicleId is required';
+      return null;
     case 'NOTIFICATION': // TODO T-21
       if (typeof ins.text !== 'string' || !ins.text) return 'text is required';
       if (ins.level !== undefined && !['INFO', 'OK', 'CRITICAL'].includes(ins.level)) return `unknown level ${ins.level}`;
@@ -377,6 +380,13 @@ export class BridgeSimulator {
             deadlineGameTime: ins.deadlineGameTime, deliveredQuantity: 0 });
         }
         this.priceEvents.push(ev);
+        return null;
+      }
+      case 'REPAIR_VEHICLE': {
+        // like the mod: Wearable:setDamageAmount(0, true) on an own vehicle
+        const v = this.vehicles.find((x) => x.uniqueId === ins.vehicleId);
+        if (!v) return 'VEHICLE_NOT_FOUND';
+        v.damage = 0;
         return null;
       }
       case 'NOTIFICATION':

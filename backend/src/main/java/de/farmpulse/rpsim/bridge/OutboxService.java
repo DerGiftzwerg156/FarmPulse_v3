@@ -87,6 +87,14 @@ public class OutboxService {
         return enqueue(sg, InstructionType.PRICE_EVENT, p, null, gameTimeEarliest, related);
     }
 
+    /** TODO T-22: repair of an own vehicle (maintenance contract). */
+    @Transactional
+    public OutboxInstruction repairVehicle(Savegame sg, String vehicleId, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("vehicleId", vehicleId);
+        return enqueue(sg, InstructionType.REPAIR_VEHICLE, p, null, null, related);
+    }
+
     /** TODO T-22: farmland transfer without money (lease start / return). */
     @Transactional
     public OutboxInstruction farmlandTransfer(Savegame sg, int farmlandId, boolean toPlayer, String note, Related related) {

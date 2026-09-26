@@ -6,5 +6,10 @@ public enum InstructionType {
     PRICE_EVENT,
     FARMLAND_TRANSFER,
     /** TODO T-21: in-game notification (new mail / incoming call); never re-sent after a rewind, no failure notice. */
-    NOTIFICATION
+    NOTIFICATION,
+    /**
+     * TODO T-22: repair of an own vehicle paid by the maintenance contract (Wearable:setDamageAmount(0, true)).
+     * Not re-sent after a rewind - the workshop repairs the still damaged vehicle at the next monthly service.
+     */
+    REPAIR_VEHICLE
 }

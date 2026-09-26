@@ -234,4 +234,22 @@ function T.TestGameAdapter:testSeasonNameComesFromTheSeasonTable()
     lu.assertNil(RPSimGameAdapter.seasonName(3))
 end
 
+-- T-22: repair of an own vehicle via Wearable:setDamageAmount(0, true)
+function T.TestGameAdapter:testRepairVehicleSetsTheDamageToZero()
+    local game = helpers.fakeGame({ vehicles = {
+        { uniqueId = "veh_owned", propertyState = VehiclePropertyState.OWNED, sellPrice = 50000, damage = 0.4 },
+        { uniqueId = "veh_foreign", propertyState = VehiclePropertyState.OWNED, sellPrice = 1, damage = 0.4, ownerFarmId = 2 },
+    } })
+    local a = RPSimGameAdapter.new()
+    lu.assertTrue(a:repairVehicle("veh_owned"))
+    lu.assertEquals(game.vehicles[1].damage, 0)
+    local ok, err = a:repairVehicle("veh_unknown")
+    lu.assertFalse(ok)
+    lu.assertEquals(err, "VEHICLE_NOT_FOUND")
+    ok, err = a:repairVehicle("veh_foreign")
+    lu.assertFalse(ok)
+    lu.assertEquals(err, "NOT_OWN_VEHICLE")
+    lu.assertEquals(game.vehicles[2].damage, 0.4)
+end
+
 return T

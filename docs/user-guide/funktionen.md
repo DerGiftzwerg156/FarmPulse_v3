@@ -128,6 +128,10 @@ findest du unter **Verträge & Vorgänge**.
   Monat vor dem Ende meldet sich der Besitzer mit einer Verlängerung zum neuen Pachtpreis und – wenn er verkaufen
   würde – einem Kaufangebot. Antwortest du nicht, geht das Feld zum Ende automatisch zurück. Bleibt die Pacht zweimal
   offen, nimmt er das Feld vorzeitig zurück.
+- **Werkstatt – Wartungsvertrag.** Für eine feste Monatsgebühr (abhängig vom Wert deiner Maschinen) setzt die
+  Werkstatt zu jedem Monatsbeginn die am stärksten abgenutzten Fahrzeuge instand – direkt im Spiel, ohne weitere
+  Kosten. Ohne Vertrag meldet sie sich ab und zu mit einem Hinweis, wenn eine Maschine stark abgenutzt ist. Das
+  Angebot forderst du unter **Verträge** an; kündigen kannst du jederzeit.
 
 ## Dorf & Charaktere
 

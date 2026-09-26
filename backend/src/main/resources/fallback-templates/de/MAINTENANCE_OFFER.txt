@@ -1,0 +1,7 @@
+Wartungsvertrag für deinen Fuhrpark
+Hallo,
+
+damit deine Maschinen in Schuss bleiben, biete ich dir einen Wartungsvertrag an: {{monthlyFee}} € pro Monat für deine {{vehicleCount}} Fahrzeuge. Jeden Monat reparieren wir die am stärksten abgenutzten Maschinen (Zustand unter {{repairBelowCondition}} %, bis zu {{maxRepairsPerMonth}} Stück) – ohne weitere Kosten. Das Angebot gilt {{validDays}} Tage, annehmen kannst du es unter „Verträge“.
+
+Viele Grüße
+{{characterName}}

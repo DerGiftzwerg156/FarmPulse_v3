@@ -157,6 +157,8 @@ function RPSimBridge:pollInstructions()
                     money = function(ins) return adapter:addMoney(ins.amount, ins.reason, ins.note) end,
                     farmlandTransfer = function(ins) return adapter:transferFarmland(ins.farmlandId, ins.direction) end,
                     notify = adapter.notify ~= nil and function(ins) return adapter:notify(ins.text, ins.level) end or nil,
+                    repairVehicle = adapter.repairVehicle ~= nil
+                        and function(ins) return adapter:repairVehicle(ins.vehicleId) end or nil,
                 },
             })
             if result.marketContextDirty then

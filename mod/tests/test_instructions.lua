@@ -162,4 +162,21 @@ function T.TestInstructions:testNotificationValidation()
     lu.assertTrue(RPSimInstructions.validate({ instructionId = "x", type = "NOTIFICATION", text = "a", level = "OK" }))
 end
 
+-- TODO T-22: repairs of the maintenance contract
+function T.TestInstructions:testRepairVehicleIsAppliedOrFailed()
+    local bridge, fs, adapter, paths = helpers.newBridge()
+    bridge:bootstrap()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        { instructionId = "ins_r1", type = "REPAIR_VEHICLE", vehicleId = "veh_00042" },
+        { instructionId = "ins_r2", type = "REPAIR_VEHICLE", vehicleId = "veh_gone" } } })
+    local res = bridge:pollInstructions()
+    lu.assertEquals(res.applied, 1)
+    lu.assertEquals(adapter.repairs, { "veh_00042" })
+    local acks = {}
+    for _, a in ipairs(RPSimJson.decode(fs.files[paths.instructionsAck]).acks) do acks[a.instructionId] = a end
+    lu.assertEquals(acks.ins_r2.status, "FAILED")
+    lu.assertEquals(acks.ins_r2.message, "VEHICLE_NOT_FOUND")
+    lu.assertFalse(RPSimInstructions.validate({ instructionId = "x", type = "REPAIR_VEHICLE" }))
+end
+
 return T

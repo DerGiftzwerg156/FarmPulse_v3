@@ -149,6 +149,11 @@ function RPSimProcessor.applyOne(state, ins, ctx)
         local start = ins.gameTimeEarliest or ctx.gameTime
         state.priceEvents:addFromInstruction(ins, start)
         return true
+    elseif ins.type == "REPAIR_VEHICLE" then
+        if ctx.actions.repairVehicle == nil then
+            return false, "NOT_SUPPORTED"
+        end
+        return ctx.actions.repairVehicle(ins)
     elseif ins.type == "NOTIFICATION" then
         -- TODO T-21: a hint that arrives too late (e.g. after loading an older savegame) is not shown
         if ins.expiresAtGameTime ~= nil and ctx.gameTime > ins.expiresAtGameTime then

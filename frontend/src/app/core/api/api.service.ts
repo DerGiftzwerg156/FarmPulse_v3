@@ -39,6 +39,10 @@ export class ApiService {
   contractAction(id: number, action: 'accept' | 'decline' | 'cancel' | string, body: unknown = {}): Observable<M.ContractView> {
     return this.post(`/contracts/${id}/${action}`, body);
   }
+  /** TODO T-22: ask the workshop for a maintenance contract. */
+  requestMaintenanceOffer(): Observable<M.ContractView> {
+    return this.post('/maintenance/offer', {});
+  }
   /** TODO T-22: ask the owner of a field for a lease; the answer is an offer or a refusal. */
   requestLease(farmlandId: number): Observable<M.ContractView> {
     return this.post(`/farmlands/${farmlandId}/lease-request`, {});

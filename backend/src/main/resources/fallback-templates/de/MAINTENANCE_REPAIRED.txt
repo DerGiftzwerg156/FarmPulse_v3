@@ -1,0 +1,7 @@
+Monatliche Wartung erledigt
+Hallo,
+
+wir haben diesen Monat {{repairCount}} Maschinen instand gesetzt (vorher im Schnitt {{averageCondition}} % Zustand). Alles ist im Wartungsvertrag enthalten.
+
+Viele Grüße
+{{characterName}}

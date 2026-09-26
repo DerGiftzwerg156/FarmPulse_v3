@@ -1,0 +1,7 @@
+Eine Maschine braucht Pflege
+Hallo,
+
+mir ist aufgefallen, dass eine deiner Maschinen nur noch bei {{condition}} % Zustand ist. Eine Reparatur lohnt sich – im Spiel in der Werkstatt, oder regelmäßig mit einem Wartungsvertrag bei uns.
+
+Viele Grüße
+{{characterName}}

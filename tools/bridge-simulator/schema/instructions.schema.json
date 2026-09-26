@@ -13,7 +13,7 @@
         "instructionId": { "type": "string", "minLength": 1 },
         "batchId": { "type": "string" },
         "gameTimeEarliest": { "type": "number" },
-        "type": { "enum": ["MONEY_TRANSACTION", "PRICE_EVENT", "FARMLAND_TRANSFER", "NOTIFICATION"] }
+        "type": { "enum": ["MONEY_TRANSACTION", "PRICE_EVENT", "FARMLAND_TRANSFER", "NOTIFICATION", "REPAIR_VEHICLE"] }
       },
       "allOf": [
         { "if": { "properties": { "type": { "const": "MONEY_TRANSACTION" } } },
@@ -31,6 +31,8 @@
         { "if": { "properties": { "type": { "const": "FARMLAND_TRANSFER" } } },
           "then": { "required": ["farmlandId", "direction"], "properties": { "farmlandId": { "type": "integer" },
             "direction": { "enum": ["TO_PLAYER", "FROM_PLAYER"] }, "price": { "type": "number" } } } },
+        { "if": { "properties": { "type": { "const": "REPAIR_VEHICLE" } } },
+          "then": { "required": ["vehicleId"], "properties": { "vehicleId": { "type": "string", "minLength": 1 } } } },
         { "if": { "properties": { "type": { "const": "NOTIFICATION" } } },
           "then": { "required": ["text"], "properties": { "text": { "type": "string", "minLength": 1 },
             "level": { "enum": ["INFO", "OK", "CRITICAL"] }, "expiresAtGameTime": { "type": "number" } } } }

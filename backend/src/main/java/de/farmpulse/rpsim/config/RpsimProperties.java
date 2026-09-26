@@ -116,6 +116,7 @@ public class RpsimProperties {
         private Livestock livestock = new Livestock();
         private Energy energy = new Energy();
         private Lease lease = new Lease();
+        private Maintenance maintenance = new Maintenance();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -619,6 +620,30 @@ public class RpsimProperties {
         /** Purchase offer of a sell-willing owner: reference price × this factor. */
         private double purchaseFactor = 1.05;
         /** The lease ends early (field goes back) after this many missed rents. */
+        private int cancelAfterMissedPayments = 2;
+    }
+
+    /**
+     * TODO T-22 maintenance contract of the workshop: monthly fee (MAINTENANCE_FEE); while it is paid, the workshop
+     * repairs the most worn own vehicles every game month (REPAIR_VEHICLE). Without a contract it sends repair hints.
+     * Vehicle condition from farm_facts (0-100). Placeholders.
+     */
+    @Getter @Setter
+    public static class Maintenance {
+        /** Monthly fee = max(minFee, value of the own vehicles × feeRate). */
+        private double feeRate = 0.002;
+        private long minFee = 60;
+        private double offerValidDays = 7;
+        /** Vehicles below this condition are repaired at the monthly service … */
+        private double repairBelowCondition = 70;
+        /** … at most this many per game month (the most worn first). */
+        private int maxRepairsPerMonth = 3;
+        /** Without contract: repair hint for the most worn vehicle below this condition … */
+        private double hintBelowCondition = 50;
+        /** … at most every n game months. */
+        private int hintEveryMonths = 3;
+        /** First unsolicited offer when a vehicle is below this condition and there never was a contract. */
+        private double firstOfferBelowCondition = 75;
         private int cancelAfterMissedPayments = 2;
     }
 }

@@ -131,6 +131,12 @@ function helpers.fakeAdapter(overrides)
         return true
     end
     a.notifications = {}
+    a.repairs = {}
+    function a:repairVehicle(id)
+        if id == "veh_gone" then return false, "VEHICLE_NOT_FOUND" end
+        self.repairs[#self.repairs + 1] = id
+        return true
+    end
     function a:notify(text, level)
         self.notifications[#self.notifications + 1] = { text = text, level = level }
         return true
