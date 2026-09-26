@@ -17,6 +17,7 @@ end
 --- raw: {
 --   savegameId, gameTime, balance,
 --   vehicles = { {uniqueId, value, damage} }, placeables = { {uniqueId, value} },
+--   leasedVehicles = { {uniqueId, costPerPeriod?} },
 --   farmland = { {farmlandId, hectares, price} }, animals = { {husbandryUniqueId, type, count, estimatedValue} },
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number, prices = { {sellPoint, fillType, pricePerLiter} } }
 function RPSimFarmFacts.build(raw, cfg)
@@ -50,6 +51,17 @@ function RPSimFarmFacts.build(raw, cfg)
         if a.sellPoint == b.sellPoint then return a.fillType < b.fillType end
         return a.sellPoint < b.sellPoint
     end)
+    -- Leased vehicles are no assets but an obligation (T-04). costPerPeriod stays absent until the game API
+    -- for leasing costs is verified (manual test plan).
+    local leasing = RPSimJson.array({})
+    for _, v in ipairs(raw.leasedVehicles or {}) do
+        local e = { uniqueId = tostring(v.uniqueId) }
+        if type(v.costPerPeriod) == "number" then
+            e.costPerPeriod = round(v.costPerPeriod)
+        end
+        leasing[#leasing + 1] = e
+    end
+    table.sort(leasing, function(a, b) return a.uniqueId < b.uniqueId end)
     local loan = raw.vanillaLoan or 0
     return {
         schemaVersion = cfg.schemaVersion,
@@ -63,7 +75,7 @@ function RPSimFarmFacts.build(raw, cfg)
             animals = animals,
             storage = RPSimStorage.aggregate(raw.silos),
         },
-        liabilities = { vanillaLoan = { active = loan > 0, remainingAmount = round(loan) } },
+        liabilities = { vanillaLoan = { active = loan > 0, remainingAmount = round(loan) }, leasing = leasing },
         prices = prices,
     }
 end

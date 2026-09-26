@@ -24,7 +24,8 @@ local function markAll(state, items, gameTime, status, message)
 end
 
 --- Processes a parsed instructions document.
--- ctx = { savegameId, gameTime, actions = { money = fn(ins) -> ok, err ; farmlandTransfer = fn(ins) -> ok, err } }
+-- ctx = { savegameId, gameTime, actions = { money = fn(ins) -> ok, err ; farmlandTransfer = fn(ins) -> ok, err ;
+--         checkBatch = optional fn(items) -> ok, err (e.g. INSUFFICIENT_FUNDS) } }
 -- Returns result { discarded, applied, rejected, deferred, marketContextDirty }.
 function RPSimProcessor.process(state, doc, ctx)
     local result = { discarded = false, applied = 0, rejected = 0, deferred = 0, duplicates = 0,
@@ -71,14 +72,25 @@ function RPSimProcessor.process(state, doc, ctx)
                     end
                 end
             end
+            -- 3) optional adapter pre-check (funds) for the whole batch
+            local applicable, why = true, nil
+            if invalid == nil and not notYet then
+                applicable, why = RPSimProcessor.batchApplicable(pending, ctx)
+            end
             if invalid ~= nil then
                 RPSimLog.warning("Rejecting batch %s: %s", tostring(batch.key), invalid)
                 markAll(state, pending, ctx.gameTime, "REJECTED", invalid)
                 result.rejected = result.rejected + #pending
             elseif notYet then
                 result.deferred = result.deferred + #pending
+            elseif not applicable then
+                -- e.g. not enough money for the debits of the batch: nothing of the batch is executed, so
+                -- ownership and money never diverge. The backend treats it like a missed payment (T-03).
+                RPSimLog.warning("Batch %s not executed: %s", tostring(batch.key), tostring(why))
+                markAll(state, pending, ctx.gameTime, "FAILED", tostring(why))
+                result.rejected = result.rejected + #pending
             else
-                -- 3) apply every member of the batch in the same cycle
+                -- 4) apply every member of the batch in the same cycle
                 for _, ins in ipairs(pending) do
                     local ok, err = RPSimProcessor.applyOne(state, ins, ctx)
                     if ok then
@@ -98,6 +110,22 @@ function RPSimProcessor.process(state, doc, ctx)
         end
     end
     return result
+end
+
+--- Runs the optional batch pre-check of the adapter. Returns ok, err.
+function RPSimProcessor.batchApplicable(items, ctx)
+    local check = ctx.actions ~= nil and ctx.actions.checkBatch or nil
+    if check == nil then
+        return true
+    end
+    local ok, res, err = pcall(check, items)
+    if not ok then
+        return false, tostring(res)
+    end
+    if res == false then
+        return false, err or "batch check failed"
+    end
+    return true
 end
 
 function RPSimProcessor.applyOne(state, ins, ctx)

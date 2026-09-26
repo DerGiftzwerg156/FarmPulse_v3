@@ -1,10 +1,10 @@
 -- FS25_RPSim entry point: registers with the FS25 mod lifecycle and wires hooks.
--- Lifecycle: addModEventListener -> loadMap / update / deleteMap; persistence via
--- FSCareerMissionInfo.saveToXMLFile (appended) and the savegame XML loaded in loadMap.
--- TODO(offene-frage): hook names verified against FS22/FS25 community mods, not against an official FS25
--- scripting reference - see docs/dev/offene-technische-punkte.md.
--- luacheck: globals g_currentMission g_modSettingsDirectory addModEventListener Utils
--- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate
+-- Lifecycle: addModEventListener -> loadMap / update / deleteMap; the first export runs in
+-- Mission00.onStartMission (farms, vehicles and placeables of the savegame exist only from then on - same
+-- pattern as FS25_UsedPlus and FS25_MarketDynamics). Persistence via FSCareerMissionInfo.saveToXMLFile
+-- (appended) and the savegame XML loaded in loadMap.
+-- luacheck: globals g_currentMission g_modSettingsDirectory addModEventListener Utils getUserProfileAppPath
+-- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00
 RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil }
 
 local XML_NAME = "FS25_RPSim.xml"
@@ -23,10 +23,16 @@ local function loadConfig(paths)
     return RPSimConfig.new(overrides)
 end
 
+local function modSettingsDir()
+    local profile = getUserProfileAppPath ~= nil and getUserProfileAppPath() or nil
+    return RPSimBridgePaths.resolveModSettingsDir(g_modSettingsDirectory, profile) or "modSettings/"
+end
+
 function RPSim:loadMap(_)
     self.adapter = RPSimGameAdapter.new()
-    local paths = RPSimBridgePaths.new(g_modSettingsDirectory or "./modSettings/")
+    local paths = RPSimBridgePaths.new(modSettingsDir())
     RPSimFileIO.ensureDir(paths.base)
+    RPSimLog.info("Bridge folder: %s", paths.base)
     local cfg = loadConfig(paths)
     local state = RPSimProcessor.newState(cfg)
 
@@ -42,15 +48,27 @@ function RPSim:loadMap(_)
         end
     end
     if state.savegameId == nil then
-        local stamp = getDate ~= nil and getDate("%Y%m%d%H%M%S") or tostring(os.time())
+        -- getDate exists in FS25 (PlayerSystem, BetterContracts); os.time does not (no `os` in the sandbox).
+        local stamp = getDate ~= nil and getDate("%Y%m%d%H%M%S") or "0"
         state.savegameId = RPSimBridge.generateSavegameId(self.adapter:getMapName(),
             self.adapter:getSavegameIndex(), stamp)
     end
 
     self.bridge = RPSimBridge.new(cfg, paths, self.adapter, state)
     self.bridge:bootstrap()
-    self.bridge:onSavegameLoaded()
+    if Mission00 == nil or Mission00.onStartMission == nil then
+        -- No start hook available: start right away (degraded, first export may be incomplete).
+        RPSimLog.warning("Mission00.onStartMission not available - starting the bridge immediately")
+        self.bridge:onSavegameLoaded()
+    end
     RPSimLog.info("Loaded, savegameId=%s", state.savegameId)
+end
+
+--- Mission00.onStartMission (appended): the savegame is completely loaded, run the first export.
+function RPSim.onStartMission(_)
+    if RPSim.bridge ~= nil and not RPSim.bridge.started then
+        RPSim.bridge:onSavegameLoaded()
+    end
 end
 
 function RPSim:update(dt)
@@ -91,22 +109,26 @@ local function effectivePriceHook(station, superFunc, fillTypeIndex, ...)
     return RPSim.bridge:effectivePrice(RPSimGameAdapter.sellPointId(station), name, base)
 end
 
--- Quantity tracking for FIXED contracts.
-local function sellFillTypeHook(station, farmId, deltaFillLevel, fillTypeIndex, ...)
-    if RPSim.bridge ~= nil and deltaFillLevel ~= nil and deltaFillLevel > 0 then
+--- Quantity tracking for FIXED contracts (T-05): the sale is counted AFTER the game has priced and paid it,
+-- so the delivery that fills the contract is still paid at the contract price. The quantity is the requested
+-- fillDelta, not the return value (unreliable in FS25, see FS25_MarketDynamics PriceHook.lua).
+-- FS25 signature: sellFillType(farmId, fillDelta, fillTypeIndex, fillPositionData, toolType, extraAttributes).
+function RPSim.sellFillTypeHook(station, superFunc, farmId, fillDelta, fillTypeIndex, ...)
+    local result = superFunc(station, farmId, fillDelta, fillTypeIndex, ...)
+    if RPSim.bridge ~= nil and fillDelta ~= nil and fillDelta > 0 then
         local name = g_fillTypeManager:getFillTypeNameByIndex(fillTypeIndex)
-        RPSim.bridge:recordSale(RPSimGameAdapter.sellPointId(station), name, deltaFillLevel)
+        RPSim.bridge:recordSale(RPSimGameAdapter.sellPointId(station), name, fillDelta)
     end
-    return farmId, deltaFillLevel, fillTypeIndex, ...
+    return result
 end
 
 if SellingStation ~= nil and Utils ~= nil then
     SellingStation.getEffectiveFillTypePrice = Utils.overwrittenFunction(SellingStation.getEffectiveFillTypePrice,
         effectivePriceHook)
-    SellingStation.sellFillType = Utils.prependedFunction(SellingStation.sellFillType,
-        function(station, farmId, deltaFillLevel, fillTypeIndex, ...)
-            sellFillTypeHook(station, farmId, deltaFillLevel, fillTypeIndex, ...)
-        end)
+    SellingStation.sellFillType = Utils.overwrittenFunction(SellingStation.sellFillType, RPSim.sellFillTypeHook)
+end
+if Mission00 ~= nil and Utils ~= nil then
+    Mission00.onStartMission = Utils.appendedFunction(Mission00.onStartMission, RPSim.onStartMission)
 end
 if FSCareerMissionInfo ~= nil and Utils ~= nil then
     FSCareerMissionInfo.saveToXMLFile = Utils.appendedFunction(FSCareerMissionInfo.saveToXMLFile, RPSim.saveSavegame)

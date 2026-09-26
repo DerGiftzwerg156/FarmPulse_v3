@@ -19,6 +19,7 @@ function T.TestFarmFacts:testBuildMatchesSchema()
     lu.assertEquals(doc.assets.animals[1], { husbandryUniqueId = "hus_00003", type = "COW", count = 24, estimatedValue = 96000 })
     lu.assertEquals(doc.assets.storage[1], { fillType = "WHEAT", amount = 42000, capacity = 50000 })
     lu.assertEquals(doc.liabilities.vanillaLoan, { active = true, remainingAmount = 80000 })
+    lu.assertEquals(doc.liabilities.leasing, { { uniqueId = "veh_00077" } })
     lu.assertEquals(doc.prices[1], { sellPoint = "MillNorth", fillType = "WHEAT", currentPrice = 215 })
 end
 
@@ -29,6 +30,7 @@ function T.TestFarmFacts:testEmptyFarmProducesEmptyArrays()
     lu.assertStrContains(json, '"storage":[]')
     lu.assertStrContains(json, '"prices":[]')
     lu.assertStrContains(json, '"vanillaLoan":{"active":false,"remainingAmount":0}')
+    lu.assertStrContains(json, '"leasing":[]')
 end
 
 function T.TestFarmFacts:testConditionFromDamageClamps()
@@ -39,8 +41,10 @@ function T.TestFarmFacts:testConditionFromDamageClamps()
     lu.assertEquals(RPSimFarmFacts.conditionFromDamage(nil), 100)
 end
 
-function T.TestFarmFacts:testExportWritesAtomicallyViaRename()
-    local bridge, fs, _, paths = helpers.newBridge()
+function T.TestFarmFacts:testExportWritesDirectlyWithoutHelperFiles()
+    -- T-07: the FS25 sandbox has no `os`, so the default mode writes the file directly.
+    local bridge, fs, _, paths = helpers.newBridge({ renameAvailable = false })
+    lu.assertEquals(bridge.cfg.atomicWriteMode, "direct")
     bridge:bootstrap()
     lu.assertTrue(bridge:exportFarmFacts())
     lu.assertNotNil(fs.files[paths.farmFacts])
@@ -50,8 +54,16 @@ function T.TestFarmFacts:testExportWritesAtomicallyViaRename()
     lu.assertEquals(doc.savegameId, "map_erlengrund_1_20260101")
 end
 
+function T.TestFarmFacts:testRenameModeStillAvailableOutsideTheGame()
+    local bridge, fs, _, paths = helpers.newBridge({ config = { atomicWriteMode = "rename" } })
+    bridge:bootstrap()
+    lu.assertTrue(bridge:exportFarmFacts())
+    lu.assertNotNil(fs.files[paths.farmFacts])
+    lu.assertNil(fs.files[paths.farmFacts .. ".tmp"])
+end
+
 function T.TestFarmFacts:testMarkerFallbackWhenRenameUnavailable()
-    local bridge, fs, _, paths = helpers.newBridge({ renameAvailable = false })
+    local bridge, fs, _, paths = helpers.newBridge({ renameAvailable = false, config = { atomicWriteMode = "auto" } })
     bridge:bootstrap()
     lu.assertTrue(bridge:exportFarmFacts())
     lu.assertNotNil(fs.files[paths.farmFacts])
@@ -61,10 +73,17 @@ end
 function T.TestFarmFacts:testExportCycleUsesConfiguredInterval()
     local bridge, fs, _, paths = helpers.newBridge({ config = { exportIntervalMs = 1000, importIntervalMs = 999999 } })
     bridge:bootstrap()
+    bridge.started = true
     bridge:update(500)
     lu.assertNil(fs.files[paths.farmFacts])
     bridge:update(500)
     lu.assertNotNil(fs.files[paths.farmFacts])
+end
+
+function T.TestFarmFacts:testLeasingCostIsExportedOnlyWhenKnown()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        leasedVehicles = { { uniqueId = "b" }, { uniqueId = "a", costPerPeriod = 1234.4 } } }, RPSimConfig.new())
+    lu.assertEquals(doc.liabilities.leasing, { { uniqueId = "a", costPerPeriod = 1234 }, { uniqueId = "b" } })
 end
 
 return T

@@ -78,6 +78,21 @@ function RPSimInstructions.validate(ins)
     return true
 end
 
+--- Funds check for a batch (T-03): the net money change of the batch must not push the balance below 0.
+-- Credits in the same batch (e.g. a farmland sale) count against its debits. Returns ok, err.
+function RPSimInstructions.checkFunds(balance, items)
+    local net = 0
+    for _, ins in ipairs(items or {}) do
+        if type(ins) == "table" and ins.type == "MONEY_TRANSACTION" and isNumber(ins.amount) then
+            net = net + ins.amount
+        end
+    end
+    if net < 0 and (balance or 0) + net < 0 then
+        return false, "INSUFFICIENT_FUNDS"
+    end
+    return true
+end
+
 --- Parses the instructions.json document text. Returns doc or nil, err (never raises).
 -- Document: { savegameId = "...", instructions = [ envelope... ] }
 function RPSimInstructions.parseDocument(text)

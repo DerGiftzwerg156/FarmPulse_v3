@@ -1,7 +1,7 @@
 -- FS25-specific adapter: the only file that touches FS25 globals. Every API call is wrapped in pcall
 -- so an engine change never crashes the savegame; failures degrade to empty/partial exports.
 -- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager
--- luacheck: globals MoneyType FarmManager FarmlandManager
+-- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -56,6 +56,25 @@ local function vehicleList()
     end, {})
 end
 
+--- Owned (bought) vehicle? Leased, mission and shop-config vehicles are not farm assets (T-04).
+-- VehiclePropertyState.OWNED / LEASED: FS25 Vehicle.lua (addOwnedItem / addLeasedItem); UsedPlus CreditSystem.lua
+-- filters collateral the same way.
+function RPSimGameAdapter.propertyState(v)
+    if VehiclePropertyState == nil then
+        return "OWNED"
+    end
+    local state = v.propertyState
+    if state == nil and v.getPropertyState ~= nil then
+        state = v:getPropertyState()
+    end
+    if state == VehiclePropertyState.OWNED then
+        return "OWNED"
+    elseif state == VehiclePropertyState.LEASED then
+        return "LEASED"
+    end
+    return "OTHER"
+end
+
 local function placeableList()
     return safe(function() return g_currentMission.placeableSystem.placeables end, {})
 end
@@ -87,7 +106,8 @@ end
 
 function RPSimGameAdapter:collectFarmFacts()
     local farmId = self:getFarmId()
-    local raw = { vehicles = {}, placeables = {}, farmland = {}, animals = {}, silos = {}, prices = {} }
+    local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, silos = {},
+        prices = {} }
     local farm = safe(function() return g_farmManager:getFarmById(farmId) end, nil)
     raw.balance = safe(function() return farm.money end, 0)
     raw.vanillaLoan = safe(function() return farm.loan end, 0)
@@ -95,8 +115,15 @@ function RPSimGameAdapter:collectFarmFacts()
     for _, v in pairs(vehicleList()) do
         safe(function()
             if v:getOwnerFarmId() == farmId and v.getSellPrice ~= nil then
-                local damage = v.getDamageAmount ~= nil and v:getDamageAmount() or 0
-                raw.vehicles[#raw.vehicles + 1] = { uniqueId = v:getUniqueId(), value = v:getSellPrice(), damage = damage }
+                local state = RPSimGameAdapter.propertyState(v)
+                if state == "OWNED" then
+                    local damage = v.getDamageAmount ~= nil and v:getDamageAmount() or 0
+                    raw.vehicles[#raw.vehicles + 1] = { uniqueId = v:getUniqueId(), value = v:getSellPrice(),
+                        damage = damage }
+                elseif state == "LEASED" then
+                    -- Leasing costs per vehicle have no documented API yet (manual test plan) - list only.
+                    raw.leasedVehicles[#raw.leasedVehicles + 1] = { uniqueId = v:getUniqueId() }
+                end
             end
             return true
         end)
@@ -209,11 +236,21 @@ function RPSimGameAdapter:collectMarketContext()
     return raw
 end
 
+--- Current balance of the player farm (farm.money, as read in collectFarmFacts and by FS25_UsedPlus).
+function RPSimGameAdapter:getBalance()
+    local farmId = self:getFarmId()
+    return safe(function() return g_farmManager:getFarmById(farmId).money end, nil)
+end
+
+--- Batch pre-check (T-03): debits are refused when the balance does not cover them, so the farm never goes
+-- into the red through a tool booking. Unknown balance => refuse debits (never book blindly).
+function RPSimGameAdapter:checkBatchFunds(items)
+    return RPSimInstructions.checkFunds(self:getBalance() or 0, items)
+end
+
 function RPSimGameAdapter:addMoney(amount, reason, note)
     local ok, err = pcall(function()
         local moneyType = MoneyType ~= nil and MoneyType.OTHER or nil
-        -- TODO(offene-frage): whether a large negative booking (CREDIT_PENALTY/CREDIT_CALLBACK) triggers FS25's
-        -- own bankruptcy/warning logic is unverified. See docs/dev/offene-technische-punkte.md.
         g_currentMission:addMoney(amount, self:getFarmId(), moneyType, true, true)
     end)
     if not ok then

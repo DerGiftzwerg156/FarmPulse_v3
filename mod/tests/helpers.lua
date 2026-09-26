@@ -109,6 +109,7 @@ function helpers.fakeAdapter(overrides)
         return {
             balance = self.balance,
             vehicles = { { uniqueId = "veh_00042", value = 285000, damage = 0.18 } },
+            leasedVehicles = { { uniqueId = "veh_00077" } },
             placeables = { { uniqueId = "plc_00011", value = 120000 } },
             farmland = self.farmland,
             animals = { { husbandryUniqueId = "hus_00003", type = "COW", count = 24, estimatedValue = 96000 } },
@@ -154,6 +155,80 @@ end
 
 function helpers.writeInstructions(fs, paths, doc)
     fs.files[paths.instructions] = RPSimJson.encode(doc)
+end
+
+--- Loads the FS25-facing files (GameAdapter.lua, RPSim.lua) against the fake engine globals of fakeGame().
+function helpers.loadGameModules()
+    dofile(SRC .. "game/GameAdapter.lua")
+    dofile(SRC .. "RPSim.lua")
+end
+
+--- Minimal fake of the FS25 engine globals used by RPSimGameAdapter. Only structure that is documented in the
+-- FS25 sources is modelled (see the references in GameAdapter.lua). opts overrides the defaults.
+function helpers.fakeGame(opts)
+    opts = opts or {}
+    local game = { moneyLog = {}, ownership = {}, notifications = {} }
+    local fillTypes = opts.fillTypes or { [1] = "WHEAT", [2] = "BARLEY", [3] = "MILK" }
+    VehiclePropertyState = { NONE = 0, OWNED = 1, LEASED = 2, MISSION = 3, SHOP_CONFIG = 4 }
+    MoneyType = { OTHER = { id = 1, statistic = "other" } }
+    FarmlandManager = { NO_OWNER_FARM_ID = 0 }
+    g_fillTypeManager = {
+        getFillTypeNameByIndex = function(_, i) return fillTypes[i] end,
+    }
+    local farm = { farmId = 1, money = opts.money or 100000, loan = opts.loan or 0 }
+    game.farm = farm
+    g_farmManager = { getFarmById = function(_, id) if id == farm.farmId then return farm end end }
+    local function vehicle(v)
+        return setmetatable(v, { __index = {
+            getOwnerFarmId = function(self) return self.ownerFarmId or 1 end,
+            getUniqueId = function(self) return self.uniqueId end,
+            getSellPrice = function(self) return self.sellPrice or 0 end,
+            getDamageAmount = function(self) return self.damage or 0 end,
+            setDamageAmount = function(self, amount) self.damage = amount end,
+        } })
+    end
+    local vehicles = {}
+    for _, v in ipairs(opts.vehicles or {
+        { uniqueId = "veh_owned", propertyState = VehiclePropertyState.OWNED, sellPrice = 50000, damage = 0.1 },
+        { uniqueId = "veh_leased", propertyState = VehiclePropertyState.LEASED, sellPrice = 90000 },
+        { uniqueId = "veh_mission", propertyState = VehiclePropertyState.MISSION, sellPrice = 70000 },
+    }) do
+        vehicles[#vehicles + 1] = vehicle(v)
+    end
+    game.vehicles = vehicles
+    local farmlands = opts.farmlands or {
+        { id = 1, areaInHa = 2.5, price = 30000, npcIndex = 1, showOnFarmlandsScreen = true,
+            defaultFarmProperty = false },
+        { id = 2, areaInHa = 0.4, price = 5000, npcIndex = 2, showOnFarmlandsScreen = false,
+            defaultFarmProperty = false },
+    }
+    for _, fl in ipairs(farmlands) do
+        game.ownership[fl.id] = fl.ownerFarmId or 0
+    end
+    g_farmlandManager = {
+        getFarmlands = function() return farmlands end,
+        getFarmlandOwner = function(_, id) return game.ownership[id] end,
+        setLandOwnership = function(_, id, farmId) game.ownership[id] = farmId end,
+    }
+    game.stations = opts.stations or {}
+    g_currentMission = {
+        getFarmId = function() return 1 end,
+        getIsServer = function() return true end,
+        environment = opts.environment or { currentMonotonicDay = 3, dayTime = 3600000, currentPeriod = 8,
+            currentDayInPeriod = 2, daysPerPeriod = 3, currentYear = 2, plannedDaysPerPeriod = 3 },
+        missionInfo = { mapTitle = "Riverbend Springs", savegameIndex = 1, savegameDirectory = "/sg1" },
+        vehicleSystem = { vehicles = vehicles },
+        placeableSystem = { placeables = opts.placeables or {} },
+        storageSystem = { getUnloadingStations = function() return game.stations end },
+        addMoney = function(_, amount, farmId, moneyType)
+            game.moneyLog[#game.moneyLog + 1] = { amount = amount, farmId = farmId, moneyType = moneyType }
+            farm.money = farm.money + amount
+        end,
+        addIngameNotification = function(_, kind, text)
+            game.notifications[#game.notifications + 1] = { kind = kind, text = text }
+        end,
+    }
+    return game
 end
 
 return helpers
