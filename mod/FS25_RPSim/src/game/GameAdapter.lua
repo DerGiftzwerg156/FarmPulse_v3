@@ -1,6 +1,6 @@
 -- FS25-specific adapter: the only file that touches FS25 globals. Every API call is wrapped in pcall
 -- so an engine change never crashes the savegame; failures degrade to empty/partial exports.
--- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager
+-- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager g_npcManager
 -- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
 -- luacheck: globals g_i18n
 RPSimGameAdapter = {}
@@ -281,6 +281,20 @@ function RPSimGameAdapter:collectFarmFacts()
     return raw
 end
 
+--- FS25 NPC of a farmland (T-21). Farmland.lua sets self.npcIndex (g_npcManager:getRandomIndex() or the NPC named
+-- in the map XML); BetterContracts (scripts/options.lua) resolves it with g_npcManager:getNPCByIndex(npcIndex) and
+-- shows npc.title. npc.name is the key of getNPCByName.
+function RPSimGameAdapter.farmlandNpc(fl)
+    if fl.npcIndex == nil or g_npcManager == nil or g_npcManager.getNPCByIndex == nil then
+        return nil
+    end
+    local npc = g_npcManager:getNPCByIndex(fl.npcIndex)
+    if npc == nil then
+        return nil
+    end
+    return { index = npc.index or fl.npcIndex, name = npc.name, title = npc.title }
+end
+
 function RPSimGameAdapter:collectMarketContext(conflictMods)
     local raw = { mapName = self:getMapName(), sellPoints = {}, fillTypes = {}, farmlands = {},
         detectedMods = RPSimGameAdapter.detectMods(conflictMods) }
@@ -309,7 +323,8 @@ function RPSimGameAdapter:collectMarketContext(conflictMods)
             raw.farmlands[#raw.farmlands + 1] = { farmlandId = fl.id, hectares = fl.areaInHa or 0, price = fl.price or 0,
                 ownerFarmId = g_farmlandManager:getFarmlandOwner(fl.id) or 0,
                 showOnFarmlandsScreen = fl.showOnFarmlandsScreen ~= false,
-                defaultFarmProperty = fl.defaultFarmProperty == true }
+                defaultFarmProperty = fl.defaultFarmProperty == true,
+                npc = safe(function() return RPSimGameAdapter.farmlandNpc(fl) end, nil) }
         end
         return true
     end)

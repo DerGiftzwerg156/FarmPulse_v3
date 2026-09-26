@@ -2,8 +2,17 @@
 -- content changed).
 RPSimMarketContext = {}
 
+--- FS25 NPC of a farmland (T-21): { index, name, title } or nil (older game data / no NPC manager).
+function RPSimMarketContext.npc(npc)
+    if type(npc) ~= "table" or npc.index == nil then
+        return nil
+    end
+    return { index = npc.index, name = npc.name, title = npc.title or npc.name }
+end
+
 --- raw: { savegameId, mapName, sellPoints = { {id, name, acceptedFillTypes = {..}} }, fillTypes = {..},
---         farmlands = { {farmlandId, hectares, price, ownerFarmId, showOnFarmlandsScreen, defaultFarmProperty} },
+--         farmlands = { {farmlandId, hectares, price, ownerFarmId, showOnFarmlandsScreen, defaultFarmProperty,
+--                      npc = {index, name, title}} },
 --         detectedMods = { "FS25_..." } }
 function RPSimMarketContext.build(raw)
     local sellPoints = RPSimJson.array({})
@@ -27,7 +36,8 @@ function RPSimMarketContext.build(raw)
             hectares = math.floor((f.hectares or 0) * 100 + 0.5) / 100,
             price = math.floor((f.price or 0) + 0.5), ownerFarmId = f.ownerFarmId or 0,
             showOnFarmlandsScreen = f.showOnFarmlandsScreen ~= false,
-            defaultFarmProperty = f.defaultFarmProperty == true }
+            defaultFarmProperty = f.defaultFarmProperty == true,
+            npc = RPSimMarketContext.npc(f.npc) }
     end
     table.sort(farmlands, function(a, b) return a.farmlandId < b.farmlandId end)
     local mods = RPSimJson.array({})

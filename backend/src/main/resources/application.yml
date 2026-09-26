@@ -217,6 +217,7 @@ rpsim:
       virtual-wealth-max: 400000
       sell-willing-probability: 0.3
       npc-owned-share: 0.4
+      use-game-npc-owners: true   # TODO T-21: owners are the FS25 NPCs of the farmlands
     satisfaction:                 # "Satisfaction-Formel"
       category-weight: 0.25
       category-max: 100

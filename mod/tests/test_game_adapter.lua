@@ -158,4 +158,15 @@ function T.TestGameAdapter:testFarmlandVisibilityFlags()
     lu.assertFalse(ctx.farmlands[2].defaultFarmProperty)
 end
 
+-- T-21: FS25 NPC of the farmland (unknown index -> no npc)
+function T.TestGameAdapter:testFarmlandNpcIsExported()
+    helpers.fakeGame()
+    local ctx = RPSimGameAdapter.new():collectMarketContext({})
+    lu.assertEquals(ctx.farmlands[1].npc, { index = 1, name = "npc_anna", title = "Anna Berger" })
+    lu.assertNil(ctx.farmlands[2].npc)
+    local doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m", farmlands = ctx.farmlands })
+    lu.assertEquals(doc.farmlands[1].npc, { index = 1, name = "npc_anna", title = "Anna Berger" })
+    lu.assertNil(doc.farmlands[2].npc)
+end
+
 return T

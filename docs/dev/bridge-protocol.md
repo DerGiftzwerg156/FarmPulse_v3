@@ -66,7 +66,8 @@ placeables of the savegame do not exist earlier). The first export writes `marke
   "sellPoints": [{ "id": "MillNorth", "name": "Mühle Nord", "acceptedFillTypes": ["BARLEY", "WHEAT"] }],
   "fillTypes": ["BARLEY", "WHEAT"],
   "farmlands": [{ "farmlandId": 12, "hectares": 4.5, "price": 54000, "ownerFarmId": 0,
-                  "showOnFarmlandsScreen": true, "defaultFarmProperty": false }],
+                  "showOnFarmlandsScreen": true, "defaultFarmProperty": false,
+                  "npc": { "index": 3, "name": "NPC_OTTO", "title": "Otto Wendler" } }],
   "detectedMods": ["FS25_UsedPlus"] }
 ```
 
@@ -76,6 +77,9 @@ menu (village, roads) or belonging to the map's default farm property are never 
 negotiated by the tool. `detectedMods`: installed mods whose features overlap with RPSim
 (`g_modIsLoaded[...]` for `FS25_MarketDynamics`, `FS25_UsedPlus`, `FS25_EnhancedLoanSystem`,
 `FS25_BetterContracts`; configurable as `conflictMods`) - the tool only warns.
+`npc` (optional, TODO T-21): the FS25 NPC of the farmland (`Farmland.npcIndex` resolved with
+`g_npcManager:getNPCByIndex`; `title` = name shown in the game, `name` = internal key). The backend lets this NPC own
+the field as a village character (`rpsim.formulas.negotiation.use-game-npc-owners`) instead of inventing one.
 
 ## `import/instructions.json` (backend → mod)
 

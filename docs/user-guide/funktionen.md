@@ -72,7 +72,9 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
 
 ![Felder](../screenshots/14-felder-verhandlung.png)
 
-Die Feldübersicht zeigt alle Felder der Karte: deine eigenen, die der Dorfbewohner und freie.
+Die Feldübersicht zeigt alle Felder der Karte: deine eigenen, die der Dorfbewohner und freie. Felder, die
+jemandem gehören, gehören den Figuren, die das Spiel selbst dem Feld zuordnet – du triffst also dieselben Namen wie
+im Feld-Menü von FS25. Diese Figuren gehören zur Karte und ziehen nie weg.
 
 - **Versteigerungen** werden per Mail angekündigt; andere bieten mit, du hast bis zu drei Runden.
 - **Direktverhandlung:** Bei Feldern, die jemandem aus dem Dorf gehören, eröffnest du selbst eine Verhandlung.

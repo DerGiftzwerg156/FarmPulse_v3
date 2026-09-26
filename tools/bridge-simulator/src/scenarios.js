@@ -1,4 +1,12 @@
 // Scenario presets (AP-2.1). Values are raw FS-like states; prices are per 1000 l.
+// Simulated FS25 NPCs of the map (the real names come from the map's NPC list in the game).
+const NPCS = [
+  { index: 1, name: 'NPC_HEINRICH', title: 'Heinrich Brandt' },
+  { index: 2, name: 'NPC_GRETA', title: 'Greta Lindner' },
+  { index: 3, name: 'NPC_OTTO', title: 'Otto Wendler' },
+  { index: 4, name: 'NPC_MARTHA', title: 'Martha Siebert' },
+];
+
 const MAP = {
   mapName: 'Erlengrund',
   sellPoints: [
@@ -12,6 +20,8 @@ const MAP = {
     farmlandId: i + 1,
     hectares: Math.round((2 + ((i * 7) % 11) * 0.9) * 100) / 100,
   })).map((f) => ({ ...f, price: Math.round(f.hectares * 12000),
+    // FS25 NPC of the farmland (TODO T-21, Farmland.npcIndex -> g_npcManager:getNPCByIndex)
+    npc: NPCS[f.farmlandId % NPCS.length],
     // farmland 16 = village area: hidden in the vanilla farmland menu, never traded (TODO T-11)
     ...(f.farmlandId === 16 ? { showOnFarmlandsScreen: false } : {}) })),
 };

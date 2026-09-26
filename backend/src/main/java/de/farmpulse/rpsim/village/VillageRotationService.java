@@ -6,6 +6,7 @@ import java.util.Optional;
 import de.farmpulse.rpsim.character.CharacterGeneratorService;
 import de.farmpulse.rpsim.character.CharacterGeneratorService.Spec;
 import de.farmpulse.rpsim.character.CharacterLookup;
+import de.farmpulse.rpsim.character.GameNpcService;
 import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.diary.DiaryService;
@@ -105,7 +106,8 @@ public class VillageRotationService {
         if (!budgetLeft(sg)) {
             return Optional.empty();
         }
-        List<Character> dynamic = lookup.activeDynamic(sg);
+        // T-21: FS25 NPCs of the map (field owners) never move away and do not count against the rotation limits
+        List<Character> dynamic = lookup.activeDynamic(sg).stream().filter(c -> !GameNpcService.isGameNpc(c)).toList();
         boolean depart = dynamic.size() > cfg().getMinDynamicCharacters()
                 && (dynamic.size() >= cfg().getMaxDynamicCharacters() || random.chance(cfg().getMoveAwayShare()));
         Optional<Character> changed = depart ? Optional.of(depart(sg, random.pick(dynamic))) : Optional.of(arrive(sg));

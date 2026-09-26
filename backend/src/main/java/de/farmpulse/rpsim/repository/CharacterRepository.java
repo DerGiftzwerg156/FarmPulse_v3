@@ -13,6 +13,8 @@ public interface CharacterRepository extends JpaRepository<Character, Long> {
 
     List<Character> findBySavegameOrderByIdAsc(Savegame savegame);
 
+    java.util.Optional<Character> findFirstBySavegameAndFs25NpcIndex(Savegame savegame, Integer fs25NpcIndex);
+
     List<Character> findBySavegameAndStatus(Savegame savegame, CharacterStatus status);
 
     List<Character> findBySavegameAndCategoryAndStatus(Savegame savegame, CharacterCategory category, CharacterStatus status);

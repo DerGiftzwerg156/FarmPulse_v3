@@ -12,6 +12,7 @@ import de.farmpulse.rpsim.bridge.BridgeEvents;
 import de.farmpulse.rpsim.bridge.FactsService;
 import de.farmpulse.rpsim.bridge.RewindService;
 import de.farmpulse.rpsim.character.CharacterLookup;
+import de.farmpulse.rpsim.character.GameNpcService;
 import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.domain.Character;
@@ -44,10 +45,11 @@ public class FarmlandOwnershipService {
     private final RpsimProperties props;
     private final JsonMapper json;
     private final RewindService rewinds;
+    private final GameNpcService gameNpcs;
 
     public FarmlandOwnershipService(FarmlandOwnershipRepository repo, SavegameRepository savegames, FactsService facts,
                                     OutboxInstructionRepository outbox, CharacterLookup lookup, RandomSource random,
-                                    RpsimProperties props, JsonMapper json, RewindService rewinds) {
+                                    RpsimProperties props, JsonMapper json, RewindService rewinds, GameNpcService gameNpcs) {
         this.repo = repo;
         this.savegames = savegames;
         this.facts = facts;
@@ -57,6 +59,7 @@ public class FarmlandOwnershipService {
         this.props = props;
         this.json = json;
         this.rewinds = rewinds;
+        this.gameNpcs = gameNpcs;
     }
 
     @EventListener
@@ -99,10 +102,11 @@ public class FarmlandOwnershipService {
                     o.setFarmlandId(mf.farmlandId());
                     if (playerOwned.contains(mf.farmlandId())) {
                         o.setOwnerType(OwnerType.PLAYER);
-                    } else if (mf.tradeable() && !npcs.isEmpty()
+                    } else if (mf.tradeable() && (gameNpc(mf) || !npcs.isEmpty())
                             && random.chance(props.getFormulas().getNegotiation().getNpcOwnedShare())) {
                         o.setOwnerType(OwnerType.CHARACTER);
-                        o.setOwnerCharacter(random.pick(npcs));
+                        // T-21: the FS25 NPC of the farmland instead of an invented owner
+                        o.setOwnerCharacter(gameNpc(mf) ? gameNpcs.ensure(sg, mf.npc()) : random.pick(npcs));
                     } else {
                         o.setOwnerType(OwnerType.UNCLAIMED);
                     }
@@ -137,6 +141,11 @@ public class FarmlandOwnershipService {
                 o.setOwnerCharacter(null);
             }
         }
+    }
+
+    /** True when the export names the FS25 NPC of the farmland and game NPC owners are enabled (TODO T-21). */
+    boolean gameNpc(BridgeDtos.MapFarmland mf) {
+        return props.getFormulas().getNegotiation().isUseGameNpcOwners() && mf.npc() != null && mf.npc().index() != null;
     }
 
     @Transactional

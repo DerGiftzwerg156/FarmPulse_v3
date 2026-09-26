@@ -205,6 +205,15 @@ function helpers.fakeGame(opts)
     for _, fl in ipairs(farmlands) do
         game.ownership[fl.id] = fl.ownerFarmId or 0
     end
+    local npcs = opts.npcs or { { index = 1, name = "npc_anna", title = "Anna Berger" } }
+    g_npcManager = {
+        getNPCByIndex = function(_, i)
+            for _, n in ipairs(npcs) do
+                if n.index == i then return n end
+            end
+            return nil
+        end,
+    }
     g_farmlandManager = {
         getFarmlands = function() return farmlands end,
         getFarmlandOwner = function(_, id) return game.ownership[id] end,

@@ -232,6 +232,7 @@ period is assumed (FS25 default).
 | `rpsim.formulas.negotiation.virtual-wealth-max` | `400000` | Hidden `virtualWealth`, upper bound. | Verhandlungs-Preisfindung |
 | `rpsim.formulas.negotiation.sell-willing-probability` | `0.3` | Share of land-owning characters willing to sell in a direct negotiation. | Verhandlungssystem |
 | `rpsim.formulas.negotiation.npc-owned-share` | `0.4` | Share of unowned map fields assigned to village characters when the ownership table is first built. | Verhandlungssystem |
+| `rpsim.formulas.negotiation.use-game-npc-owners` | `true` | TODO T-21: such a field belongs to the FS25 NPC of the farmland (`farmlands[].npc` in `market_context.json`), created once as a village character with the name the game shows; they never move away. `false` or no NPC in the export: a random village character. | Verhandlungssystem |
 
 ## `rpsim.formulas.satisfaction`
 

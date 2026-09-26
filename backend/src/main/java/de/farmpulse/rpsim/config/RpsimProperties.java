@@ -309,6 +309,11 @@ public class RpsimProperties {
         private double sellWillingProbability = 0.3;
         /** Share of unowned map farmlands assigned to dynamic NPCs when the ownership table is first built. */
         private double npcOwnedShare = 0.4;
+        /**
+         * TODO T-21: NPC-owned fields belong to the FS25 NPC of the farmland (market_context farmlands[].npc) instead
+         * of an invented village character. Falls back to village characters when the export has no NPC.
+         */
+        private boolean useGameNpcOwners = true;
     }
 
     /** Technical concept "Satisfaction-Formel". */

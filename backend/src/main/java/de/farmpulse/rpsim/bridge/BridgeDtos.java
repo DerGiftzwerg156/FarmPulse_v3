@@ -87,11 +87,19 @@ public final class BridgeDtos {
      * roads) are not buyable and never traded by the tool. Missing values (older mod) count as buyable.
      */
     public record MapFarmland(Integer farmlandId, Double hectares, Double price, Integer ownerFarmId,
-                              Boolean showOnFarmlandsScreen, Boolean defaultFarmProperty) {
+                              Boolean showOnFarmlandsScreen, Boolean defaultFarmProperty, GameNpc npc) {
 
         public boolean tradeable() {
             return !Boolean.FALSE.equals(showOnFarmlandsScreen) && !Boolean.TRUE.equals(defaultFarmProperty);
         }
+    }
+
+    /**
+     * FS25 NPC of a farmland (TODO T-21): Farmland.npcIndex resolved with g_npcManager:getNPCByIndex; {@code title} is
+     * the name the game shows, {@code name} the internal key. Missing for older mod versions.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record GameNpc(Integer index, String name, String title) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
