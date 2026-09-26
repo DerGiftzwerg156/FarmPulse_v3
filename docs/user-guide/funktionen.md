@@ -113,6 +113,10 @@ findest du unter **Verträge & Vorgänge**.
   oder zu verkaufen, und zahlt dafür eine **Prämie je Tier**. Den Handel selbst erledigst du im Spiel wie gewohnt:
   Nimmst du das Angebot an, zählt bis zur Frist, um wie viele Tiere sich dein Bestand in die vereinbarte Richtung
   verändert hat – für jedes davon gibt es die Prämie (höchstens für die vereinbarte Anzahl).
+- **Energieversorger – nur wenn deine Karte eine passende Verkaufsstelle hat.** Nimmt eine Verkaufsstelle z. B.
+  Silage, Gärreste oder Methan an (Biogas-Anlage), bietet der Energieversorger Festpreis-Kontrakte an (du entscheidest
+  unter **Warenbestand & Preise**, ob du mitmachst) oder kündigt Preisschwankungen an dieser Stelle an. Gibt es keine
+  solche Verkaufsstelle, meldet er sich nicht.
 
 ## Dorf & Charaktere
 

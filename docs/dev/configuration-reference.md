@@ -437,6 +437,21 @@ exported head count changed in the agreed direction. Vet invoices are booked as 
 | `rpsim.formulas.livestock.trader-deadline-months` | `1` | Game months to carry out an accepted offer in the game; afterwards moved animals are paid (partial) or the offer lapses. | TODO T-20 |
 | `rpsim.formulas.livestock.breeding-advice-every-months` | `6` | Advice of the breeding advisor every n game months per animal type (head count development since the last advice). | TODO T-20 |
 
+## `rpsim.formulas.energy` (TODO T-20)
+
+The energy supplier uses the existing market mechanics (fixed-price contract = `PRICE_EVENT FIXED`, price fluctuation =
+`PRICE_EVENT MULTIPLIER`; bands, premiums and quantities from `rpsim.formulas.market`), restricted to sell points of
+the map that accept one of the configured fill types. Without such a sell point in `market_context.json` the energy
+supplier does not appear.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.energy.fill-types` | `[METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]` | Fill types the energy supplier buys (FS25 names). Whether a map sells them at a `SellingStation` is checked in the game (manual test plan 8.15). | TODO T-20 |
+| `rpsim.formulas.energy.probability-per-month` | `0.35` | Chance per game month of a new offer. | TODO T-20 |
+| `rpsim.formulas.energy.max-open` | `1` | Open offers / price events of the energy supplier at the same time. | TODO T-20 |
+| `rpsim.formulas.energy.contract-share` | `0.6` | Share of fixed-price contracts (needs a current price of the pair), the rest are price fluctuations. | TODO T-20 |
+| `rpsim.formulas.energy.spike-share` | `0.5` | Share of rising prices (`DEMAND_SPIKE`) among the fluctuations, the rest `DEMAND_SLUMP`. | TODO T-20 |
+
 ## Profiles
 
 | Profile | Purpose | Overrides |

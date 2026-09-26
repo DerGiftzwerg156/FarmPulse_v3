@@ -190,7 +190,8 @@ public class MarketEventEngine {
         return Optional.of(new Target(sp.id(), sp.name(), fillType));
     }
 
-    private Set<String> busyPairs(Savegame sg) {
+    /** Open "sellPoint|fillType" pairs (no second event on the same pair). */
+    public Set<String> busyPairs(Savegame sg) {
         Set<String> s = new java.util.HashSet<>();
         for (MarketEvent ev : events.findBySavegameAndStatusIn(sg, OPEN)) {
             if (ev.getSellPoint() != null && ev.getEventType() != MarketEventType.RUMOR) {
@@ -202,7 +203,18 @@ public class MarketEventEngine {
 
     public Optional<MarketEvent> spawnPriceEvent(Savegame sg, MarketEventType type, MarketContext ctx, FarmFacts f, long start,
                                           boolean announceNow) {
-        Optional<Target> t = pickTarget(ctx, f, busyPairs(sg));
+        return spawnPriceEvent(sg, type, ctx, f, start, announceNow, Set.of(), null);
+    }
+
+    /**
+     * Price event restricted to targets outside {@code excludedPairs} ("sellPoint|fillType"), announced by
+     * {@code character} (null = role mapping of the type). Used by the energy supplier (TODO T-20).
+     */
+    public Optional<MarketEvent> spawnPriceEvent(Savegame sg, MarketEventType type, MarketContext ctx, FarmFacts f, long start,
+                                          boolean announceNow, Set<String> excludedPairs, Character character) {
+        Set<String> excluded = busyPairs(sg);
+        excluded.addAll(excludedPairs);
+        Optional<Target> t = pickTarget(ctx, f, excluded);
         if (t.isEmpty()) {
             return Optional.empty();
         }
@@ -216,7 +228,7 @@ public class MarketEventEngine {
         ev.setDecayHours((double) Math.round(random.uniform(band.getDecayHoursMin(), band.getDecayHoursMax())));
         ev.setEndGameTime(start + GameTime.hours(ev.getRampUpHours() + ev.getHoldHours() + ev.getDecayHours()));
         ev.setStatus(start > sg.getCurrentGameTime() ? MarketEventStatus.PLANNED : MarketEventStatus.ACTIVE);
-        ev.setCharacter(characterFor(sg, type).orElse(null));
+        ev.setCharacter(character != null ? character : characterFor(sg, type).orElse(null));
         events.save(ev);
         var ins = outbox.priceMultiplier(sg, ev.getFillType(), ev.getSellPoint(), ev.getPeakMultiplier(), ev.getRampUpHours(),
                 ev.getHoldHours(), ev.getDecayHours(), start, new Related(RELATED, ev.getId()));
@@ -228,11 +240,18 @@ public class MarketEventEngine {
     }
 
     public Optional<MarketEvent> spawnSpecialOffer(Savegame sg, MarketContext ctx, FarmFacts f) {
+        return spawnSpecialOffer(sg, ctx, f, Set.of(), null);
+    }
+
+    /** Fixed-price contract restricted like {@link #spawnPriceEvent(Savegame, MarketEventType, MarketContext, FarmFacts, long, boolean, Set, Character)}. */
+    public Optional<MarketEvent> spawnSpecialOffer(Savegame sg, MarketContext ctx, FarmFacts f, Set<String> excludedPairs,
+                                                   Character character) {
         if (f == null) {
             return Optional.empty();
         }
         // only pairs with a known current price can get a fixed-price contract
         Set<String> excluded = busyPairs(sg);
+        excluded.addAll(excludedPairs);
         Set<String> priced = new java.util.HashSet<>();
         f.prices().forEach(p -> priced.add(p.sellPoint() + "|" + p.fillType()));
         ctx.sellPoints().forEach(sp -> sp.acceptedFillTypes().forEach(ft -> {
@@ -263,7 +282,7 @@ public class MarketEventEngine {
         ev.setEndGameTime(ev.getDeadlineGameTime());
         // Player reaction: "Aushandeln" = participation decision, no free-text price negotiation.
         ev.setStatus(MarketEventStatus.OFFERED);
-        ev.setCharacter(characterFor(sg, MarketEventType.SPECIAL_OFFER).orElse(null));
+        ev.setCharacter(character != null ? character : characterFor(sg, MarketEventType.SPECIAL_OFFER).orElse(null));
         events.save(ev);
         announce(sg, ev);
         return Optional.of(ev);
@@ -381,9 +400,15 @@ public class MarketEventEngine {
         }
         Channel channel = random.chance(cfg().getEventCallProbability()) ? Channel.CALL : Channel.MAIL;
         narration.request(sg, type).from(ev.getCharacter()).facts(b.build()).channel(channel)
-                .category(CommunicationCategory.MARKET).related(RELATED, ev.getId())
+                .category(category(ev)).related(RELATED, ev.getId())
                 .formLink(ev.getEventType() == MarketEventType.SPECIAL_OFFER ? "/market?event=" + ev.getId() : null)
                 .submit();
+    }
+
+    /** Events of the energy supplier (TODO T-20) are filed under ENERGY, all others under MARKET. */
+    static CommunicationCategory category(MarketEvent ev) {
+        return ev.getCharacter() != null && ev.getCharacter().getRole() == CharacterRole.ENERGY_SUPPLIER
+                ? CommunicationCategory.ENERGY : CommunicationCategory.MARKET;
     }
 
     /** Price trend of the game at a sell point (CLIMBING / FALLING / STABLE) from the latest export, or null. */
@@ -439,7 +464,7 @@ public class MarketEventEngine {
                     .facts(NarrationFacts.builder().put("fillType", ev.getFillType())
                             .put("deliveredQuantity", r.deliveredQuantity()).put("maxQuantity", r.maxQuantity())
                             .put("endReason", r.endReason()).build())
-                    .category(CommunicationCategory.MARKET).related(RELATED, ev.getId()).submit();
+                    .category(category(ev)).related(RELATED, ev.getId()).submit();
             diary.addAuto(sg, "MARKET", "Sonderkontrakt beendet", r.deliveredQuantity() + " von " + r.maxQuantity()
                     + " l geliefert.", RELATED, ev.getId());
         });

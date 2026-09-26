@@ -189,6 +189,7 @@ and check `log.txt` (lines with `[FS25_RPSim]`) and the bridge files.
 | 8.12 | Calendar (T-08) | change *Days per period* in the game settings | `calendar.daysPerPeriod` follows; `periodName` is the month shown in the game; period 1 = March |
 | 8.13 | Conflict mods (T-09) | activate e.g. `FS25_UsedPlus` | `market_context.json` → `detectedMods` contains it; warning on the dashboard |
 | 8.14 | Hidden sell points / farmlands (T-10, T-11) | compare `sellPoints` with the in-game prices menu, `farmlands` with the farmland menu | no husbandry/production-only stations; village/road farmlands have `showOnFarmlandsScreen: false` |
+| 8.15 | Biogas sell points (T-20 energy supplier) | on a map with a biogas plant (Pumps n' Hoses pack), look at `market_context.json` → `sellPoints` | note whether a sell point accepts one of `rpsim.formulas.energy.fill-types` (`METHANE`, `SILAGE`, `CHAFF`, `MANURE`, `LIQUIDMANURE`, `DIGESTATE`). Biogas plants may be production points without a `SellingStation`; then the energy supplier stays away – adjust the list to the fill types that are really sold |
 
 ## 9. Finish
 

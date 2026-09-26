@@ -110,6 +110,7 @@ public class RpsimProperties {
         private Insurance insurance = new Insurance();
         private Hunting hunting = new Hunting();
         private Livestock livestock = new Livestock();
+        private Energy energy = new Energy();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -561,5 +562,25 @@ public class RpsimProperties {
         private int traderDeadlineMonths = 1;
         /** Breeding advice every n game months per animal type. */
         private int breedingAdviceEveryMonths = 6;
+    }
+
+    /**
+     * TODO T-20 energy supplier: fixed-price contracts (FIXED) and price fluctuations (MULTIPLIER) for biogas fill types
+     * at sell points of the map that accept them. Only active when the market context contains such a sell point (the
+     * tool never invents a biogas plant). Price bands and contract bounds come from {@code rpsim.formulas.market}.
+     */
+    @Getter @Setter
+    public static class Energy {
+        /** Fill types the energy supplier buys (FS25 fill type names, verified in the game code). */
+        private List<String> fillTypes = new ArrayList<>(List.of("METHANE", "SILAGE", "CHAFF", "MANURE", "LIQUIDMANURE",
+                "DIGESTATE"));
+        /** Chance per game month of a new offer of the energy supplier. */
+        private double probabilityPerMonth = 0.35;
+        /** At most this many open offers / price events of the energy supplier at the same time. */
+        private int maxOpen = 1;
+        /** Share of fixed-price contracts; the rest are price fluctuations. */
+        private double contractShare = 0.6;
+        /** Share of rising prices among the fluctuations (DEMAND_SPIKE, the rest DEMAND_SLUMP). */
+        private double spikeShare = 0.5;
     }
 }
