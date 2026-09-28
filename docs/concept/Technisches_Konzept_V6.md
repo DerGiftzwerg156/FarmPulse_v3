@@ -35,7 +35,7 @@ Basiert auf dem Fachkonzept *FS25 Mod-Konzept: KI-Rollenspiel-Simulation* und de
 ```
 modSettings/FS25_RPSim/
   export/
-    farm_facts.json       # Snapshot, alle ~60s überschrieben
+    farm_facts.json       # Snapshot, alle ~10s überschrieben
     market_context.json    # einmalig beim Laden (+ Re-Export nach FARMLAND_TRANSFER): Verkaufsstellen, Fruchtarten, Farmland-Übersicht
   import/
     instructions.json       # Warteschlange: Geld + Preis-Events

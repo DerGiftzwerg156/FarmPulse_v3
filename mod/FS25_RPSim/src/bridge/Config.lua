@@ -3,8 +3,9 @@
 RPSimConfig = {}
 
 RPSimConfig.DEFAULTS = {
-    -- Technical concept "Datei-Bridge": farm_facts.json is overwritten roughly every 60 s.
-    exportIntervalMs = 60000,
+    -- Technical concept "Datei-Bridge": farm_facts.json is overwritten every 10 s (real time), so the backend is at
+    -- most ~10 s behind the game.
+    exportIntervalMs = 10000,
     -- Safety net for T-01: if Mission00.onStartMission never reaches the bridge, it starts after this many ms
     -- of frame updates (Farm Dashboard uses the same "ready after a delay" pattern).
     startFallbackMs = 30000,
@@ -34,8 +35,8 @@ RPSimConfig.DEFAULTS = {
     -- 13 = one year plus the current month.
     financeJournalPeriods = 13,
     -- Roadmap V2 R2-C1: how often the fields are sampled (real time, ms); every farm_facts export in between carries
-    -- the last sample. 5 min = roadmap proposal.
-    fieldExportIntervalMs = 300000,
+    -- the last sample. 10 s = every export carries fresh fields (the roadmap proposed 5 min to save frame time).
+    fieldExportIntervalMs = 10000,
     -- Roadmap V2 R2-F2: show the yes/no questions also while the player sits in a vehicle. false = only on foot (the
     -- fallback of the roadmap); the key of R2-F3 opens a waiting question anywhere.
     promptsInVehicle = true,
