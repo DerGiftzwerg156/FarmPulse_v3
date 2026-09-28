@@ -10,6 +10,17 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-09-28
+
+The mod exports every 10 s instead of every 60 s. Update the mod `FS25_RPSim` to 1.5.1.0; the backend needs no
+change beyond the version.
+
+### Changed
+
+- **Mod export every 10 s:** `farm_facts.json` (including `market_context.json` when it changed) is now written every
+  10 s real time instead of every 60 s (`exportIntervalMs` = 10000), and the fields are sampled for every export
+  (`fieldExportIntervalMs` = 10000 instead of 5 min). Both stay configurable in `rpsim_config.xml`.
+
 ## [1.5.0] - 2026-09-28
 
 Roadmap V2 (`ROADMAP_V2.md`): real farm finances, staff as FS25 helpers, fields and weather, reactions to the game

@@ -4,7 +4,7 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 
 ## Was der Mod tut
 
-- Exportiert alle ~60 s (konfigurierbar) `farm_facts.json`: Kontostand, Fahrzeuge (Wert + Zustand), Gebäude,
+- Exportiert alle 10 s (konfigurierbar) `farm_facts.json`: Kontostand, Fahrzeuge (Wert + Zustand), Gebäude,
   eigene Felder, Tierbestand, **Silo-Warenbestand (nur klassische Silos)**, Vanilla-Kredit, laufende
   Verkaufspreise je Verkaufsstelle/Fruchtart.
 - Exportiert beim Spielstart (und nach jeder Feldübertragung sowie bei jeder inhaltlichen Änderung im
@@ -67,7 +67,7 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 Dokumente/My Games/FarmingSimulator2025/modSettings/FS25_RPSim/
   rpsim_config.xml           (optional, eigene Einstellungen)
   export/
-    farm_facts.json          (Mod schreibt, ~60 s)
+    farm_facts.json          (Mod schreibt, alle 10 s)
     market_context.json      (Mod schreibt, beim Spielstart + nach FARMLAND_TRANSFER + bei Änderung)
   import/
     instructions.json        (Backend schreibt, lesbare Fassung für Tools/Simulator)
@@ -94,7 +94,7 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 
 | Schlüssel | Standard | Bedeutung |
 | --- | --- | --- |
-| `exportIntervalMs` | 60000 | Export-Intervall `farm_facts.json` (Echtzeit-ms) |
+| `exportIntervalMs` | 10000 | Export-Intervall `farm_facts.json` (Echtzeit-ms) |
 | `importIntervalMs` | 5000 | Abfrage-Intervall `instructions.xml` |
 | `processedRetentionGameDays` | 30 | Aufbewahrung erledigter Instruktionen (Spieltage) |
 | `startFallbackMs` | 30000 | Sicherheitsnetz: Start der Bridge nach so vielen ms, falls der Spielstart-Hook nicht feuert |
@@ -103,7 +103,7 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | `conflictMods` | `FS25_MarketDynamics`, `FS25_UsedPlus`, `FS25_EnhancedLoanSystem`, `FS25_BetterContracts` | Mods mit überlappenden Funktionen; erkannte werden in `market_context.json` gemeldet (nur Warnung) |
 | `moneyTypeTitles` | `true` | Buchungen bekommen eigene Bezeichnungen (`MoneyType.register(statistik, "rpsim_money_<GRUND>")`, Texte in `modDesc.xml`); `false` = alles als „Sonstiges“ (`MoneyType.OTHER`) |
 | `financeJournalPeriods` | `13` | Roadmap V2 R2-B1: so viele FS25-Monate behält das Buchungsjournal (`farm_facts.finances`) |
-| `fieldExportIntervalMs` | `300000` | Roadmap V2 R2-C1: so oft (Echtzeit, ms) werden die Felder neu gelesen; jeder Export dazwischen übernimmt den letzten Stand |
+| `fieldExportIntervalMs` | `10000` | Roadmap V2 R2-C1: so oft (Echtzeit, ms) werden die Felder neu gelesen; jeder Export dazwischen übernimmt den letzten Stand |
 | `promptsInVehicle` | `true` | Roadmap V2 R2-F2: Ja/Nein-Fragen erscheinen auch, während du im Fahrzeug sitzt; `false` = nur zu Fuß (die Taste öffnet sie trotzdem) |
 | `moneyTypeStatistics` | `{}` | Finanzstatistik je Buchungsgrund, z. B. `{ "SALARY_PAYMENT": "wagePayment" }`. Belegt ist nur `other` (FS25 `FillTrigger.lua`); andere Namen erst im Spiel prüfen (Testplan 8.18) |
 

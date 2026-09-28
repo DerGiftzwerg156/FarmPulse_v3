@@ -358,7 +358,7 @@ function RPSimBridge:openNextPrompt()
     return self:updatePrompts(true)
 end
 
---- Dialog callback: the answer goes to the backend at once (not with the next 60 s export).
+--- Dialog callback: the answer goes to the backend at once (not with the next regular export).
 function RPSimBridge:onPromptAnswer(promptId, yes)
     local r = RPSimPrompts.answer(self.state.prompts, promptId, yes, self.adapter:getGameTime())
     if r ~= nil then

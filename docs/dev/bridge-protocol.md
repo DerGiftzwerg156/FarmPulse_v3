@@ -21,7 +21,7 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 `farm_facts.json` and `instructions_ack.json` immediately. The bridge folder is
 `getUserProfileAppPath() .. "modSettings/FS25_RPSim/"` and is written to `log.txt` on load.
 
-## `export/farm_facts.json` (mod → backend, every ~60 s)
+## `export/farm_facts.json` (mod → backend, every 10 s)
 
 ```json
 { "schemaVersion": 1, "gameTime": 48300000, "savegameId": "map_erlengrund_1_20260101120000",
@@ -199,7 +199,7 @@ the animal keeper (workload from animals per keeper, stable warnings), the vet e
 **Built (R2-C1):** `RPSimGameAdapter:collectFields` walks `g_fieldManager.fields`, keeps the fields whose
 `field.farmland` belongs to the player farm and whose state `isValid`, and reads crop and levels as above
 (`groundType` by a reverse lookup in `FieldGroundType`). Walking all fields is not free: the bridge samples them only
-every `fieldExportIntervalMs` (mod config, default 5 min real time) and after a `FARMLAND_TRANSFER`; every
+every `fieldExportIntervalMs` (mod config, default 10 s real time) and after a `FARMLAND_TRANSFER`; every
 `farm_facts` export in between carries the last sample. Without `g_fieldManager` the block stays missing.
 
 The backend (`FieldService`) derives the growth phase: no crop = `EMPTY`; `withered` = `WITHERED`; `cut` =
@@ -314,7 +314,7 @@ The backend removes instructions from the file once they are acknowledged.
 ```
 
 Written in mode `direct` like every bridge file, immediately after the player answered a `PROMPT` (not with the next
-60 s export) and when the savegame starts. `answer` ∈ `YES`, `NO`; `responseId` = `rsp_` + `promptId` (one answer per
+regular export) and when the savegame starts. `answer` ∈ `YES`, `NO`; `responseId` = `rsp_` + `promptId` (one answer per
 question). An answer stays in the file until the backend lists it in `ackedResponses`; the backend processes every
 `responseId` once (idempotent). The file follows the savegame: after a reload without saving the answers given after
 the last save are gone, and the backend sends the question again because it is still open. The backend reads the
