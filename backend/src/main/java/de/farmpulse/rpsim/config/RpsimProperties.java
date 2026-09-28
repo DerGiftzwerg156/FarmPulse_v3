@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -57,6 +59,12 @@ public class RpsimProperties {
         private boolean ingameNotifications = true;
         /** TODO T-21: a notification is dropped by the mod when it is processed later than this many game hours. */
         private double notificationMaxAgeHours = 2;
+        /** Roadmap V2 R2-F2: master switch of the yes/no questions in the game. */
+        private boolean ingamePrompts = true;
+        /** Roadmap V2 R2-F2: occasions asked in the game unless the player chose others (PromptKind names). */
+        private List<String> promptDefaultKinds = new ArrayList<>(List.of("CALL"));
+        /** Roadmap V2 R2-F2: a question without its own deadline (bank counter offer) expires after this many game hours. */
+        private double promptMaxAgeHours = 48;
     }
 
     @Getter @Setter
@@ -119,6 +127,14 @@ public class RpsimProperties {
         private Maintenance maintenance = new Maintenance();
         private ProductionSupply productionSupply = new ProductionSupply();
         private Contractor contractor = new Contractor();
+        private Finance finance = new Finance();
+        private Mechanic mechanic = new Mechanic();
+        private Fields fields = new Fields();
+        private VanillaBypass vanillaBypass = new VanillaBypass();
+        private Tax tax = new Tax();
+        private Authority authority = new Authority();
+        private Family family = new Family();
+        private Clubs clubs = new Clubs();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -210,6 +226,11 @@ public class RpsimProperties {
         /** Payment history score: points lost per missed installment / gained per on-time one. */
         private double paymentHistoryMissedPenalty = 15;
         private double paymentHistoryOnTimeGain = 2;
+        /**
+         * Roadmap V2 R2-C5: standing crops count as asset in the credit check - area x yield x best price x growth
+         * progress x this discount.
+         */
+        private double standingCropDiscount = 0.5;
 
         static Credit hardDefaults() {
             Credit c = new Credit();
@@ -348,6 +369,37 @@ public class RpsimProperties {
         private double warningThreshold = 30;
         private double warningAfterDays = 14;
         private double terminationAfterDays = 30;
+        /**
+         * Roadmap V2 R2-A5: between warning and resignation - below strike-threshold for strike-after-days the employee
+         * goes on strike (the helper stops, the salary keeps running) until the score is back at the threshold.
+         */
+        private double strikeThreshold = 30;
+        private double strikeAfterDays = 21;
+        /** Roadmap V2 R2-A4 / R2-A7: workload from the real game (worked hours, animals per keeper). */
+        private Workload workload = new Workload();
+    }
+
+    /**
+     * Roadmap V2 R2-A4: with worked time from the mod, the workload of machine operators follows the real hours instead
+     * of the simulated decay (evaluated every game day). R2-A7: the workload of animal keepers follows the animals per
+     * keeper. Placeholders.
+     */
+    @Getter @Setter
+    public static class Workload {
+        /** Target hours of a machine operator per game day (a game month = days per period). */
+        private double targetHoursPerDay = 8;
+        /** Workload points lost per hour above the target of a day. */
+        private double overtimePenaltyPerHour = 2;
+        /** Workload points regained per hour below the target of a day (a light recovery). */
+        private double recoveryPerHour = 0.5;
+        /** The positive monthly EMPLOYEE_EFFECT of machine operators scales with min(1, hours / target hours). */
+        private boolean effectScalesWithHours = true;
+        /** R2-A7: animals one keeper can handle; more animals per keeper cost workload. */
+        private double animalsPerKeeper = 80;
+        /** Workload points lost per day and per 100 % overload (animals per keeper above animals-per-keeper). */
+        private double keeperOverloadPenaltyPerDay = 3;
+        /** Workload points regained per day when the keeper handles at most animals-per-keeper. */
+        private double keeperRecoveryPerDay = 0.5;
     }
 
     /** Technical concept "Kündigung & Bewerbung". */
@@ -404,8 +456,6 @@ public class RpsimProperties {
         private double congratulationTrendRatio = 1.25;
         private double congratulationMinCashflow = 1000;
         private double congratulationCooldownDays = 20;
-        /** Invitation calendar: every n-th FS25 period of the year (counted from period 1 = March), 0 = never. */
-        private int invitationEveryPeriods = 6;
         private double gossipDailyProbability = 0.05;
         private double gossipCooldownDays = 3;
     }
@@ -476,6 +526,14 @@ public class RpsimProperties {
         private List<Integer> hailPeriods = new ArrayList<>(List.of(3, 4, 5, 6));
         private double hailDamagePerHectareMin = 200;
         private double hailDamagePerHectareMax = 900;
+        /**
+         * Roadmap V2 R2-C3: with the field export hail hits only standing crops; damage = area x yield x best price x
+         * a damage share between min and max. Without yield or price the per-hectare range above applies.
+         */
+        private double hailDamageShareMin = 0.05;
+        private double hailDamageShareMax = 0.3;
+        /** R2-C3: hail probability x (1 + factor x rain share of the month that just ended). */
+        private double hailRainFactor = 1.0;
         /** Game days the damage can be reported to the insurance. */
         private double reportDeadlineDays = 5;
         /** Game days between report and payout. */
@@ -525,6 +583,11 @@ public class RpsimProperties {
         private List<Integer> periods = new ArrayList<>(List.of(4, 5, 6, 7, 8));
         private double damagePerHectareMin = 150;
         private double damagePerHectareMax = 600;
+        /**
+         * Roadmap V2 R2-C3: with the field export wild boars only damage standing crops of these FS25 fruit types;
+         * the damage scales with the growth progress.
+         */
+        private List<String> crops = new ArrayList<>(List.of("MAIZE", "WHEAT", "BARLEY", "OAT", "POTATO"));
         /** First offer of the hunter as share of the damage (neutral trust). */
         private double offerShare = 0.5;
         /** Highest share the hunter accepts (neutral trust). */
@@ -575,6 +638,20 @@ public class RpsimProperties {
         private int traderDeadlineMonths = 1;
         /** Breeding advice every n game months per animal type. */
         private int breedingAdviceEveryMonths = 6;
+        /** Roadmap V2 R2-A7: emergency visit of the vet when a husbandry's health (0..100) falls below this value. */
+        private double vetEmergencyHealthThreshold = 40;
+        /** Invoice of an emergency visit = routine invoice x this factor. */
+        private double vetEmergencyFactor = 2.5;
+        /** At most one emergency visit per husbandry within this many game days. */
+        private double vetEmergencyCooldownDays = 5;
+        /** R2-A7: the animal keeper warns when food (ratio 0..1) of a husbandry falls below this value ... */
+        private double keeperFoodWarningRatio = 0.2;
+        /** ... or the water condition (getConditionInfos entry with one of water-condition-titles) below this value. */
+        private double keeperWaterWarningRatio = 0.2;
+        /** At most one warning mail of the keeper within this many game days. */
+        private double keeperWarningCooldownDays = 3;
+        /** Titles of the water condition as the game shows them (localised fill type title). */
+        private List<String> waterConditionTitles = new ArrayList<>(List.of("Wasser", "Water"));
     }
 
     /**
@@ -677,5 +754,261 @@ public class RpsimProperties {
         /** Trust of the client (FS25 NPC as village character) for a completed referred contract. */
         private double clientTrustDelta = 2;
         private double failedTrustDelta = -3;
+    }
+
+    /** Roadmap V2 R2-B2: class of a booking in the journal (farm_facts.finances). */
+    public enum FinanceClass {
+        OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING, IGNORE
+    }
+
+    /**
+     * Roadmap V2 R2-B (real farm finances from the mod's booking journal). Placeholders.
+     * <ul>
+     *   <li>categories: FS25 money type (name in the global MoneyType table) or RPSIM_&lt;REASON&gt; -> class. Only names
+     *   evidenced in the FS25 code are listed; unknown categories count as operating by their sign (logged once).</li>
+     *   <li>early warning (R2-B5): the bank writes when the operating result of this many complete months in a row was
+     *   negative while a bank loan runs - once per streak.</li>
+     *   <li>record (R2-B5): the cooperative congratulates on the highest HARVEST_INCOME + SOLD_PRODUCTS of a complete
+     *   month since the start, once at least record-min-months complete months were seen.</li>
+     * </ul>
+     */
+    @Getter @Setter
+    public static class Finance {
+        private Map<String, FinanceClass> categories = defaultCategories();
+        private boolean earlyWarningEnabled = true;
+        private int earlyWarningNegativeMonths = 2;
+        private boolean recordEnabled = true;
+        /** Money types that count as harvest revenue for the record. */
+        private List<String> recordCategories = new ArrayList<>(List.of("HARVEST_INCOME", "SOLD_PRODUCTS"));
+        private int recordMinMonths = 3;
+        private double recordTrustDelta = 2;
+
+        private static Map<String, FinanceClass> defaultCategories() {
+            Map<String, FinanceClass> m = new LinkedHashMap<>();
+            m.put("HARVEST_INCOME", FinanceClass.OPERATING_INCOME);
+            m.put("SOLD_PRODUCTS", FinanceClass.OPERATING_INCOME);
+            m.put("MISSIONS", FinanceClass.OPERATING_INCOME);
+            m.put("PROPERTY_INCOME", FinanceClass.OPERATING_INCOME);
+            m.put("SOLD_ANIMALS", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_EMPLOYEE_EFFECT", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_SUBSIDY", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_LIVESTOCK_PREMIUM", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_TAX_REFUND", FinanceClass.OPERATING_INCOME);
+            m.put("PURCHASE_FUEL", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_SEEDS", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_FERTILIZER", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_WATER", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_PALLETS", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_CONSUMABLES", FinanceClass.OPERATING_EXPENSE);
+            m.put("BOUGHT_MATERIALS", FinanceClass.OPERATING_EXPENSE);
+            m.put("VEHICLE_RUNNING_COSTS", FinanceClass.OPERATING_EXPENSE);
+            m.put("VEHICLE_REPAIR", FinanceClass.OPERATING_EXPENSE);
+            m.put("LEASING_COSTS", FinanceClass.OPERATING_EXPENSE);
+            m.put("PROPERTY_MAINTENANCE", FinanceClass.OPERATING_EXPENSE);
+            m.put("AI", FinanceClass.OPERATING_EXPENSE);
+            m.put("NEW_ANIMALS_COST", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_SALARY_PAYMENT", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_INSURANCE_PREMIUM", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_VET_INVOICE", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_LEASE_PAYMENT", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_MAINTENANCE_FEE", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_TAX_PAYMENT", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_FINE", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_FAMILY", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_SPONSORING", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_COMPENSATION", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
+            m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
+            m.put("RPSIM_FARMLAND_PURCHASE", FinanceClass.INVESTMENT);
+            m.put("SHOP_VEHICLE_SELL", FinanceClass.DIVESTMENT);
+            m.put("RPSIM_FARMLAND_SALE", FinanceClass.DIVESTMENT);
+            m.put("RPSIM_CREDIT_DISBURSEMENT", FinanceClass.FINANCING);
+            m.put("RPSIM_CREDIT_INSTALLMENT", FinanceClass.FINANCING);
+            m.put("RPSIM_CREDIT_PENALTY", FinanceClass.FINANCING);
+            m.put("RPSIM_CREDIT_CALLBACK", FinanceClass.FINANCING);
+            m.put("RPSIM_STARTING_CAPITAL_ADJUSTMENT", FinanceClass.FINANCING);
+            m.put("RPSIM_DAMAGE", FinanceClass.IGNORE);
+            m.put("RPSIM_INSURANCE_PAYOUT", FinanceClass.IGNORE);
+            m.put("RPSIM_WILDLIFE_COMPENSATION", FinanceClass.IGNORE);
+            return m;
+        }
+    }
+
+    /**
+     * Roadmap V2 R2-A6: an employed mechanic repairs part of the machines every game month (after the maintenance
+     * contract, never the same vehicle twice). Capacity = repair-points-per-month x skill / 100 x effectMultiplier
+     * condition points, spent on the most worn own vehicles below repair-below-condition. Placeholders.
+     */
+    @Getter @Setter
+    public static class Mechanic {
+        private double repairPointsPerMonth = 60;
+        private double repairBelowCondition = 90;
+        /** Workload points lost per vehicle still below repair-below-condition after the month's repairs. */
+        private double overloadWorkloadPerVehicle = 2;
+    }
+
+    /** Roadmap V2 R2-E1: tax office and tax advisor; tax year = FS25 year (placeholders). */
+    @Getter @Setter
+    public static class Tax {
+        private boolean enabled = true;
+        /** Tax on the taxable profit (profit - allowance); the harsh world mode uses the hard values. */
+        private double rate = 0.25;
+        private long allowance = 20000;
+        private double hardRate = 0.3;
+        private long hardAllowance = 10000;
+        /** Simplified depreciation per year as share of the vehicle and building values at the end of the year. */
+        private double depreciationRate = 0.1;
+        /** Journal categories that do not count for the taxable profit (owner decision: taxes and fines). */
+        private List<String> excludedCategories = new ArrayList<>(List.of("RPSIM_TAX_PAYMENT", "RPSIM_TAX_REFUND",
+                "RPSIM_FINE"));
+        /** Prepayments per quarter (periods 1, 4, 7, 10) = this share of the last assessed tax / 4. */
+        private double prepaymentShare = 1.0;
+        /** Game days to pay a bill of the tax office (pay by button). */
+        private double paymentDays = 14;
+        /** Late fee (booked as FINE) per started game month overdue, as share of the open tax. */
+        private double lateFeeRate = 0.01;
+        /** Overdue months before the tax office threatens enforcement (text and trust only, nothing is seized). */
+        private int enforcementAfterMonths = 2;
+        private double reminderTrustDelta = -2;
+        private double enforcementTrustDelta = -5;
+        /** Tax advisor: monthly fee, share of the tax saved, reminder before a deadline, audit factor. */
+        private long advisorMonthlyFee = 150;
+        private double advisorTaxReduction = 0.1;
+        private double advisorReminderDays = 3;
+        private double advisorAuditFactor = 0.5;
+        private double advisorOfferValidDays = 7;
+        /** Audit: chance per assessed year; result after audit-days. */
+        private double auditProbability = 0.15;
+        private double auditDays = 7;
+        /** Audit: a month whose operating expenses exceed this multiple of the year's monthly average is disputed. */
+        private double auditJumpFactor = 2.0;
+        /** Audit: share of the disputed expenses (unknown categories + excess of jump months) that is not accepted. */
+        private double auditDisallowedShare = 0.5;
+    }
+
+    /** Roadmap V2 R2-E2: authority - rotation, cultivation duty, animal welfare (placeholders). */
+    @Getter @Setter
+    public static class Authority {
+        private boolean enabled = true;
+        /** Rotation premium per hectare for fields with another crop than the year before (SUBSIDY). */
+        private double rotationPremiumPerHa = 40;
+        /** Share of the premium cut when a field has the same crop again after a notice. */
+        private double rotationCutShare = 0.5;
+        /** Cultivation duty: game months without a crop and with weeds / stones before the authority writes. */
+        private double dutyMonths = 3;
+        private long dutyFine = 500;
+        /** Animal welfare: health below this, or food / water empty, for welfare-days game days. */
+        private double welfareHealthThreshold = 30;
+        private double welfareDays = 3;
+        private long welfareFine = 1000;
+        private double welfareReputationDelta = -3;
+        /** Announced inspection: result after this many game days (the player can react). */
+        private double inspectionDays = 5;
+        private double violationTrustDelta = -3;
+        /** At most this many inspections announced per game month. */
+        private int maxInspectionsPerMonth = 2;
+    }
+
+    /** Roadmap V2 R2-E3: family and succession (placeholders). */
+    @Getter @Setter
+    public static class Family {
+        private boolean enabled = true;
+        /** Monthly retirement payment to the parents (only for an inherited farm or a return home). */
+        private long retirementPayment = 800;
+        private double fieldSoldTrustDelta = -15;
+        /** Help at harvest time: chance per harvest period (FS25 periods) and trust. */
+        private List<Integer> harvestPeriods = new ArrayList<>(List.of(6, 7, 8));
+        private double harvestHelpProbability = 0.5;
+        private double harvestHelpTrustDelta = 2;
+        /** FS25 period of the school start of a child (September). */
+        private int schoolStartPeriod = 7;
+    }
+
+    /** Roadmap V2 R2-E4: clubs and festivals (placeholders). */
+    @Getter @Setter
+    public static class Clubs {
+        private boolean enabled = true;
+        /** Festival calendar: FS25 period, host (club key or character role). */
+        private List<Festival> festivals = new ArrayList<>(List.of(
+                new Festival("MAIBAUM", 3, "VILLAGER"), new Festival("SCHUETZENFEST", 4, "SHOOTING_CLUB"),
+                new Festival("FEUERWEHRFEST", 6, "FIRE_BRIGADE"), new Festival("ERNTEDANKFEST", 8, "COOPERATIVE"),
+                new Festival("WEIHNACHTSMARKT", 10, "VILLAGER")));
+        private double invitationDays = 5;
+        private double invitationAcceptTrustDelta = 2;
+        private double invitationIgnoreTrustDelta = -1;
+        /** Sponsoring: chance per game month, cooldown, fixed tiers (€) and reputation per 100 €. */
+        private double sponsoringProbabilityPerMonth = 0.3;
+        private double sponsoringCooldownDays = 30;
+        private List<Long> sponsoringTiers = new ArrayList<>(List.of(250L, 500L, 1000L));
+        private double sponsoringReputationPer100 = 0.5;
+        private double sponsoringTrustDelta = 3;
+        private double sponsoringDeclineTrustDelta = -1;
+        private double sponsoringDecisionDays = 7;
+    }
+
+    @Getter @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Festival {
+        private String key;
+        private int period;
+        private String host;
+    }
+
+    /** Roadmap V2 R2-D: reactions to the vanilla loan and the FS25 field menu (placeholders). */
+    @Getter @Setter
+    public static class VanillaBypass {
+        /** Master switch (the player can also switch the reactions off per savegame on the settings page). */
+        private boolean enabled = true;
+        /** D1: an increase of the vanilla loan by at least this amount (€, per game day) counts as a new loan. */
+        private double loanMinIncrease = 5000;
+        /** D1: trust loss of the bank advisor per 10,000 € taken, capped at loan-trust-max. */
+        private double loanTrustPer10k = 1;
+        private double loanTrustMax = 8;
+        /** D1: from the second vanilla loan while one is open: surcharge on the interest of new credits until repaid. */
+        private double loanInterestSurcharge = 0.01;
+        /** D1: a repayment of at least this amount (€, per game day) gets a reaction of the bank. */
+        private double loanMinRepayment = 5000;
+        private double loanRepaidTrustDelta = 1;
+        /** D2: an NPC field bought over the owner's head in the field menu. */
+        private double fieldTrustDelta = -8;
+        private double fieldReputationDelta = -2;
+        /** D2: the former owner claims this share of the game price as compensation (0 = no claim). */
+        private double compensationShare = 0.1;
+        private double compensationDecisionDays = 7;
+        /** D2: refusing (or ignoring) the claim costs this much more trust. */
+        private double compensationDeclineTrustDelta = -5;
+        /** D3: one-time hint of the cooperative about helpers without employee. */
+        private boolean outsideHelpersHint = true;
+    }
+
+    /** Roadmap V2 R2-C: fields, crops and weather (placeholders). */
+    @Getter @Setter
+    public static class Fields {
+        /**
+         * Yield in liters per m² per FS25 fruit type, used only when the mod does not export {@code litersPerSqm}
+         * (older mod). Empty = unknown (hail then uses the per-hectare range, the bank counts no standing crop).
+         */
+        private Map<String, Double> yieldLitersPerSqm = new LinkedHashMap<>();
+        /** C2: a gap between two weather samples above this many game minutes is not counted (backend was off). */
+        private double rainSampleMaxGapMinutes = 180;
+        /** C4: weedState from which the neighbor minds the weeds (FS25 raw weed state). */
+        private int weedHighState = 5;
+        /** C4: stoneLevel from which the neighbor minds the stones (FS25 raw stone level). */
+        private int stoneHighLevel = 2;
+        /** C4: game months weeds / stones stay high before the neighbor writes (friendly). */
+        private double neighborAfterMonths = 2;
+        /** C4: game months after the friendly message before the annoyed one (with the trust loss). */
+        private double neighborRepeatMonths = 1;
+        private double neighborTrustDelta = -2;
+        /** C4: game months without a crop before the village gossips about a fallow field. */
+        private double fallowGossipMonths = 4;
+        /** C4: congratulation of the cooperative when every harvestable field of an FS25 year was harvested in time. */
+        private double harvestCongratulationTrustDelta = 1;
+        /** C4: at most this many field messages (neighbor, gossip, congratulation) per game month. */
+        private int maxMessagesPerMonth = 2;
+        /** C6: field work hints of the cooperative (switch per savegame on the settings page as well). */
+        private boolean hintsEnabled = true;
+        private double hintCooldownDays = 7;
     }
 }

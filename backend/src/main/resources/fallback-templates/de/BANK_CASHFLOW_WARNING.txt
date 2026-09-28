@@ -1,0 +1,7 @@
+Ihre Zahlen der letzten Monate
+Guten Tag,
+
+beim Blick auf Ihr Konto ist uns aufgefallen, dass Ihr Betrieb seit {{negativeMonths}} Monaten mehr ausgibt als er einnimmt. Im {{financeMonth}} lag das Betriebsergebnis bei {{financeOperatingResult}} €. Damit Ihre Kreditrate von {{monthlyInstallments}} € auch künftig sicher bedient werden kann, sollten wir zeitnah sprechen.
+
+Mit freundlichen Grüßen
+{{characterName}}

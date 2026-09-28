@@ -10,6 +10,7 @@ import de.farmpulse.rpsim.domain.VillageRelation;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -28,7 +29,8 @@ public final class Requests {
                                     @Size(max = 2000) String freeText,
                                     @NotNull @PositiveOrZero Long startingCapitalTarget,
                                     @PositiveOrZero Long legacyLoanAmount, TonePreset tonePreset,
-                                    @Size(max = 10) List<@NotNull JobRole> initialEmployees) {
+                                    @Size(max = 10) List<@NotNull JobRole> initialEmployees,
+                                    Boolean familyParents, Boolean familyPartner, Boolean familyChildren) {
     }
 
     public record RerollRequest(Long characterId) {
@@ -90,5 +92,23 @@ public final class Requests {
     }
 
     public record AiSettingsRequest(@NotBlank String provider, String model, String apiKey, String baseUrl) {
+    }
+
+    /** Roadmap V2 R2-A1 / R2-A3: helperWageMode EMPLOYEES or VANILLA. */
+    public record HelperSettingsRequest(@NotBlank @Pattern(regexp = "EMPLOYEES|VANILLA")
+                                        String helperWageMode, boolean strictHelperLimit) {
+    }
+
+    /** Roadmap V2 R2-D: switch of the reactions to the vanilla loan and the game's field menu. */
+    public record BypassSettingsRequest(boolean reactionsEnabled) {
+    }
+
+    /** Roadmap V2 R2-C6: switch of the field work hints. */
+    public record FieldSettingsRequest(boolean fieldHintsEnabled) {
+    }
+
+    /** Roadmap V2 R2-F2: occasions asked in the game (PromptKind names; empty = none). */
+    public record PromptSettingsRequest(@NotNull List<@NotBlank @Pattern(regexp = "CALL|CONTRACT_OFFER|WILDLIFE_OFFER"
+            + "|CREDIT_COUNTER|INVITATION|COMPENSATION_CLAIM|TAX_BILL|TAX_ADVISOR") String> kinds) {
     }
 }

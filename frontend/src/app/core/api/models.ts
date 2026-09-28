@@ -78,8 +78,10 @@ export interface CaseView {
   direction?: 'SELL' | 'BUY' | string | null;
   /** Head count when the trader offer was accepted. */
   baselineCount?: number | null;
-  /** Title of a referred vanilla contract (TODO T-22). */
+  /** Title of a referred vanilla contract (TODO T-22), title of a tax bill or rule of an inspection (R2-E). */
   title?: string | null;
+  /** Roadmap V2 R2-E4: amounts offered for a sponsoring request. */
+  tiers?: number[] | null;
 }
 
 export interface InsuranceQuoteView {
@@ -132,6 +134,10 @@ export interface OnboardingRequest {
   legacyLoanAmount: number | null;
   tonePreset: string;
   initialEmployees: string[];
+  /** Roadmap V2 R2-E3: family members, each switch on its own (all off = alone). */
+  familyParents?: boolean;
+  familyPartner?: boolean;
+  familyChildren?: boolean;
 }
 
 export interface CharacterRef {
@@ -251,6 +257,41 @@ export interface EmployeeView {
   warningSent: boolean;
   salaryOverdue: boolean;
   timeOffUntilGameTime: number | null;
+  /** Roadmap V2 R2-A5: the employee laid down work (the FS25 helper stopped, the salary keeps running). */
+  onStrike: boolean;
+  /** Roadmap V2 R2-A4: hours driven as FS25 helper; null without worked time from the mod or for other roles. */
+  hoursThisMonth: number | null;
+  hoursLastMonth: number | null;
+}
+
+/** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
+/** Roadmap V2 R2-D: reactions to the vanilla loan and the game's field menu. */
+/** Roadmap V2 R2-F2: occasions asked in the game as a yes/no question. */
+export interface PromptSettingsView {
+  /** false: the backend asks nothing in the game (rpsim.bridge.ingame-prompts). */
+  available: boolean;
+  kinds: string[];
+  allKinds: string[];
+}
+
+export interface BypassSettingsView {
+  reactionsEnabled: boolean;
+  /** > 0 while new credits cost more after repeated vanilla loans. */
+  interestSurchargePercent: number;
+}
+
+/** Roadmap V2 R2-C6: field work hints of the cooperative. */
+export interface FieldSettingsView {
+  fieldHintsEnabled: boolean;
+  /** The mod reports the fields (farm_facts.fields). */
+  fieldsTracked: boolean;
+}
+
+export interface HelperSettingsView {
+  helperWageMode: 'EMPLOYEES' | 'VANILLA';
+  strictHelperLimit: boolean;
+  /** The mod reports helper jobs (farm_facts.workforce). */
+  workforceTracked: boolean;
 }
 
 export interface FarmlandView {
@@ -264,7 +305,14 @@ export interface FarmlandView {
   tradeable?: boolean;
   /** Leased to the player (TODO T-22): the game shows it as the player's, the owner stays the character. */
   leased?: boolean;
+  /** Roadmap V2 R2-C: crop (FS25 fruit type) and growth phase of a field the player farms; null without field export. */
+  fruitType?: string | null;
+  phase?: FieldPhase | null;
+  /** Roadmap V2 R2-E3: marked by the player as the family field. */
+  familyField?: boolean;
 }
+
+export type FieldPhase = 'EMPTY' | 'GROWING' | 'HARVESTABLE' | 'HARVESTED' | 'WITHERED';
 
 export interface OfferView {
   round: number;
@@ -330,6 +378,72 @@ export interface StorageView {
   bestPrice: number;
   bestSellPoint: string | null;
   value: number;
+}
+
+/** Roadmap V2 R2-B4: farm bookkeeping from the mod's booking journal (amounts signed, expenses negative). */
+export type FinanceClass = 'OPERATING_INCOME' | 'OPERATING_EXPENSE' | 'INVESTMENT' | 'DIVESTMENT' | 'FINANCING' | 'IGNORE';
+
+export interface FinanceLineView {
+  category: string;
+  amount: number;
+  financeClass: FinanceClass;
+}
+
+export interface FinanceMonthView {
+  year: number;
+  period: number;
+  complete: boolean;
+  operatingIncome: number;
+  operatingExpenses: number;
+  operatingResult: number;
+  investment: number;
+  divestment: number;
+  financing: number;
+  ignored: number;
+  lines: FinanceLineView[];
+}
+
+/** Roadmap V2 R2-E1: traceable calculation of a tax assessment. */
+export interface TaxAssessmentView {
+  taxYear: number;
+  months: number;
+  operatingIncome: number;
+  /** Negative. */
+  operatingExpense: number;
+  depreciation: number;
+  interest: number;
+  profit: number;
+  allowance: number;
+  taxable: number;
+  ratePercent: number;
+  advisorReduction: number;
+  tax: number;
+  prepayments: number;
+  /** Positive = back payment, negative = refund. */
+  balance: number;
+  auditStatus: string | null;
+}
+
+/** Roadmap V2 R2-E1: tax overview on the bank page. */
+export interface TaxOverviewView {
+  currentYear: number | null;
+  incomeSoFar: number;
+  expenseSoFar: number;
+  estimatedTax: number;
+  ratePercent: number;
+  allowance: number;
+  nextPrepayment: number | null;
+  nextPrepaymentPeriod: number | null;
+  lastAssessment: TaxAssessmentView | null;
+  advisorActive: boolean;
+  journalAvailable: boolean;
+  openBills: number;
+}
+
+export interface FinanceOverview {
+  /** false: the mod exports no booking journal (older mod version). */
+  available: boolean;
+  months: FinanceMonthView[];
 }
 
 export interface StorageOverview {

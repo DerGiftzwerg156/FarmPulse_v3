@@ -1,0 +1,119 @@
+<app-card [title]="'bank.finance.title' | t" data-testid="finance-card">
+  @if (failed()) {
+    <p class="text-[12px] text-danger">{{ 'common.error' | t }}</p>
+  } @else if (overview() && !overview()!.available) {
+    <p class="text-[12px] text-muted" data-testid="finance-unavailable">{{ 'bank.finance.unavailable' | t }}</p>
+  } @else if (overview() && months().length === 0) {
+    <p class="text-[12px] text-muted" data-testid="finance-empty">{{ 'bank.finance.empty' | t }}</p>
+  } @else if (overview()) {
+    @if (lastComplete(); as m) {
+      <p class="mb-2 text-[12px] text-muted">{{ 'bank.finance.lastMonth' | t: { month: monthLabel(m) } }}</p>
+      <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <app-stat [label]="'bank.finance.income' | t" [value]="m.operatingIncome | money" [compact]="true" />
+        <app-stat [label]="'bank.finance.expenses' | t" [value]="m.operatingExpenses | money" [compact]="true" />
+        <app-stat [label]="'bank.finance.result' | t" [value]="m.operatingResult | money" [compact]="true"
+          [hint]="(m.operatingResult < 0 ? 'bank.finance.loss' : 'bank.finance.profit') | t"
+          [tone]="m.operatingResult < 0 ? 'negative' : 'positive'" data-testid="finance-result" />
+      </div>
+    }
+    <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+      <ul class="flex flex-wrap gap-3" data-testid="finance-legend">
+        @for (l of legend(); track l.key) {
+          <li class="flex items-center gap-1.5 font-body text-[11px] text-text">
+            <span class="inline-block h-2.5 w-2.5 rounded-sm" [style.background]="l.color"></span>{{ categoryLabel(l.key) }}
+          </li>
+        }
+        <li class="flex items-center gap-1.5 font-body text-[11px] text-text">
+          <span class="inline-block h-0.5 w-4 rounded" [style.background]="resultColor"></span>{{ 'bank.finance.result' | t }}
+        </li>
+      </ul>
+      <button type="button" class="fp-label hover:text-text" (click)="showTable.set(!showTable())" data-testid="finance-toggle">
+        {{ (showTable() ? 'chart.showChart' : 'chart.showTable') | t }}
+      </button>
+    </div>
+    @if (!showTable()) {
+      <div class="relative">
+        <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="h-auto w-full" role="img"
+          [attr.aria-label]="'bank.finance.chartLabel' | t" (mouseleave)="hover.set(null)" data-testid="finance-chart">
+          @for (t of yTicks(); track $index) {
+            <line [attr.x1]="pad.left" [attr.x2]="width - pad.right" [attr.y1]="sy(t)" [attr.y2]="sy(t)"
+              [attr.stroke]="t === 0 ? '#7C9088' : '#222E28'" stroke-width="1" />
+            <text [attr.x]="pad.left - 6" [attr.y]="sy(t) + 3" text-anchor="end" class="fill-muted font-mono text-[10px]">{{ compact(t) }}</text>
+          }
+          @for (c of columns(); track c.month.year * 12 + c.month.period; let i = $index) {
+            <g [attr.opacity]="hover() !== null && hover() !== i ? 0.55 : 1">
+              @for (s of c.segments; track s.key) {
+                <path [attr.d]="segmentPath(c, s)" [attr.fill]="s.color" data-testid="finance-segment" />
+              }
+              <line [attr.x1]="c.x - 4" [attr.x2]="c.x + c.width + 4" [attr.y1]="sy(c.month.operatingResult)"
+                [attr.y2]="sy(c.month.operatingResult)" [attr.stroke]="surface" stroke-width="6" stroke-linecap="round" />
+              <line [attr.x1]="c.x - 4" [attr.x2]="c.x + c.width + 4" [attr.y1]="sy(c.month.operatingResult)"
+                [attr.y2]="sy(c.month.operatingResult)" [attr.stroke]="resultColor" stroke-width="2" stroke-linecap="round"
+                data-testid="finance-result-tick" />
+            </g>
+            @if (showTick(i)) {
+              <text [attr.x]="c.x + c.width / 2" [attr.y]="height - 8" text-anchor="middle" class="fill-muted font-mono text-[10px]">
+                {{ shortMonth(c.month) }}{{ c.month.complete ? '' : '*' }}
+              </text>
+            }
+            <rect [attr.x]="pad.left + band() * i" [attr.y]="pad.top" [attr.width]="band()" [attr.height]="height - pad.top - pad.bottom"
+              fill="transparent" (mouseenter)="hover.set(i)" data-testid="finance-hit" />
+          }
+        </svg>
+        @if (hovered(); as h) {
+          <div class="pointer-events-none absolute right-2 top-2 rounded-sm border border-border bg-bg/95 px-2 py-1.5 text-[11px]"
+            data-testid="finance-tooltip">
+            <div class="font-mono text-[10px] text-muted">
+              {{ monthLabel(h.month) }}@if (!h.month.complete) { · {{ 'bank.finance.running' | t }} }
+            </div>
+            @for (l of hoverLines(); track l.category) {
+              <div class="flex items-center gap-1.5 text-text">
+                <span class="inline-block h-2 w-2 rounded-sm" [style.background]="l.color"></span>
+                {{ categoryLabel(l.category) }}: <span class="font-mono">{{ money(l.amount) }}</span>
+              </div>
+            }
+            <div class="mt-1 border-t border-border pt-1 text-text">
+              {{ 'bank.finance.result' | t }}: <span class="font-mono">{{ money(h.month.operatingResult) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+      <p class="mt-1 text-[11px] text-muted">{{ 'bank.finance.note' | t }}</p>
+    } @else {
+      <div class="max-h-80 overflow-auto">
+        <table class="w-full text-left text-[11px]" data-testid="finance-table">
+          <thead>
+            <tr class="fp-label">
+              <th class="py-1">{{ 'bank.finance.month' | t }}</th>
+              <th class="py-1 text-right">{{ 'bank.finance.income' | t }}</th>
+              <th class="py-1 text-right">{{ 'bank.finance.expenses' | t }}</th>
+              <th class="py-1 text-right">{{ 'bank.finance.result' | t }}</th>
+              <th class="py-1 text-right">{{ 'bank.finance.investment' | t }}</th>
+              <th class="py-1 text-right">{{ 'bank.finance.divestment' | t }}</th>
+              <th class="py-1 text-right">{{ 'bank.finance.financing' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of months(); track m.year * 12 + m.period) {
+              <tr class="border-t border-border" data-testid="finance-row">
+                <td class="py-1 text-text">{{ monthLabel(m) }}@if (!m.complete) { <span class="text-muted"> ({{ 'bank.finance.running' | t }})</span> }</td>
+                <td class="py-1 text-right font-mono text-text">{{ m.operatingIncome | money }}</td>
+                <td class="py-1 text-right font-mono text-text">{{ m.operatingExpenses | money }}</td>
+                <td class="py-1 text-right font-mono font-bold text-text">{{ m.operatingResult | money }}</td>
+                <td class="py-1 text-right font-mono text-muted">{{ m.investment | money }}</td>
+                <td class="py-1 text-right font-mono text-muted">{{ m.divestment | money }}</td>
+                <td class="py-1 text-right font-mono text-muted">{{ m.financing | money }}</td>
+              </tr>
+              @for (l of m.lines; track l.category) {
+                <tr class="text-muted" data-testid="finance-line">
+                  <td class="py-0.5 pl-4">{{ categoryLabel(l.category) }}</td>
+                  <td class="py-0.5 text-right font-mono" colspan="6">{{ l.amount | money }} · {{ l.financeClass | label: 'financeClass' }}</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</app-card>

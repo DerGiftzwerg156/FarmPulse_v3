@@ -1,0 +1,7 @@
+Androhung der Vollstreckung
+Guten Tag,
+
+„{{billTitle}}“ über {{amount}} € ist seit {{overdueMonths}} Monaten offen (Säumniszuschlag bisher {{lateFees}} €). Zahlen Sie nicht umgehend, müssen wir Vollstreckungsmaßnahmen prüfen.
+
+Mit freundlichen Grüßen
+{{characterName}}

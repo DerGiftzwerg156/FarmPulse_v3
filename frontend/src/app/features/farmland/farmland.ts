@@ -155,6 +155,19 @@ export class Farmland {
     });
   }
 
+  /** Roadmap V2 R2-E3: the player chooses the family field (one at a time); selling it later costs family trust. */
+  markFamilyField(f: FarmlandView): void {
+    this.run(this.api.markFamilyField(f.farmlandId), () => this.reloadFields());
+  }
+
+  clearFamilyField(): void {
+    this.run(this.api.clearFamilyField(), () => this.reloadFields());
+  }
+
+  private reloadFields(): void {
+    this.api.farmlands().subscribe((f) => this.fields.set(f));
+  }
+
   sell(f: FarmlandView): void {
     const price = Number(this.askingPrice());
     if (!Number.isFinite(price) || price <= 0) {

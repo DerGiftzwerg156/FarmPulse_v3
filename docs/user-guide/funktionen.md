@@ -39,6 +39,11 @@ Thema bleibt offen, bis du dich selbst meldest. Ignorierst du den Anruf, gilt er
 Im Gespräch zeigt ein Balken, dass dein Gegenüber auf eine Antwort wartet. Das ist nur Stimmung: Nimmst du dir
 länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
 
+**Direkt im Spiel antworten:** Mit der aktuellen Mod-Version fragt das Spiel bei einem Anruf in einem Ja/Nein-Fenster,
+ob du annimmst – ohne in den Browser zu wechseln. *Ja* nimmt an (das Gespräch ist danach im Browser bereit), *Nein*
+lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefragt werden, stellst du unter
+**Einstellungen** ein.
+
 ## Bank & Finanzen
 
 ![Bank](../screenshots/12-bank.png)
@@ -53,9 +58,44 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
   jeweils zu Beginn eines Spielmonats. Ein Spielmonat ist der Monat im FS25-Kalender; stellst du im Spiel die
   „Tage pro Monat“ um, verschieben sich alle Termine passend mit.
 - Geleaste Fahrzeuge zählen nicht zum Vermögen.
+- **Hofbuchhaltung:** Der Mod schreibt jede Buchung des Spiels mit (Ernteverkauf, Kraftstoff, Saatgut, Helferlohn,
+  Leasing …) und summiert sie je Spielmonat. Unter *Bank & Finanzen* siehst du Einnahmen und Ausgaben des laufenden
+  Betriebs je Monat als Balken, das **Monatsergebnis** und in der *Tabelle* zusätzlich Investitionen,
+  Anlagenverkäufe und Kredite. Die Bank rechnet damit: Dein Cashflow ist der Durchschnitt der abgeschlossenen
+  Monate, Investitionen zählen nicht als Verlust, und die echten Leasingkosten gelten als laufende Verpflichtung.
+  Mit einem älteren Mod rechnet die Bank weiter mit dem Kontostand.
+- **Achtung Fahrzeugkauf:** Unter welcher Buchungsart FS25 einen Fahrzeugkauf verbucht, ist noch nicht geprüft. Bis
+  das geklärt ist, erscheint ein Fahrzeugkauf als Ausgabe (meist als *Unbekannte Buchung*) und senkt das
+  Monatsergebnis. Gebäudekäufe zählen schon als Investition.
+- **Die Bank warnt:** Macht dein Betrieb zwei Monate in Folge Verlust, während ein Kredit läuft, meldet sich die
+  Bank, bevor eine Rate platzt (einmal je Verlustphase).
+- **Rekordmonat:** Hast du den höchsten Ernteerlös eines Monats seit Beginn, gratuliert die Genossenschaft – das
+  stärkt ihr Vertrauen ein wenig.
 - **Zahlungsausfall:** Mahnung → Verzugsgebühr → Vertrauensverlust → bei wiederholtem Ausfall Fälligstellung der
   Restschuld (das spricht sich im Dorf herum) oder Kreditsperre.
 - **Stundung:** Einmal pro Kredit kannst du um eine Ratenpause bitten; die Bank entscheidet nach festen Regeln.
+- **Kredit aus dem Spielmenü:** Den Kredit im Finanzmenü von FS25 kannst du weiter nutzen – gesperrt wird nichts.
+  Die Bank merkt es aber: Nimmst du dort Geld auf, meldet sich deine Bankberaterin („Sie haben sich woanders Geld
+  geliehen?“) und ihr Vertrauen sinkt, je mehr du aufnimmst. Tust du es erneut, während der alte Kredit noch offen
+  ist, kosten neue Kredite der Bank einen Zinsaufschlag, bis der Kredit aus dem Spielmenü ganz getilgt ist (unter
+  **Einstellungen** siehst du, ob gerade ein Aufschlag gilt). Jede Rückzahlung nimmt sie wohlwollend zur Kenntnis.
+
+- **Steuern:** Das Finanzamt meldet sich mit dem ersten Steuerbescheid. Das Steuerjahr ist das FS25-Jahr (ab März).
+  Gerechnet wird mit der Hofbuchhaltung: Gewinn = Einnahmen − Ausgaben des laufenden Betriebs (ohne Steuern und
+  Bußgelder) − Abschreibung (ein Anteil vom Wert deiner Fahrzeuge und Gebäude) − Zinsen deiner Bankkredite. Vom
+  Gewinn über dem Freibetrag geht ein fester Satz ab (im harten Modus höher, der Freibetrag kleiner). Zu Beginn des
+  neuen Jahres kommt der **Bescheid** mit der ganzen Rechnung: Nachzahlung oder Erstattung (die wird dir
+  gutgeschrieben). Ab dem zweiten Jahr zahlst du vierteljährlich **Vorauszahlungen** (März, Juni, September,
+  Dezember) auf Basis des letzten Bescheids. Die Karte **Steuern** zeigt die voraussichtliche Steuer des laufenden
+  Jahres, die nächste Vorauszahlung und den letzten Bescheid Zeile für Zeile.
+- **Bescheide bezahlst du selbst** unter **Verträge & Vorgänge** mit *Zahlen* – abgebucht wird nichts automatisch.
+  Nach der Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, das Finanzamt mahnt und droht später mit
+  Pfändung (nur als Brief und Vertrauensverlust, gesperrt wird nichts).
+- **Steuerberatung:** Mit *Steuerberatung anfragen* bekommst du ein Angebot mit Monatshonorar. Die Beratung senkt
+  die Steuer um einen Anteil, erinnert dich kurz vor einer Frist und macht eine **Betriebsprüfung** unwahrscheinlicher.
+  Eine Prüfung kann nach jedem Bescheid zufällig kommen; sie fordert Steuer nach auf Ausgaben unter unbekannten
+  Buchungsarten und auf Monate, in denen die Ausgaben sprunghaft über dem Durchschnitt lagen.
+- Ohne Hofbuchhaltung (älterer Mod) gibt es keinen Bescheid.
 
 ## Personal
 
@@ -68,8 +108,22 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
   Arbeitsbedingungen = Zustand deiner Maschinen). Zufriedene Leute arbeiten besser, das zeigt sich monatlich im
   Geld.
 - **Gehalt:** wird zu Beginn jedes Spielmonats (FS25-Kalender) überwiesen.
-- **Gehaltserhöhung, freier Tag, Kündigen.** Bleibt jemand lange unzufrieden, kommt erst eine Warnung, dann die
-  Kündigung.
+- **Gehaltserhöhung, freier Tag, Kündigen.** Bleibt jemand lange unzufrieden, kommt erst eine Warnung, dann ein
+  **Streik** (Abzeichen *Streikt*, das Gehalt läuft weiter, die Person arbeitet nicht) und zuletzt die Kündigung.
+  Steigt die Zufriedenheit wieder, endet der Streik von selbst.
+- **Maschinenführer fahren deine Helfer.** Startest du im Spiel einen Helfer, übernimmt ihn der erste freie
+  Maschinenführer – die Liste ist nach Können sortiert. Die Meldungen im Spiel nennen seinen Namen, und du zahlst im
+  Spiel keinen Helferlohn (das Gehalt läuft ja schon). Gibt es keinen freien Maschinenführer, fährt ein normaler
+  Helfer zum normalen Spiellohn. Auf der Personal-Karte siehst du, wie viele Stunden jemand in diesem und im letzten
+  Monat gefahren ist: Mehr als 8 Stunden je Spieltag drücken auf die Arbeitsbelastung, weniger erholt. Wer wenig
+  fährt, bringt auch weniger zusätzlichen Nutzen. Ein Streikender stellt seinen Helfer sofort ab. Fahren ständig
+  Helfer ohne eigenen Mitarbeiter, fragt die Genossenschaft einmal nach, ob du nicht jemanden fest einstellen willst.
+- **Mechaniker:in.** Setzt zu jedem Monatsbeginn deine am stärksten abgenutzten Maschinen instand – so weit ihre
+  Zeit reicht (je besser das Können, desto mehr). Bleiben Maschinen liegen, steigt die Arbeitsbelastung. Über die
+  Arbeit kommt jeden Monat ein kurzer Werkstattbericht.
+- **Tierpfleger:in.** Kümmert sich um deine Ställe. Zu viele Tiere je Pfleger (ab etwa 80) belasten, kranke Tiere
+  drücken auf die Arbeitsbedingungen. Fehlt es in einem Stall an Futter oder Wasser, meldet sich der Pfleger.
+- Die Stundenzählung braucht die aktuelle Mod-Version; mit einer älteren gilt die bisherige Arbeitsbelastung.
 
 ## Felder & Verhandlung
 
@@ -84,9 +138,55 @@ im Feld-Menü von FS25. Diese Figuren gehören zur Karte und ziehen nie weg.
   Auf ein zu niedriges Angebot folgt ein Gegenangebot, das du mit einem Klick annehmen kannst.
 - **Eigene Felder verkaufen:** Wunschpreis nennen, Interessenten melden sich mit einem ersten Angebot.
 
-Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebucht. Reicht dein Kontostand für
+Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebucht.
+
+**Feldmenü des Spiels:** Du kannst Felder weiter direkt im Feldmenü von FS25 kaufen und verkaufen – gesperrt wird
+nichts, aber das Dorf merkt es. Kaufst du das Feld einer Figur über ihren Kopf hinweg, ist sie verärgert (weniger
+Vertrauen, dein Ansehen im Dorf sinkt etwas) und verlangt einen Ausgleich (10 % des Spielpreises). Die Forderung
+findest du unter **Verträge & Vorgänge**: *Ausgleich zahlen* oder *Ablehnen* – ablehnen oder die Frist verstreichen
+lassen kostet weiteres Vertrauen. Ein freies Feld im Spielmenü zu kaufen, landet nur im Tagebuch; verkaufst du ein
+eigenes Feld dort, redet das Dorf darüber.
+ Reicht dein Kontostand für
 einen Kauf nicht, platzt das Geschäft – das Feld bleibt beim bisherigen Besitzer. Flächen, die das Spiel selbst
 nicht zum Kauf anbietet (Ortschaft, Straßen), sind als „nicht handelbar“ markiert.
+
+**Was auf deinen Feldern wächst:** Mit der aktuellen Mod-Version zeigt die Detailansicht eines Feldes, das du im
+Spiel bewirtschaftest, die Kultur und die Phase (leer, wächst, erntereif, abgeerntet, verdorrt). Das Dorf bekommt das
+mit:
+
+- **Hagel und Wildschweine** treffen nur Felder, auf denen etwas steht. Der Hagelschaden richtet sich nach Fläche,
+  Ertrag und aktuellem Preis deiner Kultur, der Wildschaden nach Fläche und Wachstum; betroffen sind nur Mais,
+  Weizen, Gerste, Hafer und Kartoffeln. Nach einem verregneten Monat hagelt es häufiger.
+- **Nachbarn:** Bleibt ein Feld längere Zeit voller Unkraut oder Steine, spricht dich ein Nachbar freundlich an. Tut
+  sich danach nichts, wird er ungehalten und sein Vertrauen sinkt etwas. Unkraut und Steine zählen nur, wenn sie in
+  deinem Spielstand eingeschaltet sind.
+- **Dorfklatsch:** Liegt ein Feld lange brach oder verdorrt eine Ernte, redet das Dorf darüber.
+- **Genossenschaft:** Hast du in einem Jahr alle erntereifen Felder rechtzeitig geerntet und ist nichts verdorrt,
+  gratuliert sie. Außerdem gibt sie höchstens einmal pro Woche einen Hinweis zur Feldarbeit: ein Feld ist erntereif,
+  braucht Kalk oder sollte gepflügt werden (Kalk und Pflügen nur, wenn dein Spielstand sie verlangt). Die Hinweise
+  kannst du unter **Einstellungen** abschalten.
+- **Bank:** Stehende Kulturen zählen in der Bonitätsprüfung als Vermögen (mit Abschlag, je nach Wachstum); die
+  Bankberaterin erwähnt das in ihrer Antwort.
+
+Mit einer älteren Mod-Version bleibt alles wie bisher: Hagel und Wildschaden treffen ein beliebiges eigenes Feld.
+
+**Familienfeld:** Hast du im Onboarding eine Familie gewählt, kannst du in der Detailansicht eines eigenen Feldes
+**Als Familienfeld markieren** („Das Feld am Bach war schon beim Großvater in der Familie“). Verkaufst du es später –
+im Tool oder im Feldmenü des Spiels –, sinkt das Vertrauen der ganzen Familie deutlich.
+
+**Das Amt** prüft nur, was das Spiel wirklich meldet:
+
+- **Fruchtfolge:** Am Ende jedes FS25-Jahres vergleicht das Amt die Hauptkultur jedes Feldes mit dem Vorjahr. Für
+  jeden Hektar mit Fruchtwechsel gibt es eine **Fruchtfolgeprämie**. Steht auf einem Feld zweimal dieselbe Kultur,
+  kommt ein Hinweis; passiert es auf einem Feld ein weiteres Mal, wird die gesamte Prämie des Jahres gekürzt.
+- **Bewirtschaftungspflicht:** Liegt ein eigenes Feld mehrere Monate ohne Kultur und voller Unkraut oder Steine,
+  kündigt das Amt eine Kontrolle an. Ist das Feld zur Frist immer noch so, folgt ein Bußgeld.
+- **Tierwohl:** Ist die Gesundheit in einem Stall mehrere Tage sehr niedrig oder sind Futter oder Wasser leer, kündigt
+  das Amt eine Kontrolle an. Beim ersten Verstoß gibt es eine **Auflage** mit neuer Frist, danach ein Bußgeld – und
+  das Dorf redet darüber.
+
+Jede Kontrolle wird vorher angekündigt (sie steht unter **Verträge & Vorgänge** mit Frist), du hast also immer Zeit
+zu reagieren. Mehr als zwei Kontrollen im Monat gibt es nicht.
 
 ## Warenbestand & Preise
 
@@ -113,8 +213,10 @@ findest du unter **Verträge & Vorgänge**.
   eine **gemeinsame Maßnahme** vereinbaren (eigener Beitrag, danach für einige Monate seltener Schäden, besseres
   Ansehen im Dorf) oder ablehnen – ein Streit spricht sich herum. Antwortest du nicht, zahlt er sein letztes Angebot.
 - **Tierarzt, Viehhändler:in und Zuchtberatung – nur wenn du Tiere hältst.** Der Tierarzt kommt alle paar Monate zur
-  Routineuntersuchung je Tierart und schickt eine Rechnung (Grundgebühr plus Betrag je Tier). Die Zuchtberatung
-  kommentiert, wie sich dein Bestand entwickelt hat. Der Viehhändler bietet ab und zu an, eine Anzahl Tiere zu kaufen
+  Routineuntersuchung je Tierart und schickt eine Rechnung (Grundgebühr plus Betrag je Tier). Sinkt die Gesundheit in
+  einem Stall stark (unter 40 %), rückt er zu einem **Notfall** aus – teurer als die Routine und höchstens alle paar
+  Tage je Stall. Die Zuchtberatung kommentiert, wie sich dein
+  Bestand entwickelt hat, und nennt die Produktivität deiner Ställe. Der Viehhändler bietet ab und zu an, eine Anzahl Tiere zu kaufen
   oder zu verkaufen, und zahlt dafür eine **Prämie je Tier**. Den Handel selbst erledigst du im Spiel wie gewohnt:
   Nimmst du das Angebot an, zählt bis zur Frist, um wie viele Tiere sich dein Bestand in die vereinbarte Richtung
   verändert hat – für jedes davon gibt es die Prämie (höchstens für die vereinbarte Anzahl).
@@ -140,6 +242,17 @@ findest du unter **Verträge & Vorgänge**.
   erledigen tust du ihn wie gewohnt im Spiel. Schaffst du ihn, steigt dein Ansehen beim Lohnunternehmer und beim
   Auftraggeber; das Tool selbst startet nie einen Auftrag.
 
+- **Finanzamt – Steuerbescheide.** Vorauszahlungen, Nachzahlungen und Nachforderungen einer Betriebsprüfung
+  erscheinen hier mit Frist; mit *Zahlen* überweist du den Betrag samt Säumniszuschlag (siehe **Bank & Finanzen**).
+- **Amt – Kontrollen.** Angekündigte Kontrollen stehen mit Frist hier; das Ergebnis (ohne Beanstandung, Auflage oder
+  Bußgeld) landet im Verlauf.
+- **Vereine – Einladungen und Sponsoring.** Schützenverein, Freiwillige Feuerwehr und Sportverein haben je eine:n
+  Vorsitzende:n. Zu den Dorffesten im FS25-Kalender (Maibaumaufstellen im Mai, Schützenfest im Juni, Feuerwehrfest im
+  August, Erntedankfest im Oktober, Weihnachtsmarkt im Dezember) kommt eine Einladung: **Zusagen** freut die
+  Gastgeber, **Absagen** ist in Ordnung, gar nicht zu antworten kostet ein wenig Vertrauen. Ab und zu bittet ein
+  Verein um **Sponsoring** in festen Stufen (z. B. 250, 500 oder 1.000 €) – das hebt dein Ansehen im Dorf; ablehnen
+  kostet nur wenig.
+
 ## Dorf & Charaktere
 
 ![Dorf](../screenshots/16-dorf-charakter.png)
@@ -149,6 +262,11 @@ stehen Charakterzüge, Sprachstil und Hintergrund. Mit **Nachricht verfassen** m
 Anruf. Schreibst du jemandem mehrmals kurz hintereinander, antwortet er trotzdem; aufs Vertrauen wirkt nur der
 erste Kontakt des Tages. Dein **Ansehen im Dorf** siehst du oben rechts als Stufe (gut angesehen, neutral,
 umstritten). Gelegentlich ziehen Leute weg oder neu zu.
+
+**Familie:** Deine Familie (aus dem Onboarding) steht mit im Dorf, zählt aber nicht zum Ansehen und zieht nie weg.
+Die Eltern auf dem Altenteil bekommen jeden Monat ihre Zahlung. Zu Geburtstagen, zum Hochzeitstag und zur Einschulung
+kommt eine Nachricht, zur Erntezeit bietet manchmal jemand Hilfe an, und zu Jahresbeginn schreibt das Tagebuch die
+Geschichte der Hofnachfolge fort.
 
 ## Tagebuch
 
@@ -163,6 +281,35 @@ Notizen sind reine Erinnerung und haben keinerlei Auswirkung aufs Spiel.
 
 KI-Anbieter, Modell und API-Schlüssel (siehe [Installation](installation.md#5-ki-anbieter-einrichten-optional)) und
 der Ton deines Spielstands (nur Anzeige).
+
+**Helfer im Spiel:** *Helferlohn über das Gehalt* (Standard an) – fährt ein Maschinenführer, bucht das Spiel keinen
+Helferlohn. Ausgeschaltet zahlst du zusätzlich den normalen Spiellohn. *Strenger Modus* (Standard aus) – höchstens so
+viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann keine Helfer, streikende oder freigestellte
+zählen nicht.
+
+**Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
+
+**Kredit und Felder im Spielmenü:** Die Reaktionen der Charaktere auf den Kredit oder Feldkauf im Spielmenü ein- oder
+ausschalten (Standard an). Ausgeschaltet bleibt nur der Tagebucheintrag.
+
+**Fragen im Spiel:** Einfache Ja/Nein-Entscheidungen erscheinen als Fenster direkt im Spiel, immer zu den
+Bedingungen, die auch im Browser stehen. Einzeln einschaltbar (Standard: nur Anrufe):
+
+- eingehende Anrufe annehmen oder ablehnen,
+- Angebote für Pacht, Wartung und Versicherung annehmen oder ablehnen und eine Pacht verlängern,
+- das Entschädigungsangebot des Jagdpächters annehmen (*Nein* = im Browser weiter verhandeln),
+- das Gegenangebot der Bank annehmen oder ablehnen,
+- Einladungen zu Festen zu- oder absagen,
+- eine Ausgleichsforderung für einen Feldkauf zahlen oder ablehnen,
+- einen Steuerbescheid bezahlen (*Nein* = später im Browser),
+- das Angebot der Steuerberatung annehmen oder ablehnen.
+
+Die Knöpfe des Fensters heißen *Ja* und *Nein*; was sie bewirken, steht im Text („Ja = Annehmen · Nein = Ablehnen“).
+Ist gerade ein Menü offen, wartet die Frage, bis es geschlossen ist. Die Taste **FarmPulse: offene Frage** (Standard
+Alt+J, in der Steuerung des Spiels änderbar) öffnet die nächste wartende Frage – sie steht in der Tastenhilfe, solange
+eine Frage wartet. Entscheidest du vorher im Browser, verschwindet die Frage im Spiel. Klappt etwas nicht (z. B. reicht
+der Kontostand nicht), meldet das Spiel es mit einem Hinweis. Lädst du einen Spielstand ohne zu speichern, kommen
+noch offene Fragen erneut.
 
 ## Auf dem Handy
 

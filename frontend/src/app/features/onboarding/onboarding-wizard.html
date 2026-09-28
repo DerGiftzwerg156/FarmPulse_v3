@@ -70,6 +70,24 @@
               </label>
             }
           </div>
+          <fieldset class="space-y-1 sm:col-span-2" data-testid="family">
+            <legend class="fp-label">{{ 'onboarding.family' | t }}</legend>
+            <p class="text-[11px] text-muted">{{ 'onboarding.familyIntro' | t }}</p>
+            <div class="flex flex-wrap gap-4">
+              <label class="flex items-center gap-2 font-body text-sm text-text">
+                <input type="checkbox" formControlName="familyParents" data-testid="family-parents" />
+                {{ 'onboarding.familyParents' | t }}
+              </label>
+              <label class="flex items-center gap-2 font-body text-sm text-text">
+                <input type="checkbox" formControlName="familyPartner" data-testid="family-partner" />
+                {{ 'onboarding.familyPartner' | t }}
+              </label>
+              <label class="flex items-center gap-2 font-body text-sm text-text">
+                <input type="checkbox" formControlName="familyChildren" data-testid="family-children" />
+                {{ 'onboarding.familyChildren' | t }}
+              </label>
+            </div>
+          </fieldset>
           <label class="space-y-1 sm:col-span-2">
             <span class="fp-label">{{ 'onboarding.freeText' | t }} ({{ 'common.optional' | t }})</span>
             <textarea class="fp-input min-h-24" formControlName="freeText" maxlength="2000" data-testid="free-text"
@@ -88,6 +106,7 @@
     @case (2) {
       <app-card [title]="'onboarding.steps.2' | t" data-testid="step-2">
         <p class="mb-3 font-body text-sm text-muted">{{ 'onboarding.staffIntro' | t }}</p>
+        <p class="mb-3 font-body text-[12px] text-muted" data-testid="helper-intro">{{ 'onboarding.helperIntro' | t }}</p>
         <div class="fp-label mb-2" data-testid="employee-count">{{ 'onboarding.staffCount' | t: { n: employees().length } }}</div>
         <ul class="space-y-2">
           @for (role of employees(); track $index) {

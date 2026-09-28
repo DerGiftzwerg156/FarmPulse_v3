@@ -16,6 +16,9 @@
       @if (employees() !== null && active().length === 0) {
         <p class="text-sm text-muted">{{ 'employees.noStaff' | t }}</p>
       }
+      @if (hasOperators()) {
+        <p class="mb-3 text-[12px] text-muted" data-testid="helper-hint">{{ 'employees.helperHint' | t }}</p>
+      }
       <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
         @for (e of active(); track e.id) {
           <article class="rounded-md border border-border bg-bg p-3" data-testid="employee">
@@ -36,7 +39,13 @@
               @if (e.warningSent) { <app-badge variant="warning" data-testid="warning">{{ 'employees.warning' | t }}</app-badge> }
               @if (e.salaryOverdue) { <app-badge variant="negative">{{ 'employees.salaryOverdue' | t }}</app-badge> }
               @if (e.timeOffUntilGameTime) { <app-badge>{{ 'employees.timeOffUntil' | t: { at: (e.timeOffUntilGameTime | gameTime) } }}</app-badge> }
+              @if (e.onStrike) { <app-badge variant="negative" data-testid="strike">{{ 'employees.strike' | t }}</app-badge> }
             </div>
+            @if (e.hoursThisMonth !== null) {
+              <p class="mt-2 font-mono text-[11px] text-muted" data-testid="hours">
+                {{ 'employees.hours' | t: { hours: e.hoursThisMonth, last: e.hoursLastMonth ?? 0 } }}
+              </p>
+            }
             <dl class="mt-3 space-y-1.5" data-testid="needs">
               @for (k of needKeys; track k) {
                 <div class="grid grid-cols-[9rem_1fr] items-center gap-2">

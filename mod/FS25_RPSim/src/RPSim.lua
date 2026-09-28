@@ -4,8 +4,10 @@
 -- pattern as FS25_UsedPlus and FS25_MarketDynamics). Persistence via FSCareerMissionInfo.saveToXMLFile
 -- (appended) and the savegame XML loaded in loadMap.
 -- luacheck: globals g_currentMission g_modSettingsDirectory addModEventListener Utils getUserProfileAppPath
--- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00
-RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil }
+-- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00 Farm AIJob AIJobFieldWork AIJobConveyor
+-- luacheck: globals PlayerInputComponent InputAction g_inputBinding g_i18n
+RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil, financeHook = false,
+    helperHooks = false, promptKeyHook = false }
 
 local XML_NAME = "FS25_RPSim.xml"
 
@@ -62,6 +64,9 @@ local function loadMapImpl(self)
     end
 
     self.bridge = RPSimBridge.new(cfg, paths, self.adapter, state)
+    self.bridge.financeJournalEnabled = RPSim.financeHook
+    self.bridge.workforceEnabled = RPSim.helperHooks
+    self.bridge.promptKeyAvailable = RPSim.promptKeyHook
     self.bridge:bootstrap()
     if Mission00 == nil or Mission00.onStartMission == nil then
         -- No start hook available: start right away (degraded, first export may be incomplete).
@@ -95,6 +100,9 @@ function RPSim:update(dt)
 end
 
 function RPSim:deleteMap()
+    if self.adapter ~= nil and self.adapter.restoreHelperLimit ~= nil then
+        self.adapter:restoreHelperLimit() -- R2-A3
+    end
     self.bridge = nil
 end
 
@@ -143,6 +151,126 @@ if SellingStation ~= nil and Utils ~= nil then
     SellingStation.getEffectiveFillTypePrice = Utils.overwrittenFunction(SellingStation.getEffectiveFillTypePrice,
         effectivePriceHook)
     SellingStation.sellFillType = Utils.overwrittenFunction(SellingStation.sellFillType, RPSim.sellFillTypeHook)
+end
+--- Roadmap V2 R2-B1: every booking of the game passes Farm:changeBalance(amount, moneyType) (LUADOC
+-- script/Farms/Farm.md). A failure never disturbs the booking itself.
+function RPSim.changeBalanceHook(farm, amount, moneyType)
+    if RPSim.bridge == nil then
+        return
+    end
+    local ok, err = pcall(function()
+        RPSim.bridge:recordBooking(farm:getId(), amount, moneyType)
+    end)
+    if not ok and not RPSim.bookingHookWarned then
+        RPSim.bookingHookWarned = true
+        RPSimLog.warning("Booking journal: %s", tostring(err))
+    end
+end
+
+-- ------------------------------------------------------------------ Roadmap V2 R2-A: employees as FS25 helpers
+
+local function workforce()
+    return RPSim.bridge ~= nil and RPSim.bridge.state.workforce or nil
+end
+
+--- R2-A1: AIJob:updateCost books getPricePerMs() * dt only when the price is > 0 (FS25 ai/jobs/AIJob.lua); a job driven
+-- by an employee costs nothing in the game when the wage mode is EMPLOYEES - the salary runs through the tool.
+function RPSim.pricePerMsHook(job, superFunc, ...)
+    local wf = workforce()
+    local ok, free = pcall(RPSimWorkforce.wageFree, wf or RPSimWorkforce.new(), job.jobId)
+    if ok and free and wf ~= nil then
+        return 0
+    end
+    return superFunc(job, ...)
+end
+
+--- R2-A2: AIJob:start(farmId) picks a random FS25 helper; for the player farm the first free active machine operator
+-- is assigned to the job as well.
+function RPSim.jobStartHook(job, farmId)
+    local wf = workforce()
+    if wf == nil or RPSim.bridge.adapter == nil then
+        return
+    end
+    pcall(function()
+        if farmId == RPSim.bridge.adapter:getFarmId() then
+            RPSimWorkforce.assign(wf, job.jobId)
+        end
+    end)
+end
+
+--- R2-A2: the helper name of the game messages (AIMessage:getMessage uses job:getHelperName()).
+function RPSim.helperNameHook(job, superFunc, ...)
+    local wf = workforce()
+    local ok, name = pcall(RPSimWorkforce.helperName, wf or RPSimWorkforce.new(), job.jobId)
+    if ok and name ~= nil then
+        return name
+    end
+    return superFunc(job, ...)
+end
+
+--- R2-A2: AIJob:stop shows the stop message first, then the employee is free again.
+function RPSim.jobStopHook(job, _)
+    local wf = workforce()
+    if wf ~= nil then
+        RPSimWorkforce.release(wf, job.jobId)
+    end
+end
+
+if AIJob ~= nil and Utils ~= nil and AIJob.getPricePerMs ~= nil and AIJob.start ~= nil then
+    -- AIJobFieldWork and AIJobConveyor define getPricePerMs themselves, the other job types inherit it from AIJob
+    for _, cls in ipairs({ AIJob, AIJobFieldWork, AIJobConveyor }) do
+        if cls ~= nil and rawget(cls, "getPricePerMs") ~= nil then
+            cls.getPricePerMs = Utils.overwrittenFunction(cls.getPricePerMs, RPSim.pricePerMsHook)
+        end
+    end
+    AIJob.start = Utils.appendedFunction(AIJob.start, RPSim.jobStartHook)
+    AIJob.getHelperName = Utils.overwrittenFunction(AIJob.getHelperName, RPSim.helperNameHook)
+    AIJob.stop = Utils.appendedFunction(AIJob.stop, RPSim.jobStopHook)
+    RPSim.helperHooks = true
+end
+
+-- ------------------------------------------------------------------ Roadmap V2 R2-F3: key for open questions
+
+--- Key press (action RPSIM_OPEN_PROMPT of modDesc.xml): opens the next waiting question, also inside a vehicle.
+function RPSim.onOpenPromptKey()
+    if RPSim.bridge ~= nil then
+        RPSim.bridge:openNextPrompt()
+    end
+end
+
+--- Registers the action in the global player context (PlayerInputComponent:registerGlobalPlayerActionEvents runs on
+-- foot and - via Enterable - in a vehicle). Arguments of registerActionEvent as in PlayerInputComponent:
+-- (action, target, callback, triggerUp, triggerDown, triggerAlways, startActive, callbackState, disableConflicting).
+-- 🟡 manual test plan 10.8: whether a mod can register a global action this way.
+function RPSim.registerPromptAction(_)
+    if RPSim.adapter == nil or InputAction == nil or InputAction.RPSIM_OPEN_PROMPT == nil or g_inputBinding == nil then
+        return
+    end
+    local ok, err = pcall(function()
+        local _, eventId = g_inputBinding:registerActionEvent(InputAction.RPSIM_OPEN_PROMPT, RPSim, RPSim.onOpenPromptKey,
+            false, true, false, true, nil, true)
+        if eventId ~= nil then
+            g_inputBinding:setActionEventText(eventId, g_i18n:getText("input_RPSIM_OPEN_PROMPT"))
+            g_inputBinding:setActionEventTextVisibility(eventId, false)
+            RPSim.adapter.promptActionEventId = eventId
+            RPSim.adapter.promptKeyVisible = false
+        end
+    end)
+    if not ok and not RPSim.promptKeyWarned then
+        RPSim.promptKeyWarned = true
+        RPSimLog.warning("Key for open questions not available: %s", tostring(err))
+    end
+end
+
+if PlayerInputComponent ~= nil and PlayerInputComponent.registerGlobalPlayerActionEvents ~= nil and Utils ~= nil then
+    PlayerInputComponent.registerGlobalPlayerActionEvents = Utils.appendedFunction(
+        PlayerInputComponent.registerGlobalPlayerActionEvents, RPSim.registerPromptAction)
+    RPSim.promptKeyHook = true
+end
+
+if Farm ~= nil and Farm.changeBalance ~= nil and Utils ~= nil then
+    Farm.changeBalance = Utils.appendedFunction(Farm.changeBalance, RPSim.changeBalanceHook)
+    RPSim.financeHook = true
 end
 if Mission00 ~= nil and Utils ~= nil then
     Mission00.onStartMission = Utils.appendedFunction(Mission00.onStartMission, RPSim.onStartMission)

@@ -1,0 +1,6 @@
+In den Ställen wird es knapp
+Hallo,
+
+in {{stableCount}} Stall/Ställen fehlt es: Futter nur noch bei {{lowestFoodPercent}} %, Wasser bei {{lowestWaterPercent}} %. Bitte sorg bald für Nachschub, sonst leiden die Tiere.
+
+{{characterName}}

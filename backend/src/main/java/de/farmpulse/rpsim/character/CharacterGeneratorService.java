@@ -35,7 +35,8 @@ import tools.jackson.databind.json.JsonMapper;
 public class CharacterGeneratorService {
 
     public record Pools(List<String> firstNames, List<String> lastNames, List<String> traits, List<String> speechStyles,
-                        Map<String, Map<String, String>> roles, Map<String, String> jobRoles) {
+                        Map<String, Map<String, String>> roles, Map<String, String> jobRoles,
+                        Map<String, String> affiliations) {
     }
 
     private final CharacterRepository characters;
@@ -115,6 +116,21 @@ public class CharacterGeneratorService {
         String title = jobRole != null ? pools.jobRoles().get(jobRole.name()) : role.get("title");
         String traits = c.getTraits();
         return c.getName() + ", " + title + " – " + role.get("description") + ". Gilt als " + traits + ".";
+    }
+
+    /**
+     * Roadmap V2 R2-E: family member or club chair - the affiliation replaces the role title in the short description
+     * ("Anna Berger, Vorsitz des Schützenvereins – ...").
+     */
+    @Transactional
+    public Character affiliate(Character c, String affiliation) {
+        c.setAffiliation(affiliation);
+        String title = pools.affiliations() == null ? null : pools.affiliations().get(affiliation);
+        if (title != null) {
+            c.setShortDescription(c.getName() + ", " + title + ". Gilt als " + c.getTraits() + ".");
+            c.setBackstory(c.getShortDescription());
+        }
+        return c;
     }
 
     /** Optional AI enrichment of the backstory; failures keep the deterministic text. */

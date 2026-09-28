@@ -190,3 +190,136 @@ test('REPAIR_VEHICLE removes the damage of an own vehicle, unknown vehicles fail
   assert.equal(acks.r2.status, 'FAILED');
   assert.equal(acks.r2.message, 'VEHICLE_NOT_FOUND');
 });
+
+// ------------------------------------------------------------------ Roadmap V2 (R2-Q1 / R2-Q2)
+test('new money reasons are accepted and booked as RPSIM_<REASON> in the journal (R2-B1)', () => {
+  const { sim, write } = setup('helfer-hof');
+  const reasons = ['TAX_PAYMENT', 'TAX_REFUND', 'FINE', 'FAMILY', 'SPONSORING', 'COMPENSATION'];
+  write(reasons.map((reason, i) => ({ instructionId: `m${i}`, type: 'MONEY_TRANSACTION', amount: i % 2 ? 100 : -100,
+    reason })));
+  assert.equal(sim.processInstructions().applied, reasons.length);
+  const byType = sim.buildFarmFacts().finances.periods[0].byType;
+  assert.deepEqual(reasons.map((r) => byType[`RPSIM_${r}`]), [-100, 100, -100, 100, -100, 100]);
+});
+
+test('REPAIR_VEHICLE with targetDamage repairs partially and never raises the damage (R2-A6)', () => {
+  const { sim, write } = setup();
+  const [worn, fine] = sim.vehicles;
+  worn.damage = 0.6;
+  fine.damage = 0.1;
+  write([{ instructionId: 'r1', type: 'REPAIR_VEHICLE', vehicleId: worn.uniqueId, targetDamage: 0.25 },
+    { instructionId: 'r2', type: 'REPAIR_VEHICLE', vehicleId: fine.uniqueId, targetDamage: 0.25 }]);
+  sim.processInstructions();
+  assert.equal(worn.damage, 0.25);
+  assert.equal(fine.damage, 0.1);
+  writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
+    { instructionId: 'r3', type: 'REPAIR_VEHICLE', vehicleId: worn.uniqueId, targetDamage: 1.5 }] }));
+  sim.processInstructions();
+  assert.equal(sim.processed.r3.status, 'REJECTED');
+});
+
+test('EMPLOYEE_ROSTER replaces the complete list (R2-A0)', () => {
+  const { sim, write } = setup('helfer-hof');
+  const roster = (id, employees) => ({ instructionId: id, type: 'EMPLOYEE_ROSTER', employees,
+    helperWageMode: 'EMPLOYEES', strictHelperLimit: false });
+  write([roster('ro1', [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR', status: 'ACTIVE' },
+    { employeeId: 2, name: 'Anna Vogt', role: 'MACHINE_OPERATOR', status: 'ON_LEAVE' }])]);
+  sim.processInstructions();
+  write([roster('ro2', [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR', status: 'STRIKE' }])]);
+  sim.processInstructions();
+  assert.deepEqual(sim.roster, { employees: [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR',
+    status: 'STRIKE' }], helperWageMode: 'EMPLOYEES', strictHelperLimit: false });
+  writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
+    { ...roster('ro3', [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR', status: 'SICK' }]) }] }));
+  sim.processInstructions();
+  assert.equal(sim.processed.ro3.status, 'REJECTED');
+  assert.equal(sim.roster.employees[0].status, 'STRIKE');
+});
+
+test('EMPLOYEE_ROSTER assigns helpers in list order and stops striking ones (R2-A2, R2-A5)', () => {
+  const { sim, write } = setup('helfer-hof');
+  const op = (employeeId, name, status = 'ACTIVE', role = 'MACHINE_OPERATOR') => ({ employeeId, name, role, status });
+  const roster = (id, employees) => ({ instructionId: id, type: 'EMPLOYEE_ROSTER', employees,
+    helperWageMode: 'EMPLOYEES', strictHelperLimit: false });
+  const jobs = () => sim.buildFarmFacts().workforce.activeJobs;
+  // the vanilla job 2 gets the first free ACTIVE operator in list order; the keeper never drives
+  write([roster('a1', [op(1, 'Klaus Berger'), op(4, 'Greta Lindner', 'ACTIVE', 'ANIMAL_KEEPER'),
+    op(3, 'Jonas Kramer'), op(2, 'Anna Vogt')])]);
+  sim.processInstructions();
+  assert.deepEqual(jobs().map((j) => [j.jobId, j.employeeId]), [[1, 1], [2, 3]]);
+  // Klaus strikes: his job is stopped; Jonas goes on leave: his job keeps running as a vanilla helper
+  write([roster('a2', [op(1, 'Klaus Berger', 'STRIKE'), op(3, 'Jonas Kramer', 'ON_LEAVE')])]);
+  sim.processInstructions();
+  assert.deepEqual(jobs(), [{ jobId: 2, title: 'CLAAS LEXION 8900' }]);
+  // a newly started helper gets a free operator of the last list
+  write([roster('a3', [op(2, 'Anna Vogt')])]);
+  sim.processInstructions();
+  sim.setActiveJobs([...jobs().map((j) => ({ jobId: j.jobId, title: j.title })), { jobId: 7, title: 'John Deere 8R' }]);
+  assert.deepEqual(jobs().map((j) => [j.jobId, j.employeeId]), [[2, 2], [7, undefined]]);
+});
+
+test('PROMPT is shown once; an expired one is acknowledged but not shown (R2-F2)', () => {
+  const { sim, write } = setup();
+  const prompt = (id, expiresGameTime) => ({ instructionId: id, type: 'PROMPT', promptId: `prm_${id}`,
+    title: 'Anruf', text: 'Greta Lindner ruft an. Annehmen?', yesLabel: 'Annehmen', noLabel: 'Ablehnen', expiresGameTime });
+  write([prompt('p1', sim.gameTime + MS_PER_GAME_HOUR), prompt('p2', sim.gameTime - 1)]);
+  sim.processInstructions();
+  sim.processInstructions();
+  assert.deepEqual(sim.prompts.map((p) => p.promptId), ['prm_p1']);
+  const acks = Object.fromEntries(read(sim.paths.ack).acks.map((a) => [a.instructionId, a]));
+  assert.equal(acks.p1.status, 'APPLIED');
+  assert.equal(acks.p2.message, 'EXPIRED');
+});
+
+test('the instruction schema describes the new types (R2-Q1)', () => {
+  const doc = (ins) => ({ savegameId: 's', instructions: [{ instructionId: 'i', ...ins }] });
+  assert.equal(validate('instructions', doc({ type: 'PROMPT', promptId: 'p', title: 't', text: 'x',
+    expiresGameTime: 1 })), null);
+  assert.notEqual(validate('instructions', doc({ type: 'PROMPT', promptId: 'p', title: 't', text: 'x' })), null);
+  assert.equal(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [],
+    helperWageMode: 'VANILLA', strictHelperLimit: true })), null);
+  assert.notEqual(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [] })), null);
+  assert.notEqual(validate('instructions', doc({ type: 'REPAIR_VEHICLE', vehicleId: 'v', targetDamage: 2 })), null);
+});
+
+test('answers go to player_responses.json at once and leave it once acknowledged (R2-F1)', () => {
+  const { sim } = setup();
+  const prompt = (id) => ({ instructionId: `ins_${id}`, type: 'PROMPT', promptId: id, title: 'Anruf',
+    text: 'Greta Lindner ruft an.', yesLabel: 'Annehmen', noLabel: 'Ablehnen', expiresGameTime: sim.gameTime + MS_PER_GAME_HOUR });
+  const writeDoc = (doc) => {
+    assert.equal(validate('instructions', doc), null);
+    writeFileSync(sim.paths.instructions, JSON.stringify(doc));
+  };
+  assert.deepEqual(read(sim.paths.playerResponses), { savegameId: sim.savegameId, responses: [] });
+  writeDoc({ savegameId: sim.savegameId, instructions: [prompt('prm_1'), prompt('prm_2')] });
+  sim.processInstructions();
+  const r = sim.answer('prm_1', 'YES');
+  assert.equal(r.responseId, 'rsp_prm_1');
+  const file = read(sim.paths.playerResponses);
+  assert.equal(validate('playerResponses', file), null);
+  assert.deepEqual(file.responses.map((x) => [x.promptId, x.answer]), [['prm_1', 'YES']]);
+  assert.throws(() => sim.answer('prm_1', 'NO'), /no open question/);
+  // acknowledged answer leaves the file, prm_2 was decided in the browser meanwhile
+  writeDoc({ savegameId: sim.savegameId, instructions: [], ackedResponses: ['rsp_prm_1'], withdrawnPrompts: ['prm_2'] });
+  sim.processInstructions();
+  assert.deepEqual(read(sim.paths.playerResponses).responses, []);
+  assert.deepEqual(sim.openPrompts(), []);
+  // the same PROMPT resent (e.g. after a rewind) is not queued again
+  writeDoc({ savegameId: sim.savegameId, instructions: [{ ...prompt('prm_2'), instructionId: 'ins_again' }] });
+  sim.processInstructions();
+  assert.deepEqual(sim.openPrompts(), []);
+  assert.equal(read(sim.paths.ack).acks.find((a) => a.instructionId === 'ins_again').message, 'DUPLICATE');
+});
+
+test('a reload without saving loses the answers given after the save (R2-F1)', () => {
+  const { sim } = setup();
+  writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
+    { instructionId: 'ins_p', type: 'PROMPT', promptId: 'prm_x', title: 'Anruf', text: 'Annehmen?',
+      expiresGameTime: sim.gameTime + MS_PER_GAME_DAY }] }));
+  sim.processInstructions();
+  sim.saveGame();
+  sim.answer('prm_x', 'NO');
+  sim.reloadWithoutSaving();
+  assert.deepEqual(read(sim.paths.playerResponses).responses, []);
+  assert.deepEqual(sim.openPrompts().map((p) => p.promptId), ['prm_x']);
+});

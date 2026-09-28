@@ -1,0 +1,7 @@
+Frist: {{billTitle}}
+Guten Tag,
+
+kurze Erinnerung: „{{billTitle}}“ über {{amount}} € ist in {{daysLeft}} Tagen fällig.
+
+Mit freundlichen Grüßen
+{{characterName}}

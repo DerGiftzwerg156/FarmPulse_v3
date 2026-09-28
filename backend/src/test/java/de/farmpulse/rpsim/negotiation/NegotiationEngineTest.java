@@ -204,7 +204,7 @@ class NegotiationEngineTest {
     }
 
     @Test
-    void vanillaPurchaseAndSaleAreFollowedUpSilently() {
+    void vanillaPurchaseOfAFreeFieldAndASaleAreFollowedUp() {
         // FS25 export now shows farmland 13 as own field and 12 no longer (bought/sold in the vanilla menu)
         String facts = TestData.farmFacts(sg.getBridgeSavegameId(), sg.getCurrentGameTime(), 1_000_000)
                 .replace("\"farmlandId\": 12", "\"farmlandId\": 13");
@@ -212,7 +212,8 @@ class NegotiationEngineTest {
         ownership.reconcile(sg);
         assertThat(ownership.get(sg, 13).orElseThrow().getOwnerType()).isEqualTo(OwnerType.PLAYER);
         assertThat(ownership.get(sg, 12).orElseThrow().getOwnerType()).isEqualTo(OwnerType.UNCLAIMED);
-        assertThat(jobs.findBySavegameOrderByIdAsc(sg)).isEmpty();
+        // Roadmap V2 R2-D2: the free field is only noted in the diary, the sale is village gossip
+        assertThat(jobs.findBySavegameOrderByIdAsc(sg)).extracting(j -> j.getEventType()).containsExactly("FIELD_GOSSIP");
     }
 
     @Test

@@ -13,7 +13,7 @@ end
 function T.TestInstructions:testAllMoneyReasonsAccepted()
     for _, r in ipairs({ "CREDIT_DISBURSEMENT", "CREDIT_INSTALLMENT", "CREDIT_PENALTY", "CREDIT_CALLBACK",
         "SALARY_PAYMENT", "EMPLOYEE_EFFECT", "SUBSIDY", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE",
-        "FARMLAND_SALE", "OTHER" }) do
+        "FARMLAND_SALE", "OTHER", "TAX_PAYMENT", "TAX_REFUND", "FINE", "FAMILY", "SPONSORING", "COMPENSATION" }) do
         lu.assertTrue(RPSimInstructions.validate(money("i", 1, r)), r)
     end
     local ok, why = RPSimInstructions.validate(money("i", 1, "FREE_MONEY"))
@@ -177,6 +177,125 @@ function T.TestInstructions:testRepairVehicleIsAppliedOrFailed()
     lu.assertEquals(acks.ins_r2.status, "FAILED")
     lu.assertEquals(acks.ins_r2.message, "VEHICLE_NOT_FOUND")
     lu.assertFalse(RPSimInstructions.validate({ instructionId = "x", type = "REPAIR_VEHICLE" }))
+end
+
+-- Roadmap V2 R2-A6: targetDamage is handed to the adapter
+function T.TestInstructions:testRepairVehiclePassesTheTargetDamage()
+    local bridge, fs, adapter, paths = helpers.newBridge()
+    local seen
+    function adapter:repairVehicle(id, targetDamage)
+        seen = { id, targetDamage }
+        return true
+    end
+    bridge:bootstrap()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        { instructionId = "ins_r3", type = "REPAIR_VEHICLE", vehicleId = "veh_00042", targetDamage = 0.3 } } })
+    lu.assertEquals(bridge:pollInstructions().applied, 1)
+    lu.assertEquals(seen, { "veh_00042", 0.3 })
+end
+
+-- Roadmap V2 R2-A6: partial repair
+function T.TestInstructions:testRepairVehicleTargetDamageIsValidated()
+    local function repair(target)
+        return RPSimInstructions.validate({ instructionId = "x", type = "REPAIR_VEHICLE", vehicleId = "veh_1",
+            targetDamage = target })
+    end
+    lu.assertTrue(repair(nil))
+    lu.assertTrue(repair(0))
+    lu.assertTrue(repair(0.35))
+    lu.assertTrue(repair(1))
+    lu.assertFalse(repair(-0.1))
+    lu.assertFalse(repair(1.2))
+    lu.assertFalse(repair("0.5"))
+end
+
+local function roster(employees, extra)
+    local ins = { instructionId = "ins_ro", type = "EMPLOYEE_ROSTER", employees = employees,
+        helperWageMode = "EMPLOYEES", strictHelperLimit = false }
+    for k, v in pairs(extra or {}) do ins[k] = v end
+    return ins
+end
+
+-- Roadmap V2 R2-A0
+function T.TestInstructions:testEmployeeRosterValidation()
+    local klaus = { employeeId = 12, name = "Klaus Berger", role = "MACHINE_OPERATOR", status = "ACTIVE" }
+    lu.assertTrue(RPSimInstructions.validate(roster({ klaus })))
+    lu.assertTrue(RPSimInstructions.validate(roster(RPSimJson.array({}))))
+    for _, status in ipairs({ "ON_LEAVE", "STRIKE" }) do
+        lu.assertTrue(RPSimInstructions.validate(roster({ { employeeId = 1, name = "A", role = "MECHANIC",
+            status = status } })), status)
+    end
+    local cases = {
+        roster(nil),
+        roster({ { employeeId = "12", name = "A", role = "MECHANIC", status = "ACTIVE" } }),
+        roster({ { employeeId = 12, name = "", role = "MECHANIC", status = "ACTIVE" } }),
+        roster({ { employeeId = 12, name = "A", role = "MECHANIC", status = "SICK" } }),
+        roster({ klaus }, { helperWageMode = "FREE" }),
+        roster({ klaus }, { strictHelperLimit = "yes" }),
+    }
+    for i, ins in ipairs(cases) do
+        lu.assertFalse(RPSimInstructions.validate(ins), "case " .. i)
+    end
+end
+
+-- Roadmap V2 R2-F2
+function T.TestInstructions:testPromptValidation()
+    local function prompt(extra)
+        local ins = { instructionId = "ins_p", type = "PROMPT", promptId = "prm_1", title = "Anruf",
+            text = "Greta Lindner ruft an. Annehmen?", expiresGameTime = 5000 }
+        for k, v in pairs(extra or {}) do ins[k] = v end
+        return ins
+    end
+    lu.assertTrue(RPSimInstructions.validate(prompt()))
+    lu.assertTrue(RPSimInstructions.validate(prompt({ yesLabel = "Annehmen", noLabel = "Ablehnen" })))
+    lu.assertFalse(RPSimInstructions.validate(prompt({ promptId = "" })))
+    lu.assertFalse(RPSimInstructions.validate(prompt({ text = "" })))
+    lu.assertFalse(RPSimInstructions.validate(prompt({ yesLabel = "" })))
+    lu.assertFalse(RPSimInstructions.validate(prompt({ expiresGameTime = "morgen" })))
+    local noExpiry = prompt()
+    noExpiry.expiresGameTime = nil
+    lu.assertFalse(RPSimInstructions.validate(noExpiry))
+end
+
+-- R2-A0 / R2-F2: EMPLOYEE_ROSTER replaces the list, PROMPT is queued for the dialog (both APPLIED, never twice).
+function T.TestInstructions:testPromptIsQueuedAndTheRosterIsApplied()
+    local bridge, fs, _, paths = helpers.newBridge()
+    bridge:bootstrap()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        roster({ { employeeId = 12, name = "Klaus Berger", role = "MACHINE_OPERATOR", status = "ACTIVE" } }),
+        { instructionId = "ins_p", type = "PROMPT", promptId = "prm_1", title = "Anruf", text = "Annehmen?",
+            expiresGameTime = 5000 } } })
+    local res = bridge:pollInstructions()
+    lu.assertEquals(res.applied, 2)
+    local acks = {}
+    for _, a in ipairs(RPSimJson.decode(fs.files[paths.instructionsAck]).acks) do acks[a.instructionId] = a end
+    lu.assertEquals(acks.ins_ro.status, "APPLIED")
+    lu.assertEquals(bridge.state.workforce.roster.employees[1].name, "Klaus Berger")
+    lu.assertEquals(acks.ins_p.status, "APPLIED")
+    lu.assertEquals(bridge.state.prompts.queue[1].promptId, "prm_1")
+end
+
+function T.TestInstructions:testNewTypesUseTheirActionOnceAvailable()
+    local calls = {}
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    local res = RPSimProcessor.process(state, { savegameId = SG, instructions = {
+        roster({}),
+        { instructionId = "ins_p", type = "PROMPT", promptId = "prm_1", title = "Anruf", text = "Annehmen?",
+            expiresGameTime = 5000 } } },
+        { savegameId = SG, gameTime = 1000, actions = {
+            employeeRoster = function(ins) calls[#calls + 1] = ins.type; return true end,
+            prompt = function(ins) calls[#calls + 1] = ins.promptId; return true end } })
+    lu.assertEquals(res.applied, 2)
+    lu.assertEquals(calls, { "EMPLOYEE_ROSTER", "prm_1" })
+    -- a missing roster action never falls back to the prompt action (and vice versa)
+    state = RPSimProcessor.newState(RPSimConfig.new())
+    calls = {}
+    res = RPSimProcessor.process(state, { savegameId = SG, instructions = { roster({}) } },
+        { savegameId = SG, gameTime = 1000, actions = {
+            prompt = function(ins) calls[#calls + 1] = ins.type; return true end } })
+    lu.assertEquals(res.applied, 0)
+    lu.assertEquals(calls, {})
+    lu.assertEquals(state.processed.ins_ro.message, "NOT_SUPPORTED")
 end
 
 return T

@@ -21,6 +21,27 @@ public enum TrustReason {
     /** TODO T-22: a contract referred by the contractor was completed / failed. */
     MISSION_COMPLETED,
     MISSION_FAILED,
+    /** Roadmap V2 R2-B5: record harvest revenue of a month, the cooperative congratulates. */
+    RECORD_HARVEST,
+    /** Roadmap V2 R2-C4: a field stayed weedy / stony although the neighbor asked. */
+    FIELD_NEGLECTED,
+    /** Roadmap V2 R2-C4: every harvestable field of a year was harvested in time. */
+    HARVEST_IN_TIME,
+    /** Roadmap V2 R2-D1: a vanilla loan was taken past the bank / repaid. */
+    VANILLA_LOAN,
+    VANILLA_LOAN_REPAID,
+    /** Roadmap V2 R2-D2: field bought over the owner's head in the game menu / compensation refused. */
+    FIELD_BYPASS,
+    COMPENSATION_DECLINED,
+    /** Roadmap V2 R2-E: tax paid late / enforcement threatened, authority violation, family, clubs, invitations. */
+    TAX_OVERDUE,
+    AUTHORITY_VIOLATION,
+    FAMILY_FIELD_SOLD,
+    FAMILY_HELP,
+    SPONSORING,
+    SPONSORING_DECLINED,
+    INVITATION_ACCEPTED,
+    INVITATION_IGNORED,
     INITIAL,
     OTHER
 }

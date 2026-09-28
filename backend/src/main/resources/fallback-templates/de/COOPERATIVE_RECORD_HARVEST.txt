@@ -1,0 +1,7 @@
+Glückwunsch zum Rekordmonat
+Hallo,
+
+was für ein Monat! Mit {{financeRevenue}} € Ernteerlös im {{financeMonth}} hatten Sie Ihren bisher besten Monat. Die ganze Genossenschaft freut sich mit Ihnen.
+
+Viele Grüße
+{{characterName}}

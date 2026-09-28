@@ -97,6 +97,47 @@
               }
               <p class="mt-1 text-[11px] text-muted">{{ 'contracts.livestockHint' | t }}</p>
             }
+            @if (c.kind === 'COMPENSATION_CLAIM') {
+              <div class="mt-1 text-[12px] text-text" data-testid="compensation-claim">{{ 'contracts.compensationClaim' | t: { name: c.character?.name ?? '–', amount: (c.offerAmount | money) } }}</div>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <app-button [disabled]="busy()" (pressed)="caseAction(c, 'accept')" data-testid="case-accept">{{ 'contracts.payCompensation' | t }}</app-button>
+                <app-button variant="danger" [disabled]="busy()" (pressed)="caseAction(c, 'decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+              </div>
+              <p class="mt-1 text-[11px] text-muted">{{ 'contracts.compensationHint' | t }}</p>
+            }
+            @if (c.kind === 'TAX_BILL') {
+              <div class="mt-1 text-[12px] text-text" data-testid="tax-bill">{{ 'contracts.taxBill' | t: { title: c.title ?? (c.reference | label: 'taxBill'), amount: (c.offerAmount | money) } }}
+                @if (c.costAmount) { · <span class="text-danger">{{ 'contracts.lateFees' | t: { amount: (c.costAmount | money) } }}</span> }</div>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <app-button [disabled]="busy()" (pressed)="caseAction(c, 'accept')" data-testid="case-accept">{{ 'contracts.payTax' | t: { amount: ((c.offerAmount ?? 0) + (c.costAmount ?? 0)) | money } }}</app-button>
+              </div>
+              <p class="mt-1 text-[11px] text-muted">{{ 'contracts.taxHint' | t }}</p>
+            }
+            @if (c.kind === 'AUTHORITY_INSPECTION') {
+              <div class="mt-1 text-[12px] text-text" data-testid="inspection">{{ 'contracts.inspection' | t: { rule: (c.title | label: 'authorityRule') } }}</div>
+              @if (c.roundsUsed > 0) {
+                <p class="mt-1 text-[12px] text-warn" data-testid="inspection-requirement">{{ 'contracts.inspectionRequirement' | t }}</p>
+              }
+              <p class="mt-1 text-[11px] text-muted">{{ 'contracts.inspectionHint' | t }}</p>
+            }
+            @if (c.kind === 'SPONSORING_REQUEST') {
+              <div class="mt-1 text-[12px] text-text" data-testid="sponsoring">{{ 'contracts.sponsoring' | t: { club: (c.reference | label: 'club') } }}</div>
+              <div class="mt-2 flex flex-wrap gap-2">
+                @for (tier of c.tiers ?? []; track tier) {
+                  <app-button [disabled]="busy()" (pressed)="caseAction(c, 'sponsor', { amount: tier })" data-testid="sponsor-tier">{{ 'contracts.sponsor' | t: { amount: (tier | money) } }}</app-button>
+                }
+                <app-button variant="secondary" [disabled]="busy()" (pressed)="caseAction(c, 'decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+              </div>
+              <p class="mt-1 text-[11px] text-muted">{{ 'contracts.sponsoringHint' | t }}</p>
+            }
+            @if (c.kind === 'INVITATION') {
+              <div class="mt-1 text-[12px] text-text" data-testid="invitation">{{ 'contracts.invitation' | t: { festival: (c.reference | label: 'festival') } }}</div>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <app-button [disabled]="busy()" (pressed)="caseAction(c, 'accept')" data-testid="case-accept">{{ 'contracts.rsvpAccept' | t }}</app-button>
+                <app-button variant="secondary" [disabled]="busy()" (pressed)="caseAction(c, 'decline')" data-testid="case-decline">{{ 'contracts.rsvpDecline' | t }}</app-button>
+              </div>
+              <p class="mt-1 text-[11px] text-muted">{{ 'contracts.invitationHint' | t }}</p>
+            }
             @if (isInsuranceCase(c)) {
               <div class="mt-2 flex flex-wrap gap-2">
                 <app-button [disabled]="busy()" (pressed)="caseAction(c, 'report', { channel: 'MAIL' })" data-testid="report-mail">{{ 'contracts.reportMail' | t }}</app-button>
@@ -134,8 +175,8 @@
               <app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'decline')" data-testid="contract-decline">{{ 'contracts.decline' | t }}</app-button>
             </div>
           }
-          @if (c.kind === 'MAINTENANCE' && c.status === 'ACTIVE') {
-            <div class="mt-2"><app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'cancel')" data-testid="maintenance-cancel">{{ 'contracts.cancel' | t }}</app-button></div>
+          @if ((c.kind === 'MAINTENANCE' || c.kind === 'TAX_ADVISOR') && c.status === 'ACTIVE') {
+            <div class="mt-2"><app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'cancel')" data-testid="contract-cancel">{{ 'contracts.cancel' | t }}</app-button></div>
           }
           @if (c.kind === 'LEASE' && c.status === 'ACTIVE') {
             <div class="mt-2 flex flex-wrap gap-2">
@@ -163,9 +204,18 @@
             @if (c.damageAmount !== null) { · {{ 'contracts.damage' | t: { amount: (c.damageAmount | money) } }} }
             @if (c.kind === 'MISSION_REFERRAL' && c.title) { · {{ c.title }} }
             @if (c.kind === 'REPAIR' && c.reference) { · {{ 'contracts.vehicle' | t: { id: c.reference, condition: c.quantity } }} }
-            @if (c.kind !== 'REPAIR' && c.quantity && c.reference) { · {{ 'contracts.animals' | t: { quantity: c.quantity, animal: (c.reference | label: 'animalType') } }} }
-            @if (c.costAmount !== null) { · {{ 'contracts.invoice' | t: { amount: (c.costAmount | money) } }} }
-            @if (c.payoutAmount !== null) { · {{ 'contracts.payout' | t: { amount: (c.payoutAmount | money) } }} }</span>
+            @if (isRoleplayCase(c)) {
+              @if (c.kind === 'TAX_BILL') { · {{ c.title ?? (c.reference | label: 'taxBill') }} }
+              @if (c.kind === 'AUTHORITY_INSPECTION') { · {{ c.title | label: 'authorityRule' }} }
+              @if (c.kind === 'SPONSORING_REQUEST') { · {{ c.reference | label: 'club' }} }
+              @if (c.kind === 'INVITATION') { · {{ c.reference | label: 'festival' }} }
+              @if (c.kind === 'AUTHORITY_INSPECTION' && c.costAmount) { · {{ 'contracts.fine' | t: { amount: (c.costAmount | money) } }} }
+              @if (c.kind !== 'AUTHORITY_INSPECTION' && c.payoutAmount !== null) { · {{ 'contracts.paid' | t: { amount: (c.payoutAmount | money) } }} }
+            } @else {
+              @if (c.kind !== 'REPAIR' && c.quantity && c.reference) { · {{ 'contracts.animals' | t: { quantity: c.quantity, animal: (c.reference | label: 'animalType') } }} }
+              @if (c.costAmount !== null) { · {{ 'contracts.invoice' | t: { amount: (c.costAmount | money) } }} }
+              @if (c.payoutAmount !== null) { · {{ 'contracts.payout' | t: { amount: (c.payoutAmount | money) } }} }
+            }</span>
           <span class="fp-label">{{ c.resolution | label: 'caseResolution' }} · {{ c.gameTime | gameTime }}</span>
         </li>
       } @empty {

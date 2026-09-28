@@ -1,0 +1,7 @@
+Fruchtfolgeprämie {{harvestYear}}
+Guten Tag,
+
+für {{hectares}} ha mit Fruchtwechsel im Jahr {{harvestYear}} erhalten Sie eine Fruchtfolgeprämie von {{premium}} €. Gekürzt: {{cut}}.
+
+Mit freundlichen Grüßen
+{{characterName}}

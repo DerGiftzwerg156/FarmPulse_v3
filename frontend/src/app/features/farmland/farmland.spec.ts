@@ -80,6 +80,22 @@ describe('Farmland', () => {
     }
   });
 
+  // Roadmap V2 R2-C
+  it('shows crop and growth phase of an own field', () => {
+    Object.assign(fields[0], { fruitType: 'WHEAT', phase: 'HARVESTABLE' });
+    try {
+      const { el, tile } = setup();
+      tile(0);
+      expect(el.querySelector('[data-testid="field-crop"]')?.textContent).toContain('Weizen');
+      expect(el.querySelector('[data-testid="field-crop"]')?.textContent).toContain('erntereif');
+      tile(1);
+      expect(el.querySelector('[data-testid="field-crop"]')).toBeNull();
+    } finally {
+      delete fields[0].fruitType;
+      delete fields[0].phase;
+    }
+  });
+
   it('asks the owner for a lease and marks leased fields (TODO T-22)', () => {
     const { el, tile, btn, http, fixture } = setup();
     tile(1);
@@ -163,5 +179,25 @@ describe('Farmland', () => {
     http.expectOne('/api/negotiations/7/withdraw').flush(neg({ status: 'WITHDRAWN' }));
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="negotiation-status"]')?.textContent).toContain('Zurückgezogen');
+  });
+
+  // Roadmap V2 R2-E3
+  it('marks an own field as the family field and removes the mark', () => {
+    const { el, btn, http, fixture, tile } = setup();
+    tile(0);
+    btn('family-field-mark').click();
+    const req = http.expectOne('/api/farmlands/1/family-field');
+    expect(req.request.method).toBe('PUT');
+    req.flush(null);
+    http.expectOne('/api/farmlands').flush([{ ...fields[0], familyField: true }, fields[1], fields[2]]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="family-field"]')?.textContent).toContain('Familienfeld');
+    btn('family-field-clear').click();
+    const clear = http.expectOne('/api/family-field');
+    expect(clear.request.method).toBe('DELETE');
+    clear.flush(null);
+    http.expectOne('/api/farmlands').flush(fields);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="family-field"]')).toBeNull();
   });
 });

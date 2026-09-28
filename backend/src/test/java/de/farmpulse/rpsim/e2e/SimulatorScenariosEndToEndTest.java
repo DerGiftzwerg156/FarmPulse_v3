@@ -90,6 +90,50 @@ class SimulatorScenariosEndToEndTest {
         });
     }
 
+    /** Roadmap V2 (R2-Q2): the optional blocks of the new scenarios reach the backend; older scenarios have none. */
+    @Test
+    void roadmapV2BlocksArriveOnlyFromScenariosThatExportThem() {
+        Savegame helpers = link("helfer-hof", "sim_helfer_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            var f = facts.latest(savegames.findById(helpers.getId()).orElseThrow()).orElseThrow();
+            assertThat(f.workforce().activeJobs()).extracting(j -> j.employeeId()).containsExactly(1L, null);
+            assertThat(f.workforce().workedGameMs()).containsKeys("1", "2");
+            assertThat(f.finances().periods()).isNotNull();
+            assertThat(f.weather().raining()).isFalse();
+            assertThat(f.husbandries()).isNull();
+            assertThat(f.fields()).isNull();
+        });
+    }
+
+    @Test
+    void roadmapV2HusbandriesAndFieldsArrive() {
+        Savegame stable = link("tierhof-krank", "sim_tierhof_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            var f = facts.latest(savegames.findById(stable.getId()).orElseThrow()).orElseThrow();
+            assertThat(f.husbandries()).extracting(h -> h.husbandryUniqueId()).containsExactly("hus_00001", "hus_00002");
+            assertThat(f.husbandries().get(0).conditions()).isNotEmpty();
+            assertThat(f.husbandries().get(1).productivity()).isNull();
+            assertThat(f.workforce()).isNull();
+        });
+        Savegame harvest = link("ernte-herbst", "sim_ernte_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            var f = facts.latest(savegames.findById(harvest.getId()).orElseThrow()).orElseThrow();
+            assertThat(f.fields()).extracting(fd -> fd.farmlandId()).containsExactly(2, 4, 6, 7);
+            assertThat(f.fields().get(3).fruitType()).isNull();
+            assertThat(f.weather().raining()).isTrue();
+            assertThat(f.calendar().period()).isEqualTo(7);
+        });
+        Savegame old = link("wohlhabender-hof", "sim_alt_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            var f = facts.latest(savegames.findById(old.getId()).orElseThrow()).orElseThrow();
+            assertThat(f.finances()).isNull();
+            assertThat(f.workforce()).isNull();
+            assertThat(f.husbandries()).isNull();
+            assertThat(f.fields()).isNull();
+            assertThat(f.weather()).isNull();
+        });
+    }
+
     @Test
     void konfliktModsAreShownInTheHeaderContext() {
         link("konflikt-mods", "sim_mods_" + System.nanoTime());

@@ -7,6 +7,7 @@ import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.domain.AbsenceVariant;
 import de.farmpulse.rpsim.domain.Character;
 import de.farmpulse.rpsim.domain.CharacterCategory;
+import de.farmpulse.rpsim.domain.CharacterRole;
 import de.farmpulse.rpsim.domain.CharacterStatus;
 import de.farmpulse.rpsim.domain.CommunicationCategory;
 import de.farmpulse.rpsim.domain.Savegame;
@@ -58,6 +59,9 @@ public class MandatoryRoleAbsenceService {
         Savegame sg = savegames.findById(e.savegameId()).orElseThrow();
         endAbsences(sg);
         for (Character c : characters.findBySavegameAndCategoryAndStatus(sg, CharacterCategory.MANDATORY, CharacterStatus.ACTIVE)) {
+            if (c.getRole() == CharacterRole.FAMILY || c.getRole() == CharacterRole.CLUB) {
+                continue; // Roadmap V2 R2-E: family members and club chairs have no office with a substitute
+            }
             if (random.chance(cfg().getDailyProbability())) {
                 startAbsence(sg, c, random.chance(cfg().getSubstituteProbability()) ? AbsenceVariant.SUBSTITUTE
                         : AbsenceVariant.DELAYED_REPLY);

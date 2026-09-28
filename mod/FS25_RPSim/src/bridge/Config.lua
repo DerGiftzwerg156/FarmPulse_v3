@@ -30,6 +30,15 @@ RPSimConfig.DEFAULTS = {
     -- T-21: finance statistic per reason, e.g. { "SALARY_PAYMENT": "wagePayment" }. Only "other" is verified in
     -- the FS25 code; other names must be checked in the game first (manual test plan). Empty = "other".
     moneyTypeStatistics = {},
+    -- Roadmap V2 R2-B1: number of FS25 periods (game months) kept in the booking journal (farm_facts.finances).
+    -- 13 = one year plus the current month.
+    financeJournalPeriods = 13,
+    -- Roadmap V2 R2-C1: how often the fields are sampled (real time, ms); every farm_facts export in between carries
+    -- the last sample. 5 min = roadmap proposal.
+    fieldExportIntervalMs = 300000,
+    -- Roadmap V2 R2-F2: show the yes/no questions also while the player sits in a vehicle. false = only on foot (the
+    -- fallback of the roadmap); the key of R2-F3 opens a waiting question anywhere.
+    promptsInVehicle = true,
 }
 
 function RPSimConfig.new(overrides)

@@ -1,13 +1,16 @@
 package de.farmpulse.rpsim.credit;
 
 import java.util.List;
+import java.util.Optional;
 
 import de.farmpulse.rpsim.bridge.BridgeDtos.FarmFacts;
 import de.farmpulse.rpsim.bridge.FactsService;
 import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.field.FieldService;
 import de.farmpulse.rpsim.domain.FactsSnapshot;
+import de.farmpulse.rpsim.finance.FinanceJournalService;
 import de.farmpulse.rpsim.domain.Loan;
 import de.farmpulse.rpsim.domain.LoanPaymentType;
 import de.farmpulse.rpsim.domain.LoanStatus;
@@ -35,10 +38,13 @@ public class CreditScoringService {
     private final TrustScoreService trust;
     private final CreditConfigResolver configs;
     private final GameTime gameTime;
+    private final FinanceJournalService journal;
+    private final FieldService fields;
 
     public CreditScoringService(FactsService facts, FactsSnapshotRepository snapshots, LoanRepository loans,
                                 LoanPaymentRepository payments, LiquidityService liquidity, CharacterLookup lookup,
-                                TrustScoreService trust, CreditConfigResolver configs, GameTime gameTime) {
+                                TrustScoreService trust, CreditConfigResolver configs, GameTime gameTime,
+                                FinanceJournalService journal, FieldService fields) {
         this.facts = facts;
         this.snapshots = snapshots;
         this.loans = loans;
@@ -48,6 +54,8 @@ public class CreditScoringService {
         this.trust = trust;
         this.configs = configs;
         this.gameTime = gameTime;
+        this.journal = journal;
+        this.fields = fields;
     }
 
     public CreditFormula.Result score(Savegame sg, long amount, int termMonths, double interestRate) {
@@ -57,25 +65,36 @@ public class CreditScoringService {
     public CreditFormula.Inputs inputs(Savegame sg, long amount, int termMonths, double interestRate) {
         RpsimProperties.Credit cfg = configs.forSavegame(sg);
         FarmFacts f = facts.latest(sg).orElse(null);
-        double assets = f == null ? 0 : facts.totalAssetValue(f);
+        // R2-C5: standing crops count as asset (harvest value x growth progress x standing-crop-discount)
+        double assets = f == null ? 0 : facts.totalAssetValue(f) + standingCropValue(f, cfg);
         List<Loan> active = new java.util.ArrayList<>(loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE));
         // T-03: an uncollected call-back is still debt
         active.addAll(loans.findBySavegameAndStatus(sg, LoanStatus.DEFAULTED));
         double loanDebt = active.stream().mapToDouble(Loan::getRemainingAmount).sum();
         double vanilla = f == null ? 0 : facts.vanillaLoanRemaining(f);
         double existingInstallments = active.stream().mapToDouble(Loan::getMonthlyInstallment).sum();
+        long now = sg.getCurrentGameTime();
+        long windowMs = GameTime.days(cfg.getCashflowWindowDays());
         // T-04: running leasing costs are an obligation like an installment (the game pays them from the balance, so
-        // the operating cash flow below already contains them)
-        existingInstallments += f == null ? 0 : FactsService.leasingCostPerMonth(f);
+        // the operating cash flow below already contains them). R2-B3: the real LEASING_COSTS of the booking journal
+        // replace the estimate from the exported costs per vehicle.
+        existingInstallments += f == null ? 0 : journal.monthlyLeasingCost(f, now, windowMs)
+                .orElseGet(() -> FactsService.leasingCostPerMonth(f));
         double newInstallment = CreditFormula.monthlyInstallment(amount, interestRate, termMonths);
         double balance = f == null ? 0 : f.liquidity().balance();
 
-        long now = sg.getCurrentGameTime();
-        long windowStart = now - GameTime.days(cfg.getCashflowWindowDays());
+        long windowStart = now - windowMs;
         List<FactsSnapshot> window = snapshots.findBySavegameAndGameTimeBetweenOrderByGameTimeAscIdAsc(sg, windowStart, now);
         boolean hasHistory = false;
         double monthlyCashflow = 0;
-        if (window.size() >= 2) {
+        // R2-B2: with a booking journal the operating cash flow is income + expenses of the complete months in the
+        // window; investments, financing and ignored bookings do not count (a machine purchase is no loss)
+        Optional<Double> fromJournal = f == null ? Optional.empty()
+                : journal.monthlyOperatingCashflow(f, now, windowMs);
+        if (fromJournal.isPresent()) {
+            hasHistory = true;
+            monthlyCashflow = fromJournal.get();
+        } else if (window.size() >= 2) {
             FactsSnapshot first = window.get(0);
             FactsSnapshot last = window.get(window.size() - 1);
             long span = last.getGameTime() - first.getGameTime();
@@ -93,6 +112,12 @@ public class CreditScoringService {
         double trustScore = lookup.bank(sg).map(trust::getCurrentTrust).orElse(0.0);
         return new CreditFormula.Inputs(monthlyCashflow, hasHistory, existingInstallments, newInstallment, assets,
                 loanDebt + vanilla, balance, amount, history, trustScore);
+    }
+
+    /** Roadmap V2 R2-C5: value of the standing crops in the credit check (0 without field export). */
+    public double standingCropValue(FarmFacts f, RpsimProperties.Credit cfg) {
+        return fields.standingCrops(f, cfg.getStandingCropDiscount()).stream()
+                .mapToDouble(FieldService.StandingCrop::value).sum();
     }
 
     /** Monthly operating cash flow trend (reused by the village-life congratulation trigger). */

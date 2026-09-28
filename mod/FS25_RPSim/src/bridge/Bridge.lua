@@ -8,6 +8,9 @@
 --   addMoney(amount, reason, note) -> ok, err
 --   checkBatchFunds(instructions) -> ok, err   (optional: refuses a batch whose debits exceed the balance)
 --   transferFarmland(farmlandId, direction) -> ok, err
+--   canShowPrompt(inVehicleAllowed) -> bool      (optional, R2-F2: no menu or dialog open, vehicle rule)
+--   showYesNo(text, title, callback(yes)) -> ok, err (optional, R2-F2)
+--   notify(text, level) -> ok, err                (optional)
 RPSimBridge = {}
 RPSimBridge.__index = RPSimBridge
 
@@ -24,6 +27,9 @@ function RPSimBridge.new(cfg, paths, adapter, state)
     -- farms, vehicles, placeables and selling stations of the savegame are not loaded yet.
     self.started = false
     self.lastMarketContextJson = nil
+    -- Roadmap V2 R2-C1: fields are sampled every fieldExportIntervalMs and carried into every farm_facts export
+    self.fieldCache = nil
+    self.fieldTimer = 0
     return self
 end
 
@@ -75,7 +81,91 @@ function RPSimBridge:exportFarmFacts()
     end
     raw.savegameId = self.state.savegameId
     raw.gameTime = self.adapter:getGameTime()
+    -- Roadmap V2 R2-B1: only exported while the booking hook runs; otherwise the block stays missing ("not present")
+    if self.financeJournalEnabled and self.state.financeJournal ~= nil then
+        raw.finances = RPSimFinanceJournal.toRaw(self.state.financeJournal)
+    end
+    if self.workforceEnabled then
+        raw.workforce = self:sampleWorkforce(raw.gameTime)
+    end
+    local fields = self:sampleFields()
+    if fields ~= nil then
+        raw.fields, raw.fieldRules = fields.fields, fields.rules
+    end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
+end
+
+--- Roadmap V2 R2-C1: walking all fields is not free, so they are sampled only every fieldExportIntervalMs (real
+-- time) or after a farmland transfer; every export in between carries the last sample. nil = no field manager.
+function RPSimBridge:sampleFields()
+    if self.fieldCache == nil or self.fieldTimer >= self.cfg.fieldExportIntervalMs then
+        self.fieldTimer = 0
+        local okFields, fields = pcall(self.adapter.collectFields, self.adapter)
+        if not okFields or fields == nil then
+            self.fieldCache = nil
+            return nil
+        end
+        local okRules, rules = pcall(self.adapter.collectFieldRules, self.adapter)
+        self.fieldCache = { fields = fields, rules = okRules and rules or nil }
+    end
+    return self.fieldCache
+end
+
+--- Roadmap V2 R2-A2 / R2-A3 / R2-A4: running helper jobs of the player farm. Jobs that run after loading are assigned
+-- now (job ids are new after a reload), the worked time since the last export is credited, and the helper limit of the
+-- strict mode is set again (in case the game reset it).
+function RPSimBridge:sampleWorkforce(gameTime)
+    local wf = self.state.workforce
+    local ok, jobs = pcall(self.adapter.collectAIJobs, self.adapter)
+    if not ok or jobs == nil then
+        jobs = {}
+    end
+    local ids = {}
+    for _, j in ipairs(jobs) do
+        RPSimWorkforce.assign(wf, j.jobId)
+        ids[#ids + 1] = j.jobId
+    end
+    RPSimWorkforce.accrue(wf, ids, gameTime)
+    if wf.roster ~= nil and self.adapter.applyHelperLimit ~= nil then
+        self.adapter:applyHelperLimit(wf)
+    end
+    return RPSimWorkforce.toRaw(wf, jobs)
+end
+
+--- Roadmap V2 R2-A0: the complete employee list from the backend. Helpers of striking employees are stopped (R2-A5),
+-- the helper limit follows the new list (R2-A3).
+function RPSimBridge:applyRoster(ins)
+    local wf = self.state.workforce
+    local strike = RPSimWorkforce.setRoster(wf, ins)
+    for _, jobId in ipairs(strike) do
+        local name = RPSimWorkforce.helperName(wf, jobId)
+        if self.adapter.stopStrikingJob ~= nil then
+            self.adapter:stopStrikingJob(jobId, name)
+        end
+        RPSimWorkforce.release(wf, jobId)
+    end
+    if self.adapter.applyHelperLimit ~= nil then
+        self.adapter:applyHelperLimit(wf)
+    end
+    RPSimLog.info("Employee list: %d employees, helper wage %s, strict limit %s", #wf.roster.employees,
+        tostring(wf.roster.helperWageMode), tostring(wf.roster.strictHelperLimit))
+    return true
+end
+
+--- Roadmap V2 R2-B1: one booking of the game (Farm.changeBalance). Only the player farm is recorded; bookings of the
+-- tool itself (adapter.bookingReason set in addMoney) land under RPSIM_<REASON>.
+function RPSimBridge:recordBooking(farmId, amount, moneyType)
+    if not self.started or farmId ~= self.adapter:getFarmId() then
+        return false
+    end
+    local year, period = self.adapter:currentPeriod()
+    if year == nil then
+        return false
+    end
+    local name = RPSimFinanceJournal.nameOf(self.adapter.bookingReason, moneyType, RPSimGameAdapter ~= nil
+        and RPSimGameAdapter.moneyTypeName or nil)
+    return RPSimFinanceJournal.record(self.state.financeJournal, year, period, name, amount,
+        self.cfg.financeJournalPeriods)
 end
 
 --- Writes market_context.json, but only when its content changed since the last successful write (the
@@ -115,9 +205,14 @@ function RPSimBridge:onSavegameLoaded()
     self.started = true
     self.exportTimer = 0
     self.importTimer = 0
+    if self.workforceEnabled and self.adapter.registerStrikeMessage ~= nil then
+        self.adapter:registerStrikeMessage() -- R2-A5: the AI message manager exists once the mission runs
+    end
     self:exportMarketContext(true)
     self:exportFarmFacts()
     self:writeAck()
+    -- R2-F1: the file follows the loaded savegame (answers given after the last save are gone, the backend asks again)
+    self:writeResponses()
     self:logFirstExport()
 end
 
@@ -158,11 +253,19 @@ function RPSimBridge:pollInstructions()
                     money = function(ins) return adapter:addMoney(ins.amount, ins.reason, ins.note) end,
                     farmlandTransfer = function(ins) return adapter:transferFarmland(ins.farmlandId, ins.direction) end,
                     notify = adapter.notify ~= nil and function(ins) return adapter:notify(ins.text, ins.level) end or nil,
+                    employeeRoster = function(ins) return self:applyRoster(ins) end,
+                    prompt = function(ins) return self:queuePrompt(ins, gameTime) end,
                     repairVehicle = adapter.repairVehicle ~= nil
-                        and function(ins) return adapter:repairVehicle(ins.vehicleId) end or nil,
+                        and function(ins) return adapter:repairVehicle(ins.vehicleId, ins.targetDamage) end or nil,
                 },
             })
+            -- R2-F1 / R2-F2: processed answers and questions decided in the browser
+            if doc.savegameId == self.state.savegameId
+                    and RPSimPrompts.applyDocument(self.state.prompts, doc, gameTime) then
+                self:writeResponses()
+            end
             if result.marketContextDirty then
+                self.fieldCache = nil -- R2-C1: the owned fields changed
                 -- Re-export right after every applied FARMLAND_TRANSFER.
                 self:exportMarketContext(true)
             end
@@ -170,6 +273,7 @@ function RPSimBridge:pollInstructions()
     end
     RPSimProcessor.collectContractReports(self.state, gameTime)
     RPSimProcessor.prune(self.state, gameTime, self.cfg.processedRetentionGameDays)
+    RPSimPrompts.prune(self.state.prompts, gameTime)
     self:writeAck()
     return result
 end
@@ -186,6 +290,7 @@ function RPSimBridge:update(dtMs)
     end
     self.exportTimer = self.exportTimer + dtMs
     self.importTimer = self.importTimer + dtMs
+    self.fieldTimer = self.fieldTimer + dtMs
     if self.importTimer >= self.cfg.importIntervalMs then
         self.importTimer = 0
         self:pollInstructions()
@@ -196,6 +301,75 @@ function RPSimBridge:update(dtMs)
         -- Keeps sell points/farmlands current (e.g. placeables bought later); written only when changed.
         self:exportMarketContext()
     end
+    self:updatePrompts(false)
+end
+
+-- ------------------------------------------------------------------ Roadmap V2 R2-F: questions in the game
+
+--- PROMPT instruction: queued; an expired one is dropped without being shown. When the question cannot be shown right
+-- now and the key of R2-F3 exists, a short notification names the key.
+function RPSimBridge:queuePrompt(ins, gameTime)
+    local ok, note = RPSimPrompts.enqueue(self.state.prompts, ins, gameTime)
+    if note == nil and self.promptKeyAvailable and not self:promptCanShow(false)
+            and self.adapter.notify ~= nil then
+        self.adapter:notify(string.format("FarmPulse: %s – Taste „FarmPulse: offene Frage“ öffnet sie", ins.title),
+            "INFO")
+    end
+    return ok, note
+end
+
+function RPSimBridge:promptCanShow(byKey)
+    if self.promptsUnsupported or self.adapter.canShowPrompt == nil or self.adapter.showYesNo == nil then
+        return false
+    end
+    local ok, can = pcall(self.adapter.canShowPrompt, self.adapter, byKey or self.cfg.promptsInVehicle)
+    return ok and can == true
+end
+
+--- Frame update (automatic display, R2-F2) and key press (R2-F3, byKey = true: also inside a vehicle).
+-- Returns true when a dialog was opened.
+function RPSimBridge:updatePrompts(byKey)
+    local prompts = self.state.prompts
+    if prompts.shown ~= nil then
+        return false
+    end
+    local nextPrompt = RPSimPrompts.nextPrompt(prompts, self.adapter:getGameTime())
+    if self.adapter.setPromptKeyVisible ~= nil then
+        self.adapter:setPromptKeyVisible(nextPrompt ~= nil)
+    end
+    if nextPrompt == nil or not self:promptCanShow(byKey) then
+        return false
+    end
+    local promptId = nextPrompt.promptId
+    prompts.shown = promptId
+    local ok, err = self.adapter:showYesNo(RPSimPrompts.dialogText(nextPrompt), nextPrompt.title, function(yes)
+        self:onPromptAnswer(promptId, yes)
+    end)
+    if not ok then
+        prompts.shown = nil
+        self.promptsUnsupported = true -- no dialog in this game version: the questions stay in the browser
+        RPSimLog.warning("Yes/no dialog not available, questions stay in the browser: %s", tostring(err))
+        return false
+    end
+    return true
+end
+
+function RPSimBridge:openNextPrompt()
+    return self:updatePrompts(true)
+end
+
+--- Dialog callback: the answer goes to the backend at once (not with the next 60 s export).
+function RPSimBridge:onPromptAnswer(promptId, yes)
+    local r = RPSimPrompts.answer(self.state.prompts, promptId, yes, self.adapter:getGameTime())
+    if r ~= nil then
+        RPSimLog.info("Answer %s to question %s", r.answer, promptId)
+        self:writeResponses()
+    end
+end
+
+function RPSimBridge:writeResponses()
+    return self:writeJson(self.paths.playerResponses,
+        RPSimPrompts.toDocument(self.state.prompts, self.state.savegameId))
 end
 
 --- Price hook entry point (called from the SellingStation override).

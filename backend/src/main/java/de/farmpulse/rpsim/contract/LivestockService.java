@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 
@@ -24,12 +25,15 @@ import de.farmpulse.rpsim.domain.CaseStatus;
 import de.farmpulse.rpsim.domain.Character;
 import de.farmpulse.rpsim.domain.CharacterRole;
 import de.farmpulse.rpsim.domain.CommunicationCategory;
+import de.farmpulse.rpsim.domain.EmployeeStatus;
+import de.farmpulse.rpsim.domain.JobRole;
 import de.farmpulse.rpsim.domain.MoneyReason;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
+import de.farmpulse.rpsim.repository.EmployeeRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
@@ -73,10 +77,12 @@ public class LivestockService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final EmployeeRepository employees;
 
     public LivestockService(ServiceCaseRepository cases, SavegameRepository savegames, FactsService facts, OutboxService outbox,
                             ServiceRoleService roles, NarrationRequestService narration, DiaryService diary,
-                            RandomSource random, RpsimProperties props, GameTime gameTime) {
+                            RandomSource random, RpsimProperties props, GameTime gameTime,
+                            EmployeeRepository employees) {
         this.cases = cases;
         this.savegames = savegames;
         this.facts = facts;
@@ -87,6 +93,7 @@ public class LivestockService {
         this.random = random;
         this.props = props;
         this.gameTime = gameTime;
+        this.employees = employees;
     }
 
     private RpsimProperties.Livestock cfg() {
@@ -196,11 +203,131 @@ public class LivestockService {
         sc.setClosedAtGameTime(sg.getCurrentGameTime());
         cases.save(sc);
         String trend = before == null ? "FIRST_CONTACT" : h.count() > before ? "GROWING" : h.count() < before ? "SHRINKING" : "STABLE";
+        // Roadmap V2 R2-A7: the advisor comments on the real productivity of the stables of this animal type
+        Double productivity = facts.latest(sg).map(f -> meanOf(stables(f, h.type()), BridgeDtos.Husbandry::productivity))
+                .orElse(null);
         narration.request(sg, NarrationEventType.BREEDING_ADVICE).from(advisor)
                 .facts(NarrationFacts.builder().put("animalType", h.type()).put("animalCount", h.count())
-                        .put("previousCount", before).put("herdTrend", trend).build())
+                        .put("previousCount", before).put("herdTrend", trend)
+                        .put("productivityPercent", productivity == null ? null : Math.round(productivity * 100)).build())
                 .category(CommunicationCategory.LIVESTOCK).related(RELATED, sc.getId()).submit();
         return sc;
+    }
+
+    // ------------------------------------------------------------------------------------------ R2-A7 real stables
+
+    /** Husbandries of an animal type (type from assets.animals, joined by husbandryUniqueId); all when type is null. */
+    public static List<BridgeDtos.Husbandry> stables(FarmFacts f, String type) {
+        if (f == null || f.husbandries() == null) {
+            return List.of();
+        }
+        Map<String, String> typeById = new java.util.HashMap<>();
+        if (f.assets() != null && f.assets().animals() != null) {
+            f.assets().animals().stream().filter(a -> a != null && a.husbandryUniqueId() != null)
+                    .forEach(a -> typeById.put(a.husbandryUniqueId(), a.type()));
+        }
+        return f.husbandries().stream().filter(Objects::nonNull)
+                .filter(h -> type == null || type.equals(typeById.get(h.husbandryUniqueId()))).toList();
+    }
+
+    static Double meanOf(List<BridgeDtos.Husbandry> stables, java.util.function.Function<BridgeDtos.Husbandry, Double> value) {
+        double[] v = stables.stream().map(value).filter(Objects::nonNull).mapToDouble(Double::doubleValue).toArray();
+        return v.length == 0 ? null : java.util.Arrays.stream(v).average().orElse(0);
+    }
+
+    /** Ratio of the water condition (title in water-condition-titles), null when the stable reports none. */
+    public Double water(BridgeDtos.Husbandry h) {
+        return h.conditions() == null ? null : h.conditions().stream()
+                .filter(c -> c != null && c.title() != null && cfg().getWaterConditionTitles().contains(c.title()))
+                .map(BridgeDtos.HusbandryCondition::ratio).filter(Objects::nonNull).findFirst().orElse(null);
+    }
+
+    /** Daily: emergency visits of the vet and warnings of the animal keeper from the real stable values. */
+    @EventListener
+    @Order(72)
+    @Transactional
+    public void onDayStables(GameDayPassedEvent e) {
+        Savegame sg = savegames.findById(e.savegameId()).orElseThrow();
+        FarmFacts f = facts.latest(sg).orElse(null);
+        if (f == null || f.husbandries() == null) {
+            return;
+        }
+        for (BridgeDtos.Husbandry h : f.husbandries()) {
+            if (h != null && h.health() != null && h.health() < cfg().getVetEmergencyHealthThreshold()) {
+                vetEmergency(sg, f, h);
+            }
+        }
+        keeperWarning(sg, f);
+    }
+
+    /** R2-A7: emergency visit for a sick husbandry (at most once per cooldown), invoice x vet-emergency-factor. */
+    @Transactional
+    public Optional<ServiceCase> vetEmergency(Savegame sg, FarmFacts f, BridgeDtos.Husbandry h) {
+        long now = sg.getCurrentGameTime();
+        String title = "Notfall " + h.husbandryUniqueId();
+        boolean recent = cases.findBySavegameAndKindInOrderByIdDesc(sg, EnumSet.of(CaseKind.VET_VISIT)).stream()
+                .anyMatch(c -> title.equals(c.getTitle())
+                        && GameTime.toDays(now - c.getGameTime()) < cfg().getVetEmergencyCooldownDays());
+        if (recent) {
+            return Optional.empty();
+        }
+        String type = "UNKNOWN";
+        int count = 0;
+        for (BridgeDtos.Animal a : f.assets() == null || f.assets().animals() == null ? List.<BridgeDtos.Animal>of()
+                : f.assets().animals()) {
+            if (a != null && h.husbandryUniqueId().equals(a.husbandryUniqueId())) {
+                type = a.type() == null ? type : a.type();
+                count = a.count() == null ? 0 : a.count();
+            }
+        }
+        Character vet = roles.ensure(sg, CharacterRole.VETERINARIAN);
+        long invoice = Math.round((cfg().getVetBaseFee() + cfg().getVetFeePerAnimal() * count) * cfg().getVetEmergencyFactor());
+        ServiceCase sc = newCase(sg, CaseKind.VET_VISIT, vet, type);
+        sc.setTitle(title);
+        sc.setStatus(CaseStatus.SETTLED);
+        sc.setResolution("EMERGENCY");
+        sc.setCostAmount(invoice);
+        sc.setQuantity(count);
+        sc.setClosedAtGameTime(now);
+        cases.save(sc);
+        outbox.money(sg, -invoice, MoneyReason.VET_INVOICE, "Tierarzt-Notfall " + type, new Related(RELATED, sc.getId()));
+        narration.request(sg, NarrationEventType.VET_EMERGENCY).from(vet)
+                .facts(NarrationFacts.builder().put("animalType", type).put("animalCount", count)
+                        .put("healthPercent", Math.round(h.health())).put("invoice", invoice).build())
+                .category(CommunicationCategory.LIVESTOCK).related(RELATED, sc.getId()).submit();
+        diary.addAuto(sg, "LIVESTOCK", "Tierarzt-Notfall", "Kranke Tiere (" + type + ", " + Math.round(h.health())
+                + " % Gesundheit), Rechnung " + invoice + " €.", RELATED, sc.getId());
+        return Optional.of(sc);
+    }
+
+    /** R2-A7: an employed animal keeper warns about low food or water (one mail per cooldown, lowest values named). */
+    @Transactional
+    public boolean keeperWarning(Savegame sg, FarmFacts f) {
+        long now = sg.getCurrentGameTime();
+        var keeper = employees.findBySavegameAndStatusAndJobRole(sg, EmployeeStatus.ACTIVE,
+                JobRole.ANIMAL_KEEPER).stream()
+                .filter(k -> k.getStrikeSinceGameTime() == null).findFirst().orElse(null);
+        if (keeper == null || (keeper.getLastStableWarningGameTime() != null
+                && GameTime.toDays(now - keeper.getLastStableWarningGameTime()) < cfg().getKeeperWarningCooldownDays())) {
+            return false;
+        }
+        List<BridgeDtos.Husbandry> low = stables(f, null).stream()
+                .filter(h -> (h.food() != null && h.food() < cfg().getKeeperFoodWarningRatio())
+                        || (water(h) != null && water(h) < cfg().getKeeperWaterWarningRatio())).toList();
+        if (low.isEmpty()) {
+            return false;
+        }
+        double food = low.stream().map(BridgeDtos.Husbandry::food).filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue).min().orElse(1);
+        double water = low.stream().map(this::water).filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue).min().orElse(1);
+        keeper.setLastStableWarningGameTime(now);
+        narration.request(sg, NarrationEventType.ANIMAL_KEEPER_WARNING).from(keeper.getCharacter())
+                .facts(NarrationFacts.builder().put("stableCount", low.size())
+                        .put("lowestFoodPercent", Math.round(food * 100)).put("lowestWaterPercent", Math.round(water * 100))
+                        .build())
+                .category(CommunicationCategory.EMPLOYEE).related("EMPLOYEE", keeper.getId()).submit();
+        return true;
     }
 
     /** Sell or buy offer of the trader with a premium per animal. */

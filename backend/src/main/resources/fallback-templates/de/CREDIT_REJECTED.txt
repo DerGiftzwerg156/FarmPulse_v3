@@ -1,7 +1,7 @@
 Ihr Kreditantrag
 Guten Tag,
 
-leider können wir Ihren Antrag über {{requestedAmount}} € für „{{purpose}}“ nicht bewilligen. Ausschlaggebend war: {{reasonCategory}}.
+leider können wir Ihren Antrag über {{requestedAmount}} € für „{{purpose}}“ nicht bewilligen. Ausschlaggebend war: {{reasonCategory}}. {{standingCropNote}}
 
 Mit freundlichen Grüßen
 {{characterName}}

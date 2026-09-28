@@ -4,8 +4,8 @@ max_line_length = 130
 -- Globals defined by this mod (FS25 loads files via `source`, modules are global tables).
 globals = {
     "RPSim", "RPSimJson", "RPSimLog", "RPSimFileIO", "RPSimConfig", "RPSimBridgePaths", "RPSimStorage",
-    "RPSimFarmFacts", "RPSimMarketContext", "RPSimInstructions", "RPSimPriceEventMath", "RPSimPriceEvents",
-    "RPSimProcessor", "RPSimPersistence", "RPSimBridge", "RPSimGameAdapter",
+    "RPSimFarmFacts", "RPSimFinanceJournal", "RPSimWorkforce", "RPSimMarketContext", "RPSimInstructions", "RPSimPriceEventMath", "RPSimPriceEvents",
+    "RPSimProcessor", "RPSimPersistence", "RPSimBridge", "RPSimGameAdapter", "RPSimPrompts",
 }
 -- FS25 engine globals (read-only).
 read_globals = {

@@ -3,7 +3,9 @@
 -- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager g_npcManager
 -- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
 -- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
--- luacheck: globals g_i18n
+-- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
+-- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
+-- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -232,6 +234,30 @@ end
 --- Name of the current season (T-21): environment.currentSeason compared with the values of the global Season
 -- table (FS25 BeehiveSystem / StonePickMission: environment.currentSeason == Season.WINTER). The name is looked up
 -- instead of assumed, so only names that really exist in the game are exported.
+--- Roadmap V2 R2-B1: name of a money type by reverse lookup in the global MoneyType table (the documented fallback of
+-- the roadmap; the name field of a money type object is not verified). nil when the object is not in the table, e.g.
+-- money types registered at runtime with MoneyType.register (FillTrigger: "finance_purchaseFuel").
+function RPSimGameAdapter.moneyTypeName(moneyType)
+    if moneyType == nil or MoneyType == nil or type(MoneyType) ~= "table" then
+        return nil
+    end
+    for name, value in pairs(MoneyType) do
+        if value == moneyType and type(name) == "string" then
+            return name
+        end
+    end
+    return nil
+end
+
+--- Roadmap V2 R2-B1: year and period of the current FS25 month (cheap - called for every booking), nil when unknown.
+function RPSimGameAdapter:currentPeriod()
+    local env = safe(function() return g_currentMission.environment end, nil)
+    if env == nil or type(env.currentPeriod) ~= "number" then
+        return nil
+    end
+    return env.currentYear or 1, env.currentPeriod
+end
+
 function RPSimGameAdapter.seasonName(current)
     if current == nil or Season == nil or type(Season) ~= "table" then
         return nil
@@ -264,8 +290,10 @@ end
 
 function RPSimGameAdapter:collectFarmFacts()
     local farmId = self:getFarmId()
-    local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, silos = {},
-        prices = {}, calendar = self:collectCalendar(), missions = self:collectMissions(50) }
+    local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, husbandries = {},
+        silos = {},
+        prices = {}, calendar = self:collectCalendar(), missions = self:collectMissions(50),
+        weather = self:collectWeather() }
     local farm = safe(function() return g_farmManager:getFarmById(farmId) end, nil)
     raw.balance = safe(function() return farm.money end, 0)
     raw.vanillaLoan = safe(function() return farm.loan end, 0)
@@ -309,6 +337,10 @@ function RPSimGameAdapter:collectFarmFacts()
                 end
                 raw.animals[#raw.animals + 1] = { husbandryUniqueId = p:getUniqueId(), type = string.upper(typeName),
                     count = count, estimatedValue = value }
+                local state = RPSimGameAdapter.husbandryState(p)
+                if state ~= nil then
+                    raw.husbandries[#raw.husbandries + 1] = state
+                end
             end
             -- silos (classic-silo classification happens in RPSimStorage)
             if p.spec_silo ~= nil then
@@ -454,10 +486,14 @@ function RPSimGameAdapter:moneyTypeFor(reason)
     return moneyType
 end
 
+--- Roadmap V2 R2-B1: while the tool books, bookingReason is set so the Farm.changeBalance hook records the amount as
+-- RPSIM_<REASON> instead of the FS25 money type.
 function RPSimGameAdapter:addMoney(amount, reason, note)
+    self.bookingReason = reason
     local ok, err = pcall(function()
         g_currentMission:addMoney(amount, self:getFarmId(), self:moneyTypeFor(reason), true, true)
     end)
+    self.bookingReason = nil
     if not ok then
         return false, tostring(err)
     end
@@ -468,7 +504,9 @@ end
 --- Repair of an own vehicle paid by the maintenance contract (TODO T-22): Wearable:setDamageAmount(0, true) - the
 -- part of FS25 Wearable:repairVehicle() that removes the damage; repairVehicle() itself would also book the repair
 -- price (addMoney(-getRepairPrice(), ..., MoneyType.VEHICLE_REPAIR)), which the contract already covers.
-function RPSimGameAdapter:repairVehicle(uniqueId)
+-- Roadmap V2 R2-A6: targetDamage (0..1, default 0) repairs only down to that damage; a repair never raises the damage
+-- (getDamageAmount() as in the export).
+function RPSimGameAdapter:repairVehicle(uniqueId, targetDamage)
     local farmId = self:getFarmId()
     local target
     for _, v in pairs(vehicleList()) do
@@ -488,18 +526,246 @@ function RPSimGameAdapter:repairVehicle(uniqueId)
         if target.setDamageAmount == nil then
             error("NOT_WEARABLE")
         end
-        target:setDamageAmount(0, true)
+        local damage = targetDamage or 0
+        if target.getDamageAmount ~= nil then
+            damage = math.min(damage, target:getDamageAmount())
+        end
+        target:setDamageAmount(damage, true)
     end)
     if not ok then
         local msg = tostring(err)
         return false, msg:match("NOT_OWN_VEHICLE") and "NOT_OWN_VEHICLE" or msg:match("NOT_WEARABLE") and "NOT_WEARABLE" or msg
     end
-    RPSimLog.info("Vehicle %s repaired (maintenance contract)", tostring(uniqueId))
+    RPSimLog.info("Vehicle %s repaired (target damage %.2f)", tostring(uniqueId), targetDamage or 0)
     return true
 end
 
 --- In-game notification (TODO T-21): g_currentMission:addIngameNotification(FSBaseMission.INGAME_NOTIFICATION_*, text),
 -- the pattern of FS25_MarketDynamics (MarketDynamics.lua, FuturesMarket.lua).
+--- Roadmap V2 R2-A7: state of one husbandry, the way the game computes it itself (all functions are placeable functions
+-- registered by the husbandry specializations, FS25 animals/husbandry/placeables):
+--   health       mean of cluster.health over all clusters (PlaceableHusbandryAnimals:updateInfo, shown as "%d %")
+--   productivity getGlobalProductionFactor() * getProductionFactor(), not for AnimalType.HORSE / PIG
+--                (PlaceableHusbandryAnimals:getConditionInfos)
+--   food         getTotalFood() / getFoodCapacity() (PlaceableHusbandryFood)
+--   conditions   title + ratio of every getConditionInfos() entry (water, straw, slurry, milk, productivity ...)
+-- nil when the husbandry has no animals specialization; a missing part is left out.
+function RPSimGameAdapter.husbandryState(p)
+    return safe(function()
+        if p.spec_husbandryAnimals == nil then
+            return nil
+        end
+        local clusters = p:getClusters() or {}
+        local health, n = 0, 0
+        for _, cluster in pairs(clusters) do
+            health = health + (cluster.health or 0)
+            n = n + 1
+        end
+        local state = { husbandryUniqueId = p:getUniqueId(), health = n > 0 and health / n or 0, conditions = {} }
+        local typeIndex = p.getAnimalTypeIndex ~= nil and p:getAnimalTypeIndex() or nil
+        local noProductivity = AnimalType ~= nil and (typeIndex == AnimalType.HORSE or typeIndex == AnimalType.PIG)
+        if not noProductivity and p.getGlobalProductionFactor ~= nil and p.getProductionFactor ~= nil then
+            state.productivity = p:getGlobalProductionFactor() * p:getProductionFactor()
+        end
+        if p.getTotalFood ~= nil and p.getFoodCapacity ~= nil then
+            local capacity = p:getFoodCapacity()
+            state.food = capacity ~= nil and capacity > 0 and p:getTotalFood() / capacity or 0
+        else
+            state.food = 0
+        end
+        if p.getConditionInfos ~= nil then
+            for _, info in ipairs(p:getConditionInfos() or {}) do
+                if type(info.title) == "string" and type(info.ratio) == "number" then
+                    state.conditions[#state.conditions + 1] = { title = info.title, ratio = info.ratio }
+                end
+            end
+        end
+        return state
+    end, nil)
+end
+
+-- ------------------------------------------------------------------------ Roadmap V2 R2-A: employees as helpers
+
+--- Running helper jobs of the player farm: AISystem:getActiveJobs() (FS25 ai/AISystem.lua), job.jobId (set by
+-- AISystem:startJob via AIJob:setId), job.startedFarmId (AIJob:start), job:getTitle() (vehicle name for field work).
+function RPSimGameAdapter:collectAIJobs()
+    local farmId = self:getFarmId()
+    local jobs = {}
+    local list = safe(function() return g_currentMission.aiSystem:getActiveJobs() end, {})
+    for _, job in ipairs(list) do
+        safe(function()
+            if job.jobId ~= nil and job.startedFarmId == farmId then
+                local title = safe(function() return job:getTitle() end, nil)
+                jobs[#jobs + 1] = { jobId = job.jobId, title = title }
+            end
+            return true
+        end)
+    end
+    table.sort(jobs, function(a, b) return a.jobId < b.jobId end)
+    return jobs
+end
+
+--- Roadmap V2 R2-C1: state of the fields on farmlands of the player farm. Sources (FS25 dump / LUADOC):
+-- g_fieldManager.fields (FieldManager.lua), field.farmland (Farmland, set by FieldManager:loadMapData),
+-- field:getName() / field:getFieldState() (AbstractFieldMission.lua, PlowMission.lua), FieldState fields
+-- (FieldState.lua), g_fruitTypeManager:getFruitTypeNameByIndex / getFruitTypeByIndex /
+-- getFillTypeNameByFruitTypeIndex (FruitTypeManager), FruitTypeDesc min/maxHarvestingGrowthState, literPerSqm,
+-- getIsWithered / getIsCut (FruitTypeDesc). Fields without a valid state are left out. nil = no field manager.
+function RPSimGameAdapter:collectFields()
+    local farmId = self:getFarmId()
+    local fields = safe(function() return g_fieldManager.fields end, nil)
+    if fields == nil then
+        return nil
+    end
+    local list = {}
+    for _, field in pairs(fields) do
+        safe(function()
+            local farmland = field.farmland
+            if farmland == nil or g_farmlandManager:getFarmlandOwner(farmland.id) ~= farmId then
+                return true
+            end
+            local state = field:getFieldState()
+            if state == nil or not state.isValid then
+                return true
+            end
+            local e = { farmlandId = farmland.id, name = field:getName(), hectares = field.areaHa,
+                growthState = state.growthState, weedState = state.weedState, stoneLevel = state.stoneLevel,
+                sprayLevel = state.sprayLevel, limeLevel = state.limeLevel, plowLevel = state.plowLevel,
+                groundType = RPSimGameAdapter.groundTypeName(state.groundType) }
+            local index = state.fruitTypeIndex
+            if index ~= nil and (FruitType == nil or index ~= FruitType.UNKNOWN) then
+                local desc = g_fruitTypeManager:getFruitTypeByIndex(index)
+                if desc ~= nil then
+                    e.fruitType = g_fruitTypeManager:getFruitTypeNameByIndex(index)
+                    e.minHarvestingGrowthState = desc.minHarvestingGrowthState
+                    e.maxHarvestingGrowthState = desc.maxHarvestingGrowthState
+                    e.withered = safe(function() return desc:getIsWithered(state.growthState) == true end, nil)
+                    e.cut = safe(function() return desc:getIsCut(state.growthState) == true end, nil)
+                    e.fillType = safe(function() return g_fruitTypeManager:getFillTypeNameByFruitTypeIndex(index) end, nil)
+                    e.litersPerSqm = desc.literPerSqm
+                end
+            end
+            list[#list + 1] = e
+            return true
+        end)
+    end
+    return list
+end
+
+--- Name of a field ground type in the global FieldGroundType table (reverse lookup, numbers only), nil if unknown.
+function RPSimGameAdapter.groundTypeName(value)
+    if value == nil or FieldGroundType == nil or type(FieldGroundType) ~= "table" then
+        return nil
+    end
+    for name, v in pairs(FieldGroundType) do
+        if v == value and type(name) == "string" and type(v) == "number" then
+            return name
+        end
+    end
+    return nil
+end
+
+--- R2-C: game settings of the soil mechanics. The game shows "needs plowing" / "needs lime" only with
+-- Platform.gameplay.usePlowCounter / useLimeCounter and missionInfo.plowingRequiredEnabled / limeRequired, weeds and
+-- stones only when the map has them and missionInfo.weedsEnabled / stonesEnabled (MapOverlayGenerator.lua).
+function RPSimGameAdapter:collectFieldRules()
+    return safe(function()
+        local info = g_currentMission.missionInfo
+        local gameplay = Platform ~= nil and Platform.gameplay or {}
+        local weeds = g_currentMission.weedSystem
+        local stones = g_currentMission.stoneSystem
+        return {
+            plowingRequired = gameplay.usePlowCounter ~= false and info.plowingRequiredEnabled == true,
+            limeRequired = gameplay.useLimeCounter ~= false and info.limeRequired == true,
+            weedsEnabled = weeds ~= nil and weeds:getMapHasWeed() == true and info.weedsEnabled == true,
+            stonesEnabled = stones ~= nil and stones:getMapHasStones() == true and info.stonesEnabled == true,
+        }
+    end, nil)
+end
+
+--- R2-C2: current weather (environment.weather:getIsRaining / getRainFallScale / getGroundWetness, used e.g. by
+-- PlaceableSolarPanels, Wipers and Wheels). nil when the weather is not available.
+function RPSimGameAdapter:collectWeather()
+    return safe(function()
+        local weather = g_currentMission.environment.weather
+        return { raining = weather:getIsRaining() == true, rainFallScale = weather:getRainFallScale(),
+            groundWetness = weather:getGroundWetness() }
+    end, nil)
+end
+
+--- R2-A3: g_currentMission.maxNumHirables limits the helpers (AISystem:getAILimitedReached). The original value is
+-- remembered the first time and written back when the strict mode is off or the map is unloaded.
+function RPSimGameAdapter:applyHelperLimit(workforce)
+    return safe(function()
+        if self.originalMaxHirables == nil then
+            self.originalMaxHirables = g_currentMission.maxNumHirables
+        end
+        if self.originalMaxHirables == nil then
+            return false
+        end
+        g_currentMission.maxNumHirables = RPSimWorkforce.helperLimit(workforce, self.originalMaxHirables)
+        return true
+    end, false)
+end
+
+function RPSimGameAdapter:restoreHelperLimit()
+    if self.originalMaxHirables ~= nil then
+        safe(function()
+            g_currentMission.maxNumHirables = self.originalMaxHirables
+            return true
+        end)
+    end
+end
+
+--- R2-A5: own AI message "%s legt die Arbeit nieder" (class pattern of AIMessageErrorUnknown: Class(x, AIMessage) with
+-- getI18NText), registered with g_currentMission.aiMessageManager:registerMessage (the manager AIJobStopEvent uses).
+function RPSimGameAdapter:registerStrikeMessage()
+    local ok = pcall(function()
+        if RPSimGameAdapter.StrikeMessage == nil then
+            local cls = {}
+            local mt = Class(cls, AIMessage)
+            function cls.new(customMt)
+                return AIMessage.new(customMt or mt)
+            end
+            function cls:getI18NText()
+                return g_i18n:getText("rpsim_ai_strike")
+            end
+            RPSimGameAdapter.StrikeMessage = cls
+        end
+        local registered = g_currentMission.aiMessageManager:registerMessage("RPSIM_STRIKE", RPSimGameAdapter.StrikeMessage)
+        if registered == nil then
+            error("registerMessage refused RPSIM_STRIKE")
+        end
+    end)
+    self.strikeMessageRegistered = ok
+    if not ok then
+        RPSimLog.warning("Strike message not registered - strikes stop helpers with the generic message")
+    end
+    return ok
+end
+
+--- R2-A5: stops the helper of a striking employee with AISystem:stopJob(job, aiMessage). Without the own message the
+-- job stops with AIMessageErrorUnknown and a notification names the reason.
+function RPSimGameAdapter:stopStrikingJob(jobId, name)
+    local ok, err = pcall(function()
+        local job = g_currentMission.aiSystem:getJobById(jobId)
+        if job == nil then
+            return
+        end
+        if self.strikeMessageRegistered and RPSimGameAdapter.StrikeMessage ~= nil then
+            g_currentMission.aiSystem:stopJob(job, RPSimGameAdapter.StrikeMessage.new())
+        else
+            g_currentMission.aiSystem:stopJob(job, AIMessageErrorUnknown.new())
+            self:notify(string.format("FarmPulse: %s streikt und hat die Arbeit niedergelegt.", tostring(name)),
+                "CRITICAL")
+        end
+    end)
+    if not ok then
+        RPSimLog.warning("Could not stop the helper of %s: %s", tostring(name), tostring(err))
+    end
+    return ok
+end
+
 function RPSimGameAdapter:notify(text, level)
     local ok, err = pcall(function()
         local kind = FSBaseMission ~= nil
@@ -511,6 +777,53 @@ function RPSimGameAdapter:notify(text, level)
         return false, tostring(err)
     end
     return true
+end
+
+-- ------------------------------------------------------------------ Roadmap V2 R2-F: questions in the game
+
+--- R2-F2: a question is only shown while no menu or dialog is open (Gui:getIsGuiVisible = current screen or any
+-- dialog, LUADOC script/GUI/Gui.md) and - unless allowed - not while the player sits in a vehicle
+-- (g_localPlayer:getIsInVehicle, used in the FS25 code).
+function RPSimGameAdapter:canShowPrompt(inVehicleAllowed)
+    local ok, can = pcall(function()
+        if g_gui == nil or YesNoDialog == nil or YesNoDialog.show == nil then
+            return false
+        end
+        if g_gui:getIsGuiVisible() then
+            return false
+        end
+        if not inVehicleAllowed and g_localPlayer ~= nil and g_localPlayer:getIsInVehicle() then
+            return false
+        end
+        return true
+    end)
+    return ok and can == true
+end
+
+--- R2-F2: YesNoDialog.show(callback, target, text, title) as in PalletFiller / PlaceableBuyable; with target nil the
+-- callback gets the answer as its only argument.
+function RPSimGameAdapter:showYesNo(text, title, callback)
+    local ok, err = pcall(function()
+        YesNoDialog.show(function(yes)
+            callback(yes == true)
+        end, nil, text, title)
+    end)
+    if not ok then
+        return false, tostring(err)
+    end
+    return true
+end
+
+--- R2-F3: the key help shows the action only while a question waits (setActionEventTextVisibility is used throughout
+-- the FS25 code). The event id comes from RPSim.registerPromptAction.
+function RPSimGameAdapter:setPromptKeyVisible(visible)
+    if self.promptActionEventId == nil or self.promptKeyVisible == visible then
+        return
+    end
+    self.promptKeyVisible = visible
+    pcall(function()
+        g_inputBinding:setActionEventTextVisibility(self.promptActionEventId, visible)
+    end)
 end
 
 --- Farmland ownership transfer between the player farm and "no owner" (NPC owners only exist in the tool).

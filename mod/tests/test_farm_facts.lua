@@ -104,4 +104,100 @@ function T.TestFarmFacts:testNoCalendarWithoutEnvironment()
     lu.assertNil(doc.calendar)
 end
 
+-- Roadmap V2 (R2-Q1): optional blocks are left out when the adapter does not collect them
+function T.TestFarmFacts:testRoadmapV2BlocksAreAbsentWhenNotCollected()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0 }, RPSimConfig.new())
+    for _, block in ipairs({ "finances", "workforce", "husbandries", "fields", "weather" }) do
+        lu.assertNil(doc[block], block)
+    end
+end
+
+function T.TestFarmFacts:testRoadmapV2EmptyBlocksStayEmptyNotMissing()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, finances = {}, workforce = {},
+        husbandries = {}, fields = {} }, RPSimConfig.new())
+    local json = RPSimJson.encode(doc)
+    lu.assertStrContains(json, '"finances":{"periods":[]}')
+    lu.assertStrContains(json, '"workforce":{"activeJobs":[],"workedGameMs":{}}')
+    lu.assertStrContains(json, '"husbandries":[]')
+    lu.assertStrContains(json, '"fields":[]')
+end
+
+function T.TestFarmFacts:testFinancesAreRoundedAndSortedByPeriod()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, finances = { periods = {
+        { year = 2, period = 8, byType = { HARVEST_INCOME = 48200.4, PURCHASE_FUEL = -3100.6, AI = "x" } },
+        { year = 2, period = 7, byType = {} },
+        { period = 9, byType = { AI = 1 } } } } }, RPSimConfig.new())
+    lu.assertEquals(doc.finances.periods, {
+        { year = 2, period = 7, byType = {} },
+        { year = 2, period = 8, byType = { HARVEST_INCOME = 48200, PURCHASE_FUEL = -3101 } } })
+end
+
+function T.TestFarmFacts:testWorkforceUsesStringKeysForEmployees()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, workforce = {
+        activeJobs = { { jobId = 7, employeeId = 12, title = "Fendt 942" }, { jobId = 3 } },
+        workedGameMs = { [12] = 3600000.4, [1] = 0 } } }, RPSimConfig.new())
+    lu.assertEquals(doc.workforce.activeJobs, { { jobId = 3 }, { jobId = 7, employeeId = 12, title = "Fendt 942" } })
+    lu.assertStrContains(RPSimJson.encode(doc), '"workedGameMs":{"1":0,"12":3600000}')
+end
+
+function T.TestFarmFacts:testHusbandriesKeepConditionsAndOptionalProductivity()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, husbandries = {
+        { husbandryUniqueId = "hus_2", health = 61.25, food = 0.12345, conditions = {} },
+        { husbandryUniqueId = "hus_1", health = 90, productivity = 0.8, food = 1,
+            conditions = { { title = "Wasser", ratio = 0.5 }, { title = "Stroh" } } },
+        { husbandryUniqueId = "hus_3", food = 1 } } }, RPSimConfig.new())
+    lu.assertEquals(#doc.husbandries, 2)
+    lu.assertEquals(doc.husbandries[1], { husbandryUniqueId = "hus_1", health = 90, productivity = 0.8, food = 1,
+        conditions = { { title = "Wasser", ratio = 0.5 } } })
+    lu.assertEquals(doc.husbandries[2], { husbandryUniqueId = "hus_2", health = 61.25, food = 0.123, conditions = {} })
+end
+
+function T.TestFarmFacts:testFieldsWithAndWithoutCrop()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, fields = {
+        { farmlandId = 12, name = "12", hectares = 4.456, fruitType = "WHEAT", growthState = 5,
+            minHarvestingGrowthState = 7, maxHarvestingGrowthState = 8, weedState = 2, stoneLevel = 1, sprayLevel = 0,
+            limeLevel = 1, plowLevel = 0, groundType = "SOWN" },
+        { farmlandId = 3, name = "3", hectares = 2, growthState = 0, weedState = 0, stoneLevel = 0, sprayLevel = 0,
+            limeLevel = 0, plowLevel = 1 },
+        { farmlandId = 4, name = "4", hectares = 2 } } }, RPSimConfig.new())
+    lu.assertEquals(#doc.fields, 2)
+    lu.assertEquals(doc.fields[1], { farmlandId = 3, name = "3", hectares = 2, growthState = 0, weedState = 0,
+        stoneLevel = 0, sprayLevel = 0, limeLevel = 0, plowLevel = 1 })
+    lu.assertEquals(doc.fields[2], { farmlandId = 12, name = "12", hectares = 4.46, fruitType = "WHEAT", growthState = 5,
+        minHarvestingGrowthState = 7, maxHarvestingGrowthState = 8, weedState = 2, stoneLevel = 1, sprayLevel = 0,
+        limeLevel = 1, plowLevel = 0, groundType = "SOWN" })
+end
+
+function T.TestFarmFacts:testCropFlagsYieldAndFieldRules()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, fields = {
+        { farmlandId = 6, name = "6", hectares = 3, fruitType = "WHEAT", growthState = 10, minHarvestingGrowthState = 8,
+            maxHarvestingGrowthState = 8, withered = true, cut = false, fillType = "WHEAT", litersPerSqm = 0.123456,
+            weedState = 0, stoneLevel = 0, sprayLevel = 0, limeLevel = 0, plowLevel = 0 },
+        { farmlandId = 7, name = "7", hectares = 1, withered = true, fillType = "WHEAT", growthState = 0, weedState = 0,
+            stoneLevel = 0, sprayLevel = 0, limeLevel = 0, plowLevel = 0 } },
+        fieldRules = { plowingRequired = true, limeRequired = false, weedsEnabled = true, stonesEnabled = false } },
+        RPSimConfig.new())
+    lu.assertTrue(doc.fields[1].withered)
+    lu.assertFalse(doc.fields[1].cut)
+    lu.assertEquals(doc.fields[1].fillType, "WHEAT")
+    lu.assertEquals(doc.fields[1].litersPerSqm, 0.1235)
+    -- the crop details only exist with a crop
+    lu.assertNil(doc.fields[2].withered)
+    lu.assertNil(doc.fields[2].fillType)
+    lu.assertEquals(doc.fieldRules, { plowingRequired = true, limeRequired = false, weedsEnabled = true,
+        stonesEnabled = false })
+    doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, fieldRules = { plowingRequired = true } },
+        RPSimConfig.new())
+    lu.assertNil(doc.fieldRules)
+end
+
+function T.TestFarmFacts:testWeatherOnlyWhenComplete()
+    local cfg = RPSimConfig.new()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        weather = { raining = true, rainFallScale = 0.66666, groundWetness = 0.4 } }, cfg)
+    lu.assertEquals(doc.weather, { raining = true, rainFallScale = 0.667, groundWetness = 0.4 })
+    doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, weather = { raining = true } }, cfg)
+    lu.assertNil(doc.weather)
+end
+
 return T

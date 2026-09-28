@@ -1,0 +1,6 @@
+Werkstattbericht
+Hallo,
+
+diesen Monat habe ich {{repairCount}} Maschinen wieder hinbekommen (jetzt im Schnitt {{averageConditionAfter}} % Zustand). {{pendingCount}} weitere müssen warten – mehr schaffe ich allein nicht.
+
+{{characterName}}

@@ -13,7 +13,11 @@ const SIM_SEASONS = ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'];
 const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CREDIT_PENALTY', 'CREDIT_CALLBACK',
   'SALARY_PAYMENT', 'EMPLOYEE_EFFECT', 'SUBSIDY', 'STARTING_CAPITAL_ADJUSTMENT', 'FARMLAND_PURCHASE',
   'FARMLAND_SALE', 'OTHER', 'INSURANCE_PREMIUM', 'INSURANCE_PAYOUT', 'DAMAGE', 'WILDLIFE_COMPENSATION', 'VET_INVOICE',
-  'LIVESTOCK_PREMIUM', 'LEASE_PAYMENT', 'MAINTENANCE_FEE']);
+  'LIVESTOCK_PREMIUM', 'LEASE_PAYMENT', 'MAINTENANCE_FEE',
+  // Roadmap V2 (R2-Q1)
+  'TAX_PAYMENT', 'TAX_REFUND', 'FINE', 'FAMILY', 'SPONSORING', 'COMPENSATION']);
+// Roadmap V2 R2-B1: number of FS25 periods kept in the booking journal (proposed mod config financeJournalPeriods)
+export const FINANCE_JOURNAL_PERIODS = 13;
 
 /** Small deterministic PRNG (mulberry32) so scenario runs are reproducible. */
 export function rng(seed) {
@@ -66,11 +70,38 @@ export function validateInstruction(ins) {
       return null;
     case 'REPAIR_VEHICLE': // TODO T-22
       if (typeof ins.vehicleId !== 'string' || !ins.vehicleId) return 'vehicleId is required';
+      // Roadmap V2 R2-A6: partial repair
+      if (ins.targetDamage !== undefined && (!num(ins.targetDamage) || ins.targetDamage < 0 || ins.targetDamage > 1)) {
+        return 'targetDamage must be between 0 and 1';
+      }
       return null;
     case 'NOTIFICATION': // TODO T-21
       if (typeof ins.text !== 'string' || !ins.text) return 'text is required';
       if (ins.level !== undefined && !['INFO', 'OK', 'CRITICAL'].includes(ins.level)) return `unknown level ${ins.level}`;
       if (ins.expiresAtGameTime !== undefined && !num(ins.expiresAtGameTime)) return 'expiresAtGameTime must be a number';
+      return null;
+    case 'EMPLOYEE_ROSTER': { // Roadmap V2 R2-A0
+      if (!Array.isArray(ins.employees)) return 'employees must be an array';
+      for (const [i, e] of ins.employees.entries()) {
+        if (!e || !num(e.employeeId)) return `employees[${i + 1}].employeeId must be a number`;
+        if (typeof e.name !== 'string' || !e.name || typeof e.role !== 'string' || !e.role) {
+          return `employees[${i + 1}]: name and role are required`;
+        }
+        if (!['ACTIVE', 'ON_LEAVE', 'STRIKE'].includes(e.status)) return `employees[${i + 1}]: unknown status ${e.status}`;
+      }
+      if (!['EMPLOYEES', 'VANILLA'].includes(ins.helperWageMode)) return `unknown helperWageMode ${ins.helperWageMode}`;
+      if (typeof ins.strictHelperLimit !== 'boolean') return 'strictHelperLimit must be a boolean';
+      return null;
+    }
+    case 'PROMPT': // Roadmap V2 R2-F2
+      if (typeof ins.promptId !== 'string' || !ins.promptId) return 'promptId is required';
+      if (typeof ins.title !== 'string' || !ins.title || typeof ins.text !== 'string' || !ins.text) {
+        return 'title and text are required';
+      }
+      for (const f of ['yesLabel', 'noLabel']) {
+        if (ins[f] !== undefined && (typeof ins[f] !== 'string' || !ins[f])) return `${f} must be a non-empty string`;
+      }
+      if (!num(ins.expiresGameTime)) return 'expiresGameTime must be a number';
       return null;
     default:
       return `unknown type ${ins.type}`;
@@ -97,6 +128,7 @@ export class BridgeSimulator {
       marketContext: join(dir, 'export', 'market_context.json'),
       instructions: join(dir, 'import', 'instructions.json'),
       ack: join(dir, 'import', 'instructions_ack.json'),
+      playerResponses: join(dir, 'export', 'player_responses.json'), // Roadmap V2 R2-F1
       savegame: join(dir, 'simulator_savegame.json'),
     };
     this.log = log;
@@ -116,7 +148,10 @@ export class BridgeSimulator {
     this.farmlands = MAP.farmlands.map((f) => ({ ...f, ownerFarmId: preset.ownedFarmlands.includes(f.farmlandId) ? 1 : 0 }));
     this.detectedMods = [...(preset.detectedMods ?? [])];
     // FS25 calendar (TODO T-08): period index counted from monotonic day 0 = period 1 (March) of year 1
-    this.calendar = { daysPerPeriod, anchorDay: 0, anchorIndex: 0 };
+    // Roadmap V2: a scenario may start in another period (startPeriod = period on the first simulated day)
+    this.calendar = preset.startPeriod
+      ? { daysPerPeriod, anchorDay: Math.floor(this.gameTime / MS_PER_GAME_DAY), anchorIndex: preset.startPeriod - 1 }
+      : { daysPerPeriod, anchorDay: 0, anchorIndex: 0 };
     this.priceWalk = {};
     this.priceTrend = {};
     for (const sp of MAP.sellPoints) for (const ft of sp.acceptedFillTypes) this.priceWalk[`${sp.id}|${ft}`] = 1;
@@ -126,6 +161,18 @@ export class BridgeSimulator {
     this.moneyLog = [];
     this.notifications = []; // TODO T-21: in-game notifications shown to the "player"
     this.missions = MISSIONS.map((m) => ({ ...m })); // TODO T-22: vanilla contracts
+    // Roadmap V2 (R2-Q2): optional farm_facts blocks - null = not exported (like a mod without the block)
+    this.journal = preset.journal ?? null;
+    this.finances = preset.journal ? { periods: [] } : null;
+    this.workforce = preset.workforce ? structuredClone(preset.workforce) : null;
+    this.husbandries = preset.husbandries ? structuredClone(preset.husbandries) : null;
+    this.fields = preset.fields ? structuredClone(preset.fields) : null;
+    this.weather = preset.weather ? { ...preset.weather } : null;
+    this.fieldRules = preset.fieldRules ? { ...preset.fieldRules } : null;
+    this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
+    this.prompts = []; // R2-F2: yes/no questions shown to the "player" (waiting for an answer)
+    this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
+    this.handledPrompts = {}; // R2-F1: answered / withdrawn questions (promptId -> expiresGameTime)
     this.lastMarketContextJson = null;
     this.loadSavegame();
     this.savedGame = this.gameState();
@@ -137,7 +184,14 @@ export class BridgeSimulator {
     return structuredClone({ gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, processed: this.processed, priceEvents: this.priceEvents,
-      contractReports: this.contractReports, calendar: this.calendar });
+      contractReports: this.contractReports, calendar: this.calendar, ...this.roadmapV2State() });
+  }
+
+  /** Roadmap V2 state the mod keeps in its savegame XML (journal R2-B1, worked time R2-A4, roster R2-A0). */
+  roadmapV2State() {
+    return { finances: this.finances, workforce: this.workforce, husbandries: this.husbandries, fields: this.fields,
+      weather: this.weather, roster: this.roster, prompts: this.prompts, responses: this.responses,
+      handledPrompts: this.handledPrompts };
   }
 
   // --------------------------------------------------------------- FS25 calendar (TODO T-08)
@@ -190,7 +244,8 @@ export class BridgeSimulator {
       Object.assign(this, { processed: s.processed ?? {}, priceEvents: s.priceEvents ?? [],
         contractReports: s.contractReports ?? [] });
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
-        'storage', 'farmlands', 'calendar']) {
+        'storage', 'farmlands', 'calendar', 'finances', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
+        'prompts', 'responses', 'handledPrompts']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -202,7 +257,7 @@ export class BridgeSimulator {
     const s = { savegameId: this.savegameId, processed: this.processed, priceEvents: this.priceEvents,
       contractReports: this.contractReports, gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
-      storage: this.storage, farmlands: this.farmlands, calendar: this.calendar };
+      storage: this.storage, farmlands: this.farmlands, calendar: this.calendar, ...this.roadmapV2State() };
     this.writeJson(this.paths.savegame, s);
   }
 
@@ -247,7 +302,9 @@ export class BridgeSimulator {
     if (contract) contract.deliveredQuantity += Math.min(liters, contract.maxQuantity - contract.deliveredQuantity);
     const stock = this.storage[fillType];
     if (stock) stock.amount = Math.max(0, stock.amount - liters);
-    this.balance += Math.round((price * liters) / 1000);
+    const revenue = Math.round((price * liters) / 1000);
+    this.balance += revenue;
+    if (this.journal) this.book(this.journal.income, revenue);
     return price;
   }
 
@@ -257,7 +314,19 @@ export class BridgeSimulator {
     const hours = ms / MS_PER_GAME_HOUR;
     this.gameTime += ms;
     const days = hours / 24;
-    this.balance += Math.round((this.drift.income - this.drift.expense) * days + (this.random() - 0.5) * this.drift.income * days);
+    const income = this.drift.income * days + (this.random() - 0.5) * this.drift.income * days;
+    const expense = this.drift.expense * days;
+    this.balance += Math.round(income - expense);
+    if (this.journal) {
+      this.book(this.journal.income, income);
+      this.book(this.journal.expense, -expense);
+    }
+    // R2-A4: game time of every helper job that an employee drives counts as his working time
+    for (const job of this.workforce?.activeJobs ?? []) {
+      if (job.employeeId === undefined) continue;
+      const key = String(job.employeeId);
+      this.workforce.workedGameMs[key] = (this.workforce.workedGameMs[key] ?? 0) + ms;
+    }
     for (const k of Object.keys(this.priceWalk)) {
       const step = (this.random() - 0.5) * 0.02 * Math.min(hours, 48) / 24;
       const before = this.priceWalk[k];
@@ -286,6 +355,170 @@ export class BridgeSimulator {
       }
     }
     this.priceEvents = keep;
+  }
+
+  // --------------------------------------------------------------- Roadmap V2 blocks (R2-Q2)
+  /** R2-B1: cumulative sum per FS25 period and money type; only the last FINANCE_JOURNAL_PERIODS periods are kept. */
+  book(moneyType, amount) {
+    if (!this.finances || !moneyType || !amount) return;
+    const { year, period } = this.buildCalendar();
+    let entry = this.finances.periods.find((p) => p.year === year && p.period === period);
+    if (!entry) {
+      entry = { year, period, byType: {} };
+      this.finances.periods.push(entry);
+      this.finances.periods.sort((a, b) => a.year - b.year || a.period - b.period);
+      this.finances.periods = this.finances.periods.slice(-FINANCE_JOURNAL_PERIODS);
+    }
+    entry.byType[moneyType] = (entry.byType[moneyType] ?? 0) + amount;
+  }
+
+  /** Adds the optional blocks the scenario has; the others stay absent. */
+  roadmapV2Blocks() {
+    const blocks = {};
+    if (this.finances) {
+      blocks.finances = { periods: this.finances.periods.map((p) => ({ year: p.year, period: p.period,
+        byType: Object.fromEntries(Object.entries(p.byType).map(([k, v]) => [k, Math.round(v)])) })) };
+    }
+    if (this.workforce) {
+      blocks.workforce = { activeJobs: this.workforce.activeJobs.map((j) => ({ ...j })).sort((a, b) => a.jobId - b.jobId),
+        workedGameMs: Object.fromEntries(Object.entries(this.workforce.workedGameMs).map(([k, v]) => [k, Math.round(v)])) };
+    }
+    if (this.husbandries) {
+      blocks.husbandries = this.husbandries.map((h) => structuredClone(h))
+        .sort((a, b) => a.husbandryUniqueId.localeCompare(b.husbandryUniqueId));
+    }
+    if (this.fields) {
+      // R2-C1: only fields on farmlands the player owns
+      const owned = new Map(this.farmlands.filter((f) => f.ownerFarmId === 1).map((f) => [f.farmlandId, f]));
+      blocks.fields = this.fields.filter((f) => owned.has(f.farmlandId))
+        .map((f) => ({ name: String(f.farmlandId), hectares: owned.get(f.farmlandId).hectares, ...f }))
+        .sort((a, b) => a.farmlandId - b.farmlandId);
+    }
+    if (this.fieldRules) blocks.fieldRules = { ...this.fieldRules };
+    if (this.weather) blocks.weather = { ...this.weather };
+    return blocks;
+  }
+
+  /**
+   * Control API: a booking of the game (R2-B1), e.g. a vehicle purchase or leasing costs. It changes the balance and
+   * lands in the journal under its FS25 money type, like Farm:changeBalance in the mod.
+   */
+  bookGame(moneyType, amount) {
+    if (typeof moneyType !== 'string' || !moneyType || typeof amount !== 'number' || !Number.isFinite(amount)) {
+      throw new Error('moneyType (string) and amount (number) are required');
+    }
+    this.balance += amount;
+    this.book(moneyType, amount);
+    return { balance: this.balance, finances: this.roadmapV2Blocks().finances ?? null };
+  }
+
+  /**
+   * Control API (Roadmap V2 R2-D1): the player takes (change > 0) or repays (change < 0) the vanilla loan in the finance
+   * menu of the game; the balance moves by the same amount, a repayment never goes below 0.
+   */
+  changeVanillaLoan(change) {
+    if (typeof change !== 'number' || !Number.isFinite(change)) throw new Error('change (number) is required');
+    const applied = Math.max(-this.vanillaLoan, change);
+    this.vanillaLoan += applied;
+    this.balance += applied;
+    return { vanillaLoan: this.vanillaLoan, balance: this.balance };
+  }
+
+  /**
+   * Control API (Roadmap V2 R2-D2): the player buys (toPlayer) or sells a farmland in the field menu of the game at its
+   * price. A purchase is booked as SHOP_PROPERTY_BUY (the money type the FS25 code uses for property purchases).
+   */
+  vanillaFarmland(farmlandId, toPlayer) {
+    const f = this.farmlands.find((x) => x.farmlandId === farmlandId);
+    if (!f) throw new Error(`unknown farmland ${farmlandId}`);
+    if ((f.ownerFarmId === 1) === Boolean(toPlayer)) throw new Error(`farmland ${farmlandId} already has that owner`);
+    f.ownerFarmId = toPlayer ? 1 : 0;
+    const amount = toPlayer ? -f.price : f.price;
+    this.balance += amount;
+    if (toPlayer) this.book('SHOP_PROPERTY_BUY', amount);
+    return { farmlandId, ownerFarmId: f.ownerFarmId, balance: this.balance };
+  }
+
+  /** Control API: the player changes the soil settings of the savegame (R2-C). */
+  setFieldRules(patch) {
+    if (!this.fieldRules) throw new Error(`scenario ${this.scenario} exports no fieldRules`);
+    Object.assign(this.fieldRules, patch);
+    return this.fieldRules;
+  }
+
+  /** Control API: the weather changes in the game (R2-C2). */
+  setWeather(patch) {
+    if (!this.weather) throw new Error(`scenario ${this.scenario} exports no weather`);
+    Object.assign(this.weather, patch);
+    return this.weather;
+  }
+
+  /** Control API: values of a husbandry change (R2-A7). */
+  setHusbandry(patch) {
+    const h = this.husbandries?.find((x) => x.husbandryUniqueId === patch.husbandryUniqueId);
+    if (!h) throw new Error(`unknown husbandry ${patch.husbandryUniqueId}`);
+    Object.assign(h, patch);
+    return h;
+  }
+
+  /** Control API: the state of a field changes (R2-C1). */
+  setField(patch) {
+    const f = this.fields?.find((x) => x.farmlandId === patch.farmlandId);
+    if (!f) throw new Error(`unknown field on farmland ${patch.farmlandId}`);
+    Object.assign(f, patch);
+    return f;
+  }
+
+  /**
+   * Control API: helpers are started / stopped in the game (R2-A4); worked time already counted stays. Like the mod, a
+   * job without employee gets the first free ACTIVE machine operator of the last roster (R2-A2).
+   */
+  setActiveJobs(activeJobs) {
+    if (!this.workforce) throw new Error(`scenario ${this.scenario} exports no workforce`);
+    this.workforce.activeJobs = activeJobs.map((j) => ({ ...j }));
+    this.assignFreeOperators();
+    for (const j of this.workforce.activeJobs) {
+      if (j.employeeId !== undefined) this.workforce.workedGameMs[String(j.employeeId)] ??= 0;
+    }
+    return this.workforce;
+  }
+
+  /**
+   * R2-A0 / R2-A2 / R2-A5 like the mod: helpers of striking employees are stopped, helpers of employees no longer ACTIVE
+   * (dismissed, on leave) keep working as vanilla helpers, free jobs get the first free ACTIVE machine operator in list
+   * order.
+   */
+  applyRosterToJobs() {
+    if (!this.workforce) return;
+    const byId = new Map(this.roster.employees.map((e) => [e.employeeId, e]));
+    const kept = [];
+    for (const j of this.workforce.activeJobs) {
+      const e = j.employeeId === undefined ? undefined : byId.get(j.employeeId);
+      if (e?.status === 'STRIKE') {
+        this.log(`helper job ${j.jobId} stopped: ${e.name} is on strike`);
+        continue;
+      }
+      if (j.employeeId !== undefined && e?.status !== 'ACTIVE') delete j.employeeId;
+      kept.push(j);
+    }
+    this.workforce.activeJobs = kept;
+    this.assignFreeOperators();
+    for (const j of kept) {
+      if (j.employeeId !== undefined) this.workforce.workedGameMs[String(j.employeeId)] ??= 0;
+    }
+  }
+
+  assignFreeOperators() {
+    if (!this.roster || !this.workforce) return;
+    const busy = new Set(this.workforce.activeJobs.map((j) => j.employeeId).filter((id) => id !== undefined));
+    for (const j of this.workforce.activeJobs) {
+      if (j.employeeId !== undefined) continue;
+      const free = this.roster.employees.find((e) => e.role === 'MACHINE_OPERATOR' && e.status === 'ACTIVE'
+        && !busy.has(e.employeeId));
+      if (!free) return;
+      j.employeeId = free.employeeId;
+      busy.add(free.employeeId);
+    }
   }
 
   // --------------------------------------------------------------- exports
@@ -322,6 +555,7 @@ export class BridgeSimulator {
       prices,
       calendar: this.buildCalendar(),
       missions: this.missions.map((m) => ({ ...m })).sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)),
+      ...this.roadmapV2Blocks(),
     };
   }
 
@@ -332,7 +566,10 @@ export class BridgeSimulator {
     m.status = status;
     if (status === 'FINISHED') {
       m.success = success !== false;
-      if (m.success) this.balance += m.reward;
+      if (m.success) {
+        this.balance += m.reward;
+        this.book('MISSIONS', m.reward);
+      }
     } else {
       delete m.success;
     }
@@ -379,6 +616,8 @@ export class BridgeSimulator {
       case 'MONEY_TRANSACTION':
         this.balance += ins.amount;
         this.moneyLog.push({ id: ins.instructionId, amount: ins.amount, reason: ins.reason, note: ins.note });
+        // R2-B1: bookings of the tool are marked RPSIM_<REASON> instead of an FS25 money type
+        this.book(`RPSIM_${ins.reason}`, ins.amount);
         return null;
       case 'FARMLAND_TRANSFER': {
         const f = this.farmlands.find((x) => x.farmlandId === ins.farmlandId);
@@ -403,7 +642,8 @@ export class BridgeSimulator {
         // like the mod: Wearable:setDamageAmount(0, true) on an own vehicle
         const v = this.vehicles.find((x) => x.uniqueId === ins.vehicleId);
         if (!v) return 'VEHICLE_NOT_FOUND';
-        v.damage = 0;
+        // R2-A6: partial repair down to targetDamage; a repair never raises the damage
+        v.damage = Math.min(v.damage, ins.targetDamage ?? 0);
         return null;
       }
       case 'NOTIFICATION':
@@ -414,6 +654,25 @@ export class BridgeSimulator {
         }
         this.notifications.push({ id: ins.instructionId, text: ins.text, level: ins.level ?? 'INFO', gameTime: this.gameTime });
         this.log(`in-game notification: ${ins.text}`);
+        return null;
+      case 'EMPLOYEE_ROSTER': // R2-A0: the list is replaced completely (idempotent)
+        this.roster = { employees: ins.employees.map((e) => ({ ...e })), helperWageMode: ins.helperWageMode,
+          strictHelperLimit: ins.strictHelperLimit };
+        this.applyRosterToJobs();
+        return null;
+      case 'PROMPT': // R2-F2: expired prompts are dropped without being shown
+        if (this.gameTime > ins.expiresGameTime) {
+          this.applyNote = 'EXPIRED';
+          return null;
+        }
+        // like the mod: a question already queued, answered or withdrawn is not queued again (e.g. resent after a rewind)
+        if (this.handledPrompts[ins.promptId] !== undefined || this.prompts.some((p) => p.promptId === ins.promptId)) {
+          this.applyNote = 'DUPLICATE';
+          return null;
+        }
+        this.prompts.push({ id: ins.instructionId, promptId: ins.promptId, title: ins.title, text: ins.text,
+          yesLabel: ins.yesLabel, noLabel: ins.noLabel, expiresGameTime: ins.expiresGameTime, gameTime: this.gameTime });
+        this.log(`in-game prompt: ${ins.title} - ${ins.text}`);
         return null;
       default:
         return 'unsupported type';
@@ -495,6 +754,7 @@ export class BridgeSimulator {
           }
         }
         if (res.marketContextDirty) this.exportMarketContext();
+        if (this.applyResponseDocument(doc)) this.writeResponses();
       }
     }
     this.collectEnded();
@@ -528,6 +788,51 @@ export class BridgeSimulator {
     this.writeJson(this.paths.ack, doc);
   }
 
+  // --------------------------------------------------------------- Roadmap V2 R2-F: questions in the game
+  /** instructions.json: processed answers (ackedResponses) and questions decided in the browser (withdrawnPrompts). */
+  applyResponseDocument(doc) {
+    const acked = new Set(Array.isArray(doc.ackedResponses) ? doc.ackedResponses : []);
+    const before = this.responses.length;
+    this.responses = this.responses.filter((r) => !acked.has(r.responseId));
+    for (const id of Array.isArray(doc.withdrawnPrompts) ? doc.withdrawnPrompts : []) {
+      const p = this.prompts.find((x) => x.promptId === id);
+      if (p) {
+        this.prompts = this.prompts.filter((x) => x !== p);
+        this.handledPrompts[id] = p.expiresGameTime;
+        this.log(`in-game question withdrawn: ${p.title}`);
+      }
+    }
+    return this.responses.length !== before;
+  }
+
+  /** The "player" answers a question in the game dialog; the file is written at once (like the mod). */
+  answer(promptId, answer) {
+    if (answer !== 'YES' && answer !== 'NO') throw new Error('answer must be YES or NO');
+    const p = this.prompts.find((x) => x.promptId === promptId);
+    if (!p) throw new Error(`no open question ${promptId}`);
+    this.prompts = this.prompts.filter((x) => x !== p);
+    this.handledPrompts[promptId] = p.expiresGameTime;
+    const r = { responseId: `rsp_${promptId}`, promptId, answer, gameTime: this.gameTime };
+    this.responses.push(r);
+    this.writeResponses();
+    this.saveSavegame();
+    this.log(`in-game answer ${answer}: ${p.title}`);
+    return r;
+  }
+
+  /** Questions still waiting (expired ones are dropped like in the mod). */
+  openPrompts() {
+    this.prompts = this.prompts.filter((p) => this.gameTime <= p.expiresGameTime);
+    return this.prompts;
+  }
+
+  writeResponses() {
+    const doc = { savegameId: this.savegameId, responses: this.responses };
+    const err = validate('playerResponses', doc);
+    if (err) throw new Error(`player_responses.json does not match schema: ${err}`);
+    this.writeJson(this.paths.playerResponses, doc);
+  }
+
   // --------------------------------------------------------------- lifecycle
   /** Equivalent of the mod's loadMap: bootstrap + immediate fresh export. */
   start() {
@@ -535,6 +840,7 @@ export class BridgeSimulator {
     this.exportMarketContext();
     this.exportFarmFacts();
     this.writeAck();
+    this.writeResponses(); // R2-F1: the file follows the loaded savegame
   }
 
   /** One simulator cycle: advance game time, apply instructions, export facts. */
@@ -547,7 +853,8 @@ export class BridgeSimulator {
   }
 
   reset() {
-    for (const p of [this.paths.savegame, this.paths.farmFacts, this.paths.marketContext, this.paths.ack]) {
+    for (const p of [this.paths.savegame, this.paths.farmFacts, this.paths.marketContext, this.paths.ack,
+      this.paths.playerResponses]) {
       rmSync(p, { force: true });
     }
   }

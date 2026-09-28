@@ -111,12 +111,49 @@ market context), hiring + resignation escalation over 32 game days, village rota
 notice), `leasing-hof` (leased vehicles arrive as `liabilities.leasing`, not as assets) and `konflikt-mods`
 (`detectedMods` in the header context). "Reload without saving" is covered by `RewindIntegrationTest` (backend)
 and by the simulator's own tests (`POST /save`, `POST /reload-without-saving`).
+Roadmap V2 (R2-Q2): the same test checks that the optional blocks of `helfer-hof` (`workforce`), `tierhof-krank`
+(`husbandries`) and `ernte-herbst` (`fields`, `weather`) reach `FactsService`, and that a scenario without them
+(`wohlhabender-hof`) leaves every block `null` ("not present"). `BridgeValidatorTest` covers missing vs. empty vs.
+invalid blocks.
+Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
+(journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
+month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,
+the frontend the card in `finance-card.spec.ts`.
+Roadmap V2 R2-A: `WorkforceServiceTest` (roster order and resend after a rewind, workload from the hours per game
+day and from animals per keeper, effect scaling, strike start and end), `MechanicServiceTest` (repair plan, no double
+repair after the maintenance contract, no repair on strike), `LivestockStablesTest` (vet emergency with cooldown,
+keeper warning, productivity in the breeding advice); the mod covers roster, assignment, wage, limit and worked
+time in `test_workforce.lua`, the simulator the roster-driven job assignment and strike stop in `instructions.test.js`,
+the frontend the helper settings and the staff hints in `settings.spec.ts` / `employees.spec.ts`.
+Roadmap V2 R2-C: `FieldServiceTest` (growth phase, records, crop history, year end, rain hours),
+`FieldDamagesAndCreditTest` (hail and wild boars only on standing crops, damage from yield and price, rain factor,
+standing crops in the credit check) and `FieldReactionServiceTest` (neighbor, gossip, hints, monthly cap); the mod
+covers the field / weather collection in `test_game_adapter.lua` and the normalisation in `test_farm_facts.lua`, the
+frontend crop and phase in `farmland.spec.ts` and the hint switch in `settings.spec.ts`.
+Roadmap V2 R2-D: `VanillaBypassServiceTest` (vanilla loan taken / repaid, surcharge, reload, switch, field bought over
+the owner's head with compensation paid / expired, hint about helpers without employee) and
+`NegotiationEngineTest.vanillaPurchaseOfAFreeFieldAndASaleAreFollowedUp`; the frontend covers the claim in
+`contracts.spec.ts` and the switch in `settings.spec.ts`, the simulator the game menus in `export.test.js`.
+Roadmap V2 R2-E: `TaxServiceTest` (traceable calculation, assessment and prepayments, pay by button with late fees,
+reminder and threat, advisor, harsh mode, audit, no journal), `AuthorityServiceTest` (rotation notice and cut,
+cultivation duty, animal welfare requirement and fine, monthly cap), `FamilyServiceTest` (family switches, retirement,
+occasions, family field sold), `ClubServiceTest` (festival invitation, ignore / decline, sponsoring tiers) and the
+festival calendar in `VillageLifeServiceTest`; `ApiIntegrationTest` covers `/api/tax`, the family field, sponsoring
+and the family in the onboarding (reroll keeps role and name). The frontend covers the tax card in
+`tax-card.spec.ts`, the new cases in `contracts.spec.ts`, the family field in `farmland.spec.ts` and the family
+switches in `onboarding-wizard.spec.ts`.
+Roadmap V2 R2-F: `PromptServiceTest` (questions asked once, the game's buttons explained, same service methods for the
+answers, withdrawal, settings, lease renewal, refused action, bank counter offer, resend after a rewind, older mod,
+master switch) and `BridgeSyncIntegrationTest.anIncomingCallIsAcceptedInTheGame` (question out, answer from
+`player_responses.json`, acknowledgement out); the mod covers queue, dialog, answers, acknowledgements, withdrawal,
+vehicle rule, key and savegame in `test_prompts.lua` and the adapter in `test_game_adapter.lua`, the frontend the
+settings card in `settings.spec.ts`, the simulator the answer file in `instructions.test.js`.
 
 ## Continuous integration (AP-11.1)
 
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
-| `.github/workflows/backend.yml` | push to `main` / PR touching `backend/`, the simulator or the config reference | `mvn -B verify` (incl. the backend E2E vs. the simulator, JaCoCo artifact) |
+| `.github/workflows/backend.yml` | push to `main` / PR touching `backend/`, the simulator or the config reference | simulator `npm test` (every scenario and instruction against the JSON schemas), `mvn -B verify` (incl. the backend E2E vs. the simulator, JaCoCo artifact) |
 | `.github/workflows/frontend.yml` | push / PR touching `frontend/` | `npm ci`, `npm run lint`, `npm run build`, `npm test -- --watch=false` |
 | `.github/workflows/mod-lint.yml` | push / PR touching `mod/` | `luacheck .` and the luaunit suite with Lua 5.1 |
 | `.github/workflows/e2e.yml` | every push to `main`, PRs touching backend/frontend/simulator, manual | builds the jar, installs Chromium, `npm run e2e`; uploads the Playwright report on failure |

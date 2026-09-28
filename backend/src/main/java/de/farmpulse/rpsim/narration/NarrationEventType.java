@@ -20,6 +20,48 @@ public enum NarrationEventType {
     CREDIT_DEFERRAL_GRANTED,
     CREDIT_DEFERRAL_DENIED,
     CREDIT_PAID_OFF,
+    // Roadmap V2 R2-B5: real farm finances
+    BANK_CASHFLOW_WARNING,
+    COOPERATIVE_RECORD_HARVEST,
+    // Roadmap V2 R2-A: employees as FS25 helpers
+    EMPLOYEE_STRIKE,
+    EMPLOYEE_STRIKE_ENDED,
+    MECHANIC_REPORT,
+    ANIMAL_KEEPER_WARNING,
+    VET_EMERGENCY,
+    // Roadmap V2 R2-C: fields, crops and weather
+    FIELD_NEIGHBOR_COMPLAINT,
+    FIELD_GOSSIP,
+    FIELD_HARVEST_CONGRATULATION,
+    FIELD_WORK_HINT,
+    // Roadmap V2 R2-D: the vanilla loan and the field menu become part of the story
+    VANILLA_LOAN_TAKEN,
+    VANILLA_LOAN_REPAID,
+    FIELD_BOUGHT_OVER_HEAD,
+    COMPENSATION_SETTLED,
+    COMPENSATION_DISPUTE,
+    OUTSIDE_HELPERS_HINT,
+    // Roadmap V2 R2-E1: tax office and tax advisor
+    TAX_PREPAYMENT,
+    TAX_ASSESSMENT,
+    TAX_REMINDER,
+    TAX_ENFORCEMENT,
+    TAX_AUDIT_ANNOUNCED,
+    TAX_AUDIT_RESULT,
+    TAX_ADVISOR_OFFER,
+    TAX_ADVISOR_REMINDER,
+    // Roadmap V2 R2-E2: authority
+    AUTHORITY_ROTATION_NOTICE,
+    AUTHORITY_SUBSIDY,
+    AUTHORITY_INSPECTION_NOTICE,
+    AUTHORITY_INSPECTION_RESULT,
+    // Roadmap V2 R2-E3: family
+    FAMILY_OCCASION,
+    FAMILY_FIELD_SOLD,
+    FAMILY_HARVEST_HELP,
+    // Roadmap V2 R2-E4: clubs and festivals
+    SPONSORING_REQUEST,
+    SPONSORING_THANKS,
     // market
     MARKET_PRICE_EVENT,
     MARKET_SPECIAL_OFFER,

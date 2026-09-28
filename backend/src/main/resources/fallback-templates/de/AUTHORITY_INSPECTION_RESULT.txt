@@ -1,0 +1,7 @@
+Ergebnis der Kontrolle
+Guten Tag,
+
+Ergebnis der Kontrolle ({{rule}}: {{subject}}): {{result}}. Bußgeld: {{fine}} €.
+
+Mit freundlichen Grüßen
+{{characterName}}

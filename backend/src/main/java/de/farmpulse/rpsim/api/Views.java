@@ -73,12 +73,57 @@ public final class Views {
                             double satisfaction, double effectiveSkill) {
     }
 
+    /**
+     * Roadmap V2 R2-A: onStrike (A5); hoursThisMonth / hoursLastMonth = hours driven as FS25 helper (A4), null when the mod
+     * reports no worked time or the employee is no machine operator.
+     */
     public record EmployeeView(Long id, CharacterRef character, String jobRole, int skill, long monthlySalary, String status,
-                               NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime) {
+                               NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
+                               boolean onStrike, Double hoursThisMonth, Double hoursLastMonth) {
     }
 
+    /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */
+    public record HelperSettingsView(String helperWageMode, boolean strictHelperLimit, boolean workforceTracked) {
+    }
+
+    /** Roadmap V2 R2-C: fruitType and phase (EMPTY, GROWING, HARVESTABLE, HARVESTED, WITHERED) of own fields only. */
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,
-                               boolean inNegotiation, boolean tradeable, boolean leased) {
+                               boolean inNegotiation, boolean tradeable, boolean leased, String fruitType, String phase,
+                               boolean familyField) {
+    }
+
+    /**
+     * Roadmap V2 R2-D: reactions to the vanilla loan and the game's field menu; interestSurchargePercent &gt; 0 while
+     * new credits cost more after repeated vanilla loans.
+     */
+    public record BypassSettingsView(boolean reactionsEnabled, double interestSurchargePercent) {
+    }
+
+    /**
+     * Roadmap V2 R2-E1: tax overview - estimate of the running FS25 year from the journal (complete months, without
+     * depreciation and interest), next prepayment and the last assessment with its calculation.
+     */
+    public record TaxOverviewView(Integer currentYear, long incomeSoFar, long expenseSoFar, long estimatedTax,
+                                  double ratePercent, long allowance, Long nextPrepayment, Integer nextPrepaymentPeriod,
+                                  TaxAssessmentView lastAssessment, boolean advisorActive, boolean journalAvailable,
+                                  int openBills) {
+    }
+
+    public record TaxAssessmentView(int taxYear, int months, long operatingIncome, long operatingExpense,
+                                    long depreciation, long interest, long profit, long allowance, long taxable,
+                                    double ratePercent, long advisorReduction, long tax, long prepayments, long balance,
+                                    String auditStatus) {
+    }
+
+    /**
+     * Roadmap V2 R2-F2: occasions asked in the game; available = the backend asks at all (rpsim.bridge.ingame-prompts),
+     * kinds = the ones switched on for this savegame, allKinds in display order.
+     */
+    public record PromptSettingsView(boolean available, List<String> kinds, List<String> allKinds) {
+    }
+
+    /** Roadmap V2 R2-C6: field work hints of the cooperative; fieldsTracked = the mod reports the fields. */
+    public record FieldSettingsView(boolean fieldHintsEnabled, boolean fieldsTracked) {
     }
 
     public record OfferView(int round, String offeredBy, String characterName, long amount, String result, Long counterAmount,
@@ -163,10 +208,27 @@ public final class Views {
     public record CaseView(Long id, String kind, String status, CharacterRef character, Integer farmlandId, Double hectares,
                            Long damageAmount, Long payoutAmount, Long costAmount, Long offerAmount, int roundsUsed,
                            boolean measureAgreed, String reference, long gameTime, Long deadlineGameTime, String resolution,
-                           Long measureCost, Integer quantity, String direction, Integer baselineCount, String title) {
+                           Long measureCost, Integer quantity, String direction, Integer baselineCount, String title,
+                           List<Long> tiers) {
     }
 
     /** Insurance tariff preview for the current farm. */
     public record InsuranceQuoteView(String level, long monthlyPremium, int coveragePercent, long deductible) {
+    }
+
+    /**
+     * Roadmap V2 R2-B4: farm bookkeeping from the booking journal. {@code available} is false when the mod exports no
+     * journal (older mod); months are oldest first, amounts signed (expenses negative), rounded to whole euros.
+     */
+    public record FinanceOverview(boolean available, List<FinanceMonthView> months) {
+    }
+
+    public record FinanceMonthView(int year, int period, boolean complete, long operatingIncome, long operatingExpenses,
+                                   long operatingResult, long investment, long divestment, long financing, long ignored,
+                                   List<FinanceLineView> lines) {
+    }
+
+    /** financeClass: OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING or IGNORE. */
+    public record FinanceLineView(String category, long amount, String financeClass) {
     }
 }

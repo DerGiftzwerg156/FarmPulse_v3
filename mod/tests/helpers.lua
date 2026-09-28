@@ -7,9 +7,9 @@ function helpers.loadModules()
     for _, f in ipairs({
         "util/Json.lua", "util/Log.lua", "util/FileIO.lua",
         "bridge/Config.lua", "bridge/BridgePaths.lua",
-        "export/Storage.lua", "export/FarmFacts.lua", "export/MarketContext.lua",
+        "export/Storage.lua", "export/FarmFacts.lua", "export/MarketContext.lua", "export/FinanceJournal.lua",
         "import/Instructions.lua", "import/PriceEventMath.lua", "import/PriceEvents.lua",
-        "import/Processor.lua", "import/Persistence.lua",
+        "game/Workforce.lua", "game/Prompts.lua", "import/Processor.lua", "import/Persistence.lua",
         "bridge/Bridge.lua",
     }) do
         local fh = io.open(SRC .. f, "r")
@@ -112,6 +112,8 @@ function helpers.fakeAdapter(overrides)
     }
     for k, v in pairs(overrides or {}) do a[k] = v end
     function a:getGameTime() return self.gameTime end
+    function a:getFarmId() return 1 end
+    function a:currentPeriod() return self.year or 2, self.period or 8 end
     function a:collectFarmFacts()
         if self.failFacts then error("engine exploded") end
         return {
@@ -127,6 +129,12 @@ function helpers.fakeAdapter(overrides)
             prices = { { sellPoint = "MillNorth", fillType = "WHEAT", pricePerLiter = 0.215 } },
         }
     end
+    a.fieldSamples = 0
+    function a:collectFields()
+        self.fieldSamples = self.fieldSamples + 1
+        return self.fields
+    end
+    function a:collectFieldRules() return self.fieldRules end
     function a:collectMarketContext()
         return { mapName = "Erlengrund",
             sellPoints = { { id = "MillNorth", name = "Mühle Nord", acceptedFillTypes = { "WHEAT", "BARLEY" } } },

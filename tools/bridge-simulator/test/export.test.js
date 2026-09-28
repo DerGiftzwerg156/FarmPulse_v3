@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { BridgeSimulator, MS_PER_GAME_DAY } from '../src/simulator.js';
+import { BridgeSimulator, MS_PER_GAME_DAY, MS_PER_GAME_HOUR } from '../src/simulator.js';
 import { SCENARIOS } from '../src/scenarios.js';
 import { validate } from '../src/validate.js';
 
@@ -109,4 +109,131 @@ test('vanilla contracts are exported and follow the player (TODO T-22)', () => {
   assert.equal(m.success, true);
   assert.equal(sim.balance, before + 5200);
   assert.equal(validate('farmFacts', sim.buildFarmFacts()), null);
+});
+
+// ------------------------------------------------------------------ Roadmap V2 (R2-Q2)
+const V2_BLOCKS = ['finances', 'workforce', 'husbandries', 'fields', 'fieldRules', 'weather'];
+const V2_SCENARIOS = { 'helfer-hof': ['finances', 'workforce', 'weather'],
+  'tierhof-krank': ['finances', 'husbandries', 'weather'], 'ernte-herbst': ['finances', 'fields', 'fieldRules', 'weather'] };
+
+test('Roadmap V2: the new scenarios export their blocks, all others leave them out (older mod)', () => {
+  for (const scenario of Object.keys(SCENARIOS)) {
+    const facts = new BridgeSimulator({ dir: tmp(), scenario }).buildFarmFacts();
+    const expected = V2_SCENARIOS[scenario] ?? [];
+    assert.deepEqual(V2_BLOCKS.filter((b) => b in facts), expected, scenario);
+    assert.equal(validate('farmFacts', facts), null, scenario);
+  }
+  const covered = new Set(Object.values(V2_SCENARIOS).flat());
+  assert.deepEqual([...covered].sort(), [...V2_BLOCKS].sort());
+});
+
+test('Roadmap V2: the booking journal sums per FS25 period and money type (R2-B1)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'helfer-hof' });
+  assert.deepEqual(sim.buildFarmFacts().finances, { periods: [] });
+  sim.advance(MS_PER_GAME_DAY); // day 2 = period 3 (May) with one day per period
+  sim.sell('MillNorth', 'WHEAT', 1000);
+  const periods = sim.buildFarmFacts().finances.periods;
+  assert.equal(periods.length, 1);
+  assert.deepEqual(Object.keys(periods[0].byType).sort(), ['AI', 'SOLD_PRODUCTS']);
+  assert.ok(periods[0].byType.SOLD_PRODUCTS > 0);
+  assert.equal(periods[0].byType.AI, -2600);
+  for (let day = 0; day < 20; day++) sim.advance(MS_PER_GAME_DAY);
+  const all = sim.buildFarmFacts().finances.periods;
+  assert.equal(all.length, 13, 'only the last 13 periods are kept');
+  assert.deepEqual(all.at(-1), { year: 2, period: 11, byType: all.at(-1).byType });
+});
+
+test('Roadmap V2: worked game time is counted for helpers driven by an employee only (R2-A4)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'helfer-hof' });
+  sim.advance(3 * MS_PER_GAME_HOUR);
+  let wf = sim.buildFarmFacts().workforce;
+  assert.deepEqual(wf.activeJobs, [{ jobId: 1, employeeId: 1, title: 'Fendt 942 Vario' },
+    { jobId: 2, title: 'CLAAS LEXION 8900' }]);
+  assert.deepEqual(wf.workedGameMs, { 1: 3 * MS_PER_GAME_HOUR, 2: 0 });
+  sim.setActiveJobs([{ jobId: 5, employeeId: 2, title: 'John Deere 8R' }]);
+  sim.advance(MS_PER_GAME_HOUR);
+  wf = sim.buildFarmFacts().workforce;
+  assert.deepEqual(wf.workedGameMs, { 1: 3 * MS_PER_GAME_HOUR, 2: MS_PER_GAME_HOUR });
+});
+
+test('Roadmap V2: husbandries, fields and weather can be changed like in the game (R2-A7, R2-C1, R2-C2)', () => {
+  const stable = new BridgeSimulator({ dir: tmp(), scenario: 'tierhof-krank' });
+  const [cows, pigs] = stable.buildFarmFacts().husbandries;
+  assert.equal(cows.husbandryUniqueId, 'hus_00001');
+  assert.equal(pigs.productivity, undefined, 'no productivity for pigs');
+  stable.setHusbandry({ husbandryUniqueId: 'hus_00001', health: 80 });
+  assert.equal(stable.buildFarmFacts().husbandries[0].health, 80);
+  assert.throws(() => stable.setField({ farmlandId: 2 }), /unknown field/);
+
+  const harvest = new BridgeSimulator({ dir: tmp(), scenario: 'ernte-herbst' });
+  const facts = harvest.buildFarmFacts();
+  assert.equal(facts.calendar.period, 7, 'the scenario starts in September');
+  assert.deepEqual(facts.fields.map((f) => [f.farmlandId, f.name, f.fruitType ?? null]),
+    [[2, '2', 'MAIZE'], [4, '4', 'POTATO'], [6, '6', 'WHEAT'], [7, '7', null]]);
+  assert.equal(facts.fields[0].hectares, harvest.farmlands.find((f) => f.farmlandId === 2).hectares);
+  harvest.setField({ farmlandId: 7, weedState: 0 });
+  harvest.setWeather({ raining: false, rainFallScale: 0 });
+  // a field that leaves the farm is no longer exported
+  harvest.farmlands.find((f) => f.farmlandId === 6).ownerFarmId = 0;
+  const after = harvest.buildFarmFacts();
+  assert.deepEqual(after.fields.map((f) => f.farmlandId), [2, 4, 7]);
+  assert.equal(after.fields[2].weedState, 0);
+  assert.deepEqual(after.weather, { raining: false, rainFallScale: 0, groundWetness: 0.7 });
+  assert.equal(validate('farmFacts', after), null);
+  assert.throws(() => new BridgeSimulator({ dir: tmp(), scenario: 'leerer-hof' }).setWeather({}), /no weather/);
+  // R2-C: crop details and the soil settings of the savegame
+  assert.deepEqual([after.fields[0].withered, after.fields[0].cut, after.fields[0].fillType, after.fields[0].litersPerSqm],
+    [false, false, 'MAIZE', 1.1]);
+  harvest.setFieldRules({ limeRequired: false });
+  assert.deepEqual(harvest.buildFarmFacts().fieldRules,
+    { plowingRequired: true, limeRequired: false, weedsEnabled: true, stonesEnabled: true });
+  assert.notEqual(validate('farmFacts', { ...after, fieldRules: { plowingRequired: true } }), null);
+  assert.throws(() => new BridgeSimulator({ dir: tmp(), scenario: 'leerer-hof' }).setFieldRules({}), /no fieldRules/);
+});
+
+test('Roadmap V2: journal and worked time go back on a reload without saving', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'helfer-hof' });
+  sim.start();
+  sim.advance(MS_PER_GAME_DAY);
+  sim.saveGame();
+  const saved = sim.buildFarmFacts();
+  sim.advance(MS_PER_GAME_DAY);
+  assert.notDeepEqual(sim.buildFarmFacts().finances, saved.finances);
+  sim.reloadWithoutSaving();
+  const reloaded = sim.buildFarmFacts();
+  assert.deepEqual(reloaded.finances, saved.finances);
+  assert.deepEqual(reloaded.workforce, saved.workforce);
+});
+
+test('Roadmap V2: game bookings land in the journal under their money type (R2-B1)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'ernte-herbst' });
+  const before = sim.balance;
+  const res = sim.bookGame('SHOP_PROPERTY_BUY', -90000);
+  assert.equal(sim.balance, before - 90000);
+  assert.equal(res.finances.periods.at(-1).byType.SHOP_PROPERTY_BUY, -90000);
+  sim.bookGame('LEASING_COSTS', -1500);
+  assert.equal(sim.buildFarmFacts().finances.periods.at(-1).byType.LEASING_COSTS, -1500);
+  assert.throws(() => sim.bookGame('', 5), /required/);
+  // a scenario without journal only changes the balance
+  const old = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
+  assert.equal(old.bookGame('AI', -10).finances, null);
+});
+
+test('Roadmap V2: vanilla loan and field menu can be used like in the game (R2-D)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'verschuldeter-hof' });
+  const before = sim.balance;
+  sim.changeVanillaLoan(50000);
+  let facts = sim.buildFarmFacts();
+  assert.equal(facts.liabilities.vanillaLoan.remainingAmount, 370000);
+  assert.equal(sim.balance, before + 50000);
+  sim.changeVanillaLoan(-1e9); // a repayment never goes below 0
+  assert.deepEqual(sim.buildFarmFacts().liabilities.vanillaLoan, { active: false, remainingAmount: 0 });
+  const free = sim.farmlands.find((f) => f.ownerFarmId === 0 && f.farmlandId !== 16);
+  sim.vanillaFarmland(free.farmlandId, true);
+  facts = sim.buildFarmFacts();
+  assert.ok(facts.assets.farmland.some((f) => f.farmlandId === free.farmlandId));
+  assert.throws(() => sim.vanillaFarmland(free.farmlandId, true), /already/);
+  sim.vanillaFarmland(free.farmlandId, false);
+  assert.ok(!sim.buildFarmFacts().assets.farmland.some((f) => f.farmlandId === free.farmlandId));
+  assert.equal(validate('farmFacts', facts), null);
 });

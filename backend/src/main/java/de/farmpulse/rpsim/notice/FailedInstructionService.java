@@ -82,6 +82,12 @@ public class FailedInstructionService {
         if (ins.getType() == InstructionType.NOTIFICATION) {
             return; // T-21: a missed in-game hint is no problem for the player - the mail is in the browser anyway
         }
+        if (ins.getType() == InstructionType.EMPLOYEE_ROSTER) {
+            return; // R2-A0: an older mod does not know the list - the helpers simply stay vanilla
+        }
+        if (ins.getType() == InstructionType.PROMPT) {
+            return; // R2-F2: an older mod cannot ask - the decision stays in the browser
+        }
         Savegame sg = savegames.findById(e.savegameId()).orElseThrow();
         JsonNode p = json.readTree(ins.getPayloadJson());
         String reason = p.path("reason").asString("");

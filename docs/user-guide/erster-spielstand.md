@@ -18,6 +18,7 @@ Spielstand in Farming Simulator 25.
 | **Startkapital** | FarmPulse gleicht deinen Kontostand im Spiel einmalig auf diesen Betrag an |
 | **Altlasten** | optionaler Alt-Kredit bei der Bank, der ab Start in Raten abbezahlt wird |
 | **Ton der Welt** | *Idyllisch*, *Realistisch* oder *Hart* – wie die Charaktere schreiben; im harten Modus ist auch die Bank strenger. Bleibt für diesen Spielstand fest. |
+| **Familie** | Eltern, Partner:in und Kinder – jedes Häkchen einzeln, ohne Häkchen führst du den Hof alleine. Die Familie gehört nicht zum Dorf-Ansehen und zieht nie weg. Bei einem geerbten Hof oder einer Rückkehr in die Heimat leben die Eltern auf dem Altenteil und bekommen eine monatliche Zahlung. |
 | **Persönliche Details** | freier Text für die Stimmung (Familie, Erinnerungen, Pläne) |
 
 Wichtig: Die Auswahlfelder setzen echte Startwerte. Der **Freitext beeinflusst nie Geld, Bonität oder andere
@@ -35,9 +36,10 @@ Bürokraft). Du kannst diesen Schritt auch leer lassen und später über Stellen
 
 ![Startbesetzung](../screenshots/03-onboarding-startbesetzung.png)
 
-FarmPulse stellt dir dein Dorf vor: Pflichtrollen (Bank, Genossenschaft, Amt), Dorfbewohner und deine
-Mitarbeiter, jeweils mit Name, Rolle und Kurzbeschreibung. Gefällt dir jemand nicht, klickst du auf
-**Neu würfeln** – einzeln oder mit **Alle neu würfeln** für die ganze Besetzung.
+FarmPulse stellt dir dein Dorf vor: Pflichtrollen (Bank, Genossenschaft, Amt), Dorfbewohner, deine
+Mitarbeiter und deine Familie, jeweils mit Name, Rolle und Kurzbeschreibung. Gefällt dir jemand nicht, klickst du auf
+**Neu würfeln** – einzeln oder mit **Alle neu würfeln** für die ganze Besetzung. Ein neu gewürfeltes
+Familienmitglied bleibt in derselben Rolle (z. B. Elternteil) und trägt den Familiennamen.
 
 ## Schritt 4 – Spielstand in FS25 laden
 

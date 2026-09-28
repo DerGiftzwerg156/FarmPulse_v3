@@ -1,6 +1,6 @@
 Einladung: {{occasion}}
 Hallo,
 
-wir laden herzlich ein zum {{occasion}} im Dorf. Wir würden uns freuen, Sie zu sehen!
+wir laden herzlich ein zum {{occasion}} im Dorf. Wir würden uns freuen, Sie zu sehen! Bitte sagen Sie unter „Verträge“ innerhalb von {{rsvpDays}} Tagen zu oder ab.
 
 {{characterName}}

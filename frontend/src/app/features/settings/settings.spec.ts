@@ -2,13 +2,17 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { AiSettingsView } from '../../core/api/models';
+import { AiSettingsView, BypassSettingsView, FieldSettingsView, PromptSettingsView } from '../../core/api/models';
 import { Settings } from './settings';
 
 const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, apiKeySet: true, providers: ['NONE', 'OPENAI', 'ANTHROPIC', 'GEMINI', 'OLLAMA'] };
 
 describe('Settings', () => {
-  function setup(game: unknown = { tonePreset: 'REALISTIC', toneLabel: 'realistisch-ausgewogen' }) {
+  function setup(game: unknown = { tonePreset: 'REALISTIC', toneLabel: 'realistisch-ausgewogen' },
+    helpers: unknown = { helperWageMode: 'EMPLOYEES', strictHelperLimit: false, workforceTracked: true },
+    fields: FieldSettingsView = { fieldHintsEnabled: true, fieldsTracked: true },
+    bypass: BypassSettingsView = { reactionsEnabled: true, interestSurchargePercent: 0 },
+    prompts: PromptSettingsView = { available: true, kinds: ['CALL'], allKinds: ['CALL', 'CONTRACT_OFFER', 'TAX_BILL'] }) {
     TestBed.configureTestingModule({
       imports: [Settings],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -19,6 +23,12 @@ describe('Settings', () => {
     const g = http.expectOne('/api/settings/game');
     if (game) g.flush(game);
     else g.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
+    const h = http.expectOne('/api/settings/helpers');
+    if (helpers) h.flush(helpers);
+    else h.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
+    http.expectOne('/api/settings/fields').flush(fields);
+    http.expectOne('/api/settings/vanilla-bypass').flush(bypass);
+    http.expectOne('/api/settings/prompts').flush(prompts);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const input = (id: string, v: string) => {
@@ -83,5 +93,79 @@ describe('Settings', () => {
   it('works without an active savegame', () => {
     const { el } = setup(null);
     expect(el.querySelector('[data-testid="tone"]')?.textContent).toContain('–');
+  });
+  // Roadmap V2 R2-A1 / R2-A3
+  it('saves the helper switches', () => {
+    const { el, http, fixture } = setup();
+    const strict = el.querySelector('[data-testid="helper-strict"]') as HTMLInputElement;
+    strict.checked = true;
+    strict.dispatchEvent(new Event('change'));
+    const req = http.expectOne('/api/settings/helpers');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ helperWageMode: 'EMPLOYEES', strictHelperLimit: true });
+    req.flush({ helperWageMode: 'EMPLOYEES', strictHelperLimit: true, workforceTracked: true });
+    fixture.detectChanges();
+    expect((el.querySelector('[data-testid="helper-strict"]') as HTMLInputElement).checked).toBe(true);
+    expect(el.querySelector('[data-testid="helper-untracked"]')).toBeNull();
+  });
+
+  // Roadmap V2 R2-C6
+  it('switches the field work hints off', () => {
+    const { el, http, fixture } = setup();
+    const box = el.querySelector('[data-testid="field-hints"]') as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    box.checked = false;
+    box.dispatchEvent(new Event('change'));
+    const req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/fields');
+    expect(req.request.body).toEqual({ fieldHintsEnabled: false });
+    req.flush({ fieldHintsEnabled: false, fieldsTracked: false });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="fields-untracked"]')?.textContent).toContain('aktuellen Mod-Version');
+  });
+
+  // Roadmap V2 R2-D
+  it('switches the reactions to the game menus off and shows a running surcharge', () => {
+    const { el, http, fixture } = setup(undefined, undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });
+    expect(el.querySelector('[data-testid="bypass-surcharge"]')?.textContent).toContain('1 Prozentpunkte');
+    const box = el.querySelector('[data-testid="bypass-reactions"]') as HTMLInputElement;
+    box.checked = false;
+    box.dispatchEvent(new Event('change'));
+    const req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/vanilla-bypass');
+    expect(req.request.body).toEqual({ reactionsEnabled: false });
+    req.flush({ reactionsEnabled: false, interestSurchargePercent: 0 });
+    fixture.detectChanges();
+    expect((el.querySelector('[data-testid="bypass-reactions"]') as HTMLInputElement).checked).toBe(false);
+    expect(el.querySelector('[data-testid="bypass-surcharge"]')).toBeNull();
+  });
+
+  it('says when the mod reports no helpers yet', () => {
+    const { el } = setup(undefined, { helperWageMode: 'VANILLA', strictHelperLimit: false, workforceTracked: false });
+    expect((el.querySelector('[data-testid="helper-wage"]') as HTMLInputElement).checked).toBe(false);
+    expect(el.querySelector('[data-testid="helper-untracked"]')?.textContent).toContain('aktuellen Mod-Version');
+  });
+
+  // Roadmap V2 R2-F2
+  it('switches the occasions asked in the game one by one', () => {
+    const { el, http, fixture } = setup();
+    const boxes = () => Array.from(el.querySelectorAll('[data-testid="prompt-kind"]')) as HTMLInputElement[];
+    expect(boxes().map((b) => b.checked)).toEqual([true, false, false]);
+    expect(el.querySelector('[data-testid="prompt-settings"]')?.textContent).toContain('Steuerbescheide bezahlen');
+    boxes()[2].checked = true;
+    boxes()[2].dispatchEvent(new Event('change'));
+    const req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/prompts');
+    expect(req.request.body).toEqual({ kinds: ['CALL', 'TAX_BILL'] });
+    req.flush({ available: true, kinds: ['CALL', 'TAX_BILL'], allKinds: ['CALL', 'CONTRACT_OFFER', 'TAX_BILL'] });
+    fixture.detectChanges();
+    boxes()[0].checked = false;
+    boxes()[0].dispatchEvent(new Event('change'));
+    expect(http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/prompts').request.body)
+      .toEqual({ kinds: ['TAX_BILL'] });
+  });
+
+  it('says when the questions in the game are switched off in the configuration', () => {
+    const { el } = setup(undefined, undefined, undefined, undefined,
+      { available: false, kinds: ['CALL'], allKinds: ['CALL'] });
+    expect(el.querySelector('[data-testid="prompts-off"]')).not.toBeNull();
+    expect((el.querySelector('[data-testid="prompt-kind"]') as HTMLInputElement).disabled).toBe(true);
   });
 });

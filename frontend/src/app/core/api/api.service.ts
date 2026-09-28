@@ -182,6 +182,27 @@ export class ApiService {
     return this.post(`/market-events/${id}/participation`, { participate });
   }
 
+  // Roadmap V2 R2-B4: farm bookkeeping
+  finances(): Observable<M.FinanceOverview> {
+    return this.get('/finances');
+  }
+
+  // Roadmap V2 R2-E1: tax office and tax advisor
+  tax(): Observable<M.TaxOverviewView> {
+    return this.get('/tax');
+  }
+  requestTaxAdvisorOffer(): Observable<M.ContractView> {
+    return this.post('/tax/advisor/offer', {});
+  }
+
+  // Roadmap V2 R2-E3: family field chosen by the player
+  markFamilyField(farmlandId: number): Observable<void> {
+    return this.http.put<void>(`${this.base}/farmlands/${farmlandId}/family-field`, {});
+  }
+  clearFamilyField(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/family-field`);
+  }
+
   // storage & prices
   storage(): Observable<M.StorageOverview> {
     return this.get('/storage');
@@ -225,6 +246,31 @@ export class ApiService {
   }
   saveAiSettings(r: { provider: string; model?: string; apiKey?: string; baseUrl?: string }): Observable<M.AiSettingsView> {
     return this.http.put<M.AiSettingsView>(`${this.base}/settings/ai`, r);
+  }
+  helperSettings(): Observable<M.HelperSettingsView> {
+    return this.get('/settings/helpers');
+  }
+  saveHelperSettings(r: { helperWageMode: string; strictHelperLimit: boolean }): Observable<M.HelperSettingsView> {
+    return this.http.put<M.HelperSettingsView>(`${this.base}/settings/helpers`, r);
+  }
+  // Roadmap V2 R2-F2: questions in the game
+  promptSettings(): Observable<M.PromptSettingsView> {
+    return this.get('/settings/prompts');
+  }
+  savePromptSettings(kinds: string[]): Observable<M.PromptSettingsView> {
+    return this.http.put<M.PromptSettingsView>(`${this.base}/settings/prompts`, { kinds });
+  }
+  bypassSettings(): Observable<M.BypassSettingsView> {
+    return this.get('/settings/vanilla-bypass');
+  }
+  saveBypassSettings(r: { reactionsEnabled: boolean }): Observable<M.BypassSettingsView> {
+    return this.http.put<M.BypassSettingsView>(`${this.base}/settings/vanilla-bypass`, r);
+  }
+  fieldSettings(): Observable<M.FieldSettingsView> {
+    return this.get('/settings/fields');
+  }
+  saveFieldSettings(r: { fieldHintsEnabled: boolean }): Observable<M.FieldSettingsView> {
+    return this.http.put<M.FieldSettingsView>(`${this.base}/settings/fields`, r);
   }
   gameSettings(): Observable<M.GameSettingsView> {
     return this.get('/settings/game');

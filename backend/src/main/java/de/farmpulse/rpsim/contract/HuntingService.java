@@ -27,6 +27,8 @@ import de.farmpulse.rpsim.domain.PublicActionType;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
 import de.farmpulse.rpsim.domain.TrustReason;
+import de.farmpulse.rpsim.field.FieldService;
+import de.farmpulse.rpsim.narration.FallbackTemplates;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
@@ -65,11 +67,12 @@ public class HuntingService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final FallbackTemplates labels;
 
     public HuntingService(ServiceCaseRepository cases, SavegameRepository savegames, FactsService facts, OutboxService outbox,
                           ServiceRoleService roles, NarrationRequestService narration, DiaryService diary,
                           TrustScoreService trust, PublicActionService publicActions, RandomSource random,
-                          RpsimProperties props, GameTime gameTime) {
+                          RpsimProperties props, GameTime gameTime, FallbackTemplates labels) {
         this.cases = cases;
         this.savegames = savegames;
         this.facts = facts;
@@ -82,6 +85,7 @@ public class HuntingService {
         this.random = random;
         this.props = props;
         this.gameTime = gameTime;
+        this.labels = labels;
     }
 
     private RpsimProperties.Hunting cfg() {
@@ -125,19 +129,49 @@ public class HuntingService {
                         && gameTime.addMonths(sg, c.getClosedAtGameTime(), cfg().getMeasureEffectMonths()) > now);
     }
 
-    /** Wild boar damage on one random own field; the hunter reports it with a first offer. */
+    /** One field the boars can hit: farmland, name as shown in the game, area, crop and growth factor. */
+    record Target(int farmlandId, String fieldName, double hectares, String fruitType, double growth) {
+    }
+
+    /**
+     * Roadmap V2 R2-C3: with the field export only standing crops of the configured fruit types (none, no damage), the
+     * damage scales with the growth progress; without the export (older mod) V1: any own field.
+     */
+    Optional<Target> target(FarmFacts f) {
+        if (f.fields() != null) {
+            List<BridgeDtos.Field> crops = f.fields().stream()
+                    .filter(x -> x != null && x.farmlandId() != null && FieldService.phase(x).standing()
+                            && cfg().getCrops().contains(x.fruitType())).toList();
+            if (crops.isEmpty()) {
+                return Optional.empty();
+            }
+            BridgeDtos.Field x = random.pick(crops);
+            return Optional.of(new Target(x.farmlandId(), x.name() == null ? String.valueOf(x.farmlandId()) : x.name(),
+                    x.hectares() == null ? 0 : x.hectares(), x.fruitType(), FieldService.progress(x)));
+        }
+        if (f.assets().farmland().isEmpty()) {
+            return Optional.empty();
+        }
+        BridgeDtos.OwnedFarmland x = random.pick(f.assets().farmland());
+        return Optional.of(new Target(x.farmlandId(), String.valueOf(x.farmlandId()),
+                x.hectares() == null ? 0 : x.hectares(), null, 1));
+    }
+
+    /** Wild boar damage on one own field; the hunter reports it with a first offer. */
     @Transactional
     public Optional<ServiceCase> damage(Savegame sg) {
         FarmFacts f = facts.latest(sg).orElse(null);
-        if (f == null || f.assets().farmland().isEmpty()) {
+        Target field = f == null ? null : target(f).orElse(null);
+        if (field == null) {
             return Optional.empty();
         }
-        BridgeDtos.OwnedFarmland field = random.pick(f.assets().farmland());
-        double ha = field.hectares() == null ? 0 : field.hectares();
-        long damage = round10(ha * random.uniform(cfg().getDamagePerHectareMin(), cfg().getDamagePerHectareMax()));
+        double ha = field.hectares();
+        long damage = round10(ha * random.uniform(cfg().getDamagePerHectareMin(), cfg().getDamagePerHectareMax())
+                * field.growth());
         if (damage <= 0) {
             return Optional.empty();
         }
+        String crop = labels.label(field.fruitType());
         Character hunter = roles.ensure(sg, CharacterRole.HUNTER);
         long now = sg.getCurrentGameTime();
         ServiceCase sc = new ServiceCase();
@@ -153,14 +187,17 @@ public class HuntingService {
         sc.setDeadlineGameTime(now + GameTime.days(cfg().getDecisionDays()));
         sc.setCreatedAt(Instant.now());
         cases.save(sc);
-        outbox.money(sg, -damage, MoneyReason.DAMAGE, "Wildschaden Feld " + field.farmlandId(), new Related(RELATED, sc.getId()));
+        outbox.money(sg, -damage, MoneyReason.DAMAGE, "Wildschaden Feld " + field.fieldName(), new Related(RELATED, sc.getId()));
         narration.request(sg, NarrationEventType.WILDLIFE_DAMAGE_REPORTED).from(hunter)
                 .facts(NarrationFacts.builder().put("farmlandId", field.farmlandId()).put("damageAmount", damage)
+                        .put("fieldName", field.fieldName()).put("fruitType", field.fruitType())
+                        .put("cropNote", crop == null ? null : " (" + crop + ")")
                         .put("offer", sc.getOfferAmount()).put("decisionDays", Math.round(cfg().getDecisionDays())).build())
                 .channel(random.chance(0.5) ? Channel.CALL : Channel.MAIL)
                 .category(CommunicationCategory.HUNTING).related(RELATED, sc.getId())
                 .formLink("/contracts?case=" + sc.getId()).submit();
-        diary.addAuto(sg, "HUNTING", "Wildschaden auf Feld " + field.farmlandId(), "Wildschweine haben Schaden von "
+        diary.addAuto(sg, "HUNTING", "Wildschaden auf Feld " + field.fieldName() + (crop == null ? "" : " (" + crop + ")"),
+                "Wildschweine haben Schaden von "
                 + damage + " € angerichtet. " + hunter.getName() + " bietet " + sc.getOfferAmount() + " € Ersatz.",
                 RELATED, sc.getId());
         return Optional.of(sc);

@@ -46,6 +46,11 @@ public class FallbackTemplates {
         }
     }
 
+    /** German label of an enum value / FS25 name (e.g. a fill type), the value itself when unknown. */
+    public String label(String value) {
+        return value == null ? null : labels.getProperty(value, value);
+    }
+
     public boolean has(NarrationEventType type) {
         return templates.containsKey(type);
     }

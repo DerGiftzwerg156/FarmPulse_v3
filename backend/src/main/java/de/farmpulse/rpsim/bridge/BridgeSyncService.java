@@ -2,6 +2,7 @@ package de.farmpulse.rpsim.bridge;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -15,8 +16,11 @@ import de.farmpulse.rpsim.domain.InstructionStatus;
 import de.farmpulse.rpsim.domain.OutboxInstruction;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.SavegameStatus;
+import de.farmpulse.rpsim.domain.PromptStatus;
 import de.farmpulse.rpsim.repository.FactsSnapshotRepository;
+import de.farmpulse.rpsim.repository.GamePromptRepository;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
+import de.farmpulse.rpsim.repository.PlayerResponseRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.savegame.SavegameContext;
 import de.farmpulse.rpsim.time.CalendarService;
@@ -47,8 +51,14 @@ public class BridgeSyncService {
     private final ApplicationEventPublisher events;
     private final RewindService rewinds;
     private final CalendarService calendar;
+    private final PlayerResponseRepository responses;
+    private final GamePromptRepository prompts;
 
     private String lastFactsRaw;
+    private String lastResponsesRaw;
+    /** Roadmap V2 R2-F1: responseIds in the last read player_responses.json (acknowledged once processed). */
+    private List<String> lastResponseIds = List.of();
+    private String lastResponsesSavegameId;
     private String lastContextRaw;
     private String lastAckRaw;
     private String lastInstructionsWritten;
@@ -56,7 +66,8 @@ public class BridgeSyncService {
     public BridgeSyncService(BridgeFiles files, SavegameRepository savegames, FactsSnapshotRepository snapshots,
                              OutboxInstructionRepository outbox, OutboxService outboxService,
                              DetectedSavegameRegistry detected, SavegameContext context, GameClockService clock,
-                             ApplicationEventPublisher events, RewindService rewinds, CalendarService calendar) {
+                             ApplicationEventPublisher events, RewindService rewinds, CalendarService calendar,
+                             PlayerResponseRepository responses, GamePromptRepository prompts) {
         this.files = files;
         this.savegames = savegames;
         this.snapshots = snapshots;
@@ -68,6 +79,8 @@ public class BridgeSyncService {
         this.events = events;
         this.rewinds = rewinds;
         this.calendar = calendar;
+        this.responses = responses;
+        this.prompts = prompts;
     }
 
     /** Result of one cycle (used by tests and logging). */
@@ -80,6 +93,7 @@ public class BridgeSyncService {
         boolean ctx = syncMarketContext();
         FactsOutcome facts = syncFacts();
         int acks = syncAcks();
+        syncResponses();
         int written = writeInstructions();
         return new CycleResult(ctx, facts == FactsOutcome.INGESTED, facts == FactsOutcome.UNLINKED, acks, written);
     }
@@ -90,6 +104,9 @@ public class BridgeSyncService {
         lastContextRaw = null;
         lastAckRaw = null;
         lastInstructionsWritten = null;
+        lastResponsesRaw = null;
+        lastResponseIds = List.of();
+        lastResponsesSavegameId = null;
     }
 
     boolean syncMarketContext() {
@@ -136,6 +153,7 @@ public class BridgeSyncService {
         if (!first && f.gameTime() < s.getCurrentGameTime()) {
             // T-02: older state of the savegame loaded - registered before anyone reacts to the rewound snapshot
             rewinds.onRewind(s, s.getCurrentGameTime(), f.gameTime());
+            events.publishEvent(new BridgeEvents.Rewound(s.getId(), s.getCurrentGameTime(), f.gameTime()));
         }
         // T-08: the game month is the FS25 period - the calendar anchor must be current before time advances
         calendar.update(s, f.calendar());
@@ -214,6 +232,39 @@ public class BridgeSyncService {
         return applied;
     }
 
+    /**
+     * Roadmap V2 R2-F1: reads export/player_responses.json. New answers are handed to the prompt handling (idempotent by
+     * responseId); the ids of the file are acknowledged in the next instructions.json once processed.
+     */
+    void syncResponses() {
+        Optional<BridgeFiles.Read<BridgeDtos.PlayerResponsesDocument>> read = files.read(files.playerResponses(),
+                BridgeDtos.PlayerResponsesDocument.class, BridgeValidator::validate);
+        if (read.isEmpty()) {
+            return;
+        }
+        if (read.get().raw().equals(lastResponsesRaw)) {
+            return;
+        }
+        BridgeDtos.PlayerResponsesDocument doc = read.get().doc();
+        Optional<Savegame> sg = savegames.findByBridgeSavegameId(doc.savegameId())
+                .filter(s -> s.getStatus() == SavegameStatus.ACTIVE);
+        if (sg.isEmpty()) {
+            return; // not linked (yet): read again once it is
+        }
+        List<BridgeDtos.PlayerAnswer> valid = doc.responses().stream().filter(BridgeValidator::valid).toList();
+        if (valid.size() < doc.responses().size()) {
+            log.warn("player_responses.json: {} invalid answers ignored", doc.responses().size() - valid.size());
+        }
+        List<BridgeDtos.PlayerAnswer> fresh = valid.stream()
+                .filter(a -> !responses.existsBySavegameAndResponseId(sg.get(), a.responseId())).toList();
+        if (!fresh.isEmpty()) {
+            events.publishEvent(new BridgeEvents.PlayerResponsesRead(sg.get().getId(), fresh));
+        }
+        lastResponsesRaw = read.get().raw();
+        lastResponseIds = valid.stream().map(BridgeDtos.PlayerAnswer::responseId).toList();
+        lastResponsesSavegameId = doc.savegameId();
+    }
+
     /** Writes all PENDING instructions of the savegame the mod currently exports. */
     int writeInstructions() {
         String bridgeId = context.currentBridgeSavegameId();
@@ -224,11 +275,20 @@ public class BridgeSyncService {
         if (sg.isEmpty()) {
             return 0;
         }
+        events.publishEvent(new BridgeEvents.InstructionsWriting(sg.get().getId()));
         List<OutboxInstruction> pending = outboxService.pending(sg.get());
         List<Object> envelopes = new ArrayList<>();
         pending.forEach(o -> envelopes.add(outboxService.toEnvelope(o)));
-        InstructionsDocument doc = new InstructionsDocument(bridgeId, envelopes);
-        String key = bridgeId + envelopes;
+        // R2-F1: processed answers of the file and questions that are no longer open
+        List<String> acked = bridgeId.equals(lastResponsesSavegameId) && !lastResponseIds.isEmpty()
+                ? responses.findBySavegameAndResponseIdIn(sg.get(), lastResponseIds).stream()
+                        .map(de.farmpulse.rpsim.domain.PlayerResponse::getResponseId).sorted().toList()
+                : List.of();
+        List<String> withdrawn = prompts.findBySavegameAndStatusInAndExpiresGameTimeGreaterThanEqualOrderByIdAsc(sg.get(),
+                        EnumSet.of(PromptStatus.ANSWERED, PromptStatus.WITHDRAWN), sg.get().getCurrentGameTime())
+                .stream().map(de.farmpulse.rpsim.domain.GamePrompt::getPromptId).toList();
+        InstructionsDocument doc = new InstructionsDocument(bridgeId, envelopes, acked, withdrawn);
+        String key = bridgeId + envelopes + acked + withdrawn;
         if (!key.equals(lastInstructionsWritten)) {
             files.writeAtomic(files.instructions(), doc);         // human-readable, simulator/tooling
             files.writeAtomicXmlPayload(files.instructionsXml(), doc); // what the FS25 mod reads

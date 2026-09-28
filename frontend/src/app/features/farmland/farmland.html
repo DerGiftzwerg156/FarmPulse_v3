@@ -47,6 +47,14 @@
             <div>
               <div class="font-display text-[13px] font-bold text-text">{{ 'farmland.fieldLabel' | t: { id: f.farmlandId } }}</div>
               <div class="fp-label">{{ f.hectares | num: 2 }} ha · {{ 'farmland.reference' | t }} {{ f.referencePrice | money }}</div>
+              @if (f.phase) {
+                <div class="fp-label mt-0.5" data-testid="field-crop">
+                  @if (f.fruitType) {<span class="text-text">{{ f.fruitType | label: 'fillType' }}</span> · }{{ f.phase | label: 'fieldPhase' }}
+                </div>
+              }
+              @if (f.familyField) {
+                <div class="mt-1"><app-badge variant="positive" data-testid="family-field">{{ 'farmland.familyField' | t }}</app-badge></div>
+              }
             </div>
             <app-badge [variant]="f.ownerType === 'PLAYER' ? 'positive' : 'neutral'">
               {{ f.tradeable === false ? ('farmland.notTradeableBadge' | t) : (f.ownerType === 'CHARACTER' && f.owner ? f.owner.name : (f.ownerType | label: 'ownerType')) }}
@@ -65,6 +73,14 @@
               </label>
               <app-button type="submit" [disabled]="busy()" data-testid="sell-submit">{{ 'farmland.offerForSale' | t }}</app-button>
             </form>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              @if (f.familyField) {
+                <app-button variant="secondary" [disabled]="busy()" (pressed)="clearFamilyField()" data-testid="family-field-clear">{{ 'farmland.clearFamilyField' | t }}</app-button>
+              } @else {
+                <app-button variant="secondary" [disabled]="busy()" (pressed)="markFamilyField(f)" data-testid="family-field-mark">{{ 'farmland.markFamilyField' | t }}</app-button>
+              }
+              <span class="text-[11px] text-muted">{{ 'farmland.familyFieldHint' | t }}</span>
+            </div>
           } @else if (f.leased) {
             <p class="mt-2 text-[12px] text-muted" data-testid="leased">{{ 'farmland.leasedHint' | t }}
               <a routerLink="/contracts" class="fp-label hover:text-accent">{{ 'farmland.toContracts' | t }}</a></p>

@@ -11,6 +11,7 @@ import de.farmpulse.rpsim.domain.CharacterStatus;
 import de.farmpulse.rpsim.domain.CommunicationCategory;
 import de.farmpulse.rpsim.domain.Employee;
 import de.farmpulse.rpsim.domain.EmployeeStatus;
+import de.farmpulse.rpsim.domain.JobRole;
 import de.farmpulse.rpsim.domain.MoneyReason;
 import de.farmpulse.rpsim.domain.SatisfactionCategory;
 import de.farmpulse.rpsim.domain.SatisfactionEvent;
@@ -25,6 +26,7 @@ import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,10 +49,13 @@ public class SatisfactionService {
     private final NarrationRequestService narration;
     private final DiaryService diary;
     private final RpsimProperties props;
+    private final ApplicationEventPublisher publisher;
+    private final GameTime gameTime;
 
     public SatisfactionService(EmployeeRepository employees, SatisfactionEventRepository events,
                                SavegameRepository savegames, FactsService facts, OutboxService outbox,
-                               NarrationRequestService narration, DiaryService diary, RpsimProperties props) {
+                               NarrationRequestService narration, DiaryService diary, RpsimProperties props,
+                               ApplicationEventPublisher publisher, GameTime gameTime) {
         this.employees = employees;
         this.events = events;
         this.savegames = savegames;
@@ -59,6 +64,8 @@ public class SatisfactionService {
         this.narration = narration;
         this.diary = diary;
         this.props = props;
+        this.publisher = publisher;
+        this.gameTime = gameTime;
     }
 
     private RpsimProperties.Satisfaction cfg() {
@@ -77,7 +84,7 @@ public class SatisfactionService {
             return;
         }
         e.setPayFairness(SatisfactionFormula.decay(e.getPayFairness(), cfg().getPayFairnessDecayPerDay(), days, cfg()));
-        e.setWorkload(SatisfactionFormula.decay(e.getWorkload(), cfg().getWorkloadDecayPerDay(), days, cfg()));
+        e.setWorkload(SatisfactionFormula.decay(e.getWorkload(), workloadDecayPerDay(e), days, cfg()));
         e.setAppreciation(SatisfactionFormula.decay(e.getAppreciation(), cfg().getAppreciationDecayPerDay(), days, cfg()));
         e.setNeedsUpdatedAtGameTime(now);
     }
@@ -86,13 +93,40 @@ public class SatisfactionService {
         return facts.latest(sg).map(f -> FactsService.averageCondition(f, cfg().getStartValue())).orElse(cfg().getStartValue());
     }
 
+    /**
+     * Roadmap V2 R2-A4 / R2-A7: the workload of machine operators follows the real hours and that of animal keepers the
+     * animals per keeper (WorkforceService, daily) as soon as the mod reports them - no simulated decay then.
+     */
+    double workloadDecayPerDay(Employee e) {
+        Savegame sg = e.getSavegame();
+        if ((e.getJobRole() == JobRole.MACHINE_OPERATOR && sg.isWorkforceTracked())
+                || (e.getJobRole() == JobRole.ANIMAL_KEEPER && sg.isHusbandriesTracked())) {
+            return 0;
+        }
+        return cfg().getWorkloadDecayPerDay();
+    }
+
+    /**
+     * Live working conditions of an employee: vehicle condition; R2-A7: for animal keepers the mean health of the
+     * husbandries when the mod reports them (bad stables: "Ich kann so nicht arbeiten").
+     */
+    public double workingConditions(Employee e) {
+        if (e.getJobRole() == JobRole.ANIMAL_KEEPER && e.getSavegame().isHusbandriesTracked()) {
+            var health = facts.latest(e.getSavegame()).map(BridgeDtosHelper::meanHealth).orElse(null);
+            if (health != null) {
+                return health;
+            }
+        }
+        return workingConditions(e.getSavegame());
+    }
+
     public Needs needs(Employee e) {
         long now = e.getSavegame().getCurrentGameTime();
         double days = Math.max(0, GameTime.toDays(now - e.getNeedsUpdatedAtGameTime()));
         double pf = SatisfactionFormula.decay(e.getPayFairness(), cfg().getPayFairnessDecayPerDay(), days, cfg());
-        double wl = SatisfactionFormula.decay(e.getWorkload(), cfg().getWorkloadDecayPerDay(), days, cfg());
+        double wl = SatisfactionFormula.decay(e.getWorkload(), workloadDecayPerDay(e), days, cfg());
         double ap = SatisfactionFormula.decay(e.getAppreciation(), cfg().getAppreciationDecayPerDay(), days, cfg());
-        double wc = workingConditions(e.getSavegame());
+        double wc = workingConditions(e);
         double score = SatisfactionFormula.score(pf, wl, ap, wc, cfg());
         double mult = SatisfactionFormula.effectMultiplier(score, cfg());
         return new Needs(pf, wl, ap, wc, score, mult, SatisfactionFormula.effectiveSkill(e.getSkill(), mult));
@@ -140,6 +174,7 @@ public class SatisfactionService {
         record(e, SatisfactionCategory.WORKLOAD, days * cfg().getTimeOffPointsPerDay(), days + " freie Tage");
         e.setTimeOffUntilGameTime(e.getSavegame().getCurrentGameTime() + GameTime.days(days));
         thanks(e, "TIME_OFF");
+        publisher.publishEvent(new RosterChangedEvent(e.getSavegame().getId())); // R2-A0: ON_LEAVE
     }
 
     /** Active mail/conversation with the employee: appreciation (with cooldown against farming). */
@@ -186,6 +221,9 @@ public class SatisfactionService {
         long now = sg.getCurrentGameTime();
         applyDecay(e, now);
         Needs n = needs(e);
+        if (e.getStrikeSinceGameTime() != null && n.score() >= cfg().getStrikeThreshold()) {
+            endStrike(e);
+        }
         if (n.score() >= cfg().getWarningThreshold()) {
             e.setLowSatisfactionSinceGameTime(null);
             e.setWarningSent(false);
@@ -196,6 +234,7 @@ public class SatisfactionService {
         }
         double lowDays = GameTime.toDays(now - e.getLowSatisfactionSinceGameTime());
         if (lowDays >= cfg().getTerminationAfterDays()) {
+            e.setStrikeSinceGameTime(null);
             e.setStatus(EmployeeStatus.TERMINATED);
             e.setTerminatedAtGameTime(now);
             e.getCharacter().setStatus(CharacterStatus.TERMINATED);
@@ -206,12 +245,40 @@ public class SatisfactionService {
                     .category(CommunicationCategory.EMPLOYEE).related(RELATED, e.getId()).submit();
             diary.addAuto(sg, "EMPLOYEE", e.getCharacter().getName() + " hat gekündigt",
                     "Nach langer Unzufriedenheit hat " + e.getCharacter().getName() + " den Hof verlassen.", RELATED, e.getId());
+            publisher.publishEvent(new RosterChangedEvent(sg.getId()));
+        } else if (lowDays >= cfg().getStrikeAfterDays() && e.getStrikeSinceGameTime() == null
+                && n.score() < cfg().getStrikeThreshold()) {
+            startStrike(e, n);
         } else if (lowDays >= cfg().getWarningAfterDays() && !e.isWarningSent()) {
             e.setWarningSent(true);
             narration.request(sg, NarrationEventType.EMPLOYEE_WARNING).from(e.getCharacter())
                     .facts(NarrationFacts.builder().put("weakestNeed", weakest(n)).build())
                     .category(CommunicationCategory.EMPLOYEE).related(RELATED, e.getId()).submit();
         }
+    }
+
+    /** Roadmap V2 R2-A5: the employee lays down work - the mod stops the helper; the salary keeps running. */
+    void startStrike(Employee e, Needs n) {
+        Savegame sg = e.getSavegame();
+        e.setStrikeSinceGameTime(sg.getCurrentGameTime());
+        e.setWarningSent(true);
+        narration.request(sg, NarrationEventType.EMPLOYEE_STRIKE).from(e.getCharacter())
+                .facts(NarrationFacts.builder().put("weakestNeed", weakest(n)).put("salary", e.getMonthlySalary()).build())
+                .category(CommunicationCategory.EMPLOYEE).related(RELATED, e.getId()).submit();
+        diary.addAuto(sg, "EMPLOYEE", e.getCharacter().getName() + " streikt",
+                e.getCharacter().getName() + " legt die Arbeit nieder, bis sich etwas ändert.", RELATED, e.getId());
+        publisher.publishEvent(new RosterChangedEvent(sg.getId()));
+    }
+
+    /** R2-A5: satisfaction back at the strike threshold - the employee works again. */
+    void endStrike(Employee e) {
+        Savegame sg = e.getSavegame();
+        e.setStrikeSinceGameTime(null);
+        narration.request(sg, NarrationEventType.EMPLOYEE_STRIKE_ENDED).from(e.getCharacter())
+                .category(CommunicationCategory.EMPLOYEE).related(RELATED, e.getId()).submit();
+        diary.addAuto(sg, "EMPLOYEE", e.getCharacter().getName() + " arbeitet wieder",
+                "Der Streik von " + e.getCharacter().getName() + " ist beendet.", RELATED, e.getId());
+        publisher.publishEvent(new RosterChangedEvent(sg.getId()));
     }
 
     static SatisfactionCategory weakest(Needs n) {
@@ -237,10 +304,38 @@ public class SatisfactionService {
         Needs n = needs(e);
         e.setLastEffectMultiplier(n.effectMultiplier());
         long amount = SatisfactionFormula.effectAmount(n.effectMultiplier(), cfg());
+        if (amount > 0) {
+            amount = Math.round(amount * effectScale(e));
+        }
+        // R2-A4: the worked hours of the month are closed after the booking
+        e.setWorkedMsLastMonth(e.getWorkedMsMonth());
+        e.setWorkedMsMonth(0);
         if (amount != 0) {
             outbox.money(e.getSavegame(), amount, MoneyReason.EMPLOYEE_EFFECT, "Arbeitsleistung " + e.getCharacter().getName(),
                     new Related(RELATED, e.getId()));
         }
         return amount;
+    }
+
+    /**
+     * Scale of a positive monthly effect (0..1): 0 during a strike (R2-A5); machine operators min(1, worked hours /
+     * target hours of the month) (R2-A4); animal keepers the mean productivity of the stables (R2-A7). 1 without data.
+     */
+    double effectScale(Employee e) {
+        Savegame sg = e.getSavegame();
+        if (e.getStrikeSinceGameTime() != null) {
+            return 0;
+        }
+        var w = cfg().getWorkload();
+        if (e.getJobRole() == JobRole.MACHINE_OPERATOR && sg.isWorkforceTracked() && w.isEffectScalesWithHours()) {
+            double target = w.getTargetHoursPerDay() * gameTime.msPerMonth(sg) / (double) GameTime.days(1);
+            double hours = e.getWorkedMsMonth() / (double) GameTime.hours(1);
+            return target <= 0 ? 1 : Math.min(1, hours / target);
+        }
+        if (e.getJobRole() == JobRole.ANIMAL_KEEPER && sg.isHusbandriesTracked()) {
+            Double productivity = facts.latest(sg).map(BridgeDtosHelper::meanProductivity).orElse(null);
+            return productivity == null ? 1 : Math.max(0, Math.min(1, productivity));
+        }
+        return 1;
     }
 }

@@ -24,14 +24,16 @@ import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.repository.FarmlandOwnershipRepository;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Keeps {@link FarmlandOwnership} consistent with the facts export and silently reconciles vanilla purchases/sales
- * made in the FS25 field menu outside the tool (no lock, just follow-up - like the vanilla loan).
+ * Keeps {@link FarmlandOwnership} consistent with the facts export and follows vanilla purchases/sales made in the FS25
+ * field menu outside the tool (no lock). Roadmap V2 R2-D2: each such change is published as
+ * {@link FarmlandBypassEvent} - the characters react to it (VanillaBypassService).
  */
 @Service
 public class FarmlandOwnershipService {
@@ -46,10 +48,12 @@ public class FarmlandOwnershipService {
     private final JsonMapper json;
     private final RewindService rewinds;
     private final GameNpcService gameNpcs;
+    private final ApplicationEventPublisher publisher;
 
     public FarmlandOwnershipService(FarmlandOwnershipRepository repo, SavegameRepository savegames, FactsService facts,
                                     OutboxInstructionRepository outbox, CharacterLookup lookup, RandomSource random,
-                                    RpsimProperties props, JsonMapper json, RewindService rewinds, GameNpcService gameNpcs) {
+                                    RpsimProperties props, JsonMapper json, RewindService rewinds, GameNpcService gameNpcs,
+                                    ApplicationEventPublisher publisher) {
         this.repo = repo;
         this.savegames = savegames;
         this.facts = facts;
@@ -60,6 +64,7 @@ public class FarmlandOwnershipService {
         this.json = json;
         this.rewinds = rewinds;
         this.gameNpcs = gameNpcs;
+        this.publisher = publisher;
     }
 
     @EventListener
@@ -135,13 +140,18 @@ public class FarmlandOwnershipService {
                 continue; // T-22: leased - the game shows the player farm, the tool keeps the owner character
             }
             if (ownedInGame && o.getOwnerType() != OwnerType.PLAYER) {
-                // vanilla purchase in the field menu -> follow up silently
+                // vanilla purchase in the field menu -> follow up; R2-D2: the former owner reacts
+                FarmlandBypassEvent ev = new FarmlandBypassEvent(sg.getId(), o.getFarmlandId(), true, o.getOwnerType(),
+                        o.getOwnerCharacter() == null ? null : o.getOwnerCharacter().getId(), o.getReferencePrice());
                 o.setOwnerType(OwnerType.PLAYER);
                 o.setOwnerCharacter(null);
+                publisher.publishEvent(ev);
             } else if (!ownedInGame && o.getOwnerType() == OwnerType.PLAYER) {
-                // vanilla sale -> follow up silently
+                // vanilla sale -> follow up; R2-D2: diary and village gossip
                 o.setOwnerType(OwnerType.UNCLAIMED);
                 o.setOwnerCharacter(null);
+                publisher.publishEvent(new FarmlandBypassEvent(sg.getId(), o.getFarmlandId(), false, OwnerType.PLAYER, null,
+                        o.getReferencePrice()));
             }
         }
     }

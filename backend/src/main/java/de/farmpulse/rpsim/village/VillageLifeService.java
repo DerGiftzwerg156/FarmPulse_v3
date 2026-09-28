@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import de.farmpulse.rpsim.character.CharacterLookup;
+import de.farmpulse.rpsim.club.ClubService;
 import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.credit.CreditScoringService;
@@ -27,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
  * deliberately rare, all through the normal Communication/NarrationJob pipeline and without any money instruction.
  * <ul>
  *   <li>congratulations - fact based: cash-flow trend from the snapshot series (reuses the credit scoring cash flow)</li>
- *   <li>invitations - calendar based (FS25 periods)</li>
+ *   <li>invitations - calendar based (FS25 periods; Roadmap V2 R2-E4: festival calendar with RSVP)</li>
  *   <li>gossip - plain daily random roll with minimal facts</li>
  * </ul>
  */
@@ -43,10 +44,11 @@ public class VillageLifeService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final ClubService clubs;
 
     public VillageLifeService(SavegameRepository savegames, CreditScoringService cashflow, CharacterLookup lookup,
                               NarrationRequestService narration, RandomSource random, RpsimProperties props,
-                              GameTime gameTime) {
+                              GameTime gameTime, ClubService clubs) {
         this.savegames = savegames;
         this.cashflow = cashflow;
         this.lookup = lookup;
@@ -54,6 +56,7 @@ public class VillageLifeService {
         this.random = random;
         this.props = props;
         this.gameTime = gameTime;
+        this.clubs = clubs;
     }
 
     private RpsimProperties.VillageLife cfg() {
@@ -105,25 +108,12 @@ public class VillageLifeService {
     }
 
     /**
-     * Calendar trigger (TODO T-08: FS25 periods): on the first day of every {@code invitationEveryPeriods}-th period of
-     * the year, counted from period 1 (March). The season follows the FS25 period.
+     * Calendar trigger (TODO T-08: FS25 periods). Roadmap V2 R2-E4: the festival calendar ({@code clubs.festivals})
+     * decides - the host of a festival of the starting period invites with RSVP (ClubService).
      */
     @Transactional
     public boolean invite(Savegame sg) {
-        long now = sg.getCurrentGameTime();
-        int every = cfg().getInvitationEveryPeriods();
-        if (every <= 0 || !gameTime.isMonthStart(sg, now) || (gameTime.periodOfYear(sg, now) - 1) % every != 0) {
-            return false;
-        }
-        Optional<Character> from = lookup.firstActive(sg, CharacterRole.COOPERATIVE, CharacterRole.VILLAGER);
-        if (from.isEmpty()) {
-            return false;
-        }
-        Season season = season(sg, now);
-        narration.request(sg, NarrationEventType.VILLAGE_INVITATION).from(from.get())
-                .facts(NarrationFacts.builder().put("season", season).put("occasion", occasion(season)).build())
-                .category(CommunicationCategory.VILLAGE_LIFE).submit();
-        return true;
+        return clubs.invite(sg);
     }
 
     /** FS25 period 1..3 (March-May) spring, 4..6 summer, 7..9 autumn, 10..12 winter. */

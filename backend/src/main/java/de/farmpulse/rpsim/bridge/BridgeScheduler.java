@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.prompt.PromptService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,10 +21,12 @@ public class BridgeScheduler {
     private static final Logger log = LoggerFactory.getLogger(BridgeScheduler.class);
 
     private final BridgeSyncService sync;
+    private final PromptService prompts;
     private final RpsimProperties props;
 
-    public BridgeScheduler(BridgeSyncService sync, RpsimProperties props) {
+    public BridgeScheduler(BridgeSyncService sync, PromptService prompts, RpsimProperties props) {
         this.sync = sync;
+        this.prompts = prompts;
         this.props = props;
     }
 
@@ -44,6 +47,11 @@ public class BridgeScheduler {
             sync.runCycle();
         } catch (RuntimeException e) {
             log.warn("Bridge cycle failed (retry next cycle): {}", e.getMessage(), e);
+        }
+        try {
+            prompts.processAnswers(); // R2-F: answers from the game, each in its own transaction
+        } catch (RuntimeException e) {
+            log.warn("Answers from the game failed (retry next cycle): {}", e.getMessage(), e);
         }
     }
 }

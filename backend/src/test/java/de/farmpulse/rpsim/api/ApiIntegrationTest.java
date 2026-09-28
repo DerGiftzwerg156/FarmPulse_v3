@@ -296,6 +296,28 @@ class ApiIntegrationTest {
         mvc.perform(get("/api/prices/history").param("from", "notanumber")).andExpect(status().isBadRequest());
     }
 
+    /** Roadmap V2 R2-B4: farm bookkeeping from the booking journal; without journal "not available". */
+    @Test
+    void financesFromTheBookingJournal() throws Exception {
+        mvc.perform(get("/api/finances")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.available").value(false)).andExpect(jsonPath("$.months", hasSize(0)));
+        long t = sg.getCurrentGameTime() + 1000;
+        fx.snapshot(sg, t, 1, TestData.farmFactsWithJournal(sg.getBridgeSavegameId(), t, 1, 1, 3, """
+                [{ "year": 1, "period": 2, "byType": { "HARVEST_INCOME": 48200.4, "PURCHASE_FUEL": -3100,
+                                                       "SHOP_PROPERTY_BUY": -90000, "MY_MOD_TYPE": 50 } },
+                 { "year": 1, "period": 3, "byType": { "AI": -1250 } }]"""));
+        mvc.perform(get("/api/finances")).andExpect(jsonPath("$.available").value(true))
+                .andExpect(jsonPath("$.months", hasSize(2)))
+                .andExpect(jsonPath("$.months[0].complete").value(true))
+                .andExpect(jsonPath("$.months[0].operatingIncome").value(48250))
+                .andExpect(jsonPath("$.months[0].operatingExpenses").value(-3100))
+                .andExpect(jsonPath("$.months[0].operatingResult").value(45150))
+                .andExpect(jsonPath("$.months[0].investment").value(-90000))
+                .andExpect(jsonPath("$.months[0].lines[0].category").value("HARVEST_INCOME"))
+                .andExpect(jsonPath("$.months[0].lines[1].financeClass").value("OPERATING_INCOME"))
+                .andExpect(jsonPath("$.months[1].complete").value(false));
+    }
+
     // ------------------------------------------------------------------ village
 
     @Test
@@ -318,6 +340,61 @@ class ApiIntegrationTest {
                 .andExpect(jsonPath("$.label").exists()).andExpect(jsonPath("$.score").doesNotExist());
     }
 
+    // ------------------------------------------------------------------ roadmap V2 R2-E
+
+    @Autowired de.farmpulse.rpsim.club.ClubService clubs;
+
+    @Test
+    void roleplayAreaEndpoints() throws Exception {
+        // E1: tax overview without a booking journal, advisor offer as a contract
+        mvc.perform(get("/api/tax")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.journalAvailable").value(false))
+                .andExpect(jsonPath("$.ratePercent").value(25.0))
+                .andExpect(jsonPath("$.lastAssessment").value(nullValue()))
+                .andExpect(jsonPath("$.openBills").value(0));
+        mvc.perform(post("/api/tax/advisor/offer")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.kind").value("TAX_ADVISOR")).andExpect(jsonPath("$.status").value("OFFERED"));
+        // E3: the family field is an own field (12), not a foreign one (13)
+        mvc.perform(put("/api/farmlands/12/family-field")).andExpect(status().isOk());
+        mvc.perform(get("/api/farmlands")).andExpect(jsonPath("$[?(@.farmlandId == 12)].familyField").value(true));
+        mvc.perform(put("/api/farmlands/13/family-field")).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("NOT_OWN_FIELD"));
+        mvc.perform(delete("/api/family-field")).andExpect(status().isOk());
+        mvc.perform(get("/api/farmlands")).andExpect(jsonPath("$[?(@.farmlandId == 12)].familyField").value(false));
+        // E4: sponsoring only with one of the offered tiers
+        long id = clubs.requestSponsoring(sg, "FIRE_BRIGADE").getId();
+        mvc.perform(get("/api/cases")).andExpect(jsonPath("$[?(@.id == %d)].tiers[1]".formatted(id)).value(500));
+        postJson("/api/cases/" + id + "/sponsor", java.util.Map.of("amount", 300)).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("INVALID_TIER"));
+        postJson("/api/cases/" + id + "/sponsor", java.util.Map.of("amount", 500)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SETTLED")).andExpect(jsonPath("$.payoutAmount").value(500));
+    }
+
+    @Test
+    void onboardingWithFamily() throws Exception {
+        JsonNode created = read(postJson("/api/onboarding", java.util.Map.of("startingCapitalTarget", 100000,
+                "farmOrigin", "INHERITED", "familyParents", true, "familyPartner", false, "familyChildren", false))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.cast[?(@.role == 'FAMILY')]", hasSize(2))));
+        JsonNode parent = null;
+        for (JsonNode c : created.get("cast")) {
+            if (c.get("role").asString().equals("FAMILY")) {
+                parent = c;
+            }
+        }
+        String familyName = parent.get("name").asString().substring(parent.get("name").asString().lastIndexOf(' '));
+        // a rerolled parent stays a parent of the family
+        JsonNode rerolled = read(postJson("/api/onboarding/" + created.get("id").asLong() + "/reroll",
+                java.util.Map.of("characterId", parent.get("characterId").asLong())).andExpect(status().isOk()));
+        int parents = 0;
+        for (JsonNode c : rerolled.get("cast")) {
+            if (c.get("role").asString().equals("FAMILY")) {
+                parents++;
+                org.assertj.core.api.Assertions.assertThat(c.get("name").asString()).endsWith(familyName);
+            }
+        }
+        org.assertj.core.api.Assertions.assertThat(parents).isEqualTo(2);
+    }
+
     // ------------------------------------------------------------------ settings
 
     @Test
@@ -333,6 +410,41 @@ class ApiIntegrationTest {
         mvc.perform(put("/api/settings/ai").contentType(MediaType.APPLICATION_JSON).content("{\"provider\":\"SKYNET\"}"))
                 .andExpect(status().isBadRequest());
         mvc.perform(get("/api/settings/game")).andExpect(jsonPath("$.tonePreset").value("REALISTIC"));
+        // Roadmap V2 R2-A1 / R2-A3
+        mvc.perform(get("/api/settings/helpers")).andExpect(jsonPath("$.helperWageMode").value("EMPLOYEES"))
+                .andExpect(jsonPath("$.strictHelperLimit").value(false));
+        mvc.perform(put("/api/settings/helpers").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"helperWageMode\":\"VANILLA\",\"strictHelperLimit\":true}"))
+                .andExpect(jsonPath("$.helperWageMode").value("VANILLA"))
+                .andExpect(jsonPath("$.strictHelperLimit").value(true));
+        mvc.perform(put("/api/settings/helpers").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"helperWageMode\":\"FREE\",\"strictHelperLimit\":true}"))
+                .andExpect(status().isBadRequest());
+        // Roadmap V2 R2-C6
+        mvc.perform(get("/api/settings/fields")).andExpect(jsonPath("$.fieldHintsEnabled").value(true))
+                .andExpect(jsonPath("$.fieldsTracked").value(false));
+        mvc.perform(put("/api/settings/fields").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"fieldHintsEnabled\":false}"))
+                .andExpect(jsonPath("$.fieldHintsEnabled").value(false));
+        // Roadmap V2 R2-D
+        mvc.perform(get("/api/settings/vanilla-bypass")).andExpect(jsonPath("$.reactionsEnabled").value(true))
+                .andExpect(jsonPath("$.interestSurchargePercent").value(0.0));
+        mvc.perform(put("/api/settings/vanilla-bypass").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reactionsEnabled\":false}"))
+                .andExpect(jsonPath("$.reactionsEnabled").value(false));
+        // Roadmap V2 R2-F2: occasions asked in the game, default only calls
+        mvc.perform(get("/api/settings/prompts")).andExpect(jsonPath("$.available").value(true))
+                .andExpect(jsonPath("$.kinds", hasSize(1))).andExpect(jsonPath("$.kinds[0]").value("CALL"))
+                .andExpect(jsonPath("$.allKinds", hasItem("TAX_BILL")));
+        mvc.perform(put("/api/settings/prompts").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"kinds\":[\"CALL\",\"INVITATION\"]}"))
+                .andExpect(jsonPath("$.kinds", hasSize(2)));
+        mvc.perform(put("/api/settings/prompts").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"kinds\":[]}"))
+                .andExpect(jsonPath("$.kinds", hasSize(0)));
+        mvc.perform(put("/api/settings/prompts").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"kinds\":[\"SKYNET\"]}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

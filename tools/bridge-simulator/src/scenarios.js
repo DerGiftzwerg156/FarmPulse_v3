@@ -88,6 +88,73 @@ export const SCENARIOS = {
   },
 };
 
+// Roadmap V2 (R2-Q2): scenarios with the optional farm_facts blocks finances, workforce, husbandries, fields and
+// weather. All other scenarios leave these blocks out and stand for a mod without them ("not present").
+// `journal` names the FS25 money types (MoneyType.*) the daily income/expense drift is booked under (R2-B1).
+// All numbers are simulated: growth states, health etc. are plausible examples, not values read from FS25.
+Object.assign(SCENARIOS, {
+  'helfer-hof': {
+    description: 'Maschinenführer fahren FS25-Helfer: laufende Helfer-Jobs, Arbeitszeit je Mitarbeiter, Buchungsjournal (R2-A).',
+    balance: 180000, vanillaLoan: 0, ownedFarmlands: [1, 2, 5],
+    vehicles: [vehicle(1, 240000, 0.15), vehicle(2, 310000, 0.1), vehicle(3, 85000, 0.3)],
+    placeables: [{ uniqueId: 'plc_00001', value: 90000 }],
+    animals: [], storage: { WHEAT: { amount: 40000, capacity: 100000 } },
+    drift: { income: 3500, expense: 2600 },
+    journal: { income: 'SOLD_PRODUCTS', expense: 'AI' },
+    // jobId 2 runs without an employee: a vanilla helper paid with the game's wage (R2-D3)
+    workforce: {
+      activeJobs: [{ jobId: 1, employeeId: 1, title: 'Fendt 942 Vario' }, { jobId: 2, title: 'CLAAS LEXION 8900' }],
+      workedGameMs: { 1: 0, 2: 0 },
+    },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.1 },
+  },
+  'tierhof-krank': {
+    description: 'Tierhof mit schlechten Stallwerten: niedrige Gesundheit, wenig Futter und Wasser (R2-A7).',
+    balance: 90000, vanillaLoan: 0, ownedFarmlands: [3],
+    vehicles: [vehicle(1, 70000, 0.35)],
+    placeables: [{ uniqueId: 'plc_00001', value: 150000 }],
+    animals: [{ husbandryUniqueId: 'hus_00001', type: 'COW', count: 45, estimatedValue: 180000 },
+      { husbandryUniqueId: 'hus_00002', type: 'PIG', count: 120, estimatedValue: 36000 }],
+    storage: {},
+    drift: { income: 2200, expense: 2500 },
+    journal: { income: 'SOLD_PRODUCTS', expense: 'BOUGHT_MATERIALS' },
+    // productivity is missing for pigs (and horses) like in PlaceableHusbandryAnimals:getConditionInfos
+    husbandries: [
+      { husbandryUniqueId: 'hus_00001', health: 38, productivity: 0.42, food: 0.08,
+        conditions: [{ title: 'Wasser', ratio: 0.05 }, { title: 'Stroh', ratio: 0.2 }, { title: 'Gülle', ratio: 0.95 },
+          { title: 'Milch', ratio: 0.6 }] },
+      { husbandryUniqueId: 'hus_00002', health: 55, food: 0.3, conditions: [{ title: 'Wasser', ratio: 0.4 }] },
+    ],
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.2 },
+  },
+  'ernte-herbst': {
+    description: 'Herbst (September): erntereifer Mais, wachsende Kartoffeln, verdorrter Weizen, ein brachliegendes Feld, Regen (R2-C).',
+    balance: 120000, vanillaLoan: 0, ownedFarmlands: [2, 4, 6, 7], startPeriod: 7,
+    vehicles: [vehicle(1, 260000, 0.2), vehicle(2, 180000, 0.25)],
+    placeables: [{ uniqueId: 'plc_00001', value: 80000 }],
+    animals: [], storage: { WHEAT: { amount: 60000, capacity: 150000 } },
+    drift: { income: 4000, expense: 3000 },
+    journal: { income: 'HARVEST_INCOME', expense: 'PURCHASE_FUEL' },
+    // only fields on farmlands the player owns are exported (R2-C1)
+    fields: [
+      { farmlandId: 2, fruitType: 'MAIZE', growthState: 7, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'MAIZE', litersPerSqm: 1.1,
+        weedState: 0, stoneLevel: 0, sprayLevel: 2, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+      { farmlandId: 4, fruitType: 'POTATO', growthState: 4, minHarvestingGrowthState: 6, maxHarvestingGrowthState: 6,
+        withered: false, cut: false, fillType: 'POTATO', litersPerSqm: 4,
+        weedState: 1, stoneLevel: 1, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+      { farmlandId: 6, fruitType: 'WHEAT', growthState: 10, minHarvestingGrowthState: 8, maxHarvestingGrowthState: 8,
+        withered: true, cut: false, fillType: 'WHEAT', litersPerSqm: 0.95,
+        weedState: 2, stoneLevel: 0, sprayLevel: 0, limeLevel: 0, plowLevel: 0, groundType: 'SOWN' },
+      { farmlandId: 7, growthState: 0, weedState: 3, stoneLevel: 3, sprayLevel: 0, limeLevel: 0, plowLevel: 0,
+        groundType: 'CULTIVATED' },
+    ],
+    // R2-C: game settings of the soil mechanics (all on, like a new career savegame with every option enabled)
+    fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
+    weather: { raining: true, rainFallScale: 0.6, groundWetness: 0.7 },
+  },
+});
+
 // Simulated vanilla contracts (TODO T-22); the mod reads them from g_missionManager:getMissions().
 export const MISSIONS = [
   { uniqueId: 'mission_001', title: 'Ernte', typeName: 'harvestMission', field: '7', npcIndex: 3, npcTitle: 'Otto Wendler',

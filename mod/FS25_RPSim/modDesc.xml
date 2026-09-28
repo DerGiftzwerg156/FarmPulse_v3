@@ -3,7 +3,7 @@
      Version follows SemVer and is coupled to CHANGELOG.md in the repository root. -->
 <modDesc descVersion="92">
     <author>Keno</author>
-    <version>1.1.2.0</version>
+    <version>1.5.0.0</version>
     <title>
         <en>RP Sim Bridge</en>
         <de>RP-Sim-Bridge</de>
@@ -96,5 +96,49 @@
             <en>Maintenance contract</en>
             <de>Wartungsvertrag</de>
         </text>
+        <!-- Roadmap V2 (R2-Q1) -->
+        <text name="rpsim_money_TAX_PAYMENT">
+            <en>Tax payment</en>
+            <de>Steuerzahlung</de>
+        </text>
+        <text name="rpsim_money_TAX_REFUND">
+            <en>Tax refund</en>
+            <de>Steuererstattung</de>
+        </text>
+        <text name="rpsim_money_FINE">
+            <en>Fine/surcharge</en>
+            <de>Bußgeld/Zuschlag</de>
+        </text>
+        <text name="rpsim_money_FAMILY">
+            <en>Family</en>
+            <de>Familie</de>
+        </text>
+        <text name="rpsim_money_SPONSORING">
+            <en>Sponsoring</en>
+            <de>Sponsoring</de>
+        </text>
+        <text name="rpsim_money_COMPENSATION">
+            <en>Compensation payment</en>
+            <de>Ausgleichszahlung</de>
+        </text>
+        <!-- Roadmap V2 R2-A5: AI message when an employee goes on strike (%s = helper / employee name) -->
+        <text name="rpsim_ai_strike">
+            <en>%s has gone on strike</en>
+            <de>%s legt die Arbeit nieder</de>
+        </text>
+        <!-- Roadmap V2 R2-F3: key help / controls menu -->
+        <text name="input_RPSIM_OPEN_PROMPT">
+            <en>FarmPulse: open question</en>
+            <de>FarmPulse: offene Frage</de>
+        </text>
     </l10n>
+    <!-- Roadmap V2 R2-F3: opens the next waiting yes/no question (rebindable in the controls menu) -->
+    <actions>
+        <action name="RPSIM_OPEN_PROMPT" category="ONFOOT VEHICLE" axisType="HALF"/>
+    </actions>
+    <inputBinding>
+        <actionBinding action="RPSIM_OPEN_PROMPT">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_lalt KEY_j"/>
+        </actionBinding>
+    </inputBinding>
 </modDesc>

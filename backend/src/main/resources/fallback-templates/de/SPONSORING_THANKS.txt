@@ -1,0 +1,6 @@
+Danke für die Unterstützung
+Hallo,
+
+herzlichen Dank für {{amount}} € an den {{club}}! Das spricht sich im Dorf herum.
+
+{{characterName}}

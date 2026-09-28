@@ -104,7 +104,11 @@
       "BREEDING_ADVISOR": "Zuchtverband",
       "ENERGY_SUPPLIER": "Energieversorger",
       "WORKSHOP": "Landmaschinenwerkstatt",
-      "CONTRACTOR": "Lohnunternehmer:in"
+      "CONTRACTOR": "Lohnunternehmer:in",
+      "TAX_OFFICE": "Finanzamt",
+      "TAX_ADVISOR": "Steuerberater:in",
+      "FAMILY": "Familie",
+      "CLUB": "Verein"
     },
     "characterCategory": {
       "MANDATORY": "Pflichtrolle",
@@ -322,7 +326,13 @@
       "VET_INVOICE": "Tierarztrechnung",
       "LIVESTOCK_PREMIUM": "Vermittlungsprämie",
       "LEASE_PAYMENT": "Pacht",
-      "MAINTENANCE_FEE": "Wartungsvertrag"
+      "MAINTENANCE_FEE": "Wartungsvertrag",
+      "TAX_PAYMENT": "Steuerzahlung",
+      "TAX_REFUND": "Steuererstattung",
+      "FINE": "Bußgeld/Zuschlag",
+      "FAMILY": "Familie",
+      "SPONSORING": "Sponsoring",
+      "COMPENSATION": "Ausgleichszahlung"
     },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
@@ -358,7 +368,8 @@
     "contractKind": {
       "INSURANCE": "Sturm- und Hagelversicherung",
       "LEASE": "Pacht",
-      "MAINTENANCE": "Wartungsvertrag"
+      "MAINTENANCE": "Wartungsvertrag",
+      "TAX_ADVISOR": "Steuerberatung"
     },
     "contractStatus": {
       "OFFERED": "Angebot",
@@ -379,7 +390,12 @@
       "LIVESTOCK_OFFER": "Angebot Viehhandel",
       "BREEDING_ADVICE": "Zuchtberatung",
       "REPAIR": "Reparatur",
-      "MISSION_REFERRAL": "Vermittelter Auftrag"
+      "MISSION_REFERRAL": "Vermittelter Auftrag",
+      "COMPENSATION_CLAIM": "Ausgleichsforderung",
+      "TAX_BILL": "Steuerbescheid",
+      "AUTHORITY_INSPECTION": "Kontrolle des Amts",
+      "SPONSORING_REQUEST": "Sponsoring-Anfrage",
+      "INVITATION": "Einladung"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -411,7 +427,14 @@
       "COMPLETED": "Erledigt",
       "FAILED": "Nicht geschafft",
       "NOT_TAKEN": "Nicht angenommen",
-      "GONE": "Im Spiel beendet"
+      "GONE": "Im Spiel beendet",
+      "SUPERSEDED": "Durch den Jahresbescheid ersetzt",
+      "IN_ORDER": "Ohne Beanstandung",
+      "REQUIREMENT": "Auflage erteilt",
+      "FINED": "Bußgeld verhängt",
+      "DECLINED": "Abgesagt",
+      "SPONSORED": "Gesponsert",
+      "IGNORED": "Nicht beantwortet"
     },
     "animalType": {
       "COW": "Rinder",
@@ -437,6 +460,104 @@
       "TRANSFER_FAILED": "Übergabe im Spiel fehlgeschlagen",
       "TERMINATED_BY_PLAYER": "von dir gekündigt",
       "FEE_MISSED": "wegen unbezahlter Gebühren"
+    },
+    "financeCategory": {
+      "HARVEST_INCOME": "Ernteverkauf",
+      "SOLD_PRODUCTS": "Produktverkauf",
+      "MISSIONS": "Aufträge",
+      "PROPERTY_INCOME": "Einnahmen aus Gebäuden",
+      "SOLD_ANIMALS": "Tierverkauf",
+      "PURCHASE_FUEL": "Kraftstoff",
+      "PURCHASE_SEEDS": "Saatgut",
+      "PURCHASE_FERTILIZER": "Dünger und Pflanzenschutz",
+      "PURCHASE_WATER": "Wasser",
+      "PURCHASE_PALLETS": "Paletten",
+      "PURCHASE_CONSUMABLES": "Verbrauchsmaterial",
+      "BOUGHT_MATERIALS": "Materialeinkauf",
+      "VEHICLE_RUNNING_COSTS": "Betriebskosten Fahrzeuge",
+      "VEHICLE_REPAIR": "Reparaturen",
+      "LEASING_COSTS": "Leasing",
+      "PROPERTY_MAINTENANCE": "Unterhalt Gebäude",
+      "AI": "Helferlohn",
+      "NEW_ANIMALS_COST": "Tierkauf",
+      "SHOP_PROPERTY_BUY": "Kauf von Gebäuden",
+      "SHOP_VEHICLE_SELL": "Fahrzeugverkauf",
+      "UNKNOWN": "Unbekannte Buchung",
+      "RPSIM_CREDIT_DISBURSEMENT": "Kreditauszahlung",
+      "RPSIM_CREDIT_INSTALLMENT": "Kreditrate",
+      "RPSIM_CREDIT_PENALTY": "Mahngebühr",
+      "RPSIM_CREDIT_CALLBACK": "Fälligstellung",
+      "RPSIM_SALARY_PAYMENT": "Gehälter",
+      "RPSIM_EMPLOYEE_EFFECT": "Arbeitsleistung",
+      "RPSIM_SUBSIDY": "Förderung",
+      "RPSIM_STARTING_CAPITAL_ADJUSTMENT": "Ausgleich Startkapital",
+      "RPSIM_FARMLAND_PURCHASE": "Feldkauf",
+      "RPSIM_FARMLAND_SALE": "Feldverkauf",
+      "RPSIM_OTHER": "FarmPulse sonstiges",
+      "RPSIM_INSURANCE_PREMIUM": "Versicherungsprämie",
+      "RPSIM_INSURANCE_PAYOUT": "Versicherungsleistung",
+      "RPSIM_DAMAGE": "Unwetterschaden",
+      "RPSIM_WILDLIFE_COMPENSATION": "Wildschadenersatz",
+      "RPSIM_VET_INVOICE": "Tierarzt",
+      "RPSIM_LIVESTOCK_PREMIUM": "Vermittlungsprämie",
+      "RPSIM_LEASE_PAYMENT": "Pacht",
+      "RPSIM_MAINTENANCE_FEE": "Wartungsvertrag",
+      "RPSIM_TAX_PAYMENT": "Steuerzahlung",
+      "RPSIM_TAX_REFUND": "Steuererstattung",
+      "RPSIM_FINE": "Bußgeld/Zuschlag",
+      "RPSIM_FAMILY": "Familie",
+      "RPSIM_SPONSORING": "Sponsoring",
+      "RPSIM_COMPENSATION": "Ausgleichszahlung"
+    },
+    "financeClass": {
+      "OPERATING_INCOME": "Einnahme",
+      "OPERATING_EXPENSE": "Ausgabe",
+      "INVESTMENT": "Investition",
+      "DIVESTMENT": "Anlagenverkauf",
+      "FINANCING": "Finanzierung",
+      "IGNORE": "nicht operativ"
+    },
+    "fieldPhase": {
+      "EMPTY": "leer",
+      "GROWING": "wächst",
+      "HARVESTABLE": "erntereif",
+      "HARVESTED": "abgeerntet",
+      "WITHERED": "verdorrt"
+    },
+    "festival": {
+      "MAIBAUM": "Maibaumaufstellen",
+      "SCHUETZENFEST": "Schützenfest",
+      "FEUERWEHRFEST": "Feuerwehrfest",
+      "ERNTEDANKFEST": "Erntedankfest",
+      "WEIHNACHTSMARKT": "Weihnachtsmarkt"
+    },
+    "club": {
+      "SHOOTING_CLUB": "Schützenverein",
+      "FIRE_BRIGADE": "Freiwillige Feuerwehr",
+      "SPORTS_CLUB": "Sportverein"
+    },
+    "authorityRule": {
+      "CULTIVATION_DUTY": "Bewirtschaftungspflicht",
+      "ANIMAL_WELFARE": "Tierwohl"
+    },
+    "taxBill": {
+      "PREPAYMENT": "Vorauszahlung",
+      "ASSESSMENT": "Nachzahlung",
+      "AUDIT": "Nachforderung Betriebsprüfung"
+    },
+    "auditStatus": {
+      "ANNOUNCED": "Betriebsprüfung angekündigt – das Ergebnis kommt per Post.",
+      "DONE": "Betriebsprüfung abgeschlossen."
+    },
+    "promptKind": {
+      "CALL": "Eingehende Anrufe annehmen oder ablehnen",
+      "CONTRACT_OFFER": "Angebote für Pacht, Wartung und Versicherung sowie Pachtverlängerungen",
+      "WILDLIFE_OFFER": "Entschädigungsangebot des Jagdpächters annehmen",
+      "CREDIT_COUNTER": "Gegenangebot der Bank annehmen oder ablehnen",
+      "INVITATION": "Einladungen zu Festen zu- oder absagen",
+      "COMPENSATION_CLAIM": "Ausgleichsforderung für einen Feldkauf zahlen oder ablehnen",
+      "TAX_BILL": "Steuerbescheide bezahlen",
+      "TAX_ADVISOR": "Angebot der Steuerberatung annehmen oder ablehnen"
     }
   },
   "onboarding": {
@@ -479,7 +600,13 @@
     "noDetected": "Noch kein unverknüpfter Spielstand erkannt. Lade den Spielstand in FS25 und klicke auf „Aktualisieren“.",
     "unknownMap": "Unbekannte Karte",
     "lastSeen": "zuletzt gesehen {at}",
-    "confirm": "Bestätigen & verknüpfen"
+    "confirm": "Bestätigen & verknüpfen",
+    "helperIntro": "Maschinenführer fahren später die Helfer im Spiel – mit ihrem Namen und ohne zusätzlichen Helferlohn. Im strengen Modus (Einstellungen) gibt es ohne Maschinenführer keine Helfer.",
+    "family": "Familie",
+    "familyIntro": "Wer gehört zur Familie? Jede Angabe ist einzeln wählbar – ohne Häkchen führst du den Hof alleine.",
+    "familyParents": "Eltern (bei geerbtem Hof oder Rückkehr auf dem Altenteil)",
+    "familyPartner": "Partner:in",
+    "familyChildren": "Kinder"
   },
   "mailbox": {
     "filter": "Filter",
@@ -573,7 +700,56 @@
     "deferralHint": "Die Bank prüft die Stundung nach festen Regeln – deine Begründung ändert daran nichts.",
     "requestDeferral": "Stundung anfragen",
     "deferralGranted": "Stundung gewährt – die nächste Rate wird verschoben.",
-    "deferralDenied": "Stundung abgelehnt"
+    "deferralDenied": "Stundung abgelehnt",
+    "finance": {
+      "title": "Hofbuchhaltung",
+      "unavailable": "Die Hofbuchhaltung braucht die aktuelle Version des Mods FS25_RPSim. Bis dahin rechnet die Bank wie bisher mit dem Kontostand.",
+      "empty": "Noch keine Buchungen erfasst. Sobald im Spiel Geld fließt, erscheinen hier Einnahmen und Ausgaben je Monat.",
+      "lastMonth": "Letzter abgeschlossener Monat: {month}",
+      "year": "J{year}",
+      "income": "Einnahmen",
+      "expenses": "Ausgaben",
+      "result": "Monatsergebnis",
+      "profit": "Gewinn aus dem laufenden Betrieb",
+      "loss": "Verlust aus dem laufenden Betrieb",
+      "investment": "Investitionen",
+      "divestment": "Anlagenverkäufe",
+      "financing": "Finanzierung",
+      "month": "Monat",
+      "running": "läuft noch",
+      "other": "Sonstige",
+      "chartLabel": "Einnahmen und Ausgaben des laufenden Betriebs je Monat, gestapelt nach Kategorie, mit Monatsergebnis",
+      "note": "Nur der laufende Betrieb. Investitionen, Anlagenverkäufe und Kredite stehen in der Tabelle. * = Monat läuft noch."
+    },
+    "tax": {
+      "title": "Steuern",
+      "unavailable": "Die Steuer rechnet mit der Hofbuchhaltung und braucht die aktuelle Version des Mods FS25_RPSim. Ohne Buchungsjournal gibt es keinen Bescheid.",
+      "estimated": "Voraussichtliche Steuer J{year}",
+      "rate": "{rate} % auf den Gewinn über {allowance} Freibetrag",
+      "nextPrepayment": "Nächste Vorauszahlung",
+      "none": "keine",
+      "dueIn": "fällig im {period}",
+      "openBills": "Offene Bescheide",
+      "estimateNote": "Schätzung aus den abgeschlossenen Monaten des laufenden Jahres, noch ohne Abschreibung und Zinsen. Der Bescheid kommt zu Beginn des nächsten Jahres.",
+      "payBills": "Bescheide unter „Verträge & Vorgänge“ bezahlen",
+      "assessment": "Bescheid J{year} ({months} Monate)",
+      "income": "Betriebseinnahmen",
+      "expense": "Betriebsausgaben (ohne Steuern und Bußgelder)",
+      "depreciation": "Abschreibung",
+      "interest": "Kreditzinsen",
+      "profit": "Gewinn",
+      "allowance": "Freibetrag",
+      "taxable": "Zu versteuern ({rate} %)",
+      "advisorReduction": "Abzug Steuerberatung",
+      "tax": "Steuer",
+      "prepayments": "Geleistete Vorauszahlungen",
+      "backPayment": "Nachzahlung",
+      "refund": "Erstattung",
+      "advisorActive": "Steuerberatung beauftragt",
+      "requestAdvisor": "Steuerberatung anfragen",
+      "advisorHint": "Senkt die Steuer, erinnert an Fristen und macht eine Betriebsprüfung unwahrscheinlicher – gegen ein Monatshonorar.",
+      "advisorRequested": "Das Angebot liegt unter"
+    }
   },
   "employees": {
     "staff": "Team",
@@ -622,7 +798,10 @@
     "timeOffGranted": "{name} hat frei bekommen.",
     "dismissed": "{name} wurde gekündigt.",
     "dismissTitle": "Mitarbeiter kündigen",
-    "dismissText": "Willst du {name} wirklich kündigen? Das lässt sich nicht rückgängig machen."
+    "dismissText": "Willst du {name} wirklich kündigen? Das lässt sich nicht rückgängig machen.",
+    "helperHint": "Deine Maschinenführer fahren die Helfer im Spiel. Helfer ohne freien Maschinenführer kosten den normalen Spiellohn.",
+    "strike": "Streikt",
+    "hours": "Als Helfer gefahren: {hours} h in diesem Monat (Vormonat {last} h)"
   },
   "farmland": {
     "map": "Feldübersicht",
@@ -683,7 +862,11 @@
       "LEADING": "Du liegst vorn."
     },
     "notTradeable": "Diese Fläche ist im Spiel nicht kaufbar (z. B. Ortschaft oder Straße) und wird nicht gehandelt.",
-    "notTradeableBadge": "nicht handelbar"
+    "notTradeableBadge": "nicht handelbar",
+    "familyField": "Familienfeld",
+    "markFamilyField": "Als Familienfeld markieren",
+    "clearFamilyField": "Markierung entfernen",
+    "familyFieldHint": "Das Familienfeld liegt deiner Familie am Herzen – verkaufst du es, kostet das viel Vertrauen."
   },
   "market": {
     "storageValue": "Wert im Silo",
@@ -794,7 +977,32 @@
     "game": "Spielstand",
     "toneFixed": "Der Ton wurde im Onboarding festgelegt und bleibt für diesen Spielstand fest.",
     "detectedMods": "Erkannte Mods mit Überschneidungen",
-    "noDetectedMods": "Keine bekannten Konflikt-Mods aktiv."
+    "noDetectedMods": "Keine bekannten Konflikt-Mods aktiv.",
+    "helpers": {
+      "title": "Helfer im Spiel",
+      "intro": "Angestellte Maschinenführer fahren die FS25-Helfer: Im Spiel steht ihr Name, und ihre gefahrene Zeit bestimmt die Arbeitsbelastung.",
+      "wage": "Helferlohn über das Gehalt: Fährt ein Maschinenführer, bucht das Spiel keinen Helferlohn.",
+      "strict": "Strenger Modus: höchstens so viele Helfer wie aktive Maschinenführer",
+      "strictHint": "Ohne Maschinenführer gibt es im strengen Modus keine Helfer. Streikende oder freigestellte Mitarbeiter zählen nicht.",
+      "untracked": "Der Mod meldet noch keine Helfer – die Einstellungen wirken erst mit der aktuellen Mod-Version."
+    },
+    "fields": {
+      "title": "Felder",
+      "hints": "Hinweise der Genossenschaft zur Feldarbeit (erntereif, Kalk, Pflügen) – höchstens einer pro Woche",
+      "untracked": "Der Mod meldet noch keine Felder – Hinweise und Feldreaktionen wirken erst mit der aktuellen Mod-Version."
+    },
+    "bypass": {
+      "title": "Kredit und Felder im Spielmenü",
+      "reactions": "Charaktere reagieren, wenn du den Kredit oder den Feldkauf im Spielmenü nutzt",
+      "hint": "Gesperrt wird nichts: Die Bank meldet sich bei einem Kredit aus dem Finanzmenü, frühere Feldbesitzer bei einem Kauf über ihren Kopf hinweg.",
+      "surcharge": "Neue Kredite der Bank kosten derzeit {percent} Prozentpunkte mehr Zinsen, bis der Kredit aus dem Spielmenü getilgt ist."
+    },
+    "prompts": {
+      "title": "Fragen im Spiel",
+      "hint": "Einfache Ja/Nein-Entscheidungen erscheinen als Dialog direkt im Spiel – immer zu den Bedingungen, die hier im Browser stehen. Gespräche, Gegenforderungen und Formulare mit Beträgen bleiben im Browser.",
+      "off": "Fragen im Spiel sind in der Konfiguration abgeschaltet (rpsim.bridge.ingame-prompts).",
+      "key": "Ist gerade ein Menü offen, wartet die Frage. Mit der Taste „FarmPulse: offene Frage“ (Steuerung im Spiel, Standard Alt+J) öffnest du sie jederzeit, auch im Fahrzeug."
+    }
   },
   "notices": {
     "title": "Hinweise aus dem Spiel",
@@ -862,6 +1070,25 @@
     "livestockHint": "Der Handel selbst läuft im Spiel: Kaufe oder verkaufe die Tiere wie gewohnt. Die Prämie zahlt der Händler für jedes Tier, um das sich dein Bestand bis zur Frist in die vereinbarte Richtung ändert.",
     "animals": "{quantity} {animal}",
     "invoice": "Rechnung {amount}",
-    "measureHint": "Gemeinsame Maßnahme: Du beteiligst dich an Drückjagd oder Zaun, bekommst den angebotenen Ersatz, und für einige Monate gibt es seltener Wildschäden. Das Dorf rechnet es dir an – ein Streit dagegen spricht sich herum."
+    "measureHint": "Gemeinsame Maßnahme: Du beteiligst dich an Drückjagd oder Zaun, bekommst den angebotenen Ersatz, und für einige Monate gibt es seltener Wildschäden. Das Dorf rechnet es dir an – ein Streit dagegen spricht sich herum.",
+    "compensationClaim": "{name} verlangt {amount} Ausgleich, weil du das Feld über den Kopf hinweg im Spielmenü gekauft hast.",
+    "payCompensation": "Ausgleich zahlen",
+    "compensationHint": "Zahlst du nicht bis zur Frist, gilt die Forderung als abgelehnt – das kostet weiteres Vertrauen.",
+    "taxBill": "{title}: {amount}",
+    "lateFees": "zzgl. {amount} Säumniszuschlag",
+    "payTax": "Zahlen ({amount})",
+    "taxHint": "Der Betrag wird erst abgebucht, wenn du auf „Zahlen“ klickst. Nach der Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, später droht das Finanzamt mit Pfändung.",
+    "inspection": "Kontrolle: {rule}",
+    "inspectionRequirement": "Auflage: Der Mangel muss bis zur neuen Frist behoben sein, sonst folgt ein Bußgeld.",
+    "inspectionHint": "Das Amt prüft zur Frist, ob der Mangel noch besteht. Behebe ihn im Spiel – dann bleibt es ohne Beanstandung.",
+    "sponsoring": "{club} bittet um Unterstützung.",
+    "sponsor": "{amount} spenden",
+    "sponsoringHint": "Ein Sponsoring hebt dein Ansehen im Dorf. Ablehnen kostet nur ein wenig Vertrauen beim Verein.",
+    "invitation": "Einladung zum {festival}",
+    "rsvpAccept": "Zusagen",
+    "rsvpDecline": "Absagen",
+    "invitationHint": "Eine Zusage freut die Gastgeber. Absagen ist in Ordnung – nur gar nicht zu antworten kommt schlecht an.",
+    "fine": "Bußgeld {amount}",
+    "paid": "Bezahlt {amount}"
   }
 }

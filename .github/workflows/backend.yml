@@ -31,6 +31,10 @@ jobs:
       - name: Bridge simulator dependencies
         working-directory: tools/bridge-simulator
         run: npm ci
+      # Roadmap V2 (R2-Q2): the simulator's own tests validate every scenario against the JSON schemas
+      - name: Bridge simulator tests (JSON schema validation)
+        working-directory: tools/bridge-simulator
+        run: npm test
       - name: Build and test (mvn verify, JaCoCo)
         working-directory: backend
         run: mvn -B verify

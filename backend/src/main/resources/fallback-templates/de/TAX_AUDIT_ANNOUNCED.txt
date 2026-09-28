@@ -1,0 +1,7 @@
+Ankündigung einer Betriebsprüfung
+Guten Tag,
+
+für das Jahr {{taxYear}} kündigen wir eine Betriebsprüfung an. Das Ergebnis erhalten Sie in etwa {{auditDays}} Tagen.
+
+Mit freundlichen Grüßen
+{{characterName}}

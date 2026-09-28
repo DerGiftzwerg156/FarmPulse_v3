@@ -28,12 +28,25 @@
     "BREEDING_ADVISOR": { "title": "Zuchtberater/in des Zuchtverbands", "description": "berät zu Zucht, Nachwuchs und Tiergesundheit" },
     "ENERGY_SUPPLIER": { "title": "Vertreter/in des Energieversorgers", "description": "kauft Biomasse für Biogas und handelt mit Strom" },
     "WORKSHOP": { "title": "Meister/in der Landmaschinenwerkstatt", "description": "wartet und repariert Traktoren und Geräte" },
-    "CONTRACTOR": { "title": "Lohnunternehmer/in", "description": "vermittelt Feldarbeiten zwischen den Höfen" }
+    "CONTRACTOR": { "title": "Lohnunternehmer/in", "description": "vermittelt Feldarbeiten zwischen den Höfen" },
+    "TAX_OFFICE": { "title": "Sachbearbeiter/in beim Finanzamt", "description": "setzt die Steuer fest und achtet auf Fristen" },
+    "TAX_ADVISOR": { "title": "Steuerberater/in", "description": "hilft bei der Steuer und behält die Fristen im Blick" },
+    "FAMILY": { "title": "Familie", "description": "gehört zur Familie auf dem Hof" },
+    "CLUB": { "title": "Vereinsvorsitz", "description": "führt einen Verein im Dorf" }
   },
   "jobRoles": {
     "MACHINE_OPERATOR": "Maschinenführer/in",
     "MECHANIC": "Mechaniker/in",
     "ANIMAL_KEEPER": "Tierpfleger/in",
     "OFFICE_CLERK": "Bürokraft"
+  },
+  "affiliations": {
+    "PARENT": "Elternteil auf dem Altenteil",
+    "PARENT_AWAY": "Elternteil",
+    "PARTNER": "Partner/in",
+    "CHILD": "Kind",
+    "SHOOTING_CLUB": "Vorsitz des Schützenvereins",
+    "FIRE_BRIGADE": "Wehrführung der Freiwilligen Feuerwehr",
+    "SPORTS_CLUB": "Vorsitz des Sportvereins"
   }
 }

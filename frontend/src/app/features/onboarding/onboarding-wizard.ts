@@ -62,6 +62,10 @@ export class OnboardingWizard {
     legacyLoanAmount: [50000, [Validators.min(0)]],
     freeText: ['', [Validators.maxLength(2000)]],
     tonePreset: ['REALISTIC', Validators.required],
+    // Roadmap V2 R2-E3: each family switch on its own, all off = alone
+    familyParents: [false],
+    familyPartner: [false],
+    familyChildren: [false],
   });
 
   readonly freeTextEmpty = signal(true);
@@ -112,6 +116,9 @@ export class OnboardingWizard {
       legacyLoanAmount: v.withLegacyLoan ? Number(v.legacyLoanAmount) : null,
       tonePreset: v.tonePreset,
       initialEmployees: [...this.employees()],
+      familyParents: v.familyParents,
+      familyPartner: v.familyPartner,
+      familyChildren: v.familyChildren,
     };
   }
 

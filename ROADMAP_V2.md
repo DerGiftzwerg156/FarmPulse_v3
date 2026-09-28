@@ -51,43 +51,56 @@ kleinen Mod-Eingriff braucht. D ist unabhängig und kann jederzeit dazwischen um
 
 Arbeiten, die jeder Bereich braucht. Einmal sauber anlegen, dann bei jedem Punkt nur ergänzen.
 
+**Stand 28.09.2026: umgesetzt.** Q legt den Vertrag an (Schemas, DTOs, Validator, Simulator, Doku). Das Auslesen der
+Spielwerte im Mod folgt mit B1, A4, A7, C1 und C2; bis dahin fehlen die Blöcke in `farm_facts.json`. Entscheidungen
+(siehe `QUESTIONS.md`): `finances = { periods: [{ year, period, byType }] }`, Einträge in `husbandries[]` tragen die
+`husbandryUniqueId` aus `assets.animals`, nur die neuen Simulator-Szenarien liefern die Blöcke.
+
 ### R2-Q1 Bridge-Schema erweitern, ohne alte Stände zu brechen
 
-- [ ] Neue Blöcke in `farm_facts.json` als optionale Felder anlegen (wie `calendar` und `missions` in V1):
+- [x] Neue Blöcke in `farm_facts.json` als optionale Felder anlegen (wie `calendar` und `missions` in V1):
   `finances` (B), `workforce` (A), `husbandries` (A7), `fields` und `weather` (C).
-- [ ] `schemaVersion` bleibt `1`, solange alle neuen Felder optional sind. `BridgeDtos` und `BridgeValidator` lesen
+  Mod: `RPSimFarmFacts.build` normalisiert die Blöcke, sobald der Adapter sie liefert.
+- [x] `schemaVersion` bleibt `1`, solange alle neuen Felder optional sind. `BridgeDtos` und `BridgeValidator` lesen
   fehlende Blöcke als „nicht vorhanden“ (nicht als leer), damit das Backend zwischen „Mod zu alt“ und „nichts da“
   unterscheiden kann.
-- [ ] Neue Anweisungstypen im Mod registrieren (`RPSimInstructions.TYPES`) und validieren:
+- [x] Neue Anweisungstypen im Mod registrieren (`RPSimInstructions.TYPES`) und validieren:
   `EMPLOYEE_ROSTER` (A), `PROMPT` (F). `REPAIR_VEHICLE` bekommt ein optionales Feld `targetDamage` (A6).
-- [ ] Neue `MoneyReason`-Werte in Mod (`RPSimInstructions.MONEY_REASONS`), Backend (`domain/MoneyReason.java`) und
+  `EMPLOYEE_ROSTER` und `PROMPT` quittiert der Mod bis A0 bzw. F2 mit `FAILED` / `NOT_SUPPORTED`; `targetDamage`
+  wirkt schon (eine Reparatur erhöht den Schaden nie).
+- [x] Neue `MoneyReason`-Werte in Mod (`RPSimInstructions.MONEY_REASONS`), Backend (`domain/MoneyReason.java`) und
   Buchungstiteln (`modDesc.xml`, `rpsim_money_<REASON>`): `TAX_PAYMENT`, `TAX_REFUND`, `FINE`, `FAMILY`,
   `SPONSORING`, `COMPENSATION`.
-- [ ] `docs/dev/bridge-protocol.md` je Feld mit Quelle im FS25-Code ergänzen.
+- [x] `docs/dev/bridge-protocol.md` je Feld mit Quelle im FS25-Code ergänzen.
 
 **Warum:** V1 hat gezeigt, dass optionale Felder (Kalender, Aufträge) problemlos nachrüstbar sind. Ein harter
 Versionssprung würde bestehende Spielstände und den Simulator gleichzeitig brechen.
 
 ### R2-Q2 Bridge-Simulator und Tests
 
-- [ ] `tools/bridge-simulator` erzeugt jeden neuen Block (Szenarien z. B. `helfer-hof`, `tierhof-krank`,
+- [x] `tools/bridge-simulator` erzeugt jeden neuen Block (Szenarien z. B. `helfer-hof`, `tierhof-krank`,
   `ernte-herbst`) und versteht die neuen Anweisungstypen.
-- [ ] JSON-Schemas des Simulators erweitern (Validierung in CI).
-- [ ] Mod-Tests (`mod/tests/`) für jede neue Adapter-Funktion mit gemockten FS25-Globals, wie in
-  `test_game_adapter.lua`.
-- [ ] Backend: Grenzwert-Tests für jede neue Formel (wie `CreditFormulaTest`), End-to-End-Test gegen den Simulator.
+- [x] JSON-Schemas des Simulators erweitern (Validierung in CI: `npm test` des Simulators läuft jetzt im
+  Backend-Workflow).
+- [x] Mod-Tests (`mod/tests/`) für jede neue Adapter-Funktion mit gemockten FS25-Globals, wie in
+  `test_game_adapter.lua`. In Q: Teilreparatur (`repairVehicle` mit `targetDamage`), Normalisierung der Blöcke,
+  Validierung der neuen Anweisungen. Gilt weiter für jede Adapter-Funktion der Features.
+- [x] Backend: Grenzwert-Tests für jede neue Formel (wie `CreditFormulaTest`), End-to-End-Test gegen den Simulator.
+  Q bringt keine Formel; `BridgeValidatorTest` und `SimulatorScenariosEndToEndTest` prüfen die neuen Blöcke.
 
 ### R2-Q3 Konfiguration und Doku
 
-- [ ] Alle neuen Werte unter `rpsim.formulas.*` in `backend/src/main/resources/application.yml` und
+- [x] Alle neuen Werte unter `rpsim.formulas.*` in `backend/src/main/resources/application.yml` und
   `config/RpsimProperties.java`. **Achtung:** `ConfigurationReferenceDocTest` schlägt fehl, wenn ein Schlüssel in
-  `docs/dev/configuration-reference.md` fehlt.
-- [ ] Neue Mod-Schalter in `RPSimConfig.DEFAULTS` (überschreibbar über `rpsim_config.xml`).
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md` je Feature, Eintrag in `CHANGELOG.md`.
+  `docs/dev/configuration-reference.md` fehlt. Q bringt keine neuen Werte; die Regel gilt für jedes Feature.
+- [x] Neue Mod-Schalter in `RPSimConfig.DEFAULTS` (überschreibbar über `rpsim_config.xml`). Q bringt keine neuen
+  Schalter (`financeJournalPeriods`, `fieldExportIntervalMs` kommen mit B1 bzw. C1).
+- [x] Spieler-Doku `docs/user-guide/funktionen.md` je Feature, Eintrag in `CHANGELOG.md`. Q ist für Spieler nicht
+  sichtbar, daher nur der `CHANGELOG`-Eintrag.
 
 ### R2-Q4 Prüfliste für den Spieltest erweitern
 
-- [ ] In `docs/dev/manual-test-plan.md` einen neuen Abschnitt **„10. Roadmap V2 im echten FS25“** anlegen. Jeder
+- [x] In `docs/dev/manual-test-plan.md` einen neuen Abschnitt **„10. Roadmap V2 im echten FS25“** anlegen. Jeder
   🟡-Punkt dieser Roadmap bekommt dort eine Zeile mit „Wie prüfen“ und „Erwartet“.
 
 ---
@@ -102,17 +115,25 @@ der Hof sein Geld verdient.
 **Idee:** Der Mod protokolliert jede Buchung des Spiels nach FS25-Kategorie (`MoneyType`). Das Backend bekommt damit
 eine echte Einnahmen-/Ausgabenrechnung.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Als Investition zählen nur im FS25-Code
+belegte Namen (`SHOP_PROPERTY_BUY`, Desinvestition `SHOP_VEHICLE_SELL`). Der Name des Fahrzeugkaufs ist nicht belegt;
+bis er im Spiel geprüft ist (Testplan 10.9), zählt ein Fahrzeugkauf operativ. Die Akzeptanz „Maschinenkauf senkt den
+Cashflow nicht“ gilt deshalb erst, wenn der Name in `rpsim.formulas.finance.categories` steht. Der Cashflow ist der
+Durchschnitt der abgeschlossenen Monate im Fenster, die Frühwarnung kommt nur bei laufendem Bankkredit, das
+Monatsergebnis der Oberfläche ist das operative Ergebnis. Der Name eines `moneyType` wird per Rückwärts-Abgleich mit
+der Tabelle `MoneyType` bestimmt; nicht gefundene Buchungen heißen `UNKNOWN`.
+
 ### R2-B1 Buchungsjournal im Mod
 
-- [ ] Hook auf `Farm.changeBalance` (`Utils.appendedFunction`): Betrag und `moneyType` jeder Buchung der
+- [x] Hook auf `Farm.changeBalance` (`Utils.appendedFunction`): Betrag und `moneyType` jeder Buchung der
   Spieler-Farm erfassen.
-- [ ] Summen je FS25-Periode (Monat) und Kategorie bilden, z. B.
+- [x] Summen je FS25-Periode (Monat) und Kategorie bilden, z. B.
   `{ year: 2, period: 8, byType: { HARVEST_INCOME: 48200, PURCHASE_FUEL: -3100, AI: -1250 } }`.
-- [ ] Die letzten N Perioden (Konfig `financeJournalPeriods`, Vorschlag 13) im Savegame-XML speichern
+- [x] Die letzten N Perioden (Konfig `financeJournalPeriods`, Vorschlag 13) im Savegame-XML speichern
   (`import/Persistence.lua`) und als `farm_facts.finances` exportieren.
-- [ ] Eigene RPSim-Buchungen kennzeichnen: In `RPSimGameAdapter:addMoney` ein Flag um den Aufruf setzen, damit diese
+- [x] Eigene RPSim-Buchungen kennzeichnen: In `RPSimGameAdapter:addMoney` ein Flag um den Aufruf setzen, damit diese
   Beträge unter `RPSIM_<REASON>` statt unter der FS25-Kategorie landen.
-- [ ] Die Zähler sind kumulativ je Periode. Nach einem Neuladen ohne Speichern springen sie zurück, das Backend
+- [x] Die Zähler sind kumulativ je Periode. Nach einem Neuladen ohne Speichern springen sie zurück, das Backend
   übernimmt einfach den neuen Stand (kein Delta-Protokoll nötig).
 
 **Beleg:** ✅ `Farm:changeBalance(amount, moneyType)` ist in der LUADOC dokumentiert (`script/Farms/Farm.md`, „Add or
@@ -132,36 +153,36 @@ remove money from the farm“), ebenso `Farm:getId()`. ✅ Die Kategorien sind i
 
 ### R2-B2 Cashflow der Bank aus dem Journal
 
-- [ ] Neue Konfiguration `rpsim.formulas.finance.categories`: jede Kategorie gehört zu genau einer Klasse
+- [x] Neue Konfiguration `rpsim.formulas.finance.categories`: jede Kategorie gehört zu genau einer Klasse
   `OPERATING_INCOME`, `OPERATING_EXPENSE`, `INVESTMENT`, `DIVESTMENT`, `FINANCING` oder `IGNORE`.
   Vorschlag: `HARVEST_INCOME`, `SOLD_PRODUCTS`, `MISSIONS`, `PROPERTY_INCOME` → Einnahmen; `PURCHASE_*`, `AI`,
   `VEHICLE_RUNNING_COSTS`, `VEHICLE_REPAIR`, `LEASING_COSTS`, `BOUGHT_MATERIALS` → Ausgaben; Fahrzeug- und
   Gebäudekäufe → Investition; `RPSIM_CREDIT_*` → Finanzierung.
-- [ ] Unbekannte Kategorien (Mods, künftige FS25-Versionen) nach Vorzeichen als operativ werten und einmal loggen.
-- [ ] `CreditScoringService`: Liegt ein Journal vor, ist der operative Cashflow = Einnahmen + Ausgaben der letzten
+- [x] Unbekannte Kategorien (Mods, künftige FS25-Versionen) nach Vorzeichen als operativ werten und einmal loggen.
+- [x] `CreditScoringService`: Liegt ein Journal vor, ist der operative Cashflow = Einnahmen + Ausgaben der letzten
   `cashflow-window-days`. Sonst weiter das V1-Verfahren (Kontostand-Differenz).
-- [ ] Investitionen gehen **nicht** in den Cashflow ein, sondern verändern nur das Vermögen. So senkt ein
+- [x] Investitionen gehen **nicht** in den Cashflow ein, sondern verändern nur das Vermögen. So senkt ein
   Maschinenkauf die Bonität nicht mehr fälschlich wie ein Verlust.
 
 ### R2-B3 Echte Leasingkosten
 
-- [ ] `LEASING_COSTS` je Periode ersetzt die Schätzung `FactsService.leasingCostPerMonth` in der Bonitätsprüfung.
-- [ ] Die Kosten pro Fahrzeug bleiben unbekannt. Für die Bank reicht die Summe.
-- [ ] Offenen Punkt T-04 in `docs/dev/offene-technische-punkte.md` als gelöst markieren.
+- [x] `LEASING_COSTS` je Periode ersetzt die Schätzung `FactsService.leasingCostPerMonth` in der Bonitätsprüfung.
+- [x] Die Kosten pro Fahrzeug bleiben unbekannt. Für die Bank reicht die Summe.
+- [x] Offenen Punkt T-04 in `docs/dev/offene-technische-punkte.md` als gelöst markieren.
 
 ### R2-B4 Hofbuchhaltung in der Oberfläche
 
-- [ ] Neue Karte bzw. Tab unter **Bank & Finanzen**: Einnahmen und Ausgaben je Monat nach Kategorie (gestapeltes
+- [x] Neue Karte bzw. Tab unter **Bank & Finanzen**: Einnahmen und Ausgaben je Monat nach Kategorie (gestapeltes
   Balkendiagramm, mit *Tabelle* als Zahlen wie beim Preisverlauf) und ein Monatsergebnis.
-- [ ] Deutsche Namen der Kategorien in `frontend/src/app/core/i18n/de.json`; unbekannte zeigen den Rohnamen.
+- [x] Deutsche Namen der Kategorien in `frontend/src/app/core/i18n/de.json`; unbekannte zeigen den Rohnamen.
 
 ### R2-B5 Charaktere reagieren auf echte Zahlen
 
-- [ ] **Bank-Frühwarnung:** Ist der operative Cashflow zwei Perioden in Folge negativ, meldet sich die Bank, bevor
+- [x] **Bank-Frühwarnung:** Ist der operative Cashflow zwei Perioden in Folge negativ, meldet sich die Bank, bevor
   eine Rate platzt (Ton je nach Weltmodus).
-- [ ] **Genossenschaft:** Rekord-Ernteerlös in einer Periode (höchster `HARVEST_INCOME + SOLD_PRODUCTS` seit
+- [x] **Genossenschaft:** Rekord-Ernteerlös in einer Periode (höchster `HARVEST_INCOME + SOLD_PRODUCTS` seit
   Spielbeginn) → Glückwunsch, kleiner Vertrauensbonus.
-- [ ] Prompt-Fakten (`NarrationFacts`) um echte Kennzahlen ergänzen, damit Texte konkrete Beträge nennen können
+- [x] Prompt-Fakten (`NarrationFacts`) um echte Kennzahlen ergänzen, damit Texte konkrete Beträge nennen können
   („Ihre Verkaufserlöse im Oktober lagen bei …“). Die Zahlen kommen aus dem Backend, nie aus der KI.
 
 **Akzeptanz B:** Ein Maschinenkauf senkt den Cashflow in der Bonitätsprüfung nicht. Eine Ernte, die im Spiel verkauft
@@ -178,25 +199,35 @@ Spieler für jeden FS25-Helfer den Stundenlohn des Spiels, also **doppelt**. Die
 **Idee:** Angestellte Maschinenführer *sind* die FS25-Helfer. Ihr Lohn läuft über das Tool, ihre Namen erscheinen im
 Spiel, ihre echte Arbeitszeit bestimmt die Arbeitsbelastung, und wer sehr unzufrieden ist, legt die Arbeit nieder.
 
+**Stand 28.09.2026: umgesetzt** (den Verweis auf E2 erfüllt die Tierwohl-Kontrolle aus E2). Entscheidungen (siehe `QUESTIONS.md`): Die Soll-Stunden
+gelten je Spieltag (`workload.target-hours-per-day`, Platzhalter 8; das Backend zählt die Stunden je Spieltag). Das
+Gehalt läuft während eines Streiks weiter, der positive Leistungseffekt entfällt. Der positive `EMPLOYEE_EFFECT` von
+Maschinenführern skaliert mit den gefahrenen Stunden des Monats. Die Reihenfolge der Liste ist die Priorität der
+Zuordnung: Das Backend sortiert nach Skill, die Liste selbst trägt kein Feld `skill`. `helperWageMode` ist immer
+`EMPLOYEES` voreingestellt; ohne Maschinenführer wird kein Job zugeordnet, es gilt also der Spiellohn. Die Zuordnung
+`jobId → employeeId` wird nicht gespeichert (Job-IDs sind nach dem Laden neu), laufende Jobs werden beim nächsten
+Export neu zugeordnet. Wasser erkennt das Backend am Titel der Bedingung (`livestock.water-condition-titles`,
+Testplan 10.12). Alle Zahlen sind Platzhalter aus der Konfiguration.
+
 ### R2-A0 Mitarbeiterliste an den Mod senden (`EMPLOYEE_ROSTER`)
 
-- [ ] Neuer Anweisungstyp `EMPLOYEE_ROSTER`: vollständige Liste
+- [x] Neuer Anweisungstyp `EMPLOYEE_ROSTER`: vollständige Liste
   `[{ employeeId, name, role, status }]` mit `status` = `ACTIVE`, `ON_LEAVE` (freier Tag), `STRIKE` (A5).
   Enthält außerdem die Schalter `helperWageMode` (A1) und `strictHelperLimit` (A3).
-- [ ] Das Backend sendet die Liste bei jeder Änderung (Einstellung, Kündigung, freier Tag, Streik) und nach jedem
+- [x] Das Backend sendet die Liste bei jeder Änderung (Einstellung, Kündigung, freier Tag, Streik) und nach jedem
   Neuladen des Spielstands.
-- [ ] Der Mod ersetzt seine Liste vollständig (idempotent) und speichert sie im Savegame-XML.
+- [x] Der Mod ersetzt seine Liste vollständig (idempotent) und speichert sie im Savegame-XML.
 
 ### R2-A1 Helferlohn über das Tool-Gehalt statt doppelt
 
-- [ ] `Utils.overwrittenFunction` auf `AIJob.getPricePerMs`, `AIJobFieldWork.getPricePerMs` und
+- [x] `Utils.overwrittenFunction` auf `AIJob.getPricePerMs`, `AIJobFieldWork.getPricePerMs` und
   `AIJobConveyor.getPricePerMs` (alle drei definieren die Funktion selbst; `AIJobDeliver`, `AIJobGoTo` und
   `AIJobLoadAndDeliver` erben von `AIJob`).
-- [ ] Ist dem Job ein Mitarbeiter zugeordnet (A2) und `helperWageMode = "EMPLOYEES"`, gibt der Hook `0` zurück. Sonst
+- [x] Ist dem Job ein Mitarbeiter zugeordnet (A2) und `helperWageMode = "EMPLOYEES"`, gibt der Hook `0` zurück. Sonst
   `superFunc` (normaler Spiellohn).
-- [ ] Standard: `helperWageMode = "EMPLOYEES"`, sobald mindestens ein Maschinenführer angestellt ist. Mit `"VANILLA"`
+- [x] Standard: `helperWageMode = "EMPLOYEES"`, sobald mindestens ein Maschinenführer angestellt ist. Mit `"VANILLA"`
   bleibt alles wie im Grundspiel.
-- [ ] Hinweis in der Oberfläche (Personal-Seite): „Deine Maschinenführer fahren die Helfer im Spiel. Helfer ohne
+- [x] Hinweis in der Oberfläche (Personal-Seite): „Deine Maschinenführer fahren die Helfer im Spiel. Helfer ohne
   freien Maschinenführer kosten den normalen Spiellohn.“
 
 **Beleg:** ✅ `ai/jobs/AIJob.lua`: `AIJob:updateCost(dt)` ruft `self:getPricePerMs()`, rechnet
@@ -210,11 +241,11 @@ Gehaltsverzug (T-03).
 
 ### R2-A2 Helfer bekommen den Namen des Mitarbeiters
 
-- [ ] `Utils.appendedFunction` auf `AIJob.start(farmId)`: Nur für die Spieler-Farm dem Job den ersten freien
+- [x] `Utils.appendedFunction` auf `AIJob.start(farmId)`: Nur für die Spieler-Farm dem Job den ersten freien
   Maschinenführer mit Status `ACTIVE` zuordnen (höchster Skill zuerst) und die Zuordnung `jobId → employeeId` im
   Mod-Zustand merken. Laufende Jobs nach dem Laden bei der ersten Abfrage nachträglich zuordnen.
-- [ ] `Utils.overwrittenFunction` auf `AIJob.getHelperName`: Name des zugeordneten Mitarbeiters, sonst `superFunc`.
-- [ ] Zuordnung beim Job-Ende freigeben (Abo auf `MessageType.AI_JOB_STOPPED` oder Hook auf `AIJob.stop`).
+- [x] `Utils.overwrittenFunction` auf `AIJob.getHelperName`: Name des zugeordneten Mitarbeiters, sonst `superFunc`.
+- [x] Zuordnung beim Job-Ende freigeben (Abo auf `MessageType.AI_JOB_STOPPED` oder Hook auf `AIJob.stop`).
 
 **Beleg:** ✅ `AIJob:start` wählt `g_helperManager:getRandomHelper()` und setzt `self.helperIndex` und
 `self.startedFarmId`. ✅ `AIJob:getHelperName()` gibt `helper.title` zurück. ✅ `ai/errors/AIMessage.lua` baut die
@@ -227,11 +258,11 @@ in den Meldungen wie der Mitarbeiter; das reicht für die Immersion.
 
 ### R2-A3 Helfer-Limit = Anzahl Maschinenführer (optionaler „strenger Modus“)
 
-- [ ] Schalter `strictHelperLimit` (Standard **aus**, einstellbar auf der Einstellungsseite).
-- [ ] Ist er an, setzt der Mod `g_currentMission.maxNumHirables` auf
+- [x] Schalter `strictHelperLimit` (Standard **aus**, einstellbar auf der Einstellungsseite).
+- [x] Ist er an, setzt der Mod `g_currentMission.maxNumHirables` auf
   `min(Originalwert, Anzahl Maschinenführer mit Status ACTIVE)`. Den Originalwert merken und beim Ausschalten bzw. in
   `deleteMap` zurückschreiben.
-- [ ] Kein Maschinenführer + strenger Modus = keine Helfer. Deshalb im Onboarding erklären.
+- [x] Kein Maschinenführer + strenger Modus = keine Helfer. Deshalb im Onboarding erklären.
 
 **Beleg:** ✅ `ai/AISystem.lua`: `getAILimitedReached()` = `#self.activeJobVehicles >= g_currentMission.maxNumHirables`.
 
@@ -240,31 +271,31 @@ Welche Meldung sieht der Spieler beim Limit? **Fallback:** Den Wert bei jedem Ex
 
 ### R2-A4 Echte Arbeitszeit → Arbeitsbelastung
 
-- [ ] Bei jedem Export über `g_currentMission.aiSystem:getActiveJobs()` laufen und für jeden zugeordneten Job die
+- [x] Bei jedem Export über `g_currentMission.aiSystem:getActiveJobs()` laufen und für jeden zugeordneten Job die
   seit dem letzten Export vergangene **Spielzeit** (`RPSimGameAdapter:getGameTime()`) dem Mitarbeiter gutschreiben.
   Spielzeit statt `dt`, damit Zeitraffer korrekt zählt und die Einheit eindeutig ist.
-- [ ] Kumulative Zähler `workedGameMs` je Mitarbeiter im Savegame-XML speichern und als
+- [x] Kumulative Zähler `workedGameMs` je Mitarbeiter im Savegame-XML speichern und als
   `farm_facts.workforce = { activeJobs: [{ jobId, employeeId, title }], workedGameMs: { "<employeeId>": 123 } }`
   exportieren. `title` kommt aus `job:getTitle()` (bei Feldarbeit der Fahrzeugname).
-- [ ] Backend: Die Arbeitsbelastung von Maschinenführern folgt den echten Stunden statt dem simulierten Zerfall.
+- [x] Backend: Die Arbeitsbelastung von Maschinenführern folgt den echten Stunden statt dem simulierten Zerfall.
   Konfig `rpsim.formulas.satisfaction.workload.*`: Soll-Stunden je Spielmonat, Abzug je Überstunde, leichte Erholung
   bei weniger Stunden. Freie Tage (`ON_LEAVE`) zählen weiter als Entlastung.
-- [ ] Optional: Die monatliche Leistungsbuchung `EMPLOYEE_EFFECT` von Maschinenführern skaliert mit den gearbeiteten
+- [x] Optional: Die monatliche Leistungsbuchung `EMPLOYEE_EFFECT` von Maschinenführern skaliert mit den gearbeiteten
   Stunden (wer nie fährt, bringt auch keinen Bonus).
-- [ ] Oberfläche: Stunden des Monats je Mitarbeiter auf der Personal-Seite.
+- [x] Oberfläche: Stunden des Monats je Mitarbeiter auf der Personal-Seite.
 
 **Beleg:** ✅ `AISystem:getActiveJobs()`, `AISystem:getNumActiveJobs()`; ✅ `AIJobFieldWork:getTitle()` =
 Fahrzeugname. ✅ Zähler im Savegame speichern wie die bestehende Idempotenz-Liste (`import/Persistence.lua`).
 
 ### R2-A5 Streik bei starker Unzufriedenheit
 
-- [ ] Backend: Neue Stufe zwischen Warnung und Kündigung in `SatisfactionService`. Liegt die Zufriedenheit
+- [x] Backend: Neue Stufe zwischen Warnung und Kündigung in `SatisfactionService`. Liegt die Zufriedenheit
   `strike-after-days` unter `strike-threshold`, geht der Mitarbeiter in `STRIKE`. Er meldet sich per Mail oder Anruf.
   Der Streik endet, wenn die Zufriedenheit über die Schwelle steigt (z. B. nach Gehaltserhöhung), sonst folgt wie
   bisher die Kündigung.
-- [ ] Mod: Wird einem Job ein streikender Mitarbeiter zugeordnet oder beginnt der Streik während eines Jobs, stoppt
+- [x] Mod: Wird einem Job ein streikender Mitarbeiter zugeordnet oder beginnt der Streik während eines Jobs, stoppt
   der Mod den Job mit `g_currentMission.aiSystem:stopJob(job, message)`.
-- [ ] Meldung: eigene Klasse `RPSimAIMessageStrike` (abgeleitet von `AIMessage`, `getI18NText` → Text aus
+- [x] Meldung: eigene Klasse `RPSimAIMessageStrike` (abgeleitet von `AIMessage`, `getI18NText` → Text aus
   `modDesc.xml`, z. B. „%s legt die Arbeit nieder“) über `AIMessageManager:registerMessage` registrieren.
 
 **Beleg:** ✅ `AISystem:stopJob(job, aiMessage)`; ✅ `ai/errors/AIMessageManager.lua` registriert alle Meldungen mit
@@ -277,14 +308,14 @@ Anweisung `NOTIFICATION` einblenden.
 
 ### R2-A6 Angestellter Mechaniker repariert teilweise
 
-- [ ] `REPAIR_VEHICLE` um ein optionales Feld `targetDamage` (0–1) erweitern. Standard `0` = V1-Verhalten des
+- [x] `REPAIR_VEHICLE` um ein optionales Feld `targetDamage` (0–1) erweitern. Standard `0` = V1-Verhalten des
   Wartungsvertrags.
-- [ ] Backend `MechanicService`: Zu jedem Monatsbeginn verteilt jeder angestellte Mechaniker eine
+- [x] Backend `MechanicService`: Zu jedem Monatsbeginn verteilt jeder angestellte Mechaniker eine
   **Reparaturleistung** (Konfig: Schadenspunkte je Monat × Skill × `effectMultiplier` aus der Zufriedenheit) auf die
   am stärksten abgenutzten eigenen Fahrzeuge (`assets.vehicles[].condition`).
-- [ ] Reihenfolge: zuerst der Wartungsvertrag (`MaintenanceService`), dann der Mechaniker für die übrigen Fahrzeuge.
+- [x] Reihenfolge: zuerst der Wartungsvertrag (`MaintenanceService`), dann der Mechaniker für die übrigen Fahrzeuge.
   Kein Fahrzeug wird doppelt bearbeitet.
-- [ ] Kurze Mail des Mechanikers („Hab den Frontlader wieder hinbekommen, der Rest muss warten“). Zu viele kaputte
+- [x] Kurze Mail des Mechanikers („Hab den Frontlader wieder hinbekommen, der Rest muss warten“). Zu viele kaputte
   Maschinen senken seine Arbeitsbelastung.
 
 **Beleg:** ✅ Bereits in V1 genutzt: `Wearable:setDamageAmount(amount, true)` in `RPSimGameAdapter:repairVehicle`,
@@ -292,20 +323,20 @@ Anweisung `NOTIFICATION` einblenden.
 
 ### R2-A7 Tierpfleger und Tierarzt reagieren auf echte Stallwerte
 
-- [ ] Export je Stall als `farm_facts.husbandries[]`:
+- [x] Export je Stall als `farm_facts.husbandries[]`:
   - `health`: Durchschnitt von `cluster.health` über alle Gruppen (Berechnung wie im Spiel selbst),
   - `productivity`: `getGlobalProductionFactor() × getProductionFactor()` (entfällt bei Pferd und Schwein wie im
     Spiel),
   - `food`: `getTotalFood()` / `getFoodCapacity()`,
   - `conditions`: generische Liste aus `getConditionInfos()` mit `title` und `ratio` (Wasser, Stroh, Gülle, Milch …).
-- [ ] **Tierarzt** (`LivestockService`): Liegt `health` unter `vet.emergency-health-threshold`, kommt ein
+- [x] **Tierarzt** (`LivestockService`): Liegt `health` unter `vet.emergency-health-threshold`, kommt ein
   Notfallbesuch mit höherer Rechnung. Die Routinebesuche bleiben.
-- [ ] **Tierpfleger** (angestellt, `JobRole.ANIMAL_KEEPER`): Er warnt per Mail, wenn Futter oder Wasser unter einen
+- [x] **Tierpfleger** (angestellt, `JobRole.ANIMAL_KEEPER`): Er warnt per Mail, wenn Futter oder Wasser unter einen
   Schwellwert fallen. Seine Arbeitsbelastung hängt an der Tierzahl je Pfleger, seine Zufriedenheit leidet bei
   dauerhaft schlechten Werten („Ich kann so nicht arbeiten“). Sein monatlicher Leistungseffekt skaliert mit der
   `productivity` der Ställe.
-- [ ] **Zuchtberatung:** Kommentare nutzen `productivity` und die Entwicklung der Tierzahl.
-- [ ] Die Werte fließen auch in E2 (Kontrollen).
+- [x] **Zuchtberatung:** Kommentare nutzen `productivity` und die Entwicklung der Tierzahl.
+- [x] Die Werte fließen auch in E2 (Kontrollen): die Tierwohl-Kontrolle des Amts (R2-E2).
 
 **Beleg:** ✅ `animals/husbandry/placeables/PlaceableHusbandryAnimals.lua` (`updateInfo`: Mittelwert von
 `cluster.health`; `getConditionInfos`: `getGlobalProductionFactor() * getProductionFactor()`, nicht für
@@ -327,17 +358,27 @@ können nicht über den Zustand der Felder sprechen.
 **Idee:** Der Mod exportiert Kultur, Wachstum und Pflegezustand der eigenen Felder sowie das aktuelle Wetter. Die
 simulierten Ereignisse werden damit plausibel, und das Dorf reagiert auf die Feldarbeit.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Der Mod exportiert zusätzlich je Feld
+`withered` / `cut` (`getIsWithered` / `getIsCut`), `fillType` und `litersPerSqm` sowie den Block `fieldRules`
+(Pflügen/Kalk verlangt, Unkraut/Steine aktiv). Die Phase kennt deshalb neben `VERDORRT` auch `ABGEERNTET`; die
+Roadmap-Regel „über max = verdorrt“ gilt nur für Mods ohne die Flags. Unkraut, Steine, Kalk und Pflug wertet das
+Backend nur mit `fieldRules` aus. Der Ertrag kommt aus dem Spiel, die Konfig-Tabelle ist nur Rückfall. Die Hinweise
+schickt die Genossenschaft, abschaltbar auf der Einstellungsseite; die Feldseite zeigt Kultur und Phase. Die
+„Rekordernte“ aus C4 ist der Rekordmonat der Genossenschaft aus B5. Der Mod liest die Felder nur alle
+`fieldExportIntervalMs` (und nach einer Feldübertragung) neu; jeder Export dazwischen trägt den letzten Stand, denn ein
+fehlender Block hieße „nicht vorhanden“. Alle Zahlen sind Platzhalter.
+
 ### R2-C1 Feldzustand exportieren
 
-- [ ] Über `g_fieldManager.fields` laufen und nur Felder mit `field.farmland` im Besitz des Spielers exportieren (bei
-  Bedarf zusätzlich Felder der Tool-NPCs für Vergleiche).
-- [ ] Je Feld `farm_facts.fields[]`: `farmlandId`, `name` (`field:getName()`), `hectares` (`field.areaHa`),
+- [x] Über `g_fieldManager.fields` laufen und nur Felder mit `field.farmland` im Besitz des Spielers exportieren (bei
+  Bedarf zusätzlich Felder der Tool-NPCs für Vergleiche – derzeit nicht nötig, nicht exportiert).
+- [x] Je Feld `farm_facts.fields[]`: `farmlandId`, `name` (`field:getName()`), `hectares` (`field.areaHa`),
   `fruitType` (`g_fruitTypeManager:getFruitTypeNameByIndex(state.fruitTypeIndex)`), `growthState`,
   `minHarvestingGrowthState` / `maxHarvestingGrowthState` (aus `getFruitTypeByIndex`), `weedState`, `stoneLevel`,
   `sprayLevel`, `limeLevel`, `plowLevel`, `groundType`.
-- [ ] Nur bei Änderung und in größerem Abstand exportieren (Konfig `fieldExportIntervalMs`, Vorschlag 5 min
+- [x] Nur bei Änderung und in größerem Abstand exportieren (Konfig `fieldExportIntervalMs`, Vorschlag 5 min
   Echtzeit), damit `farm_facts.json` klein bleibt.
-- [ ] Backend: Wachstumsphase ableiten (`LEER`, `WÄCHST`, `ERNTEREIF` zwischen min und max, `VERDORRT` über max) und
+- [x] Backend: Wachstumsphase ableiten (`LEER`, `WÄCHST`, `ERNTEREIF` zwischen min und max, `VERDORRT` über max) und
   je Feld eine kurze Historie führen (Kultur je Erntejahr, nötig für E2).
 
 **Beleg:** ✅ `field/FieldState.lua` (Felder `isValid`, `fruitTypeIndex`, `growthState`, `weedState`, `stoneLevel`,
@@ -354,44 +395,44 @@ Debug-Ansicht). Das ist eine Stichprobe an einem Punkt und reicht für die Einor
 
 ### R2-C2 Wetter exportieren
 
-- [ ] `farm_facts.weather = { raining, rainFallScale, groundWetness }` aus
+- [x] `farm_facts.weather = { raining, rainFallScale, groundWetness }` aus
   `g_currentMission.environment.weather:getIsRaining()`, `getRainFallScale()`, `getGroundWetness()`.
-- [ ] Backend: Regenstunden je Periode aus den Exporten hochrechnen (Stichprobe alle ~60 s reicht).
+- [x] Backend: Regenstunden je Periode aus den Exporten hochrechnen (Stichprobe alle ~60 s reicht).
 
 **Beleg:** ✅ Alle drei Aufrufe im Spielcode (u. a. Sprayer, Mähwerke, Solaranlagen, `BeehiveSystem`).
 
 ### R2-C3 Unwetter und Wildschaden plausibel machen
 
-- [ ] **Hagel** (`InsuranceService`) trifft nur Felder mit einer Kultur im Wachstum oder erntereif. Schaden =
+- [x] **Hagel** (`InsuranceService`) trifft nur Felder mit einer Kultur im Wachstum oder erntereif. Schaden =
   Fläche × typischer Ertrag (Konfig je Fruchtart) × aktueller Preis aus `prices` × Schadensquote. In regnerischen
   Perioden steigt die Wahrscheinlichkeit.
-- [ ] **Wildschaden** (`HuntingService`) nur auf Feldern mit Kulturen aus einer Konfig-Liste (Vorschlag: `MAIZE`,
+- [x] **Wildschaden** (`HuntingService`) nur auf Feldern mit Kulturen aus einer Konfig-Liste (Vorschlag: `MAIZE`,
   `WHEAT`, `BARLEY`, `OAT`, `POTATO`), Schaden nach Fläche und Wachstum.
-- [ ] Sturm auf Gebäude bleibt wie in V1.
-- [ ] Die Schadensmeldung nennt Feld und Kultur („Hagel auf Feld 12, Ihr Weizen …“).
-- [ ] Ohne Feld-Export (älterer Mod) bleibt das V1-Verhalten.
+- [x] Sturm auf Gebäude bleibt wie in V1.
+- [x] Die Schadensmeldung nennt Feld und Kultur („Hagel auf Feld 12, Ihr Weizen …“).
+- [x] Ohne Feld-Export (älterer Mod) bleibt das V1-Verhalten.
 
 **Hinweis:** Der Schaden bleibt eine Geldbuchung (`DAMAGE`). Echte Ernteverluste im Spiel sind nicht belegt, siehe
 [Bewusst nicht aufgenommen](#bewusst-nicht-aufgenommen).
 
 ### R2-C4 Dorf und Nachbarn reagieren auf die Felder
 
-- [ ] **Nachbar:** Hoher `weedState` auf einem eigenen Feld über mehrere Perioden → freundliche, später genervte
+- [x] **Nachbar:** Hoher `weedState` auf einem eigenen Feld über mehrere Perioden → freundliche, später genervte
   Nachricht; kleiner Vertrauensverlust, wenn nichts passiert. Dasselbe für viele Steine (`stoneLevel`).
-- [ ] **Dorfklatsch:** Eigene Felder, die lange brach liegen („Da wächst ja gar nichts mehr“), oder verdorrte
+- [x] **Dorfklatsch:** Eigene Felder, die lange brach liegen („Da wächst ja gar nichts mehr“), oder verdorrte
   Bestände (`VERDORRT`).
-- [ ] **Glückwunsch:** Alle Felder rechtzeitig geerntet, Rekordernte (zusammen mit B).
-- [ ] Alle Schwellen und Häufigkeiten in `rpsim.formulas.fields.*`, Obergrenze je Monat wie bei den anderen Spawnern.
+- [x] **Glückwunsch:** Alle Felder rechtzeitig geerntet, Rekordernte (zusammen mit B).
+- [x] Alle Schwellen und Häufigkeiten in `rpsim.formulas.fields.*`, Obergrenze je Monat wie bei den anderen Spawnern.
 
 ### R2-C5 Bank bewertet den Aufwuchs
 
-- [ ] Stehende Kulturen erhöhen das Vermögen in der Bonitätsprüfung: Fläche × Ertrag × Preis × Wachstumsfortschritt
+- [x] Stehende Kulturen erhöhen das Vermögen in der Bonitätsprüfung: Fläche × Ertrag × Preis × Wachstumsfortschritt
   × Abschlag (Konfig `credit.standing-crop-discount`, Vorschlag 0.5).
-- [ ] Die Bankberaterin erwähnt es („Ihr Weizen steht gut, das berücksichtigen wir“).
+- [x] Die Bankberaterin erwähnt es („Ihr Weizen steht gut, das berücksichtigen wir“).
 
 ### R2-C6 Hinweise zur Feldarbeit
 
-- [ ] Genossenschaft oder Lohnunternehmer geben saisonale Hinweise aus echten Werten: „Feld 7 ist erntereif“, „Auf
+- [x] Genossenschaft oder Lohnunternehmer geben saisonale Hinweise aus echten Werten: „Feld 7 ist erntereif“, „Auf
   Feld 3 fehlt Kalk“ (`limeLevel`), „Feld 9 sollte gepflügt werden“ (`plowLevel`). Höchstens einer pro Woche,
   abschaltbar.
 
@@ -409,40 +450,49 @@ purchases“). Der Spieler kann Bank und Verhandlungen so ohne Folgen umgehen.
 **Idee:** Nicht sperren (Entscheidung aus V1: „erkennen und warnen, nichts abschalten“), sondern die Charaktere
 reagieren lassen. Die Umgehung wird Teil der Geschichte.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Die Verkaufsgrenze eines NPC liegt laut
+`NegotiationFormula` immer unter dem Spielpreis, eine „Differenz zum Verhandlungspreis“ wäre nie positiv. Die
+Ausgleichsforderung ist deshalb ein Anteil des Spielpreises (`compensation-share`, Platzhalter 10 %); keine Antwort
+gilt als Ablehnung. Die Bank reagiert auf jede Tilgung ab `loan-min-repayment`. Als Wiederholung zählt die zweite
+Aufnahme bei offenem Vanilla-Kredit, die volle Tilgung setzt Zähler und Aufschlag zurück. Die Reaktionen sind je
+Spielstand auf der Einstellungsseite abschaltbar (plus `vanilla-bypass.enabled`). Erhöhungen und Tilgungen werden je
+Spieltag gesammelt und einmal beantwortet; ein Neuladen ohne Speichern verschiebt nur den Bezugspunkt. Die Nachricht zu
+D3 schickt die Genossenschaft einmal je Spielstand. Alle Zahlen sind Platzhalter.
+
 ### R2-D1 Vanilla-Kredit erkennen
 
-- [ ] Backend: `liabilities.vanillaLoan.remainingAmount` mit dem vorherigen Snapshot vergleichen. Steigt der Betrag
+- [x] Backend: `liabilities.vanillaLoan.remainingAmount` mit dem vorherigen Snapshot vergleichen. Steigt der Betrag
   über `vanilla-bypass.loan-min-increase`, entsteht das Ereignis `VANILLA_LOAN_TAKEN` mit dem Betrag.
-- [ ] Die Bankberaterin meldet sich („Sie haben sich woanders Geld geliehen?“). Vertrauensverlust skaliert mit dem
+- [x] Die Bankberaterin meldet sich („Sie haben sich woanders Geld geliehen?“). Vertrauensverlust skaliert mit dem
   Betrag, gedeckelt. Wiederholt sich das, gibt es einen Zinsaufschlag für neue Anträge
   (`vanilla-bypass.loan-interest-surcharge`), bis der Vanilla-Kredit getilgt ist.
-- [ ] Tilgung des Vanilla-Kredits → neutrale bis leicht positive Reaktion.
-- [ ] Tagebucheintrag; Hinweis in der Spieler-Doku.
+- [x] Tilgung des Vanilla-Kredits → neutrale bis leicht positive Reaktion.
+- [x] Tagebucheintrag; Hinweis in der Spieler-Doku.
 
 **Beleg:** ✅ Kein Mod-Eingriff nötig. `farm.loan` wird schon exportiert (`RPSimGameAdapter:collectFarmFacts`,
 `raw.vanillaLoan`), ✅ `Farm:getLoan()` ist dokumentiert.
 
 ### R2-D2 Feldkauf und -verkauf über das Spielmenü
 
-- [ ] `FarmlandOwnershipService.reconcile` erzeugt ein Ereignis statt still abzugleichen:
+- [x] `FarmlandOwnershipService.reconcile` erzeugt ein Ereignis statt still abzugleichen:
   - Das Feld gehörte im Tool einem **Charakter** (FS25-NPC oder Dorfbewohner): Er reagiert verärgert („über meinen
     Kopf hinweg gekauft“), Vertrauensverlust, kleiner Abzug beim Dorf-Ansehen.
   - Optional **Ausgleichsforderung:** Der frühere Besitzer verlangt die Differenz zwischen seinem Verhandlungspreis
     (Formel aus `NegotiationEngine`) und dem Spielpreis. Formular „zahlen / ablehnen“; Zahlung als
     `MONEY_TRANSACTION` mit `COMPENSATION`, Ablehnung kostet mehr Vertrauen.
   - Das Feld war **frei** (`UNCLAIMED`): nur Tagebucheintrag.
-- [ ] Verkauf eines eigenen Feldes über das Spielmenü → Tagebucheintrag, Klatsch im Dorf.
-- [ ] Alle Werte unter `rpsim.formulas.vanilla-bypass.*`; die Reaktion ist abschaltbar.
+- [x] Verkauf eines eigenen Feldes über das Spielmenü → Tagebucheintrag, Klatsch im Dorf.
+- [x] Alle Werte unter `rpsim.formulas.vanilla-bypass.*`; die Reaktion ist abschaltbar.
 
 **Beleg:** ✅ Die Erkennung existiert bereits (`reconcile`, ausgelöst durch `FactsIngested` und
 `MarketContextUpdated`). Es fehlt nur die Reaktion.
 
 ### R2-D3 Helfer ohne Mitarbeiter
 
-- [ ] Mit A1 zahlt der Spieler für Helfer ohne freien Maschinenführer den Spiellohn. Einmalige Nachricht der
+- [x] Mit A1 zahlt der Spieler für Helfer ohne freien Maschinenführer den Spiellohn. Einmalige Nachricht der
   Genossenschaft oder eines Bewerbers: „Sie haben ja ständig Leute von außen auf dem Hof, wollen Sie nicht jemanden
   fest einstellen?“ mit Link auf **Stelle ausschreiben**.
-- [ ] Voraussetzung: `farm_facts.workforce.activeJobs` (A4) enthält Jobs ohne `employeeId`.
+- [x] Voraussetzung: `farm_facts.workforce.activeJobs` (A4) enthält Jobs ohne `employeeId`.
 
 **Akzeptanz D:** Wer den Vanilla-Kredit nimmt oder ein NPC-Feld im Spielmenü kauft, bekommt innerhalb eines Spieltags
 eine Reaktion des betroffenen Charakters. Nichts wird gesperrt.
@@ -456,58 +506,68 @@ Diese Bereiche brauchen **keine neue Spiel-API**: Sie nutzen die vorhandenen Anw
 Persönlichkeitsvorlagen, Fallback-Texte ohne KI (Deutsch), Formeln als Konfiguration, Tagebucheinträge,
 Frontend-Darstellung unter **Verträge & Vorgänge**.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Eine Betriebsprüfung beanstandet einen Anteil
+der strittigen Ausgaben (unbekannte Buchungsarten und Sprungmonate). Steuern und Bußgelder gehören nicht zur
+Bemessungsgrundlage. Bescheide werden per Knopf unter **Verträge & Vorgänge** bezahlt, nicht automatisch abgebucht.
+Ein Altenteil gibt es nur bei geerbtem Hof oder Rückkehr in die Heimat. Vereine sind die neue Rolle `CLUB` (ein
+Charakter je Verein). Die Fruchtfolgeprämie gibt es je Hektar mit Fruchtwechsel, bei Wiederholung wird die gesamte
+Prämie des Jahres gekürzt. Die Familie wählt der Spieler im Onboarding mit drei einzelnen Schaltern, das Familienfeld
+markiert er auf der Feldseite. Zu- und Absage einer Einladung laufen über die vorhandenen Vorgangs-Endpunkte
+(`/api/cases/{id}/accept|decline`), Sponsoring über `/api/cases/{id}/sponsor`. Der Festkalender ersetzt
+`village-life.invitation-every-periods`. Alle Zahlen sind Platzhalter.
+
 ### R2-E1 Finanzamt und Steuerberater (braucht B)
 
-- [ ] Neue Rollen `TAX_OFFICE` (Pflichtrolle, erscheint mit dem ersten Steuerbescheid) und `TAX_ADVISOR` (optional
+- [x] Neue Rollen `TAX_OFFICE` (Pflichtrolle, erscheint mit dem ersten Steuerbescheid) und `TAX_ADVISOR` (optional
   beauftragbar).
-- [ ] **Steuerjahr = FS25-Jahr** (Periode 1 = März). Gewinn = operative Einnahmen − operative Ausgaben aus dem Journal
+- [x] **Steuerjahr = FS25-Jahr** (Periode 1 = März). Gewinn = operative Einnahmen − operative Ausgaben aus dem Journal
   (B2) − vereinfachte Abschreibung (Konfig: Prozent des Fahrzeug- und Gebäudewerts) − Zinsen der Tool-Kredite.
-- [ ] Steuersatz und Freibetrag konfigurierbar (`rpsim.formulas.tax.*`), im harten Weltmodus strenger.
-- [ ] **Vorauszahlungen** je Quartal (drei Perioden) auf Basis des Vorjahres, **Bescheid** nach Jahresende mit
+- [x] Steuersatz und Freibetrag konfigurierbar (`rpsim.formulas.tax.*`), im harten Weltmodus strenger.
+- [x] **Vorauszahlungen** je Quartal (drei Perioden) auf Basis des Vorjahres, **Bescheid** nach Jahresende mit
   Nachzahlung (`TAX_PAYMENT`) oder Erstattung (`TAX_REFUND`).
-- [ ] Nicht gezahlt → Säumniszuschlag (`FINE`), Mahnung, später Pfändungsandrohung (nur Text und Vertrauen, keine
+- [x] Nicht gezahlt → Säumniszuschlag (`FINE`), Mahnung, später Pfändungsandrohung (nur Text und Vertrauen, keine
   Sperre).
-- [ ] **Steuerberater:** Monatliches Honorar, senkt die Steuer um einen konfigurierbaren Anteil, erinnert an
+- [x] **Steuerberater:** Monatliches Honorar, senkt die Steuer um einen konfigurierbaren Anteil, erinnert an
   Fristen und senkt die Wahrscheinlichkeit einer **Betriebsprüfung**. Die Prüfung kann zufällig kommen und bei
   auffälligen Sprüngen im Journal Nachzahlungen fordern.
-- [ ] Oberfläche: Steuerübersicht (voraussichtliche Steuer, nächste Vorauszahlung) auf der Bank-Seite.
+- [x] Oberfläche: Steuerübersicht (voraussichtliche Steuer, nächste Vorauszahlung) auf der Bank-Seite.
 
 ### R2-E2 Amt und Kontrollen (braucht C, A7)
 
 Nur Regeln, die sich aus exportierten Werten messen lassen:
 
-- [ ] **Fruchtfolge:** Dieselbe Kultur auf demselben Feld in aufeinanderfolgenden Erntejahren (Historie aus C1) →
+- [x] **Fruchtfolge:** Dieselbe Kultur auf demselben Feld in aufeinanderfolgenden Erntejahren (Historie aus C1) →
   Hinweis, bei Wiederholung Kürzung einer Förderung. Abwechslungsreiche Fruchtfolge → **Förderprämie** (`SUBSIDY`)
   über die Rolle `AUTHORITY`.
-- [ ] **Bewirtschaftungspflicht:** Eigene Felder, die mehrere Perioden ohne Kultur und ungepflegt sind (Unkraut,
+- [x] **Bewirtschaftungspflicht:** Eigene Felder, die mehrere Perioden ohne Kultur und ungepflegt sind (Unkraut,
   Steine) → Aufforderung des Amts, danach Bußgeld (`FINE`).
-- [ ] **Tierwohl-Kontrolle:** Stall mit `health` unter Schwelle oder leerem Futter/Wasser über längere Zeit (A7) →
+- [x] **Tierwohl-Kontrolle:** Stall mit `health` unter Schwelle oder leerem Futter/Wasser über längere Zeit (A7) →
   Kontrolle, Auflage mit Frist, bei erneutem Verstoß Bußgeld und Ansehensverlust im Dorf.
-- [ ] Kontrollen kündigt das Amt an (Mail), das Ergebnis kommt nach der Frist. Der Spieler hat also immer eine Chance
+- [x] Kontrollen kündigt das Amt an (Mail), das Ergebnis kommt nach der Frist. Der Spieler hat also immer eine Chance
   zu reagieren.
-- [ ] Werte in `rpsim.formulas.authority.*`, Häufigkeit gedeckelt.
+- [x] Werte in `rpsim.formulas.authority.*`, Häufigkeit gedeckelt.
 
 ### R2-E3 Familie und Hofnachfolge
 
-- [ ] Neue Rolle `FAMILY` (Eltern auf dem Altenteil, optional Partner:in und Kinder), festgelegt im Onboarding
+- [x] Neue Rolle `FAMILY` (Eltern auf dem Altenteil, optional Partner:in und Kinder), festgelegt im Onboarding
   zusammen mit der Vorgeschichte. Wer keine Familie will, wählt „alleine“.
-- [ ] **Altenteil:** Monatliche Zahlung an die Eltern (`FAMILY`), Höhe aus der Vorgeschichte.
-- [ ] **Anlässe aus dem Kalender:** Geburtstage, Hochzeitstag, Einschulung (Periode fest je Charakter).
-- [ ] **Familienwünsche** als Geschichten mit Folgen für das Familien-Vertrauen, z. B. „Das Feld am Bach war schon beim
+- [x] **Altenteil:** Monatliche Zahlung an die Eltern (`FAMILY`), Höhe aus der Vorgeschichte.
+- [x] **Anlässe aus dem Kalender:** Geburtstage, Hochzeitstag, Einschulung (Periode fest je Charakter).
+- [x] **Familienwünsche** als Geschichten mit Folgen für das Familien-Vertrauen, z. B. „Das Feld am Bach war schon beim
   Großvater in der Familie“ → Verkauf dieses Feldes kostet Vertrauen. Oder Mithilfe zur Erntezeit (nur Text und
   Vertrauen, keine Spielwirkung).
-- [ ] Hofnachfolge als langfristiger Erzählbogen im Tagebuch.
+- [x] Hofnachfolge als langfristiger Erzählbogen im Tagebuch.
 
 ### R2-E4 Vereine und Dorffeste
 
-- [ ] Feste im FS25-Kalender (Konfig je Fest: Periode und Name, z. B. Erntedank im Oktober, Schützenfest im Juni).
-- [ ] **Sponsoring-Anfragen** von Vereinen (Schützenverein, Freiwillige Feuerwehr, Sportverein) mit festen Stufen
+- [x] Feste im FS25-Kalender (Konfig je Fest: Periode und Name, z. B. Erntedank im Oktober, Schützenfest im Juni).
+- [x] **Sponsoring-Anfragen** von Vereinen (Schützenverein, Freiwillige Feuerwehr, Sportverein) mit festen Stufen
   (Formular, Betrag vom Backend vorgegeben) → Ansehen im Dorf steigt nach der Formel des Dorf-Ansehens (`SPONSORING`).
   Ablehnen kostet wenig.
-- [ ] **Einladungen mit Zusage:** Die Einladungen aus V1 (`VillageLifeService`) sind heute reine Mails. Neu: Zu- oder
+- [x] **Einladungen mit Zusage:** Die Einladungen aus V1 (`VillageLifeService`) sind heute reine Mails. Neu: Zu- oder
   Absage per Knopf (neuer Endpunkt). Zusagen stärkt das Vertrauen der Gastgeber, Absagen ist neutral, Ignorieren
   kostet wenig. Einladungen zu Festen nennen das Fest aus dem Kalender.
-- [ ] Werte in `rpsim.formulas.clubs.*`.
+- [x] Werte in `rpsim.formulas.clubs.*`.
 
 **Akzeptanz E:** Nach dem ersten FS25-Jahr kommt ein Steuerbescheid mit nachvollziehbarer Rechnung. Eine monotone
 Fruchtfolge führt zu einem Hinweis vom Amt. Ein Sponsoring hebt das Dorf-Ansehen messbar.
@@ -522,16 +582,28 @@ Spieler in den Browser wechseln, auch bei einfachen Ja/Nein-Fragen.
 **Idee:** Einfache Entscheidungen erscheinen als Ja/Nein-Dialog im Spiel. Die Antwort geht über einen neuen Rückkanal
 an das Backend. Gespräche und Formulare mit Beträgen bleiben im Browser.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Belegt ist nur
+`YesNoDialog.show(callback, target, text, title)`; der Dialog zeigt deshalb die Ja/Nein-Knöpfe des Spiels, die
+Bedeutung (`yesLabel` / `noLabel`) hängt der Mod an den Text an. Im Browser getroffene Entscheidungen zieht das Backend
+über `withdrawnPrompts` in `instructions.json` zurück. Zusätzlich zur Liste unten sind die Ja/Nein-Fälle aus D und E
+einstellbar (Ausgleichsforderung, Steuerbescheid, Angebot der Steuerberatung); Standard bleibt „nur Anrufe“. Die
+Antworten führt das Backend nach dem Bridge-Zyklus aus, jede in einer eigenen Transaktion; eine abgelehnte Aktion
+meldet das Spiel als Hinweis. F3 ist abgesichert gebaut (Einhängen in
+`PlayerInputComponent.registerGlobalPlayerActionEvents`, 🟡 Testplan 10.8), Standardtaste Alt+J. Ob der Dialog während
+der Fahrt stört, bleibt 🟡 (Testplan 10.7); der Fallback ist der Mod-Schalter `promptsInVehicle`. Die belegte Taste
+lässt sich mit keiner belegten API auslesen: Kann eine Frage nicht sofort erscheinen, blendet der Mod einen Hinweis mit
+dem Namen der Aktion („FarmPulse: offene Frage“) ein, die Tastenhilfe zeigt die Taste selbst.
+
 ### R2-F1 Rückkanal Mod → Backend
 
-- [ ] Neue Datei `export/player_responses.json`:
+- [x] Neue Datei `export/player_responses.json`:
   `{ savegameId, responses: [{ responseId, promptId, answer: "YES" | "NO", gameTime }] }`.
-- [ ] Der Mod schreibt die Datei **sofort** nach einer Antwort (nicht erst beim 60-s-Export), im Schreibmodus
+- [x] Der Mod schreibt die Datei **sofort** nach einer Antwort (nicht erst beim 60-s-Export), im Schreibmodus
   `direct` wie alle Bridge-Dateien.
-- [ ] Das Backend liest die Datei bei jedem Bridge-Zyklus (`rpsim.bridge.poll-interval-ms`, heute 2000). Es bestätigt
+- [x] Das Backend liest die Datei bei jedem Bridge-Zyklus (`rpsim.bridge.poll-interval-ms`, heute 2000). Es bestätigt
   verarbeitete Antworten in `instructions.json` mit `ackedResponses: [responseId]`, der Mod entfernt sie dann aus
   der Datei. Doppelte `responseId` ignoriert das Backend (idempotent).
-- [ ] Nach dem Neuladen ohne Speichern gehen unbestätigte Antworten verloren. Die Frage kommt dann einfach erneut,
+- [x] Nach dem Neuladen ohne Speichern gehen unbestätigte Antworten verloren. Die Frage kommt dann einfach erneut,
   weil das Backend sie noch als offen führt.
 
 **Beleg:** ✅ Schreiben mit `io.open` im `modSettings`-Ordner ist in V1 belegt und im Einsatz (Farm Dashboard,
@@ -539,13 +611,13 @@ an das Backend. Gespräche und Formulare mit Beträgen bleiben im Browser.
 
 ### R2-F2 Anweisung `PROMPT` und Ja/Nein-Dialog
 
-- [ ] Neuer Anweisungstyp
+- [x] Neuer Anweisungstyp
   `PROMPT { promptId, title, text, yesLabel?, noLabel?, expiresGameTime }`.
-- [ ] Der Mod reiht Prompts ein und zeigt jeweils einen mit `YesNoDialog.show(callback, target, text, title)`. Der
+- [x] Der Mod reiht Prompts ein und zeigt jeweils einen mit `YesNoDialog.show(callback, target, text, title)`. Der
   Callback schreibt die Antwort in den Rückkanal (F1). Abgelaufene Prompts verwirft der Mod ungezeigt.
-- [ ] Nur bei der Spieler-Farm und nicht, wenn gerade ein anderer Dialog oder ein Menü offen ist. In dem Fall wartet
+- [x] Nur bei der Spieler-Farm und nicht, wenn gerade ein anderer Dialog oder ein Menü offen ist. In dem Fall wartet
   der Prompt bis zum nächsten Frame ohne offenes Menü.
-- [ ] **Erlaubte Anlässe** (nur Entscheidungen, deren Zahlen das Backend festlegt):
+- [x] **Erlaubte Anlässe** (nur Entscheidungen, deren Zahlen das Backend festlegt):
   - eingehender Anruf: **Annehmen / Ablehnen** (angenommen → das Gespräch ist im Browser bereit, abgelehnt → wie
     „Ablehnen“ in der Oberfläche),
   - angebotene Verträge (Pacht, Wartungsvertrag, Versicherung) annehmen / ablehnen und Pacht verlängern, jeweils zu
@@ -553,9 +625,9 @@ an das Backend. Gespräche und Formulare mit Beträgen bleiben im Browser.
   - Entschädigungsangebot des Jagdpächters annehmen (`/api/cases/{id}/accept`); Nachverhandeln bleibt im Browser,
   - Gegenangebot der Bank annehmen / ablehnen (`/api/credit-applications/{id}/accept-counter|decline-counter`),
   - Einladungen zu- oder absagen (erst mit der Zusage-Mechanik aus E4).
-- [ ] Die Antwort löst im Backend **dieselbe Service-Methode** aus wie der Klick im Browser. So gibt es keine zweite
+- [x] Die Antwort löst im Backend **dieselbe Service-Methode** aus wie der Klick im Browser. So gibt es keine zweite
   Geschäftslogik.
-- [ ] Im Tool einstellbar: welche Anlässe im Spiel gefragt werden (Standard: nur Anrufe).
+- [x] Im Tool einstellbar: welche Anlässe im Spiel gefragt werden (Standard: nur Anrufe).
 
 **Beleg:** ✅ `dialogs/YesNoDialog.lua`; ✅ Aufrufe `YesNoDialog.show(callback, target, text[, title])` im Spielcode
 (`PlaceableBuyable`, `PlaceableTrainSystem`, `TourIconsMobile`).
@@ -565,9 +637,9 @@ an das Backend. Gespräche und Formulare mit Beträgen bleiben im Browser.
 
 ### R2-F3 Taste für offene Entscheidungen (optional)
 
-- [ ] Eigene Aktion in `modDesc.xml` (`<actions>` / `<inputBinding>`) und Registrierung über `g_inputBinding` mit
+- [x] Eigene Aktion in `modDesc.xml` (`<actions>` / `<inputBinding>`) und Registrierung über `g_inputBinding` mit
   Anzeige in der Tastenhilfe: öffnet die nächste offene Frage.
-- [ ] Die Einblendung (`NOTIFICATION`) nennt die Taste: „FarmPulse: Anruf von … – [Taste] zum Annehmen“.
+- [x] Die Einblendung (`NOTIFICATION`) nennt die Taste: „FarmPulse: Anruf von … – [Taste] zum Annehmen“.
 
 **Beleg:** ✅ Aktionen werden im Spielcode mit `addActionEvent(..., InputAction.X, ...)` registriert (z. B.
 `TensionBelts`, `Drivable`, `WorkMode`).

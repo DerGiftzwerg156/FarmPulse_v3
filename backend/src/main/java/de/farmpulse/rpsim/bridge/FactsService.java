@@ -95,6 +95,15 @@ public class FactsService {
                 .mapToDouble(l -> l.costPerPeriod() == null ? 0 : l.costPerPeriod()).sum();
     }
 
+    /** Roadmap V2 R2-A7: number of animals of the farm (sum of assets.animals counts). */
+    public static int animalCount(FarmFacts f) {
+        if (f.assets() == null || f.assets().animals() == null) {
+            return 0;
+        }
+        return f.assets().animals().stream().filter(java.util.Objects::nonNull)
+                .mapToInt(a -> a.count() == null ? 0 : a.count()).sum();
+    }
+
     /** T-04: number of leased vehicles (not part of the assets). */
     public static int leasedVehicleCount(FarmFacts f) {
         return f.liabilities() == null || f.liabilities().leasing() == null ? 0 : f.liabilities().leasing().size();

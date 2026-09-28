@@ -1,0 +1,7 @@
+Ergebnis der Betriebsprüfung {{taxYear}}
+Guten Tag,
+
+die Prüfung für das Jahr {{taxYear}} ist abgeschlossen. Nachforderung: {{backPayment}} € (0 € = keine Beanstandung).
+
+Mit freundlichen Grüßen
+{{characterName}}

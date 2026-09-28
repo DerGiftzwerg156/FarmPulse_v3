@@ -20,6 +20,9 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.bridge.rewind-lookback-hours` | `24` | Bookings acknowledged up to this many game hours before the reloaded point are checked as well (the first export after loading happens slightly after the saved point). Must stay below the mod's `processedRetentionGameDays`. | TODO T-02 |
 | `rpsim.bridge.ingame-notifications` | `true` | New mails and incoming calls are shown in the game (`NOTIFICATION` instruction → `addIngameNotification`). Only for savegames linked to FS25. | TODO T-21 |
 | `rpsim.bridge.notification-max-age-hours` | `2` | The mod acknowledges a notification without showing it (`message: EXPIRED`) when it is processed more than this many game hours after it was created, e.g. after loading an older savegame. | TODO T-21 |
+| `rpsim.bridge.ingame-prompts` | `true` | Roadmap V2 R2-F2: open decisions of the occasions switched on per savegame are asked in the game as a yes/no question (`PROMPT` instruction); off = every open question is withdrawn. | Roadmap V2 R2-F2 |
+| `rpsim.bridge.prompt-default-kinds` | `[CALL]` | Occasions asked in the game until the player chooses on the settings page: `CALL`, `CONTRACT_OFFER` (lease, maintenance, insurance offers and the lease renewal), `WILDLIFE_OFFER`, `CREDIT_COUNTER`, `INVITATION`, `COMPENSATION_CLAIM`, `TAX_BILL`, `TAX_ADVISOR`. | Roadmap V2 R2-F2 |
+| `rpsim.bridge.prompt-max-age-hours` | `48` | A question without its own deadline (the counter offer of the bank; a tax bill past its deadline) expires after this many game hours; the others expire with the deadline of their decision (ring timeout, offer validity, end of the lease). | Roadmap V2 R2-F2 |
 
 ## `rpsim.web` – Web
 
@@ -125,6 +128,7 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit.legacy-term-months` | `60` | Term of the legacy loan. | Onboarding & Zwei-Phasen-Verknüpfung |
 | `rpsim.formulas.credit.payment-history-missed-penalty` | `15` | `paymentHistoryScore` points lost per missed installment. | Bonitäts-Score |
 | `rpsim.formulas.credit.payment-history-on-time-gain` | `2` | `paymentHistoryScore` points gained per on-time installment. | Bonitäts-Score |
+| `rpsim.formulas.credit.standing-crop-discount` | `0.5` | Standing crops count as asset in the credit check: harvest value (area × yield × best price) × growth progress × this discount; only with the field export. | Roadmap V2 R2-C5 |
 
 ## `rpsim.formulas.credit-hard`
 
@@ -172,6 +176,7 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit-hard.legacy-term-months` | `60` | HART profile (tone preset *Hart*): same as `formulas.credit.legacy-term-months`. | Ton-/Genre-Konfigurationsprofile |
 | `rpsim.formulas.credit-hard.payment-history-missed-penalty` | `15` | HART profile (tone preset *Hart*): same as `formulas.credit.payment-history-missed-penalty`. | Ton-/Genre-Konfigurationsprofile |
 | `rpsim.formulas.credit-hard.payment-history-on-time-gain` | `2` | HART profile (tone preset *Hart*): same as `formulas.credit.payment-history-on-time-gain`. | Ton-/Genre-Konfigurationsprofile |
+| `rpsim.formulas.credit-hard.standing-crop-discount` | `0.5` | HART profile: same as `formulas.credit.standing-crop-discount`. | Roadmap V2 R2-C5 |
 
 ## `rpsim.formulas.market`
 
@@ -258,6 +263,15 @@ period is assumed (FS25 default).
 | `rpsim.formulas.satisfaction.warning-threshold` | `30` | Score below this value counts as dissatisfied (strict "< 30"). | Kündigung & Bewerbung |
 | `rpsim.formulas.satisfaction.warning-after-days` | `14` | Days dissatisfied in a row until the warning mail (≥ 14). | Kündigung & Bewerbung |
 | `rpsim.formulas.satisfaction.termination-after-days` | `30` | Days dissatisfied in a row until the resignation (≥ 30). | Kündigung & Bewerbung |
+| `rpsim.formulas.satisfaction.strike-threshold` | `30` | Roadmap V2 R2-A5: below this satisfaction score for `strike-after-days` the employee goes on strike (the FS25 helper stops, the salary keeps running); back at the threshold the strike ends. | Roadmap V2 R2-A5 |
+| `rpsim.formulas.satisfaction.strike-after-days` | `21` | Days dissatisfied in a row until the strike (between the warning after 14 and the resignation after 30 days). | Roadmap V2 R2-A5 |
+| `rpsim.formulas.satisfaction.workload.target-hours-per-day` | `8` | Roadmap V2 R2-A4: target hours of a machine operator per game day; with worked time from the mod the workload follows the real hours instead of `workload-decay-per-day` (evaluated every game day). The target of a game month = hours × days per period. | Roadmap V2 R2-A4 |
+| `rpsim.formulas.satisfaction.workload.overtime-penalty-per-hour` | `2` | Workload points lost per hour driven above the daily target. | Roadmap V2 R2-A4 |
+| `rpsim.formulas.satisfaction.workload.recovery-per-hour` | `0.5` | Workload points regained per hour below the daily target (light recovery). | Roadmap V2 R2-A4 |
+| `rpsim.formulas.satisfaction.workload.effect-scales-with-hours` | `true` | The positive monthly `EMPLOYEE_EFFECT` of a machine operator × min(1, hours driven / target hours of the month); a malus stays unchanged. | Roadmap V2 R2-A4 |
+| `rpsim.formulas.satisfaction.workload.animals-per-keeper` | `80` | Roadmap V2 R2-A7: animals one keeper handles; with husbandry values from the mod the keeper's workload follows the animals per keeper (daily). | Roadmap V2 R2-A7 |
+| `rpsim.formulas.satisfaction.workload.keeper-overload-penalty-per-day` | `3` | Workload points lost per day and per 100 % overload above `animals-per-keeper`. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.satisfaction.workload.keeper-recovery-per-day` | `0.5` | Workload points regained per day at or below `animals-per-keeper`. | Roadmap V2 R2-A7 |
 
 ## `rpsim.formulas.hiring`
 
@@ -313,7 +327,6 @@ period is assumed (FS25 default).
 | `rpsim.formulas.village-life.congratulation-trend-ratio` | `1.25` | Congratulation when the cash-flow trend exceeds the previous window by this ratio. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.congratulation-min-cashflow` | `1000` | …and the monthly cash flow is at least this amount. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.congratulation-cooldown-days` | `20` | Cool-down between congratulations. | Dorfleben-Modul |
-| `rpsim.formulas.village-life.invitation-every-periods` | `6` | Invitation calendar: an invitation on the first day of every n-th FS25 period of the year, counted from period 1 = March (6 → March and September; 0 = off). | Dorfleben-Modul |
 | `rpsim.formulas.village-life.gossip-daily-probability` | `0.05` | Daily roll for village gossip. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.gossip-cooldown-days` | `3` | Cool-down between gossip messages. | Dorfleben-Modul |
 
@@ -378,6 +391,9 @@ reference prices of the own fields + value of the own buildings.
 | `rpsim.formulas.insurance.hail-periods` | `[3, 4, 5, 6]` | FS25 periods with hail: May to August. | TODO T-20 |
 | `rpsim.formulas.insurance.hail-damage-per-hectare-min` | `200` | Hail damage in € per hectare of the hit field (lower bound). | TODO T-20 |
 | `rpsim.formulas.insurance.hail-damage-per-hectare-max` | `900` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.insurance.hail-damage-share-min` | `0.05` | With the field export hail hits only standing crops: damage = harvest value (area × yield × best price) × a share between min and max; without yield or price the per-hectare range applies. | Roadmap V2 R2-C3 |
+| `rpsim.formulas.insurance.hail-damage-share-max` | `0.3` | Upper bound. | Roadmap V2 R2-C3 |
+| `rpsim.formulas.insurance.hail-rain-factor` | `1.0` | Hail probability × (1 + factor × rain share of the game month that just ended). | Roadmap V2 R2-C3 |
 | `rpsim.formulas.insurance.report-deadline-days` | `5` | Game days to report a damage to the insurance; afterwards no payout. | TODO T-20 |
 | `rpsim.formulas.insurance.settlement-delay-days-min` | `1` | Game days between report and payout (lower bound). | TODO T-20 |
 | `rpsim.formulas.insurance.settlement-delay-days-max` | `3` | Upper bound. | TODO T-20 |
@@ -404,6 +420,7 @@ Wild boar damage is simulated per game month (`DAMAGE`); the hunter compensates 
 | `rpsim.formulas.hunting.periods` | `[4, 5, 6, 7, 8]` | FS25 periods with wildlife damage (1 = March): June to October. | TODO T-20 |
 | `rpsim.formulas.hunting.damage-per-hectare-min` | `150` | Damage in € per hectare (lower bound). | TODO T-20 |
 | `rpsim.formulas.hunting.damage-per-hectare-max` | `600` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.hunting.crops` | `[MAIZE, WHEAT, BARLEY, OAT, POTATO]` | With the field export wild boars only damage standing crops of these FS25 fruit types; the damage scales with the growth progress. | Roadmap V2 R2-C3 |
 | `rpsim.formulas.hunting.offer-share` | `0.5` | First compensation offer of the hunter as share of the damage (neutral trust). | TODO T-20 |
 | `rpsim.formulas.hunting.max-share` | `0.9` | Highest share the hunter accepts on a counter demand (neutral trust); never shown to the AI. | TODO T-20 |
 | `rpsim.formulas.hunting.trust-influence` | `0.2` | Shift of both shares at trust +100 / −100 (linear, bounded to 10–100 %). | TODO T-20 |
@@ -439,6 +456,13 @@ exported head count changed in the agreed direction. Vet invoices are booked as 
 | `rpsim.formulas.livestock.trader-answer-days` | `5` | Game days to answer an offer, afterwards it expires. | TODO T-20 |
 | `rpsim.formulas.livestock.trader-deadline-months` | `1` | Game months to carry out an accepted offer in the game; afterwards moved animals are paid (partial) or the offer lapses. | TODO T-20 |
 | `rpsim.formulas.livestock.breeding-advice-every-months` | `6` | Advice of the breeding advisor every n game months per animal type (head count development since the last advice). | TODO T-20 |
+| `rpsim.formulas.livestock.vet-emergency-health-threshold` | `40` | Roadmap V2 R2-A7: a husbandry below this health (0..100, `farm_facts.husbandries`) brings the vet for an emergency visit. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.vet-emergency-factor` | `2.5` | Invoice of the emergency visit = routine invoice (base fee + fee per animal) × factor (`VET_INVOICE`). | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.vet-emergency-cooldown-days` | `5` | At most one emergency visit per husbandry within this many game days. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.keeper-food-warning-ratio` | `0.2` | An employed animal keeper warns by mail when the food of a husbandry falls below this ratio … | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.keeper-water-warning-ratio` | `0.2` | … or its water condition below this ratio. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.keeper-warning-cooldown-days` | `3` | At most one warning mail of the keeper within this many game days. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.water-condition-titles` | `[Wasser, Water]` | Titles of the water entry in `husbandries[].conditions` - the game shows the localised fill type title, so the list must contain the title of the game language (manual test plan 10.12). | Roadmap V2 R2-A7 |
 
 ## `rpsim.formulas.energy` (TODO T-20)
 
@@ -516,6 +540,219 @@ player takes them in the game's contracts menu. Nothing is started by the tool, 
 | `rpsim.formulas.contractor.completed-trust-delta` | `3` | Trust of the contractor when a referred contract is completed. | TODO T-22 |
 | `rpsim.formulas.contractor.client-trust-delta` | `2` | Trust of the client (FS25 NPC as village character, T-21) for a completed referred contract. | TODO T-22 |
 | `rpsim.formulas.contractor.failed-trust-delta` | `-3` | Trust of the contractor when a referred contract fails. | TODO T-22 |
+
+## `rpsim.formulas.mechanic` (Roadmap V2 R2-A6)
+
+An employed mechanic repairs part of the machines at the start of every game month, after the maintenance contract and
+never the same vehicle twice. Capacity = `repair-points-per-month` × skill / 100 × effectMultiplier condition points,
+spent on the most worn own vehicles below `repair-below-condition` (sent as `REPAIR_VEHICLE` with `targetDamage`).
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.mechanic.repair-points-per-month` | `60` | Condition points a mechanic with skill 100 and full satisfaction repairs per game month. | Roadmap V2 R2-A6 |
+| `rpsim.formulas.mechanic.repair-below-condition` | `90` | Only vehicles below this condition (0..100) are repaired. | Roadmap V2 R2-A6 |
+| `rpsim.formulas.mechanic.overload-workload-per-vehicle` | `2` | Workload points the mechanic loses per vehicle still below the threshold after the month's repairs. | Roadmap V2 R2-A6 |
+
+## `rpsim.formulas.vanilla-bypass` (Roadmap V2 R2-D)
+
+The vanilla loan (finance menu) and the field menu of FS25 stay open (V1: recognise and warn, switch nothing off) - the
+characters react instead. The player can switch the reactions off per savegame on the settings page. All values are
+placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.vanilla-bypass.enabled` | `true` | Master switch of all reactions below (diary entries stay). | Roadmap V2 R2-D |
+| `rpsim.formulas.vanilla-bypass.loan-min-increase` | `5000` | An increase of `liabilities.vanillaLoan.remainingAmount` by at least this amount (€, summed per game day) counts as a new vanilla loan; the bank advisor writes once per day. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-trust-per10k` | `1` | Trust loss of the bank advisor per 10,000 € taken. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-trust-max` | `8` | Cap of that trust loss per reaction. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-interest-surcharge` | `0.01` | From the second vanilla loan while one is open: added to the interest of new credits until the vanilla loan is repaid in full. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-min-repayment` | `5000` | A repayment of at least this amount (€, summed per game day) gets an answer of the bank. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-repaid-trust-delta` | `1` | Trust of the bank advisor per answered repayment. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.field-trust-delta` | `-8` | Trust of the former owner when their field is bought in the field menu. | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.field-reputation-delta` | `-2` | Village reputation (public action `FIELD_BYPASS`) for the same. | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.compensation-share` | `0.1` | The former owner claims this share of the game price of the field (0 = no claim). | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.compensation-decision-days` | `7` | Game days to pay or refuse; no answer = refused. | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.compensation-decline-trust-delta` | `-5` | Additional trust loss when the claim is refused or ignored. | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.outside-helpers-hint` | `true` | One hint of the cooperative when a helper without employee runs (Roadmap V2 R2-D3). | Roadmap V2 R2-D3 |
+
+## `rpsim.formulas.tax` (Roadmap V2 R2-E1)
+
+Tax office and tax advisor. One assessment per FS25 year at the start of period 1 of the next year, only from the
+complete months of the booking journal (R2-B; without a journal the year stays `NO_DATA`): profit = operating income +
+operating expenses (without `excluded-categories`) - depreciation - interest part of the tool credit installments;
+taxable = max(0, profit - allowance); tax = taxable × rate - advisor reduction; balance = tax - paid prepayments
+(positive = bill, negative = refund `RPSIM_TAX_REFUND`). Prepayments at the start of periods 1, 4, 7 and 10 from the
+last assessment. Bills are paid by button in the contracts page (owner decision), not debited automatically. The
+difficulty `HARSH` uses the `hard-*` values. All values are placeholders, not a real tax law.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.tax.enabled` | `true` | Master switch of the tax office (assessment, prepayments, audits). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.rate` | `0.25` | Flat tax rate on the taxable profit. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.allowance` | `20000` | Tax-free allowance per FS25 year (€). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.hard-rate` | `0.3` | Tax rate in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.hard-allowance` | `10000` | Allowance in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.depreciation-rate` | `0.1` | Yearly depreciation as a share of the exported value of vehicles and placeables (`assets`) at the assessment. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.excluded-categories` | `[RPSIM_TAX_PAYMENT, RPSIM_TAX_REFUND, RPSIM_FINE]` | Journal categories that are not part of the tax base (owner decision: taxes and fines). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.prepayment-share` | `1.0` | Share of the last assessed tax billed as prepayments, split into four quarters (0 = no prepayments). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.payment-days` | `14` | Game days to pay a tax bill. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.late-fee-rate` | `0.01` | Late fee per started game month after the deadline, as a share of the bill (added to the amount due). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.enforcement-after-months` | `2` | Game months after the deadline until the tax office threatens enforcement (once per bill). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.reminder-trust-delta` | `-2` | Trust of the tax office per reminder. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.enforcement-trust-delta` | `-5` | Trust of the tax office at the enforcement threat. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-monthly-fee` | `150` | Monthly fee of the tax advisor contract (booking `RPSIM_OTHER`). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-tax-reduction` | `0.1` | With an active advisor contract: the tax is reduced by this share. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-reminder-days` | `3` | The advisor reminds of an unpaid bill this many game days before its deadline. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-audit-factor` | `0.5` | With an advisor the audit probability is multiplied by this factor. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-offer-valid-days` | `7` | Game days the advisor offer stays open. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.audit-probability` | `0.15` | Chance of a tax audit at every assessment. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.audit-days` | `7` | Game days between the announcement and the result of the audit. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.audit-jump-factor` | `2.0` | A month whose operating expenses exceed this factor × the monthly average of the year counts as a jump month; its excess over the average is disputed. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.audit-disallowed-share` | `0.5` | Share of the disputed expenses (unknown categories + jump months, owner decision) the audit does not accept; back tax = disputed × share × rate. | Roadmap V2 R2-E1 |
+
+## `rpsim.formulas.authority` (Roadmap V2 R2-E2)
+
+The agricultural authority checks only what the export measures: crop rotation (crop history of C1), cultivation duty
+(own field without crop with weeds or stones above `fields.weed-high-state` / `fields.stone-high-level`, only when the
+savegame has them switched on) and animal welfare (`husbandries`: health, food, water). Inspections are announced and
+decided after `inspection-days`, so the player can always react. All values are placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.authority.enabled` | `true` | Master switch of rotation premium and inspections. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.rotation-premium-per-ha` | `40` | Rotation premium (booking `RPSIM_SUBSIDY`) per hectare of fields whose main crop differs from the year before, paid at the end of every FS25 year (owner decision: per hectare). | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.rotation-cut-share` | `0.5` | When a field repeats its crop for the second time, the whole premium of the year is cut by this share (owner decision); the first repetition only gets a notice. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.duty-months` | `3` | Game months without crop (with weeds or stones) before a cultivation duty inspection is announced; also the gap after a decision. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.duty-fine` | `500` | Fine (booking `RPSIM_FINE`) when the field is still violated at the deadline. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.welfare-health-threshold` | `30` | A husbandry with animal health below this value (or empty food / water) counts as bad (same scale as the vet emergency of R2-A7). | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.welfare-days` | `3` | Game days a husbandry stays bad before an animal welfare inspection is announced. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.welfare-fine` | `1000` | Fine of a repeated animal welfare violation (the first one brings a requirement with a new deadline). | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.welfare-reputation-delta` | `-3` | Village reputation (public action `AUTHORITY_FINE`) at an animal welfare fine. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.inspection-days` | `5` | Game days between the announcement (or a requirement) and the decision. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.violation-trust-delta` | `-3` | Trust of the authority per requirement or fine. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.max-inspections-per-month` | `2` | Cap of new inspection announcements per game month. | Roadmap V2 R2-E2 |
+
+## `rpsim.formulas.family` (Roadmap V2 R2-E3)
+
+Family characters chosen in the onboarding (parents, partner, children - each switch on its own). They do not count as
+villagers for the reputation and never leave the village. All values are placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.family.enabled` | `true` | Master switch of the monthly family events (retirement payment, occasions, harvest help, family field). | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.retirement-payment` | `800` | Monthly retirement payment to the parents (booking `RPSIM_FAMILY`), only for the start stories "inherited" and "returned home" (owner decision). | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.field-sold-trust-delta` | `-15` | Trust of every family member when the family field (chosen by the player) is no longer owned. | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.harvest-periods` | `[6, 7, 8]` | FS25 periods (1 = March) in which a family member may offer help with the harvest. | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.harvest-help-probability` | `0.5` | Chance per harvest period. | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.harvest-help-trust-delta` | `2` | Trust of the helping family member. | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.school-start-period` | `7` | FS25 period of the school start of the youngest child (occasion message). | Roadmap V2 R2-E3 |
+
+## `rpsim.formulas.clubs` (Roadmap V2 R2-E4)
+
+Clubs (one character with role `CLUB` per club, created when first needed) and the festival calendar. Replaces the
+fixed invitation calendar `village-life.invitation-every-periods` of V1. All values are placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.clubs.enabled` | `true` | Master switch of invitations and sponsoring requests. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.festivals` | Maibaum 3, Schützenfest 4, Feuerwehrfest 6, Erntedankfest 8, Weihnachtsmarkt 10 | Festival calendar: `{ key, period, host }` - invitation at the start of the FS25 period (1 = March); the host is a club (`SHOOTING_CLUB`, `FIRE_BRIGADE`, `SPORTS_CLUB`) or a character role (`VILLAGER`, `COOPERATIVE`). | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.invitation-days` | `5` | Game days to accept or decline an invitation; no answer = ignored. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.invitation-accept-trust-delta` | `2` | Trust of the host when the player accepts. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.invitation-ignore-trust-delta` | `-1` | Trust of the host when the invitation is ignored (declining costs nothing). | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-probability-per-month` | `0.3` | Chance per game month that a club asks for sponsoring. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-cooldown-days` | `30` | Game days after the last request before the next one. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-tiers` | `[250, 500, 1000]` | Amounts the player can choose (booking `RPSIM_SPONSORING`); empty = no requests. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-reputation-per100` | `0.5` | Village reputation (public action `SPONSORING`) per 100 € sponsored. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-trust-delta` | `3` | Trust of the club when the player sponsors. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-decline-trust-delta` | `-1` | Trust of the club when the request is declined or expires. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-decision-days` | `7` | Game days to answer a sponsoring request. | Roadmap V2 R2-E4 |
+
+## `rpsim.formulas.fields` (Roadmap V2 R2-C)
+
+Fields, crops and weather from `farm_facts.fields` / `fieldRules` / `weather`. Growth phase: no crop = empty; the mod's
+flags `withered` / `cut` (FS25 `getIsWithered` / `getIsCut`) decide withered and harvested; otherwise below
+`minHarvestingGrowthState` growing, up to `max` harvestable, above `max` withered (mods without the flags). Weeds,
+stones, lime and plowing are only evaluated when the savegame has them switched on (`fieldRules`). All values are
+placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.fields.yield-liters-per-sqm` | `{}` | Yield in liters per m² per FS25 fruit type, only for mods that do not export `litersPerSqm`; empty = unknown (hail uses the per-hectare range, the bank counts no standing crop). | Roadmap V2 R2-C3 / C5 |
+| `rpsim.formulas.fields.rain-sample-max-gap-minutes` | `180` | Rain hours are extrapolated from the weather samples (sample and hold); a gap above this many game minutes (backend was off) is not counted. | Roadmap V2 R2-C2 |
+| `rpsim.formulas.fields.weed-high-state` | `5` | FS25 `weedState` from which the neighbor minds the weeds (🟡 manual test plan 10.15). | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.stone-high-level` | `2` | FS25 `stoneLevel` from which the neighbor minds the stones (🟡 manual test plan 10.15). | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.neighbor-after-months` | `2` | Game months weeds / stones stay high before the neighbor writes (friendly). | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.neighbor-repeat-months` | `1` | Game months after the friendly message before the annoyed one. | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.neighbor-trust-delta` | `-2` | Trust of the neighbor at the annoyed message ("nothing happened"). | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.fallow-gossip-months` | `4` | Game months without a crop (empty or stubble) before the village gossips about the field; a withered crop is talked about at once. | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.harvest-congratulation-trust-delta` | `1` | Trust of the cooperative when every harvestable field of an FS25 year was harvested and nothing withered. | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.max-messages-per-month` | `2` | Cap of the field messages (neighbor, gossip, congratulation) per game month. | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.hints-enabled` | `true` | Field work hints of the cooperative (harvest ready, lime, plowing); the player can also switch them off per savegame in the settings. | Roadmap V2 R2-C6 |
+| `rpsim.formulas.fields.hint-cooldown-days` | `7` | At most one hint per this many game days. | Roadmap V2 R2-C6 |
+
+## `rpsim.formulas.finance` (Roadmap V2 R2-B)
+
+Real farm finances from the mod's booking journal (`farm_facts.finances`, sums per FS25 period and money type). Each
+category belongs to exactly one class; the operating cash flow of the credit check is operating income + expenses of
+the complete months in `credit.cashflow-window-days` (without a journal the V1 balance method stays). Only money type
+names evidenced in the FS25 code are listed - vehicle purchases have no evidenced name yet ([manual test plan
+10.9](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)); unknown categories count as operating by their sign and are
+logged once (add them here). Tool bookings arrive as `RPSIM_<REASON>`; their classes follow the V1 list of
+non-operating reasons (`LiquidityService.NON_OPERATING`).
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.finance.categories.HARVEST_INCOME` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.SOLD_PRODUCTS` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.MISSIONS` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PROPERTY_INCOME` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.SOLD_ANIMALS` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_EMPLOYEE_EFFECT` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_SUBSIDY` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_LIVESTOCK_PREMIUM` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_TAX_REFUND` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_FUEL` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_SEEDS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_FERTILIZER` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_WATER` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_PALLETS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_CONSUMABLES` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.BOUGHT_MATERIALS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.VEHICLE_RUNNING_COSTS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.VEHICLE_REPAIR` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.LEASING_COSTS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PROPERTY_MAINTENANCE` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.AI` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.NEW_ANIMALS_COST` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_SALARY_PAYMENT` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_INSURANCE_PREMIUM` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_VET_INVOICE` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_LEASE_PAYMENT` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_MAINTENANCE_FEE` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_TAX_PAYMENT` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_FINE` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_FAMILY` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_SPONSORING` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_COMPENSATION` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_OTHER` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.SHOP_PROPERTY_BUY` | `INVESTMENT` | FS25 money type: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_FARMLAND_PURCHASE` | `INVESTMENT` | tool booking: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.SHOP_VEHICLE_SELL` | `DIVESTMENT` | FS25 money type: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_FARMLAND_SALE` | `DIVESTMENT` | tool booking: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_DISBURSEMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_INSTALLMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_PENALTY` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_CALLBACK` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_STARTING_CAPITAL_ADJUSTMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_DAMAGE` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_INSURANCE_PAYOUT` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_WILDLIFE_COMPENSATION` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.early-warning-enabled` | `true` | The bank writes before an installment fails when the operating result was negative for several months (R2-B5). | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.early-warning-negative-months` | `2` | Complete months in a row with a negative operating result; only while a bank loan runs, once per streak. | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.record-enabled` | `true` | The cooperative congratulates on the highest harvest revenue of a complete month since the start. | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.record-categories` | `[HARVEST_INCOME, SOLD_PRODUCTS]` | Money types that count as harvest revenue for the record. | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.record-min-months` | `3` | Complete months of history before a record counts. | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.record-trust-delta` | `2` | Trust of the cooperative for a record month. | Roadmap V2 R2-B5 |
 
 ## Profiles
 

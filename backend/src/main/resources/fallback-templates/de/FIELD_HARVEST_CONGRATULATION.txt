@@ -1,0 +1,7 @@
+Glückwunsch zur eingebrachten Ernte
+Hallo,
+
+alle Felder rechtzeitig geerntet und nichts ist verdorrt – {{harvestedFields}} Ernten im Jahr {{harvestYear}}. Die Genossenschaft zieht den Hut.
+
+Viele Grüße
+{{characterName}}

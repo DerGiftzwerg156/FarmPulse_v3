@@ -26,6 +26,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@org.springframework.context.annotation.Import(de.farmpulse.rpsim.support.Fixtures.class)
 class BridgeSyncIntegrationTest {
 
     static Path dir = TestBridge.newDir();
@@ -136,6 +137,50 @@ class BridgeSyncIntegrationTest {
         assertThat(batch).hasSize(2);
         assertThat(batch.get(0).getBatchId()).isNotNull().isEqualTo(batch.get(1).getBatchId());
         assertThat(batch.get(1).getPayloadJson()).contains("FARMLAND_PURCHASE").contains("-47500");
+    }
+
+    @Autowired de.farmpulse.rpsim.support.Fixtures fx;
+    @Autowired de.farmpulse.rpsim.communication.CommunicationService communications;
+    @Autowired de.farmpulse.rpsim.prompt.PromptService prompts;
+    @Autowired de.farmpulse.rpsim.repository.CommunicationRepository communicationRepo;
+
+    /** Roadmap V2 R2-F1 / R2-F2: question out, answer back from player_responses.json, acknowledgement out. */
+    @Test
+    void anIncomingCallIsAcceptedInTheGame() {
+        savegames.save(TestData.activeSavegame("sg_prompt"));
+        TestBridge.write(files.farmFacts(), TestData.farmFacts("sg_prompt", 90_000_000, 5000));
+        sync.runCycle();
+        Savegame sg = savegames.findByBridgeSavegameId("sg_prompt").orElseThrow();
+        var bank = fx.bank(sg);
+        var call = communications.create(new de.farmpulse.rpsim.communication.CommunicationService.Draft(sg, bank,
+                de.farmpulse.rpsim.domain.Channel.CALL, de.farmpulse.rpsim.domain.CommunicationInitiator.CHARACTER,
+                "Ihr Kreditantrag", "Hallo?", de.farmpulse.rpsim.domain.CommunicationCategory.CREDIT, "REPLY", null, null,
+                null, null, false, null));
+        sync.runCycle();
+        JsonNode prompt = null;
+        for (JsonNode env : json.readTree(TestBridge.read(files.instructions())).get("instructions")) {
+            if (env.get("type").asString().equals("PROMPT")) {
+                prompt = env;
+            }
+        }
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.get("title").asString()).isEqualTo("Anruf von Frau Berger");
+        String promptId = prompt.get("promptId").asString();
+
+        TestBridge.write(files.playerResponses(), """
+            {"savegameId":"sg_prompt","responses":[{"responseId":"rsp_%s","promptId":"%s","answer":"YES",
+             "gameTime":90000500}]}""".formatted(promptId, promptId));
+        sync.runCycle();
+        assertThat(prompts.processAnswers()).isEqualTo(1);
+        assertThat(communicationRepo.findById(call.getId()).orElseThrow().getCallStatus())
+                .isEqualTo(de.farmpulse.rpsim.domain.CallStatus.ACCEPTED);
+        sync.runCycle();
+        JsonNode doc = json.readTree(TestBridge.read(files.instructions()));
+        assertThat(doc.get("ackedResponses").get(0).asString()).isEqualTo("rsp_" + promptId);
+        assertThat(doc.get("withdrawnPrompts").get(0).asString()).isEqualTo(promptId);
+        assertThat(doc.get("instructions").toString()).contains("im Browser bereit");
+        // the mod keeps the answer until it sees the acknowledgement: reading it again changes nothing
+        assertThat(prompts.processAnswers()).isZero();
     }
 
     /** DoD AP-3.3 / AP-2.2: backend reads files written by the real bridge simulator and vice versa. */

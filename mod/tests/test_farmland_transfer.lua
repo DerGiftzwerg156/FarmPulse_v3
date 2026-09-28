@@ -69,4 +69,16 @@ function T.TestFarmlandTransfer:testNoReExportWithoutTransfer()
     lu.assertEquals(fs.files[paths.marketContext], "OLD")
 end
 
+function T.TestFarmlandTransfer:testATransferResamplesTheFields()
+    local bridge, fs, adapter, paths = helpers.newBridge({ adapter = { fields = {} } })
+    bridge:onSavegameLoaded()
+    bridge:exportFarmFacts()
+    bridge:exportFarmFacts()
+    lu.assertEquals(adapter.fieldSamples, 1)
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = batch("TO_PLAYER") })
+    bridge:pollInstructions()
+    bridge:exportFarmFacts()
+    lu.assertEquals(adapter.fieldSamples, 2)
+end
+
 return T

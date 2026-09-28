@@ -12,6 +12,9 @@ function RPSimProcessor.newState(cfg)
         processed = {},        -- [instructionId] = { gameTime, status, message }
         contractReports = {},  -- list of ended FIXED contract reports (kept until retention)
         priceEvents = RPSimPriceEvents.new(cfg),
+        financeJournal = RPSimFinanceJournal.new(), -- Roadmap V2 R2-B1
+        workforce = RPSimWorkforce.new(), -- Roadmap V2 R2-A0..A5
+        prompts = RPSimPrompts.new(), -- Roadmap V2 R2-F1 / R2-F2
     }
 end
 
@@ -163,6 +166,16 @@ function RPSimProcessor.applyOne(state, ins, ctx)
             return true, "NOT_SUPPORTED"
         end
         return ctx.actions.notify(ins)
+    elseif ins.type == "EMPLOYEE_ROSTER" or ins.type == "PROMPT" then
+        -- Roadmap V2: EMPLOYEE_ROSTER (R2-A0) replaces the list, PROMPT (R2-F2) is queued for the dialog
+        local action = ctx.actions.prompt
+        if ins.type == "EMPLOYEE_ROSTER" then
+            action = ctx.actions.employeeRoster
+        end
+        if action == nil then
+            return false, "NOT_SUPPORTED"
+        end
+        return action(ins)
     end
     return false, "unsupported type"
 end

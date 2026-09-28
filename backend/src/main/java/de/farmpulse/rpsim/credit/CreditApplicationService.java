@@ -1,10 +1,17 @@
 package de.farmpulse.rpsim.credit;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
+import de.farmpulse.rpsim.bridge.BridgeDtos;
+import de.farmpulse.rpsim.bypass.VanillaBypassService;
+import de.farmpulse.rpsim.bridge.FactsService;
+import de.farmpulse.rpsim.field.FieldService;
+import de.farmpulse.rpsim.narration.FallbackTemplates;
 import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.diary.DiaryService;
@@ -17,6 +24,7 @@ import de.farmpulse.rpsim.domain.EmployeeStatus;
 import de.farmpulse.rpsim.domain.JobRole;
 import de.farmpulse.rpsim.domain.Loan;
 import de.farmpulse.rpsim.domain.Savegame;
+import de.farmpulse.rpsim.finance.FinanceJournalService;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
@@ -48,11 +56,18 @@ public class CreditApplicationService {
     private final CharacterLookup lookup;
     private final DiaryService diary;
     private final RandomSource random;
+    private final FactsService facts;
+    private final FinanceJournalService journal;
+    private final FieldService fields;
+    private final FallbackTemplates labels;
+    private final VanillaBypassService bypass;
 
     public CreditApplicationService(CreditApplicationRepository applications, CreditScoringService scoring,
                                     LoanService loanService, LoanRepository loans, EmployeeRepository employees,
                                     CreditConfigResolver configs, NarrationRequestService narration,
-                                    CharacterLookup lookup, DiaryService diary, RandomSource random) {
+                                    CharacterLookup lookup, DiaryService diary, RandomSource random,
+                                    FactsService facts, FinanceJournalService journal, FieldService fields,
+                                    FallbackTemplates labels, VanillaBypassService bypass) {
         this.applications = applications;
         this.scoring = scoring;
         this.loanService = loanService;
@@ -63,6 +78,11 @@ public class CreditApplicationService {
         this.lookup = lookup;
         this.diary = diary;
         this.random = random;
+        this.facts = facts;
+        this.journal = journal;
+        this.fields = fields;
+        this.labels = labels;
+        this.bypass = bypass;
     }
 
     @Transactional
@@ -90,19 +110,21 @@ public class CreditApplicationService {
             a.setReasonCategory(CreditReasonCategory.CREDIT_BLOCKED);
         } else {
             // score is computed immediately on receipt - only its visibility is delayed
-            CreditFormula.Result r = scoring.score(sg, amount, termMonths, cfg.getBaseInterestRate());
+            // R2-D1: after repeated vanilla loans new credits cost a surcharge until the vanilla loan is repaid
+            double surcharge = bypass.interestSurcharge(sg);
+            CreditFormula.Result r = scoring.score(sg, amount, termMonths, cfg.getBaseInterestRate() + surcharge);
             a.setFinalScore(r.finalScore());
             a.setDecision(r.decision());
             a.setReasonCategory(r.reasonCategory());
             if (r.decision() == CreditDecision.APPROVED) {
                 a.setOfferedAmount(amount);
                 a.setOfferedTermMonths(termMonths);
-                a.setOfferedInterestRate(cfg.getBaseInterestRate());
+                a.setOfferedInterestRate(cfg.getBaseInterestRate() + surcharge);
             } else if (r.decision() == CreditDecision.COUNTER_OFFER) {
                 CreditFormula.Terms t = CreditFormula.counterTerms(r.finalScore(), amount, termMonths, cfg);
                 a.setOfferedAmount(t.amount());
                 a.setOfferedTermMonths(t.termMonths());
-                a.setOfferedInterestRate(t.interestRate());
+                a.setOfferedInterestRate(t.interestRate() + surcharge);
             }
         }
         return applications.save(a);
@@ -133,6 +155,15 @@ public class CreditApplicationService {
                     .put("requestedAmount", a.getAmount())
                     .put("purpose", a.getPurpose())
                     .put("requestedTermMonths", a.getTermMonths());
+            // R2-B5: the advisor can name the real figures of the last month
+            facts.latest(sg).ifPresent(ff -> {
+                journal.putFacts(f, ff);
+                putStandingCropFacts(sg, f, ff); // R2-C5: "Ihr Weizen steht gut, das berücksichtigen wir"
+            });
+            double surcharge = bypass.interestSurcharge(sg);
+            if (surcharge > 0) { // R2-D1: the advisor names the surcharge after repeated vanilla loans
+                f.put("vanillaSurchargePercent", pct(surcharge));
+            }
             NarrationEventType type;
             switch (a.getDecision()) {
                 case APPROVED -> {
@@ -164,6 +195,19 @@ public class CreditApplicationService {
                     .formLink(type == NarrationEventType.CREDIT_COUNTER_OFFER ? "/bank?application=" + a.getId() : null)
                     .submit();
         }
+    }
+
+    /** Roadmap V2 R2-C5: value of the standing crops the bank counted and the most valuable crop. */
+    void putStandingCropFacts(Savegame sg, NarrationFacts.Builder f, BridgeDtos.FarmFacts ff) {
+        List<FieldService.StandingCrop> crops = fields.standingCrops(ff, configs.forSavegame(sg).getStandingCropDiscount());
+        long value = Math.round(crops.stream().mapToDouble(FieldService.StandingCrop::value).sum());
+        if (value <= 0) {
+            return;
+        }
+        String main = crops.get(0).field().fruitType();
+        f.put("standingCropValue", value).put("mainStandingCrop", main)
+                .put("standingCropNote", "Ihren stehenden Bestand (" + labels.label(main) + ") haben wir mit rund "
+                        + NumberFormat.getIntegerInstance(Locale.GERMANY).format(value) + " € berücksichtigt.");
     }
 
     private static double pct(Double rate) {

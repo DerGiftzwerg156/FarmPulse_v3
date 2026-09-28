@@ -35,6 +35,9 @@ rpsim:
     rewind-lookback-hours: 24          # T-02: bookings acked this long before the reloaded point are checked as well
     ingame-notifications: true         # TODO T-21: new mails / incoming calls as in-game notification
     notification-max-age-hours: 2      # TODO T-21: older notifications are dropped by the mod
+    ingame-prompts: true               # Roadmap V2 R2-F2: yes/no questions in the game
+    prompt-default-kinds: [CALL]       # R2-F2: occasions asked in the game until the player chooses (settings page)
+    prompt-max-age-hours: 48           # R2-F2: questions without their own deadline expire after this many game hours
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
   ai:
@@ -119,6 +122,7 @@ rpsim:
       legacy-term-months: 60
       payment-history-missed-penalty: 15
       payment-history-on-time-gain: 2
+      standing-crop-discount: 0.5   # Roadmap V2 R2-C5
     credit-hard:                  # "Ton-/Genre-Konfigurationsprofile": CreditConfig.HART
       weight-debt-service-coverage: 0.30
       weight-equity-ratio: 0.25
@@ -162,6 +166,7 @@ rpsim:
       legacy-term-months: 60
       payment-history-missed-penalty: 15
       payment-history-on-time-gain: 2
+      standing-crop-discount: 0.5   # Roadmap V2 R2-C5
     market:                       # "Preis-Events & Sonderkontrakte"
       daily-spawn-probability: 0.15
       max-active-events: 3
@@ -239,6 +244,16 @@ rpsim:
       warning-threshold: 30
       warning-after-days: 14
       termination-after-days: 30
+      strike-threshold: 30          # Roadmap V2 R2-A5
+      strike-after-days: 21
+      workload:                     # Roadmap V2 R2-A4 / R2-A7: workload from the real game (placeholders)
+        target-hours-per-day: 8
+        overtime-penalty-per-hour: 2
+        recovery-per-hour: 0.5
+        effect-scales-with-hours: true
+        animals-per-keeper: 80
+        keeper-overload-penalty-per-day: 3
+        keeper-recovery-per-day: 0.5
     hiring:                       # "Kündigung & Bewerbung"
       candidates-min: 3
       candidates-max: 5
@@ -275,7 +290,6 @@ rpsim:
       congratulation-trend-ratio: 1.25
       congratulation-min-cashflow: 1000
       congratulation-cooldown-days: 20
-      invitation-every-periods: 6   # T-08: every 6th FS25 period (March, September)
       gossip-daily-probability: 0.05
       gossip-cooldown-days: 3
     onboarding:
@@ -307,6 +321,9 @@ rpsim:
       hail-periods: [3, 4, 5, 6]
       hail-damage-per-hectare-min: 200
       hail-damage-per-hectare-max: 900
+      hail-damage-share-min: 0.05   # Roadmap V2 R2-C3 (placeholders)
+      hail-damage-share-max: 0.3
+      hail-rain-factor: 1.0
       report-deadline-days: 5
       settlement-delay-days-min: 1
       settlement-delay-days-max: 3
@@ -330,6 +347,7 @@ rpsim:
       periods: [4, 5, 6, 7, 8]
       damage-per-hectare-min: 150
       damage-per-hectare-max: 600
+      crops: [MAIZE, WHEAT, BARLEY, OAT, POTATO]   # Roadmap V2 R2-C3
       offer-share: 0.5
       max-share: 0.9
       trust-influence: 0.2
@@ -357,6 +375,13 @@ rpsim:
       trader-answer-days: 5
       trader-deadline-months: 1
       breeding-advice-every-months: 6
+      vet-emergency-health-threshold: 40   # Roadmap V2 R2-A7 (placeholders)
+      vet-emergency-factor: 2.5
+      vet-emergency-cooldown-days: 5
+      keeper-food-warning-ratio: 0.2
+      keeper-water-warning-ratio: 0.2
+      keeper-warning-cooldown-days: 3
+      water-condition-titles: [Wasser, Water]
     lease:                        # TODO T-22: lease of NPC fields (placeholders)
       annual-rent-share: 0.05
       trust-influence: 0.1
@@ -388,6 +413,152 @@ rpsim:
       completed-trust-delta: 3
       client-trust-delta: 2
       failed-trust-delta: -3
+    mechanic:                     # Roadmap V2 R2-A6: employed mechanic repairs partially (placeholders)
+      repair-points-per-month: 60
+      repair-below-condition: 90
+      overload-workload-per-vehicle: 2
+    finance:                      # Roadmap V2 R2-B: real farm finances from the booking journal (placeholders)
+      categories:                 # FS25 money type or RPSIM_<REASON> -> class; unknown names: operating by sign
+        HARVEST_INCOME: OPERATING_INCOME
+        SOLD_PRODUCTS: OPERATING_INCOME
+        MISSIONS: OPERATING_INCOME
+        PROPERTY_INCOME: OPERATING_INCOME
+        SOLD_ANIMALS: OPERATING_INCOME
+        RPSIM_EMPLOYEE_EFFECT: OPERATING_INCOME
+        RPSIM_SUBSIDY: OPERATING_INCOME
+        RPSIM_LIVESTOCK_PREMIUM: OPERATING_INCOME
+        RPSIM_TAX_REFUND: OPERATING_INCOME
+        PURCHASE_FUEL: OPERATING_EXPENSE
+        PURCHASE_SEEDS: OPERATING_EXPENSE
+        PURCHASE_FERTILIZER: OPERATING_EXPENSE
+        PURCHASE_WATER: OPERATING_EXPENSE
+        PURCHASE_PALLETS: OPERATING_EXPENSE
+        PURCHASE_CONSUMABLES: OPERATING_EXPENSE
+        BOUGHT_MATERIALS: OPERATING_EXPENSE
+        VEHICLE_RUNNING_COSTS: OPERATING_EXPENSE
+        VEHICLE_REPAIR: OPERATING_EXPENSE
+        LEASING_COSTS: OPERATING_EXPENSE
+        PROPERTY_MAINTENANCE: OPERATING_EXPENSE
+        AI: OPERATING_EXPENSE
+        NEW_ANIMALS_COST: OPERATING_EXPENSE
+        RPSIM_SALARY_PAYMENT: OPERATING_EXPENSE
+        RPSIM_INSURANCE_PREMIUM: OPERATING_EXPENSE
+        RPSIM_VET_INVOICE: OPERATING_EXPENSE
+        RPSIM_LEASE_PAYMENT: OPERATING_EXPENSE
+        RPSIM_MAINTENANCE_FEE: OPERATING_EXPENSE
+        RPSIM_TAX_PAYMENT: OPERATING_EXPENSE
+        RPSIM_FINE: OPERATING_EXPENSE
+        RPSIM_FAMILY: OPERATING_EXPENSE
+        RPSIM_SPONSORING: OPERATING_EXPENSE
+        RPSIM_COMPENSATION: OPERATING_EXPENSE
+        RPSIM_OTHER: OPERATING_EXPENSE
+        SHOP_PROPERTY_BUY: INVESTMENT
+        RPSIM_FARMLAND_PURCHASE: INVESTMENT
+        SHOP_VEHICLE_SELL: DIVESTMENT
+        RPSIM_FARMLAND_SALE: DIVESTMENT
+        RPSIM_CREDIT_DISBURSEMENT: FINANCING
+        RPSIM_CREDIT_INSTALLMENT: FINANCING
+        RPSIM_CREDIT_PENALTY: FINANCING
+        RPSIM_CREDIT_CALLBACK: FINANCING
+        RPSIM_STARTING_CAPITAL_ADJUSTMENT: FINANCING
+        RPSIM_DAMAGE: IGNORE
+        RPSIM_INSURANCE_PAYOUT: IGNORE
+        RPSIM_WILDLIFE_COMPENSATION: IGNORE
+      early-warning-enabled: true
+      early-warning-negative-months: 2
+      record-enabled: true
+      record-categories: [HARVEST_INCOME, SOLD_PRODUCTS]
+      record-min-months: 3
+      record-trust-delta: 2
+    tax:                          # Roadmap V2 R2-E1: tax office and tax advisor (placeholders)
+      enabled: true
+      rate: 0.25
+      allowance: 20000
+      hard-rate: 0.3
+      hard-allowance: 10000
+      depreciation-rate: 0.1
+      excluded-categories: [RPSIM_TAX_PAYMENT, RPSIM_TAX_REFUND, RPSIM_FINE]
+      prepayment-share: 1.0
+      payment-days: 14
+      late-fee-rate: 0.01
+      enforcement-after-months: 2
+      reminder-trust-delta: -2
+      enforcement-trust-delta: -5
+      advisor-monthly-fee: 150
+      advisor-tax-reduction: 0.1
+      advisor-reminder-days: 3
+      advisor-audit-factor: 0.5
+      advisor-offer-valid-days: 7
+      audit-probability: 0.15
+      audit-days: 7
+      audit-jump-factor: 2.0
+      audit-disallowed-share: 0.5
+    authority:                    # Roadmap V2 R2-E2: rotation, cultivation duty, animal welfare (placeholders)
+      enabled: true
+      rotation-premium-per-ha: 40
+      rotation-cut-share: 0.5
+      duty-months: 3
+      duty-fine: 500
+      welfare-health-threshold: 30
+      welfare-days: 3
+      welfare-fine: 1000
+      welfare-reputation-delta: -3
+      inspection-days: 5
+      violation-trust-delta: -3
+      max-inspections-per-month: 2
+    family:                       # Roadmap V2 R2-E3: family and succession (placeholders)
+      enabled: true
+      retirement-payment: 800
+      field-sold-trust-delta: -15
+      harvest-periods: [6, 7, 8]
+      harvest-help-probability: 0.5
+      harvest-help-trust-delta: 2
+      school-start-period: 7
+    clubs:                        # Roadmap V2 R2-E4: clubs and festivals (placeholders)
+      enabled: true
+      festivals:                  # FS25 period (1 = March) and host (club or character role)
+        - { key: MAIBAUM, period: 3, host: VILLAGER }
+        - { key: SCHUETZENFEST, period: 4, host: SHOOTING_CLUB }
+        - { key: FEUERWEHRFEST, period: 6, host: FIRE_BRIGADE }
+        - { key: ERNTEDANKFEST, period: 8, host: COOPERATIVE }
+        - { key: WEIHNACHTSMARKT, period: 10, host: VILLAGER }
+      invitation-days: 5
+      invitation-accept-trust-delta: 2
+      invitation-ignore-trust-delta: -1
+      sponsoring-probability-per-month: 0.3
+      sponsoring-cooldown-days: 30
+      sponsoring-tiers: [250, 500, 1000]
+      sponsoring-reputation-per100: 0.5
+      sponsoring-trust-delta: 3
+      sponsoring-decline-trust-delta: -1
+      sponsoring-decision-days: 7
+    vanilla-bypass:               # Roadmap V2 R2-D: reactions to the vanilla loan and the field menu (placeholders)
+      enabled: true
+      loan-min-increase: 5000
+      loan-trust-per10k: 1
+      loan-trust-max: 8
+      loan-interest-surcharge: 0.01
+      loan-min-repayment: 5000
+      loan-repaid-trust-delta: 1
+      field-trust-delta: -8
+      field-reputation-delta: -2
+      compensation-share: 0.1
+      compensation-decision-days: 7
+      compensation-decline-trust-delta: -5
+      outside-helpers-hint: true
+    fields:                       # Roadmap V2 R2-C: fields, crops and weather (placeholders)
+      yield-liters-per-sqm: {}    # only for mods without litersPerSqm, e.g. { WHEAT: 0.9 }; empty = unknown
+      rain-sample-max-gap-minutes: 180
+      weed-high-state: 5
+      stone-high-level: 2
+      neighbor-after-months: 2
+      neighbor-repeat-months: 1
+      neighbor-trust-delta: -2
+      fallow-gossip-months: 4
+      harvest-congratulation-trust-delta: 1
+      max-messages-per-month: 2
+      hints-enabled: true
+      hint-cooldown-days: 7
     energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
       fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
       probability-per-month: 0.35

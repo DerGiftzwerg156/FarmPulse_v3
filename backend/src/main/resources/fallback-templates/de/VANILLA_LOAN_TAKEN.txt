@@ -1,0 +1,7 @@
+Sie haben sich woanders Geld geliehen?
+Guten Tag,
+
+wir haben gesehen, dass Sie einen Kredit über {{loanAmount}} € außerhalb unseres Hauses aufgenommen haben (offen: {{vanillaLoanRemaining}} €). Sprechen Sie uns beim nächsten Mal bitte zuerst an – wir finden sicher eine Lösung. {{surchargeNote}}
+
+Mit freundlichen Grüßen
+{{characterName}}

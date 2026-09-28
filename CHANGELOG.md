@@ -10,11 +10,131 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-28
+
+Roadmap V2 (`ROADMAP_V2.md`): real farm finances, staff as FS25 helpers, fields and weather, reactions to the game
+menus, new roleplay areas and yes/no decisions directly in the game. Update the mod `FS25_RPSim` to 1.5.0.0 together
+with the backend: with an older mod the blocks it does not export stay "not present" and the features built on them
+stay off.
+
 ### Added
 
 - **Roadmap V2 (`ROADMAP_V2.md`):** plan for the next features, each checked against the FS25 code - staff as
   FS25 helpers, real farm finances from the game's bookings, field/crop/weather export, reactions to vanilla loan
   and field purchases, tax office / authority / family / clubs, yes/no decisions inside the game.
+- **Roadmap V2 groundwork (R2-Q):** the bridge contract for the next features, without game-visible changes yet.
+  - `farm_facts.json` knows five optional blocks - `finances` (booking journal), `workforce` (helper jobs and
+    worked time), `husbandries` (health, productivity, food, conditions), `fields` (crop and field state) and
+    `weather`. `schemaVersion` stays `1`; a missing block means "not present" (older mod), not "empty". The mod
+    normalises the blocks once a feature collects them; `BridgeDtos` / `BridgeValidator` read and check them.
+  - New instruction types `EMPLOYEE_ROSTER` and `PROMPT` are validated by the mod (executed with R2-A0 / R2-F2,
+    until then acknowledged `FAILED` / `NOT_SUPPORTED`; `EMPLOYEE_ROSTER` is executed since R2-A); `REPAIR_VEHICLE` takes an optional `targetDamage` for
+    partial repairs and never raises the damage.
+  - New booking reasons `TAX_PAYMENT`, `TAX_REFUND`, `FINE`, `FAMILY`, `SPONSORING`, `COMPENSATION` in mod, backend,
+    booking titles (`modDesc.xml`) and the German UI labels.
+  - Bridge simulator: scenarios `helfer-hof`, `tierhof-krank` and `ernte-herbst` export the new blocks (journal and
+    worked time grow with the game time), understand the new instructions and offer the control endpoints
+    `/weather`, `/husbandry`, `/field`, `/jobs`. The simulator tests (JSON schema validation) now run in the backend
+    CI workflow.
+  - Docs: every new field with its source in the FS25 code (`docs/dev/bridge-protocol.md`) and section 10 of the
+    manual test plan with one check per "Im Spiel prüfen" point of the roadmap.
+- **Real farm finances (Roadmap V2, R2-B):**
+  - Mod: booking journal - a hook on `Farm.changeBalance` sums every booking of the player farm per FS25 month and
+    money type (tool bookings as `RPSIM_<REASON>`), keeps the last `financeJournalPeriods` (13) months in the savegame
+    and exports them as `farm_facts.finances`.
+  - Credit check: with a journal the operating cash flow is the average of the complete months in the cash-flow
+    window; investments, financing and one-off damage bookings do not count, and the real `LEASING_COSTS` replace the
+    leasing estimate (T-04). Classes per category in `rpsim.formulas.finance.categories`; unknown categories count as
+    operating by their sign and are logged once. Only money type names evidenced in the FS25 code are classified -
+    a vehicle purchase counts as operating until its name is checked in the game (manual test plan 10.9).
+  - Bank page: new card *Hofbuchhaltung* - income and expenses of the running business per month as stacked columns
+    by category with the monthly result, a table with investments, divestments and financing, German category names.
+  - Characters: the bank warns (once per loss streak, only with a running bank loan) after two months with a negative
+    operating result; the cooperative congratulates on a record harvest revenue month (small trust bonus); credit
+    decisions and both messages get the real figures of the last month as narration facts.
+  - Simulator: `POST /book` books a game money type (e.g. a purchase) into the journal.
+- **Staff as FS25 helpers (Roadmap V2, R2-A):**
+  - Mod: executes `EMPLOYEE_ROSTER` - a helper started by the player farm is driven by the first free active machine
+    operator (list sorted by skill), the game messages show the employee's name, and with the helper wage mode
+    `EMPLOYEES` (default) the game books no helper wage for it (`AIJob.getPricePerMs` = 0). A strict mode limits
+    `maxNumHirables` to the active machine operators. The worked game time per employee is stored in the savegame
+    and exported as `farm_facts.workforce`; the stable state (health, productivity, food, conditions) as
+    `farm_facts.husbandries`.
+  - Workload: the backend counts the driven hours per game day - above 8 h (`workload.target-hours-per-day`) the
+    workload need drops, below it recovers; the positive monthly effect of an operator scales with the hours of the
+    month. Without the block (older mod) the V1 workload decay stays.
+  - Strike: after 21 days below the satisfaction threshold an employee goes on strike (badge *Streikt*, mail); the
+    mod stops the running helper with "%s legt die Arbeit nieder", the salary keeps running, no positive effect. The
+    strike ends when the satisfaction is back at the threshold.
+  - Mechanic: repairs the most worn machines at every month start as far as the monthly capacity reaches (partial
+    repair via `targetDamage`), sends a workshop report; machines left broken raise the workload.
+  - Animal keeper: workload from animals per keeper, working conditions from the stable health, a warning mail when
+    food or water run low; the vet comes to an emergency (more expensive) when a stable's health drops below 40 %;
+    the breeding advice names the productivity.
+  - Settings: new card *Helfer im Spiel* (helper wage via salary, strict mode); *Personal* shows the helper hint, the
+    strike badge and the driven hours per month. New settings are documented in `configuration-reference.md`.
+  - Simulator: `EMPLOYEE_ROSTER` assigns running jobs in list order and stops the jobs of striking employees.
+- **Fields, crops and weather (Roadmap V2, R2-C):**
+  - Mod: exports the own fields (`farm_facts.fields`: crop, growth, weeds, stones, lime, plowing, plus `withered`,
+    `cut`, `fillType` and `litersPerSqm` from the game), the soil settings of the savegame (`fieldRules`) and the
+    weather. The fields are sampled every `fieldExportIntervalMs` (5 min) and after a farmland transfer.
+  - Backend: growth phase per field (empty, growing, harvestable, harvested, withered), crop history per FS25 year,
+    rain hours per game month.
+  - Hail and wild boars only hit standing crops (wild boars only maize, wheat, barley, oat, potatoes); the hail damage
+    follows area × yield × current price, the wildlife damage the growth; a rainy month raises the hail probability.
+    The messages name field and crop. Without the field export (older mod) V1 stays.
+  - Village: a neighbor minds weeds or stones (friendly, later annoyed with a small trust loss), gossip about fallow
+    fields and withered crops, the cooperative congratulates when every harvestable field of a year was harvested in
+    time; at most 2 field messages per game month.
+  - The cooperative gives at most one field work hint per week (harvest ready, lime, plowing - lime / plowing only when
+    the savegame requires them); switchable on the new settings card *Felder*.
+  - Bank: standing crops count as asset in the credit check (harvest value × growth × `standing-crop-discount` 0.5),
+    the advisor mentions them.
+  - *Felder*: the detail of an own field shows crop and phase.
+  - Simulator: `ernte-herbst` exports the crop details and `fieldRules`, new endpoint `POST /field-rules`.
+- **Bypassing the tool in the game menus becomes part of the story (Roadmap V2, R2-D)** - nothing is locked:
+  - Vanilla loan: the bank advisor writes within a game day when the loan of the finance menu grows (trust loss
+    scaled by the amount, capped); from the second loan while one is open new credits cost an interest surcharge until
+    it is repaid; every repayment gets a friendly note. A reload without saving is no repayment.
+  - Field menu: a field of a character bought over their head costs trust and village reputation, the former owner
+    claims 10 % of the game price (*Verträge* → *Ausgleich zahlen* / *Ablehnen*, no answer = refused); a free field is
+    only noted in the diary, an own field sold in the menu is village gossip.
+  - Helpers without employee: one hint of the cooperative with a link to *Personal*.
+  - Settings card *Kredit und Felder im Spielmenü* (switch, running surcharge); values in
+    `rpsim.formulas.vanilla-bypass.*`. Simulator: `POST /vanilla-loan`, `POST /vanilla-farmland`.
+- **New roleplay areas (Roadmap V2, R2-E)** - all from the booking journal, the fields and the stables, no new game API:
+  - Tax office: the FS25 year is the tax year; at the start of the next year an assessment with the traceable
+    calculation (operating income and expenses without taxes and fines, depreciation of vehicles and buildings,
+    interest of the bank credits, allowance, flat rate - stricter in the harsh mode), back payment or refund,
+    quarterly prepayments from the last assessment. Bills are paid by button under *Verträge*; late fees per started
+    month, reminder, enforcement threat (text and trust only). Tax advisor as a contract (monthly fee, lower tax,
+    deadline reminders, fewer audits); a random audit disputes expenses under unknown money types and jump months.
+    *Bank* → new card *Steuern*.
+  - Authority: rotation premium per hectare with a crop change at the end of every FS25 year, a notice for the same crop
+    twice, the whole premium cut on a repeat; announced inspections for the cultivation duty (fine) and animal welfare
+    (requirement, then fine and village reputation); at most 2 inspections per month.
+  - Family: parents, partner and children chosen one by one in the onboarding (reroll keeps role and name);
+    retirement payment for an inherited farm or a return home; birthdays, wedding day, school start, help at harvest
+    time, succession in the diary; a family field chosen on *Felder* - selling it costs the trust of the whole family.
+  - Clubs: shooting club, fire brigade and sports club (role `CLUB`), festival calendar (Maibaum, Schützenfest,
+    Feuerwehrfest, Erntedankfest, Weihnachtsmarkt) with invitations to accept or decline (ignoring costs a little
+    trust) - replaces the fixed invitation calendar `village-life.invitation-every-periods`; sponsoring requests with
+    fixed tiers raise the village reputation.
+  - Values in `rpsim.formulas.tax.*`, `authority.*`, `family.*`, `clubs.*` (V20 migration).
+- **Decisions directly in the game (Roadmap V2, R2-F)** - simple yes/no decisions without switching to the browser:
+  - Mod: `PROMPT` questions are queued and shown one at a time with the game's yes/no dialog as soon as no menu is
+    open (`promptsInVehicle` switch); the buttons stay "Ja"/"Nein", their meaning is in the text. The answer is written
+    at once to the new file `export/player_responses.json`; queue and open answers are kept in the savegame.
+  - Key *FarmPulse: offene Frage* (default Alt+J, rebindable) opens the next waiting question, also in a vehicle; the
+    key help shows it while a question waits.
+  - Backend: open decisions of the occasions switched on per savegame (default: only calls) become questions -
+    calls, contract offers and lease renewals, the hunting tenant's offer, the bank's counter offer, invitations, and
+    (owner decision) compensation claims, tax bills and the tax advisor's offer. Answers are processed once per
+    `responseId` with the same service methods as the browser buttons; a refused action comes back as a notification.
+    `instructions.json` acknowledges answers (`ackedResponses`) and withdraws questions decided in the browser
+    (`withdrawnPrompts`); after a reload without saving an open question is sent again.
+  - Settings card *Fragen im Spiel*; `rpsim.bridge.ingame-prompts`, `prompt-default-kinds`, `prompt-max-age-hours`
+    (V21 migration). Simulator: `POST /answer`, `export/player_responses.json`.
 
 ## [1.1.2] - 2026-09-28
 

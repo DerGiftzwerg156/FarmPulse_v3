@@ -1,0 +1,6 @@
+Ein besonderer Tag
+Hallo,
+
+heute ist ein besonderer Tag: {{occasion}}. Schön, dass wir das zusammen auf dem Hof erleben.
+
+{{characterName}}

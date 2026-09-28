@@ -19,7 +19,8 @@ export function startControlServer(sim, port, log = () => {}) {
       if (req.method === 'GET' && url.pathname === '/state') {
         return send(200, { savegameId: sim.savegameId, scenario: sim.scenario, gameTime: sim.gameTime,
           balance: sim.balance, priceEvents: sim.priceEvents, moneyLog: sim.moneyLog.slice(-50),
-          notifications: sim.notifications.slice(-50) });
+          notifications: sim.notifications.slice(-50), roster: sim.roster, prompts: sim.openPrompts(),
+          responses: sim.responses });
       }
       if (req.method === 'POST' && url.pathname === '/advance') {
         const b = await body(req);
@@ -64,6 +65,37 @@ export function startControlServer(sim, port, log = () => {}) {
         sim.exportFarmFacts();
         return send(200, m);
       }
+      // Roadmap V2 (R2-Q2): change the optional farm_facts blocks of the scenario
+      const patches = { '/book': (b) => sim.bookGame(b.moneyType, Number(b.amount)),
+        '/weather': (b) => sim.setWeather(b), '/husbandry': (b) => sim.setHusbandry(b),
+        '/field': (b) => sim.setField(b), '/field-rules': (b) => sim.setFieldRules(b), '/jobs': (b) => sim.setActiveJobs(b.activeJobs ?? []) };
+      if (req.method === 'POST' && patches[url.pathname]) {
+        const result = patches[url.pathname](await body(req));
+        sim.exportFarmFacts();
+        return send(200, result);
+      }
+      // Roadmap V2 R2-D: the player bypasses the tool in the game menus
+      if (req.method === 'POST' && url.pathname === '/vanilla-loan') {
+        const result = sim.changeVanillaLoan(Number((await body(req)).change));
+        sim.exportFarmFacts();
+        return send(200, result);
+      }
+      if (req.method === 'POST' && url.pathname === '/vanilla-farmland') {
+        const b = await body(req);
+        const result = sim.vanillaFarmland(Number(b.farmlandId), b.toPlayer === true);
+        sim.exportFarmFacts();
+        sim.exportMarketContext();
+        return send(200, result);
+      }
+      // Roadmap V2 R2-F: the player answers a yes/no question in the game
+      if (req.method === 'POST' && url.pathname === '/answer') {
+        const b = await body(req);
+        try {
+          return send(200, sim.answer(b.promptId, b.answer));
+        } catch (e) {
+          return send(400, { error: e.message });
+        }
+      }
       if (req.method === 'POST' && url.pathname === '/balance') {
         const b = await body(req);
         sim.balance = Number(b.balance);
@@ -75,6 +107,6 @@ export function startControlServer(sim, port, log = () => {}) {
       return send(500, { error: e.message });
     }
   });
-  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving)`));
+  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving|/book|/weather|/husbandry|/field|/field-rules|/jobs|/vanilla-loan|/vanilla-farmland|/answer)`));
   return server;
 }

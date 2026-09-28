@@ -1,0 +1,6 @@
+Unser Familienfeld
+Hallo,
+
+dass Feld {{farmlandId}} nicht mehr zum Hof gehört, tut weh. Das Feld war schon beim Großvater in der Familie.
+
+{{characterName}}

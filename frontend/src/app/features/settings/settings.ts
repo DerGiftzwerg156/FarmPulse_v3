@@ -2,7 +2,9 @@ import { GameStateStore } from '../../core/state/game-state.store';
 import { Component, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { AiSettingsView, GameSettingsView } from '../../core/api/models';
+import {
+  AiSettingsView, BypassSettingsView, FieldSettingsView, GameSettingsView, HelperSettingsView, PromptSettingsView,
+} from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { LabelPipe } from '../../shared/format/label.pipe';
@@ -31,6 +33,10 @@ export class Settings {
 
   readonly ai = signal<AiSettingsView | null>(null);
   readonly game = signal<GameSettingsView | null>(null);
+  readonly helpers = signal<HelperSettingsView | null>(null);
+  readonly fields = signal<FieldSettingsView | null>(null);
+  readonly bypass = signal<BypassSettingsView | null>(null);
+  readonly prompts = signal<PromptSettingsView | null>(null);
   readonly provider = signal('');
   readonly model = signal('');
   readonly apiKey = signal('');
@@ -50,6 +56,44 @@ export class Settings {
       error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
     });
     this.api.gameSettings().subscribe({ next: (g) => this.game.set(g), error: () => this.game.set(null) });
+    this.api.helperSettings().subscribe({ next: (h) => this.helpers.set(h), error: () => this.helpers.set(null) });
+    this.api.fieldSettings().subscribe({ next: (f) => this.fields.set(f), error: () => this.fields.set(null) });
+    this.api.bypassSettings().subscribe({ next: (b) => this.bypass.set(b), error: () => this.bypass.set(null) });
+    this.api.promptSettings().subscribe({ next: (p) => this.prompts.set(p), error: () => this.prompts.set(null) });
+  }
+
+  /** Roadmap V2 R2-F2: switches one occasion of the questions in the game on or off. */
+  togglePrompt(kind: string, on: boolean): void {
+    const current = this.prompts()?.kinds ?? [];
+    const kinds = on ? [...new Set([...current, kind])] : current.filter((k) => k !== kind);
+    this.api.savePromptSettings(kinds).subscribe({
+      next: (p) => this.prompts.set(p),
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
+  }
+
+  /** Roadmap V2 R2-D: switches the reactions to the vanilla loan and the game's field menu. */
+  saveBypass(reactionsEnabled: boolean): void {
+    this.api.saveBypassSettings({ reactionsEnabled }).subscribe({
+      next: (b) => this.bypass.set(b),
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
+  }
+
+  /** Roadmap V2 R2-C6: switches the field work hints of the cooperative. */
+  saveFields(fieldHintsEnabled: boolean): void {
+    this.api.saveFieldSettings({ fieldHintsEnabled }).subscribe({
+      next: (f) => this.fields.set(f),
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
+  }
+
+  /** Roadmap V2 R2-A1 / R2-A3: saves the helper switches (sent to the mod with the employee list). */
+  saveHelpers(r: { helperWageMode: string; strictHelperLimit: boolean }): void {
+    this.api.saveHelperSettings(r).subscribe({
+      next: (h) => this.helpers.set(h),
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
   }
 
   private apply(s: AiSettingsView): void {

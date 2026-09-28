@@ -130,4 +130,151 @@ public class Savegame {
     /** TODO T-21: name of the current season from the game's Season table (e.g. WINTER), null if unknown. */
     @Column(name = "cal_season", length = 64)
     private String calSeason;
+
+    // ---- Roadmap V2 R2-B5: evaluation of the booking journal, one complete month after the other
+
+    /** Continuous month number (year * 12 + period - 1) of the last evaluated complete month. */
+    @Column(name = "fin_last_month_key")
+    private Long finLastMonthKey;
+
+    /** Number of complete months evaluated so far. */
+    @Column(name = "fin_months_seen", nullable = false)
+    private int finMonthsSeen;
+
+    /** Negative operating results in a row up to the last evaluated month. */
+    @Column(name = "fin_negative_streak", nullable = false)
+    private int finNegativeStreak;
+
+    /** The bank already warned about the current negative streak. */
+    @Column(name = "fin_warning_sent", nullable = false)
+    private boolean finWarningSent;
+
+    /** Highest harvest revenue of a complete month so far (record). */
+    @Column(name = "fin_record_revenue")
+    private Double finRecordRevenue;
+
+    // ---- Roadmap V2 R2-A: employees as FS25 helpers
+
+    /** A1: EMPLOYEES = helpers driven by an employee cost no game wage; VANILLA = game wage as in the base game. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "helper_wage_mode", nullable = false, length = 16)
+    private HelperWageMode helperWageMode = HelperWageMode.EMPLOYEES;
+
+    /** A3: strict mode - at most as many helpers as active machine operators. */
+    @Column(name = "strict_helper_limit", nullable = false)
+    private boolean strictHelperLimit;
+
+    /** A0: content of the last EMPLOYEE_ROSTER sent to the mod (sent again only when it changes or after a rewind). */
+    @Lob
+    @Column(name = "roster_json")
+    private String rosterJson;
+
+    @Column(name = "roster_sent_game_time")
+    private Long rosterSentGameTime;
+
+    /** A4: the mod reports worked time (farm_facts.workforce) - the workload of machine operators follows it. */
+    @Column(name = "workforce_tracked", nullable = false)
+    private boolean workforceTracked;
+
+    /** A7: the mod reports husbandry values (farm_facts.husbandries) - keepers work with the real stables. */
+    @Column(name = "husbandries_tracked", nullable = false)
+    private boolean husbandriesTracked;
+
+    // ---- Roadmap V2 R2-C: fields, crops and weather
+
+    /** C2: game time and rain state of the last weather sample (rain hours = sample and hold). */
+    @Column(name = "last_weather_game_time")
+    private Long lastWeatherGameTime;
+
+    @Column(name = "last_weather_raining")
+    private Boolean lastWeatherRaining;
+
+    /** C1: the mod reports the fields (farm_facts.fields) - damages and reactions follow the real crops. */
+    @Column(name = "fields_tracked", nullable = false)
+    private boolean fieldsTracked;
+
+    /** C4: FS25 year of the last field sample (a new year closes the harvest year of the fields). */
+    @Column(name = "field_year")
+    private Integer fieldYear;
+
+    /** C4: monthly cap of the field messages - game month index and messages sent in it. */
+    @Column(name = "field_messages_month")
+    private Long fieldMessagesMonth;
+
+    @Column(name = "field_messages_count", nullable = false)
+    private int fieldMessagesCount;
+
+    /** C6: last field work hint of the cooperative (at most one per cooldown). */
+    @Column(name = "last_field_hint_game_time")
+    private Long lastFieldHintGameTime;
+
+    /** C6: the player can switch the field work hints off (settings page). */
+    @Column(name = "field_hints_enabled", nullable = false)
+    private boolean fieldHintsEnabled = true;
+
+    // ---- Roadmap V2 R2-D: the vanilla loan and the field menu become part of the story
+
+    /** D1: remaining vanilla loan of the last export and its game time (a smaller game time = reload). */
+    @Column(name = "vanilla_loan_seen")
+    private Double vanillaLoanSeen;
+
+    @Column(name = "vanilla_loan_seen_game_time")
+    private Long vanillaLoanSeenGameTime;
+
+    /** D1: increases / repayments since the last daily reaction. */
+    @Column(name = "vanilla_loan_pending_taken", nullable = false)
+    private double vanillaLoanPendingTaken;
+
+    @Column(name = "vanilla_loan_pending_repaid", nullable = false)
+    private double vanillaLoanPendingRepaid;
+
+    /** D1: vanilla loans taken while the loan is open; from the second one new credits get a surcharge. */
+    @Column(name = "vanilla_loan_takings", nullable = false)
+    private int vanillaLoanTakings;
+
+    @Column(name = "vanilla_loan_surcharge", nullable = false)
+    private boolean vanillaLoanSurcharge;
+
+    /** D: the player can switch the reactions to the vanilla loan / field menu off (settings page). */
+    @Column(name = "vanilla_bypass_enabled", nullable = false)
+    private boolean vanillaBypassEnabled = true;
+
+    /** D3: the hint about helpers without employee was sent (once per savegame). */
+    @Column(name = "outside_helpers_hint_sent", nullable = false)
+    private boolean outsideHelpersHintSent;
+
+    // ---- Roadmap V2 R2-E: new roleplay areas
+
+    /** E2: game month and inspections announced in it (cap). */
+    @Column(name = "authority_month")
+    private Long authorityMonth;
+
+    @Column(name = "authority_count", nullable = false)
+    private int authorityCount;
+
+    /** E4: last sponsoring request of a club. */
+    @Column(name = "last_sponsoring_game_time")
+    private Long lastSponsoringGameTime;
+
+    /** E3: family chosen in the onboarding. */
+    @Column(name = "family_parents", nullable = false)
+    private boolean familyParents;
+
+    @Column(name = "family_partner", nullable = false)
+    private boolean familyPartner;
+
+    @Column(name = "family_children", nullable = false)
+    private boolean familyChildren;
+
+    /** E3: farmland the player marked as family field ("the field at the brook"). */
+    @Column(name = "family_field_id")
+    private Integer familyFieldId;
+
+    /** E3: monthly retirement payment to the parents (null = none). */
+    @Column(name = "retirement_payment")
+    private Long retirementPayment;
+
+    /** Roadmap V2 R2-F2: occasions asked in the game (comma separated PromptKind names); null = configured default. */
+    @Column(name = "ingame_prompt_kinds", length = 255)
+    private String ingamePromptKinds;
 }
