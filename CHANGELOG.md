@@ -10,6 +10,12 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+### Added
+
+- **Roadmap V2 (`ROADMAP_V2.md`):** plan for the next features, each checked against the FS25 code - staff as
+  FS25 helpers, real farm finances from the game's bookings, field/crop/weather export, reactions to vanilla loan
+  and field purchases, tax office / authority / family / clubs, yes/no decisions inside the game.
+
 ## [1.1.2] - 2026-09-28
 
 ### Fixed
