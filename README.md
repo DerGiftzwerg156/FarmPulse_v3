@@ -82,6 +82,9 @@ Mehr in [`docs/dev/setup.md`](docs/dev/setup.md).
 | [Fehlerbehebung](docs/user-guide/fehlerbehebung.md) | [Tests](docs/dev/testing.md) · [Manueller Testplan](docs/dev/manual-test-plan.md) · [Frontend](docs/dev/frontend.md) · [Mod-Tests](docs/dev/mod-testing.md) |
 | [Mod-README](mod/README.md) | [Offene technische Punkte](docs/dev/offene-technische-punkte.md) · [Offene Fragen](QUESTIONS.md) · [Konzepte](docs/concept/) |
 
+Ausbauplan: [Roadmap V2](ROADMAP_V2.md) – Mitarbeiter als FS25-Helfer, echte Hof-Finanzen, Felder & Wetter, neue
+Rollenspiel-Bereiche und Entscheidungen im Spiel.
+
 Weitere Werkzeuge: [Bridge-Simulator](tools/bridge-simulator/README.md) ·
 [Screenshot-Generator](tools/screenshot-generator/README.md) · [Beitragen](CONTRIBUTING.md) ·
 [Änderungen](CHANGELOG.md)
