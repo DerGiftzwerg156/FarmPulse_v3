@@ -78,8 +78,10 @@ export interface CaseView {
   direction?: 'SELL' | 'BUY' | string | null;
   /** Head count when the trader offer was accepted. */
   baselineCount?: number | null;
-  /** Title of a referred vanilla contract (TODO T-22). */
+  /** Title of a referred vanilla contract (TODO T-22), title of a tax bill or rule of an inspection (R2-E). */
   title?: string | null;
+  /** Roadmap V2 R2-E4: amounts offered for a sponsoring request. */
+  tiers?: number[] | null;
 }
 
 export interface InsuranceQuoteView {
@@ -132,6 +134,10 @@ export interface OnboardingRequest {
   legacyLoanAmount: number | null;
   tonePreset: string;
   initialEmployees: string[];
+  /** Roadmap V2 R2-E3: family members, each switch on its own (all off = alone). */
+  familyParents?: boolean;
+  familyPartner?: boolean;
+  familyChildren?: boolean;
 }
 
 export interface CharacterRef {
@@ -294,6 +300,8 @@ export interface FarmlandView {
   /** Roadmap V2 R2-C: crop (FS25 fruit type) and growth phase of a field the player farms; null without field export. */
   fruitType?: string | null;
   phase?: FieldPhase | null;
+  /** Roadmap V2 R2-E3: marked by the player as the family field. */
+  familyField?: boolean;
 }
 
 export type FieldPhase = 'EMPTY' | 'GROWING' | 'HARVESTABLE' | 'HARVESTED' | 'WITHERED';
@@ -385,6 +393,43 @@ export interface FinanceMonthView {
   financing: number;
   ignored: number;
   lines: FinanceLineView[];
+}
+
+/** Roadmap V2 R2-E1: traceable calculation of a tax assessment. */
+export interface TaxAssessmentView {
+  taxYear: number;
+  months: number;
+  operatingIncome: number;
+  /** Negative. */
+  operatingExpense: number;
+  depreciation: number;
+  interest: number;
+  profit: number;
+  allowance: number;
+  taxable: number;
+  ratePercent: number;
+  advisorReduction: number;
+  tax: number;
+  prepayments: number;
+  /** Positive = back payment, negative = refund. */
+  balance: number;
+  auditStatus: string | null;
+}
+
+/** Roadmap V2 R2-E1: tax overview on the bank page. */
+export interface TaxOverviewView {
+  currentYear: number | null;
+  incomeSoFar: number;
+  expenseSoFar: number;
+  estimatedTax: number;
+  ratePercent: number;
+  allowance: number;
+  nextPrepayment: number | null;
+  nextPrepaymentPeriod: number | null;
+  lastAssessment: TaxAssessmentView | null;
+  advisorActive: boolean;
+  journalAvailable: boolean;
+  openBills: number;
 }
 
 export interface FinanceOverview {

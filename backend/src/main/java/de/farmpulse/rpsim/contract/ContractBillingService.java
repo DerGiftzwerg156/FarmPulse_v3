@@ -55,6 +55,7 @@ public class ContractBillingService {
             case INSURANCE -> MoneyReason.INSURANCE_PREMIUM;
             case LEASE -> MoneyReason.LEASE_PAYMENT;
             case MAINTENANCE -> MoneyReason.MAINTENANCE_FEE;
+            case TAX_ADVISOR -> MoneyReason.OTHER; // R2-E1: no own booking reason (the mod knows OTHER)
         };
     }
 
@@ -128,6 +129,7 @@ public class ContractBillingService {
             case INSURANCE -> "Versicherungsprämie";
             case LEASE -> "Pacht Feld " + c.getFarmlandId();
             case MAINTENANCE -> "Wartungsvertrag";
+            case TAX_ADVISOR -> "Honorar Steuerberatung";
         };
     }
 

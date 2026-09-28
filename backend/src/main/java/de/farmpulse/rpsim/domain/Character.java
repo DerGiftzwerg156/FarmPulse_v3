@@ -98,6 +98,14 @@ public class Character extends SavegameScoped {
     private boolean aiEnriched;
 
     /** TODO T-21: index of the FS25 NPC this character stands for (farmland owner of the map), null otherwise. */
+    /** Roadmap V2 R2-E: family relation (PARENT, PARTNER, CHILD) or club (SHOOTING_CLUB, FIRE_BRIGADE, SPORTS_CLUB). */
+    @Column(name = "affiliation", length = 32)
+    private String affiliation;
+
+    /** Roadmap V2 R2-E3: FS25 period of the yearly occasion (birthday, wedding day). */
+    @Column(name = "occasion_period")
+    private Integer occasionPeriod;
+
     @Column(name = "fs25_npc_index")
     private Integer fs25NpcIndex;
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.domain.Character;
 import de.farmpulse.rpsim.domain.CharacterCategory;
+import de.farmpulse.rpsim.domain.CharacterRole;
 import de.farmpulse.rpsim.domain.CharacterStatus;
 import de.farmpulse.rpsim.domain.PublicActionEvent;
 import de.farmpulse.rpsim.domain.Savegame;
@@ -49,10 +50,11 @@ public class VillageReputationService {
         return props.getFormulas().getReputation();
     }
 
-    /** Villagers whose trust counts (applicants and substitutes are not part of the village). */
+    /** Villagers whose trust counts (applicants, substitutes and - Roadmap V2 R2-E3 - the family are not the village). */
     List<Character> villagers(Savegame sg) {
         return characters.findBySavegameAndStatus(sg, CharacterStatus.ACTIVE).stream()
-                .filter(c -> c.getCategory() != CharacterCategory.APPLICANT && c.getCategory() != CharacterCategory.SUBSTITUTE)
+                .filter(c -> c.getCategory() != CharacterCategory.APPLICANT && c.getCategory() != CharacterCategory.SUBSTITUTE
+                        && c.getRole() != CharacterRole.FAMILY)
                 .toList();
     }
 

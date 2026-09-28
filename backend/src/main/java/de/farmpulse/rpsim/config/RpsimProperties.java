@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -123,6 +125,10 @@ public class RpsimProperties {
         private Mechanic mechanic = new Mechanic();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
+        private Tax tax = new Tax();
+        private Authority authority = new Authority();
+        private Family family = new Family();
+        private Clubs clubs = new Clubs();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -444,8 +450,6 @@ public class RpsimProperties {
         private double congratulationTrendRatio = 1.25;
         private double congratulationMinCashflow = 1000;
         private double congratulationCooldownDays = 20;
-        /** Invitation calendar: every n-th FS25 period of the year (counted from period 1 = March), 0 = never. */
-        private int invitationEveryPeriods = 6;
         private double gossipDailyProbability = 0.05;
         private double gossipCooldownDays = 3;
     }
@@ -835,6 +839,114 @@ public class RpsimProperties {
         private double repairBelowCondition = 90;
         /** Workload points lost per vehicle still below repair-below-condition after the month's repairs. */
         private double overloadWorkloadPerVehicle = 2;
+    }
+
+    /** Roadmap V2 R2-E1: tax office and tax advisor; tax year = FS25 year (placeholders). */
+    @Getter @Setter
+    public static class Tax {
+        private boolean enabled = true;
+        /** Tax on the taxable profit (profit - allowance); the harsh world mode uses the hard values. */
+        private double rate = 0.25;
+        private long allowance = 20000;
+        private double hardRate = 0.3;
+        private long hardAllowance = 10000;
+        /** Simplified depreciation per year as share of the vehicle and building values at the end of the year. */
+        private double depreciationRate = 0.1;
+        /** Journal categories that do not count for the taxable profit (owner decision: taxes and fines). */
+        private List<String> excludedCategories = new ArrayList<>(List.of("RPSIM_TAX_PAYMENT", "RPSIM_TAX_REFUND",
+                "RPSIM_FINE"));
+        /** Prepayments per quarter (periods 1, 4, 7, 10) = this share of the last assessed tax / 4. */
+        private double prepaymentShare = 1.0;
+        /** Game days to pay a bill of the tax office (pay by button). */
+        private double paymentDays = 14;
+        /** Late fee (booked as FINE) per started game month overdue, as share of the open tax. */
+        private double lateFeeRate = 0.01;
+        /** Overdue months before the tax office threatens enforcement (text and trust only, nothing is seized). */
+        private int enforcementAfterMonths = 2;
+        private double reminderTrustDelta = -2;
+        private double enforcementTrustDelta = -5;
+        /** Tax advisor: monthly fee, share of the tax saved, reminder before a deadline, audit factor. */
+        private long advisorMonthlyFee = 150;
+        private double advisorTaxReduction = 0.1;
+        private double advisorReminderDays = 3;
+        private double advisorAuditFactor = 0.5;
+        private double advisorOfferValidDays = 7;
+        /** Audit: chance per assessed year; result after audit-days. */
+        private double auditProbability = 0.15;
+        private double auditDays = 7;
+        /** Audit: a month whose operating expenses exceed this multiple of the year's monthly average is disputed. */
+        private double auditJumpFactor = 2.0;
+        /** Audit: share of the disputed expenses (unknown categories + excess of jump months) that is not accepted. */
+        private double auditDisallowedShare = 0.5;
+    }
+
+    /** Roadmap V2 R2-E2: authority - rotation, cultivation duty, animal welfare (placeholders). */
+    @Getter @Setter
+    public static class Authority {
+        private boolean enabled = true;
+        /** Rotation premium per hectare for fields with another crop than the year before (SUBSIDY). */
+        private double rotationPremiumPerHa = 40;
+        /** Share of the premium cut when a field has the same crop again after a notice. */
+        private double rotationCutShare = 0.5;
+        /** Cultivation duty: game months without a crop and with weeds / stones before the authority writes. */
+        private double dutyMonths = 3;
+        private long dutyFine = 500;
+        /** Animal welfare: health below this, or food / water empty, for welfare-days game days. */
+        private double welfareHealthThreshold = 30;
+        private double welfareDays = 3;
+        private long welfareFine = 1000;
+        private double welfareReputationDelta = -3;
+        /** Announced inspection: result after this many game days (the player can react). */
+        private double inspectionDays = 5;
+        private double violationTrustDelta = -3;
+        /** At most this many inspections announced per game month. */
+        private int maxInspectionsPerMonth = 2;
+    }
+
+    /** Roadmap V2 R2-E3: family and succession (placeholders). */
+    @Getter @Setter
+    public static class Family {
+        private boolean enabled = true;
+        /** Monthly retirement payment to the parents (only for an inherited farm or a return home). */
+        private long retirementPayment = 800;
+        private double fieldSoldTrustDelta = -15;
+        /** Help at harvest time: chance per harvest period (FS25 periods) and trust. */
+        private List<Integer> harvestPeriods = new ArrayList<>(List.of(6, 7, 8));
+        private double harvestHelpProbability = 0.5;
+        private double harvestHelpTrustDelta = 2;
+        /** FS25 period of the school start of a child (September). */
+        private int schoolStartPeriod = 7;
+    }
+
+    /** Roadmap V2 R2-E4: clubs and festivals (placeholders). */
+    @Getter @Setter
+    public static class Clubs {
+        private boolean enabled = true;
+        /** Festival calendar: FS25 period, host (club key or character role). */
+        private List<Festival> festivals = new ArrayList<>(List.of(
+                new Festival("MAIBAUM", 3, "VILLAGER"), new Festival("SCHUETZENFEST", 4, "SHOOTING_CLUB"),
+                new Festival("FEUERWEHRFEST", 6, "FIRE_BRIGADE"), new Festival("ERNTEDANKFEST", 8, "COOPERATIVE"),
+                new Festival("WEIHNACHTSMARKT", 10, "VILLAGER")));
+        private double invitationDays = 5;
+        private double invitationAcceptTrustDelta = 2;
+        private double invitationIgnoreTrustDelta = -1;
+        /** Sponsoring: chance per game month, cooldown, fixed tiers (€) and reputation per 100 €. */
+        private double sponsoringProbabilityPerMonth = 0.3;
+        private double sponsoringCooldownDays = 30;
+        private List<Long> sponsoringTiers = new ArrayList<>(List.of(250L, 500L, 1000L));
+        private double sponsoringReputationPer100 = 0.5;
+        private double sponsoringTrustDelta = 3;
+        private double sponsoringDeclineTrustDelta = -1;
+        private double sponsoringDecisionDays = 7;
+    }
+
+    @Getter @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Festival {
+        private String key;
+        private int period;
+        private String host;
     }
 
     /** Roadmap V2 R2-D: reactions to the vanilla loan and the FS25 field menu (placeholders). */

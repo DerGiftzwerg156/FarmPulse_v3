@@ -29,7 +29,8 @@ public final class Requests {
                                     @Size(max = 2000) String freeText,
                                     @NotNull @PositiveOrZero Long startingCapitalTarget,
                                     @PositiveOrZero Long legacyLoanAmount, TonePreset tonePreset,
-                                    @Size(max = 10) List<@NotNull JobRole> initialEmployees) {
+                                    @Size(max = 10) List<@NotNull JobRole> initialEmployees,
+                                    Boolean familyParents, Boolean familyPartner, Boolean familyChildren) {
     }
 
     public record RerollRequest(Long characterId) {

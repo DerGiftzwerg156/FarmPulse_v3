@@ -164,4 +164,79 @@ describe('Contracts', () => {
     expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Feld 7');
     expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Erledigt');
   });
+
+  // Roadmap V2 R2-E
+  it('pays a tax bill with its late fees by button', () => {
+    const bill = damage({ id: 20, kind: 'TAX_BILL', farmlandId: null, damageAmount: null, offerAmount: 4000, costAmount: 40,
+      reference: 'ASSESSMENT', title: 'Steuerbescheid Jahr 1', quantity: 1, roundsUsed: 1,
+      character: { id: 9, name: 'Frau Kramer', role: 'TAX_OFFICE', status: 'ACTIVE' } });
+    const { fixture, http, el } = setup([], [bill]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Steuerbescheid');
+    expect(el.querySelector('[data-testid="tax-bill"]')?.textContent).toContain('4.000');
+    expect(el.querySelector('[data-testid="tax-bill"]')?.textContent).toMatch(/zzgl\. 40\s€ Säumniszuschlag/);
+    expect(el.querySelector('[data-testid="case-accept"]')?.textContent).toContain('4.040');
+    (el.querySelector('[data-testid="case-accept"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/cases/20/accept').flush({ ...bill, status: 'SETTLED', resolution: 'PAID', payoutAmount: 4040 });
+    http.expectOne('/api/contracts').flush([]);
+    http.expectOne('/api/cases').flush([{ ...bill, status: 'SETTLED', resolution: 'PAID', payoutAmount: 4040 }]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    const closed = el.querySelector('[data-testid="closed-case"]')?.textContent ?? '';
+    expect(closed).toContain('Steuerbescheid Jahr 1');
+    expect(closed).toContain('Bezahlt 4.040');
+    expect(closed).not.toContain('Rechnung');
+  });
+
+  it('shows an authority inspection with its requirement and the fine in the history', () => {
+    const inspection = damage({ id: 21, kind: 'AUTHORITY_INSPECTION', status: 'IN_PROGRESS', farmlandId: null, damageAmount: null,
+      title: 'ANIMAL_WELFARE', reference: 'h1', roundsUsed: 1 });
+    const fined = damage({ id: 22, kind: 'AUTHORITY_INSPECTION', status: 'SETTLED', farmlandId: 7, damageAmount: null,
+      title: 'CULTIVATION_DUTY', reference: '7', costAmount: 500, resolution: 'FINED' });
+    const { fixture, http, el } = setup([], [inspection, fined]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="inspection"]')?.textContent).toContain('Kontrolle: Tierwohl');
+    expect(el.querySelector('[data-testid="inspection-requirement"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="case-accept"]')).toBeNull();
+    const closed = el.querySelector('[data-testid="closed-case"]')?.textContent ?? '';
+    expect(closed).toContain('Bewirtschaftungspflicht');
+    expect(closed).toContain('Bußgeld 500');
+    expect(closed).toContain('Bußgeld verhängt');
+  });
+
+  it('sponsors a club with one of the offered tiers', () => {
+    const request = damage({ id: 23, kind: 'SPONSORING_REQUEST', farmlandId: null, damageAmount: null, reference: 'FIRE_BRIGADE',
+      tiers: [250, 500, 1000] });
+    const { fixture, http, el } = setup([], [request]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="sponsoring"]')?.textContent).toContain('Freiwillige Feuerwehr');
+    const tiers = el.querySelectorAll('[data-testid="sponsor-tier"] button');
+    expect(tiers.length).toBe(3);
+    (tiers[1] as HTMLButtonElement).click();
+    const req = http.expectOne('/api/cases/23/sponsor');
+    expect(req.request.body).toEqual({ amount: 500 });
+  });
+
+  it('answers an invitation to a festival', () => {
+    const invitation = damage({ id: 24, kind: 'INVITATION', farmlandId: null, damageAmount: null, reference: 'SCHUETZENFEST' });
+    const { fixture, http, el } = setup([], [invitation]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="invitation"]')?.textContent).toContain('Einladung zum Schützenfest');
+    (el.querySelector('[data-testid="case-decline"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/cases/24/decline');
+  });
+
+  it('cancels an active tax advisor contract', () => {
+    const advisor = contract({ id: 30, kind: 'TAX_ADVISOR', status: 'ACTIVE', level: null, monthlyAmount: 150, coveragePercent: null,
+      deductible: null, offerExpiresAtGameTime: null });
+    const { fixture, http, el } = setup([contract({ status: 'ACTIVE' }), advisor], []);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="contract"][data-kind="TAX_ADVISOR"]')?.textContent).toContain('Steuerberatung');
+    (el.querySelector('[data-testid="contract-cancel"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/contracts/30/cancel');
+  });
 });

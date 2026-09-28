@@ -86,6 +86,11 @@ public class FinanceJournalService {
         return amount >= 0 ? FinanceClass.OPERATING_INCOME : FinanceClass.OPERATING_EXPENSE;
     }
 
+    /** Roadmap V2 R2-E1: the category is classified in rpsim.formulas.finance.categories (unknown ones are disputed). */
+    public boolean isKnown(String category) {
+        return props.getFormulas().getFinance().getCategories().containsKey(category);
+    }
+
     /** The journal months, oldest first; empty when the mod exports no journal. */
     public List<Month> months(FarmFacts f) {
         if (f == null || f.finances() == null || f.finances().periods() == null) {

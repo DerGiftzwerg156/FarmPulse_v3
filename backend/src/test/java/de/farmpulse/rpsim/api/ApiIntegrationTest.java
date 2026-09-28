@@ -340,6 +340,61 @@ class ApiIntegrationTest {
                 .andExpect(jsonPath("$.label").exists()).andExpect(jsonPath("$.score").doesNotExist());
     }
 
+    // ------------------------------------------------------------------ roadmap V2 R2-E
+
+    @Autowired de.farmpulse.rpsim.club.ClubService clubs;
+
+    @Test
+    void roleplayAreaEndpoints() throws Exception {
+        // E1: tax overview without a booking journal, advisor offer as a contract
+        mvc.perform(get("/api/tax")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.journalAvailable").value(false))
+                .andExpect(jsonPath("$.ratePercent").value(25.0))
+                .andExpect(jsonPath("$.lastAssessment").value(nullValue()))
+                .andExpect(jsonPath("$.openBills").value(0));
+        mvc.perform(post("/api/tax/advisor/offer")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.kind").value("TAX_ADVISOR")).andExpect(jsonPath("$.status").value("OFFERED"));
+        // E3: the family field is an own field (12), not a foreign one (13)
+        mvc.perform(put("/api/farmlands/12/family-field")).andExpect(status().isOk());
+        mvc.perform(get("/api/farmlands")).andExpect(jsonPath("$[?(@.farmlandId == 12)].familyField").value(true));
+        mvc.perform(put("/api/farmlands/13/family-field")).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("NOT_OWN_FIELD"));
+        mvc.perform(delete("/api/family-field")).andExpect(status().isOk());
+        mvc.perform(get("/api/farmlands")).andExpect(jsonPath("$[?(@.farmlandId == 12)].familyField").value(false));
+        // E4: sponsoring only with one of the offered tiers
+        long id = clubs.requestSponsoring(sg, "FIRE_BRIGADE").getId();
+        mvc.perform(get("/api/cases")).andExpect(jsonPath("$[?(@.id == %d)].tiers[1]".formatted(id)).value(500));
+        postJson("/api/cases/" + id + "/sponsor", java.util.Map.of("amount", 300)).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("INVALID_TIER"));
+        postJson("/api/cases/" + id + "/sponsor", java.util.Map.of("amount", 500)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SETTLED")).andExpect(jsonPath("$.payoutAmount").value(500));
+    }
+
+    @Test
+    void onboardingWithFamily() throws Exception {
+        JsonNode created = read(postJson("/api/onboarding", java.util.Map.of("startingCapitalTarget", 100000,
+                "farmOrigin", "INHERITED", "familyParents", true, "familyPartner", false, "familyChildren", false))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.cast[?(@.role == 'FAMILY')]", hasSize(2))));
+        JsonNode parent = null;
+        for (JsonNode c : created.get("cast")) {
+            if (c.get("role").asString().equals("FAMILY")) {
+                parent = c;
+            }
+        }
+        String familyName = parent.get("name").asString().substring(parent.get("name").asString().lastIndexOf(' '));
+        // a rerolled parent stays a parent of the family
+        JsonNode rerolled = read(postJson("/api/onboarding/" + created.get("id").asLong() + "/reroll",
+                java.util.Map.of("characterId", parent.get("characterId").asLong())).andExpect(status().isOk()));
+        int parents = 0;
+        for (JsonNode c : rerolled.get("cast")) {
+            if (c.get("role").asString().equals("FAMILY")) {
+                parents++;
+                org.assertj.core.api.Assertions.assertThat(c.get("name").asString()).endsWith(familyName);
+            }
+        }
+        org.assertj.core.api.Assertions.assertThat(parents).isEqualTo(2);
+    }
+
     // ------------------------------------------------------------------ settings
 
     @Test

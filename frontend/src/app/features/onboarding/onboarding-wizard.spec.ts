@@ -63,6 +63,9 @@ describe('OnboardingWizard', () => {
   it('step 2: manages count and roles of initial employees and sends a typed request', () => {
     const s = setup();
     s.cmp.form.patchValue({ startingCapitalTarget: 120000, withLegacyLoan: true, legacyLoanAmount: 30000, tonePreset: 'HARSH' });
+    // Roadmap V2 R2-E3: family members, each switch on its own
+    (s.el.querySelector('[data-testid="family-parents"]') as HTMLInputElement).click();
+    (s.el.querySelector('[data-testid="family-children"]') as HTMLInputElement).click();
     s.click('next-1');
     s.click('add-employee');
     s.click('add-employee');
@@ -75,6 +78,7 @@ describe('OnboardingWizard', () => {
     expect(req.request.body).toEqual({
       farmOrigin: 'INHERITED', villageRelation: 'UNKNOWN', freeText: '', startingCapitalTarget: 120000,
       legacyLoanAmount: 30000, tonePreset: 'HARSH', initialEmployees: ['ANIMAL_KEEPER'],
+      familyParents: true, familyPartner: false, familyChildren: true,
     });
     req.flush(DRAFT);
     s.fixture.detectChanges();

@@ -75,6 +75,23 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
   ist, kosten neue Kredite der Bank einen Zinsaufschlag, bis der Kredit aus dem Spielmenü ganz getilgt ist (unter
   **Einstellungen** siehst du, ob gerade ein Aufschlag gilt). Jede Rückzahlung nimmt sie wohlwollend zur Kenntnis.
 
+- **Steuern:** Das Finanzamt meldet sich mit dem ersten Steuerbescheid. Das Steuerjahr ist das FS25-Jahr (ab März).
+  Gerechnet wird mit der Hofbuchhaltung: Gewinn = Einnahmen − Ausgaben des laufenden Betriebs (ohne Steuern und
+  Bußgelder) − Abschreibung (ein Anteil vom Wert deiner Fahrzeuge und Gebäude) − Zinsen deiner Bankkredite. Vom
+  Gewinn über dem Freibetrag geht ein fester Satz ab (im harten Modus höher, der Freibetrag kleiner). Zu Beginn des
+  neuen Jahres kommt der **Bescheid** mit der ganzen Rechnung: Nachzahlung oder Erstattung (die wird dir
+  gutgeschrieben). Ab dem zweiten Jahr zahlst du vierteljährlich **Vorauszahlungen** (März, Juni, September,
+  Dezember) auf Basis des letzten Bescheids. Die Karte **Steuern** zeigt die voraussichtliche Steuer des laufenden
+  Jahres, die nächste Vorauszahlung und den letzten Bescheid Zeile für Zeile.
+- **Bescheide bezahlst du selbst** unter **Verträge & Vorgänge** mit *Zahlen* – abgebucht wird nichts automatisch.
+  Nach der Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, das Finanzamt mahnt und droht später mit
+  Pfändung (nur als Brief und Vertrauensverlust, gesperrt wird nichts).
+- **Steuerberatung:** Mit *Steuerberatung anfragen* bekommst du ein Angebot mit Monatshonorar. Die Beratung senkt
+  die Steuer um einen Anteil, erinnert dich kurz vor einer Frist und macht eine **Betriebsprüfung** unwahrscheinlicher.
+  Eine Prüfung kann nach jedem Bescheid zufällig kommen; sie fordert Steuer nach auf Ausgaben unter unbekannten
+  Buchungsarten und auf Monate, in denen die Ausgaben sprunghaft über dem Durchschnitt lagen.
+- Ohne Hofbuchhaltung (älterer Mod) gibt es keinen Bescheid.
+
 ## Personal
 
 ![Personal](../screenshots/13-personal.png)
@@ -148,6 +165,24 @@ mit:
 
 Mit einer älteren Mod-Version bleibt alles wie bisher: Hagel und Wildschaden treffen ein beliebiges eigenes Feld.
 
+**Familienfeld:** Hast du im Onboarding eine Familie gewählt, kannst du in der Detailansicht eines eigenen Feldes
+**Als Familienfeld markieren** („Das Feld am Bach war schon beim Großvater in der Familie“). Verkaufst du es später –
+im Tool oder im Feldmenü des Spiels –, sinkt das Vertrauen der ganzen Familie deutlich.
+
+**Das Amt** prüft nur, was das Spiel wirklich meldet:
+
+- **Fruchtfolge:** Am Ende jedes FS25-Jahres vergleicht das Amt die Hauptkultur jedes Feldes mit dem Vorjahr. Für
+  jeden Hektar mit Fruchtwechsel gibt es eine **Fruchtfolgeprämie**. Steht auf einem Feld zweimal dieselbe Kultur,
+  kommt ein Hinweis; passiert es auf einem Feld ein weiteres Mal, wird die gesamte Prämie des Jahres gekürzt.
+- **Bewirtschaftungspflicht:** Liegt ein eigenes Feld mehrere Monate ohne Kultur und voller Unkraut oder Steine,
+  kündigt das Amt eine Kontrolle an. Ist das Feld zur Frist immer noch so, folgt ein Bußgeld.
+- **Tierwohl:** Ist die Gesundheit in einem Stall mehrere Tage sehr niedrig oder sind Futter oder Wasser leer, kündigt
+  das Amt eine Kontrolle an. Beim ersten Verstoß gibt es eine **Auflage** mit neuer Frist, danach ein Bußgeld – und
+  das Dorf redet darüber.
+
+Jede Kontrolle wird vorher angekündigt (sie steht unter **Verträge & Vorgänge** mit Frist), du hast also immer Zeit
+zu reagieren. Mehr als zwei Kontrollen im Monat gibt es nicht.
+
 ## Warenbestand & Preise
 
 ![Warenbestand](../screenshots/15-warenbestand-preise.png)
@@ -202,6 +237,17 @@ findest du unter **Verträge & Vorgänge**.
   erledigen tust du ihn wie gewohnt im Spiel. Schaffst du ihn, steigt dein Ansehen beim Lohnunternehmer und beim
   Auftraggeber; das Tool selbst startet nie einen Auftrag.
 
+- **Finanzamt – Steuerbescheide.** Vorauszahlungen, Nachzahlungen und Nachforderungen einer Betriebsprüfung
+  erscheinen hier mit Frist; mit *Zahlen* überweist du den Betrag samt Säumniszuschlag (siehe **Bank & Finanzen**).
+- **Amt – Kontrollen.** Angekündigte Kontrollen stehen mit Frist hier; das Ergebnis (ohne Beanstandung, Auflage oder
+  Bußgeld) landet im Verlauf.
+- **Vereine – Einladungen und Sponsoring.** Schützenverein, Freiwillige Feuerwehr und Sportverein haben je eine:n
+  Vorsitzende:n. Zu den Dorffesten im FS25-Kalender (Maibaumaufstellen im Mai, Schützenfest im Juni, Feuerwehrfest im
+  August, Erntedankfest im Oktober, Weihnachtsmarkt im Dezember) kommt eine Einladung: **Zusagen** freut die
+  Gastgeber, **Absagen** ist in Ordnung, gar nicht zu antworten kostet ein wenig Vertrauen. Ab und zu bittet ein
+  Verein um **Sponsoring** in festen Stufen (z. B. 250, 500 oder 1.000 €) – das hebt dein Ansehen im Dorf; ablehnen
+  kostet nur wenig.
+
 ## Dorf & Charaktere
 
 ![Dorf](../screenshots/16-dorf-charakter.png)
@@ -211,6 +257,11 @@ stehen Charakterzüge, Sprachstil und Hintergrund. Mit **Nachricht verfassen** m
 Anruf. Schreibst du jemandem mehrmals kurz hintereinander, antwortet er trotzdem; aufs Vertrauen wirkt nur der
 erste Kontakt des Tages. Dein **Ansehen im Dorf** siehst du oben rechts als Stufe (gut angesehen, neutral,
 umstritten). Gelegentlich ziehen Leute weg oder neu zu.
+
+**Familie:** Deine Familie (aus dem Onboarding) steht mit im Dorf, zählt aber nicht zum Ansehen und zieht nie weg.
+Die Eltern auf dem Altenteil bekommen jeden Monat ihre Zahlung. Zu Geburtstagen, zum Hochzeitstag und zur Einschulung
+kommt eine Nachricht, zur Erntezeit bietet manchmal jemand Hilfe an, und zu Jahresbeginn schreibt das Tagebuch die
+Geschichte der Hofnachfolge fort.
 
 ## Tagebuch
 

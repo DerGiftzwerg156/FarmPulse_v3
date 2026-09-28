@@ -1,0 +1,7 @@
+Hinweis zur Fruchtfolge auf Feld {{fieldName}}
+Guten Tag,
+
+auf Feld {{fieldName}} stand zwei Jahre in Folge dieselbe Kultur ({{fruitType}}). Bitte achten Sie auf eine abwechslungsreiche Fruchtfolge – bei Wiederholung wird die Fruchtfolgeprämie gekürzt.
+
+Mit freundlichen Grüßen
+{{characterName}}

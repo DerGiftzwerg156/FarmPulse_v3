@@ -16,4 +16,9 @@ public interface LoanPaymentRepository extends JpaRepository<LoanPayment, Long> 
     long countBySavegameAndType(Savegame savegame, LoanPaymentType type);
 
     Optional<LoanPayment> findFirstByInstructionId(String instructionId);
+
+    /** Roadmap V2 R2-E1: installments of a tax year (their interest part reduces the taxable profit). */
+    List<LoanPayment> findBySavegameAndTypeAndGameTimeGreaterThanEqualAndGameTimeLessThan(Savegame savegame,
+                                                                                          LoanPaymentType type, long from,
+                                                                                          long to);
 }

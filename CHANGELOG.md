@@ -95,6 +95,25 @@ versions or this changelog do not match.
   - Helpers without employee: one hint of the cooperative with a link to *Personal*.
   - Settings card *Kredit und Felder im Spielmenü* (switch, running surcharge); values in
     `rpsim.formulas.vanilla-bypass.*`. Simulator: `POST /vanilla-loan`, `POST /vanilla-farmland`.
+- **New roleplay areas (Roadmap V2, R2-E)** - all from the booking journal, the fields and the stables, no new game API:
+  - Tax office: the FS25 year is the tax year; at the start of the next year an assessment with the traceable
+    calculation (operating income and expenses without taxes and fines, depreciation of vehicles and buildings,
+    interest of the bank credits, allowance, flat rate - stricter in the harsh mode), back payment or refund,
+    quarterly prepayments from the last assessment. Bills are paid by button under *Verträge*; late fees per started
+    month, reminder, enforcement threat (text and trust only). Tax advisor as a contract (monthly fee, lower tax,
+    deadline reminders, fewer audits); a random audit disputes expenses under unknown money types and jump months.
+    *Bank* → new card *Steuern*.
+  - Authority: rotation premium per hectare with a crop change at the end of every FS25 year, a notice for the same crop
+    twice, the whole premium cut on a repeat; announced inspections for the cultivation duty (fine) and animal welfare
+    (requirement, then fine and village reputation); at most 2 inspections per month.
+  - Family: parents, partner and children chosen one by one in the onboarding (reroll keeps role and name);
+    retirement payment for an inherited farm or a return home; birthdays, wedding day, school start, help at harvest
+    time, succession in the diary; a family field chosen on *Felder* - selling it costs the trust of the whole family.
+  - Clubs: shooting club, fire brigade and sports club (role `CLUB`), festival calendar (Maibaum, Schützenfest,
+    Feuerwehrfest, Erntedankfest, Weihnachtsmarkt) with invitations to accept or decline (ignoring costs a little
+    trust) - replaces the fixed invitation calendar `village-life.invitation-every-periods`; sponsoring requests with
+    fixed tiers raise the village reputation.
+  - Values in `rpsim.formulas.tax.*`, `authority.*`, `family.*`, `clubs.*` (V20 migration).
 
 ## [1.1.2] - 2026-09-28
 

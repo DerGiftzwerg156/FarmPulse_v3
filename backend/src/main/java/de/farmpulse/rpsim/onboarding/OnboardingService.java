@@ -35,6 +35,7 @@ import de.farmpulse.rpsim.domain.StoryHook;
 import de.farmpulse.rpsim.domain.TonePreset;
 import de.farmpulse.rpsim.domain.VillageRelation;
 import de.farmpulse.rpsim.employee.HiringService;
+import de.farmpulse.rpsim.family.FamilyService;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
@@ -71,7 +72,14 @@ public class OnboardingService {
             CharacterRole.VILLAGER, CharacterRole.NEIGHBOR_FARMER, CharacterRole.SUPPLIER);
 
     public record Request(FarmOrigin farmOrigin, VillageRelation villageRelation, String freeText, long startingCapitalTarget,
-                          Long legacyLoanAmount, TonePreset tonePreset, List<JobRole> initialEmployees) {
+                          Long legacyLoanAmount, TonePreset tonePreset, List<JobRole> initialEmployees,
+                          FamilyService.Choice family) {
+
+        public Request(FarmOrigin farmOrigin, VillageRelation villageRelation, String freeText, long startingCapitalTarget,
+                       Long legacyLoanAmount, TonePreset tonePreset, List<JobRole> initialEmployees) {
+            this(farmOrigin, villageRelation, freeText, startingCapitalTarget, legacyLoanAmount, tonePreset,
+                    initialEmployees, FamilyService.Choice.NONE);
+        }
     }
 
     public record EmployeeSlot(Long characterId, JobRole jobRole) {
@@ -95,6 +103,7 @@ public class OnboardingService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final JsonMapper json;
+    private final FamilyService family;
 
     public OnboardingService(SavegameRepository savegames, CharacterRepository characters, TrustEventRepository trustEvents,
                              StoryHookRepository hooks, CharacterGeneratorService generator, HiringService hiring,
@@ -102,7 +111,7 @@ public class OnboardingService {
                              NarrationRequestService narration, CharacterLookup lookup, DiaryService diary,
                              DetectedSavegameRegistry detected, BridgeSyncService bridgeSync,
                              ObjectProvider<FreeTextModerator> moderator, RandomSource random, RpsimProperties props,
-                             JsonMapper json) {
+                             JsonMapper json, FamilyService family) {
         this.savegames = savegames;
         this.characters = characters;
         this.trustEvents = trustEvents;
@@ -121,6 +130,7 @@ public class OnboardingService {
         this.random = random;
         this.props = props;
         this.json = json;
+        this.family = family;
     }
 
     private RpsimProperties.Onboarding cfg() {
@@ -150,6 +160,8 @@ public class OnboardingService {
         savegames.save(sg);
         List<EmployeeSlot> slots = new ArrayList<>();
         generateCast(sg, r.initialEmployees() == null ? List.of() : r.initialEmployees(), slots);
+        // Roadmap V2 R2-E3: the family is chosen together with the backstory
+        family.create(sg, r.family() == null ? FamilyService.Choice.NONE : r.family());
         sg.setInitialEmployeesJson(json.writeValueAsString(slots));
         return sg;
     }
@@ -249,11 +261,16 @@ public class OnboardingService {
             JobRole jr = slot.map(EmployeeSlot::jobRole).orElse(null);
             CharacterRole role = old.getRole();
             CharacterCategory category = old.getCategory();
+            // R2-E3: a family member keeps the relation and the family name
+            Character familyTemplate = role == CharacterRole.FAMILY ? copyOf(old) : null;
             trustEvents.deleteByCharacter(old);
             characters.delete(old);
             characters.flush();
-            Character fresh = generator.generate(sg, specFor(sg, role, category, jr), random.nextLong());
-            enrich(fresh, sg);
+            Character fresh = familyTemplate != null ? family.reroll(sg, familyTemplate)
+                    : generator.generate(sg, specFor(sg, role, category, jr), random.nextLong());
+            if (familyTemplate == null) {
+                enrich(fresh, sg);
+            }
             if (slot.isPresent()) {
                 slots.remove(slot.get());
                 slots.add(new EmployeeSlot(fresh.getId(), jr));
@@ -261,6 +278,13 @@ public class OnboardingService {
         }
         sg.setInitialEmployeesJson(json.writeValueAsString(slots));
         return sg;
+    }
+
+    private static Character copyOf(Character c) {
+        Character copy = new Character();
+        copy.setName(c.getName());
+        copy.setAffiliation(c.getAffiliation());
+        return copy;
     }
 
     // ------------------------------------------------------------------------------------------ steps 3-5

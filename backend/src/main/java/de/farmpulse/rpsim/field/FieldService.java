@@ -287,6 +287,7 @@ public class FieldService {
                 r.setPlowHintSent(false);
             }
             r.setFieldName(field.name());
+            r.setHectares(field.hectares());
             r.setFruitType(field.fruitType());
             r.setLastSeenGameTime(now);
             records.save(r);

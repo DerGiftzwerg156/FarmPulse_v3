@@ -72,6 +72,14 @@ public class MemoryService {
             case VANILLA_LOAN_REPAID -> "Kredit aus dem Spielmenü getilgt";
             case FIELD_BYPASS -> "Feld über den Kopf hinweg gekauft";
             case COMPENSATION_DECLINED -> "Ausgleich für das Feld verweigert";
+            case TAX_OVERDUE -> "Steuer nicht fristgerecht gezahlt";
+            case AUTHORITY_VIOLATION -> "Auflage des Amts nicht erfüllt";
+            case FAMILY_FIELD_SOLD -> "Familienfeld verkauft";
+            case FAMILY_HELP -> "gemeinsam bei der Ernte angepackt";
+            case SPONSORING -> "Verein unterstützt";
+            case SPONSORING_DECLINED -> "Sponsoring abgelehnt";
+            case INVITATION_ACCEPTED -> "Einladung angenommen";
+            case INVITATION_IGNORED -> "Einladung unbeantwortet gelassen";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

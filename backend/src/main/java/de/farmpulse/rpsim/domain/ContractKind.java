@@ -7,5 +7,7 @@ public enum ContractKind {
     /** Lease of an NPC field: monthly rent, field goes back at the end. */
     LEASE,
     /** Maintenance contract with the workshop: monthly fee, repairs of worn vehicles included. */
-    MAINTENANCE
+    MAINTENANCE,
+    /** Roadmap V2 R2-E1: tax advisor - monthly fee, lower tax, reminders, fewer audits. */
+    TAX_ADVISOR
 }

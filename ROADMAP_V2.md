@@ -199,7 +199,7 @@ Spieler für jeden FS25-Helfer den Stundenlohn des Spiels, also **doppelt**. Die
 **Idee:** Angestellte Maschinenführer *sind* die FS25-Helfer. Ihr Lohn läuft über das Tool, ihre Namen erscheinen im
 Spiel, ihre echte Arbeitszeit bestimmt die Arbeitsbelastung, und wer sehr unzufrieden ist, legt die Arbeit nieder.
 
-**Stand 28.09.2026: umgesetzt** (bis auf den Verweis auf E2). Entscheidungen (siehe `QUESTIONS.md`): Die Soll-Stunden
+**Stand 28.09.2026: umgesetzt** (den Verweis auf E2 erfüllt die Tierwohl-Kontrolle aus E2). Entscheidungen (siehe `QUESTIONS.md`): Die Soll-Stunden
 gelten je Spieltag (`workload.target-hours-per-day`, Platzhalter 8; das Backend zählt die Stunden je Spieltag). Das
 Gehalt läuft während eines Streiks weiter, der positive Leistungseffekt entfällt. Der positive `EMPLOYEE_EFFECT` von
 Maschinenführern skaliert mit den gefahrenen Stunden des Monats. Die Reihenfolge der Liste ist die Priorität der
@@ -336,7 +336,7 @@ Anweisung `NOTIFICATION` einblenden.
   dauerhaft schlechten Werten („Ich kann so nicht arbeiten“). Sein monatlicher Leistungseffekt skaliert mit der
   `productivity` der Ställe.
 - [x] **Zuchtberatung:** Kommentare nutzen `productivity` und die Entwicklung der Tierzahl.
-- [ ] Die Werte fließen auch in E2 (Kontrollen). *(folgt mit E2)*
+- [x] Die Werte fließen auch in E2 (Kontrollen): die Tierwohl-Kontrolle des Amts (R2-E2).
 
 **Beleg:** ✅ `animals/husbandry/placeables/PlaceableHusbandryAnimals.lua` (`updateInfo`: Mittelwert von
 `cluster.health`; `getConditionInfos`: `getGlobalProductionFactor() * getProductionFactor()`, nicht für
@@ -506,58 +506,68 @@ Diese Bereiche brauchen **keine neue Spiel-API**: Sie nutzen die vorhandenen Anw
 Persönlichkeitsvorlagen, Fallback-Texte ohne KI (Deutsch), Formeln als Konfiguration, Tagebucheinträge,
 Frontend-Darstellung unter **Verträge & Vorgänge**.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Eine Betriebsprüfung beanstandet einen Anteil
+der strittigen Ausgaben (unbekannte Buchungsarten und Sprungmonate). Steuern und Bußgelder gehören nicht zur
+Bemessungsgrundlage. Bescheide werden per Knopf unter **Verträge & Vorgänge** bezahlt, nicht automatisch abgebucht.
+Ein Altenteil gibt es nur bei geerbtem Hof oder Rückkehr in die Heimat. Vereine sind die neue Rolle `CLUB` (ein
+Charakter je Verein). Die Fruchtfolgeprämie gibt es je Hektar mit Fruchtwechsel, bei Wiederholung wird die gesamte
+Prämie des Jahres gekürzt. Die Familie wählt der Spieler im Onboarding mit drei einzelnen Schaltern, das Familienfeld
+markiert er auf der Feldseite. Zu- und Absage einer Einladung laufen über die vorhandenen Vorgangs-Endpunkte
+(`/api/cases/{id}/accept|decline`), Sponsoring über `/api/cases/{id}/sponsor`. Der Festkalender ersetzt
+`village-life.invitation-every-periods`. Alle Zahlen sind Platzhalter.
+
 ### R2-E1 Finanzamt und Steuerberater (braucht B)
 
-- [ ] Neue Rollen `TAX_OFFICE` (Pflichtrolle, erscheint mit dem ersten Steuerbescheid) und `TAX_ADVISOR` (optional
+- [x] Neue Rollen `TAX_OFFICE` (Pflichtrolle, erscheint mit dem ersten Steuerbescheid) und `TAX_ADVISOR` (optional
   beauftragbar).
-- [ ] **Steuerjahr = FS25-Jahr** (Periode 1 = März). Gewinn = operative Einnahmen − operative Ausgaben aus dem Journal
+- [x] **Steuerjahr = FS25-Jahr** (Periode 1 = März). Gewinn = operative Einnahmen − operative Ausgaben aus dem Journal
   (B2) − vereinfachte Abschreibung (Konfig: Prozent des Fahrzeug- und Gebäudewerts) − Zinsen der Tool-Kredite.
-- [ ] Steuersatz und Freibetrag konfigurierbar (`rpsim.formulas.tax.*`), im harten Weltmodus strenger.
-- [ ] **Vorauszahlungen** je Quartal (drei Perioden) auf Basis des Vorjahres, **Bescheid** nach Jahresende mit
+- [x] Steuersatz und Freibetrag konfigurierbar (`rpsim.formulas.tax.*`), im harten Weltmodus strenger.
+- [x] **Vorauszahlungen** je Quartal (drei Perioden) auf Basis des Vorjahres, **Bescheid** nach Jahresende mit
   Nachzahlung (`TAX_PAYMENT`) oder Erstattung (`TAX_REFUND`).
-- [ ] Nicht gezahlt → Säumniszuschlag (`FINE`), Mahnung, später Pfändungsandrohung (nur Text und Vertrauen, keine
+- [x] Nicht gezahlt → Säumniszuschlag (`FINE`), Mahnung, später Pfändungsandrohung (nur Text und Vertrauen, keine
   Sperre).
-- [ ] **Steuerberater:** Monatliches Honorar, senkt die Steuer um einen konfigurierbaren Anteil, erinnert an
+- [x] **Steuerberater:** Monatliches Honorar, senkt die Steuer um einen konfigurierbaren Anteil, erinnert an
   Fristen und senkt die Wahrscheinlichkeit einer **Betriebsprüfung**. Die Prüfung kann zufällig kommen und bei
   auffälligen Sprüngen im Journal Nachzahlungen fordern.
-- [ ] Oberfläche: Steuerübersicht (voraussichtliche Steuer, nächste Vorauszahlung) auf der Bank-Seite.
+- [x] Oberfläche: Steuerübersicht (voraussichtliche Steuer, nächste Vorauszahlung) auf der Bank-Seite.
 
 ### R2-E2 Amt und Kontrollen (braucht C, A7)
 
 Nur Regeln, die sich aus exportierten Werten messen lassen:
 
-- [ ] **Fruchtfolge:** Dieselbe Kultur auf demselben Feld in aufeinanderfolgenden Erntejahren (Historie aus C1) →
+- [x] **Fruchtfolge:** Dieselbe Kultur auf demselben Feld in aufeinanderfolgenden Erntejahren (Historie aus C1) →
   Hinweis, bei Wiederholung Kürzung einer Förderung. Abwechslungsreiche Fruchtfolge → **Förderprämie** (`SUBSIDY`)
   über die Rolle `AUTHORITY`.
-- [ ] **Bewirtschaftungspflicht:** Eigene Felder, die mehrere Perioden ohne Kultur und ungepflegt sind (Unkraut,
+- [x] **Bewirtschaftungspflicht:** Eigene Felder, die mehrere Perioden ohne Kultur und ungepflegt sind (Unkraut,
   Steine) → Aufforderung des Amts, danach Bußgeld (`FINE`).
-- [ ] **Tierwohl-Kontrolle:** Stall mit `health` unter Schwelle oder leerem Futter/Wasser über längere Zeit (A7) →
+- [x] **Tierwohl-Kontrolle:** Stall mit `health` unter Schwelle oder leerem Futter/Wasser über längere Zeit (A7) →
   Kontrolle, Auflage mit Frist, bei erneutem Verstoß Bußgeld und Ansehensverlust im Dorf.
-- [ ] Kontrollen kündigt das Amt an (Mail), das Ergebnis kommt nach der Frist. Der Spieler hat also immer eine Chance
+- [x] Kontrollen kündigt das Amt an (Mail), das Ergebnis kommt nach der Frist. Der Spieler hat also immer eine Chance
   zu reagieren.
-- [ ] Werte in `rpsim.formulas.authority.*`, Häufigkeit gedeckelt.
+- [x] Werte in `rpsim.formulas.authority.*`, Häufigkeit gedeckelt.
 
 ### R2-E3 Familie und Hofnachfolge
 
-- [ ] Neue Rolle `FAMILY` (Eltern auf dem Altenteil, optional Partner:in und Kinder), festgelegt im Onboarding
+- [x] Neue Rolle `FAMILY` (Eltern auf dem Altenteil, optional Partner:in und Kinder), festgelegt im Onboarding
   zusammen mit der Vorgeschichte. Wer keine Familie will, wählt „alleine“.
-- [ ] **Altenteil:** Monatliche Zahlung an die Eltern (`FAMILY`), Höhe aus der Vorgeschichte.
-- [ ] **Anlässe aus dem Kalender:** Geburtstage, Hochzeitstag, Einschulung (Periode fest je Charakter).
-- [ ] **Familienwünsche** als Geschichten mit Folgen für das Familien-Vertrauen, z. B. „Das Feld am Bach war schon beim
+- [x] **Altenteil:** Monatliche Zahlung an die Eltern (`FAMILY`), Höhe aus der Vorgeschichte.
+- [x] **Anlässe aus dem Kalender:** Geburtstage, Hochzeitstag, Einschulung (Periode fest je Charakter).
+- [x] **Familienwünsche** als Geschichten mit Folgen für das Familien-Vertrauen, z. B. „Das Feld am Bach war schon beim
   Großvater in der Familie“ → Verkauf dieses Feldes kostet Vertrauen. Oder Mithilfe zur Erntezeit (nur Text und
   Vertrauen, keine Spielwirkung).
-- [ ] Hofnachfolge als langfristiger Erzählbogen im Tagebuch.
+- [x] Hofnachfolge als langfristiger Erzählbogen im Tagebuch.
 
 ### R2-E4 Vereine und Dorffeste
 
-- [ ] Feste im FS25-Kalender (Konfig je Fest: Periode und Name, z. B. Erntedank im Oktober, Schützenfest im Juni).
-- [ ] **Sponsoring-Anfragen** von Vereinen (Schützenverein, Freiwillige Feuerwehr, Sportverein) mit festen Stufen
+- [x] Feste im FS25-Kalender (Konfig je Fest: Periode und Name, z. B. Erntedank im Oktober, Schützenfest im Juni).
+- [x] **Sponsoring-Anfragen** von Vereinen (Schützenverein, Freiwillige Feuerwehr, Sportverein) mit festen Stufen
   (Formular, Betrag vom Backend vorgegeben) → Ansehen im Dorf steigt nach der Formel des Dorf-Ansehens (`SPONSORING`).
   Ablehnen kostet wenig.
-- [ ] **Einladungen mit Zusage:** Die Einladungen aus V1 (`VillageLifeService`) sind heute reine Mails. Neu: Zu- oder
+- [x] **Einladungen mit Zusage:** Die Einladungen aus V1 (`VillageLifeService`) sind heute reine Mails. Neu: Zu- oder
   Absage per Knopf (neuer Endpunkt). Zusagen stärkt das Vertrauen der Gastgeber, Absagen ist neutral, Ignorieren
   kostet wenig. Einladungen zu Festen nennen das Fest aus dem Kalender.
-- [ ] Werte in `rpsim.formulas.clubs.*`.
+- [x] Werte in `rpsim.formulas.clubs.*`.
 
 **Akzeptanz E:** Nach dem ersten FS25-Jahr kommt ein Steuerbescheid mit nachvollziehbarer Rechnung. Eine monotone
 Fruchtfolge führt zu einem Hinweis vom Amt. Ein Sponsoring hebt das Dorf-Ansehen messbar.

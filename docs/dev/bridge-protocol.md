@@ -42,6 +42,8 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 
 - `gameTime`: in-game milliseconds since savegame start (stops while paused). 1 game day = 86 400 000.
 - `vehicles`: only vehicles the farm **owns** (`VehiclePropertyState.OWNED`); leased vehicles are no assets.
+  Roadmap V2 R2-E1: the yearly tax assessment depreciates `tax.depreciation-rate` of the `value` of these vehicles and
+  of the placeables.
 - `liabilities.leasing`: leased vehicles (`VehiclePropertyState.LEASED`). `costPerPeriod` (per FS25 period) is
   optional and currently not exported - there is no verified FS25 API for per-vehicle leasing costs yet (manual
   test plan). The backend counts known costs as an obligation in the credit check. Roadmap V2 R2-B3: with a booking

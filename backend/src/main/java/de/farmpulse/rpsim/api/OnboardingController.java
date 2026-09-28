@@ -9,6 +9,7 @@ import de.farmpulse.rpsim.api.Views.DetectedView;
 import de.farmpulse.rpsim.api.Views.OnboardingView;
 import de.farmpulse.rpsim.api.Views.PreviewView;
 import de.farmpulse.rpsim.domain.Savegame;
+import de.farmpulse.rpsim.family.FamilyService;
 import de.farmpulse.rpsim.onboarding.OnboardingService;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +42,9 @@ public class OnboardingController {
     public OnboardingView create(@Valid @RequestBody OnboardingRequest r) {
         Savegame sg = onboarding.create(new OnboardingService.Request(r.farmOrigin(), r.villageRelation(), r.freeText(),
                 r.startingCapitalTarget(), r.legacyLoanAmount(), r.tonePreset(),
-                r.initialEmployees() == null ? List.of() : r.initialEmployees()));
+                r.initialEmployees() == null ? List.of() : r.initialEmployees(),
+                new FamilyService.Choice(Boolean.TRUE.equals(r.familyParents()), Boolean.TRUE.equals(r.familyPartner()),
+                        Boolean.TRUE.equals(r.familyChildren()))));
         return view(sg);
     }
 

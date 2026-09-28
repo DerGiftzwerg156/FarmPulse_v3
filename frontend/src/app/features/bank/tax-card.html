@@ -1,0 +1,64 @@
+<app-card [title]="'bank.tax.title' | t" data-testid="tax-card">
+  @if (failed()) {
+    <p class="text-[12px] text-danger">{{ 'common.error' | t }}</p>
+  } @else if (overview(); as o) {
+    @if (!o.journalAvailable) {
+      <p class="mb-3 text-[12px] text-muted" data-testid="tax-unavailable">{{ 'bank.tax.unavailable' | t }}</p>
+    }
+    <div class="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <app-stat [label]="'bank.tax.estimated' | t: { year: o.currentYear ?? '–' }" [value]="o.estimatedTax | money" [compact]="true"
+        [hint]="'bank.tax.rate' | t: { rate: o.ratePercent, allowance: (o.allowance | money) }" data-testid="tax-estimated" />
+      <app-stat [label]="'bank.tax.nextPrepayment' | t" [value]="o.nextPrepayment !== null ? (o.nextPrepayment | money) : ('bank.tax.none' | t)"
+        [compact]="true" [hint]="o.nextPrepaymentPeriod !== null ? ('bank.tax.dueIn' | t: { period: ('' + o.nextPrepaymentPeriod | label: 'period') }) : ''"
+        data-testid="tax-prepayment" />
+      <app-stat [label]="'bank.tax.openBills' | t" [value]="o.openBills" [compact]="true"
+        [tone]="o.openBills > 0 ? 'warning' : 'neutral'" data-testid="tax-open-bills" />
+    </div>
+    <p class="mb-3 text-[11px] text-muted">{{ 'bank.tax.estimateNote' | t }}</p>
+    @if (o.openBills > 0) {
+      <a routerLink="/contracts" class="mb-3 inline-block fp-label text-accent hover:underline" data-testid="tax-bills-link">{{ 'bank.tax.payBills' | t }}</a>
+    }
+
+    @if (o.lastAssessment; as a) {
+      <h4 class="mb-1 fp-label">{{ 'bank.tax.assessment' | t: { year: a.taxYear, months: a.months } }}</h4>
+      <table class="mb-3 w-full text-left text-[12px]" data-testid="tax-assessment">
+        <tbody>
+          <tr><td class="py-0.5 text-muted">{{ 'bank.tax.income' | t }}</td><td class="py-0.5 text-right font-mono text-text">{{ a.operatingIncome | money }}</td></tr>
+          <tr><td class="py-0.5 text-muted">{{ 'bank.tax.expense' | t }}</td><td class="py-0.5 text-right font-mono text-text">{{ a.operatingExpense | money }}</td></tr>
+          <tr><td class="py-0.5 text-muted">{{ 'bank.tax.depreciation' | t }}</td><td class="py-0.5 text-right font-mono text-text">− {{ a.depreciation | money }}</td></tr>
+          <tr><td class="py-0.5 text-muted">{{ 'bank.tax.interest' | t }}</td><td class="py-0.5 text-right font-mono text-text">− {{ a.interest | money }}</td></tr>
+          <tr class="border-t border-border"><td class="py-0.5 text-text">{{ 'bank.tax.profit' | t }}</td><td class="py-0.5 text-right font-mono font-bold text-text">{{ a.profit | money }}</td></tr>
+          <tr><td class="py-0.5 text-muted">{{ 'bank.tax.allowance' | t }}</td><td class="py-0.5 text-right font-mono text-text">− {{ a.allowance | money }}</td></tr>
+          <tr><td class="py-0.5 text-muted">{{ 'bank.tax.taxable' | t: { rate: a.ratePercent } }}</td><td class="py-0.5 text-right font-mono text-text">{{ a.taxable | money }}</td></tr>
+          @if (a.advisorReduction > 0) {
+            <tr><td class="py-0.5 text-muted">{{ 'bank.tax.advisorReduction' | t }}</td><td class="py-0.5 text-right font-mono text-text">− {{ a.advisorReduction | money }}</td></tr>
+          }
+          <tr class="border-t border-border"><td class="py-0.5 text-text">{{ 'bank.tax.tax' | t }}</td><td class="py-0.5 text-right font-mono font-bold text-text">{{ a.tax | money }}</td></tr>
+          <tr><td class="py-0.5 text-muted">{{ 'bank.tax.prepayments' | t }}</td><td class="py-0.5 text-right font-mono text-text">− {{ a.prepayments | money }}</td></tr>
+          <tr class="border-t border-border" data-testid="tax-balance">
+            <td class="py-0.5 text-text">{{ (a.balance < 0 ? 'bank.tax.refund' : 'bank.tax.backPayment') | t }}</td>
+            <td class="py-0.5 text-right font-mono font-bold text-text">{{ (a.balance < 0 ? -a.balance : a.balance) | money }}</td>
+          </tr>
+        </tbody>
+      </table>
+      @if (a.auditStatus) {
+        <p class="mb-3 text-[12px] text-muted" data-testid="tax-audit">{{ a.auditStatus | label: 'auditStatus' }}</p>
+      }
+    }
+
+    <div class="flex flex-wrap items-center gap-2">
+      @if (o.advisorActive) {
+        <app-badge variant="positive" data-testid="tax-advisor-active">{{ 'bank.tax.advisorActive' | t }}</app-badge>
+      } @else if (advisorRequested()) {
+        <p class="text-[12px] text-muted" data-testid="tax-advisor-requested">{{ 'bank.tax.advisorRequested' | t }}
+          <a routerLink="/contracts" class="text-accent hover:underline">{{ 'nav.contracts' | t }}</a></p>
+      } @else {
+        <app-button variant="secondary" [disabled]="busy()" (pressed)="requestAdvisor()" data-testid="tax-advisor-request">{{ 'bank.tax.requestAdvisor' | t }}</app-button>
+        <span class="text-[11px] text-muted">{{ 'bank.tax.advisorHint' | t }}</span>
+      }
+    </div>
+    @if (actionError(); as msg) {
+      <p class="mt-2 text-[12px] text-danger" data-testid="tax-error">{{ msg }}</p>
+    }
+  }
+</app-card>

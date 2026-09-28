@@ -1,0 +1,7 @@
+Ankündigung einer Kontrolle
+Guten Tag,
+
+wir kündigen eine Kontrolle an ({{rule}}: {{subject}}). In {{inspectionDays}} Tagen sehen wir uns das an – bis dahin haben Sie Gelegenheit, Abhilfe zu schaffen.
+
+Mit freundlichen Grüßen
+{{characterName}}

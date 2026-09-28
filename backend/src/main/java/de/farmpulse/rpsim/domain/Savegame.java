@@ -242,4 +242,35 @@ public class Savegame {
     /** D3: the hint about helpers without employee was sent (once per savegame). */
     @Column(name = "outside_helpers_hint_sent", nullable = false)
     private boolean outsideHelpersHintSent;
+
+    // ---- Roadmap V2 R2-E: new roleplay areas
+
+    /** E2: game month and inspections announced in it (cap). */
+    @Column(name = "authority_month")
+    private Long authorityMonth;
+
+    @Column(name = "authority_count", nullable = false)
+    private int authorityCount;
+
+    /** E4: last sponsoring request of a club. */
+    @Column(name = "last_sponsoring_game_time")
+    private Long lastSponsoringGameTime;
+
+    /** E3: family chosen in the onboarding. */
+    @Column(name = "family_parents", nullable = false)
+    private boolean familyParents;
+
+    @Column(name = "family_partner", nullable = false)
+    private boolean familyPartner;
+
+    @Column(name = "family_children", nullable = false)
+    private boolean familyChildren;
+
+    /** E3: farmland the player marked as family field ("the field at the brook"). */
+    @Column(name = "family_field_id")
+    private Integer familyFieldId;
+
+    /** E3: monthly retirement payment to the parents (null = none). */
+    @Column(name = "retirement_payment")
+    private Long retirementPayment;
 }

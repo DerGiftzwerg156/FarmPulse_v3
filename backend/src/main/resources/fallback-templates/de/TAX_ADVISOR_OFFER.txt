@@ -1,0 +1,7 @@
+Angebot Steuerberatung
+Guten Tag,
+
+gern übernehme ich Ihre Steuer: {{monthlyFee}} € im Monat. Ich rechne mit rund {{taxReductionPercent}} % weniger Steuer, erinnere Sie an Fristen und sorge dafür, dass Prüfungen seltener werden. Das Angebot gilt {{validDays}} Tage (unter „Verträge“).
+
+Mit freundlichen Grüßen
+{{characterName}}

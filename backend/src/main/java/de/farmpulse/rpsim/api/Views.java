@@ -88,7 +88,8 @@ public final class Views {
 
     /** Roadmap V2 R2-C: fruitType and phase (EMPTY, GROWING, HARVESTABLE, HARVESTED, WITHERED) of own fields only. */
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,
-                               boolean inNegotiation, boolean tradeable, boolean leased, String fruitType, String phase) {
+                               boolean inNegotiation, boolean tradeable, boolean leased, String fruitType, String phase,
+                               boolean familyField) {
     }
 
     /**
@@ -96,6 +97,22 @@ public final class Views {
      * new credits cost more after repeated vanilla loans.
      */
     public record BypassSettingsView(boolean reactionsEnabled, double interestSurchargePercent) {
+    }
+
+    /**
+     * Roadmap V2 R2-E1: tax overview - estimate of the running FS25 year from the journal (complete months, without
+     * depreciation and interest), next prepayment and the last assessment with its calculation.
+     */
+    public record TaxOverviewView(Integer currentYear, long incomeSoFar, long expenseSoFar, long estimatedTax,
+                                  double ratePercent, long allowance, Long nextPrepayment, Integer nextPrepaymentPeriod,
+                                  TaxAssessmentView lastAssessment, boolean advisorActive, boolean journalAvailable,
+                                  int openBills) {
+    }
+
+    public record TaxAssessmentView(int taxYear, int months, long operatingIncome, long operatingExpense,
+                                    long depreciation, long interest, long profit, long allowance, long taxable,
+                                    double ratePercent, long advisorReduction, long tax, long prepayments, long balance,
+                                    String auditStatus) {
     }
 
     /** Roadmap V2 R2-C6: field work hints of the cooperative; fieldsTracked = the mod reports the fields. */
@@ -184,7 +201,8 @@ public final class Views {
     public record CaseView(Long id, String kind, String status, CharacterRef character, Integer farmlandId, Double hectares,
                            Long damageAmount, Long payoutAmount, Long costAmount, Long offerAmount, int roundsUsed,
                            boolean measureAgreed, String reference, long gameTime, Long deadlineGameTime, String resolution,
-                           Long measureCost, Integer quantity, String direction, Integer baselineCount, String title) {
+                           Long measureCost, Integer quantity, String direction, Integer baselineCount, String title,
+                           List<Long> tiers) {
     }
 
     /** Insurance tariff preview for the current farm. */

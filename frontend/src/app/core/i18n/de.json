@@ -104,7 +104,11 @@
       "BREEDING_ADVISOR": "Zuchtverband",
       "ENERGY_SUPPLIER": "Energieversorger",
       "WORKSHOP": "Landmaschinenwerkstatt",
-      "CONTRACTOR": "Lohnunternehmer:in"
+      "CONTRACTOR": "Lohnunternehmer:in",
+      "TAX_OFFICE": "Finanzamt",
+      "TAX_ADVISOR": "Steuerberater:in",
+      "FAMILY": "Familie",
+      "CLUB": "Verein"
     },
     "characterCategory": {
       "MANDATORY": "Pflichtrolle",
@@ -364,7 +368,8 @@
     "contractKind": {
       "INSURANCE": "Sturm- und Hagelversicherung",
       "LEASE": "Pacht",
-      "MAINTENANCE": "Wartungsvertrag"
+      "MAINTENANCE": "Wartungsvertrag",
+      "TAX_ADVISOR": "Steuerberatung"
     },
     "contractStatus": {
       "OFFERED": "Angebot",
@@ -386,7 +391,11 @@
       "BREEDING_ADVICE": "Zuchtberatung",
       "REPAIR": "Reparatur",
       "MISSION_REFERRAL": "Vermittelter Auftrag",
-      "COMPENSATION_CLAIM": "Ausgleichsforderung"
+      "COMPENSATION_CLAIM": "Ausgleichsforderung",
+      "TAX_BILL": "Steuerbescheid",
+      "AUTHORITY_INSPECTION": "Kontrolle des Amts",
+      "SPONSORING_REQUEST": "Sponsoring-Anfrage",
+      "INVITATION": "Einladung"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -418,7 +427,14 @@
       "COMPLETED": "Erledigt",
       "FAILED": "Nicht geschafft",
       "NOT_TAKEN": "Nicht angenommen",
-      "GONE": "Im Spiel beendet"
+      "GONE": "Im Spiel beendet",
+      "SUPERSEDED": "Durch den Jahresbescheid ersetzt",
+      "IN_ORDER": "Ohne Beanstandung",
+      "REQUIREMENT": "Auflage erteilt",
+      "FINED": "Bußgeld verhängt",
+      "DECLINED": "Abgesagt",
+      "SPONSORED": "Gesponsert",
+      "IGNORED": "Nicht beantwortet"
     },
     "animalType": {
       "COW": "Rinder",
@@ -507,6 +523,31 @@
       "HARVESTABLE": "erntereif",
       "HARVESTED": "abgeerntet",
       "WITHERED": "verdorrt"
+    },
+    "festival": {
+      "MAIBAUM": "Maibaumaufstellen",
+      "SCHUETZENFEST": "Schützenfest",
+      "FEUERWEHRFEST": "Feuerwehrfest",
+      "ERNTEDANKFEST": "Erntedankfest",
+      "WEIHNACHTSMARKT": "Weihnachtsmarkt"
+    },
+    "club": {
+      "SHOOTING_CLUB": "Schützenverein",
+      "FIRE_BRIGADE": "Freiwillige Feuerwehr",
+      "SPORTS_CLUB": "Sportverein"
+    },
+    "authorityRule": {
+      "CULTIVATION_DUTY": "Bewirtschaftungspflicht",
+      "ANIMAL_WELFARE": "Tierwohl"
+    },
+    "taxBill": {
+      "PREPAYMENT": "Vorauszahlung",
+      "ASSESSMENT": "Nachzahlung",
+      "AUDIT": "Nachforderung Betriebsprüfung"
+    },
+    "auditStatus": {
+      "ANNOUNCED": "Betriebsprüfung angekündigt – das Ergebnis kommt per Post.",
+      "DONE": "Betriebsprüfung abgeschlossen."
     }
   },
   "onboarding": {
@@ -550,7 +591,12 @@
     "unknownMap": "Unbekannte Karte",
     "lastSeen": "zuletzt gesehen {at}",
     "confirm": "Bestätigen & verknüpfen",
-    "helperIntro": "Maschinenführer fahren später die Helfer im Spiel – mit ihrem Namen und ohne zusätzlichen Helferlohn. Im strengen Modus (Einstellungen) gibt es ohne Maschinenführer keine Helfer."
+    "helperIntro": "Maschinenführer fahren später die Helfer im Spiel – mit ihrem Namen und ohne zusätzlichen Helferlohn. Im strengen Modus (Einstellungen) gibt es ohne Maschinenführer keine Helfer.",
+    "family": "Familie",
+    "familyIntro": "Wer gehört zur Familie? Jede Angabe ist einzeln wählbar – ohne Häkchen führst du den Hof alleine.",
+    "familyParents": "Eltern (bei geerbtem Hof oder Rückkehr auf dem Altenteil)",
+    "familyPartner": "Partner:in",
+    "familyChildren": "Kinder"
   },
   "mailbox": {
     "filter": "Filter",
@@ -664,6 +710,35 @@
       "other": "Sonstige",
       "chartLabel": "Einnahmen und Ausgaben des laufenden Betriebs je Monat, gestapelt nach Kategorie, mit Monatsergebnis",
       "note": "Nur der laufende Betrieb. Investitionen, Anlagenverkäufe und Kredite stehen in der Tabelle. * = Monat läuft noch."
+    },
+    "tax": {
+      "title": "Steuern",
+      "unavailable": "Die Steuer rechnet mit der Hofbuchhaltung und braucht die aktuelle Version des Mods FS25_RPSim. Ohne Buchungsjournal gibt es keinen Bescheid.",
+      "estimated": "Voraussichtliche Steuer J{year}",
+      "rate": "{rate} % auf den Gewinn über {allowance} Freibetrag",
+      "nextPrepayment": "Nächste Vorauszahlung",
+      "none": "keine",
+      "dueIn": "fällig im {period}",
+      "openBills": "Offene Bescheide",
+      "estimateNote": "Schätzung aus den abgeschlossenen Monaten des laufenden Jahres, noch ohne Abschreibung und Zinsen. Der Bescheid kommt zu Beginn des nächsten Jahres.",
+      "payBills": "Bescheide unter „Verträge & Vorgänge“ bezahlen",
+      "assessment": "Bescheid J{year} ({months} Monate)",
+      "income": "Betriebseinnahmen",
+      "expense": "Betriebsausgaben (ohne Steuern und Bußgelder)",
+      "depreciation": "Abschreibung",
+      "interest": "Kreditzinsen",
+      "profit": "Gewinn",
+      "allowance": "Freibetrag",
+      "taxable": "Zu versteuern ({rate} %)",
+      "advisorReduction": "Abzug Steuerberatung",
+      "tax": "Steuer",
+      "prepayments": "Geleistete Vorauszahlungen",
+      "backPayment": "Nachzahlung",
+      "refund": "Erstattung",
+      "advisorActive": "Steuerberatung beauftragt",
+      "requestAdvisor": "Steuerberatung anfragen",
+      "advisorHint": "Senkt die Steuer, erinnert an Fristen und macht eine Betriebsprüfung unwahrscheinlicher – gegen ein Monatshonorar.",
+      "advisorRequested": "Das Angebot liegt unter"
     }
   },
   "employees": {
@@ -777,7 +852,11 @@
       "LEADING": "Du liegst vorn."
     },
     "notTradeable": "Diese Fläche ist im Spiel nicht kaufbar (z. B. Ortschaft oder Straße) und wird nicht gehandelt.",
-    "notTradeableBadge": "nicht handelbar"
+    "notTradeableBadge": "nicht handelbar",
+    "familyField": "Familienfeld",
+    "markFamilyField": "Als Familienfeld markieren",
+    "clearFamilyField": "Markierung entfernen",
+    "familyFieldHint": "Das Familienfeld liegt deiner Familie am Herzen – verkaufst du es, kostet das viel Vertrauen."
   },
   "market": {
     "storageValue": "Wert im Silo",
@@ -978,6 +1057,22 @@
     "measureHint": "Gemeinsame Maßnahme: Du beteiligst dich an Drückjagd oder Zaun, bekommst den angebotenen Ersatz, und für einige Monate gibt es seltener Wildschäden. Das Dorf rechnet es dir an – ein Streit dagegen spricht sich herum.",
     "compensationClaim": "{name} verlangt {amount} Ausgleich, weil du das Feld über den Kopf hinweg im Spielmenü gekauft hast.",
     "payCompensation": "Ausgleich zahlen",
-    "compensationHint": "Zahlst du nicht bis zur Frist, gilt die Forderung als abgelehnt – das kostet weiteres Vertrauen."
+    "compensationHint": "Zahlst du nicht bis zur Frist, gilt die Forderung als abgelehnt – das kostet weiteres Vertrauen.",
+    "taxBill": "{title}: {amount}",
+    "lateFees": "zzgl. {amount} Säumniszuschlag",
+    "payTax": "Zahlen ({amount})",
+    "taxHint": "Der Betrag wird erst abgebucht, wenn du auf „Zahlen“ klickst. Nach der Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, später droht das Finanzamt mit Pfändung.",
+    "inspection": "Kontrolle: {rule}",
+    "inspectionRequirement": "Auflage: Der Mangel muss bis zur neuen Frist behoben sein, sonst folgt ein Bußgeld.",
+    "inspectionHint": "Das Amt prüft zur Frist, ob der Mangel noch besteht. Behebe ihn im Spiel – dann bleibt es ohne Beanstandung.",
+    "sponsoring": "{club} bittet um Unterstützung.",
+    "sponsor": "{amount} spenden",
+    "sponsoringHint": "Ein Sponsoring hebt dein Ansehen im Dorf. Ablehnen kostet nur ein wenig Vertrauen beim Verein.",
+    "invitation": "Einladung zum {festival}",
+    "rsvpAccept": "Zusagen",
+    "rsvpDecline": "Absagen",
+    "invitationHint": "Eine Zusage freut die Gastgeber. Absagen ist in Ordnung – nur gar nicht zu antworten kommt schlecht an.",
+    "fine": "Bußgeld {amount}",
+    "paid": "Bezahlt {amount}"
   }
 }

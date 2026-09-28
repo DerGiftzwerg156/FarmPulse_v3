@@ -1,0 +1,7 @@
+Ihr Steuerbescheid für das Jahr {{taxYear}}
+Guten Tag,
+
+anbei die Festsetzung für das Jahr {{taxYear}}: Einnahmen {{operatingIncome}} €, Ausgaben {{operatingExpense}} €, Abschreibung {{depreciation}} €, Kreditzinsen {{interest}} € – Gewinn {{profit}} €. Abzüglich Freibetrag {{allowance}} € sind {{taxable}} € zu versteuern ({{taxRatePercent}} %): Steuer {{tax}} €. Vorauszahlungen {{prepayments}} €, verbleibend {{balance}} € (negativ = Erstattung).
+
+Mit freundlichen Grüßen
+{{characterName}}

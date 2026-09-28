@@ -236,7 +236,7 @@ public class LivestockService {
     }
 
     /** Ratio of the water condition (title in water-condition-titles), null when the stable reports none. */
-    Double water(BridgeDtos.Husbandry h) {
+    public Double water(BridgeDtos.Husbandry h) {
         return h.conditions() == null ? null : h.conditions().stream()
                 .filter(c -> c != null && c.title() != null && cfg().getWaterConditionTitles().contains(c.title()))
                 .map(BridgeDtos.HusbandryCondition::ratio).filter(Objects::nonNull).findFirst().orElse(null);

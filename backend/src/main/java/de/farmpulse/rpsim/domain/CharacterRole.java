@@ -20,5 +20,10 @@ public enum CharacterRole {
     ENERGY_SUPPLIER,
     // TODO T-22: contract partners
     WORKSHOP,
-    CONTRACTOR
+    CONTRACTOR,
+    // Roadmap V2 R2-E: tax office, tax advisor, family, clubs
+    TAX_OFFICE,
+    TAX_ADVISOR,
+    FAMILY,
+    CLUB
 }

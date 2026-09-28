@@ -1,0 +1,6 @@
+Unterstützung für den {{club}}
+Hallo,
+
+der {{club}} sucht Unterstützer für das kommende Vereinsjahr. Schon mit {{smallestTier}} € (bis {{largestTier}} €) wäre uns sehr geholfen. Unter „Verträge“ kannst du einen Betrag wählen oder ablehnen – du hast {{decisionDays}} Tage Zeit.
+
+{{characterName}}

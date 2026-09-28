@@ -73,4 +73,14 @@ public class FieldRecord extends SavegameScoped {
 
     @Column(name = "plow_hint_sent", nullable = false)
     private boolean plowHintSent;
+
+    /** Roadmap V2 R2-E2: area (rotation premium per hectare) and violations of rotation / cultivation duty. */
+    @Column(name = "hectares")
+    private Double hectares;
+
+    @Column(name = "rotation_violations", nullable = false)
+    private int rotationViolations;
+
+    @Column(name = "duty_violations", nullable = false)
+    private int dutyViolations;
 }

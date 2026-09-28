@@ -33,6 +33,15 @@ public enum TrustReason {
     /** Roadmap V2 R2-D2: field bought over the owner's head in the game menu / compensation refused. */
     FIELD_BYPASS,
     COMPENSATION_DECLINED,
+    /** Roadmap V2 R2-E: tax paid late / enforcement threatened, authority violation, family, clubs, invitations. */
+    TAX_OVERDUE,
+    AUTHORITY_VIOLATION,
+    FAMILY_FIELD_SOLD,
+    FAMILY_HELP,
+    SPONSORING,
+    SPONSORING_DECLINED,
+    INVITATION_ACCEPTED,
+    INVITATION_IGNORED,
     INITIAL,
     OTHER
 }

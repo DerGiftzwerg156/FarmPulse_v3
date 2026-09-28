@@ -134,6 +134,14 @@ Roadmap V2 R2-D: `VanillaBypassServiceTest` (vanilla loan taken / repaid, surcha
 the owner's head with compensation paid / expired, hint about helpers without employee) and
 `NegotiationEngineTest.vanillaPurchaseOfAFreeFieldAndASaleAreFollowedUp`; the frontend covers the claim in
 `contracts.spec.ts` and the switch in `settings.spec.ts`, the simulator the game menus in `export.test.js`.
+Roadmap V2 R2-E: `TaxServiceTest` (traceable calculation, assessment and prepayments, pay by button with late fees,
+reminder and threat, advisor, harsh mode, audit, no journal), `AuthorityServiceTest` (rotation notice and cut,
+cultivation duty, animal welfare requirement and fine, monthly cap), `FamilyServiceTest` (family switches, retirement,
+occasions, family field sold), `ClubServiceTest` (festival invitation, ignore / decline, sponsoring tiers) and the
+festival calendar in `VillageLifeServiceTest`; `ApiIntegrationTest` covers `/api/tax`, the family field, sponsoring
+and the family in the onboarding (reroll keeps role and name). The frontend covers the tax card in
+`tax-card.spec.ts`, the new cases in `contracts.spec.ts`, the family field in `farmland.spec.ts` and the family
+switches in `onboarding-wizard.spec.ts`.
 
 ## Continuous integration (AP-11.1)
 

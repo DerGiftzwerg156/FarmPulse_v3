@@ -324,7 +324,6 @@ period is assumed (FS25 default).
 | `rpsim.formulas.village-life.congratulation-trend-ratio` | `1.25` | Congratulation when the cash-flow trend exceeds the previous window by this ratio. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.congratulation-min-cashflow` | `1000` | …and the monthly cash flow is at least this amount. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.congratulation-cooldown-days` | `20` | Cool-down between congratulations. | Dorfleben-Modul |
-| `rpsim.formulas.village-life.invitation-every-periods` | `6` | Invitation calendar: an invitation on the first day of every n-th FS25 period of the year, counted from period 1 = March (6 → March and September; 0 = off). | Dorfleben-Modul |
 | `rpsim.formulas.village-life.gossip-daily-probability` | `0.05` | Daily roll for village gossip. | Dorfleben-Modul |
 | `rpsim.formulas.village-life.gossip-cooldown-days` | `3` | Cool-down between gossip messages. | Dorfleben-Modul |
 
@@ -572,6 +571,98 @@ placeholders.
 | `rpsim.formulas.vanilla-bypass.compensation-decision-days` | `7` | Game days to pay or refuse; no answer = refused. | Roadmap V2 R2-D2 |
 | `rpsim.formulas.vanilla-bypass.compensation-decline-trust-delta` | `-5` | Additional trust loss when the claim is refused or ignored. | Roadmap V2 R2-D2 |
 | `rpsim.formulas.vanilla-bypass.outside-helpers-hint` | `true` | One hint of the cooperative when a helper without employee runs (Roadmap V2 R2-D3). | Roadmap V2 R2-D3 |
+
+## `rpsim.formulas.tax` (Roadmap V2 R2-E1)
+
+Tax office and tax advisor. One assessment per FS25 year at the start of period 1 of the next year, only from the
+complete months of the booking journal (R2-B; without a journal the year stays `NO_DATA`): profit = operating income +
+operating expenses (without `excluded-categories`) - depreciation - interest part of the tool credit installments;
+taxable = max(0, profit - allowance); tax = taxable × rate - advisor reduction; balance = tax - paid prepayments
+(positive = bill, negative = refund `RPSIM_TAX_REFUND`). Prepayments at the start of periods 1, 4, 7 and 10 from the
+last assessment. Bills are paid by button in the contracts page (owner decision), not debited automatically. The
+difficulty `HARSH` uses the `hard-*` values. All values are placeholders, not a real tax law.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.tax.enabled` | `true` | Master switch of the tax office (assessment, prepayments, audits). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.rate` | `0.25` | Flat tax rate on the taxable profit. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.allowance` | `20000` | Tax-free allowance per FS25 year (€). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.hard-rate` | `0.3` | Tax rate in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.hard-allowance` | `10000` | Allowance in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.depreciation-rate` | `0.1` | Yearly depreciation as a share of the exported value of vehicles and placeables (`assets`) at the assessment. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.excluded-categories` | `[RPSIM_TAX_PAYMENT, RPSIM_TAX_REFUND, RPSIM_FINE]` | Journal categories that are not part of the tax base (owner decision: taxes and fines). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.prepayment-share` | `1.0` | Share of the last assessed tax billed as prepayments, split into four quarters (0 = no prepayments). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.payment-days` | `14` | Game days to pay a tax bill. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.late-fee-rate` | `0.01` | Late fee per started game month after the deadline, as a share of the bill (added to the amount due). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.enforcement-after-months` | `2` | Game months after the deadline until the tax office threatens enforcement (once per bill). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.reminder-trust-delta` | `-2` | Trust of the tax office per reminder. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.enforcement-trust-delta` | `-5` | Trust of the tax office at the enforcement threat. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-monthly-fee` | `150` | Monthly fee of the tax advisor contract (booking `RPSIM_OTHER`). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-tax-reduction` | `0.1` | With an active advisor contract: the tax is reduced by this share. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-reminder-days` | `3` | The advisor reminds of an unpaid bill this many game days before its deadline. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-audit-factor` | `0.5` | With an advisor the audit probability is multiplied by this factor. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.advisor-offer-valid-days` | `7` | Game days the advisor offer stays open. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.audit-probability` | `0.15` | Chance of a tax audit at every assessment. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.audit-days` | `7` | Game days between the announcement and the result of the audit. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.audit-jump-factor` | `2.0` | A month whose operating expenses exceed this factor × the monthly average of the year counts as a jump month; its excess over the average is disputed. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.audit-disallowed-share` | `0.5` | Share of the disputed expenses (unknown categories + jump months, owner decision) the audit does not accept; back tax = disputed × share × rate. | Roadmap V2 R2-E1 |
+
+## `rpsim.formulas.authority` (Roadmap V2 R2-E2)
+
+The agricultural authority checks only what the export measures: crop rotation (crop history of C1), cultivation duty
+(own field without crop with weeds or stones above `fields.weed-high-state` / `fields.stone-high-level`, only when the
+savegame has them switched on) and animal welfare (`husbandries`: health, food, water). Inspections are announced and
+decided after `inspection-days`, so the player can always react. All values are placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.authority.enabled` | `true` | Master switch of rotation premium and inspections. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.rotation-premium-per-ha` | `40` | Rotation premium (booking `RPSIM_SUBSIDY`) per hectare of fields whose main crop differs from the year before, paid at the end of every FS25 year (owner decision: per hectare). | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.rotation-cut-share` | `0.5` | When a field repeats its crop for the second time, the whole premium of the year is cut by this share (owner decision); the first repetition only gets a notice. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.duty-months` | `3` | Game months without crop (with weeds or stones) before a cultivation duty inspection is announced; also the gap after a decision. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.duty-fine` | `500` | Fine (booking `RPSIM_FINE`) when the field is still violated at the deadline. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.welfare-health-threshold` | `30` | A husbandry with animal health below this value (or empty food / water) counts as bad (same scale as the vet emergency of R2-A7). | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.welfare-days` | `3` | Game days a husbandry stays bad before an animal welfare inspection is announced. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.welfare-fine` | `1000` | Fine of a repeated animal welfare violation (the first one brings a requirement with a new deadline). | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.welfare-reputation-delta` | `-3` | Village reputation (public action `AUTHORITY_FINE`) at an animal welfare fine. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.inspection-days` | `5` | Game days between the announcement (or a requirement) and the decision. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.violation-trust-delta` | `-3` | Trust of the authority per requirement or fine. | Roadmap V2 R2-E2 |
+| `rpsim.formulas.authority.max-inspections-per-month` | `2` | Cap of new inspection announcements per game month. | Roadmap V2 R2-E2 |
+
+## `rpsim.formulas.family` (Roadmap V2 R2-E3)
+
+Family characters chosen in the onboarding (parents, partner, children - each switch on its own). They do not count as
+villagers for the reputation and never leave the village. All values are placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.family.enabled` | `true` | Master switch of the monthly family events (retirement payment, occasions, harvest help, family field). | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.retirement-payment` | `800` | Monthly retirement payment to the parents (booking `RPSIM_FAMILY`), only for the start stories "inherited" and "returned home" (owner decision). | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.field-sold-trust-delta` | `-15` | Trust of every family member when the family field (chosen by the player) is no longer owned. | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.harvest-periods` | `[6, 7, 8]` | FS25 periods (1 = March) in which a family member may offer help with the harvest. | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.harvest-help-probability` | `0.5` | Chance per harvest period. | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.harvest-help-trust-delta` | `2` | Trust of the helping family member. | Roadmap V2 R2-E3 |
+| `rpsim.formulas.family.school-start-period` | `7` | FS25 period of the school start of the youngest child (occasion message). | Roadmap V2 R2-E3 |
+
+## `rpsim.formulas.clubs` (Roadmap V2 R2-E4)
+
+Clubs (one character with role `CLUB` per club, created when first needed) and the festival calendar. Replaces the
+fixed invitation calendar `village-life.invitation-every-periods` of V1. All values are placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.clubs.enabled` | `true` | Master switch of invitations and sponsoring requests. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.festivals` | Maibaum 3, Schützenfest 4, Feuerwehrfest 6, Erntedankfest 8, Weihnachtsmarkt 10 | Festival calendar: `{ key, period, host }` - invitation at the start of the FS25 period (1 = March); the host is a club (`SHOOTING_CLUB`, `FIRE_BRIGADE`, `SPORTS_CLUB`) or a character role (`VILLAGER`, `COOPERATIVE`). | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.invitation-days` | `5` | Game days to accept or decline an invitation; no answer = ignored. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.invitation-accept-trust-delta` | `2` | Trust of the host when the player accepts. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.invitation-ignore-trust-delta` | `-1` | Trust of the host when the invitation is ignored (declining costs nothing). | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-probability-per-month` | `0.3` | Chance per game month that a club asks for sponsoring. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-cooldown-days` | `30` | Game days after the last request before the next one. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-tiers` | `[250, 500, 1000]` | Amounts the player can choose (booking `RPSIM_SPONSORING`); empty = no requests. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-reputation-per100` | `0.5` | Village reputation (public action `SPONSORING`) per 100 € sponsored. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-trust-delta` | `3` | Trust of the club when the player sponsors. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-decline-trust-delta` | `-1` | Trust of the club when the request is declined or expires. | Roadmap V2 R2-E4 |
+| `rpsim.formulas.clubs.sponsoring-decision-days` | `7` | Game days to answer a sponsoring request. | Roadmap V2 R2-E4 |
 
 ## `rpsim.formulas.fields` (Roadmap V2 R2-C)
 

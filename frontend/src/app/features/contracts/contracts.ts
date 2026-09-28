@@ -23,6 +23,7 @@ export const CONTRACT_BADGE: Record<string, BadgeVariant> = {
 
 /** Cases still shown under "open": waiting for an answer, or accepted and running (trader offer). */
 const OPEN_CASE = ['AWAITING_PLAYER', 'IN_PROGRESS'];
+const ROLEPLAY_CASES = ['TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION'];
 
 /**
  * Contracts & service cases (TODO T-20 / T-22): insurance (offer, accept, cancel), damage reports, and the cases and
@@ -122,6 +123,11 @@ export class Contracts {
 
   setDemand(id: number, value: number): void {
     this.demand.update((d) => ({ ...d, [id]: Number.isFinite(value) ? value : 0 }));
+  }
+
+  /** Roadmap V2 R2-E: tax bills, inspections, sponsoring requests and invitations have their own history line. */
+  isRoleplayCase(c: CaseView): boolean {
+    return ROLEPLAY_CASES.includes(c.kind);
   }
 
   isInsuranceCase(c: CaseView): boolean {

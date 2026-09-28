@@ -287,7 +287,6 @@ rpsim:
       congratulation-trend-ratio: 1.25
       congratulation-min-cashflow: 1000
       congratulation-cooldown-days: 20
-      invitation-every-periods: 6   # T-08: every 6th FS25 period (March, September)
       gossip-daily-probability: 0.05
       gossip-cooldown-days: 3
     onboarding:
@@ -468,6 +467,68 @@ rpsim:
       record-categories: [HARVEST_INCOME, SOLD_PRODUCTS]
       record-min-months: 3
       record-trust-delta: 2
+    tax:                          # Roadmap V2 R2-E1: tax office and tax advisor (placeholders)
+      enabled: true
+      rate: 0.25
+      allowance: 20000
+      hard-rate: 0.3
+      hard-allowance: 10000
+      depreciation-rate: 0.1
+      excluded-categories: [RPSIM_TAX_PAYMENT, RPSIM_TAX_REFUND, RPSIM_FINE]
+      prepayment-share: 1.0
+      payment-days: 14
+      late-fee-rate: 0.01
+      enforcement-after-months: 2
+      reminder-trust-delta: -2
+      enforcement-trust-delta: -5
+      advisor-monthly-fee: 150
+      advisor-tax-reduction: 0.1
+      advisor-reminder-days: 3
+      advisor-audit-factor: 0.5
+      advisor-offer-valid-days: 7
+      audit-probability: 0.15
+      audit-days: 7
+      audit-jump-factor: 2.0
+      audit-disallowed-share: 0.5
+    authority:                    # Roadmap V2 R2-E2: rotation, cultivation duty, animal welfare (placeholders)
+      enabled: true
+      rotation-premium-per-ha: 40
+      rotation-cut-share: 0.5
+      duty-months: 3
+      duty-fine: 500
+      welfare-health-threshold: 30
+      welfare-days: 3
+      welfare-fine: 1000
+      welfare-reputation-delta: -3
+      inspection-days: 5
+      violation-trust-delta: -3
+      max-inspections-per-month: 2
+    family:                       # Roadmap V2 R2-E3: family and succession (placeholders)
+      enabled: true
+      retirement-payment: 800
+      field-sold-trust-delta: -15
+      harvest-periods: [6, 7, 8]
+      harvest-help-probability: 0.5
+      harvest-help-trust-delta: 2
+      school-start-period: 7
+    clubs:                        # Roadmap V2 R2-E4: clubs and festivals (placeholders)
+      enabled: true
+      festivals:                  # FS25 period (1 = March) and host (club or character role)
+        - { key: MAIBAUM, period: 3, host: VILLAGER }
+        - { key: SCHUETZENFEST, period: 4, host: SHOOTING_CLUB }
+        - { key: FEUERWEHRFEST, period: 6, host: FIRE_BRIGADE }
+        - { key: ERNTEDANKFEST, period: 8, host: COOPERATIVE }
+        - { key: WEIHNACHTSMARKT, period: 10, host: VILLAGER }
+      invitation-days: 5
+      invitation-accept-trust-delta: 2
+      invitation-ignore-trust-delta: -1
+      sponsoring-probability-per-month: 0.3
+      sponsoring-cooldown-days: 30
+      sponsoring-tiers: [250, 500, 1000]
+      sponsoring-reputation-per100: 0.5
+      sponsoring-trust-delta: 3
+      sponsoring-decline-trust-delta: -1
+      sponsoring-decision-days: 7
     vanilla-bypass:               # Roadmap V2 R2-D: reactions to the vanilla loan and the field menu (placeholders)
       enabled: true
       loan-min-increase: 5000

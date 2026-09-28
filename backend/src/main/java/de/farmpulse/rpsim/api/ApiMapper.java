@@ -115,7 +115,8 @@ public class ApiMapper {
         return new FarmlandView(o.getFarmlandId(), o.getHectares(), o.getReferencePrice(), o.getOwnerType().name(),
                 ref(o.getOwnerCharacter()), negotiations.isBlocked(sg, AssetType.FARMLAND, String.valueOf(o.getFarmlandId())),
                 o.isTradeable(), o.isLeasedToPlayer(), field == null ? null : field.getFruitType(),
-                field == null ? null : field.getPhase().name());
+                field == null ? null : field.getPhase().name(),
+                Integer.valueOf(o.getFarmlandId()).equals(sg.getFamilyFieldId()));
     }
 
     public NegotiationView negotiation(Negotiation n) {

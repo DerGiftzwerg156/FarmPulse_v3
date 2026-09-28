@@ -187,6 +187,22 @@ export class ApiService {
     return this.get('/finances');
   }
 
+  // Roadmap V2 R2-E1: tax office and tax advisor
+  tax(): Observable<M.TaxOverviewView> {
+    return this.get('/tax');
+  }
+  requestTaxAdvisorOffer(): Observable<M.ContractView> {
+    return this.post('/tax/advisor/offer', {});
+  }
+
+  // Roadmap V2 R2-E3: family field chosen by the player
+  markFamilyField(farmlandId: number): Observable<void> {
+    return this.http.put<void>(`${this.base}/farmlands/${farmlandId}/family-field`, {});
+  }
+  clearFamilyField(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/family-field`);
+  }
+
   // storage & prices
   storage(): Observable<M.StorageOverview> {
     return this.get('/storage');
