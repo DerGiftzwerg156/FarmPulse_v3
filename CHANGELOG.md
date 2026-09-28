@@ -10,6 +10,15 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`application-local.yml` did not override profile values (backend):** the file was imported from
+  `application.yml`, and Spring ranks such an import below `application-<profile>.yml`. With the `prod` profile of
+  `start.bat`/`start.sh`, `rpsim.bridge.path` (and `server.address`, the datasource) from `application-prod.yml`
+  therefore always won - a custom bridge path, e.g. for a Documents folder in OneDrive, was ignored and the backend
+  kept looking in `<user>\Documents\...`. The import now lives in `application-dev.yml` and `application-prod.yml`,
+  so every value in `application-local.yml` wins over the profile defaults.
+
 ## [1.1.1] - 2026-09-26
 
 ### Fixed

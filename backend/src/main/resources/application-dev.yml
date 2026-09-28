@@ -1,5 +1,9 @@
 # dev: H2 file database next to the backend, bridge path points at the bridge simulator.
 spring:
+  config:
+    # Local, never committed overrides (API keys, bridge path ...), see application-local.yml.example.
+    # Imported here (not in application.yml) so it overrides the values of this profile file.
+    import: optional:file:./application-local.yml
   datasource:
     url: jdbc:h2:file:./data/rpsim-dev;AUTO_SERVER=TRUE
     username: sa

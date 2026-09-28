@@ -3,9 +3,9 @@ spring:
     name: rpsim-backend
   profiles:
     default: dev
-  config:
-    # Local, never committed overrides (API keys etc.), see application-local.yml.example
-    import: optional:file:./application-local.yml
+  # application-local.yml (local, never committed overrides) is imported by the profile files
+  # (application-dev.yml / application-prod.yml), not here: an import from this file ranks BELOW
+  # application-<profile>.yml, so e.g. rpsim.bridge.path from application-prod.yml would win.
   jpa:
     open-in-view: false
     hibernate:
