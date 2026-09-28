@@ -10,6 +10,11 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-09-28
+
+The mod exports every 10 s instead of every 60 s. Update the mod `FS25_RPSim` to 1.5.1.0; the backend needs no
+change beyond the version.
+
 ### Changed
 
 - **Mod export every 10 s:** `farm_facts.json` (including `market_context.json` when it changed) is now written every
