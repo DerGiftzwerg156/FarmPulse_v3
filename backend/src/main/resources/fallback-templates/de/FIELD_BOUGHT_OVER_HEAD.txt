@@ -1,0 +1,6 @@
+Mein Feld {{farmlandId}}
+Hallo,
+
+du hast mein Feld {{farmlandId}} einfach über meinen Kopf hinweg gekauft, ohne ein Wort mit mir zu reden. Das hätte ich nicht von dir gedacht. {{claimNote}}
+
+{{characterName}}

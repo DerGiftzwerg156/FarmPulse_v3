@@ -1,0 +1,6 @@
+Kein Ausgleich für Feld {{farmlandId}}
+Hallo,
+
+dass du mir für Feld {{farmlandId}} keinen Ausgleich zahlst, merke ich mir. So geht man unter Nachbarn nicht miteinander um.
+
+{{characterName}}

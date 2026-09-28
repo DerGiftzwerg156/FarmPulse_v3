@@ -122,6 +122,7 @@ public class RpsimProperties {
         private Finance finance = new Finance();
         private Mechanic mechanic = new Mechanic();
         private Fields fields = new Fields();
+        private VanillaBypass vanillaBypass = new VanillaBypass();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -834,6 +835,33 @@ public class RpsimProperties {
         private double repairBelowCondition = 90;
         /** Workload points lost per vehicle still below repair-below-condition after the month's repairs. */
         private double overloadWorkloadPerVehicle = 2;
+    }
+
+    /** Roadmap V2 R2-D: reactions to the vanilla loan and the FS25 field menu (placeholders). */
+    @Getter @Setter
+    public static class VanillaBypass {
+        /** Master switch (the player can also switch the reactions off per savegame on the settings page). */
+        private boolean enabled = true;
+        /** D1: an increase of the vanilla loan by at least this amount (€, per game day) counts as a new loan. */
+        private double loanMinIncrease = 5000;
+        /** D1: trust loss of the bank advisor per 10,000 € taken, capped at loan-trust-max. */
+        private double loanTrustPer10k = 1;
+        private double loanTrustMax = 8;
+        /** D1: from the second vanilla loan while one is open: surcharge on the interest of new credits until repaid. */
+        private double loanInterestSurcharge = 0.01;
+        /** D1: a repayment of at least this amount (€, per game day) gets a reaction of the bank. */
+        private double loanMinRepayment = 5000;
+        private double loanRepaidTrustDelta = 1;
+        /** D2: an NPC field bought over the owner's head in the field menu. */
+        private double fieldTrustDelta = -8;
+        private double fieldReputationDelta = -2;
+        /** D2: the former owner claims this share of the game price as compensation (0 = no claim). */
+        private double compensationShare = 0.1;
+        private double compensationDecisionDays = 7;
+        /** D2: refusing (or ignoring) the claim costs this much more trust. */
+        private double compensationDeclineTrustDelta = -5;
+        /** D3: one-time hint of the cooperative about helpers without employee. */
+        private boolean outsideHelpersHint = true;
     }
 
     /** Roadmap V2 R2-C: fields, crops and weather (placeholders). */

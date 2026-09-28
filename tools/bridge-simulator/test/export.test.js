@@ -218,3 +218,22 @@ test('Roadmap V2: game bookings land in the journal under their money type (R2-B
   const old = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
   assert.equal(old.bookGame('AI', -10).finances, null);
 });
+
+test('Roadmap V2: vanilla loan and field menu can be used like in the game (R2-D)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'verschuldeter-hof' });
+  const before = sim.balance;
+  sim.changeVanillaLoan(50000);
+  let facts = sim.buildFarmFacts();
+  assert.equal(facts.liabilities.vanillaLoan.remainingAmount, 370000);
+  assert.equal(sim.balance, before + 50000);
+  sim.changeVanillaLoan(-1e9); // a repayment never goes below 0
+  assert.deepEqual(sim.buildFarmFacts().liabilities.vanillaLoan, { active: false, remainingAmount: 0 });
+  const free = sim.farmlands.find((f) => f.ownerFarmId === 0 && f.farmlandId !== 16);
+  sim.vanillaFarmland(free.farmlandId, true);
+  facts = sim.buildFarmFacts();
+  assert.ok(facts.assets.farmland.some((f) => f.farmlandId === free.farmlandId));
+  assert.throws(() => sim.vanillaFarmland(free.farmlandId, true), /already/);
+  sim.vanillaFarmland(free.farmlandId, false);
+  assert.ok(!sim.buildFarmFacts().assets.farmland.some((f) => f.farmlandId === free.farmlandId));
+  assert.equal(validate('farmFacts', facts), null);
+});

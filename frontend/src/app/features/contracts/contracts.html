@@ -97,6 +97,14 @@
               }
               <p class="mt-1 text-[11px] text-muted">{{ 'contracts.livestockHint' | t }}</p>
             }
+            @if (c.kind === 'COMPENSATION_CLAIM') {
+              <div class="mt-1 text-[12px] text-text" data-testid="compensation-claim">{{ 'contracts.compensationClaim' | t: { name: c.character?.name ?? '–', amount: (c.offerAmount | money) } }}</div>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <app-button [disabled]="busy()" (pressed)="caseAction(c, 'accept')" data-testid="case-accept">{{ 'contracts.payCompensation' | t }}</app-button>
+                <app-button variant="danger" [disabled]="busy()" (pressed)="caseAction(c, 'decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+              </div>
+              <p class="mt-1 text-[11px] text-muted">{{ 'contracts.compensationHint' | t }}</p>
+            }
             @if (isInsuranceCase(c)) {
               <div class="mt-2 flex flex-wrap gap-2">
                 <app-button [disabled]="busy()" (pressed)="caseAction(c, 'report', { channel: 'MAIL' })" data-testid="report-mail">{{ 'contracts.reportMail' | t }}</app-button>

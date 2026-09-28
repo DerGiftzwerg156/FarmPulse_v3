@@ -9,5 +9,7 @@ public enum PublicActionType {
     WILDLIFE_MEASURE,
     /** TODO T-20: wildlife compensation refused - a public dispute with the hunter. */
     WILDLIFE_DISPUTE,
+    /** Roadmap V2 R2-D2: a field of a villager bought over their head in the game menu. */
+    FIELD_BYPASS,
     OTHER
 }

@@ -2,7 +2,7 @@ import { GameStateStore } from '../../core/state/game-state.store';
 import { Component, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { AiSettingsView, FieldSettingsView, GameSettingsView, HelperSettingsView } from '../../core/api/models';
+import { AiSettingsView, BypassSettingsView, FieldSettingsView, GameSettingsView, HelperSettingsView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { LabelPipe } from '../../shared/format/label.pipe';
@@ -33,6 +33,7 @@ export class Settings {
   readonly game = signal<GameSettingsView | null>(null);
   readonly helpers = signal<HelperSettingsView | null>(null);
   readonly fields = signal<FieldSettingsView | null>(null);
+  readonly bypass = signal<BypassSettingsView | null>(null);
   readonly provider = signal('');
   readonly model = signal('');
   readonly apiKey = signal('');
@@ -54,6 +55,15 @@ export class Settings {
     this.api.gameSettings().subscribe({ next: (g) => this.game.set(g), error: () => this.game.set(null) });
     this.api.helperSettings().subscribe({ next: (h) => this.helpers.set(h), error: () => this.helpers.set(null) });
     this.api.fieldSettings().subscribe({ next: (f) => this.fields.set(f), error: () => this.fields.set(null) });
+    this.api.bypassSettings().subscribe({ next: (b) => this.bypass.set(b), error: () => this.bypass.set(null) });
+  }
+
+  /** Roadmap V2 R2-D: switches the reactions to the vanilla loan and the game's field menu. */
+  saveBypass(reactionsEnabled: boolean): void {
+    this.api.saveBypassSettings({ reactionsEnabled }).subscribe({
+      next: (b) => this.bypass.set(b),
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
   }
 
   /** Roadmap V2 R2-C6: switches the field work hints of the cooperative. */

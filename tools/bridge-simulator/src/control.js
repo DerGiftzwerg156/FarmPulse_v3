@@ -73,6 +73,19 @@ export function startControlServer(sim, port, log = () => {}) {
         sim.exportFarmFacts();
         return send(200, result);
       }
+      // Roadmap V2 R2-D: the player bypasses the tool in the game menus
+      if (req.method === 'POST' && url.pathname === '/vanilla-loan') {
+        const result = sim.changeVanillaLoan(Number((await body(req)).change));
+        sim.exportFarmFacts();
+        return send(200, result);
+      }
+      if (req.method === 'POST' && url.pathname === '/vanilla-farmland') {
+        const b = await body(req);
+        const result = sim.vanillaFarmland(Number(b.farmlandId), b.toPlayer === true);
+        sim.exportFarmFacts();
+        sim.exportMarketContext();
+        return send(200, result);
+      }
       if (req.method === 'POST' && url.pathname === '/balance') {
         const b = await body(req);
         sim.balance = Number(b.balance);
@@ -84,6 +97,6 @@ export function startControlServer(sim, port, log = () => {}) {
       return send(500, { error: e.message });
     }
   });
-  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving|/book|/weather|/husbandry|/field|/jobs)`));
+  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving|/book|/weather|/husbandry|/field|/field-rules|/jobs|/vanilla-loan|/vanilla-farmland)`));
   return server;
 }

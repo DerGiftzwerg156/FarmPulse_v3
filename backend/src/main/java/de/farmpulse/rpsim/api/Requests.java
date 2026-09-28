@@ -98,6 +98,10 @@ public final class Requests {
                                         String helperWageMode, boolean strictHelperLimit) {
     }
 
+    /** Roadmap V2 R2-D: switch of the reactions to the vanilla loan and the game's field menu. */
+    public record BypassSettingsRequest(boolean reactionsEnabled) {
+    }
+
     /** Roadmap V2 R2-C6: switch of the field work hints. */
     public record FieldSettingsRequest(boolean fieldHintsEnabled) {
     }

@@ -8,6 +8,7 @@ import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.bridge.BridgeDtos;
+import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.bridge.FactsService;
 import de.farmpulse.rpsim.field.FieldService;
 import de.farmpulse.rpsim.narration.FallbackTemplates;
@@ -59,13 +60,14 @@ public class CreditApplicationService {
     private final FinanceJournalService journal;
     private final FieldService fields;
     private final FallbackTemplates labels;
+    private final VanillaBypassService bypass;
 
     public CreditApplicationService(CreditApplicationRepository applications, CreditScoringService scoring,
                                     LoanService loanService, LoanRepository loans, EmployeeRepository employees,
                                     CreditConfigResolver configs, NarrationRequestService narration,
                                     CharacterLookup lookup, DiaryService diary, RandomSource random,
                                     FactsService facts, FinanceJournalService journal, FieldService fields,
-                                    FallbackTemplates labels) {
+                                    FallbackTemplates labels, VanillaBypassService bypass) {
         this.applications = applications;
         this.scoring = scoring;
         this.loanService = loanService;
@@ -80,6 +82,7 @@ public class CreditApplicationService {
         this.journal = journal;
         this.fields = fields;
         this.labels = labels;
+        this.bypass = bypass;
     }
 
     @Transactional
@@ -107,19 +110,21 @@ public class CreditApplicationService {
             a.setReasonCategory(CreditReasonCategory.CREDIT_BLOCKED);
         } else {
             // score is computed immediately on receipt - only its visibility is delayed
-            CreditFormula.Result r = scoring.score(sg, amount, termMonths, cfg.getBaseInterestRate());
+            // R2-D1: after repeated vanilla loans new credits cost a surcharge until the vanilla loan is repaid
+            double surcharge = bypass.interestSurcharge(sg);
+            CreditFormula.Result r = scoring.score(sg, amount, termMonths, cfg.getBaseInterestRate() + surcharge);
             a.setFinalScore(r.finalScore());
             a.setDecision(r.decision());
             a.setReasonCategory(r.reasonCategory());
             if (r.decision() == CreditDecision.APPROVED) {
                 a.setOfferedAmount(amount);
                 a.setOfferedTermMonths(termMonths);
-                a.setOfferedInterestRate(cfg.getBaseInterestRate());
+                a.setOfferedInterestRate(cfg.getBaseInterestRate() + surcharge);
             } else if (r.decision() == CreditDecision.COUNTER_OFFER) {
                 CreditFormula.Terms t = CreditFormula.counterTerms(r.finalScore(), amount, termMonths, cfg);
                 a.setOfferedAmount(t.amount());
                 a.setOfferedTermMonths(t.termMonths());
-                a.setOfferedInterestRate(t.interestRate());
+                a.setOfferedInterestRate(t.interestRate() + surcharge);
             }
         }
         return applications.save(a);
@@ -155,6 +160,10 @@ public class CreditApplicationService {
                 journal.putFacts(f, ff);
                 putStandingCropFacts(sg, f, ff); // R2-C5: "Ihr Weizen steht gut, das berücksichtigen wir"
             });
+            double surcharge = bypass.interestSurcharge(sg);
+            if (surcharge > 0) { // R2-D1: the advisor names the surcharge after repeated vanilla loans
+                f.put("vanillaSurchargePercent", pct(surcharge));
+            }
             NarrationEventType type;
             switch (a.getDecision()) {
                 case APPROVED -> {

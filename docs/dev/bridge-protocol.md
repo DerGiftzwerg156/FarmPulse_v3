@@ -46,6 +46,9 @@ placeables of the savegame do not exist earlier). The first export writes `marke
   optional and currently not exported - there is no verified FS25 API for per-vehicle leasing costs yet (manual
   test plan). The backend counts known costs as an obligation in the credit check. Roadmap V2 R2-B3: with a booking
   journal the real `LEASING_COSTS` per month (sum of all vehicles) replace this estimate.
+- `liabilities.vanillaLoan`: the loan of the game's finance menu (`farm.loan`). Roadmap V2 R2-D1: the backend compares
+  `remainingAmount` with the last export - an increase is a new vanilla loan (the bank reacts), a decrease a
+  repayment; a rewound game time only moves the reference point.
 - `condition`: 0–100 (100 = no damage).
 - `storage`: classic silos only, aggregated per fill type (liters).
 - `currentPrice`: price per 1000 liters currently paid at the sell point (incl. active RPSim events).

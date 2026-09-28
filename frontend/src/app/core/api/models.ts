@@ -259,6 +259,13 @@ export interface EmployeeView {
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
+/** Roadmap V2 R2-D: reactions to the vanilla loan and the game's field menu. */
+export interface BypassSettingsView {
+  reactionsEnabled: boolean;
+  /** > 0 while new credits cost more after repeated vanilla loans. */
+  interestSurchargePercent: number;
+}
+
 /** Roadmap V2 R2-C6: field work hints of the cooperative. */
 export interface FieldSettingsView {
   fieldHintsEnabled: boolean;

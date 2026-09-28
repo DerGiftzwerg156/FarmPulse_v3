@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { AiSettingsView, FieldSettingsView } from '../../core/api/models';
+import { AiSettingsView, BypassSettingsView, FieldSettingsView } from '../../core/api/models';
 import { Settings } from './settings';
 
 const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, apiKeySet: true, providers: ['NONE', 'OPENAI', 'ANTHROPIC', 'GEMINI', 'OLLAMA'] };
@@ -10,7 +10,8 @@ const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, 
 describe('Settings', () => {
   function setup(game: unknown = { tonePreset: 'REALISTIC', toneLabel: 'realistisch-ausgewogen' },
     helpers: unknown = { helperWageMode: 'EMPLOYEES', strictHelperLimit: false, workforceTracked: true },
-    fields: FieldSettingsView = { fieldHintsEnabled: true, fieldsTracked: true }) {
+    fields: FieldSettingsView = { fieldHintsEnabled: true, fieldsTracked: true },
+    bypass: BypassSettingsView = { reactionsEnabled: true, interestSurchargePercent: 0 }) {
     TestBed.configureTestingModule({
       imports: [Settings],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -25,6 +26,7 @@ describe('Settings', () => {
     if (helpers) h.flush(helpers);
     else h.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
     http.expectOne('/api/settings/fields').flush(fields);
+    http.expectOne('/api/settings/vanilla-bypass').flush(bypass);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const input = (id: string, v: string) => {
@@ -117,6 +119,21 @@ describe('Settings', () => {
     req.flush({ fieldHintsEnabled: false, fieldsTracked: false });
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="fields-untracked"]')?.textContent).toContain('aktuellen Mod-Version');
+  });
+
+  // Roadmap V2 R2-D
+  it('switches the reactions to the game menus off and shows a running surcharge', () => {
+    const { el, http, fixture } = setup(undefined, undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });
+    expect(el.querySelector('[data-testid="bypass-surcharge"]')?.textContent).toContain('1 Prozentpunkte');
+    const box = el.querySelector('[data-testid="bypass-reactions"]') as HTMLInputElement;
+    box.checked = false;
+    box.dispatchEvent(new Event('change'));
+    const req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/vanilla-bypass');
+    expect(req.request.body).toEqual({ reactionsEnabled: false });
+    req.flush({ reactionsEnabled: false, interestSurchargePercent: 0 });
+    fixture.detectChanges();
+    expect((el.querySelector('[data-testid="bypass-reactions"]') as HTMLInputElement).checked).toBe(false);
+    expect(el.querySelector('[data-testid="bypass-surcharge"]')).toBeNull();
   });
 
   it('says when the mod reports no helpers yet', () => {

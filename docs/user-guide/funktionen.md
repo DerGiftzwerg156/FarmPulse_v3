@@ -69,6 +69,11 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
 - **Zahlungsausfall:** Mahnung → Verzugsgebühr → Vertrauensverlust → bei wiederholtem Ausfall Fälligstellung der
   Restschuld (das spricht sich im Dorf herum) oder Kreditsperre.
 - **Stundung:** Einmal pro Kredit kannst du um eine Ratenpause bitten; die Bank entscheidet nach festen Regeln.
+- **Kredit aus dem Spielmenü:** Den Kredit im Finanzmenü von FS25 kannst du weiter nutzen – gesperrt wird nichts.
+  Die Bank merkt es aber: Nimmst du dort Geld auf, meldet sich deine Bankberaterin („Sie haben sich woanders Geld
+  geliehen?“) und ihr Vertrauen sinkt, je mehr du aufnimmst. Tust du es erneut, während der alte Kredit noch offen
+  ist, kosten neue Kredite der Bank einen Zinsaufschlag, bis der Kredit aus dem Spielmenü ganz getilgt ist (unter
+  **Einstellungen** siehst du, ob gerade ein Aufschlag gilt). Jede Rückzahlung nimmt sie wohlwollend zur Kenntnis.
 
 ## Personal
 
@@ -89,7 +94,8 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
   Spiel keinen Helferlohn (das Gehalt läuft ja schon). Gibt es keinen freien Maschinenführer, fährt ein normaler
   Helfer zum normalen Spiellohn. Auf der Personal-Karte siehst du, wie viele Stunden jemand in diesem und im letzten
   Monat gefahren ist: Mehr als 8 Stunden je Spieltag drücken auf die Arbeitsbelastung, weniger erholt. Wer wenig
-  fährt, bringt auch weniger zusätzlichen Nutzen. Ein Streikender stellt seinen Helfer sofort ab.
+  fährt, bringt auch weniger zusätzlichen Nutzen. Ein Streikender stellt seinen Helfer sofort ab. Fahren ständig
+  Helfer ohne eigenen Mitarbeiter, fragt die Genossenschaft einmal nach, ob du nicht jemanden fest einstellen willst.
 - **Mechaniker:in.** Setzt zu jedem Monatsbeginn deine am stärksten abgenutzten Maschinen instand – so weit ihre
   Zeit reicht (je besser das Können, desto mehr). Bleiben Maschinen liegen, steigt die Arbeitsbelastung. Über die
   Arbeit kommt jeden Monat ein kurzer Werkstattbericht.
@@ -110,7 +116,15 @@ im Feld-Menü von FS25. Diese Figuren gehören zur Karte und ziehen nie weg.
   Auf ein zu niedriges Angebot folgt ein Gegenangebot, das du mit einem Klick annehmen kannst.
 - **Eigene Felder verkaufen:** Wunschpreis nennen, Interessenten melden sich mit einem ersten Angebot.
 
-Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebucht. Reicht dein Kontostand für
+Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebucht.
+
+**Feldmenü des Spiels:** Du kannst Felder weiter direkt im Feldmenü von FS25 kaufen und verkaufen – gesperrt wird
+nichts, aber das Dorf merkt es. Kaufst du das Feld einer Figur über ihren Kopf hinweg, ist sie verärgert (weniger
+Vertrauen, dein Ansehen im Dorf sinkt etwas) und verlangt einen Ausgleich (10 % des Spielpreises). Die Forderung
+findest du unter **Verträge & Vorgänge**: *Ausgleich zahlen* oder *Ablehnen* – ablehnen oder die Frist verstreichen
+lassen kostet weiteres Vertrauen. Ein freies Feld im Spielmenü zu kaufen, landet nur im Tagebuch; verkaufst du ein
+eigenes Feld dort, redet das Dorf darüber.
+ Reicht dein Kontostand für
 einen Kauf nicht, platzt das Geschäft – das Feld bleibt beim bisherigen Besitzer. Flächen, die das Spiel selbst
 nicht zum Kauf anbietet (Ortschaft, Straßen), sind als „nicht handelbar“ markiert.
 
@@ -218,6 +232,9 @@ viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann kei
 zählen nicht.
 
 **Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
+
+**Kredit und Felder im Spielmenü:** Die Reaktionen der Charaktere auf den Kredit oder Feldkauf im Spielmenü ein- oder
+ausschalten (Standard an). Ausgeschaltet bleibt nur der Tagebucheintrag.
 
 ## Auf dem Handy
 

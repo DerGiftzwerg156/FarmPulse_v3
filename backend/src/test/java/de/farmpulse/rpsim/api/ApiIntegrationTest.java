@@ -371,6 +371,12 @@ class ApiIntegrationTest {
         mvc.perform(put("/api/settings/fields").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"fieldHintsEnabled\":false}"))
                 .andExpect(jsonPath("$.fieldHintsEnabled").value(false));
+        // Roadmap V2 R2-D
+        mvc.perform(get("/api/settings/vanilla-bypass")).andExpect(jsonPath("$.reactionsEnabled").value(true))
+                .andExpect(jsonPath("$.interestSurchargePercent").value(0.0));
+        mvc.perform(put("/api/settings/vanilla-bypass").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reactionsEnabled\":false}"))
+                .andExpect(jsonPath("$.reactionsEnabled").value(false));
     }
 
     @Test

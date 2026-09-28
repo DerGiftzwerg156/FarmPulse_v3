@@ -9,5 +9,7 @@ public enum CaseKind {
     LIVESTOCK_OFFER,
     BREEDING_ADVICE,
     REPAIR,
-    MISSION_REFERRAL
+    MISSION_REFERRAL,
+    /** Roadmap V2 R2-D2: the former owner of a field bought in the game menu claims a compensation. */
+    COMPENSATION_CLAIM
 }

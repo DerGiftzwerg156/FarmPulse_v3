@@ -85,6 +85,16 @@ versions or this changelog do not match.
     the advisor mentions them.
   - *Felder*: the detail of an own field shows crop and phase.
   - Simulator: `ernte-herbst` exports the crop details and `fieldRules`, new endpoint `POST /field-rules`.
+- **Bypassing the tool in the game menus becomes part of the story (Roadmap V2, R2-D)** - nothing is locked:
+  - Vanilla loan: the bank advisor writes within a game day when the loan of the finance menu grows (trust loss
+    scaled by the amount, capped); from the second loan while one is open new credits cost an interest surcharge until
+    it is repaid; every repayment gets a friendly note. A reload without saving is no repayment.
+  - Field menu: a field of a character bought over their head costs trust and village reputation, the former owner
+    claims 10 % of the game price (*Verträge* → *Ausgleich zahlen* / *Ablehnen*, no answer = refused); a free field is
+    only noted in the diary, an own field sold in the menu is village gossip.
+  - Helpers without employee: one hint of the cooperative with a link to *Personal*.
+  - Settings card *Kredit und Felder im Spielmenü* (switch, running surcharge); values in
+    `rpsim.formulas.vanilla-bypass.*`. Simulator: `POST /vanilla-loan`, `POST /vanilla-farmland`.
 
 ## [1.1.2] - 2026-09-28
 

@@ -27,6 +27,12 @@ public enum TrustReason {
     FIELD_NEGLECTED,
     /** Roadmap V2 R2-C4: every harvestable field of a year was harvested in time. */
     HARVEST_IN_TIME,
+    /** Roadmap V2 R2-D1: a vanilla loan was taken past the bank / repaid. */
+    VANILLA_LOAN,
+    VANILLA_LOAN_REPAID,
+    /** Roadmap V2 R2-D2: field bought over the owner's head in the game menu / compensation refused. */
+    FIELD_BYPASS,
+    COMPENSATION_DECLINED,
     INITIAL,
     OTHER
 }

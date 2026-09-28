@@ -1,0 +1,6 @@
+Ausgleich erhalten
+Hallo,
+
+die {{compensation}} € für Feld {{farmlandId}} sind angekommen. Damit ist die Sache für mich erledigt.
+
+{{characterName}}

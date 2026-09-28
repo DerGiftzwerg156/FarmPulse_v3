@@ -34,6 +34,13 @@ public enum NarrationEventType {
     FIELD_GOSSIP,
     FIELD_HARVEST_CONGRATULATION,
     FIELD_WORK_HINT,
+    // Roadmap V2 R2-D: the vanilla loan and the field menu become part of the story
+    VANILLA_LOAN_TAKEN,
+    VANILLA_LOAN_REPAID,
+    FIELD_BOUGHT_OVER_HEAD,
+    COMPENSATION_SETTLED,
+    COMPENSATION_DISPUTE,
+    OUTSIDE_HELPERS_HINT,
     // market
     MARKET_PRICE_EVENT,
     MARKET_SPECIAL_OFFER,

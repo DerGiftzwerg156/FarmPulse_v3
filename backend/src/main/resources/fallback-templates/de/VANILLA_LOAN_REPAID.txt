@@ -1,0 +1,7 @@
+Rückzahlung zur Kenntnis genommen
+Guten Tag,
+
+wir haben gesehen, dass Sie {{repaidAmount}} € Ihres anderen Kredits zurückgezahlt haben (offen: {{vanillaLoanRemaining}} €). Das nehmen wir gern zur Kenntnis.
+
+Mit freundlichen Grüßen
+{{characterName}}

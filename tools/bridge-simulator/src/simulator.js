@@ -407,6 +407,33 @@ export class BridgeSimulator {
     return { balance: this.balance, finances: this.roadmapV2Blocks().finances ?? null };
   }
 
+  /**
+   * Control API (Roadmap V2 R2-D1): the player takes (change > 0) or repays (change < 0) the vanilla loan in the finance
+   * menu of the game; the balance moves by the same amount, a repayment never goes below 0.
+   */
+  changeVanillaLoan(change) {
+    if (typeof change !== 'number' || !Number.isFinite(change)) throw new Error('change (number) is required');
+    const applied = Math.max(-this.vanillaLoan, change);
+    this.vanillaLoan += applied;
+    this.balance += applied;
+    return { vanillaLoan: this.vanillaLoan, balance: this.balance };
+  }
+
+  /**
+   * Control API (Roadmap V2 R2-D2): the player buys (toPlayer) or sells a farmland in the field menu of the game at its
+   * price. A purchase is booked as SHOP_PROPERTY_BUY (the money type the FS25 code uses for property purchases).
+   */
+  vanillaFarmland(farmlandId, toPlayer) {
+    const f = this.farmlands.find((x) => x.farmlandId === farmlandId);
+    if (!f) throw new Error(`unknown farmland ${farmlandId}`);
+    if ((f.ownerFarmId === 1) === Boolean(toPlayer)) throw new Error(`farmland ${farmlandId} already has that owner`);
+    f.ownerFarmId = toPlayer ? 1 : 0;
+    const amount = toPlayer ? -f.price : f.price;
+    this.balance += amount;
+    if (toPlayer) this.book('SHOP_PROPERTY_BUY', amount);
+    return { farmlandId, ownerFarmId: f.ownerFarmId, balance: this.balance };
+  }
+
   /** Control API: the player changes the soil settings of the savegame (R2-C). */
   setFieldRules(patch) {
     if (!this.fieldRules) throw new Error(`scenario ${this.scenario} exports no fieldRules`);

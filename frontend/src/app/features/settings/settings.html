@@ -93,6 +93,21 @@
     }
   </app-card>
 
+  <app-card [title]="'settings.bypass.title' | t" data-testid="bypass-settings">
+    @if (bypass(); as b) {
+      <label class="flex items-start gap-2 text-[12px] text-text">
+        <input type="checkbox" [checked]="b.reactionsEnabled" (change)="saveBypass($any($event.target).checked)" data-testid="bypass-reactions" />
+        <span>{{ 'settings.bypass.reactions' | t }}</span>
+      </label>
+      <p class="mt-1 text-[11px] text-muted">{{ 'settings.bypass.hint' | t }}</p>
+      @if (b.interestSurchargePercent > 0) {
+        <p class="mt-1 text-[11px] text-warn" data-testid="bypass-surcharge">{{ 'settings.bypass.surcharge' | t: { percent: b.interestSurchargePercent } }}</p>
+      }
+    } @else {
+      <p class="text-[12px] text-muted">–</p>
+    }
+  </app-card>
+
   <app-card [title]="'settings.fields.title' | t" data-testid="field-settings">
     @if (fields(); as f) {
       <label class="flex items-start gap-2 text-[12px] text-text">

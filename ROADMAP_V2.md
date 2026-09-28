@@ -450,40 +450,49 @@ purchases“). Der Spieler kann Bank und Verhandlungen so ohne Folgen umgehen.
 **Idee:** Nicht sperren (Entscheidung aus V1: „erkennen und warnen, nichts abschalten“), sondern die Charaktere
 reagieren lassen. Die Umgehung wird Teil der Geschichte.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Die Verkaufsgrenze eines NPC liegt laut
+`NegotiationFormula` immer unter dem Spielpreis, eine „Differenz zum Verhandlungspreis“ wäre nie positiv. Die
+Ausgleichsforderung ist deshalb ein Anteil des Spielpreises (`compensation-share`, Platzhalter 10 %); keine Antwort
+gilt als Ablehnung. Die Bank reagiert auf jede Tilgung ab `loan-min-repayment`. Als Wiederholung zählt die zweite
+Aufnahme bei offenem Vanilla-Kredit, die volle Tilgung setzt Zähler und Aufschlag zurück. Die Reaktionen sind je
+Spielstand auf der Einstellungsseite abschaltbar (plus `vanilla-bypass.enabled`). Erhöhungen und Tilgungen werden je
+Spieltag gesammelt und einmal beantwortet; ein Neuladen ohne Speichern verschiebt nur den Bezugspunkt. Die Nachricht zu
+D3 schickt die Genossenschaft einmal je Spielstand. Alle Zahlen sind Platzhalter.
+
 ### R2-D1 Vanilla-Kredit erkennen
 
-- [ ] Backend: `liabilities.vanillaLoan.remainingAmount` mit dem vorherigen Snapshot vergleichen. Steigt der Betrag
+- [x] Backend: `liabilities.vanillaLoan.remainingAmount` mit dem vorherigen Snapshot vergleichen. Steigt der Betrag
   über `vanilla-bypass.loan-min-increase`, entsteht das Ereignis `VANILLA_LOAN_TAKEN` mit dem Betrag.
-- [ ] Die Bankberaterin meldet sich („Sie haben sich woanders Geld geliehen?“). Vertrauensverlust skaliert mit dem
+- [x] Die Bankberaterin meldet sich („Sie haben sich woanders Geld geliehen?“). Vertrauensverlust skaliert mit dem
   Betrag, gedeckelt. Wiederholt sich das, gibt es einen Zinsaufschlag für neue Anträge
   (`vanilla-bypass.loan-interest-surcharge`), bis der Vanilla-Kredit getilgt ist.
-- [ ] Tilgung des Vanilla-Kredits → neutrale bis leicht positive Reaktion.
-- [ ] Tagebucheintrag; Hinweis in der Spieler-Doku.
+- [x] Tilgung des Vanilla-Kredits → neutrale bis leicht positive Reaktion.
+- [x] Tagebucheintrag; Hinweis in der Spieler-Doku.
 
 **Beleg:** ✅ Kein Mod-Eingriff nötig. `farm.loan` wird schon exportiert (`RPSimGameAdapter:collectFarmFacts`,
 `raw.vanillaLoan`), ✅ `Farm:getLoan()` ist dokumentiert.
 
 ### R2-D2 Feldkauf und -verkauf über das Spielmenü
 
-- [ ] `FarmlandOwnershipService.reconcile` erzeugt ein Ereignis statt still abzugleichen:
+- [x] `FarmlandOwnershipService.reconcile` erzeugt ein Ereignis statt still abzugleichen:
   - Das Feld gehörte im Tool einem **Charakter** (FS25-NPC oder Dorfbewohner): Er reagiert verärgert („über meinen
     Kopf hinweg gekauft“), Vertrauensverlust, kleiner Abzug beim Dorf-Ansehen.
   - Optional **Ausgleichsforderung:** Der frühere Besitzer verlangt die Differenz zwischen seinem Verhandlungspreis
     (Formel aus `NegotiationEngine`) und dem Spielpreis. Formular „zahlen / ablehnen“; Zahlung als
     `MONEY_TRANSACTION` mit `COMPENSATION`, Ablehnung kostet mehr Vertrauen.
   - Das Feld war **frei** (`UNCLAIMED`): nur Tagebucheintrag.
-- [ ] Verkauf eines eigenen Feldes über das Spielmenü → Tagebucheintrag, Klatsch im Dorf.
-- [ ] Alle Werte unter `rpsim.formulas.vanilla-bypass.*`; die Reaktion ist abschaltbar.
+- [x] Verkauf eines eigenen Feldes über das Spielmenü → Tagebucheintrag, Klatsch im Dorf.
+- [x] Alle Werte unter `rpsim.formulas.vanilla-bypass.*`; die Reaktion ist abschaltbar.
 
 **Beleg:** ✅ Die Erkennung existiert bereits (`reconcile`, ausgelöst durch `FactsIngested` und
 `MarketContextUpdated`). Es fehlt nur die Reaktion.
 
 ### R2-D3 Helfer ohne Mitarbeiter
 
-- [ ] Mit A1 zahlt der Spieler für Helfer ohne freien Maschinenführer den Spiellohn. Einmalige Nachricht der
+- [x] Mit A1 zahlt der Spieler für Helfer ohne freien Maschinenführer den Spiellohn. Einmalige Nachricht der
   Genossenschaft oder eines Bewerbers: „Sie haben ja ständig Leute von außen auf dem Hof, wollen Sie nicht jemanden
   fest einstellen?“ mit Link auf **Stelle ausschreiben**.
-- [ ] Voraussetzung: `farm_facts.workforce.activeJobs` (A4) enthält Jobs ohne `employeeId`.
+- [x] Voraussetzung: `farm_facts.workforce.activeJobs` (A4) enthält Jobs ohne `employeeId`.
 
 **Akzeptanz D:** Wer den Vanilla-Kredit nimmt oder ein NPC-Feld im Spielmenü kauft, bekommt innerhalb eines Spieltags
 eine Reaktion des betroffenen Charakters. Nichts wird gesperrt.

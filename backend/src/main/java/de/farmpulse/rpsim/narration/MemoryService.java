@@ -68,6 +68,10 @@ public class MemoryService {
             case RECORD_HARVEST -> "Rekord-Ernteerlös im Monat";
             case FIELD_NEGLECTED -> "verunkrautetes oder steiniges Feld trotz Bitte";
             case HARVEST_IN_TIME -> "alle Felder rechtzeitig geerntet";
+            case VANILLA_LOAN -> "Geld woanders geliehen (Kredit im Spielmenü)";
+            case VANILLA_LOAN_REPAID -> "Kredit aus dem Spielmenü getilgt";
+            case FIELD_BYPASS -> "Feld über den Kopf hinweg gekauft";
+            case COMPENSATION_DECLINED -> "Ausgleich für das Feld verweigert";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

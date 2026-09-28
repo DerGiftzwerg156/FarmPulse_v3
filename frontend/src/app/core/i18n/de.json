@@ -385,7 +385,8 @@
       "LIVESTOCK_OFFER": "Angebot Viehhandel",
       "BREEDING_ADVICE": "Zuchtberatung",
       "REPAIR": "Reparatur",
-      "MISSION_REFERRAL": "Vermittelter Auftrag"
+      "MISSION_REFERRAL": "Vermittelter Auftrag",
+      "COMPENSATION_CLAIM": "Ausgleichsforderung"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -900,6 +901,12 @@
       "title": "Felder",
       "hints": "Hinweise der Genossenschaft zur Feldarbeit (erntereif, Kalk, Pflügen) – höchstens einer pro Woche",
       "untracked": "Der Mod meldet noch keine Felder – Hinweise und Feldreaktionen wirken erst mit der aktuellen Mod-Version."
+    },
+    "bypass": {
+      "title": "Kredit und Felder im Spielmenü",
+      "reactions": "Charaktere reagieren, wenn du den Kredit oder den Feldkauf im Spielmenü nutzt",
+      "hint": "Gesperrt wird nichts: Die Bank meldet sich bei einem Kredit aus dem Finanzmenü, frühere Feldbesitzer bei einem Kauf über ihren Kopf hinweg.",
+      "surcharge": "Neue Kredite der Bank kosten derzeit {percent} Prozentpunkte mehr Zinsen, bis der Kredit aus dem Spielmenü getilgt ist."
     }
   },
   "notices": {
@@ -968,6 +975,9 @@
     "livestockHint": "Der Handel selbst läuft im Spiel: Kaufe oder verkaufe die Tiere wie gewohnt. Die Prämie zahlt der Händler für jedes Tier, um das sich dein Bestand bis zur Frist in die vereinbarte Richtung ändert.",
     "animals": "{quantity} {animal}",
     "invoice": "Rechnung {amount}",
-    "measureHint": "Gemeinsame Maßnahme: Du beteiligst dich an Drückjagd oder Zaun, bekommst den angebotenen Ersatz, und für einige Monate gibt es seltener Wildschäden. Das Dorf rechnet es dir an – ein Streit dagegen spricht sich herum."
+    "measureHint": "Gemeinsame Maßnahme: Du beteiligst dich an Drückjagd oder Zaun, bekommst den angebotenen Ersatz, und für einige Monate gibt es seltener Wildschäden. Das Dorf rechnet es dir an – ein Streit dagegen spricht sich herum.",
+    "compensationClaim": "{name} verlangt {amount} Ausgleich, weil du das Feld über den Kopf hinweg im Spielmenü gekauft hast.",
+    "payCompensation": "Ausgleich zahlen",
+    "compensationHint": "Zahlst du nicht bis zur Frist, gilt die Forderung als abgelehnt – das kostet weiteres Vertrauen."
   }
 }

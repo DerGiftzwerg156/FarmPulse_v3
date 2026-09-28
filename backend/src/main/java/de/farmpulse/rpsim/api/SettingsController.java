@@ -7,6 +7,7 @@ import de.farmpulse.rpsim.ai.AiSettingsService;
 import de.farmpulse.rpsim.api.Requests.AiSettingsRequest;
 import de.farmpulse.rpsim.api.Views.AiSettingsView;
 import de.farmpulse.rpsim.api.Views.GameSettingsView;
+import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.domain.HelperWageMode;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.WorkforceService;
@@ -29,13 +30,15 @@ public class SettingsController {
     private final AiProviderRegistry registry;
     private final SavegameContext context;
     private final WorkforceService workforce;
+    private final VanillaBypassService bypass;
 
     public SettingsController(AiSettingsService settings, AiProviderRegistry registry, SavegameContext context,
-                              WorkforceService workforce) {
+                              WorkforceService workforce, VanillaBypassService bypass) {
         this.settings = settings;
         this.registry = registry;
         this.context = context;
         this.workforce = workforce;
+        this.bypass = bypass;
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers and the strict helper limit. */
@@ -54,6 +57,26 @@ public class SettingsController {
         sg.setStrictHelperLimit(r.strictHelperLimit());
         workforce.sync(sg);
         return new Views.HelperSettingsView(sg.getHelperWageMode().name(), sg.isStrictHelperLimit(), sg.isWorkforceTracked());
+    }
+
+    /** Roadmap V2 R2-D: reactions to the vanilla loan and the game's field menu. */
+    @GetMapping("/api/settings/vanilla-bypass")
+    @Transactional(readOnly = true)
+    public Views.BypassSettingsView bypass() {
+        return bypassView(context.requireActive());
+    }
+
+    @PutMapping("/api/settings/vanilla-bypass")
+    @Transactional
+    public Views.BypassSettingsView saveBypass(@Valid @RequestBody Requests.BypassSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setVanillaBypassEnabled(r.reactionsEnabled());
+        return bypassView(sg);
+    }
+
+    private Views.BypassSettingsView bypassView(Savegame sg) {
+        return new Views.BypassSettingsView(sg.isVanillaBypassEnabled(),
+                Math.round(bypass.interestSurcharge(sg) * 10000) / 100.0);
     }
 
     /** Roadmap V2 R2-C6: field work hints of the cooperative. */

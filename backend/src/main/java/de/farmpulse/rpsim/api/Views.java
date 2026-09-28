@@ -91,6 +91,13 @@ public final class Views {
                                boolean inNegotiation, boolean tradeable, boolean leased, String fruitType, String phase) {
     }
 
+    /**
+     * Roadmap V2 R2-D: reactions to the vanilla loan and the game's field menu; interestSurchargePercent &gt; 0 while
+     * new credits cost more after repeated vanilla loans.
+     */
+    public record BypassSettingsView(boolean reactionsEnabled, double interestSurchargePercent) {
+    }
+
     /** Roadmap V2 R2-C6: field work hints of the cooperative; fieldsTracked = the mod reports the fields. */
     public record FieldSettingsView(boolean fieldHintsEnabled, boolean fieldsTracked) {
     }

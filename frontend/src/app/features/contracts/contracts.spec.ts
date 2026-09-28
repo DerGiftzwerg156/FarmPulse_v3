@@ -100,6 +100,24 @@ describe('Contracts', () => {
     expect(el.querySelector('[data-testid="case-accept"]')).toBeNull();
   });
 
+  // Roadmap V2 R2-D2
+  it('pays the compensation claimed for a field bought in the game menu', () => {
+    const claim = damage({ id: 11, kind: 'COMPENSATION_CLAIM', farmlandId: 13, damageAmount: null, offerAmount: 7200,
+      character: { id: 4, name: 'Bauer Jansen', role: 'NEIGHBOR_FARMER', status: 'ACTIVE' } });
+    const { fixture, http, el } = setup([], [claim]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Ausgleichsforderung');
+    expect(el.querySelector('[data-testid="compensation-claim"]')?.textContent).toContain('Bauer Jansen verlangt 7.200');
+    (el.querySelector('[data-testid="case-accept"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/cases/11/accept').flush({ ...claim, status: 'SETTLED', resolution: 'PAID' });
+    http.expectOne('/api/contracts').flush([]);
+    http.expectOne('/api/cases').flush([{ ...claim, status: 'SETTLED', resolution: 'PAID' }]);
+    http.expectOne('/api/insurance/quotes').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="compensation-claim"]')).toBeNull();
+  });
+
   it('shows a lease with renewal and purchase offer', () => {
     const lease = contract({ id: 5, kind: 'LEASE', status: 'ACTIVE', level: null, farmlandId: 13, monthlyAmount: 300,
       coveragePercent: null, deductible: null, termMonths: 12, endsAtGameTime: 40 * DAY, offerExpiresAtGameTime: null,

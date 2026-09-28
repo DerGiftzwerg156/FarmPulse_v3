@@ -237,6 +237,12 @@ export class ApiService {
   saveHelperSettings(r: { helperWageMode: string; strictHelperLimit: boolean }): Observable<M.HelperSettingsView> {
     return this.http.put<M.HelperSettingsView>(`${this.base}/settings/helpers`, r);
   }
+  bypassSettings(): Observable<M.BypassSettingsView> {
+    return this.get('/settings/vanilla-bypass');
+  }
+  saveBypassSettings(r: { reactionsEnabled: boolean }): Observable<M.BypassSettingsView> {
+    return this.http.put<M.BypassSettingsView>(`${this.base}/settings/vanilla-bypass`, r);
+  }
   fieldSettings(): Observable<M.FieldSettingsView> {
     return this.get('/settings/fields');
   }

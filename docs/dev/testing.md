@@ -130,6 +130,10 @@ Roadmap V2 R2-C: `FieldServiceTest` (growth phase, records, crop history, year e
 standing crops in the credit check) and `FieldReactionServiceTest` (neighbor, gossip, hints, monthly cap); the mod
 covers the field / weather collection in `test_game_adapter.lua` and the normalisation in `test_farm_facts.lua`, the
 frontend crop and phase in `farmland.spec.ts` and the hint switch in `settings.spec.ts`.
+Roadmap V2 R2-D: `VanillaBypassServiceTest` (vanilla loan taken / repaid, surcharge, reload, switch, field bought over
+the owner's head with compensation paid / expired, hint about helpers without employee) and
+`NegotiationEngineTest.vanillaPurchaseOfAFreeFieldAndASaleAreFollowedUp`; the frontend covers the claim in
+`contracts.spec.ts` and the switch in `settings.spec.ts`, the simulator the game menus in `export.test.js`.
 
 ## Continuous integration (AP-11.1)
 

@@ -8,6 +8,7 @@ import de.farmpulse.rpsim.api.Requests.OfferRequest;
 import de.farmpulse.rpsim.api.Views.CaseView;
 import de.farmpulse.rpsim.api.Views.ContractView;
 import de.farmpulse.rpsim.api.Views.InsuranceQuoteView;
+import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.config.RpsimProperties;
@@ -44,11 +45,12 @@ public class ContractController {
     private final MaintenanceService maintenance;
     private final ApiMapper mapper;
     private final RpsimProperties props;
+    private final VanillaBypassService bypass;
 
     public ContractController(SavegameContext context, ContractRepository contracts, ServiceCaseRepository cases,
                               InsuranceService insurance, HuntingService hunting, LivestockService livestock, LeaseService lease,
                               MaintenanceService maintenance, ApiMapper mapper,
-                              RpsimProperties props) {
+                              RpsimProperties props, VanillaBypassService bypass) {
         this.context = context;
         this.contracts = contracts;
         this.cases = cases;
@@ -59,6 +61,7 @@ public class ContractController {
         this.maintenance = maintenance;
         this.mapper = mapper;
         this.props = props;
+        this.bypass = bypass;
     }
 
     @GetMapping("/api/contracts")
@@ -179,6 +182,7 @@ public class ContractController {
         return view(switch (serviceCase(sg, id).getKind()) {
             case WILDLIFE_DAMAGE -> hunting.accept(sg, id);
             case LIVESTOCK_OFFER -> livestock.accept(sg, id);
+            case COMPENSATION_CLAIM -> bypass.pay(sg, id); // R2-D2: pay the compensation
             default -> throw unsupported();
         });
     }
@@ -210,6 +214,7 @@ public class ContractController {
         return view(switch (serviceCase(sg, id).getKind()) {
             case WILDLIFE_DAMAGE -> hunting.decline(sg, id);
             case LIVESTOCK_OFFER -> livestock.decline(sg, id);
+            case COMPENSATION_CLAIM -> bypass.decline(sg, id);
             default -> throw unsupported();
         });
     }

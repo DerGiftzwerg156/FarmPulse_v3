@@ -551,6 +551,28 @@ spent on the most worn own vehicles below `repair-below-condition` (sent as `REP
 | `rpsim.formulas.mechanic.repair-below-condition` | `90` | Only vehicles below this condition (0..100) are repaired. | Roadmap V2 R2-A6 |
 | `rpsim.formulas.mechanic.overload-workload-per-vehicle` | `2` | Workload points the mechanic loses per vehicle still below the threshold after the month's repairs. | Roadmap V2 R2-A6 |
 
+## `rpsim.formulas.vanilla-bypass` (Roadmap V2 R2-D)
+
+The vanilla loan (finance menu) and the field menu of FS25 stay open (V1: recognise and warn, switch nothing off) - the
+characters react instead. The player can switch the reactions off per savegame on the settings page. All values are
+placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.vanilla-bypass.enabled` | `true` | Master switch of all reactions below (diary entries stay). | Roadmap V2 R2-D |
+| `rpsim.formulas.vanilla-bypass.loan-min-increase` | `5000` | An increase of `liabilities.vanillaLoan.remainingAmount` by at least this amount (€, summed per game day) counts as a new vanilla loan; the bank advisor writes once per day. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-trust-per10k` | `1` | Trust loss of the bank advisor per 10,000 € taken. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-trust-max` | `8` | Cap of that trust loss per reaction. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-interest-surcharge` | `0.01` | From the second vanilla loan while one is open: added to the interest of new credits until the vanilla loan is repaid in full. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-min-repayment` | `5000` | A repayment of at least this amount (€, summed per game day) gets an answer of the bank. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.loan-repaid-trust-delta` | `1` | Trust of the bank advisor per answered repayment. | Roadmap V2 R2-D1 |
+| `rpsim.formulas.vanilla-bypass.field-trust-delta` | `-8` | Trust of the former owner when their field is bought in the field menu. | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.field-reputation-delta` | `-2` | Village reputation (public action `FIELD_BYPASS`) for the same. | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.compensation-share` | `0.1` | The former owner claims this share of the game price of the field (0 = no claim). | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.compensation-decision-days` | `7` | Game days to pay or refuse; no answer = refused. | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.compensation-decline-trust-delta` | `-5` | Additional trust loss when the claim is refused or ignored. | Roadmap V2 R2-D2 |
+| `rpsim.formulas.vanilla-bypass.outside-helpers-hint` | `true` | One hint of the cooperative when a helper without employee runs (Roadmap V2 R2-D3). | Roadmap V2 R2-D3 |
+
 ## `rpsim.formulas.fields` (Roadmap V2 R2-C)
 
 Fields, crops and weather from `farm_facts.fields` / `fieldRules` / `weather`. Growth phase: no crop = empty; the mod's

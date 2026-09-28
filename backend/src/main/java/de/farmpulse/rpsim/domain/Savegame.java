@@ -211,4 +211,35 @@ public class Savegame {
     /** C6: the player can switch the field work hints off (settings page). */
     @Column(name = "field_hints_enabled", nullable = false)
     private boolean fieldHintsEnabled = true;
+
+    // ---- Roadmap V2 R2-D: the vanilla loan and the field menu become part of the story
+
+    /** D1: remaining vanilla loan of the last export and its game time (a smaller game time = reload). */
+    @Column(name = "vanilla_loan_seen")
+    private Double vanillaLoanSeen;
+
+    @Column(name = "vanilla_loan_seen_game_time")
+    private Long vanillaLoanSeenGameTime;
+
+    /** D1: increases / repayments since the last daily reaction. */
+    @Column(name = "vanilla_loan_pending_taken", nullable = false)
+    private double vanillaLoanPendingTaken;
+
+    @Column(name = "vanilla_loan_pending_repaid", nullable = false)
+    private double vanillaLoanPendingRepaid;
+
+    /** D1: vanilla loans taken while the loan is open; from the second one new credits get a surcharge. */
+    @Column(name = "vanilla_loan_takings", nullable = false)
+    private int vanillaLoanTakings;
+
+    @Column(name = "vanilla_loan_surcharge", nullable = false)
+    private boolean vanillaLoanSurcharge;
+
+    /** D: the player can switch the reactions to the vanilla loan / field menu off (settings page). */
+    @Column(name = "vanilla_bypass_enabled", nullable = false)
+    private boolean vanillaBypassEnabled = true;
+
+    /** D3: the hint about helpers without employee was sent (once per savegame). */
+    @Column(name = "outside_helpers_hint_sent", nullable = false)
+    private boolean outsideHelpersHintSent;
 }

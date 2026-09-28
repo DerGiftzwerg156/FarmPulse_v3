@@ -468,6 +468,20 @@ rpsim:
       record-categories: [HARVEST_INCOME, SOLD_PRODUCTS]
       record-min-months: 3
       record-trust-delta: 2
+    vanilla-bypass:               # Roadmap V2 R2-D: reactions to the vanilla loan and the field menu (placeholders)
+      enabled: true
+      loan-min-increase: 5000
+      loan-trust-per10k: 1
+      loan-trust-max: 8
+      loan-interest-surcharge: 0.01
+      loan-min-repayment: 5000
+      loan-repaid-trust-delta: 1
+      field-trust-delta: -8
+      field-reputation-delta: -2
+      compensation-share: 0.1
+      compensation-decision-days: 7
+      compensation-decline-trust-delta: -5
+      outside-helpers-hint: true
     fields:                       # Roadmap V2 R2-C: fields, crops and weather (placeholders)
       yield-liters-per-sqm: {}    # only for mods without litersPerSqm, e.g. { WHEAT: 0.9 }; empty = unknown
       rain-sample-max-gap-minutes: 180
