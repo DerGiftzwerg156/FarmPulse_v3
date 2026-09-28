@@ -47,3 +47,5 @@ modSettings/
 .DS_Store
 Thumbs.db
 tools/screenshot-generator/.runtime/
+/data/rpsim-dev.lock.db
+/data/rpsim-dev.mv.db
