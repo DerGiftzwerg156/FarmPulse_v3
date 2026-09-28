@@ -10,6 +10,8 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-09-28
+
 ### Fixed
 
 - **`application-local.yml` did not override profile values (backend):** the file was imported from
