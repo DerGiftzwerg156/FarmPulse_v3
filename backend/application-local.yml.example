@@ -1,4 +1,5 @@
-# Copy to backend/application-local.yml (git-ignored!) and enter YOUR OWN key. Never commit real keys.
+# Copy to application-local.yml next to rpsim-backend.jar (release) or to backend/application-local.yml (dev,
+# git-ignored!) and enter YOUR OWN values. Never commit real keys. Values here override the profile defaults.
 # The settings page of the web UI can also write the provider configuration to
 # rpsim.ai.local-config-file (./data/local-config/ai-provider.properties, also git-ignored).
 rpsim:

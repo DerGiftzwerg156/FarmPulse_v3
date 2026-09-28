@@ -1,5 +1,9 @@
 # prod: real FS25 modSettings folder (Windows default location; adjust in application-local.yml if needed).
 spring:
+  config:
+    # Local, never committed overrides (API keys, bridge path ...), see application-local.yml.example.
+    # Imported here (not in application.yml) so it overrides the values of this profile file.
+    import: optional:file:./application-local.yml
   datasource:
     url: jdbc:h2:file:${user.home}/.rpsim/rpsim;AUTO_SERVER=TRUE
     username: sa
