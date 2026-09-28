@@ -5,7 +5,7 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 ## Was der Mod tut
 
 - Exportiert alle 10 s (konfigurierbar) `farm_facts.json`: Kontostand, Fahrzeuge (Wert + Zustand), Gebäude,
-  eigene Felder, Tierbestand, **Silo-Warenbestand (nur klassische Silos)**, Vanilla-Kredit, laufende
+  eigene Felder, Tierbestand, **Warenbestand (Silos, Silo-Erweiterungen, Produktionen, Fahrsilos)**, Vanilla-Kredit, laufende
   Verkaufspreise je Verkaufsstelle/Fruchtart.
 - Exportiert beim Spielstart (und nach jeder Feldübertragung sowie bei jeder inhaltlichen Änderung im
   `farm_facts`-Takt) `market_context.json`: Kartenname, Verkaufsstellen (Produktionen gekennzeichnet), Fruchtarten,

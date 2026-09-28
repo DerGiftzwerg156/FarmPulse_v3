@@ -5,24 +5,23 @@ T.TestStorage = {}
 local function silo(desc, storages)
     return { descriptor = desc, storages = storages }
 end
-local CLASSIC = { hasSiloSpec = true, categoryName = "SILOS" }
+local SILO = { kind = "SILO" }
 
-function T.TestStorage:testClassicSiloClassification()
-    lu.assertTrue(RPSimStorage.isClassicSilo(CLASSIC))
-    lu.assertTrue(RPSimStorage.isClassicSilo({ hasSiloSpec = true }))
-    lu.assertFalse(RPSimStorage.isClassicSilo({ hasSiloSpec = true, hasBunkerSiloSpec = true }))
-    lu.assertFalse(RPSimStorage.isClassicSilo({ hasSiloSpec = true, hasObjectStorageSpec = true }))
-    lu.assertFalse(RPSimStorage.isClassicSilo({ hasSiloSpec = true, hasHusbandrySpec = true }))
-    lu.assertFalse(RPSimStorage.isClassicSilo({ hasSiloSpec = true, hasProductionSpec = true }))
-    lu.assertFalse(RPSimStorage.isClassicSilo({ hasSiloSpec = true, categoryName = "SHEDS" }))
-    lu.assertFalse(RPSimStorage.isClassicSilo({ hasSiloSpec = false }))
-    lu.assertFalse(RPSimStorage.isClassicSilo(nil))
+function T.TestStorage:testWhatCountsAsStock()
+    lu.assertTrue(RPSimStorage.counts(SILO))
+    lu.assertTrue(RPSimStorage.counts({ kind = "SILO_EXTENSION" }))
+    lu.assertTrue(RPSimStorage.counts({ kind = "PRODUCTION" }))
+    lu.assertTrue(RPSimStorage.counts({ kind = "BUNKER_SILO" }))
+    lu.assertEquals(RPSimStorage.exclusionReason({ kind = "SILO", hasHusbandrySpec = true }), "husbandry")
+    lu.assertEquals(RPSimStorage.exclusionReason({ kind = "SILO", hasObjectStorageSpec = true }), "object storage")
+    lu.assertEquals(RPSimStorage.exclusionReason({ kind = "SHED" }), "no storage")
+    lu.assertFalse(RPSimStorage.counts(nil))
 end
 
 function T.TestStorage:testMultipleSilosSameFillTypeAreSummed()
     local out = RPSimStorage.aggregate({
-        silo(CLASSIC, { { capacity = 50000, fillLevels = { WHEAT = 42000 } } }),
-        silo(CLASSIC, { { capacity = 30000, fillLevels = { WHEAT = 10000, BARLEY = 5000 } } }),
+        silo(SILO, { { capacity = 50000, fillLevels = { WHEAT = 42000 } } }),
+        silo(SILO, { { capacity = 30000, fillLevels = { WHEAT = 10000, BARLEY = 5000 } } }),
     })
     lu.assertEquals(out, {
         { fillType = "BARLEY", amount = 5000, capacity = 30000 },
@@ -30,54 +29,48 @@ function T.TestStorage:testMultipleSilosSameFillTypeAreSummed()
     })
 end
 
-function T.TestStorage:testBunkerSiloAndHallAreExcluded()
+function T.TestStorage:testProductionsAndBunkerSilosCountHallsAndHusbandriesNot()
     local out = RPSimStorage.aggregate({
-        silo(CLASSIC, { { capacity = 50000, fillLevels = { WHEAT = 1000 } } }),
-        silo({ hasSiloSpec = true, hasBunkerSiloSpec = true }, { { capacity = 99999, fillLevels = { SILAGE = 90000 } } }),
-        silo({ hasSiloSpec = true, hasObjectStorageSpec = true }, { { capacity = 99999, fillLevels = { WHEAT = 90000 } } }),
+        silo(SILO, { { capacity = 50000, fillLevels = { WHEAT = 1000 } } }),
+        silo({ kind = "BUNKER_SILO" }, { { capacity = 0, fillLevels = { SILAGE = 90000 } } }),
+        silo({ kind = "PRODUCTION" }, { { capacity = 20000, fillLevels = { SUGARBEET = 3000, SUGAR = 500 } } }),
+        silo({ kind = "SILO", hasObjectStorageSpec = true }, { { capacity = 99999, fillLevels = { WHEAT = 90000 } } }),
+        silo({ kind = "SILO", hasHusbandrySpec = true }, { { capacity = 99999, fillLevels = { WHEAT = 90000 } } }),
     })
-    lu.assertEquals(out, { { fillType = "WHEAT", amount = 1000, capacity = 50000 } })
+    lu.assertEquals(out, {
+        { fillType = "SILAGE", amount = 90000, capacity = 0 },
+        { fillType = "SUGAR", amount = 500, capacity = 20000 },
+        { fillType = "SUGARBEET", amount = 3000, capacity = 20000 },
+        { fillType = "WHEAT", amount = 1000, capacity = 50000 },
+    })
 end
 
 function T.TestStorage:testEmptyFillTypesAreOmitted()
-    local out = RPSimStorage.aggregate({ silo(CLASSIC, { { capacity = 100, fillLevels = { WHEAT = 0 } } }) })
+    local out = RPSimStorage.aggregate({ silo(SILO, { { capacity = 100, fillLevels = { WHEAT = 0 } } }) })
     lu.assertEquals(#out, 0)
 end
 
--- Live test 1.5.1 (empty storage): a category other than "SILOS" dropped the silo - only pure sheds are excluded now.
-function T.TestStorage:testStoreCategoryOnlyExcludesPureSheds()
-    lu.assertTrue(RPSimStorage.isClassicSilo({ hasSiloSpec = true, categoryName = "PLACEABLEMISC" }))
-    lu.assertTrue(RPSimStorage.isClassicSilo({ hasSiloSpec = true, categoryNames = { "silos" } }))
-    lu.assertTrue(RPSimStorage.isClassicSilo({ hasSiloSpec = true, categoryNames = { "SHEDS", "SILOS" } }))
-    lu.assertFalse(RPSimStorage.isClassicSilo({ hasSiloSpec = true, categoryNames = { "sheds" } }))
-    lu.assertEquals(RPSimStorage.exclusionReason({ hasSiloSpec = true, categoryNames = { "SHEDS" } }),
-        "hall category SHEDS")
-end
-
 function T.TestStorage:testSiloExtensionsCount()
-    local ext = { hasSiloExtensionSpec = true }
-    lu.assertTrue(RPSimStorage.isClassicSilo(ext))
-    lu.assertFalse(RPSimStorage.isClassicSilo({ hasSiloExtensionSpec = true, hasHusbandrySpec = true }))
     local out = RPSimStorage.aggregate({
-        silo(CLASSIC, { { capacity = 50000, fillLevels = { WHEAT = 1000 } } }),
-        silo(ext, { { capacity = 200000, fillLevels = { WHEAT = 3000 } } }),
+        silo(SILO, { { capacity = 50000, fillLevels = { WHEAT = 1000 } } }),
+        silo({ kind = "SILO_EXTENSION" }, { { capacity = 200000, fillLevels = { WHEAT = 3000 } } }),
     })
     lu.assertEquals(out, { { fillType = "WHEAT", amount = 4000, capacity = 250000 } })
 end
 
-function T.TestStorage:testDescribeExplainsEachSilo()
+function T.TestStorage:testDescribeExplainsEachStoragePlace()
     local lines = RPSimStorage.describe({
-        { uniqueId = "silo_1", descriptor = CLASSIC, storages = { { capacity = 10, fillLevels = { WHEAT = 4.6, OAT = 0 } } } },
-        { uniqueId = "bunker", descriptor = { hasSiloSpec = true, hasBunkerSiloSpec = true }, storages = {} },
+        { uniqueId = "silo_1", descriptor = SILO, storages = { { capacity = 10, fillLevels = { WHEAT = 4.6, OAT = 0 } } } },
+        { uniqueId = "cow", descriptor = { kind = "SILO", hasHusbandrySpec = true }, storages = {} },
     })
     lu.assertEquals(lines, {
-        "silo_1 [silo, categories=SILOS]: counted, 1 storages, fill levels: WHEAT=5",
-        "bunker [silo, categories=]: ignored (bunker silo), 0 storages, fill levels: empty",
+        "silo_1 [SILO]: counted, 1 storages, fill levels: WHEAT=5",
+        "cow [SILO]: ignored (husbandry), 0 storages, fill levels: empty",
     })
 end
 
 function T.TestStorage:testPerFillTypeCapacity()
-    local out = RPSimStorage.aggregate({ silo(CLASSIC, { { capacity = 100,
+    local out = RPSimStorage.aggregate({ silo(SILO, { { capacity = 100,
         capacityPerFillType = { WHEAT = 60 }, fillLevels = { WHEAT = 10 } } }) })
     lu.assertEquals(out[1].capacity, 60)
 end

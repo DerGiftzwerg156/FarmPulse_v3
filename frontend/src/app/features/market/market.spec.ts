@@ -37,7 +37,7 @@ describe('toChartSeries', () => {
 });
 
 describe('Market', () => {
-  function setup(events: MarketEventView[] = []) {
+  function setup(events: MarketEventView[] = [], stock: StorageOverview = storage) {
     TestBed.configureTestingModule({
       imports: [Market],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -45,7 +45,7 @@ describe('Market', () => {
     const fixture = TestBed.createComponent(Market);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne('/api/storage').flush(storage);
+    http.expectOne('/api/storage').flush(stock);
     http.expectOne('/api/prices/current').flush(prices);
     http.expectOne('/api/market-events').flush(events);
     const hist = http.expectOne((r) => r.url === '/api/prices/history');
@@ -62,6 +62,16 @@ describe('Market', () => {
     expect(el.querySelector('[data-testid="storage-value"]')?.textContent?.replace(/\s/g, ' ')).toContain('51.600 €');
     expect(el.querySelector('[data-testid="storage-hint"]')?.textContent).toContain('Bonität');
     expect(el.querySelector('[data-testid="storage-hint"]')?.textContent).toContain('Marktereignisse');
+  });
+
+  it('shows no capacity for stock without one (bunker silo)', () => {
+    const silage = { fillType: 'SILAGE', amount: 90000, capacity: 0, bestPrice: 0, bestSellPoint: null, value: 0 };
+    const { el, hist } = setup([], { ...storage, items: [storage.items[0], silage] });
+    hist.flush(history);
+    const items = el.querySelectorAll('[data-testid="storage-item"]');
+    expect(items[0].textContent?.replace(/\s+/g, ' ')).toContain('180.000 / 200.000 l');
+    expect(items[1].textContent?.replace(/\s+/g, ' ')).toContain('90.000 l');
+    expect(items[1].textContent).not.toContain('/ 0');
   });
 
   it('shows the price trend of the game (TODO T-10)', () => {

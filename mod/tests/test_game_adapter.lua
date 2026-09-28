@@ -454,7 +454,7 @@ function T.TestGameAdapter:testWeatherAndFieldsReachFarmFactsFieldsOnlyEveryInte
     g_fieldManager = nil
 end
 
--- Silo stock (open point #8): spec_silo storages, silo extensions, FS25 category list, per-fill-type capacities.
+-- Stock export: silos (also per-farm silos of the map), silo extensions, productions, bunker silos.
 local function placeable(id, specs)
     specs.getUniqueId = function() return id end
     specs.getOwnerFarmId = function(self) return self.ownerFarmId or 1 end
@@ -462,40 +462,50 @@ local function placeable(id, specs)
     return specs
 end
 
-function T.TestGameAdapter:testSilosAndSiloExtensionsAreExportedAsStorage()
-    helpers.fakeGame({ placeables = {
-        placeable("silo", { storeItem = { categoryNames = { "SILOS" } }, spec_silo = { storages = {
-            { capacity = 100000, fillLevels = { [1] = 40000, [2] = 0 } },
-            { capacity = 50000, capacities = { [2] = 20000 }, fillLevels = { [2] = 7000 } } } } }),
-        placeable("ext", { configFileName = "ext.xml",
-            spec_siloExtension = { storage = { capacity = 60000, fillLevels = { [1] = 5000 } } } }),
-        placeable("bunker", { spec_silo = { storages = { { capacity = 1, fillLevels = { [1] = 999 } } } },
-            spec_bunkerSilo = {} }),
-        placeable("foreign", { ownerFarmId = 2, spec_silo = { storages = { { capacity = 1, fillLevels = { [1] = 7 } } } } }),
+function T.TestGameAdapter:testAllStoragePlacesAreExportedAsStock()
+    helpers.fakeGame({ fillTypes = { [1] = "WHEAT", [2] = "BARLEY", [3] = "CHAFF", [4] = "SILAGE", [5] = "SUGAR" },
+        placeables = {
+        placeable("silo", { spec_silo = { storages = {
+            { ownerFarmId = 1, capacity = 100000, capacities = {}, fillLevels = { [1] = 40000, [2] = 0 } },
+            { ownerFarmId = 1, capacity = 50000, capacities = { [2] = 20000 }, fillLevels = { [2] = 7000 } } } } }),
+        placeable("ext", { spec_siloExtension = { storage = {
+            ownerFarmId = 1, capacity = 60000, fillLevels = { [1] = 5000 } } } }),
+        -- per-farm silo of the map: the placeable is not the farm's, storage 1 is
+        placeable("mapSilo", { ownerFarmId = 0, spec_silo = { storages = {
+            { ownerFarmId = 1, capacity = 10000, fillLevels = { [1] = 1000 } },
+            { ownerFarmId = 2, capacity = 10000, fillLevels = { [1] = 9999 } } } } }),
+        placeable("sugar", { spec_productionPoint = { productionPoint = { storage = {
+            ownerFarmId = 1, capacity = 30000, capacities = { [5] = 10000 }, fillLevels = { [5] = 2500 } } } } }),
+        placeable("bunkerFull", { spec_bunkerSilo = { bunkerSilo = {
+            state = 2, inputFillType = 3, outputFillType = 4, fillLevel = 80000 } } }),
+        placeable("bunkerFilling", { spec_bunkerSilo = { bunkerSilo = {
+            state = 0, inputFillType = 3, outputFillType = 4, fillLevel = 12000 } } }),
+        placeable("foreignFactory", { ownerFarmId = 2, spec_productionPoint = { productionPoint = { storage = {
+            capacity = 1, fillLevels = { [5] = 7 } } } } }),
     } })
-    g_storeManager = { getItemByXMLFilename = function(_, f)
-        if f == "ext.xml" then return { categoryNames = { "SILOEXTENSIONS" } } end
-    end }
+    BunkerSilo = { STATE_FILL = 0, STATE_CLOSED = 1, STATE_FERMENTED = 2, STATE_DRAIN = 3 }
     local raw = RPSimGameAdapter.new():collectFarmFacts()
-    lu.assertEquals(#raw.silos, 3)
-    lu.assertEquals(raw.silos[2].descriptor.categoryNames, { "SILOEXTENSIONS" })
-    lu.assertTrue(raw.silos[2].descriptor.hasSiloExtensionSpec)
+    lu.assertEquals(#raw.silos, 6)
     local doc = RPSimFarmFacts.build(raw)
     lu.assertEquals(doc.assets.storage, {
         { fillType = "BARLEY", amount = 7000, capacity = 120000 },
-        { fillType = "WHEAT", amount = 45000, capacity = 160000 },
+        { fillType = "CHAFF", amount = 12000, capacity = 0 },
+        { fillType = "SILAGE", amount = 80000, capacity = 0 },
+        { fillType = "SUGAR", amount = 2500, capacity = 10000 },
+        { fillType = "WHEAT", amount = 46000, capacity = 170000 },
     })
-    g_storeManager = nil
+    BunkerSilo = nil
 end
 
-function T.TestGameAdapter:testFirstExportLogsTheSiloClassification()
+function T.TestGameAdapter:testFirstExportLogsTheStoragePlaces()
     local game = helpers.fakeGame({ placeables = {
         placeable("silo", { spec_silo = { storages = { { capacity = 100, fillLevels = { [1] = 40 } } } } }) } })
     local bridge = realBridge(game)
     helpers.logs = {}
     bridge:logFirstExport()
-    lu.assertEquals(helpers.countLogs("info", "Silo stock: 1 own silos/silo extensions, 1 fill types in storage"), 1)
-    lu.assertEquals(helpers.countLogs("info", "Silo silo [silo, categories=]: counted, 1 storages, fill levels: WHEAT=40"), 1)
+    lu.assertEquals(helpers.countLogs("info",
+        "Stock: 1 storage places (silos, silo extensions, productions, bunker silos), 1 fill types"), 1)
+    lu.assertEquals(helpers.countLogs("info", "Storage silo [SILO]: counted, 1 storages, fill levels: WHEAT=40"), 1)
 end
 
 return T
