@@ -114,6 +114,26 @@ Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebuc
 einen Kauf nicht, platzt das Geschäft – das Feld bleibt beim bisherigen Besitzer. Flächen, die das Spiel selbst
 nicht zum Kauf anbietet (Ortschaft, Straßen), sind als „nicht handelbar“ markiert.
 
+**Was auf deinen Feldern wächst:** Mit der aktuellen Mod-Version zeigt die Detailansicht eines Feldes, das du im
+Spiel bewirtschaftest, die Kultur und die Phase (leer, wächst, erntereif, abgeerntet, verdorrt). Das Dorf bekommt das
+mit:
+
+- **Hagel und Wildschweine** treffen nur Felder, auf denen etwas steht. Der Hagelschaden richtet sich nach Fläche,
+  Ertrag und aktuellem Preis deiner Kultur, der Wildschaden nach Fläche und Wachstum; betroffen sind nur Mais,
+  Weizen, Gerste, Hafer und Kartoffeln. Nach einem verregneten Monat hagelt es häufiger.
+- **Nachbarn:** Bleibt ein Feld längere Zeit voller Unkraut oder Steine, spricht dich ein Nachbar freundlich an. Tut
+  sich danach nichts, wird er ungehalten und sein Vertrauen sinkt etwas. Unkraut und Steine zählen nur, wenn sie in
+  deinem Spielstand eingeschaltet sind.
+- **Dorfklatsch:** Liegt ein Feld lange brach oder verdorrt eine Ernte, redet das Dorf darüber.
+- **Genossenschaft:** Hast du in einem Jahr alle erntereifen Felder rechtzeitig geerntet und ist nichts verdorrt,
+  gratuliert sie. Außerdem gibt sie höchstens einmal pro Woche einen Hinweis zur Feldarbeit: ein Feld ist erntereif,
+  braucht Kalk oder sollte gepflügt werden (Kalk und Pflügen nur, wenn dein Spielstand sie verlangt). Die Hinweise
+  kannst du unter **Einstellungen** abschalten.
+- **Bank:** Stehende Kulturen zählen in der Bonitätsprüfung als Vermögen (mit Abschlag, je nach Wachstum); die
+  Bankberaterin erwähnt das in ihrer Antwort.
+
+Mit einer älteren Mod-Version bleibt alles wie bisher: Hagel und Wildschaden treffen ein beliebiges eigenes Feld.
+
 ## Warenbestand & Preise
 
 ![Warenbestand](../screenshots/15-warenbestand-preise.png)
@@ -196,6 +216,8 @@ der Ton deines Spielstands (nur Anzeige).
 Helferlohn. Ausgeschaltet zahlst du zusätzlich den normalen Spiellohn. *Strenger Modus* (Standard aus) – höchstens so
 viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann keine Helfer, streikende oder freigestellte
 zählen nicht.
+
+**Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
 
 ## Auf dem Handy
 

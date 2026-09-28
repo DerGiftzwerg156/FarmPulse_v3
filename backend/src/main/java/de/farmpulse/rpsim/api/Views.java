@@ -86,8 +86,13 @@ public final class Views {
     public record HelperSettingsView(String helperWageMode, boolean strictHelperLimit, boolean workforceTracked) {
     }
 
+    /** Roadmap V2 R2-C: fruitType and phase (EMPTY, GROWING, HARVESTABLE, HARVESTED, WITHERED) of own fields only. */
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,
-                               boolean inNegotiation, boolean tradeable, boolean leased) {
+                               boolean inNegotiation, boolean tradeable, boolean leased, String fruitType, String phase) {
+    }
+
+    /** Roadmap V2 R2-C6: field work hints of the cooperative; fieldsTracked = the mod reports the fields. */
+    public record FieldSettingsView(boolean fieldHintsEnabled, boolean fieldsTracked) {
     }
 
     public record OfferView(int round, String offeredBy, String characterName, long amount, String result, Long counterAmount,

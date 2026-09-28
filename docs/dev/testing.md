@@ -125,6 +125,11 @@ repair after the maintenance contract, no repair on strike), `LivestockStablesTe
 keeper warning, productivity in the breeding advice); the mod covers roster, assignment, wage, limit and worked
 time in `test_workforce.lua`, the simulator the roster-driven job assignment and strike stop in `instructions.test.js`,
 the frontend the helper settings and the staff hints in `settings.spec.ts` / `employees.spec.ts`.
+Roadmap V2 R2-C: `FieldServiceTest` (growth phase, records, crop history, year end, rain hours),
+`FieldDamagesAndCreditTest` (hail and wild boars only on standing crops, damage from yield and price, rain factor,
+standing crops in the credit check) and `FieldReactionServiceTest` (neighbor, gossip, hints, monthly cap); the mod
+covers the field / weather collection in `test_game_adapter.lua` and the normalisation in `test_farm_facts.lua`, the
+frontend crop and phase in `farmland.spec.ts` and the hint switch in `settings.spec.ts`.
 
 ## Continuous integration (AP-11.1)
 

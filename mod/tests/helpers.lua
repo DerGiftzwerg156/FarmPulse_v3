@@ -129,6 +129,12 @@ function helpers.fakeAdapter(overrides)
             prices = { { sellPoint = "MillNorth", fillType = "WHEAT", pricePerLiter = 0.215 } },
         }
     end
+    a.fieldSamples = 0
+    function a:collectFields()
+        self.fieldSamples = self.fieldSamples + 1
+        return self.fields
+    end
+    function a:collectFieldRules() return self.fieldRules end
     function a:collectMarketContext()
         return { mapName = "Erlengrund",
             sellPoints = { { id = "MillNorth", name = "Mühle Nord", acceptedFillTypes = { "WHEAT", "BARLEY" } } },

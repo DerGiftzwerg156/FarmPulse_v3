@@ -125,6 +125,7 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit.legacy-term-months` | `60` | Term of the legacy loan. | Onboarding & Zwei-Phasen-Verknüpfung |
 | `rpsim.formulas.credit.payment-history-missed-penalty` | `15` | `paymentHistoryScore` points lost per missed installment. | Bonitäts-Score |
 | `rpsim.formulas.credit.payment-history-on-time-gain` | `2` | `paymentHistoryScore` points gained per on-time installment. | Bonitäts-Score |
+| `rpsim.formulas.credit.standing-crop-discount` | `0.5` | Standing crops count as asset in the credit check: harvest value (area × yield × best price) × growth progress × this discount; only with the field export. | Roadmap V2 R2-C5 |
 
 ## `rpsim.formulas.credit-hard`
 
@@ -172,6 +173,7 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit-hard.legacy-term-months` | `60` | HART profile (tone preset *Hart*): same as `formulas.credit.legacy-term-months`. | Ton-/Genre-Konfigurationsprofile |
 | `rpsim.formulas.credit-hard.payment-history-missed-penalty` | `15` | HART profile (tone preset *Hart*): same as `formulas.credit.payment-history-missed-penalty`. | Ton-/Genre-Konfigurationsprofile |
 | `rpsim.formulas.credit-hard.payment-history-on-time-gain` | `2` | HART profile (tone preset *Hart*): same as `formulas.credit.payment-history-on-time-gain`. | Ton-/Genre-Konfigurationsprofile |
+| `rpsim.formulas.credit-hard.standing-crop-discount` | `0.5` | HART profile: same as `formulas.credit.standing-crop-discount`. | Roadmap V2 R2-C5 |
 
 ## `rpsim.formulas.market`
 
@@ -387,6 +389,9 @@ reference prices of the own fields + value of the own buildings.
 | `rpsim.formulas.insurance.hail-periods` | `[3, 4, 5, 6]` | FS25 periods with hail: May to August. | TODO T-20 |
 | `rpsim.formulas.insurance.hail-damage-per-hectare-min` | `200` | Hail damage in € per hectare of the hit field (lower bound). | TODO T-20 |
 | `rpsim.formulas.insurance.hail-damage-per-hectare-max` | `900` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.insurance.hail-damage-share-min` | `0.05` | With the field export hail hits only standing crops: damage = harvest value (area × yield × best price) × a share between min and max; without yield or price the per-hectare range applies. | Roadmap V2 R2-C3 |
+| `rpsim.formulas.insurance.hail-damage-share-max` | `0.3` | Upper bound. | Roadmap V2 R2-C3 |
+| `rpsim.formulas.insurance.hail-rain-factor` | `1.0` | Hail probability × (1 + factor × rain share of the game month that just ended). | Roadmap V2 R2-C3 |
 | `rpsim.formulas.insurance.report-deadline-days` | `5` | Game days to report a damage to the insurance; afterwards no payout. | TODO T-20 |
 | `rpsim.formulas.insurance.settlement-delay-days-min` | `1` | Game days between report and payout (lower bound). | TODO T-20 |
 | `rpsim.formulas.insurance.settlement-delay-days-max` | `3` | Upper bound. | TODO T-20 |
@@ -413,6 +418,7 @@ Wild boar damage is simulated per game month (`DAMAGE`); the hunter compensates 
 | `rpsim.formulas.hunting.periods` | `[4, 5, 6, 7, 8]` | FS25 periods with wildlife damage (1 = March): June to October. | TODO T-20 |
 | `rpsim.formulas.hunting.damage-per-hectare-min` | `150` | Damage in € per hectare (lower bound). | TODO T-20 |
 | `rpsim.formulas.hunting.damage-per-hectare-max` | `600` | Upper bound. | TODO T-20 |
+| `rpsim.formulas.hunting.crops` | `[MAIZE, WHEAT, BARLEY, OAT, POTATO]` | With the field export wild boars only damage standing crops of these FS25 fruit types; the damage scales with the growth progress. | Roadmap V2 R2-C3 |
 | `rpsim.formulas.hunting.offer-share` | `0.5` | First compensation offer of the hunter as share of the damage (neutral trust). | TODO T-20 |
 | `rpsim.formulas.hunting.max-share` | `0.9` | Highest share the hunter accepts on a counter demand (neutral trust); never shown to the AI. | TODO T-20 |
 | `rpsim.formulas.hunting.trust-influence` | `0.2` | Shift of both shares at trust +100 / −100 (linear, bounded to 10–100 %). | TODO T-20 |
@@ -544,6 +550,29 @@ spent on the most worn own vehicles below `repair-below-condition` (sent as `REP
 | `rpsim.formulas.mechanic.repair-points-per-month` | `60` | Condition points a mechanic with skill 100 and full satisfaction repairs per game month. | Roadmap V2 R2-A6 |
 | `rpsim.formulas.mechanic.repair-below-condition` | `90` | Only vehicles below this condition (0..100) are repaired. | Roadmap V2 R2-A6 |
 | `rpsim.formulas.mechanic.overload-workload-per-vehicle` | `2` | Workload points the mechanic loses per vehicle still below the threshold after the month's repairs. | Roadmap V2 R2-A6 |
+
+## `rpsim.formulas.fields` (Roadmap V2 R2-C)
+
+Fields, crops and weather from `farm_facts.fields` / `fieldRules` / `weather`. Growth phase: no crop = empty; the mod's
+flags `withered` / `cut` (FS25 `getIsWithered` / `getIsCut`) decide withered and harvested; otherwise below
+`minHarvestingGrowthState` growing, up to `max` harvestable, above `max` withered (mods without the flags). Weeds,
+stones, lime and plowing are only evaluated when the savegame has them switched on (`fieldRules`). All values are
+placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.fields.yield-liters-per-sqm` | `{}` | Yield in liters per m² per FS25 fruit type, only for mods that do not export `litersPerSqm`; empty = unknown (hail uses the per-hectare range, the bank counts no standing crop). | Roadmap V2 R2-C3 / C5 |
+| `rpsim.formulas.fields.rain-sample-max-gap-minutes` | `180` | Rain hours are extrapolated from the weather samples (sample and hold); a gap above this many game minutes (backend was off) is not counted. | Roadmap V2 R2-C2 |
+| `rpsim.formulas.fields.weed-high-state` | `5` | FS25 `weedState` from which the neighbor minds the weeds (🟡 manual test plan 10.15). | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.stone-high-level` | `2` | FS25 `stoneLevel` from which the neighbor minds the stones (🟡 manual test plan 10.15). | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.neighbor-after-months` | `2` | Game months weeds / stones stay high before the neighbor writes (friendly). | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.neighbor-repeat-months` | `1` | Game months after the friendly message before the annoyed one. | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.neighbor-trust-delta` | `-2` | Trust of the neighbor at the annoyed message ("nothing happened"). | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.fallow-gossip-months` | `4` | Game months without a crop (empty or stubble) before the village gossips about the field; a withered crop is talked about at once. | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.harvest-congratulation-trust-delta` | `1` | Trust of the cooperative when every harvestable field of an FS25 year was harvested and nothing withered. | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.max-messages-per-month` | `2` | Cap of the field messages (neighbor, gossip, congratulation) per game month. | Roadmap V2 R2-C4 |
+| `rpsim.formulas.fields.hints-enabled` | `true` | Field work hints of the cooperative (harvest ready, lime, plowing); the player can also switch them off per savegame in the settings. | Roadmap V2 R2-C6 |
+| `rpsim.formulas.fields.hint-cooldown-days` | `7` | At most one hint per this many game days. | Roadmap V2 R2-C6 |
 
 ## `rpsim.formulas.finance` (Roadmap V2 R2-B)
 

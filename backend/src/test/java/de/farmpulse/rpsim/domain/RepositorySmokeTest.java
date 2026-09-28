@@ -27,7 +27,8 @@ class RepositorySmokeTest {
                 CreditApplication.class, MarketEvent.class, FarmlandOwnership.class, Negotiation.class,
                 NegotiationOffer.class, Employee.class, SatisfactionEvent.class, JobPosting.class, JobApplication.class,
                 Communication.class, OutboxInstruction.class, FactsSnapshot.class, StoryHook.class,
-                PublicActionEvent.class, DiaryEntry.class, NarrationJob.class);
+                PublicActionEvent.class, DiaryEntry.class, NarrationJob.class, FieldRecord.class, FieldCropHistory.class,
+                RainPeriod.class);
     }
 
     private int counter;

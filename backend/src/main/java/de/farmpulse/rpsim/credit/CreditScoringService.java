@@ -8,6 +8,7 @@ import de.farmpulse.rpsim.bridge.FactsService;
 import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.field.FieldService;
 import de.farmpulse.rpsim.domain.FactsSnapshot;
 import de.farmpulse.rpsim.finance.FinanceJournalService;
 import de.farmpulse.rpsim.domain.Loan;
@@ -38,11 +39,12 @@ public class CreditScoringService {
     private final CreditConfigResolver configs;
     private final GameTime gameTime;
     private final FinanceJournalService journal;
+    private final FieldService fields;
 
     public CreditScoringService(FactsService facts, FactsSnapshotRepository snapshots, LoanRepository loans,
                                 LoanPaymentRepository payments, LiquidityService liquidity, CharacterLookup lookup,
                                 TrustScoreService trust, CreditConfigResolver configs, GameTime gameTime,
-                                FinanceJournalService journal) {
+                                FinanceJournalService journal, FieldService fields) {
         this.facts = facts;
         this.snapshots = snapshots;
         this.loans = loans;
@@ -53,6 +55,7 @@ public class CreditScoringService {
         this.configs = configs;
         this.gameTime = gameTime;
         this.journal = journal;
+        this.fields = fields;
     }
 
     public CreditFormula.Result score(Savegame sg, long amount, int termMonths, double interestRate) {
@@ -62,7 +65,8 @@ public class CreditScoringService {
     public CreditFormula.Inputs inputs(Savegame sg, long amount, int termMonths, double interestRate) {
         RpsimProperties.Credit cfg = configs.forSavegame(sg);
         FarmFacts f = facts.latest(sg).orElse(null);
-        double assets = f == null ? 0 : facts.totalAssetValue(f);
+        // R2-C5: standing crops count as asset (harvest value x growth progress x standing-crop-discount)
+        double assets = f == null ? 0 : facts.totalAssetValue(f) + standingCropValue(f, cfg);
         List<Loan> active = new java.util.ArrayList<>(loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE));
         // T-03: an uncollected call-back is still debt
         active.addAll(loans.findBySavegameAndStatus(sg, LoanStatus.DEFAULTED));
@@ -108,6 +112,12 @@ public class CreditScoringService {
         double trustScore = lookup.bank(sg).map(trust::getCurrentTrust).orElse(0.0);
         return new CreditFormula.Inputs(monthlyCashflow, hasHistory, existingInstallments, newInstallment, assets,
                 loanDebt + vanilla, balance, amount, history, trustScore);
+    }
+
+    /** Roadmap V2 R2-C5: value of the standing crops in the credit check (0 without field export). */
+    public double standingCropValue(FarmFacts f, RpsimProperties.Credit cfg) {
+        return fields.standingCrops(f, cfg.getStandingCropDiscount()).stream()
+                .mapToDouble(FieldService.StandingCrop::value).sum();
     }
 
     /** Monthly operating cash flow trend (reused by the village-life congratulation trigger). */

@@ -2,14 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { AiSettingsView } from '../../core/api/models';
+import { AiSettingsView, FieldSettingsView } from '../../core/api/models';
 import { Settings } from './settings';
 
 const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, apiKeySet: true, providers: ['NONE', 'OPENAI', 'ANTHROPIC', 'GEMINI', 'OLLAMA'] };
 
 describe('Settings', () => {
   function setup(game: unknown = { tonePreset: 'REALISTIC', toneLabel: 'realistisch-ausgewogen' },
-    helpers: unknown = { helperWageMode: 'EMPLOYEES', strictHelperLimit: false, workforceTracked: true }) {
+    helpers: unknown = { helperWageMode: 'EMPLOYEES', strictHelperLimit: false, workforceTracked: true },
+    fields: FieldSettingsView = { fieldHintsEnabled: true, fieldsTracked: true }) {
     TestBed.configureTestingModule({
       imports: [Settings],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -23,6 +24,7 @@ describe('Settings', () => {
     const h = http.expectOne('/api/settings/helpers');
     if (helpers) h.flush(helpers);
     else h.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
+    http.expectOne('/api/settings/fields').flush(fields);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const input = (id: string, v: string) => {
@@ -101,6 +103,20 @@ describe('Settings', () => {
     fixture.detectChanges();
     expect((el.querySelector('[data-testid="helper-strict"]') as HTMLInputElement).checked).toBe(true);
     expect(el.querySelector('[data-testid="helper-untracked"]')).toBeNull();
+  });
+
+  // Roadmap V2 R2-C6
+  it('switches the field work hints off', () => {
+    const { el, http, fixture } = setup();
+    const box = el.querySelector('[data-testid="field-hints"]') as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    box.checked = false;
+    box.dispatchEvent(new Event('change'));
+    const req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/fields');
+    expect(req.request.body).toEqual({ fieldHintsEnabled: false });
+    req.flush({ fieldHintsEnabled: false, fieldsTracked: false });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="fields-untracked"]')?.textContent).toContain('aktuellen Mod-Version');
   });
 
   it('says when the mod reports no helpers yet', () => {

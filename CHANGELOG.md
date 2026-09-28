@@ -67,6 +67,24 @@ versions or this changelog do not match.
   - Settings: new card *Helfer im Spiel* (helper wage via salary, strict mode); *Personal* shows the helper hint, the
     strike badge and the driven hours per month. New settings are documented in `configuration-reference.md`.
   - Simulator: `EMPLOYEE_ROSTER` assigns running jobs in list order and stops the jobs of striking employees.
+- **Fields, crops and weather (Roadmap V2, R2-C):**
+  - Mod: exports the own fields (`farm_facts.fields`: crop, growth, weeds, stones, lime, plowing, plus `withered`,
+    `cut`, `fillType` and `litersPerSqm` from the game), the soil settings of the savegame (`fieldRules`) and the
+    weather. The fields are sampled every `fieldExportIntervalMs` (5 min) and after a farmland transfer.
+  - Backend: growth phase per field (empty, growing, harvestable, harvested, withered), crop history per FS25 year,
+    rain hours per game month.
+  - Hail and wild boars only hit standing crops (wild boars only maize, wheat, barley, oat, potatoes); the hail damage
+    follows area × yield × current price, the wildlife damage the growth; a rainy month raises the hail probability.
+    The messages name field and crop. Without the field export (older mod) V1 stays.
+  - Village: a neighbor minds weeds or stones (friendly, later annoyed with a small trust loss), gossip about fallow
+    fields and withered crops, the cooperative congratulates when every harvestable field of a year was harvested in
+    time; at most 2 field messages per game month.
+  - The cooperative gives at most one field work hint per week (harvest ready, lime, plowing - lime / plowing only when
+    the savegame requires them); switchable on the new settings card *Felder*.
+  - Bank: standing crops count as asset in the credit check (harvest value × growth × `standing-crop-discount` 0.5),
+    the advisor mentions them.
+  - *Felder*: the detail of an own field shows crop and phase.
+  - Simulator: `ernte-herbst` exports the crop details and `fieldRules`, new endpoint `POST /field-rules`.
 
 ## [1.1.2] - 2026-09-28
 

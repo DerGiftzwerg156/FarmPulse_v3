@@ -259,6 +259,13 @@ export interface EmployeeView {
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
+/** Roadmap V2 R2-C6: field work hints of the cooperative. */
+export interface FieldSettingsView {
+  fieldHintsEnabled: boolean;
+  /** The mod reports the fields (farm_facts.fields). */
+  fieldsTracked: boolean;
+}
+
 export interface HelperSettingsView {
   helperWageMode: 'EMPLOYEES' | 'VANILLA';
   strictHelperLimit: boolean;
@@ -277,7 +284,12 @@ export interface FarmlandView {
   tradeable?: boolean;
   /** Leased to the player (TODO T-22): the game shows it as the player's, the owner stays the character. */
   leased?: boolean;
+  /** Roadmap V2 R2-C: crop (FS25 fruit type) and growth phase of a field the player farms; null without field export. */
+  fruitType?: string | null;
+  phase?: FieldPhase | null;
 }
+
+export type FieldPhase = 'EMPTY' | 'GROWING' | 'HARVESTABLE' | 'HARVESTED' | 'WITHERED';
 
 export interface OfferView {
   round: number;

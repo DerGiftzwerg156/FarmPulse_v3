@@ -29,6 +29,11 @@ public enum NarrationEventType {
     MECHANIC_REPORT,
     ANIMAL_KEEPER_WARNING,
     VET_EMERGENCY,
+    // Roadmap V2 R2-C: fields, crops and weather
+    FIELD_NEIGHBOR_COMPLAINT,
+    FIELD_GOSSIP,
+    FIELD_HARVEST_CONGRATULATION,
+    FIELD_WORK_HINT,
     // market
     MARKET_PRICE_EVENT,
     MARKET_SPECIAL_OFFER,

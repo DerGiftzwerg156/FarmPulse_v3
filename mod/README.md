@@ -22,6 +22,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   steht im Spielstand und in `farm_facts.json` (`workforce`).
 - Exportiert den **Zustand der Ställe** (R2-A7, `husbandries`): Gesundheit, Produktivität, Futter und die
   Bedingungen (Wasser, Stroh …) je Stall.
+- Exportiert **Felder und Wetter** (R2-C, `fields`, `fieldRules`, `weather`): Kultur, Wachstum, Unkraut, Steine,
+  Kalk und Pflug je eigenem Feld (dazu verdorrt/abgeerntet, Fülltyp und Ertrag je m²), die Bodeneinstellungen des
+  Spielstands und das aktuelle Wetter. Die Felder werden nur alle `fieldExportIntervalMs` neu gelesen.
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -97,6 +100,7 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | `conflictMods` | `FS25_MarketDynamics`, `FS25_UsedPlus`, `FS25_EnhancedLoanSystem`, `FS25_BetterContracts` | Mods mit überlappenden Funktionen; erkannte werden in `market_context.json` gemeldet (nur Warnung) |
 | `moneyTypeTitles` | `true` | Buchungen bekommen eigene Bezeichnungen (`MoneyType.register(statistik, "rpsim_money_<GRUND>")`, Texte in `modDesc.xml`); `false` = alles als „Sonstiges“ (`MoneyType.OTHER`) |
 | `financeJournalPeriods` | `13` | Roadmap V2 R2-B1: so viele FS25-Monate behält das Buchungsjournal (`farm_facts.finances`) |
+| `fieldExportIntervalMs` | `300000` | Roadmap V2 R2-C1: so oft (Echtzeit, ms) werden die Felder neu gelesen; jeder Export dazwischen übernimmt den letzten Stand |
 | `moneyTypeStatistics` | `{}` | Finanzstatistik je Buchungsgrund, z. B. `{ "SALARY_PAYMENT": "wagePayment" }`. Belegt ist nur `other` (FS25 `FillTrigger.lua`); andere Namen erst im Spiel prüfen (Testplan 8.18) |
 
 ## Entwicklung & Tests

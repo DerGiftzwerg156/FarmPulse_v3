@@ -75,7 +75,12 @@
         "maxHarvestingGrowthState": { "type": "integer", "minimum": 0 },
         "weedState": { "type": "integer", "minimum": 0 }, "stoneLevel": { "type": "integer", "minimum": 0 },
         "sprayLevel": { "type": "integer", "minimum": 0 }, "limeLevel": { "type": "integer", "minimum": 0 },
-        "plowLevel": { "type": "integer", "minimum": 0 }, "groundType": { "type": "string" } } } },
+        "plowLevel": { "type": "integer", "minimum": 0 }, "groundType": { "type": "string" },
+        "withered": { "type": "boolean" }, "cut": { "type": "boolean" }, "fillType": { "type": "string", "minLength": 1 },
+        "litersPerSqm": { "type": "number", "minimum": 0 } } } },
+    "fieldRules": { "type": "object", "required": ["plowingRequired", "limeRequired", "weedsEnabled", "stonesEnabled"],
+      "properties": { "plowingRequired": { "type": "boolean" }, "limeRequired": { "type": "boolean" },
+        "weedsEnabled": { "type": "boolean" }, "stonesEnabled": { "type": "boolean" } } },
     "weather": { "type": "object", "required": ["raining", "rainFallScale", "groundWetness"], "properties": {
       "raining": { "type": "boolean" }, "rainFallScale": { "type": "number", "minimum": 0 },
       "groundWetness": { "type": "number", "minimum": 0 } } }

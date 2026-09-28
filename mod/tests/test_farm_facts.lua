@@ -168,6 +168,29 @@ function T.TestFarmFacts:testFieldsWithAndWithoutCrop()
         limeLevel = 1, plowLevel = 0, groundType = "SOWN" })
 end
 
+function T.TestFarmFacts:testCropFlagsYieldAndFieldRules()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, fields = {
+        { farmlandId = 6, name = "6", hectares = 3, fruitType = "WHEAT", growthState = 10, minHarvestingGrowthState = 8,
+            maxHarvestingGrowthState = 8, withered = true, cut = false, fillType = "WHEAT", litersPerSqm = 0.123456,
+            weedState = 0, stoneLevel = 0, sprayLevel = 0, limeLevel = 0, plowLevel = 0 },
+        { farmlandId = 7, name = "7", hectares = 1, withered = true, fillType = "WHEAT", growthState = 0, weedState = 0,
+            stoneLevel = 0, sprayLevel = 0, limeLevel = 0, plowLevel = 0 } },
+        fieldRules = { plowingRequired = true, limeRequired = false, weedsEnabled = true, stonesEnabled = false } },
+        RPSimConfig.new())
+    lu.assertTrue(doc.fields[1].withered)
+    lu.assertFalse(doc.fields[1].cut)
+    lu.assertEquals(doc.fields[1].fillType, "WHEAT")
+    lu.assertEquals(doc.fields[1].litersPerSqm, 0.1235)
+    -- the crop details only exist with a crop
+    lu.assertNil(doc.fields[2].withered)
+    lu.assertNil(doc.fields[2].fillType)
+    lu.assertEquals(doc.fieldRules, { plowingRequired = true, limeRequired = false, weedsEnabled = true,
+        stonesEnabled = false })
+    doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, fieldRules = { plowingRequired = true } },
+        RPSimConfig.new())
+    lu.assertNil(doc.fieldRules)
+end
+
 function T.TestFarmFacts:testWeatherOnlyWhenComplete()
     local cfg = RPSimConfig.new()
     local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,

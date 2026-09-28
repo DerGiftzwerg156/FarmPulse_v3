@@ -237,6 +237,12 @@ export class ApiService {
   saveHelperSettings(r: { helperWageMode: string; strictHelperLimit: boolean }): Observable<M.HelperSettingsView> {
     return this.http.put<M.HelperSettingsView>(`${this.base}/settings/helpers`, r);
   }
+  fieldSettings(): Observable<M.FieldSettingsView> {
+    return this.get('/settings/fields');
+  }
+  saveFieldSettings(r: { fieldHintsEnabled: boolean }): Observable<M.FieldSettingsView> {
+    return this.http.put<M.FieldSettingsView>(`${this.base}/settings/fields`, r);
+  }
   gameSettings(): Observable<M.GameSettingsView> {
     return this.get('/settings/game');
   }

@@ -97,4 +97,8 @@ public final class Requests {
     public record HelperSettingsRequest(@NotBlank @Pattern(regexp = "EMPLOYEES|VANILLA")
                                         String helperWageMode, boolean strictHelperLimit) {
     }
+
+    /** Roadmap V2 R2-C6: switch of the field work hints. */
+    public record FieldSettingsRequest(boolean fieldHintsEnabled) {
+    }
 }

@@ -358,17 +358,27 @@ können nicht über den Zustand der Felder sprechen.
 **Idee:** Der Mod exportiert Kultur, Wachstum und Pflegezustand der eigenen Felder sowie das aktuelle Wetter. Die
 simulierten Ereignisse werden damit plausibel, und das Dorf reagiert auf die Feldarbeit.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Der Mod exportiert zusätzlich je Feld
+`withered` / `cut` (`getIsWithered` / `getIsCut`), `fillType` und `litersPerSqm` sowie den Block `fieldRules`
+(Pflügen/Kalk verlangt, Unkraut/Steine aktiv). Die Phase kennt deshalb neben `VERDORRT` auch `ABGEERNTET`; die
+Roadmap-Regel „über max = verdorrt“ gilt nur für Mods ohne die Flags. Unkraut, Steine, Kalk und Pflug wertet das
+Backend nur mit `fieldRules` aus. Der Ertrag kommt aus dem Spiel, die Konfig-Tabelle ist nur Rückfall. Die Hinweise
+schickt die Genossenschaft, abschaltbar auf der Einstellungsseite; die Feldseite zeigt Kultur und Phase. Die
+„Rekordernte“ aus C4 ist der Rekordmonat der Genossenschaft aus B5. Der Mod liest die Felder nur alle
+`fieldExportIntervalMs` (und nach einer Feldübertragung) neu; jeder Export dazwischen trägt den letzten Stand, denn ein
+fehlender Block hieße „nicht vorhanden“. Alle Zahlen sind Platzhalter.
+
 ### R2-C1 Feldzustand exportieren
 
-- [ ] Über `g_fieldManager.fields` laufen und nur Felder mit `field.farmland` im Besitz des Spielers exportieren (bei
-  Bedarf zusätzlich Felder der Tool-NPCs für Vergleiche).
-- [ ] Je Feld `farm_facts.fields[]`: `farmlandId`, `name` (`field:getName()`), `hectares` (`field.areaHa`),
+- [x] Über `g_fieldManager.fields` laufen und nur Felder mit `field.farmland` im Besitz des Spielers exportieren (bei
+  Bedarf zusätzlich Felder der Tool-NPCs für Vergleiche – derzeit nicht nötig, nicht exportiert).
+- [x] Je Feld `farm_facts.fields[]`: `farmlandId`, `name` (`field:getName()`), `hectares` (`field.areaHa`),
   `fruitType` (`g_fruitTypeManager:getFruitTypeNameByIndex(state.fruitTypeIndex)`), `growthState`,
   `minHarvestingGrowthState` / `maxHarvestingGrowthState` (aus `getFruitTypeByIndex`), `weedState`, `stoneLevel`,
   `sprayLevel`, `limeLevel`, `plowLevel`, `groundType`.
-- [ ] Nur bei Änderung und in größerem Abstand exportieren (Konfig `fieldExportIntervalMs`, Vorschlag 5 min
+- [x] Nur bei Änderung und in größerem Abstand exportieren (Konfig `fieldExportIntervalMs`, Vorschlag 5 min
   Echtzeit), damit `farm_facts.json` klein bleibt.
-- [ ] Backend: Wachstumsphase ableiten (`LEER`, `WÄCHST`, `ERNTEREIF` zwischen min und max, `VERDORRT` über max) und
+- [x] Backend: Wachstumsphase ableiten (`LEER`, `WÄCHST`, `ERNTEREIF` zwischen min und max, `VERDORRT` über max) und
   je Feld eine kurze Historie führen (Kultur je Erntejahr, nötig für E2).
 
 **Beleg:** ✅ `field/FieldState.lua` (Felder `isValid`, `fruitTypeIndex`, `growthState`, `weedState`, `stoneLevel`,
@@ -385,44 +395,44 @@ Debug-Ansicht). Das ist eine Stichprobe an einem Punkt und reicht für die Einor
 
 ### R2-C2 Wetter exportieren
 
-- [ ] `farm_facts.weather = { raining, rainFallScale, groundWetness }` aus
+- [x] `farm_facts.weather = { raining, rainFallScale, groundWetness }` aus
   `g_currentMission.environment.weather:getIsRaining()`, `getRainFallScale()`, `getGroundWetness()`.
-- [ ] Backend: Regenstunden je Periode aus den Exporten hochrechnen (Stichprobe alle ~60 s reicht).
+- [x] Backend: Regenstunden je Periode aus den Exporten hochrechnen (Stichprobe alle ~60 s reicht).
 
 **Beleg:** ✅ Alle drei Aufrufe im Spielcode (u. a. Sprayer, Mähwerke, Solaranlagen, `BeehiveSystem`).
 
 ### R2-C3 Unwetter und Wildschaden plausibel machen
 
-- [ ] **Hagel** (`InsuranceService`) trifft nur Felder mit einer Kultur im Wachstum oder erntereif. Schaden =
+- [x] **Hagel** (`InsuranceService`) trifft nur Felder mit einer Kultur im Wachstum oder erntereif. Schaden =
   Fläche × typischer Ertrag (Konfig je Fruchtart) × aktueller Preis aus `prices` × Schadensquote. In regnerischen
   Perioden steigt die Wahrscheinlichkeit.
-- [ ] **Wildschaden** (`HuntingService`) nur auf Feldern mit Kulturen aus einer Konfig-Liste (Vorschlag: `MAIZE`,
+- [x] **Wildschaden** (`HuntingService`) nur auf Feldern mit Kulturen aus einer Konfig-Liste (Vorschlag: `MAIZE`,
   `WHEAT`, `BARLEY`, `OAT`, `POTATO`), Schaden nach Fläche und Wachstum.
-- [ ] Sturm auf Gebäude bleibt wie in V1.
-- [ ] Die Schadensmeldung nennt Feld und Kultur („Hagel auf Feld 12, Ihr Weizen …“).
-- [ ] Ohne Feld-Export (älterer Mod) bleibt das V1-Verhalten.
+- [x] Sturm auf Gebäude bleibt wie in V1.
+- [x] Die Schadensmeldung nennt Feld und Kultur („Hagel auf Feld 12, Ihr Weizen …“).
+- [x] Ohne Feld-Export (älterer Mod) bleibt das V1-Verhalten.
 
 **Hinweis:** Der Schaden bleibt eine Geldbuchung (`DAMAGE`). Echte Ernteverluste im Spiel sind nicht belegt, siehe
 [Bewusst nicht aufgenommen](#bewusst-nicht-aufgenommen).
 
 ### R2-C4 Dorf und Nachbarn reagieren auf die Felder
 
-- [ ] **Nachbar:** Hoher `weedState` auf einem eigenen Feld über mehrere Perioden → freundliche, später genervte
+- [x] **Nachbar:** Hoher `weedState` auf einem eigenen Feld über mehrere Perioden → freundliche, später genervte
   Nachricht; kleiner Vertrauensverlust, wenn nichts passiert. Dasselbe für viele Steine (`stoneLevel`).
-- [ ] **Dorfklatsch:** Eigene Felder, die lange brach liegen („Da wächst ja gar nichts mehr“), oder verdorrte
+- [x] **Dorfklatsch:** Eigene Felder, die lange brach liegen („Da wächst ja gar nichts mehr“), oder verdorrte
   Bestände (`VERDORRT`).
-- [ ] **Glückwunsch:** Alle Felder rechtzeitig geerntet, Rekordernte (zusammen mit B).
-- [ ] Alle Schwellen und Häufigkeiten in `rpsim.formulas.fields.*`, Obergrenze je Monat wie bei den anderen Spawnern.
+- [x] **Glückwunsch:** Alle Felder rechtzeitig geerntet, Rekordernte (zusammen mit B).
+- [x] Alle Schwellen und Häufigkeiten in `rpsim.formulas.fields.*`, Obergrenze je Monat wie bei den anderen Spawnern.
 
 ### R2-C5 Bank bewertet den Aufwuchs
 
-- [ ] Stehende Kulturen erhöhen das Vermögen in der Bonitätsprüfung: Fläche × Ertrag × Preis × Wachstumsfortschritt
+- [x] Stehende Kulturen erhöhen das Vermögen in der Bonitätsprüfung: Fläche × Ertrag × Preis × Wachstumsfortschritt
   × Abschlag (Konfig `credit.standing-crop-discount`, Vorschlag 0.5).
-- [ ] Die Bankberaterin erwähnt es („Ihr Weizen steht gut, das berücksichtigen wir“).
+- [x] Die Bankberaterin erwähnt es („Ihr Weizen steht gut, das berücksichtigen wir“).
 
 ### R2-C6 Hinweise zur Feldarbeit
 
-- [ ] Genossenschaft oder Lohnunternehmer geben saisonale Hinweise aus echten Werten: „Feld 7 ist erntereif“, „Auf
+- [x] Genossenschaft oder Lohnunternehmer geben saisonale Hinweise aus echten Werten: „Feld 7 ist erntereif“, „Auf
   Feld 3 fehlt Kalk“ (`limeLevel`), „Feld 9 sollte gepflügt werden“ (`plowLevel`). Höchstens einer pro Woche,
   abschaltbar.
 

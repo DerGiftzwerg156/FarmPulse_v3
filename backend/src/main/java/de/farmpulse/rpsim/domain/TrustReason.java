@@ -23,6 +23,10 @@ public enum TrustReason {
     MISSION_FAILED,
     /** Roadmap V2 R2-B5: record harvest revenue of a month, the cooperative congratulates. */
     RECORD_HARVEST,
+    /** Roadmap V2 R2-C4: a field stayed weedy / stony although the neighbor asked. */
+    FIELD_NEGLECTED,
+    /** Roadmap V2 R2-C4: every harvestable field of a year was harvested in time. */
+    HARVEST_IN_TIME,
     INITIAL,
     OTHER
 }

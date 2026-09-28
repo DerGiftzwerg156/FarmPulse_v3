@@ -365,6 +365,12 @@ class ApiIntegrationTest {
         mvc.perform(put("/api/settings/helpers").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"helperWageMode\":\"FREE\",\"strictHelperLimit\":true}"))
                 .andExpect(status().isBadRequest());
+        // Roadmap V2 R2-C6
+        mvc.perform(get("/api/settings/fields")).andExpect(jsonPath("$.fieldHintsEnabled").value(true))
+                .andExpect(jsonPath("$.fieldsTracked").value(false));
+        mvc.perform(put("/api/settings/fields").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"fieldHintsEnabled\":false}"))
+                .andExpect(jsonPath("$.fieldHintsEnabled").value(false));
     }
 
     @Test

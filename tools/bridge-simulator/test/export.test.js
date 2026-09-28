@@ -112,9 +112,9 @@ test('vanilla contracts are exported and follow the player (TODO T-22)', () => {
 });
 
 // ------------------------------------------------------------------ Roadmap V2 (R2-Q2)
-const V2_BLOCKS = ['finances', 'workforce', 'husbandries', 'fields', 'weather'];
+const V2_BLOCKS = ['finances', 'workforce', 'husbandries', 'fields', 'fieldRules', 'weather'];
 const V2_SCENARIOS = { 'helfer-hof': ['finances', 'workforce', 'weather'],
-  'tierhof-krank': ['finances', 'husbandries', 'weather'], 'ernte-herbst': ['finances', 'fields', 'weather'] };
+  'tierhof-krank': ['finances', 'husbandries', 'weather'], 'ernte-herbst': ['finances', 'fields', 'fieldRules', 'weather'] };
 
 test('Roadmap V2: the new scenarios export their blocks, all others leave them out (older mod)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {
@@ -181,6 +181,14 @@ test('Roadmap V2: husbandries, fields and weather can be changed like in the gam
   assert.deepEqual(after.weather, { raining: false, rainFallScale: 0, groundWetness: 0.7 });
   assert.equal(validate('farmFacts', after), null);
   assert.throws(() => new BridgeSimulator({ dir: tmp(), scenario: 'leerer-hof' }).setWeather({}), /no weather/);
+  // R2-C: crop details and the soil settings of the savegame
+  assert.deepEqual([after.fields[0].withered, after.fields[0].cut, after.fields[0].fillType, after.fields[0].litersPerSqm],
+    [false, false, 'MAIZE', 1.1]);
+  harvest.setFieldRules({ limeRequired: false });
+  assert.deepEqual(harvest.buildFarmFacts().fieldRules,
+    { plowingRequired: true, limeRequired: false, weedsEnabled: true, stonesEnabled: true });
+  assert.notEqual(validate('farmFacts', { ...after, fieldRules: { plowingRequired: true } }), null);
+  assert.throws(() => new BridgeSimulator({ dir: tmp(), scenario: 'leerer-hof' }).setFieldRules({}), /no fieldRules/);
 });
 
 test('Roadmap V2: journal and worked time go back on a reload without saving', () => {

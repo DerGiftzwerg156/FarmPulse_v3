@@ -119,6 +119,7 @@ rpsim:
       legacy-term-months: 60
       payment-history-missed-penalty: 15
       payment-history-on-time-gain: 2
+      standing-crop-discount: 0.5   # Roadmap V2 R2-C5
     credit-hard:                  # "Ton-/Genre-Konfigurationsprofile": CreditConfig.HART
       weight-debt-service-coverage: 0.30
       weight-equity-ratio: 0.25
@@ -162,6 +163,7 @@ rpsim:
       legacy-term-months: 60
       payment-history-missed-penalty: 15
       payment-history-on-time-gain: 2
+      standing-crop-discount: 0.5   # Roadmap V2 R2-C5
     market:                       # "Preis-Events & Sonderkontrakte"
       daily-spawn-probability: 0.15
       max-active-events: 3
@@ -317,6 +319,9 @@ rpsim:
       hail-periods: [3, 4, 5, 6]
       hail-damage-per-hectare-min: 200
       hail-damage-per-hectare-max: 900
+      hail-damage-share-min: 0.05   # Roadmap V2 R2-C3 (placeholders)
+      hail-damage-share-max: 0.3
+      hail-rain-factor: 1.0
       report-deadline-days: 5
       settlement-delay-days-min: 1
       settlement-delay-days-max: 3
@@ -340,6 +345,7 @@ rpsim:
       periods: [4, 5, 6, 7, 8]
       damage-per-hectare-min: 150
       damage-per-hectare-max: 600
+      crops: [MAIZE, WHEAT, BARLEY, OAT, POTATO]   # Roadmap V2 R2-C3
       offer-share: 0.5
       max-share: 0.9
       trust-influence: 0.2
@@ -462,6 +468,19 @@ rpsim:
       record-categories: [HARVEST_INCOME, SOLD_PRODUCTS]
       record-min-months: 3
       record-trust-delta: 2
+    fields:                       # Roadmap V2 R2-C: fields, crops and weather (placeholders)
+      yield-liters-per-sqm: {}    # only for mods without litersPerSqm, e.g. { WHEAT: 0.9 }; empty = unknown
+      rain-sample-max-gap-minutes: 180
+      weed-high-state: 5
+      stone-high-level: 2
+      neighbor-after-months: 2
+      neighbor-repeat-months: 1
+      neighbor-trust-delta: -2
+      fallow-gossip-months: 4
+      harvest-congratulation-trust-delta: 1
+      max-messages-per-month: 2
+      hints-enabled: true
+      hint-cooldown-days: 7
     energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
       fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
       probability-per-month: 0.35

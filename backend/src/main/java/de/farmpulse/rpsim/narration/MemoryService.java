@@ -66,6 +66,8 @@ public class MemoryService {
             case MISSION_COMPLETED -> "vermittelter Auftrag erledigt";
             case MISSION_FAILED -> "vermittelter Auftrag nicht erledigt";
             case RECORD_HARVEST -> "Rekord-Ernteerlös im Monat";
+            case FIELD_NEGLECTED -> "verunkrautetes oder steiniges Feld trotz Bitte";
+            case HARVEST_IN_TIME -> "alle Felder rechtzeitig geerntet";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

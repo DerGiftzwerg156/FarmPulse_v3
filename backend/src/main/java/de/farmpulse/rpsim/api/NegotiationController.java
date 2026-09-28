@@ -1,6 +1,8 @@
 package de.farmpulse.rpsim.api;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.farmpulse.rpsim.api.Requests.DirectNegotiationRequest;
 import de.farmpulse.rpsim.api.Requests.OfferRequest;
@@ -10,7 +12,9 @@ import de.farmpulse.rpsim.api.Views.FarmlandView;
 import de.farmpulse.rpsim.api.Views.MarketEventView;
 import de.farmpulse.rpsim.api.Views.NegotiationView;
 import de.farmpulse.rpsim.api.Views.OfferResultView;
+import de.farmpulse.rpsim.domain.FieldRecord;
 import de.farmpulse.rpsim.domain.Savegame;
+import de.farmpulse.rpsim.field.FieldService;
 import de.farmpulse.rpsim.market.MarketEventEngine;
 import de.farmpulse.rpsim.negotiation.FarmlandOwnershipService;
 import de.farmpulse.rpsim.negotiation.NegotiationEngine;
@@ -31,14 +35,16 @@ public class NegotiationController {
     private final NegotiationEngine engine;
     private final MarketEventEngine market;
     private final ApiMapper mapper;
+    private final FieldService fields;
 
     public NegotiationController(SavegameContext context, FarmlandOwnershipService ownership, NegotiationEngine engine,
-                                 MarketEventEngine market, ApiMapper mapper) {
+                                 MarketEventEngine market, ApiMapper mapper, FieldService fields) {
         this.context = context;
         this.ownership = ownership;
         this.engine = engine;
         this.market = market;
         this.mapper = mapper;
+        this.fields = fields;
     }
 
     /** Map overview of all farmlands incl. owner. */
@@ -46,7 +52,10 @@ public class NegotiationController {
     @Transactional(readOnly = true)
     public List<FarmlandView> farmlands() {
         Savegame sg = context.requireActive();
-        return ownership.list(sg).stream().map(o -> mapper.farmland(sg, o)).toList();
+        // R2-C: crop and growth phase of the fields the player farms in the game (only with the field export)
+        Map<Integer, FieldRecord> records = fields.records(sg).stream()
+                .collect(Collectors.toMap(FieldRecord::getFarmlandId, r -> r, (a, b) -> a));
+        return ownership.list(sg).stream().map(o -> mapper.farmland(sg, o, records.get(o.getFarmlandId()))).toList();
     }
 
     @PostMapping("/api/farmlands/{id}/sell-offer")

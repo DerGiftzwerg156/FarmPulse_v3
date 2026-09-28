@@ -54,13 +54,13 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | `konflikt-mods` | `FS25_UsedPlus` and `FS25_MarketDynamics` reported in `detectedMods` (TODO T-09) |
 | `helfer-hof` | Roadmap V2 (R2-A): `workforce` with one helper driven by employee 1 and one vanilla helper without employee, `finances`, `weather` |
 | `tierhof-krank` | Roadmap V2 (R2-A7): `husbandries` with low health, little food and water (pigs without `productivity`), `finances`, `weather` |
-| `ernte-herbst` | Roadmap V2 (R2-C): starts in September; `fields` with ready maize, growing potatoes, withered wheat and a weedy empty field, rain in `weather`, `finances` |
+| `ernte-herbst` | Roadmap V2 (R2-C): starts in September; `fields` with ready maize, growing potatoes, withered wheat and a weedy empty field (with the crop details `withered`, `cut`, `fillType`, `litersPerSqm`), `fieldRules` with every soil mechanic on, rain in `weather`, `finances` |
 
 All scenarios share the map "Erlengrund" with 16 farmlands; farmland 16 is the village area
 (`showOnFarmlandsScreen: false`, TODO T-11). The calendar starts at monotonic day 0 with period 1 (March) of year 1
 (`ernte-herbst`: period 7, September, on the first simulated day).
 
-**Roadmap V2 blocks** (`finances`, `workforce`, `husbandries`, `fields`, `weather`, see
+**Roadmap V2 blocks** (`finances`, `workforce`, `husbandries`, `fields`, `fieldRules`, `weather`, see
 [`docs/dev/bridge-protocol.md`](../../docs/dev/bridge-protocol.md)): only the three Roadmap V2 scenarios export them.
 All other scenarios leave them out and stand for a mod that does not deliver them yet, so the backend must treat a
 missing block as "not present". The values are simulated examples, not numbers read from FS25:
@@ -70,6 +70,8 @@ missing block as "not present". The values are simulated examples, not numbers r
 - `workforce` (R2-A4): every helper job with an `employeeId` adds the elapsed game time to `workedGameMs` of that
   employee.
 - `fields` (R2-C1): only fields on farmlands the player owns are exported (a `FARMLAND_TRANSFER` changes the list).
+  The crops do not grow on their own - change them with `POST /field`. `fieldRules` (R2-C) stands for the soil
+  settings of the savegame (`POST /field-rules`).
 - Journal, worked time, fields, husbandries, weather and the last `EMPLOYEE_ROSTER` are part of the simulated savegame
   and go back on `/reload-without-saving`.
 
@@ -99,7 +101,8 @@ but acknowledges it `FAILED` / `NOT_SUPPORTED` until R2-F2 is built.
 | `POST /book {"moneyType":"SHOP_PROPERTY_BUY","amount":-90000}` | A booking of the game (R2-B1): changes the balance and lands in `finances` under that FS25 money type (scenarios with a journal only) |
 | `POST /weather {"raining":true,"rainFallScale":0.8}` | Change the exported weather (Roadmap V2 scenarios only) |
 | `POST /husbandry {"husbandryUniqueId":"hus_00001","health":80,"food":0.6}` | Change the values of a husbandry (`tierhof-krank`) |
-| `POST /field {"farmlandId":7,"weedState":0}` | Change the state of a field (`ernte-herbst`) |
+| `POST /field {"farmlandId":7,"weedState":0}` | Change the state of a field (`ernte-herbst`), e.g. `{"farmlandId":2,"growthState":9,"cut":true}` = harvested |
+| `POST /field-rules {"limeRequired":false}` | The player changes the soil settings of the savegame (`ernte-herbst`) |
 | `POST /jobs {"activeJobs":[{"jobId":5,"employeeId":2,"title":"John Deere 8R"}]}` | Replace the running helper jobs (`helfer-hof`); jobs without `employeeId` get a free operator of the last roster |
 
 ## Running the whole tool without FS25

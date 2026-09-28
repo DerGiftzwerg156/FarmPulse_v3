@@ -121,6 +121,7 @@ public class RpsimProperties {
         private Contractor contractor = new Contractor();
         private Finance finance = new Finance();
         private Mechanic mechanic = new Mechanic();
+        private Fields fields = new Fields();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -212,6 +213,11 @@ public class RpsimProperties {
         /** Payment history score: points lost per missed installment / gained per on-time one. */
         private double paymentHistoryMissedPenalty = 15;
         private double paymentHistoryOnTimeGain = 2;
+        /**
+         * Roadmap V2 R2-C5: standing crops count as asset in the credit check - area x yield x best price x growth
+         * progress x this discount.
+         */
+        private double standingCropDiscount = 0.5;
 
         static Credit hardDefaults() {
             Credit c = new Credit();
@@ -509,6 +515,14 @@ public class RpsimProperties {
         private List<Integer> hailPeriods = new ArrayList<>(List.of(3, 4, 5, 6));
         private double hailDamagePerHectareMin = 200;
         private double hailDamagePerHectareMax = 900;
+        /**
+         * Roadmap V2 R2-C3: with the field export hail hits only standing crops; damage = area x yield x best price x
+         * a damage share between min and max. Without yield or price the per-hectare range above applies.
+         */
+        private double hailDamageShareMin = 0.05;
+        private double hailDamageShareMax = 0.3;
+        /** R2-C3: hail probability x (1 + factor x rain share of the month that just ended). */
+        private double hailRainFactor = 1.0;
         /** Game days the damage can be reported to the insurance. */
         private double reportDeadlineDays = 5;
         /** Game days between report and payout. */
@@ -558,6 +572,11 @@ public class RpsimProperties {
         private List<Integer> periods = new ArrayList<>(List.of(4, 5, 6, 7, 8));
         private double damagePerHectareMin = 150;
         private double damagePerHectareMax = 600;
+        /**
+         * Roadmap V2 R2-C3: with the field export wild boars only damage standing crops of these FS25 fruit types;
+         * the damage scales with the growth progress.
+         */
+        private List<String> crops = new ArrayList<>(List.of("MAIZE", "WHEAT", "BARLEY", "OAT", "POTATO"));
         /** First offer of the hunter as share of the damage (neutral trust). */
         private double offerShare = 0.5;
         /** Highest share the hunter accepts (neutral trust). */
@@ -815,5 +834,35 @@ public class RpsimProperties {
         private double repairBelowCondition = 90;
         /** Workload points lost per vehicle still below repair-below-condition after the month's repairs. */
         private double overloadWorkloadPerVehicle = 2;
+    }
+
+    /** Roadmap V2 R2-C: fields, crops and weather (placeholders). */
+    @Getter @Setter
+    public static class Fields {
+        /**
+         * Yield in liters per m² per FS25 fruit type, used only when the mod does not export {@code litersPerSqm}
+         * (older mod). Empty = unknown (hail then uses the per-hectare range, the bank counts no standing crop).
+         */
+        private Map<String, Double> yieldLitersPerSqm = new LinkedHashMap<>();
+        /** C2: a gap between two weather samples above this many game minutes is not counted (backend was off). */
+        private double rainSampleMaxGapMinutes = 180;
+        /** C4: weedState from which the neighbor minds the weeds (FS25 raw weed state). */
+        private int weedHighState = 5;
+        /** C4: stoneLevel from which the neighbor minds the stones (FS25 raw stone level). */
+        private int stoneHighLevel = 2;
+        /** C4: game months weeds / stones stay high before the neighbor writes (friendly). */
+        private double neighborAfterMonths = 2;
+        /** C4: game months after the friendly message before the annoyed one (with the trust loss). */
+        private double neighborRepeatMonths = 1;
+        private double neighborTrustDelta = -2;
+        /** C4: game months without a crop before the village gossips about a fallow field. */
+        private double fallowGossipMonths = 4;
+        /** C4: congratulation of the cooperative when every harvestable field of an FS25 year was harvested in time. */
+        private double harvestCongratulationTrustDelta = 1;
+        /** C4: at most this many field messages (neighbor, gossip, congratulation) per game month. */
+        private int maxMessagesPerMonth = 2;
+        /** C6: field work hints of the cooperative (switch per savegame on the settings page as well). */
+        private boolean hintsEnabled = true;
+        private double hintCooldownDays = 7;
     }
 }

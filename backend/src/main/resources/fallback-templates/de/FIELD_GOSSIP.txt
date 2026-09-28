@@ -1,0 +1,6 @@
+Hast du das mit Feld {{fieldName}} gesehen?
+Moin,
+
+man redet im Dorf über dein Feld {{fieldName}} – {{topic}}. Ich sag's dir nur, damit du Bescheid weißt.
+
+{{characterName}}

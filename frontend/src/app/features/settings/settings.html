@@ -92,4 +92,18 @@
       <p class="text-[12px] text-muted">–</p>
     }
   </app-card>
+
+  <app-card [title]="'settings.fields.title' | t" data-testid="field-settings">
+    @if (fields(); as f) {
+      <label class="flex items-start gap-2 text-[12px] text-text">
+        <input type="checkbox" [checked]="f.fieldHintsEnabled" (change)="saveFields($any($event.target).checked)" data-testid="field-hints" />
+        <span>{{ 'settings.fields.hints' | t }}</span>
+      </label>
+      @if (!f.fieldsTracked) {
+        <p class="mt-1 text-[11px] text-warn" data-testid="fields-untracked">{{ 'settings.fields.untracked' | t }}</p>
+      }
+    } @else {
+      <p class="text-[12px] text-muted">–</p>
+    }
+  </app-card>
 </section>

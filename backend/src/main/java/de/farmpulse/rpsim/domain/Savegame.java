@@ -179,4 +179,36 @@ public class Savegame {
     /** A7: the mod reports husbandry values (farm_facts.husbandries) - keepers work with the real stables. */
     @Column(name = "husbandries_tracked", nullable = false)
     private boolean husbandriesTracked;
+
+    // ---- Roadmap V2 R2-C: fields, crops and weather
+
+    /** C2: game time and rain state of the last weather sample (rain hours = sample and hold). */
+    @Column(name = "last_weather_game_time")
+    private Long lastWeatherGameTime;
+
+    @Column(name = "last_weather_raining")
+    private Boolean lastWeatherRaining;
+
+    /** C1: the mod reports the fields (farm_facts.fields) - damages and reactions follow the real crops. */
+    @Column(name = "fields_tracked", nullable = false)
+    private boolean fieldsTracked;
+
+    /** C4: FS25 year of the last field sample (a new year closes the harvest year of the fields). */
+    @Column(name = "field_year")
+    private Integer fieldYear;
+
+    /** C4: monthly cap of the field messages - game month index and messages sent in it. */
+    @Column(name = "field_messages_month")
+    private Long fieldMessagesMonth;
+
+    @Column(name = "field_messages_count", nullable = false)
+    private int fieldMessagesCount;
+
+    /** C6: last field work hint of the cooperative (at most one per cooldown). */
+    @Column(name = "last_field_hint_game_time")
+    private Long lastFieldHintGameTime;
+
+    /** C6: the player can switch the field work hints off (settings page). */
+    @Column(name = "field_hints_enabled", nullable = false)
+    private boolean fieldHintsEnabled = true;
 }

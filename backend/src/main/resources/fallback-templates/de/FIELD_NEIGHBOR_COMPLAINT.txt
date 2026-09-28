@@ -1,0 +1,6 @@
+Wegen deinem Feld {{fieldName}}
+Moin,
+
+auf deinem Feld {{fieldName}} sehe ich {{topic}}. {{stage}}
+
+{{characterName}}

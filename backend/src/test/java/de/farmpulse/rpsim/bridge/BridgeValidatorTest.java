@@ -58,7 +58,9 @@ class BridgeValidatorTest {
                                   "conditions": [{ "title": "Wasser", "ratio": 0.05 }] }],
                 "fields": [{ "farmlandId": 12, "name": "12", "hectares": 4.5, "fruitType": "WHEAT", "growthState": 5,
                              "minHarvestingGrowthState": 7, "maxHarvestingGrowthState": 8, "weedState": 1,
-                             "stoneLevel": 0, "sprayLevel": 1, "limeLevel": 0, "plowLevel": 1, "groundType": "SOWN" }],
+                             "stoneLevel": 0, "sprayLevel": 1, "limeLevel": 0, "plowLevel": 1, "groundType": "SOWN",
+                             "withered": false, "cut": false, "fillType": "WHEAT", "litersPerSqm": 0.9 }],
+                "fieldRules": { "plowingRequired": true, "limeRequired": false, "weedsEnabled": true, "stonesEnabled": true },
                 "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7 }""");
         assertThat(BridgeValidator.validate(f)).isEmpty();
         assertThat(f.finances().periods().get(0).byType()).containsEntry("PURCHASE_FUEL", -3100.0);
@@ -67,6 +69,10 @@ class BridgeValidatorTest {
         assertThat(f.husbandries().get(0).productivity()).isNull();
         assertThat(f.fields().get(0).maxHarvestingGrowthState()).isEqualTo(8);
         assertThat(f.weather().rainFallScale()).isEqualTo(0.6);
+        // Roadmap V2 R2-C: crop details and the soil settings of the savegame
+        assertThat(f.fields().get(0).litersPerSqm()).isEqualTo(0.9);
+        assertThat(f.fields().get(0).withered()).isFalse();
+        assertThat(f.fieldRules().limeRequired()).isFalse();
     }
 
     @Test
@@ -88,5 +94,7 @@ class BridgeValidatorTest {
                 .singleElement().asString().startsWith("invalid field");
         assertThat(BridgeValidator.validate(facts("\"weather\": { \"raining\": true, \"rainFallScale\": -1, \"groundWetness\": 0 }")))
                 .singleElement().asString().startsWith("invalid weather");
+        assertThat(BridgeValidator.validate(facts("\"fieldRules\": { \"plowingRequired\": true }")))
+                .singleElement().asString().startsWith("invalid fieldRules");
     }
 }

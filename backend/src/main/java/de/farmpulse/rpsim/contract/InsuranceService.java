@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalDouble;
 
 import de.farmpulse.rpsim.bridge.BridgeDtos;
 import de.farmpulse.rpsim.bridge.BridgeDtos.FarmFacts;
@@ -29,6 +30,8 @@ import de.farmpulse.rpsim.domain.ContractStatus;
 import de.farmpulse.rpsim.domain.MoneyReason;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
+import de.farmpulse.rpsim.field.FieldService;
+import de.farmpulse.rpsim.narration.FallbackTemplates;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
@@ -68,11 +71,14 @@ public class InsuranceService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final FieldService fields;
+    private final FallbackTemplates labels;
 
     public InsuranceService(ContractRepository contracts, ServiceCaseRepository cases, SavegameRepository savegames,
                             ContractBillingService billing, FactsService facts, OutboxService outbox,
                             ServiceRoleService roles, CharacterLookup lookup, NarrationRequestService narration,
-                            DiaryService diary, RandomSource random, RpsimProperties props, GameTime gameTime) {
+                            DiaryService diary, RandomSource random, RpsimProperties props, GameTime gameTime,
+                            FieldService fields, FallbackTemplates labels) {
         this.contracts = contracts;
         this.cases = cases;
         this.savegames = savegames;
@@ -86,6 +92,8 @@ public class InsuranceService {
         this.random = random;
         this.props = props;
         this.gameTime = gameTime;
+        this.fields = fields;
+        this.labels = labels;
     }
 
     private RpsimProperties.Insurance cfg() {
@@ -279,7 +287,7 @@ public class InsuranceService {
     public void onMonth(GameMonthPassedEvent e) {
         Savegame sg = savegames.findById(e.savegameId()).orElseThrow();
         int period = gameTime.periodOfYear(sg, e.gameTime());
-        if (cfg().getHailPeriods().contains(period) && random.chance(cfg().getHailProbabilityPerMonth())) {
+        if (cfg().getHailPeriods().contains(period) && random.chance(hailProbability(sg, e.gameTime()))) {
             hail(sg);
         }
         if (cfg().getStormPeriods().contains(period) && random.chance(cfg().getStormProbabilityPerMonth())) {
@@ -289,20 +297,60 @@ public class InsuranceService {
 
     // ------------------------------------------------------------------------------------------ damage
 
-    /** Hail on one random own field: hectares × damage per hectare. */
+    /**
+     * Roadmap V2 R2-C3: probability of hail in the month that starts now - more after a rainy month:
+     * p x (1 + hail-rain-factor x rain share of the month that just ended).
+     */
+    public double hailProbability(Savegame sg, long now) {
+        double share = fields.rainShare(sg, gameTime.monthIndex(sg, now) - 1);
+        return Math.min(1, cfg().getHailProbabilityPerMonth() * (1 + cfg().getHailRainFactor() * share));
+    }
+
+    /**
+     * Hail on one own field. Roadmap V2 R2-C3: with the field export only fields with a standing crop (growing or
+     * harvestable) are hit - none, no hail; damage = harvest value (area x yield x best price) x damage share, the
+     * per-hectare range when yield or price is unknown. Without the export (older mod) V1: any own field, hectares x
+     * damage per hectare.
+     */
     @Transactional
     public Optional<ServiceCase> hail(Savegame sg) {
         FarmFacts f = facts.latest(sg).orElse(null);
-        if (f == null || f.assets().farmland().isEmpty()) {
+        if (f == null) {
+            return Optional.empty();
+        }
+        if (f.fields() != null) {
+            List<BridgeDtos.Field> standing = f.fields().stream()
+                    .filter(x -> x != null && x.farmlandId() != null && FieldService.phase(x).standing()).toList();
+            if (standing.isEmpty()) {
+                return Optional.empty();
+            }
+            BridgeDtos.Field field = random.pick(standing);
+            double ha = field.hectares() == null ? 0 : field.hectares();
+            OptionalDouble value = fields.harvestValue(field, FactsService.bestPrices(f));
+            long damage = value.isPresent()
+                    ? round10(value.getAsDouble() * random.uniform(cfg().getHailDamageShareMin(), cfg().getHailDamageShareMax()))
+                    : perHectare(ha);
+            if (damage <= 0) {
+                return Optional.empty();
+            }
+            return Optional.of(damage(sg, CaseKind.HAIL_DAMAGE, field.farmlandId(), ha, damage,
+                    field.name() == null ? String.valueOf(field.farmlandId()) : field.name(), field.fruitType()));
+        }
+        if (f.assets().farmland().isEmpty()) {
             return Optional.empty();
         }
         BridgeDtos.OwnedFarmland field = random.pick(f.assets().farmland());
         double ha = field.hectares() == null ? 0 : field.hectares();
-        long damage = round10(ha * random.uniform(cfg().getHailDamagePerHectareMin(), cfg().getHailDamagePerHectareMax()));
+        long damage = perHectare(ha);
         if (damage <= 0) {
             return Optional.empty();
         }
-        return Optional.of(damage(sg, CaseKind.HAIL_DAMAGE, field.farmlandId(), ha, damage));
+        return Optional.of(damage(sg, CaseKind.HAIL_DAMAGE, field.farmlandId(), ha, damage,
+                String.valueOf(field.farmlandId()), null));
+    }
+
+    private long perHectare(double ha) {
+        return round10(ha * random.uniform(cfg().getHailDamagePerHectareMin(), cfg().getHailDamagePerHectareMax()));
     }
 
     /** Storm damage on the buildings: share of the building value. */
@@ -314,10 +362,11 @@ public class InsuranceService {
         if (damage <= 0) {
             return Optional.empty();
         }
-        return Optional.of(damage(sg, CaseKind.STORM_DAMAGE, null, null, damage));
+        return Optional.of(damage(sg, CaseKind.STORM_DAMAGE, null, null, damage, null, null));
     }
 
-    ServiceCase damage(Savegame sg, CaseKind kind, Integer farmlandId, Double hectares, long damage) {
+    ServiceCase damage(Savegame sg, CaseKind kind, Integer farmlandId, Double hectares, long damage, String fieldName,
+                       String fruitType) {
         long now = sg.getCurrentGameTime();
         Optional<Contract> insurance = active(sg);
         boolean covered = insurance.isPresent() && !insurance.get().isPaymentOverdue();
@@ -345,17 +394,22 @@ public class InsuranceService {
         }
         sc.setCharacter(narrator);
         cases.save(sc);
-        outbox.money(sg, -damage, MoneyReason.DAMAGE, (kind == CaseKind.HAIL_DAMAGE ? "Hagelschaden Feld " + farmlandId
+        // R2-C3: the message names field and crop ("Hagel auf Feld 12, Weizen")
+        String crop = labels.label(fruitType);
+        outbox.money(sg, -damage, MoneyReason.DAMAGE, (kind == CaseKind.HAIL_DAMAGE ? "Hagelschaden Feld " + fieldName
                 : "Sturmschaden Gebäude"), new Related(RELATED, sc.getId()));
         narration.request(sg, NarrationEventType.DAMAGE_NOTICE).from(narrator)
                 .facts(NarrationFacts.builder().put("damageType", kind).put("farmlandId", farmlandId)
+                        .put("fieldName", fieldName).put("fruitType", fruitType)
+                        .put("cropNote", crop == null ? null : ", " + crop)
                         .put("damageAmount", damage).put("insured", covered)
                         .put("coverSuspended", insurance.isPresent() && !covered)
                         .put("reportDeadlineDays", covered ? Math.round(cfg().getReportDeadlineDays()) : null).build())
                 .channel(covered ? Channel.CALL : Channel.MAIL)
                 .category(CommunicationCategory.INSURANCE).related(RELATED, sc.getId())
                 .formLink(covered ? "/contracts?case=" + sc.getId() : null).submit();
-        diary.addAuto(sg, "INSURANCE", kind == CaseKind.HAIL_DAMAGE ? "Hagel auf Feld " + farmlandId : "Sturmschaden",
+        diary.addAuto(sg, "INSURANCE", kind == CaseKind.HAIL_DAMAGE
+                        ? "Hagel auf Feld " + fieldName + (crop == null ? "" : " (" + crop + ")") : "Sturmschaden",
                 "Schaden: " + damage + " €" + (covered ? " – versichert, Meldung ausstehend." : " – nicht versichert."),
                 RELATED, sc.getId());
         if (!covered) {

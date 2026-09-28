@@ -1,11 +1,16 @@
 package de.farmpulse.rpsim.credit;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
+import de.farmpulse.rpsim.bridge.BridgeDtos;
 import de.farmpulse.rpsim.bridge.FactsService;
+import de.farmpulse.rpsim.field.FieldService;
+import de.farmpulse.rpsim.narration.FallbackTemplates;
 import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.diary.DiaryService;
@@ -52,12 +57,15 @@ public class CreditApplicationService {
     private final RandomSource random;
     private final FactsService facts;
     private final FinanceJournalService journal;
+    private final FieldService fields;
+    private final FallbackTemplates labels;
 
     public CreditApplicationService(CreditApplicationRepository applications, CreditScoringService scoring,
                                     LoanService loanService, LoanRepository loans, EmployeeRepository employees,
                                     CreditConfigResolver configs, NarrationRequestService narration,
                                     CharacterLookup lookup, DiaryService diary, RandomSource random,
-                                    FactsService facts, FinanceJournalService journal) {
+                                    FactsService facts, FinanceJournalService journal, FieldService fields,
+                                    FallbackTemplates labels) {
         this.applications = applications;
         this.scoring = scoring;
         this.loanService = loanService;
@@ -70,6 +78,8 @@ public class CreditApplicationService {
         this.random = random;
         this.facts = facts;
         this.journal = journal;
+        this.fields = fields;
+        this.labels = labels;
     }
 
     @Transactional
@@ -141,7 +151,10 @@ public class CreditApplicationService {
                     .put("purpose", a.getPurpose())
                     .put("requestedTermMonths", a.getTermMonths());
             // R2-B5: the advisor can name the real figures of the last month
-            facts.latest(sg).ifPresent(ff -> journal.putFacts(f, ff));
+            facts.latest(sg).ifPresent(ff -> {
+                journal.putFacts(f, ff);
+                putStandingCropFacts(sg, f, ff); // R2-C5: "Ihr Weizen steht gut, das berücksichtigen wir"
+            });
             NarrationEventType type;
             switch (a.getDecision()) {
                 case APPROVED -> {
@@ -173,6 +186,19 @@ public class CreditApplicationService {
                     .formLink(type == NarrationEventType.CREDIT_COUNTER_OFFER ? "/bank?application=" + a.getId() : null)
                     .submit();
         }
+    }
+
+    /** Roadmap V2 R2-C5: value of the standing crops the bank counted and the most valuable crop. */
+    void putStandingCropFacts(Savegame sg, NarrationFacts.Builder f, BridgeDtos.FarmFacts ff) {
+        List<FieldService.StandingCrop> crops = fields.standingCrops(ff, configs.forSavegame(sg).getStandingCropDiscount());
+        long value = Math.round(crops.stream().mapToDouble(FieldService.StandingCrop::value).sum());
+        if (value <= 0) {
+            return;
+        }
+        String main = crops.get(0).field().fruitType();
+        f.put("standingCropValue", value).put("mainStandingCrop", main)
+                .put("standingCropNote", "Ihren stehenden Bestand (" + labels.label(main) + ") haben wir mit rund "
+                        + NumberFormat.getIntegerInstance(Locale.GERMANY).format(value) + " € berücksichtigt.");
     }
 
     private static double pct(Double rate) {

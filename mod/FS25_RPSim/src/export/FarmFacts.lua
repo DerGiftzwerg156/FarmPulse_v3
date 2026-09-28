@@ -93,7 +93,8 @@ end
 local FIELD_LEVELS = { "growthState", "weedState", "stoneLevel", "sprayLevel", "limeLevel", "plowLevel" }
 
 --- R2-C1: raw = { {farmlandId, name, hectares, fruitType?, minHarvestingGrowthState?, maxHarvestingGrowthState?,
---   groundType?, growthState, weedState, stoneLevel, sprayLevel, limeLevel, plowLevel} }
+--   withered?, cut?, fillType?, litersPerSqm?, groundType?, growthState, weedState, stoneLevel, sprayLevel, limeLevel,
+--   plowLevel} }. withered / cut / fillType / litersPerSqm only with a crop (Roadmap V2 R2-C, owner decision).
 function RPSimFarmFacts.buildFields(raw)
     local list = RPSimJson.array({})
     for _, f in ipairs(raw) do
@@ -111,6 +112,18 @@ function RPSimFarmFacts.buildFields(raw)
                 e.fruitType = f.fruitType
                 e.minHarvestingGrowthState = optNumber(f, "minHarvestingGrowthState")
                 e.maxHarvestingGrowthState = optNumber(f, "maxHarvestingGrowthState")
+                if type(f.withered) == "boolean" then
+                    e.withered = f.withered
+                end
+                if type(f.cut) == "boolean" then
+                    e.cut = f.cut
+                end
+                if type(f.fillType) == "string" and f.fillType ~= "" then
+                    e.fillType = f.fillType
+                end
+                if type(f.litersPerSqm) == "number" and f.litersPerSqm >= 0 then
+                    e.litersPerSqm = math.floor(f.litersPerSqm * 10000 + 0.5) / 10000
+                end
             end
             if type(f.groundType) == "string" and f.groundType ~= "" then
                 e.groundType = f.groundType
@@ -123,6 +136,21 @@ function RPSimFarmFacts.buildFields(raw)
         return a.farmlandId < b.farmlandId
     end)
     return list
+end
+
+local FIELD_RULES = { "plowingRequired", "limeRequired", "weedsEnabled", "stonesEnabled" }
+
+--- R2-C: game settings that decide whether plowing, lime, weeds and stones matter at all (the game's soil map shows
+-- them only when active). raw = { plowingRequired, limeRequired, weedsEnabled, stonesEnabled }; incomplete = nil.
+function RPSimFarmFacts.buildFieldRules(raw)
+    local rules = {}
+    for _, key in ipairs(FIELD_RULES) do
+        if type(raw[key]) ~= "boolean" then
+            return nil
+        end
+        rules[key] = raw[key]
+    end
+    return rules
 end
 
 --- R2-C2: raw = { raining, rainFallScale, groundWetness }. Incomplete weather is left out.
@@ -142,7 +170,7 @@ end
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
 --   prices = { {sellPoint, fillType, pricePerLiter, trend?} },
 --   calendar = { period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName?, season? } | nil,
---   Roadmap V2, each optional (nil = not collected): finances, workforce, husbandries, fields, weather
+--   Roadmap V2, each optional (nil = not collected): finances, workforce, husbandries, fields, fieldRules, weather
 --   (see the build* functions above) }
 function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
@@ -246,6 +274,9 @@ function RPSimFarmFacts.build(raw, cfg)
     end
     if type(raw.fields) == "table" then
         doc.fields = RPSimFarmFacts.buildFields(raw.fields)
+    end
+    if type(raw.fieldRules) == "table" then
+        doc.fieldRules = RPSimFarmFacts.buildFieldRules(raw.fieldRules)
     end
     if type(raw.weather) == "table" then
         doc.weather = RPSimFarmFacts.buildWeather(raw.weather)

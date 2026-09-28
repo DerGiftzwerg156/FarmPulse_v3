@@ -138,14 +138,19 @@ Object.assign(SCENARIOS, {
     // only fields on farmlands the player owns are exported (R2-C1)
     fields: [
       { farmlandId: 2, fruitType: 'MAIZE', growthState: 7, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'MAIZE', litersPerSqm: 1.1,
         weedState: 0, stoneLevel: 0, sprayLevel: 2, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
       { farmlandId: 4, fruitType: 'POTATO', growthState: 4, minHarvestingGrowthState: 6, maxHarvestingGrowthState: 6,
+        withered: false, cut: false, fillType: 'POTATO', litersPerSqm: 4,
         weedState: 1, stoneLevel: 1, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
       { farmlandId: 6, fruitType: 'WHEAT', growthState: 10, minHarvestingGrowthState: 8, maxHarvestingGrowthState: 8,
+        withered: true, cut: false, fillType: 'WHEAT', litersPerSqm: 0.95,
         weedState: 2, stoneLevel: 0, sprayLevel: 0, limeLevel: 0, plowLevel: 0, groundType: 'SOWN' },
       { farmlandId: 7, growthState: 0, weedState: 3, stoneLevel: 3, sprayLevel: 0, limeLevel: 0, plowLevel: 0,
         groundType: 'CULTIVATED' },
     ],
+    // R2-C: game settings of the soil mechanics (all on, like a new career savegame with every option enabled)
+    fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
     weather: { raining: true, rainFallScale: 0.6, groundWetness: 0.7 },
   },
 });

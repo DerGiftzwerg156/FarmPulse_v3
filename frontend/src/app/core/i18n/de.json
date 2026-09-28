@@ -499,6 +499,13 @@
       "DIVESTMENT": "Anlagenverkauf",
       "FINANCING": "Finanzierung",
       "IGNORE": "nicht operativ"
+    },
+    "fieldPhase": {
+      "EMPTY": "leer",
+      "GROWING": "wächst",
+      "HARVESTABLE": "erntereif",
+      "HARVESTED": "abgeerntet",
+      "WITHERED": "verdorrt"
     }
   },
   "onboarding": {
@@ -888,6 +895,11 @@
       "strict": "Strenger Modus: höchstens so viele Helfer wie aktive Maschinenführer",
       "strictHint": "Ohne Maschinenführer gibt es im strengen Modus keine Helfer. Streikende oder freigestellte Mitarbeiter zählen nicht.",
       "untracked": "Der Mod meldet noch keine Helfer – die Einstellungen wirken erst mit der aktuellen Mod-Version."
+    },
+    "fields": {
+      "title": "Felder",
+      "hints": "Hinweise der Genossenschaft zur Feldarbeit (erntereif, Kalk, Pflügen) – höchstens einer pro Woche",
+      "untracked": "Der Mod meldet noch keine Felder – Hinweise und Feldreaktionen wirken erst mit der aktuellen Mod-Version."
     }
   },
   "notices": {

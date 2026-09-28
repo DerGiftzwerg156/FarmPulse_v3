@@ -4,7 +4,7 @@
 -- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
 -- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
 -- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
--- luacheck: globals g_i18n
+-- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -291,7 +291,8 @@ function RPSimGameAdapter:collectFarmFacts()
     local farmId = self:getFarmId()
     local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, husbandries = {},
         silos = {},
-        prices = {}, calendar = self:collectCalendar(), missions = self:collectMissions(50) }
+        prices = {}, calendar = self:collectCalendar(), missions = self:collectMissions(50),
+        weather = self:collectWeather() }
     local farm = safe(function() return g_farmManager:getFarmById(farmId) end, nil)
     raw.balance = safe(function() return farm.money end, 0)
     raw.vanillaLoan = safe(function() return farm.loan end, 0)
@@ -601,6 +602,94 @@ function RPSimGameAdapter:collectAIJobs()
     end
     table.sort(jobs, function(a, b) return a.jobId < b.jobId end)
     return jobs
+end
+
+--- Roadmap V2 R2-C1: state of the fields on farmlands of the player farm. Sources (FS25 dump / LUADOC):
+-- g_fieldManager.fields (FieldManager.lua), field.farmland (Farmland, set by FieldManager:loadMapData),
+-- field:getName() / field:getFieldState() (AbstractFieldMission.lua, PlowMission.lua), FieldState fields
+-- (FieldState.lua), g_fruitTypeManager:getFruitTypeNameByIndex / getFruitTypeByIndex /
+-- getFillTypeNameByFruitTypeIndex (FruitTypeManager), FruitTypeDesc min/maxHarvestingGrowthState, literPerSqm,
+-- getIsWithered / getIsCut (FruitTypeDesc). Fields without a valid state are left out. nil = no field manager.
+function RPSimGameAdapter:collectFields()
+    local farmId = self:getFarmId()
+    local fields = safe(function() return g_fieldManager.fields end, nil)
+    if fields == nil then
+        return nil
+    end
+    local list = {}
+    for _, field in pairs(fields) do
+        safe(function()
+            local farmland = field.farmland
+            if farmland == nil or g_farmlandManager:getFarmlandOwner(farmland.id) ~= farmId then
+                return true
+            end
+            local state = field:getFieldState()
+            if state == nil or not state.isValid then
+                return true
+            end
+            local e = { farmlandId = farmland.id, name = field:getName(), hectares = field.areaHa,
+                growthState = state.growthState, weedState = state.weedState, stoneLevel = state.stoneLevel,
+                sprayLevel = state.sprayLevel, limeLevel = state.limeLevel, plowLevel = state.plowLevel,
+                groundType = RPSimGameAdapter.groundTypeName(state.groundType) }
+            local index = state.fruitTypeIndex
+            if index ~= nil and (FruitType == nil or index ~= FruitType.UNKNOWN) then
+                local desc = g_fruitTypeManager:getFruitTypeByIndex(index)
+                if desc ~= nil then
+                    e.fruitType = g_fruitTypeManager:getFruitTypeNameByIndex(index)
+                    e.minHarvestingGrowthState = desc.minHarvestingGrowthState
+                    e.maxHarvestingGrowthState = desc.maxHarvestingGrowthState
+                    e.withered = safe(function() return desc:getIsWithered(state.growthState) == true end, nil)
+                    e.cut = safe(function() return desc:getIsCut(state.growthState) == true end, nil)
+                    e.fillType = safe(function() return g_fruitTypeManager:getFillTypeNameByFruitTypeIndex(index) end, nil)
+                    e.litersPerSqm = desc.literPerSqm
+                end
+            end
+            list[#list + 1] = e
+            return true
+        end)
+    end
+    return list
+end
+
+--- Name of a field ground type in the global FieldGroundType table (reverse lookup, numbers only), nil if unknown.
+function RPSimGameAdapter.groundTypeName(value)
+    if value == nil or FieldGroundType == nil or type(FieldGroundType) ~= "table" then
+        return nil
+    end
+    for name, v in pairs(FieldGroundType) do
+        if v == value and type(name) == "string" and type(v) == "number" then
+            return name
+        end
+    end
+    return nil
+end
+
+--- R2-C: game settings of the soil mechanics. The game shows "needs plowing" / "needs lime" only with
+-- Platform.gameplay.usePlowCounter / useLimeCounter and missionInfo.plowingRequiredEnabled / limeRequired, weeds and
+-- stones only when the map has them and missionInfo.weedsEnabled / stonesEnabled (MapOverlayGenerator.lua).
+function RPSimGameAdapter:collectFieldRules()
+    return safe(function()
+        local info = g_currentMission.missionInfo
+        local gameplay = Platform ~= nil and Platform.gameplay or {}
+        local weeds = g_currentMission.weedSystem
+        local stones = g_currentMission.stoneSystem
+        return {
+            plowingRequired = gameplay.usePlowCounter ~= false and info.plowingRequiredEnabled == true,
+            limeRequired = gameplay.useLimeCounter ~= false and info.limeRequired == true,
+            weedsEnabled = weeds ~= nil and weeds:getMapHasWeed() == true and info.weedsEnabled == true,
+            stonesEnabled = stones ~= nil and stones:getMapHasStones() == true and info.stonesEnabled == true,
+        }
+    end, nil)
+end
+
+--- R2-C2: current weather (environment.weather:getIsRaining / getRainFallScale / getGroundWetness, used e.g. by
+-- PlaceableSolarPanels, Wipers and Wheels). nil when the weather is not available.
+function RPSimGameAdapter:collectWeather()
+    return safe(function()
+        local weather = g_currentMission.environment.weather
+        return { raining = weather:getIsRaining() == true, rainFallScale = weather:getRainFallScale(),
+            groundWetness = weather:getGroundWetness() }
+    end, nil)
 end
 
 --- R2-A3: g_currentMission.maxNumHirables limits the helpers (AISystem:getAILimitedReached). The original value is

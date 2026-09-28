@@ -107,9 +107,15 @@ public class ApiMapper {
     }
 
     public FarmlandView farmland(Savegame sg, FarmlandOwnership o) {
+        return farmland(sg, o, null);
+    }
+
+    /** R2-C: with the field record of an own field (crop and growth phase). */
+    public FarmlandView farmland(Savegame sg, FarmlandOwnership o, FieldRecord field) {
         return new FarmlandView(o.getFarmlandId(), o.getHectares(), o.getReferencePrice(), o.getOwnerType().name(),
                 ref(o.getOwnerCharacter()), negotiations.isBlocked(sg, AssetType.FARMLAND, String.valueOf(o.getFarmlandId())),
-                o.isTradeable(), o.isLeasedToPlayer());
+                o.isTradeable(), o.isLeasedToPlayer(), field == null ? null : field.getFruitType(),
+                field == null ? null : field.getPhase().name());
     }
 
     public NegotiationView negotiation(Negotiation n) {

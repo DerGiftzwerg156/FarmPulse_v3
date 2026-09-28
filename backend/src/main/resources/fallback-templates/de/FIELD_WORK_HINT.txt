@@ -1,0 +1,7 @@
+Hinweis zu Feld {{fieldName}}
+Hallo,
+
+kurzer Hinweis von der Genossenschaft: Feld {{fieldName}} {{hint}}.
+
+Viele Grüße
+{{characterName}}

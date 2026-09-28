@@ -24,6 +24,9 @@ function RPSimBridge.new(cfg, paths, adapter, state)
     -- farms, vehicles, placeables and selling stations of the savegame are not loaded yet.
     self.started = false
     self.lastMarketContextJson = nil
+    -- Roadmap V2 R2-C1: fields are sampled every fieldExportIntervalMs and carried into every farm_facts export
+    self.fieldCache = nil
+    self.fieldTimer = 0
     return self
 end
 
@@ -82,7 +85,27 @@ function RPSimBridge:exportFarmFacts()
     if self.workforceEnabled then
         raw.workforce = self:sampleWorkforce(raw.gameTime)
     end
+    local fields = self:sampleFields()
+    if fields ~= nil then
+        raw.fields, raw.fieldRules = fields.fields, fields.rules
+    end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
+end
+
+--- Roadmap V2 R2-C1: walking all fields is not free, so they are sampled only every fieldExportIntervalMs (real
+-- time) or after a farmland transfer; every export in between carries the last sample. nil = no field manager.
+function RPSimBridge:sampleFields()
+    if self.fieldCache == nil or self.fieldTimer >= self.cfg.fieldExportIntervalMs then
+        self.fieldTimer = 0
+        local okFields, fields = pcall(self.adapter.collectFields, self.adapter)
+        if not okFields or fields == nil then
+            self.fieldCache = nil
+            return nil
+        end
+        local okRules, rules = pcall(self.adapter.collectFieldRules, self.adapter)
+        self.fieldCache = { fields = fields, rules = okRules and rules or nil }
+    end
+    return self.fieldCache
 end
 
 --- Roadmap V2 R2-A2 / R2-A3 / R2-A4: running helper jobs of the player farm. Jobs that run after loading are assigned
@@ -231,6 +254,7 @@ function RPSimBridge:pollInstructions()
                 },
             })
             if result.marketContextDirty then
+                self.fieldCache = nil -- R2-C1: the owned fields changed
                 -- Re-export right after every applied FARMLAND_TRANSFER.
                 self:exportMarketContext(true)
             end
@@ -254,6 +278,7 @@ function RPSimBridge:update(dtMs)
     end
     self.exportTimer = self.exportTimer + dtMs
     self.importTimer = self.importTimer + dtMs
+    self.fieldTimer = self.fieldTimer + dtMs
     if self.importTimer >= self.cfg.importIntervalMs then
         self.importTimer = 0
         self:pollInstructions()

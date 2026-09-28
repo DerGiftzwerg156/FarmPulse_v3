@@ -47,6 +47,11 @@
             <div>
               <div class="font-display text-[13px] font-bold text-text">{{ 'farmland.fieldLabel' | t: { id: f.farmlandId } }}</div>
               <div class="fp-label">{{ f.hectares | num: 2 }} ha · {{ 'farmland.reference' | t }} {{ f.referencePrice | money }}</div>
+              @if (f.phase) {
+                <div class="fp-label mt-0.5" data-testid="field-crop">
+                  @if (f.fruitType) {<span class="text-text">{{ f.fruitType | label: 'fillType' }}</span> · }{{ f.phase | label: 'fieldPhase' }}
+                </div>
+              }
             </div>
             <app-badge [variant]="f.ownerType === 'PLAYER' ? 'positive' : 'neutral'">
               {{ f.tradeable === false ? ('farmland.notTradeableBadge' | t) : (f.ownerType === 'CHARACTER' && f.owner ? f.owner.name : (f.ownerType | label: 'ownerType')) }}

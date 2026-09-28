@@ -167,6 +167,7 @@ export class BridgeSimulator {
     this.husbandries = preset.husbandries ? structuredClone(preset.husbandries) : null;
     this.fields = preset.fields ? structuredClone(preset.fields) : null;
     this.weather = preset.weather ? { ...preset.weather } : null;
+    this.fieldRules = preset.fieldRules ? { ...preset.fieldRules } : null;
     this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
     this.prompts = []; // R2-F2: yes/no questions shown to the "player"
     this.lastMarketContextJson = null;
@@ -388,6 +389,7 @@ export class BridgeSimulator {
         .map((f) => ({ name: String(f.farmlandId), hectares: owned.get(f.farmlandId).hectares, ...f }))
         .sort((a, b) => a.farmlandId - b.farmlandId);
     }
+    if (this.fieldRules) blocks.fieldRules = { ...this.fieldRules };
     if (this.weather) blocks.weather = { ...this.weather };
     return blocks;
   }
@@ -403,6 +405,13 @@ export class BridgeSimulator {
     this.balance += amount;
     this.book(moneyType, amount);
     return { balance: this.balance, finances: this.roadmapV2Blocks().finances ?? null };
+  }
+
+  /** Control API: the player changes the soil settings of the savegame (R2-C). */
+  setFieldRules(patch) {
+    if (!this.fieldRules) throw new Error(`scenario ${this.scenario} exports no fieldRules`);
+    Object.assign(this.fieldRules, patch);
+    return this.fieldRules;
   }
 
   /** Control API: the weather changes in the game (R2-C2). */

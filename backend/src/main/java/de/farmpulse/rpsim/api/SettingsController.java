@@ -56,6 +56,22 @@ public class SettingsController {
         return new Views.HelperSettingsView(sg.getHelperWageMode().name(), sg.isStrictHelperLimit(), sg.isWorkforceTracked());
     }
 
+    /** Roadmap V2 R2-C6: field work hints of the cooperative. */
+    @GetMapping("/api/settings/fields")
+    @Transactional(readOnly = true)
+    public Views.FieldSettingsView fields() {
+        Savegame sg = context.requireActive();
+        return new Views.FieldSettingsView(sg.isFieldHintsEnabled(), sg.isFieldsTracked());
+    }
+
+    @PutMapping("/api/settings/fields")
+    @Transactional
+    public Views.FieldSettingsView saveFields(@Valid @RequestBody Requests.FieldSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setFieldHintsEnabled(r.fieldHintsEnabled());
+        return new Views.FieldSettingsView(sg.isFieldHintsEnabled(), sg.isFieldsTracked());
+    }
+
     private AiSettingsView view(AiSettingsService.View v) {
         List<String> providers = registry.ids().stream().filter(id -> !"FAKE".equals(id)).toList();
         return new AiSettingsView(v.provider(), v.model(), v.baseUrl(), v.apiKeySet(), providers);

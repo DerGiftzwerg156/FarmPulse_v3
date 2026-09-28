@@ -73,14 +73,14 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 `farm_facts.json` gets five more **optional** blocks for [`ROADMAP_V2.md`](../../ROADMAP_V2.md). `schemaVersion` stays
 `1` as long as every new block is optional. The contract is fixed now; the mod fills a block once the feature that
 collects it is built (named per block). Until then the block is **missing**. Filled by the mod so far: `finances`
-(R2-B1), `workforce` (R2-A4) and `husbandries` (R2-A7).
+(R2-B1), `workforce` (R2-A4), `husbandries` (R2-A7), `fields`, `fieldRules` (R2-C1) and `weather` (R2-C2).
 
 - **Missing ≠ empty.** A missing block means "not present" (older mod, or the feature is not built yet); the backend
   keeps its V1 behaviour then. An empty block (`"fields": []`, `"workedGameMs": {}`) is a real answer of the game.
   `BridgeDtos.FarmFacts` returns `null` for a missing block, `BridgeValidator` checks a block only when it is present.
 - `RPSimFarmFacts.build` normalises what the adapter collects (`raw.finances`, `raw.workforce`, `raw.husbandries`,
-  `raw.fields`, `raw.weather`): numbers are rounded, lists sorted, incomplete entries dropped. Ratios and weather
-  values are rounded to 3 decimals.
+  `raw.fields`, `raw.fieldRules`, `raw.weather`): numbers are rounded, lists sorted, incomplete entries dropped.
+  Ratios and weather values are rounded to 3 decimals.
 - The bridge simulator exports the blocks only in the scenarios `helfer-hof`, `tierhof-krank` and `ernte-herbst`.
 
 ```json
@@ -92,8 +92,10 @@ collects it is built (named per block). Until then the block is **missing**. Fil
   "husbandries": [{ "husbandryUniqueId": "hus_00003", "health": 61.5, "productivity": 0.42, "food": 0.2,
                     "conditions": [{ "title": "Wasser", "ratio": 0.05 }, { "title": "Stroh", "ratio": 0.2 }] }],
   "fields": [{ "farmlandId": 12, "name": "12", "hectares": 4.5, "fruitType": "WHEAT", "growthState": 5,
-               "minHarvestingGrowthState": 7, "maxHarvestingGrowthState": 8, "weedState": 1, "stoneLevel": 0,
+               "minHarvestingGrowthState": 7, "maxHarvestingGrowthState": 8, "withered": false, "cut": false,
+               "fillType": "WHEAT", "litersPerSqm": 0.9, "weedState": 1, "stoneLevel": 0,
                "sprayLevel": 1, "limeLevel": 0, "plowLevel": 1, "groundType": "SOWN" }],
+  "fieldRules": { "plowingRequired": true, "limeRequired": true, "weedsEnabled": true, "stonesEnabled": false },
   "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7 } }
 ```
 
@@ -182,9 +184,38 @@ the animal keeper (workload from animals per keeper, stable warnings), the vet e
 | `minHarvestingGrowthState` / `maxHarvestingGrowthState` | Growth states in which the crop can be harvested; only with `fruitType` | `getFruitTypeByIndex(...)` fields of the same name (dump `FruitTypeDesc.lua`, `MapOverlayGenerator.lua`) |
 | `growthState`, `weedState`, `stoneLevel`, `sprayLevel`, `limeLevel`, `plowLevel` | Raw levels of the field state (integers, units as in the game) | `FieldState` fields of the same name (dump `field/FieldState.lua`) via `field:getFieldState()` |
 | `groundType` | Name of the ground type in the global `FieldGroundType` table (e.g. `SOWN`, `CULTIVATED`, `PLOWED`); optional | `FieldState.groundType` (dump); names as used in `FieldManager.lua` |
+| `withered` / `cut` | The crop is withered / cut (stubble after the harvest); only with `fruitType`, optional (owner decision R2-C: the roadmap rule "above `max` = withered" would call every harvested field withered) | `FruitTypeDesc:getIsWithered(growthState)` / `getIsCut(growthState)` (LUADOC `script/Fruits/FruitTypeDesc.md`) |
+| `fillType` | Fill type of the harvest, the name the prices use; only with `fruitType`, optional | `g_fruitTypeManager:getFillTypeNameByFruitTypeIndex(index)` (LUADOC `script/Fruits/FruitTypeManager.md`) |
+| `litersPerSqm` | Yield of the crop in liters per m² (4 decimals); only with `fruitType`, optional | `FruitTypeDesc.literPerSqm`, read from the map's fruit types (`harvest#litersPerSqm`, LUADOC `FruitTypeDesc.md`) |
 
 🟡 whether `field:getFieldState()` is updated soon after field work (the `FieldManager` walks the fields round-robin,
 `fieldStateUpdateIndex`); fallback: own `FieldState.new()` sampled at the field centre (`posX`/`posZ`).
+
+**Built (R2-C1):** `RPSimGameAdapter:collectFields` walks `g_fieldManager.fields`, keeps the fields whose
+`field.farmland` belongs to the player farm and whose state `isValid`, and reads crop and levels as above
+(`groundType` by a reverse lookup in `FieldGroundType`). Walking all fields is not free: the bridge samples them only
+every `fieldExportIntervalMs` (mod config, default 5 min real time) and after a `FARMLAND_TRANSFER`; every
+`farm_facts` export in between carries the last sample. Without `g_fieldManager` the block stays missing.
+
+The backend (`FieldService`) derives the growth phase: no crop = `EMPTY`; `withered` = `WITHERED`; `cut` =
+`HARVESTED`; otherwise below `minHarvestingGrowthState` `GROWING`, up to `max` `HARVESTABLE`, above `max` `WITHERED`
+(mods without the flags). It keeps one record per field and the crop per FS25 year (harvestable seen, harvested,
+withered) for the village reactions (R2-C4) and E2. Hail and wild boars hit only standing crops (R2-C3), the bank
+counts them as asset (R2-C5), the cooperative gives field work hints (R2-C6).
+
+**`fieldRules`** (R2-C). The soil settings of the savegame; all four booleans required. The game shows "needs
+plowing" / "needs lime" on the soil map only when they are active, weeds and stones only when the map has them and they
+are switched on. The backend evaluates weeds, stones, lime and plowing only with this block.
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `plowingRequired` | Plowing is required (plow counter active) | `Platform.gameplay.usePlowCounter` and `g_currentMission.missionInfo.plowingRequiredEnabled` (dump `base/MapOverlayGenerator.lua`, `field/FieldManager.lua`) |
+| `limeRequired` | Lime is required (lime counter active) | `Platform.gameplay.useLimeCounter` and `missionInfo.limeRequired` (same) |
+| `weedsEnabled` | Weeds grow | `g_currentMission.weedSystem:getMapHasWeed()` and `missionInfo.weedsEnabled` (same) |
+| `stonesEnabled` | Stones appear | `g_currentMission.stoneSystem:getMapHasStones()` and `missionInfo.stonesEnabled` (same) |
+
+"Needs plowing" / "needs lime" = `plowLevel` / `limeLevel` `0`: the soil map colours state value `0` of these layers
+(`MapOverlayGenerator`), `FieldManager` sets both to their maximum on a freshly worked field.
 
 **`weather`** (R2-C2). All three fields required.
 
@@ -193,6 +224,11 @@ the animal keeper (workload from animals per keeper, stable warnings), the vet e
 | `raining` | It is raining | `g_currentMission.environment.weather:getIsRaining()` (LUADOC: `BeehiveSystem`, `PlaceableSolarPanels`) |
 | `rainFallScale` | Rain intensity, 0 = dry (the game tests `> 0`) | `weather:getRainFallScale()` (LUADOC: `VehicleSystem`, `Wipers`, `Combine`) |
 | `groundWetness` | Ground wetness as the game uses it for wheels | `weather:getGroundWetness()` (LUADOC: `Wheels`, `Washable`) |
+
+**Built (R2-C2):** `RPSimGameAdapter:collectWeather` reads the three values at every `farm_facts` export. The backend
+extrapolates the rain hours per game month (sample and hold: the game time since the last sample counts as rain when
+that sample said `raining`; gaps above `fields.rain-sample-max-gap-minutes` and a rewound game time only move the
+reference point). A rainy month raises the hail probability of the next one (`insurance.hail-rain-factor`).
 
 ## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, and on every `farm_facts` cycle when its content changed)
 

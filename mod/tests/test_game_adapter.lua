@@ -323,4 +323,81 @@ function T.TestGameAdapter:testMissionsAreExported()
     g_missionManager, MissionStatus, MissionFinishState = nil, nil, nil
 end
 
+-- Roadmap V2 R2-C1 / R2-C2
+local function fakeFields(game)
+    game.ownership[1] = 1
+    FruitType = { UNKNOWN = 0 }
+    FieldGroundType = { NONE = 0, SOWN = 5, getValueByType = function() return 9 end }
+    local wheat = { minHarvestingGrowthState = 8, maxHarvestingGrowthState = 8, literPerSqm = 0.99,
+        getIsWithered = function(_, gs) return gs == 10 end, getIsCut = function(_, gs) return gs == 9 end }
+    g_fruitTypeManager = {
+        getFruitTypeByIndex = function(_, i) return i == 3 and wheat or nil end,
+        getFruitTypeNameByIndex = function(_, i) return i == 3 and "WHEAT" or nil end,
+        getFillTypeNameByFruitTypeIndex = function(_, i) return i == 3 and "WHEAT" or nil end,
+    }
+    local function field(farmland, name, state)
+        return { farmland = farmland, areaHa = 4.5, getName = function() return name end,
+            getFieldState = function() return state end }
+    end
+    local base = { isValid = true, weedState = 1, stoneLevel = 0, sprayLevel = 1, limeLevel = 0, plowLevel = 1 }
+    local function state(t)
+        local s = {}
+        for k, v in pairs(base) do s[k] = v end
+        for k, v in pairs(t) do s[k] = v end
+        return s
+    end
+    g_fieldManager = { fields = {
+        field({ id = 1 }, "1", state({ fruitTypeIndex = 3, growthState = 10, groundType = 5 })),
+        field({ id = 2 }, "2", state({ fruitTypeIndex = 3, growthState = 5 })), -- not owned
+        field({ id = 1 }, "1b", state({ isValid = false, fruitTypeIndex = 0, growthState = 0 })),
+        field(nil, "x", state({ fruitTypeIndex = 0, growthState = 0 })),
+    } }
+end
+
+function T.TestGameAdapter:testOnlyValidFieldsOfOwnedFarmlandsWithCropDetails()
+    local game = helpers.fakeGame()
+    fakeFields(game)
+    local fields = RPSimGameAdapter.new():collectFields()
+    lu.assertEquals(#fields, 1)
+    local f = fields[1]
+    lu.assertEquals({ f.farmlandId, f.name, f.fruitType, f.growthState, f.groundType }, { 1, "1", "WHEAT", 10, "SOWN" })
+    lu.assertTrue(f.withered)
+    lu.assertFalse(f.cut)
+    lu.assertEquals({ f.fillType, f.litersPerSqm, f.minHarvestingGrowthState }, { "WHEAT", 0.99, 8 })
+    g_fieldManager = nil
+    lu.assertNil(RPSimGameAdapter.new():collectFields())
+end
+
+function T.TestGameAdapter:testFieldRulesFollowTheGameSettings()
+    helpers.fakeGame()
+    Platform = { gameplay = { usePlowCounter = true, useLimeCounter = false } }
+    g_currentMission.missionInfo.plowingRequiredEnabled = true
+    g_currentMission.missionInfo.limeRequired = true
+    g_currentMission.missionInfo.weedsEnabled = true
+    g_currentMission.weedSystem = { getMapHasWeed = function() return true end }
+    lu.assertEquals(RPSimGameAdapter.new():collectFieldRules(), { plowingRequired = true, limeRequired = false,
+        weedsEnabled = true, stonesEnabled = false })
+    Platform = nil
+end
+
+function T.TestGameAdapter:testWeatherAndFieldsReachFarmFactsFieldsOnlyEveryInterval()
+    local game = helpers.fakeGame()
+    fakeFields(game)
+    g_currentMission.environment.weather = { getIsRaining = function() return true end,
+        getRainFallScale = function() return 0.5 end, getGroundWetness = function() return 0.25 end }
+    local bridge, fs, paths = realBridge(game)
+    bridge:exportFarmFacts()
+    local doc = RPSimJson.decode(fs.files[paths.farmFacts])
+    lu.assertEquals(doc.weather, { raining = true, rainFallScale = 0.5, groundWetness = 0.25 })
+    lu.assertEquals(doc.fields[1].fruitType, "WHEAT")
+    -- the next export carries the cached sample until the interval has passed
+    g_fieldManager.fields = {}
+    bridge:exportFarmFacts()
+    lu.assertEquals(#RPSimJson.decode(fs.files[paths.farmFacts]).fields, 1)
+    bridge.fieldTimer = bridge.cfg.fieldExportIntervalMs
+    bridge:exportFarmFacts()
+    lu.assertEquals(#RPSimJson.decode(fs.files[paths.farmFacts]).fields, 0)
+    g_fieldManager = nil
+end
+
 return T

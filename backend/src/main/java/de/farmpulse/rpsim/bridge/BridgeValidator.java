@@ -114,10 +114,17 @@ public final class BridgeValidator {
             f.fields().forEach(fd -> {
                 if (fd == null || fd.farmlandId() == null || fd.name() == null || negativeOrNull(fd.hectares())
                         || Stream.of(fd.growthState(), fd.weedState(), fd.stoneLevel(), fd.sprayLevel(), fd.limeLevel(),
-                        fd.plowLevel()).anyMatch(v -> v == null || v < 0)) {
+                        fd.plowLevel()).anyMatch(v -> v == null || v < 0)
+                        || (fd.litersPerSqm() != null && fd.litersPerSqm() < 0)) {
                     e.add("invalid field " + fd);
                 }
             });
+        }
+        if (f.fieldRules() != null) {
+            var r = f.fieldRules();
+            if (Stream.of(r.plowingRequired(), r.limeRequired(), r.weedsEnabled(), r.stonesEnabled()).anyMatch(v -> v == null)) {
+                e.add("invalid fieldRules " + r);
+            }
         }
         if (f.weather() != null) {
             var w = f.weather();

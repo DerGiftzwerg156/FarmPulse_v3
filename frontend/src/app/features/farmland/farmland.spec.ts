@@ -80,6 +80,22 @@ describe('Farmland', () => {
     }
   });
 
+  // Roadmap V2 R2-C
+  it('shows crop and growth phase of an own field', () => {
+    Object.assign(fields[0], { fruitType: 'WHEAT', phase: 'HARVESTABLE' });
+    try {
+      const { el, tile } = setup();
+      tile(0);
+      expect(el.querySelector('[data-testid="field-crop"]')?.textContent).toContain('Weizen');
+      expect(el.querySelector('[data-testid="field-crop"]')?.textContent).toContain('erntereif');
+      tile(1);
+      expect(el.querySelector('[data-testid="field-crop"]')).toBeNull();
+    } finally {
+      delete fields[0].fruitType;
+      delete fields[0].phase;
+    }
+  });
+
   it('asks the owner for a lease and marks leased fields (TODO T-22)', () => {
     const { el, tile, btn, http, fixture } = setup();
     tile(1);

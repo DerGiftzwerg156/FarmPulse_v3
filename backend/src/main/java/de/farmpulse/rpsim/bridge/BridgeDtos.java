@@ -21,7 +21,7 @@ public final class BridgeDtos {
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
                             Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
                             Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
-                            Weather weather) {
+                            Weather weather, FieldRules fieldRules) {
 
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
                          Liabilities liabilities, List<Price> prices, Calendar calendar) {
@@ -31,7 +31,7 @@ public final class BridgeDtos {
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
                          Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions) {
             this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, missions,
-                    null, null, null, null, null);
+                    null, null, null, null, null, null);
         }
 
         public List<Mission> missionList() {
@@ -89,13 +89,31 @@ public final class BridgeDtos {
     }
 
     /**
-     * Roadmap V2 R2-C1: state of an own field (FS25 FieldState). {@code fruitType} and the harvesting growth states are
+     * Roadmap V2 R2-C1: state of an own field (FS25 FieldState). {@code fruitType}, the harvesting growth states and the
+     * crop details ({@code withered}, {@code cut}, {@code fillType}, {@code litersPerSqm}; older mods omit them) are
      * missing on a field without a crop.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Field(Integer farmlandId, String name, Double hectares, String fruitType, Integer growthState,
                         Integer minHarvestingGrowthState, Integer maxHarvestingGrowthState, Integer weedState,
-                        Integer stoneLevel, Integer sprayLevel, Integer limeLevel, Integer plowLevel, String groundType) {
+                        Integer stoneLevel, Integer sprayLevel, Integer limeLevel, Integer plowLevel, String groundType,
+                        Boolean withered, Boolean cut, String fillType, Double litersPerSqm) {
+
+        /** Q contract without the crop details of R2-C (older mod). */
+        public Field(Integer farmlandId, String name, Double hectares, String fruitType, Integer growthState,
+                     Integer minHarvestingGrowthState, Integer maxHarvestingGrowthState, Integer weedState,
+                     Integer stoneLevel, Integer sprayLevel, Integer limeLevel, Integer plowLevel, String groundType) {
+            this(farmlandId, name, hectares, fruitType, growthState, minHarvestingGrowthState, maxHarvestingGrowthState,
+                    weedState, stoneLevel, sprayLevel, limeLevel, plowLevel, groundType, null, null, null, null);
+        }
+    }
+
+    /**
+     * Roadmap V2 R2-C: game settings of the soil mechanics - the game shows "needs plowing" / "needs lime", weeds and
+     * stones only when active. Missing block (older mod) = unknown.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FieldRules(Boolean plowingRequired, Boolean limeRequired, Boolean weedsEnabled, Boolean stonesEnabled) {
     }
 
     /** Roadmap V2 R2-C2: current weather (environment.weather getIsRaining / getRainFallScale / getGroundWetness). */
