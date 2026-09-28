@@ -229,7 +229,26 @@ public final class BridgeDtos {
     public record ContractReport(String instructionId, Long deliveredQuantity, Long maxQuantity, String endReason) {
     }
 
+    /**
+     * instructions.json. Roadmap V2 R2-F1: {@code ackedResponses} = answers the backend processed (the mod removes them
+     * from player_responses.json), {@code withdrawnPrompts} = questions no longer open (the mod drops them).
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record InstructionsDocument(String savegameId, List<Object> instructions) {
+    public record InstructionsDocument(String savegameId, List<Object> instructions,
+                                       @JsonInclude(JsonInclude.Include.NON_EMPTY) List<String> ackedResponses,
+                                       @JsonInclude(JsonInclude.Include.NON_EMPTY) List<String> withdrawnPrompts) {
+
+        public InstructionsDocument(String savegameId, List<Object> instructions) {
+            this(savegameId, instructions, List.of(), List.of());
+        }
+    }
+
+    /** Roadmap V2 R2-F1: export/player_responses.json. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record PlayerResponsesDocument(String savegameId, List<PlayerAnswer> responses) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record PlayerAnswer(String responseId, String promptId, String answer, Long gameTime) {
     }
 }

@@ -8,15 +8,11 @@ import de.farmpulse.rpsim.api.Requests.OfferRequest;
 import de.farmpulse.rpsim.api.Views.CaseView;
 import de.farmpulse.rpsim.api.Views.ContractView;
 import de.farmpulse.rpsim.api.Views.InsuranceQuoteView;
-import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.club.ClubService;
-import de.farmpulse.rpsim.common.BusinessRuleException;
-import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.config.RpsimProperties;
-import de.farmpulse.rpsim.contract.HuntingService;
+import de.farmpulse.rpsim.contract.ContractActions;
 import de.farmpulse.rpsim.contract.InsuranceService;
 import de.farmpulse.rpsim.contract.LeaseService;
-import de.farmpulse.rpsim.contract.LivestockService;
 import de.farmpulse.rpsim.contract.MaintenanceService;
 import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.Savegame;
@@ -41,33 +37,29 @@ public class ContractController {
     private final ContractRepository contracts;
     private final ServiceCaseRepository cases;
     private final InsuranceService insurance;
-    private final HuntingService hunting;
-    private final LivestockService livestock;
     private final LeaseService lease;
     private final MaintenanceService maintenance;
     private final ApiMapper mapper;
     private final RpsimProperties props;
-    private final VanillaBypassService bypass;
     private final TaxService tax;
     private final ClubService clubs;
+    private final ContractActions actions;
 
     public ContractController(SavegameContext context, ContractRepository contracts, ServiceCaseRepository cases,
-                              InsuranceService insurance, HuntingService hunting, LivestockService livestock, LeaseService lease,
-                              MaintenanceService maintenance, ApiMapper mapper,
-                              RpsimProperties props, VanillaBypassService bypass, TaxService tax, ClubService clubs) {
+                              InsuranceService insurance, LeaseService lease, MaintenanceService maintenance,
+                              ApiMapper mapper, RpsimProperties props, TaxService tax, ClubService clubs,
+                              ContractActions actions) {
         this.context = context;
         this.contracts = contracts;
         this.cases = cases;
         this.insurance = insurance;
-        this.hunting = hunting;
-        this.livestock = livestock;
         this.lease = lease;
         this.maintenance = maintenance;
         this.mapper = mapper;
         this.props = props;
-        this.bypass = bypass;
         this.tax = tax;
         this.clubs = clubs;
+        this.actions = actions;
     }
 
     @GetMapping("/api/contracts")
@@ -106,40 +98,19 @@ public class ContractController {
     @PostMapping("/api/contracts/{id}/accept")
     @Transactional
     public ContractView accept(@PathVariable Long id) {
-        Savegame sg = context.requireActive();
-        return view(switch (contract(sg, id).getKind()) {
-            case INSURANCE -> insurance.accept(sg, id);
-            case LEASE -> lease.accept(sg, id);
-            case MAINTENANCE -> maintenance.accept(sg, id);
-            case TAX_ADVISOR -> tax.acceptAdvisor(sg, id);
-            default -> throw unsupported();
-        });
+        return view(actions.accept(context.requireActive(), id));
     }
 
     @PostMapping("/api/contracts/{id}/decline")
     @Transactional
     public ContractView decline(@PathVariable Long id) {
-        Savegame sg = context.requireActive();
-        return view(switch (contract(sg, id).getKind()) {
-            case INSURANCE -> insurance.decline(sg, id);
-            case LEASE -> lease.decline(sg, id);
-            case MAINTENANCE -> maintenance.decline(sg, id);
-            case TAX_ADVISOR -> tax.declineAdvisor(sg, id);
-            default -> throw unsupported();
-        });
+        return view(actions.decline(context.requireActive(), id));
     }
 
     @PostMapping("/api/contracts/{id}/cancel")
     @Transactional
     public ContractView cancel(@PathVariable Long id) {
-        Savegame sg = context.requireActive();
-        return view(switch (contract(sg, id).getKind()) {
-            case INSURANCE -> insurance.cancel(sg, id);
-            case LEASE -> lease.cancel(sg, id);
-            case MAINTENANCE -> maintenance.cancel(sg, id);
-            case TAX_ADVISOR -> tax.cancelAdvisor(sg, id);
-            default -> throw unsupported();
-        });
+        return view(actions.cancel(context.requireActive(), id));
     }
 
     /** Roadmap V2 R2-E1: ask a tax advisor for an offer. */
@@ -167,22 +138,14 @@ public class ContractController {
     @PostMapping("/api/contracts/{id}/renew")
     @Transactional
     public ContractView renew(@PathVariable Long id) {
-        Savegame sg = context.requireActive();
-        return view(switch (contract(sg, id).getKind()) {
-            case LEASE -> lease.renew(sg, id);
-            default -> throw unsupported();
-        });
+        return view(actions.renew(context.requireActive(), id));
     }
 
     /** TODO T-22: buy the leased field at the owner's offer. */
     @PostMapping("/api/contracts/{id}/buy")
     @Transactional
     public ContractView buy(@PathVariable Long id) {
-        Savegame sg = context.requireActive();
-        return view(switch (contract(sg, id).getKind()) {
-            case LEASE -> lease.buy(sg, id);
-            default -> throw unsupported();
-        });
+        return view(actions.buy(context.requireActive(), id));
     }
 
     /** TODO T-22: ask the owner of a field for a lease (answer: offer or refusal). */
@@ -201,63 +164,25 @@ public class ContractController {
     @PostMapping("/api/cases/{id}/accept")
     @Transactional
     public CaseView acceptCase(@PathVariable Long id) {
-        Savegame sg = context.requireActive();
-        return view(switch (serviceCase(sg, id).getKind()) {
-            case WILDLIFE_DAMAGE -> hunting.accept(sg, id);
-            case LIVESTOCK_OFFER -> livestock.accept(sg, id);
-            case COMPENSATION_CLAIM -> bypass.pay(sg, id); // R2-D2: pay the compensation
-            case TAX_BILL -> tax.pay(sg, id); // R2-E1: pay by button
-            case INVITATION -> clubs.acceptInvitation(sg, id); // R2-E4: RSVP
-            default -> throw unsupported();
-        });
+        return view(actions.acceptCase(context.requireActive(), id));
     }
 
     @PostMapping("/api/cases/{id}/counter")
     @Transactional
     public CaseView counterCase(@PathVariable Long id, @Valid @RequestBody OfferRequest r) {
-        Savegame sg = context.requireActive();
-        return view(switch (serviceCase(sg, id).getKind()) {
-            case WILDLIFE_DAMAGE -> hunting.counter(sg, id, r.amount());
-            default -> throw unsupported();
-        });
+        return view(actions.counterCase(context.requireActive(), id, r.amount()));
     }
 
     @PostMapping("/api/cases/{id}/measure")
     @Transactional
     public CaseView measureCase(@PathVariable Long id) {
-        Savegame sg = context.requireActive();
-        return view(switch (serviceCase(sg, id).getKind()) {
-            case WILDLIFE_DAMAGE -> hunting.measure(sg, id);
-            default -> throw unsupported();
-        });
+        return view(actions.measureCase(context.requireActive(), id));
     }
 
     @PostMapping("/api/cases/{id}/decline")
     @Transactional
     public CaseView declineCase(@PathVariable Long id) {
-        Savegame sg = context.requireActive();
-        return view(switch (serviceCase(sg, id).getKind()) {
-            case WILDLIFE_DAMAGE -> hunting.decline(sg, id);
-            case LIVESTOCK_OFFER -> livestock.decline(sg, id);
-            case COMPENSATION_CLAIM -> bypass.decline(sg, id);
-            case INVITATION -> clubs.declineInvitation(sg, id);
-            case SPONSORING_REQUEST -> clubs.declineSponsoring(sg, id);
-            default -> throw unsupported();
-        });
-    }
-
-    private ServiceCase serviceCase(Savegame sg, Long id) {
-        return cases.findById(id).filter(c -> c.getSavegame().getId().equals(sg.getId()))
-                .orElseThrow(() -> new NotFoundException("case " + id));
-    }
-
-    private static BusinessRuleException unsupported() {
-        return new BusinessRuleException("UNSUPPORTED_ACTION", "Diese Aktion ist für diesen Vertrag nicht möglich.");
-    }
-
-    private Contract contract(Savegame sg, Long id) {
-        return contracts.findById(id).filter(c -> c.getSavegame().getId().equals(sg.getId()))
-                .orElseThrow(() -> new NotFoundException("contract " + id));
+        return view(actions.declineCase(context.requireActive(), id));
     }
 
     ContractView view(Contract c) {

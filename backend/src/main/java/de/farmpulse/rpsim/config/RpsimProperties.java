@@ -59,6 +59,12 @@ public class RpsimProperties {
         private boolean ingameNotifications = true;
         /** TODO T-21: a notification is dropped by the mod when it is processed later than this many game hours. */
         private double notificationMaxAgeHours = 2;
+        /** Roadmap V2 R2-F2: master switch of the yes/no questions in the game. */
+        private boolean ingamePrompts = true;
+        /** Roadmap V2 R2-F2: occasions asked in the game unless the player chose others (PromptKind names). */
+        private List<String> promptDefaultKinds = new ArrayList<>(List.of("CALL"));
+        /** Roadmap V2 R2-F2: a question without its own deadline (bank counter offer) expires after this many game hours. */
+        private double promptMaxAgeHours = 48;
     }
 
     @Getter @Setter

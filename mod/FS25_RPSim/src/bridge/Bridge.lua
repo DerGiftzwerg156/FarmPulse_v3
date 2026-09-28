@@ -8,6 +8,9 @@
 --   addMoney(amount, reason, note) -> ok, err
 --   checkBatchFunds(instructions) -> ok, err   (optional: refuses a batch whose debits exceed the balance)
 --   transferFarmland(farmlandId, direction) -> ok, err
+--   canShowPrompt(inVehicleAllowed) -> bool      (optional, R2-F2: no menu or dialog open, vehicle rule)
+--   showYesNo(text, title, callback(yes)) -> ok, err (optional, R2-F2)
+--   notify(text, level) -> ok, err                (optional)
 RPSimBridge = {}
 RPSimBridge.__index = RPSimBridge
 
@@ -208,6 +211,8 @@ function RPSimBridge:onSavegameLoaded()
     self:exportMarketContext(true)
     self:exportFarmFacts()
     self:writeAck()
+    -- R2-F1: the file follows the loaded savegame (answers given after the last save are gone, the backend asks again)
+    self:writeResponses()
     self:logFirstExport()
 end
 
@@ -249,10 +254,16 @@ function RPSimBridge:pollInstructions()
                     farmlandTransfer = function(ins) return adapter:transferFarmland(ins.farmlandId, ins.direction) end,
                     notify = adapter.notify ~= nil and function(ins) return adapter:notify(ins.text, ins.level) end or nil,
                     employeeRoster = function(ins) return self:applyRoster(ins) end,
+                    prompt = function(ins) return self:queuePrompt(ins, gameTime) end,
                     repairVehicle = adapter.repairVehicle ~= nil
                         and function(ins) return adapter:repairVehicle(ins.vehicleId, ins.targetDamage) end or nil,
                 },
             })
+            -- R2-F1 / R2-F2: processed answers and questions decided in the browser
+            if doc.savegameId == self.state.savegameId
+                    and RPSimPrompts.applyDocument(self.state.prompts, doc, gameTime) then
+                self:writeResponses()
+            end
             if result.marketContextDirty then
                 self.fieldCache = nil -- R2-C1: the owned fields changed
                 -- Re-export right after every applied FARMLAND_TRANSFER.
@@ -262,6 +273,7 @@ function RPSimBridge:pollInstructions()
     end
     RPSimProcessor.collectContractReports(self.state, gameTime)
     RPSimProcessor.prune(self.state, gameTime, self.cfg.processedRetentionGameDays)
+    RPSimPrompts.prune(self.state.prompts, gameTime)
     self:writeAck()
     return result
 end
@@ -289,6 +301,75 @@ function RPSimBridge:update(dtMs)
         -- Keeps sell points/farmlands current (e.g. placeables bought later); written only when changed.
         self:exportMarketContext()
     end
+    self:updatePrompts(false)
+end
+
+-- ------------------------------------------------------------------ Roadmap V2 R2-F: questions in the game
+
+--- PROMPT instruction: queued; an expired one is dropped without being shown. When the question cannot be shown right
+-- now and the key of R2-F3 exists, a short notification names the key.
+function RPSimBridge:queuePrompt(ins, gameTime)
+    local ok, note = RPSimPrompts.enqueue(self.state.prompts, ins, gameTime)
+    if note == nil and self.promptKeyAvailable and not self:promptCanShow(false)
+            and self.adapter.notify ~= nil then
+        self.adapter:notify(string.format("FarmPulse: %s – Taste „FarmPulse: offene Frage“ öffnet sie", ins.title),
+            "INFO")
+    end
+    return ok, note
+end
+
+function RPSimBridge:promptCanShow(byKey)
+    if self.promptsUnsupported or self.adapter.canShowPrompt == nil or self.adapter.showYesNo == nil then
+        return false
+    end
+    local ok, can = pcall(self.adapter.canShowPrompt, self.adapter, byKey or self.cfg.promptsInVehicle)
+    return ok and can == true
+end
+
+--- Frame update (automatic display, R2-F2) and key press (R2-F3, byKey = true: also inside a vehicle).
+-- Returns true when a dialog was opened.
+function RPSimBridge:updatePrompts(byKey)
+    local prompts = self.state.prompts
+    if prompts.shown ~= nil then
+        return false
+    end
+    local nextPrompt = RPSimPrompts.nextPrompt(prompts, self.adapter:getGameTime())
+    if self.adapter.setPromptKeyVisible ~= nil then
+        self.adapter:setPromptKeyVisible(nextPrompt ~= nil)
+    end
+    if nextPrompt == nil or not self:promptCanShow(byKey) then
+        return false
+    end
+    local promptId = nextPrompt.promptId
+    prompts.shown = promptId
+    local ok, err = self.adapter:showYesNo(RPSimPrompts.dialogText(nextPrompt), nextPrompt.title, function(yes)
+        self:onPromptAnswer(promptId, yes)
+    end)
+    if not ok then
+        prompts.shown = nil
+        self.promptsUnsupported = true -- no dialog in this game version: the questions stay in the browser
+        RPSimLog.warning("Yes/no dialog not available, questions stay in the browser: %s", tostring(err))
+        return false
+    end
+    return true
+end
+
+function RPSimBridge:openNextPrompt()
+    return self:updatePrompts(true)
+end
+
+--- Dialog callback: the answer goes to the backend at once (not with the next 60 s export).
+function RPSimBridge:onPromptAnswer(promptId, yes)
+    local r = RPSimPrompts.answer(self.state.prompts, promptId, yes, self.adapter:getGameTime())
+    if r ~= nil then
+        RPSimLog.info("Answer %s to question %s", r.answer, promptId)
+        self:writeResponses()
+    end
+end
+
+function RPSimBridge:writeResponses()
+    return self:writeJson(self.paths.playerResponses,
+        RPSimPrompts.toDocument(self.state.prompts, self.state.savegameId))
 end
 
 --- Price hook entry point (called from the SellingStation override).

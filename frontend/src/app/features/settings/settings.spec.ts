@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { AiSettingsView, BypassSettingsView, FieldSettingsView } from '../../core/api/models';
+import { AiSettingsView, BypassSettingsView, FieldSettingsView, PromptSettingsView } from '../../core/api/models';
 import { Settings } from './settings';
 
 const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, apiKeySet: true, providers: ['NONE', 'OPENAI', 'ANTHROPIC', 'GEMINI', 'OLLAMA'] };
@@ -11,7 +11,8 @@ describe('Settings', () => {
   function setup(game: unknown = { tonePreset: 'REALISTIC', toneLabel: 'realistisch-ausgewogen' },
     helpers: unknown = { helperWageMode: 'EMPLOYEES', strictHelperLimit: false, workforceTracked: true },
     fields: FieldSettingsView = { fieldHintsEnabled: true, fieldsTracked: true },
-    bypass: BypassSettingsView = { reactionsEnabled: true, interestSurchargePercent: 0 }) {
+    bypass: BypassSettingsView = { reactionsEnabled: true, interestSurchargePercent: 0 },
+    prompts: PromptSettingsView = { available: true, kinds: ['CALL'], allKinds: ['CALL', 'CONTRACT_OFFER', 'TAX_BILL'] }) {
     TestBed.configureTestingModule({
       imports: [Settings],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -27,6 +28,7 @@ describe('Settings', () => {
     else h.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
     http.expectOne('/api/settings/fields').flush(fields);
     http.expectOne('/api/settings/vanilla-bypass').flush(bypass);
+    http.expectOne('/api/settings/prompts').flush(prompts);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const input = (id: string, v: string) => {
@@ -140,5 +142,30 @@ describe('Settings', () => {
     const { el } = setup(undefined, { helperWageMode: 'VANILLA', strictHelperLimit: false, workforceTracked: false });
     expect((el.querySelector('[data-testid="helper-wage"]') as HTMLInputElement).checked).toBe(false);
     expect(el.querySelector('[data-testid="helper-untracked"]')?.textContent).toContain('aktuellen Mod-Version');
+  });
+
+  // Roadmap V2 R2-F2
+  it('switches the occasions asked in the game one by one', () => {
+    const { el, http, fixture } = setup();
+    const boxes = () => Array.from(el.querySelectorAll('[data-testid="prompt-kind"]')) as HTMLInputElement[];
+    expect(boxes().map((b) => b.checked)).toEqual([true, false, false]);
+    expect(el.querySelector('[data-testid="prompt-settings"]')?.textContent).toContain('Steuerbescheide bezahlen');
+    boxes()[2].checked = true;
+    boxes()[2].dispatchEvent(new Event('change'));
+    const req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/prompts');
+    expect(req.request.body).toEqual({ kinds: ['CALL', 'TAX_BILL'] });
+    req.flush({ available: true, kinds: ['CALL', 'TAX_BILL'], allKinds: ['CALL', 'CONTRACT_OFFER', 'TAX_BILL'] });
+    fixture.detectChanges();
+    boxes()[0].checked = false;
+    boxes()[0].dispatchEvent(new Event('change'));
+    expect(http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/prompts').request.body)
+      .toEqual({ kinds: ['TAX_BILL'] });
+  });
+
+  it('says when the questions in the game are switched off in the configuration', () => {
+    const { el } = setup(undefined, undefined, undefined, undefined,
+      { available: false, kinds: ['CALL'], allKinds: ['CALL'] });
+    expect(el.querySelector('[data-testid="prompts-off"]')).not.toBeNull();
+    expect((el.querySelector('[data-testid="prompt-kind"]') as HTMLInputElement).disabled).toBe(true);
   });
 });

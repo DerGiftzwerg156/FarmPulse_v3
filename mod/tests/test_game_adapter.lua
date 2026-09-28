@@ -182,6 +182,60 @@ function T.TestGameAdapter:testNotifyUsesTheIngameNotification()
     FSBaseMission = nil
 end
 
+-- Roadmap V2 R2-F2: menus and dialogs block a question, a vehicle only when not allowed
+function T.TestGameAdapter:testPromptOnlyWithoutMenuAndVehicleRule()
+    helpers.fakeGame()
+    local guiVisible, inVehicle = false, false
+    g_gui = { getIsGuiVisible = function() return guiVisible end }
+    g_localPlayer = { getIsInVehicle = function() return inVehicle end }
+    local shown = {}
+    YesNoDialog = { show = function(callback, target, text, title)
+        shown[#shown + 1] = { callback = callback, target = target, text = text, title = title }
+    end }
+    local a = RPSimGameAdapter.new()
+    lu.assertTrue(a:canShowPrompt(false))
+    inVehicle = true
+    lu.assertFalse(a:canShowPrompt(false))
+    lu.assertTrue(a:canShowPrompt(true))
+    guiVisible = true
+    lu.assertFalse(a:canShowPrompt(true))
+    local answer
+    lu.assertTrue(a:showYesNo("Text", "Titel", function(yes) answer = yes end))
+    lu.assertNil(shown[1].target)
+    lu.assertEquals(shown[1].title, "Titel")
+    shown[1].callback(true) -- target nil: the game passes the answer as the only argument
+    lu.assertTrue(answer)
+    YesNoDialog = nil
+    lu.assertFalse(a:canShowPrompt(true))
+    lu.assertFalse(a:showYesNo("Text", "Titel", function() end))
+    g_gui, g_localPlayer = nil, nil
+end
+
+-- Roadmap V2 R2-F3: the key help shows the action only while a question waits
+function T.TestGameAdapter:testPromptKeyVisibilityFollowsTheQueue()
+    local calls = {}
+    g_inputBinding = { setActionEventTextVisibility = function(_, id, visible) calls[#calls + 1] = { id, visible } end }
+    local a = RPSimGameAdapter.new()
+    a:setPromptKeyVisible(true) -- no action registered: nothing to do
+    lu.assertEquals(#calls, 0)
+    a.promptActionEventId = 7
+    a.promptKeyVisible = false
+    a:setPromptKeyVisible(true)
+    a:setPromptKeyVisible(true)
+    a:setPromptKeyVisible(false)
+    lu.assertEquals(calls, { { 7, true }, { 7, false } })
+    g_inputBinding = nil
+end
+
+function T.TestGameAdapter:testPromptActionIsDeclaredInModDesc()
+    local fh = io.open((os.getenv("RPSIM_SRC") or "FS25_RPSim/src/"):gsub("src/$", "") .. "modDesc.xml", "r")
+    local xml = fh:read("*a")
+    fh:close()
+    lu.assertStrContains(xml, '<action name="RPSIM_OPEN_PROMPT"')
+    lu.assertStrContains(xml, '<actionBinding action="RPSIM_OPEN_PROMPT">')
+    lu.assertStrContains(xml, 'name="input_RPSIM_OPEN_PROMPT"')
+end
+
 -- T-21: own booking titles via MoneyType.register(statistic, titleKey)
 function T.TestGameAdapter:testBookingsGetTheirOwnMoneyType()
     local game = helpers.fakeGame()

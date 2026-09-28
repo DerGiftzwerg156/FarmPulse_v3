@@ -35,6 +35,9 @@ rpsim:
     rewind-lookback-hours: 24          # T-02: bookings acked this long before the reloaded point are checked as well
     ingame-notifications: true         # TODO T-21: new mails / incoming calls as in-game notification
     notification-max-age-hours: 2      # TODO T-21: older notifications are dropped by the mod
+    ingame-prompts: true               # Roadmap V2 R2-F2: yes/no questions in the game
+    prompt-default-kinds: [CALL]       # R2-F2: occasions asked in the game until the player chooses (settings page)
+    prompt-max-age-hours: 48           # R2-F2: questions without their own deadline expire after this many game hours
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
   ai:

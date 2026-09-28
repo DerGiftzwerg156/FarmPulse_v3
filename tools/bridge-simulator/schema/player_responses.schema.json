@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "player_responses.schema.json",
+  "title": "player_responses.json (FS25_RPSim -> backend, Roadmap V2 R2-F1)",
+  "type": "object",
+  "required": ["savegameId", "responses"],
+  "properties": {
+    "savegameId": { "type": "string" },
+    "responses": { "type": "array", "items": { "type": "object",
+      "required": ["responseId", "promptId", "answer", "gameTime"],
+      "properties": { "responseId": { "type": "string", "minLength": 1 }, "promptId": { "type": "string", "minLength": 1 },
+        "answer": { "enum": ["YES", "NO"] }, "gameTime": { "type": "number" } } } }
+  }
+}

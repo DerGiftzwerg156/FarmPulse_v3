@@ -9,7 +9,7 @@ function helpers.loadModules()
         "bridge/Config.lua", "bridge/BridgePaths.lua",
         "export/Storage.lua", "export/FarmFacts.lua", "export/MarketContext.lua", "export/FinanceJournal.lua",
         "import/Instructions.lua", "import/PriceEventMath.lua", "import/PriceEvents.lua",
-        "game/Workforce.lua", "import/Processor.lua", "import/Persistence.lua",
+        "game/Workforce.lua", "game/Prompts.lua", "import/Processor.lua", "import/Persistence.lua",
         "bridge/Bridge.lua",
     }) do
         local fh = io.open(SRC .. f, "r")

@@ -6,6 +6,8 @@
   "required": ["savegameId", "instructions"],
   "properties": {
     "savegameId": { "type": "string" },
+    "ackedResponses": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "withdrawnPrompts": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "instructions": { "type": "array", "items": {
       "type": "object",
       "required": ["instructionId", "type"],

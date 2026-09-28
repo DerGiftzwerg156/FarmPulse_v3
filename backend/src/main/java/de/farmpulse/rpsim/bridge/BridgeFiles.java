@@ -58,6 +58,11 @@ public class BridgeFiles {
         return base().resolve("import").resolve("instructions.xml");
     }
 
+    /** Roadmap V2 R2-F1: answers of the yes/no questions, written by the mod right after every answer. */
+    public Path playerResponses() {
+        return base().resolve("export").resolve("player_responses.json");
+    }
+
     public Path ack() {
         return base().resolve("import").resolve("instructions_ack.json");
     }

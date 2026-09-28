@@ -263,8 +263,14 @@ the field as a village character (`rpsim.formulas.negotiation.use-game-npc-owner
 ## `import/instructions.json` + `import/instructions.xml` (backend → mod)
 
 ```json
-{ "savegameId": "...", "instructions": [ <envelope>, ... ] }
+{ "savegameId": "...", "instructions": [ <envelope>, ... ],
+  "ackedResponses": ["rsp_prm_1a2b"], "withdrawnPrompts": ["prm_3c4d"] }
 ```
+
+Roadmap V2 R2-F1: `ackedResponses` (optional) lists the answers of `export/player_responses.json` the backend has
+stored - the mod removes them from the file; `withdrawnPrompts` (optional) lists questions that are no longer open
+(decided in the browser, occasion ended, switched off, already answered) - the mod drops them if they still wait (a
+dialog already open stays; the backend ignores its answer). Both are left out when empty.
 
 The FS25 Lua sandbox refuses `io.open` in read mode ("io.open, only write mode ('w') is allowed"), so the mod
 cannot read `instructions.json`. The backend therefore writes the same document a second time, as compact JSON
@@ -292,13 +298,29 @@ optional `savegameId`.
 | `REPAIR_VEHICLE` (TODO T-22) | `vehicleId` (uniqueId of an own vehicle), optional `targetDamage` (0..1, R2-A6, default `0`). The mod calls `Wearable:setDamageAmount(min(targetDamage, getDamageAmount()), true)` - the damage part of the game's `repairVehicle()` without its repair booking (the maintenance contract pays); a repair never raises the damage. `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` or `NOT_WEARABLE`. Not re-sent after a rewind (the next monthly service repairs again). Sent with `targetDamage` by the maintenance contract and, since R2-A6, by an employed mechanic (partial repair up to the mechanic's monthly capacity). |
 | `NOTIFICATION` (TODO T-21) | `text` (German, ≤ 120 characters), optional `level` ∈ `INFO, OK, CRITICAL` (`FSBaseMission.INGAME_NOTIFICATION_*`), optional `expiresAtGameTime`. Shown with `g_currentMission:addIngameNotification`; processed after `expiresAtGameTime` it is acknowledged `APPLIED` with `message: "EXPIRED"` and not shown. Never re-sent after a reload without saving, a failure creates no notice. |
 | `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) | `employees[]` with `employeeId` (tool id, integer), `name`, `role` (`JobRole` name), `status` ∈ `ACTIVE, ON_LEAVE, STRIKE`; `helperWageMode` ∈ `EMPLOYEES, VANILLA` (R2-A1); `strictHelperLimit` (boolean, R2-A3). The complete list, sorted by assignment priority (skill, descending); the mod replaces its list (idempotent) and `APPLIED`s it. Running helpers of a `STRIKE` employee are stopped with the own AI message `RPSIM_STRIKE` ("%s legt die Arbeit nieder", R2-A5; fallback: the game's unknown-error message plus an in-game notification). Helpers of an employee no longer `ACTIVE` or no longer listed keep running as vanilla helpers. The backend sends the list after every change of an employee (hire, dismissal, leave, strike, settings) and again after a rewind; a failure raises no notice (the next change resends). |
-| `PROMPT` (Roadmap V2, R2-F2) | `promptId`, `title`, `text`, optional `yesLabel` / `noLabel`, `expiresGameTime`. Yes/no question shown in the game; an expired prompt is dropped without being shown. **Validated since R2-Q1, executed with R2-F2** - until then the mod acknowledges it `FAILED` / `NOT_SUPPORTED`. |
+| `PROMPT` (Roadmap V2, R2-F2) | `promptId`, `title`, `text`, optional `yesLabel` / `noLabel`, `expiresGameTime`. Yes/no question: the mod queues it (`APPLIED`; processed after `expiresGameTime` it is acknowledged with `message: "EXPIRED"`, a promptId already queued, answered or withdrawn with `message: "DUPLICATE"`) and shows one at a time with `YesNoDialog.show(callback, nil, text, title)` as soon as no menu or dialog is open (`g_gui:getIsGuiVisible()`) - with mod config `promptsInVehicle = false` only on foot. Custom button texts are not evidenced in the FS25 code: the dialog shows the game's yes / no buttons and the mod appends "Ja = `yesLabel` · Nein = `noLabel`" to the text. The answer goes to `export/player_responses.json` at once. The queue, the open answers and the handled promptIds are stored in the savegame. An older mod acknowledges `FAILED` / `NOT_SUPPORTED` - the decision stays in the browser, no notice. Sent again after a reload without saving while the question is still open. |
 
 **Batches:** instructions sharing a `batchId` are validated together and applied in the same cycle, or all
 rejected. The backend always sends `FARMLAND_TRANSFER` + its `MONEY_TRANSACTION` as one batch.
 
 **Pending:** an instruction whose `gameTimeEarliest` lies in the future stays in the file and is applied later.
 The backend removes instructions from the file once they are acknowledged.
+
+## `export/player_responses.json` (mod → backend, right after every answer; Roadmap V2 R2-F1)
+
+```json
+{ "savegameId": "...",
+  "responses": [{ "responseId": "rsp_prm_1a2b", "promptId": "prm_1a2b", "answer": "YES", "gameTime": 48300000 }] }
+```
+
+Written in mode `direct` like every bridge file, immediately after the player answered a `PROMPT` (not with the next
+60 s export) and when the savegame starts. `answer` ∈ `YES`, `NO`; `responseId` = `rsp_` + `promptId` (one answer per
+question). An answer stays in the file until the backend lists it in `ackedResponses`; the backend processes every
+`responseId` once (idempotent). The file follows the savegame: after a reload without saving the answers given after
+the last save are gone, and the backend sends the question again because it is still open. The backend reads the
+file in every bridge cycle (`rpsim.bridge.poll-interval-ms`) and carries the answers out after the cycle, each with
+the same service method as the button in the browser; a refused action (e.g. not enough money) comes back as a
+`NOTIFICATION` with level `CRITICAL`.
 
 ## `import/instructions_ack.json` (mod → backend)
 

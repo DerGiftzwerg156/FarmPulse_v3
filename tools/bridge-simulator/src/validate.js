@@ -13,6 +13,7 @@ export const validators = {
   marketContext: load('market_context.schema.json'),
   instructions: load('instructions.schema.json'),
   instructionsAck: load('instructions_ack.schema.json'),
+  playerResponses: load('player_responses.schema.json'), // Roadmap V2 R2-F1
 };
 
 /** Returns null when valid, otherwise a readable error string. */

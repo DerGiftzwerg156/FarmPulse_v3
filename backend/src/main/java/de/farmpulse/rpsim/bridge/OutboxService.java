@@ -155,6 +155,26 @@ public class OutboxService {
         return enqueue(sg, InstructionType.NOTIFICATION, p, null, null, related);
     }
 
+    /**
+     * Roadmap V2 R2-F2: yes/no question in the game. The mod drops it without showing when it is processed after
+     * {@code expiresGameTime}; the labels name the meaning of the game's yes / no buttons.
+     */
+    public OutboxInstruction prompt(Savegame sg, String promptId, String title, String text, String yesLabel,
+                                    String noLabel, long expiresGameTime, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("promptId", promptId);
+        p.put("title", title);
+        p.put("text", text);
+        if (yesLabel != null) {
+            p.put("yesLabel", yesLabel);
+        }
+        if (noLabel != null) {
+            p.put("noLabel", noLabel);
+        }
+        p.put("expiresGameTime", expiresGameTime);
+        return enqueue(sg, InstructionType.PROMPT, p, null, null, related);
+    }
+
     private OutboxInstruction enqueue(Savegame sg, InstructionType type, Map<String, Object> payload, String batchId,
                                       Long gameTimeEarliest, Related related) {
         OutboxInstruction o = new OutboxInstruction();

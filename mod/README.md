@@ -39,8 +39,11 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     gezeigt
   - `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) – ersetzt die Mitarbeiterliste; Helfer streikender Mitarbeiter werden mit
     der Meldung „%s legt die Arbeit nieder“ angehalten (R2-A5)
-  - `PROMPT` (Roadmap V2) wird schon geprüft, aber erst mit R2-F2 ausgeführt; bis dahin quittiert der Mod es mit
-    `FAILED` / `NOT_SUPPORTED`
+  - `PROMPT` (Roadmap V2, R2-F2) – Ja/Nein-Frage: wird eingereiht und einzeln mit dem Dialog des Spiels
+    (`YesNoDialog`) gezeigt, sobald kein Menü offen ist; die Knöpfe heißen „Ja“/„Nein“, ihre Bedeutung steht im Text.
+    Die Antwort schreibt der Mod sofort nach `export/player_responses.json` (R2-F1); vom Backend quittierte Antworten
+    (`ackedResponses`) und zurückgezogene Fragen (`withdrawnPrompts`) verschwinden. Die Taste „FarmPulse: offene
+    Frage“ (Standard Alt+J, in der Steuerung änderbar; R2-F3) öffnet die nächste Frage, auch im Fahrzeug
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.
@@ -101,6 +104,7 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | `moneyTypeTitles` | `true` | Buchungen bekommen eigene Bezeichnungen (`MoneyType.register(statistik, "rpsim_money_<GRUND>")`, Texte in `modDesc.xml`); `false` = alles als „Sonstiges“ (`MoneyType.OTHER`) |
 | `financeJournalPeriods` | `13` | Roadmap V2 R2-B1: so viele FS25-Monate behält das Buchungsjournal (`farm_facts.finances`) |
 | `fieldExportIntervalMs` | `300000` | Roadmap V2 R2-C1: so oft (Echtzeit, ms) werden die Felder neu gelesen; jeder Export dazwischen übernimmt den letzten Stand |
+| `promptsInVehicle` | `true` | Roadmap V2 R2-F2: Ja/Nein-Fragen erscheinen auch, während du im Fahrzeug sitzt; `false` = nur zu Fuß (die Taste öffnet sie trotzdem) |
 | `moneyTypeStatistics` | `{}` | Finanzstatistik je Buchungsgrund, z. B. `{ "SALARY_PAYMENT": "wagePayment" }`. Belegt ist nur `other` (FS25 `FillTrigger.lua`); andere Namen erst im Spiel prüfen (Testplan 8.18) |
 
 ## Entwicklung & Tests

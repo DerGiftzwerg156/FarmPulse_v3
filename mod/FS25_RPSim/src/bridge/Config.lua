@@ -36,6 +36,9 @@ RPSimConfig.DEFAULTS = {
     -- Roadmap V2 R2-C1: how often the fields are sampled (real time, ms); every farm_facts export in between carries
     -- the last sample. 5 min = roadmap proposal.
     fieldExportIntervalMs = 300000,
+    -- Roadmap V2 R2-F2: show the yes/no questions also while the player sits in a vehicle. false = only on foot (the
+    -- fallback of the roadmap); the key of R2-F3 opens a waiting question anywhere.
+    promptsInVehicle = true,
 }
 
 function RPSimConfig.new(overrides)

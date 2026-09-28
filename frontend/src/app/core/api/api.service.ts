@@ -253,6 +253,13 @@ export class ApiService {
   saveHelperSettings(r: { helperWageMode: string; strictHelperLimit: boolean }): Observable<M.HelperSettingsView> {
     return this.http.put<M.HelperSettingsView>(`${this.base}/settings/helpers`, r);
   }
+  // Roadmap V2 R2-F2: questions in the game
+  promptSettings(): Observable<M.PromptSettingsView> {
+    return this.get('/settings/prompts');
+  }
+  savePromptSettings(kinds: string[]): Observable<M.PromptSettingsView> {
+    return this.http.put<M.PromptSettingsView>(`${this.base}/settings/prompts`, { kinds });
+  }
   bypassSettings(): Observable<M.BypassSettingsView> {
     return this.get('/settings/vanilla-bypass');
   }

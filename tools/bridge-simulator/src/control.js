@@ -19,7 +19,8 @@ export function startControlServer(sim, port, log = () => {}) {
       if (req.method === 'GET' && url.pathname === '/state') {
         return send(200, { savegameId: sim.savegameId, scenario: sim.scenario, gameTime: sim.gameTime,
           balance: sim.balance, priceEvents: sim.priceEvents, moneyLog: sim.moneyLog.slice(-50),
-          notifications: sim.notifications.slice(-50), roster: sim.roster, prompts: sim.prompts.slice(-50) });
+          notifications: sim.notifications.slice(-50), roster: sim.roster, prompts: sim.openPrompts(),
+          responses: sim.responses });
       }
       if (req.method === 'POST' && url.pathname === '/advance') {
         const b = await body(req);
@@ -86,6 +87,15 @@ export function startControlServer(sim, port, log = () => {}) {
         sim.exportMarketContext();
         return send(200, result);
       }
+      // Roadmap V2 R2-F: the player answers a yes/no question in the game
+      if (req.method === 'POST' && url.pathname === '/answer') {
+        const b = await body(req);
+        try {
+          return send(200, sim.answer(b.promptId, b.answer));
+        } catch (e) {
+          return send(400, { error: e.message });
+        }
+      }
       if (req.method === 'POST' && url.pathname === '/balance') {
         const b = await body(req);
         sim.balance = Number(b.balance);
@@ -97,6 +107,6 @@ export function startControlServer(sim, port, log = () => {}) {
       return send(500, { error: e.message });
     }
   });
-  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving|/book|/weather|/husbandry|/field|/field-rules|/jobs|/vanilla-loan|/vanilla-farmland)`));
+  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving|/book|/weather|/husbandry|/field|/field-rules|/jobs|/vanilla-loan|/vanilla-farmland|/answer)`));
   return server;
 }

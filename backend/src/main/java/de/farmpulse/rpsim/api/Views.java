@@ -115,6 +115,13 @@ public final class Views {
                                     String auditStatus) {
     }
 
+    /**
+     * Roadmap V2 R2-F2: occasions asked in the game; available = the backend asks at all (rpsim.bridge.ingame-prompts),
+     * kinds = the ones switched on for this savegame, allKinds in display order.
+     */
+    public record PromptSettingsView(boolean available, List<String> kinds, List<String> allKinds) {
+    }
+
     /** Roadmap V2 R2-C6: field work hints of the cooperative; fieldsTracked = the mod reports the fields. */
     public record FieldSettingsView(boolean fieldHintsEnabled, boolean fieldsTracked) {
     }

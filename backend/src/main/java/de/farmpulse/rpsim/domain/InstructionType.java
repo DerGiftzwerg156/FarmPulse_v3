@@ -16,5 +16,10 @@ public enum InstructionType {
      * Roadmap V2 R2-A0: complete employee list for the mod (helpers driven by employees). Sent when it changes and after
      * a rewind; a refusal (older mod) creates no notice.
      */
-    EMPLOYEE_ROSTER
+    EMPLOYEE_ROSTER,
+    /**
+     * Roadmap V2 R2-F2: yes/no question shown in the game; the answer comes back in export/player_responses.json. Sent
+     * again after a rewind while the question is still open; a refusal (older mod) creates no notice.
+     */
+    PROMPT
 }

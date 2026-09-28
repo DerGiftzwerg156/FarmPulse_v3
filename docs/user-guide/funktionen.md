@@ -39,6 +39,11 @@ Thema bleibt offen, bis du dich selbst meldest. Ignorierst du den Anruf, gilt er
 Im Gespräch zeigt ein Balken, dass dein Gegenüber auf eine Antwort wartet. Das ist nur Stimmung: Nimmst du dir
 länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
 
+**Direkt im Spiel antworten:** Mit der aktuellen Mod-Version fragt das Spiel bei einem Anruf in einem Ja/Nein-Fenster,
+ob du annimmst – ohne in den Browser zu wechseln. *Ja* nimmt an (das Gespräch ist danach im Browser bereit), *Nein*
+lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefragt werden, stellst du unter
+**Einstellungen** ein.
+
 ## Bank & Finanzen
 
 ![Bank](../screenshots/12-bank.png)
@@ -286,6 +291,25 @@ zählen nicht.
 
 **Kredit und Felder im Spielmenü:** Die Reaktionen der Charaktere auf den Kredit oder Feldkauf im Spielmenü ein- oder
 ausschalten (Standard an). Ausgeschaltet bleibt nur der Tagebucheintrag.
+
+**Fragen im Spiel:** Einfache Ja/Nein-Entscheidungen erscheinen als Fenster direkt im Spiel, immer zu den
+Bedingungen, die auch im Browser stehen. Einzeln einschaltbar (Standard: nur Anrufe):
+
+- eingehende Anrufe annehmen oder ablehnen,
+- Angebote für Pacht, Wartung und Versicherung annehmen oder ablehnen und eine Pacht verlängern,
+- das Entschädigungsangebot des Jagdpächters annehmen (*Nein* = im Browser weiter verhandeln),
+- das Gegenangebot der Bank annehmen oder ablehnen,
+- Einladungen zu Festen zu- oder absagen,
+- eine Ausgleichsforderung für einen Feldkauf zahlen oder ablehnen,
+- einen Steuerbescheid bezahlen (*Nein* = später im Browser),
+- das Angebot der Steuerberatung annehmen oder ablehnen.
+
+Die Knöpfe des Fensters heißen *Ja* und *Nein*; was sie bewirken, steht im Text („Ja = Annehmen · Nein = Ablehnen“).
+Ist gerade ein Menü offen, wartet die Frage, bis es geschlossen ist. Die Taste **FarmPulse: offene Frage** (Standard
+Alt+J, in der Steuerung des Spiels änderbar) öffnet die nächste wartende Frage – sie steht in der Tastenhilfe, solange
+eine Frage wartet. Entscheidest du vorher im Browser, verschwindet die Frage im Spiel. Klappt etwas nicht (z. B. reicht
+der Kontostand nicht), meldet das Spiel es mit einem Hinweis. Lädst du einen Spielstand ohne zu speichern, kommen
+noch offene Fragen erneut.
 
 ## Auf dem Handy
 

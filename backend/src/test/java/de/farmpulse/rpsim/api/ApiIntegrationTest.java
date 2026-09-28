@@ -432,6 +432,19 @@ class ApiIntegrationTest {
         mvc.perform(put("/api/settings/vanilla-bypass").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"reactionsEnabled\":false}"))
                 .andExpect(jsonPath("$.reactionsEnabled").value(false));
+        // Roadmap V2 R2-F2: occasions asked in the game, default only calls
+        mvc.perform(get("/api/settings/prompts")).andExpect(jsonPath("$.available").value(true))
+                .andExpect(jsonPath("$.kinds", hasSize(1))).andExpect(jsonPath("$.kinds[0]").value("CALL"))
+                .andExpect(jsonPath("$.allKinds", hasItem("TAX_BILL")));
+        mvc.perform(put("/api/settings/prompts").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"kinds\":[\"CALL\",\"INVITATION\"]}"))
+                .andExpect(jsonPath("$.kinds", hasSize(2)));
+        mvc.perform(put("/api/settings/prompts").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"kinds\":[]}"))
+                .andExpect(jsonPath("$.kinds", hasSize(0)));
+        mvc.perform(put("/api/settings/prompts").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"kinds\":[\"SKYNET\"]}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

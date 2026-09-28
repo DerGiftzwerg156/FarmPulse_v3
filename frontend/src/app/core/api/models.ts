@@ -266,6 +266,14 @@ export interface EmployeeView {
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
 /** Roadmap V2 R2-D: reactions to the vanilla loan and the game's field menu. */
+/** Roadmap V2 R2-F2: occasions asked in the game as a yes/no question. */
+export interface PromptSettingsView {
+  /** false: the backend asks nothing in the game (rpsim.bridge.ingame-prompts). */
+  available: boolean;
+  kinds: string[];
+  allKinds: string[];
+}
+
 export interface BypassSettingsView {
   reactionsEnabled: boolean;
   /** > 0 while new credits cost more after repeated vanilla loans. */

@@ -92,6 +92,40 @@ function RPSimPersistence.save(writer, state)
             writer:setFloat(e .. "#amount", p.byType[name])
         end
     end
+    -- Roadmap V2 R2-F: waiting questions, unacknowledged answers and handled question ids
+    local prompts = state.prompts
+    if prompts ~= nil then
+        for i, q in ipairs(prompts.queue) do
+            local k = string.format("%s.prompts.prompt(%d)", ROOT, i - 1)
+            writer:setString(k .. "#id", q.promptId)
+            writer:setString(k .. "#title", q.title)
+            writer:setString(k .. "#text", q.text)
+            if q.yesLabel ~= nil then
+                writer:setString(k .. "#yesLabel", q.yesLabel)
+            end
+            if q.noLabel ~= nil then
+                writer:setString(k .. "#noLabel", q.noLabel)
+            end
+            writer:setFloat(k .. "#expiresGameTime", q.expiresGameTime or 0)
+        end
+        for i, r in ipairs(prompts.responses) do
+            local k = string.format("%s.prompts.response(%d)", ROOT, i - 1)
+            writer:setString(k .. "#id", r.responseId)
+            writer:setString(k .. "#promptId", r.promptId)
+            writer:setString(k .. "#answer", r.answer)
+            writer:setFloat(k .. "#gameTime", r.gameTime)
+        end
+        local handled = {}
+        for id, _ in pairs(prompts.handled) do
+            handled[#handled + 1] = id
+        end
+        table.sort(handled)
+        for i, id in ipairs(handled) do
+            local k = string.format("%s.prompts.handled(%d)", ROOT, i - 1)
+            writer:setString(k .. "#id", id)
+            writer:setFloat(k .. "#expiresGameTime", prompts.handled[id])
+        end
+    end
 end
 
 function RPSimPersistence.load(reader, state)
@@ -182,6 +216,36 @@ function RPSimPersistence.load(reader, state)
             j = j + 1
         end
         state.financeJournal.periods[#state.financeJournal.periods + 1] = p
+        i = i + 1
+    end
+    -- Roadmap V2 R2-F
+    state.prompts = RPSimPrompts.new()
+    i = 0
+    while true do
+        local k = string.format("%s.prompts.prompt(%d)", ROOT, i)
+        local id = reader:getString(k .. "#id")
+        if id == nil then break end
+        state.prompts.queue[#state.prompts.queue + 1] = { promptId = id, title = reader:getString(k .. "#title") or "",
+            text = reader:getString(k .. "#text") or "", yesLabel = reader:getString(k .. "#yesLabel"),
+            noLabel = reader:getString(k .. "#noLabel"), expiresGameTime = reader:getFloat(k .. "#expiresGameTime") }
+        i = i + 1
+    end
+    i = 0
+    while true do
+        local k = string.format("%s.prompts.response(%d)", ROOT, i)
+        local id = reader:getString(k .. "#id")
+        if id == nil then break end
+        state.prompts.responses[#state.prompts.responses + 1] = { responseId = id,
+            promptId = reader:getString(k .. "#promptId") or "", answer = reader:getString(k .. "#answer") or "NO",
+            gameTime = reader:getFloat(k .. "#gameTime") or 0 }
+        i = i + 1
+    end
+    i = 0
+    while true do
+        local k = string.format("%s.prompts.handled(%d)", ROOT, i)
+        local id = reader:getString(k .. "#id")
+        if id == nil then break end
+        state.prompts.handled[id] = reader:getFloat(k .. "#expiresGameTime") or 0
         i = i + 1
     end
 end

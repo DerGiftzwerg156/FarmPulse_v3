@@ -81,9 +81,10 @@ running helper jobs like the mod (R2-A2 / R2-A5): the job of a `STRIKE` employee
 helper (no `employeeId`), and jobs without employee get the first free `ACTIVE` `MACHINE_OPERATOR` in list order (the
 backend sends the list sorted by skill). Jobs started via `POST /jobs` without `employeeId` are assigned the same way.
 The strict helper limit (R2-A3) and the dropped game wage (R2-A1) are not simulated. `PROMPT` is "shown" once
-(`GET /state` → `prompts`; an expired one is acknowledged `APPLIED` / `EXPIRED` without being shown),
-`REPAIR_VEHICLE` with `targetDamage` repairs down to that damage and never raises it. The real mod validates `PROMPT`
-but acknowledges it `FAILED` / `NOT_SUPPORTED` until R2-F2 is built.
+(`GET /state` → `prompts`; an expired one is acknowledged `APPLIED` / `EXPIRED` without being shown, a promptId already
+queued, answered or withdrawn `DUPLICATE`); answer it with `POST /answer` - like the mod, the simulator writes
+`export/player_responses.json` at once, removes answers listed in `ackedResponses` and drops questions listed in
+`withdrawnPrompts` (R2-F1). `REPAIR_VEHICLE` with `targetDamage` repairs down to that damage and never raises it.
 
 ## Control API (manual testing / E2E)
 
@@ -105,6 +106,7 @@ but acknowledges it `FAILED` / `NOT_SUPPORTED` until R2-F2 is built.
 | `POST /field-rules {"limeRequired":false}` | The player changes the soil settings of the savegame (`ernte-herbst`) |
 | `POST /vanilla-loan {"change": 30000}` | Roadmap V2 R2-D1: the player takes (positive) or repays (negative) the vanilla loan in the finance menu; the balance moves by the same amount |
 | `POST /vanilla-farmland {"farmlandId": 13, "toPlayer": true}` | Roadmap V2 R2-D2: the player buys (`true`) or sells a farmland in the game's field menu at its price (purchase booked as `SHOP_PROPERTY_BUY`), market context re-exported |
+| `POST /answer {"promptId":"prm_…","answer":"YES"}` | Roadmap V2 R2-F: the player answers a yes/no question in the game (`YES` / `NO`); 400 for an unknown question |
 | `POST /jobs {"activeJobs":[{"jobId":5,"employeeId":2,"title":"John Deere 8R"}]}` | Replace the running helper jobs (`helfer-hof`); jobs without `employeeId` get a free operator of the last roster |
 
 ## Running the whole tool without FS25

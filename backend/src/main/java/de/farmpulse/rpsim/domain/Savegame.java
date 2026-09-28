@@ -273,4 +273,8 @@ public class Savegame {
     /** E3: monthly retirement payment to the parents (null = none). */
     @Column(name = "retirement_payment")
     private Long retirementPayment;
+
+    /** Roadmap V2 R2-F2: occasions asked in the game (comma separated PromptKind names); null = configured default. */
+    @Column(name = "ingame_prompt_kinds", length = 255)
+    private String ingamePromptKinds;
 }

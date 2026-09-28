@@ -128,6 +128,7 @@ export class BridgeSimulator {
       marketContext: join(dir, 'export', 'market_context.json'),
       instructions: join(dir, 'import', 'instructions.json'),
       ack: join(dir, 'import', 'instructions_ack.json'),
+      playerResponses: join(dir, 'export', 'player_responses.json'), // Roadmap V2 R2-F1
       savegame: join(dir, 'simulator_savegame.json'),
     };
     this.log = log;
@@ -169,7 +170,9 @@ export class BridgeSimulator {
     this.weather = preset.weather ? { ...preset.weather } : null;
     this.fieldRules = preset.fieldRules ? { ...preset.fieldRules } : null;
     this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
-    this.prompts = []; // R2-F2: yes/no questions shown to the "player"
+    this.prompts = []; // R2-F2: yes/no questions shown to the "player" (waiting for an answer)
+    this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
+    this.handledPrompts = {}; // R2-F1: answered / withdrawn questions (promptId -> expiresGameTime)
     this.lastMarketContextJson = null;
     this.loadSavegame();
     this.savedGame = this.gameState();
@@ -187,7 +190,8 @@ export class BridgeSimulator {
   /** Roadmap V2 state the mod keeps in its savegame XML (journal R2-B1, worked time R2-A4, roster R2-A0). */
   roadmapV2State() {
     return { finances: this.finances, workforce: this.workforce, husbandries: this.husbandries, fields: this.fields,
-      weather: this.weather, roster: this.roster };
+      weather: this.weather, roster: this.roster, prompts: this.prompts, responses: this.responses,
+      handledPrompts: this.handledPrompts };
   }
 
   // --------------------------------------------------------------- FS25 calendar (TODO T-08)
@@ -240,7 +244,8 @@ export class BridgeSimulator {
       Object.assign(this, { processed: s.processed ?? {}, priceEvents: s.priceEvents ?? [],
         contractReports: s.contractReports ?? [] });
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
-        'storage', 'farmlands', 'calendar', 'finances', 'workforce', 'husbandries', 'fields', 'weather', 'roster']) {
+        'storage', 'farmlands', 'calendar', 'finances', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
+        'prompts', 'responses', 'handledPrompts']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -660,6 +665,11 @@ export class BridgeSimulator {
           this.applyNote = 'EXPIRED';
           return null;
         }
+        // like the mod: a question already queued, answered or withdrawn is not queued again (e.g. resent after a rewind)
+        if (this.handledPrompts[ins.promptId] !== undefined || this.prompts.some((p) => p.promptId === ins.promptId)) {
+          this.applyNote = 'DUPLICATE';
+          return null;
+        }
         this.prompts.push({ id: ins.instructionId, promptId: ins.promptId, title: ins.title, text: ins.text,
           yesLabel: ins.yesLabel, noLabel: ins.noLabel, expiresGameTime: ins.expiresGameTime, gameTime: this.gameTime });
         this.log(`in-game prompt: ${ins.title} - ${ins.text}`);
@@ -744,6 +754,7 @@ export class BridgeSimulator {
           }
         }
         if (res.marketContextDirty) this.exportMarketContext();
+        if (this.applyResponseDocument(doc)) this.writeResponses();
       }
     }
     this.collectEnded();
@@ -777,6 +788,51 @@ export class BridgeSimulator {
     this.writeJson(this.paths.ack, doc);
   }
 
+  // --------------------------------------------------------------- Roadmap V2 R2-F: questions in the game
+  /** instructions.json: processed answers (ackedResponses) and questions decided in the browser (withdrawnPrompts). */
+  applyResponseDocument(doc) {
+    const acked = new Set(Array.isArray(doc.ackedResponses) ? doc.ackedResponses : []);
+    const before = this.responses.length;
+    this.responses = this.responses.filter((r) => !acked.has(r.responseId));
+    for (const id of Array.isArray(doc.withdrawnPrompts) ? doc.withdrawnPrompts : []) {
+      const p = this.prompts.find((x) => x.promptId === id);
+      if (p) {
+        this.prompts = this.prompts.filter((x) => x !== p);
+        this.handledPrompts[id] = p.expiresGameTime;
+        this.log(`in-game question withdrawn: ${p.title}`);
+      }
+    }
+    return this.responses.length !== before;
+  }
+
+  /** The "player" answers a question in the game dialog; the file is written at once (like the mod). */
+  answer(promptId, answer) {
+    if (answer !== 'YES' && answer !== 'NO') throw new Error('answer must be YES or NO');
+    const p = this.prompts.find((x) => x.promptId === promptId);
+    if (!p) throw new Error(`no open question ${promptId}`);
+    this.prompts = this.prompts.filter((x) => x !== p);
+    this.handledPrompts[promptId] = p.expiresGameTime;
+    const r = { responseId: `rsp_${promptId}`, promptId, answer, gameTime: this.gameTime };
+    this.responses.push(r);
+    this.writeResponses();
+    this.saveSavegame();
+    this.log(`in-game answer ${answer}: ${p.title}`);
+    return r;
+  }
+
+  /** Questions still waiting (expired ones are dropped like in the mod). */
+  openPrompts() {
+    this.prompts = this.prompts.filter((p) => this.gameTime <= p.expiresGameTime);
+    return this.prompts;
+  }
+
+  writeResponses() {
+    const doc = { savegameId: this.savegameId, responses: this.responses };
+    const err = validate('playerResponses', doc);
+    if (err) throw new Error(`player_responses.json does not match schema: ${err}`);
+    this.writeJson(this.paths.playerResponses, doc);
+  }
+
   // --------------------------------------------------------------- lifecycle
   /** Equivalent of the mod's loadMap: bootstrap + immediate fresh export. */
   start() {
@@ -784,6 +840,7 @@ export class BridgeSimulator {
     this.exportMarketContext();
     this.exportFarmFacts();
     this.writeAck();
+    this.writeResponses(); // R2-F1: the file follows the loaded savegame
   }
 
   /** One simulator cycle: advance game time, apply instructions, export facts. */
@@ -796,7 +853,8 @@ export class BridgeSimulator {
   }
 
   reset() {
-    for (const p of [this.paths.savegame, this.paths.farmFacts, this.paths.marketContext, this.paths.ack]) {
+    for (const p of [this.paths.savegame, this.paths.farmFacts, this.paths.marketContext, this.paths.ack,
+      this.paths.playerResponses]) {
       rmSync(p, { force: true });
     }
   }

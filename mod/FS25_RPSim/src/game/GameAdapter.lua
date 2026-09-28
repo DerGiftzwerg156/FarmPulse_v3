@@ -5,6 +5,7 @@
 -- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
 -- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
 -- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
+-- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -776,6 +777,53 @@ function RPSimGameAdapter:notify(text, level)
         return false, tostring(err)
     end
     return true
+end
+
+-- ------------------------------------------------------------------ Roadmap V2 R2-F: questions in the game
+
+--- R2-F2: a question is only shown while no menu or dialog is open (Gui:getIsGuiVisible = current screen or any
+-- dialog, LUADOC script/GUI/Gui.md) and - unless allowed - not while the player sits in a vehicle
+-- (g_localPlayer:getIsInVehicle, used in the FS25 code).
+function RPSimGameAdapter:canShowPrompt(inVehicleAllowed)
+    local ok, can = pcall(function()
+        if g_gui == nil or YesNoDialog == nil or YesNoDialog.show == nil then
+            return false
+        end
+        if g_gui:getIsGuiVisible() then
+            return false
+        end
+        if not inVehicleAllowed and g_localPlayer ~= nil and g_localPlayer:getIsInVehicle() then
+            return false
+        end
+        return true
+    end)
+    return ok and can == true
+end
+
+--- R2-F2: YesNoDialog.show(callback, target, text, title) as in PalletFiller / PlaceableBuyable; with target nil the
+-- callback gets the answer as its only argument.
+function RPSimGameAdapter:showYesNo(text, title, callback)
+    local ok, err = pcall(function()
+        YesNoDialog.show(function(yes)
+            callback(yes == true)
+        end, nil, text, title)
+    end)
+    if not ok then
+        return false, tostring(err)
+    end
+    return true
+end
+
+--- R2-F3: the key help shows the action only while a question waits (setActionEventTextVisibility is used throughout
+-- the FS25 code). The event id comes from RPSim.registerPromptAction.
+function RPSimGameAdapter:setPromptKeyVisible(visible)
+    if self.promptActionEventId == nil or self.promptKeyVisible == visible then
+        return
+    end
+    self.promptKeyVisible = visible
+    pcall(function()
+        g_inputBinding:setActionEventTextVisibility(self.promptActionEventId, visible)
+    end)
 end
 
 --- Farmland ownership transfer between the player farm and "no owner" (NPC owners only exist in the tool).

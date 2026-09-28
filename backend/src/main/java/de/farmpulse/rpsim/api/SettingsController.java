@@ -1,6 +1,9 @@
 package de.farmpulse.rpsim.api;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import de.farmpulse.rpsim.ai.AiProviderRegistry;
 import de.farmpulse.rpsim.ai.AiSettingsService;
@@ -9,8 +12,10 @@ import de.farmpulse.rpsim.api.Views.AiSettingsView;
 import de.farmpulse.rpsim.api.Views.GameSettingsView;
 import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.domain.HelperWageMode;
+import de.farmpulse.rpsim.domain.PromptKind;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.WorkforceService;
+import de.farmpulse.rpsim.prompt.PromptService;
 import de.farmpulse.rpsim.savegame.SavegameContext;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,14 +36,39 @@ public class SettingsController {
     private final SavegameContext context;
     private final WorkforceService workforce;
     private final VanillaBypassService bypass;
+    private final PromptService prompts;
 
     public SettingsController(AiSettingsService settings, AiProviderRegistry registry, SavegameContext context,
-                              WorkforceService workforce, VanillaBypassService bypass) {
+                              WorkforceService workforce, VanillaBypassService bypass, PromptService prompts) {
         this.settings = settings;
         this.registry = registry;
         this.context = context;
         this.workforce = workforce;
         this.bypass = bypass;
+        this.prompts = prompts;
+    }
+
+    /** Roadmap V2 R2-F2: which decisions are asked in the game as a yes/no question (default: only calls). */
+    @GetMapping("/api/settings/prompts")
+    @Transactional(readOnly = true)
+    public Views.PromptSettingsView prompts() {
+        return promptView(context.requireActive());
+    }
+
+    @PutMapping("/api/settings/prompts")
+    @Transactional
+    public Views.PromptSettingsView savePrompts(@Valid @RequestBody Requests.PromptSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        Set<PromptKind> kinds = EnumSet.noneOf(PromptKind.class);
+        r.kinds().forEach(k -> kinds.add(PromptKind.valueOf(k)));
+        prompts.setEnabledKinds(sg, kinds);
+        return promptView(sg);
+    }
+
+    private Views.PromptSettingsView promptView(Savegame sg) {
+        return new Views.PromptSettingsView(prompts.globallyEnabled(),
+                prompts.enabledKinds(sg).stream().map(Enum::name).toList(),
+                Arrays.stream(PromptKind.values()).map(Enum::name).toList());
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers and the strict helper limit. */

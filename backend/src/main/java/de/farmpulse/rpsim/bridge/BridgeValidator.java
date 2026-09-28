@@ -160,6 +160,19 @@ public final class BridgeValidator {
         return e;
     }
 
+    /** Roadmap V2 R2-F1: answers need an id, the question and YES / NO; invalid entries are dropped (never a crash). */
+    public static List<String> validate(BridgeDtos.PlayerResponsesDocument d) {
+        List<String> e = new ArrayList<>();
+        if (blank(d.savegameId())) e.add("savegameId missing");
+        if (d.responses() == null) e.add("responses missing");
+        return e;
+    }
+
+    public static boolean valid(BridgeDtos.PlayerAnswer a) {
+        return a != null && !blank(a.responseId()) && !blank(a.promptId())
+                && ("YES".equals(a.answer()) || "NO".equals(a.answer())) && a.gameTime() != null;
+    }
+
     private static boolean blank(String s) {
         return s == null || s.isBlank();
     }

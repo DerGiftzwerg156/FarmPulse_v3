@@ -548,6 +548,16 @@
     "auditStatus": {
       "ANNOUNCED": "Betriebsprüfung angekündigt – das Ergebnis kommt per Post.",
       "DONE": "Betriebsprüfung abgeschlossen."
+    },
+    "promptKind": {
+      "CALL": "Eingehende Anrufe annehmen oder ablehnen",
+      "CONTRACT_OFFER": "Angebote für Pacht, Wartung und Versicherung sowie Pachtverlängerungen",
+      "WILDLIFE_OFFER": "Entschädigungsangebot des Jagdpächters annehmen",
+      "CREDIT_COUNTER": "Gegenangebot der Bank annehmen oder ablehnen",
+      "INVITATION": "Einladungen zu Festen zu- oder absagen",
+      "COMPENSATION_CLAIM": "Ausgleichsforderung für einen Feldkauf zahlen oder ablehnen",
+      "TAX_BILL": "Steuerbescheide bezahlen",
+      "TAX_ADVISOR": "Angebot der Steuerberatung annehmen oder ablehnen"
     }
   },
   "onboarding": {
@@ -986,6 +996,12 @@
       "reactions": "Charaktere reagieren, wenn du den Kredit oder den Feldkauf im Spielmenü nutzt",
       "hint": "Gesperrt wird nichts: Die Bank meldet sich bei einem Kredit aus dem Finanzmenü, frühere Feldbesitzer bei einem Kauf über ihren Kopf hinweg.",
       "surcharge": "Neue Kredite der Bank kosten derzeit {percent} Prozentpunkte mehr Zinsen, bis der Kredit aus dem Spielmenü getilgt ist."
+    },
+    "prompts": {
+      "title": "Fragen im Spiel",
+      "hint": "Einfache Ja/Nein-Entscheidungen erscheinen als Dialog direkt im Spiel – immer zu den Bedingungen, die hier im Browser stehen. Gespräche, Gegenforderungen und Formulare mit Beträgen bleiben im Browser.",
+      "off": "Fragen im Spiel sind in der Konfiguration abgeschaltet (rpsim.bridge.ingame-prompts).",
+      "key": "Ist gerade ein Menü offen, wartet die Frage. Mit der Taste „FarmPulse: offene Frage“ (Steuerung im Spiel, Standard Alt+J) öffnest du sie jederzeit, auch im Fahrzeug."
     }
   },
   "notices": {

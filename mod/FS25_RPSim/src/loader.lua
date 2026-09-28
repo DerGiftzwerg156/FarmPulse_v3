@@ -6,7 +6,7 @@ local files = {
     "bridge/Config.lua", "bridge/BridgePaths.lua",
     "export/Storage.lua", "export/FarmFacts.lua", "export/MarketContext.lua", "export/FinanceJournal.lua",
     "import/Instructions.lua", "import/PriceEventMath.lua", "import/PriceEvents.lua",
-    "game/Workforce.lua", "import/Processor.lua", "import/Persistence.lua",
+    "game/Workforce.lua", "game/Prompts.lua", "import/Processor.lua", "import/Persistence.lua",
     "bridge/Bridge.lua", "game/GameAdapter.lua", "RPSim.lua",
 }
 for _, f in ipairs(files) do

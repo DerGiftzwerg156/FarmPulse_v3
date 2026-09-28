@@ -281,3 +281,45 @@ test('the instruction schema describes the new types (R2-Q1)', () => {
   assert.notEqual(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [] })), null);
   assert.notEqual(validate('instructions', doc({ type: 'REPAIR_VEHICLE', vehicleId: 'v', targetDamage: 2 })), null);
 });
+
+test('answers go to player_responses.json at once and leave it once acknowledged (R2-F1)', () => {
+  const { sim } = setup();
+  const prompt = (id) => ({ instructionId: `ins_${id}`, type: 'PROMPT', promptId: id, title: 'Anruf',
+    text: 'Greta Lindner ruft an.', yesLabel: 'Annehmen', noLabel: 'Ablehnen', expiresGameTime: sim.gameTime + MS_PER_GAME_HOUR });
+  const writeDoc = (doc) => {
+    assert.equal(validate('instructions', doc), null);
+    writeFileSync(sim.paths.instructions, JSON.stringify(doc));
+  };
+  assert.deepEqual(read(sim.paths.playerResponses), { savegameId: sim.savegameId, responses: [] });
+  writeDoc({ savegameId: sim.savegameId, instructions: [prompt('prm_1'), prompt('prm_2')] });
+  sim.processInstructions();
+  const r = sim.answer('prm_1', 'YES');
+  assert.equal(r.responseId, 'rsp_prm_1');
+  const file = read(sim.paths.playerResponses);
+  assert.equal(validate('playerResponses', file), null);
+  assert.deepEqual(file.responses.map((x) => [x.promptId, x.answer]), [['prm_1', 'YES']]);
+  assert.throws(() => sim.answer('prm_1', 'NO'), /no open question/);
+  // acknowledged answer leaves the file, prm_2 was decided in the browser meanwhile
+  writeDoc({ savegameId: sim.savegameId, instructions: [], ackedResponses: ['rsp_prm_1'], withdrawnPrompts: ['prm_2'] });
+  sim.processInstructions();
+  assert.deepEqual(read(sim.paths.playerResponses).responses, []);
+  assert.deepEqual(sim.openPrompts(), []);
+  // the same PROMPT resent (e.g. after a rewind) is not queued again
+  writeDoc({ savegameId: sim.savegameId, instructions: [{ ...prompt('prm_2'), instructionId: 'ins_again' }] });
+  sim.processInstructions();
+  assert.deepEqual(sim.openPrompts(), []);
+  assert.equal(read(sim.paths.ack).acks.find((a) => a.instructionId === 'ins_again').message, 'DUPLICATE');
+});
+
+test('a reload without saving loses the answers given after the save (R2-F1)', () => {
+  const { sim } = setup();
+  writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
+    { instructionId: 'ins_p', type: 'PROMPT', promptId: 'prm_x', title: 'Anruf', text: 'Annehmen?',
+      expiresGameTime: sim.gameTime + MS_PER_GAME_DAY }] }));
+  sim.processInstructions();
+  sim.saveGame();
+  sim.answer('prm_x', 'NO');
+  sim.reloadWithoutSaving();
+  assert.deepEqual(read(sim.paths.playerResponses).responses, []);
+  assert.deepEqual(sim.openPrompts().map((p) => p.promptId), ['prm_x']);
+});

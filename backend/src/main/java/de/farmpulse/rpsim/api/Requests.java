@@ -106,4 +106,9 @@ public final class Requests {
     /** Roadmap V2 R2-C6: switch of the field work hints. */
     public record FieldSettingsRequest(boolean fieldHintsEnabled) {
     }
+
+    /** Roadmap V2 R2-F2: occasions asked in the game (PromptKind names; empty = none). */
+    public record PromptSettingsRequest(@NotNull List<@NotBlank @Pattern(regexp = "CALL|CONTRACT_OFFER|WILDLIFE_OFFER"
+            + "|CREDIT_COUNTER|INVITATION|COMPENSATION_CLAIM|TAX_BILL|TAX_ADVISOR") String> kinds) {
+    }
 }

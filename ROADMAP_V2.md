@@ -582,16 +582,28 @@ Spieler in den Browser wechseln, auch bei einfachen Ja/Nein-Fragen.
 **Idee:** Einfache Entscheidungen erscheinen als Ja/Nein-Dialog im Spiel. Die Antwort geht über einen neuen Rückkanal
 an das Backend. Gespräche und Formulare mit Beträgen bleiben im Browser.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Belegt ist nur
+`YesNoDialog.show(callback, target, text, title)`; der Dialog zeigt deshalb die Ja/Nein-Knöpfe des Spiels, die
+Bedeutung (`yesLabel` / `noLabel`) hängt der Mod an den Text an. Im Browser getroffene Entscheidungen zieht das Backend
+über `withdrawnPrompts` in `instructions.json` zurück. Zusätzlich zur Liste unten sind die Ja/Nein-Fälle aus D und E
+einstellbar (Ausgleichsforderung, Steuerbescheid, Angebot der Steuerberatung); Standard bleibt „nur Anrufe“. Die
+Antworten führt das Backend nach dem Bridge-Zyklus aus, jede in einer eigenen Transaktion; eine abgelehnte Aktion
+meldet das Spiel als Hinweis. F3 ist abgesichert gebaut (Einhängen in
+`PlayerInputComponent.registerGlobalPlayerActionEvents`, 🟡 Testplan 10.8), Standardtaste Alt+J. Ob der Dialog während
+der Fahrt stört, bleibt 🟡 (Testplan 10.7); der Fallback ist der Mod-Schalter `promptsInVehicle`. Die belegte Taste
+lässt sich mit keiner belegten API auslesen: Kann eine Frage nicht sofort erscheinen, blendet der Mod einen Hinweis mit
+dem Namen der Aktion („FarmPulse: offene Frage“) ein, die Tastenhilfe zeigt die Taste selbst.
+
 ### R2-F1 Rückkanal Mod → Backend
 
-- [ ] Neue Datei `export/player_responses.json`:
+- [x] Neue Datei `export/player_responses.json`:
   `{ savegameId, responses: [{ responseId, promptId, answer: "YES" | "NO", gameTime }] }`.
-- [ ] Der Mod schreibt die Datei **sofort** nach einer Antwort (nicht erst beim 60-s-Export), im Schreibmodus
+- [x] Der Mod schreibt die Datei **sofort** nach einer Antwort (nicht erst beim 60-s-Export), im Schreibmodus
   `direct` wie alle Bridge-Dateien.
-- [ ] Das Backend liest die Datei bei jedem Bridge-Zyklus (`rpsim.bridge.poll-interval-ms`, heute 2000). Es bestätigt
+- [x] Das Backend liest die Datei bei jedem Bridge-Zyklus (`rpsim.bridge.poll-interval-ms`, heute 2000). Es bestätigt
   verarbeitete Antworten in `instructions.json` mit `ackedResponses: [responseId]`, der Mod entfernt sie dann aus
   der Datei. Doppelte `responseId` ignoriert das Backend (idempotent).
-- [ ] Nach dem Neuladen ohne Speichern gehen unbestätigte Antworten verloren. Die Frage kommt dann einfach erneut,
+- [x] Nach dem Neuladen ohne Speichern gehen unbestätigte Antworten verloren. Die Frage kommt dann einfach erneut,
   weil das Backend sie noch als offen führt.
 
 **Beleg:** ✅ Schreiben mit `io.open` im `modSettings`-Ordner ist in V1 belegt und im Einsatz (Farm Dashboard,
@@ -599,13 +611,13 @@ an das Backend. Gespräche und Formulare mit Beträgen bleiben im Browser.
 
 ### R2-F2 Anweisung `PROMPT` und Ja/Nein-Dialog
 
-- [ ] Neuer Anweisungstyp
+- [x] Neuer Anweisungstyp
   `PROMPT { promptId, title, text, yesLabel?, noLabel?, expiresGameTime }`.
-- [ ] Der Mod reiht Prompts ein und zeigt jeweils einen mit `YesNoDialog.show(callback, target, text, title)`. Der
+- [x] Der Mod reiht Prompts ein und zeigt jeweils einen mit `YesNoDialog.show(callback, target, text, title)`. Der
   Callback schreibt die Antwort in den Rückkanal (F1). Abgelaufene Prompts verwirft der Mod ungezeigt.
-- [ ] Nur bei der Spieler-Farm und nicht, wenn gerade ein anderer Dialog oder ein Menü offen ist. In dem Fall wartet
+- [x] Nur bei der Spieler-Farm und nicht, wenn gerade ein anderer Dialog oder ein Menü offen ist. In dem Fall wartet
   der Prompt bis zum nächsten Frame ohne offenes Menü.
-- [ ] **Erlaubte Anlässe** (nur Entscheidungen, deren Zahlen das Backend festlegt):
+- [x] **Erlaubte Anlässe** (nur Entscheidungen, deren Zahlen das Backend festlegt):
   - eingehender Anruf: **Annehmen / Ablehnen** (angenommen → das Gespräch ist im Browser bereit, abgelehnt → wie
     „Ablehnen“ in der Oberfläche),
   - angebotene Verträge (Pacht, Wartungsvertrag, Versicherung) annehmen / ablehnen und Pacht verlängern, jeweils zu
@@ -613,9 +625,9 @@ an das Backend. Gespräche und Formulare mit Beträgen bleiben im Browser.
   - Entschädigungsangebot des Jagdpächters annehmen (`/api/cases/{id}/accept`); Nachverhandeln bleibt im Browser,
   - Gegenangebot der Bank annehmen / ablehnen (`/api/credit-applications/{id}/accept-counter|decline-counter`),
   - Einladungen zu- oder absagen (erst mit der Zusage-Mechanik aus E4).
-- [ ] Die Antwort löst im Backend **dieselbe Service-Methode** aus wie der Klick im Browser. So gibt es keine zweite
+- [x] Die Antwort löst im Backend **dieselbe Service-Methode** aus wie der Klick im Browser. So gibt es keine zweite
   Geschäftslogik.
-- [ ] Im Tool einstellbar: welche Anlässe im Spiel gefragt werden (Standard: nur Anrufe).
+- [x] Im Tool einstellbar: welche Anlässe im Spiel gefragt werden (Standard: nur Anrufe).
 
 **Beleg:** ✅ `dialogs/YesNoDialog.lua`; ✅ Aufrufe `YesNoDialog.show(callback, target, text[, title])` im Spielcode
 (`PlaceableBuyable`, `PlaceableTrainSystem`, `TourIconsMobile`).
@@ -625,9 +637,9 @@ an das Backend. Gespräche und Formulare mit Beträgen bleiben im Browser.
 
 ### R2-F3 Taste für offene Entscheidungen (optional)
 
-- [ ] Eigene Aktion in `modDesc.xml` (`<actions>` / `<inputBinding>`) und Registrierung über `g_inputBinding` mit
+- [x] Eigene Aktion in `modDesc.xml` (`<actions>` / `<inputBinding>`) und Registrierung über `g_inputBinding` mit
   Anzeige in der Tastenhilfe: öffnet die nächste offene Frage.
-- [ ] Die Einblendung (`NOTIFICATION`) nennt die Taste: „FarmPulse: Anruf von … – [Taste] zum Annehmen“.
+- [x] Die Einblendung (`NOTIFICATION`) nennt die Taste: „FarmPulse: Anruf von … – [Taste] zum Annehmen“.
 
 **Beleg:** ✅ Aktionen werden im Spielcode mit `addActionEvent(..., InputAction.X, ...)` registriert (z. B.
 `TensionBelts`, `Drivable`, `WorkMode`).

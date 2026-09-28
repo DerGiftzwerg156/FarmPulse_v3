@@ -114,6 +114,20 @@ versions or this changelog do not match.
     trust) - replaces the fixed invitation calendar `village-life.invitation-every-periods`; sponsoring requests with
     fixed tiers raise the village reputation.
   - Values in `rpsim.formulas.tax.*`, `authority.*`, `family.*`, `clubs.*` (V20 migration).
+- **Decisions directly in the game (Roadmap V2, R2-F)** - simple yes/no decisions without switching to the browser:
+  - Mod: `PROMPT` questions are queued and shown one at a time with the game's yes/no dialog as soon as no menu is
+    open (`promptsInVehicle` switch); the buttons stay "Ja"/"Nein", their meaning is in the text. The answer is written
+    at once to the new file `export/player_responses.json`; queue and open answers are kept in the savegame.
+  - Key *FarmPulse: offene Frage* (default Alt+J, rebindable) opens the next waiting question, also in a vehicle; the
+    key help shows it while a question waits.
+  - Backend: open decisions of the occasions switched on per savegame (default: only calls) become questions -
+    calls, contract offers and lease renewals, the hunting tenant's offer, the bank's counter offer, invitations, and
+    (owner decision) compensation claims, tax bills and the tax advisor's offer. Answers are processed once per
+    `responseId` with the same service methods as the browser buttons; a refused action comes back as a notification.
+    `instructions.json` acknowledges answers (`ackedResponses`) and withdraws questions decided in the browser
+    (`withdrawnPrompts`); after a reload without saving an open question is sent again.
+  - Settings card *Fragen im Spiel*; `rpsim.bridge.ingame-prompts`, `prompt-default-kinds`, `prompt-max-age-hours`
+    (V21 migration). Simulator: `POST /answer`, `export/player_responses.json`.
 
 ## [1.1.2] - 2026-09-28
 

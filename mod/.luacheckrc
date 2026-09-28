@@ -5,7 +5,7 @@ max_line_length = 130
 globals = {
     "RPSim", "RPSimJson", "RPSimLog", "RPSimFileIO", "RPSimConfig", "RPSimBridgePaths", "RPSimStorage",
     "RPSimFarmFacts", "RPSimFinanceJournal", "RPSimWorkforce", "RPSimMarketContext", "RPSimInstructions", "RPSimPriceEventMath", "RPSimPriceEvents",
-    "RPSimProcessor", "RPSimPersistence", "RPSimBridge", "RPSimGameAdapter",
+    "RPSimProcessor", "RPSimPersistence", "RPSimBridge", "RPSimGameAdapter", "RPSimPrompts",
 }
 -- FS25 engine globals (read-only).
 read_globals = {

@@ -126,5 +126,19 @@
             <en>%s has gone on strike</en>
             <de>%s legt die Arbeit nieder</de>
         </text>
+        <!-- Roadmap V2 R2-F3: key help / controls menu -->
+        <text name="input_RPSIM_OPEN_PROMPT">
+            <en>FarmPulse: open question</en>
+            <de>FarmPulse: offene Frage</de>
+        </text>
     </l10n>
+    <!-- Roadmap V2 R2-F3: opens the next waiting yes/no question (rebindable in the controls menu) -->
+    <actions>
+        <action name="RPSIM_OPEN_PROMPT" category="ONFOOT VEHICLE" axisType="HALF"/>
+    </actions>
+    <inputBinding>
+        <actionBinding action="RPSIM_OPEN_PROMPT">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_lalt KEY_j"/>
+        </actionBinding>
+    </inputBinding>
 </modDesc>

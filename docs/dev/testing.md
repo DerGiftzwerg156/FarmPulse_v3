@@ -142,6 +142,12 @@ festival calendar in `VillageLifeServiceTest`; `ApiIntegrationTest` covers `/api
 and the family in the onboarding (reroll keeps role and name). The frontend covers the tax card in
 `tax-card.spec.ts`, the new cases in `contracts.spec.ts`, the family field in `farmland.spec.ts` and the family
 switches in `onboarding-wizard.spec.ts`.
+Roadmap V2 R2-F: `PromptServiceTest` (questions asked once, the game's buttons explained, same service methods for the
+answers, withdrawal, settings, lease renewal, refused action, bank counter offer, resend after a rewind, older mod,
+master switch) and `BridgeSyncIntegrationTest.anIncomingCallIsAcceptedInTheGame` (question out, answer from
+`player_responses.json`, acknowledgement out); the mod covers queue, dialog, answers, acknowledgements, withdrawal,
+vehicle rule, key and savegame in `test_prompts.lua` and the adapter in `test_game_adapter.lua`, the frontend the
+settings card in `settings.spec.ts`, the simulator the answer file in `instructions.test.js`.
 
 ## Continuous integration (AP-11.1)
 

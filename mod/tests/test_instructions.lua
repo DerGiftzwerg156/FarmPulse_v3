@@ -257,9 +257,8 @@ function T.TestInstructions:testPromptValidation()
     lu.assertFalse(RPSimInstructions.validate(noExpiry))
 end
 
--- Until R2-F2 the mod has no action for PROMPT: acknowledged FAILED / NOT_SUPPORTED, never executed twice.
--- EMPLOYEE_ROSTER is executed since R2-A0.
-function T.TestInstructions:testPromptIsNotSupportedYetButTheRosterIsApplied()
+-- R2-A0 / R2-F2: EMPLOYEE_ROSTER replaces the list, PROMPT is queued for the dialog (both APPLIED, never twice).
+function T.TestInstructions:testPromptIsQueuedAndTheRosterIsApplied()
     local bridge, fs, _, paths = helpers.newBridge()
     bridge:bootstrap()
     helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
@@ -267,14 +266,13 @@ function T.TestInstructions:testPromptIsNotSupportedYetButTheRosterIsApplied()
         { instructionId = "ins_p", type = "PROMPT", promptId = "prm_1", title = "Anruf", text = "Annehmen?",
             expiresGameTime = 5000 } } })
     local res = bridge:pollInstructions()
-    lu.assertEquals(res.applied, 1)
-    lu.assertEquals(res.rejected, 1)
+    lu.assertEquals(res.applied, 2)
     local acks = {}
     for _, a in ipairs(RPSimJson.decode(fs.files[paths.instructionsAck]).acks) do acks[a.instructionId] = a end
     lu.assertEquals(acks.ins_ro.status, "APPLIED")
     lu.assertEquals(bridge.state.workforce.roster.employees[1].name, "Klaus Berger")
-    lu.assertEquals(acks.ins_p.status, "FAILED")
-    lu.assertEquals(acks.ins_p.message, "NOT_SUPPORTED")
+    lu.assertEquals(acks.ins_p.status, "APPLIED")
+    lu.assertEquals(bridge.state.prompts.queue[1].promptId, "prm_1")
 end
 
 function T.TestInstructions:testNewTypesUseTheirActionOnceAvailable()

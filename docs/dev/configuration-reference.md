@@ -20,6 +20,9 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.bridge.rewind-lookback-hours` | `24` | Bookings acknowledged up to this many game hours before the reloaded point are checked as well (the first export after loading happens slightly after the saved point). Must stay below the mod's `processedRetentionGameDays`. | TODO T-02 |
 | `rpsim.bridge.ingame-notifications` | `true` | New mails and incoming calls are shown in the game (`NOTIFICATION` instruction → `addIngameNotification`). Only for savegames linked to FS25. | TODO T-21 |
 | `rpsim.bridge.notification-max-age-hours` | `2` | The mod acknowledges a notification without showing it (`message: EXPIRED`) when it is processed more than this many game hours after it was created, e.g. after loading an older savegame. | TODO T-21 |
+| `rpsim.bridge.ingame-prompts` | `true` | Roadmap V2 R2-F2: open decisions of the occasions switched on per savegame are asked in the game as a yes/no question (`PROMPT` instruction); off = every open question is withdrawn. | Roadmap V2 R2-F2 |
+| `rpsim.bridge.prompt-default-kinds` | `[CALL]` | Occasions asked in the game until the player chooses on the settings page: `CALL`, `CONTRACT_OFFER` (lease, maintenance, insurance offers and the lease renewal), `WILDLIFE_OFFER`, `CREDIT_COUNTER`, `INVITATION`, `COMPENSATION_CLAIM`, `TAX_BILL`, `TAX_ADVISOR`. | Roadmap V2 R2-F2 |
+| `rpsim.bridge.prompt-max-age-hours` | `48` | A question without its own deadline (the counter offer of the bank; a tax bill past its deadline) expires after this many game hours; the others expire with the deadline of their decision (ring timeout, offer validity, end of the lease). | Roadmap V2 R2-F2 |
 
 ## `rpsim.web` – Web
 
