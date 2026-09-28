@@ -190,3 +190,72 @@ test('REPAIR_VEHICLE removes the damage of an own vehicle, unknown vehicles fail
   assert.equal(acks.r2.status, 'FAILED');
   assert.equal(acks.r2.message, 'VEHICLE_NOT_FOUND');
 });
+
+// ------------------------------------------------------------------ Roadmap V2 (R2-Q1 / R2-Q2)
+test('new money reasons are accepted and booked as RPSIM_<REASON> in the journal (R2-B1)', () => {
+  const { sim, write } = setup('helfer-hof');
+  const reasons = ['TAX_PAYMENT', 'TAX_REFUND', 'FINE', 'FAMILY', 'SPONSORING', 'COMPENSATION'];
+  write(reasons.map((reason, i) => ({ instructionId: `m${i}`, type: 'MONEY_TRANSACTION', amount: i % 2 ? 100 : -100,
+    reason })));
+  assert.equal(sim.processInstructions().applied, reasons.length);
+  const byType = sim.buildFarmFacts().finances.periods[0].byType;
+  assert.deepEqual(reasons.map((r) => byType[`RPSIM_${r}`]), [-100, 100, -100, 100, -100, 100]);
+});
+
+test('REPAIR_VEHICLE with targetDamage repairs partially and never raises the damage (R2-A6)', () => {
+  const { sim, write } = setup();
+  const [worn, fine] = sim.vehicles;
+  worn.damage = 0.6;
+  fine.damage = 0.1;
+  write([{ instructionId: 'r1', type: 'REPAIR_VEHICLE', vehicleId: worn.uniqueId, targetDamage: 0.25 },
+    { instructionId: 'r2', type: 'REPAIR_VEHICLE', vehicleId: fine.uniqueId, targetDamage: 0.25 }]);
+  sim.processInstructions();
+  assert.equal(worn.damage, 0.25);
+  assert.equal(fine.damage, 0.1);
+  writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
+    { instructionId: 'r3', type: 'REPAIR_VEHICLE', vehicleId: worn.uniqueId, targetDamage: 1.5 }] }));
+  sim.processInstructions();
+  assert.equal(sim.processed.r3.status, 'REJECTED');
+});
+
+test('EMPLOYEE_ROSTER replaces the complete list (R2-A0)', () => {
+  const { sim, write } = setup('helfer-hof');
+  const roster = (id, employees) => ({ instructionId: id, type: 'EMPLOYEE_ROSTER', employees,
+    helperWageMode: 'EMPLOYEES', strictHelperLimit: false });
+  write([roster('ro1', [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR', status: 'ACTIVE' },
+    { employeeId: 2, name: 'Anna Vogt', role: 'MACHINE_OPERATOR', status: 'ON_LEAVE' }])]);
+  sim.processInstructions();
+  write([roster('ro2', [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR', status: 'STRIKE' }])]);
+  sim.processInstructions();
+  assert.deepEqual(sim.roster, { employees: [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR',
+    status: 'STRIKE' }], helperWageMode: 'EMPLOYEES', strictHelperLimit: false });
+  writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
+    { ...roster('ro3', [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR', status: 'SICK' }]) }] }));
+  sim.processInstructions();
+  assert.equal(sim.processed.ro3.status, 'REJECTED');
+  assert.equal(sim.roster.employees[0].status, 'STRIKE');
+});
+
+test('PROMPT is shown once; an expired one is acknowledged but not shown (R2-F2)', () => {
+  const { sim, write } = setup();
+  const prompt = (id, expiresGameTime) => ({ instructionId: id, type: 'PROMPT', promptId: `prm_${id}`,
+    title: 'Anruf', text: 'Greta Lindner ruft an. Annehmen?', yesLabel: 'Annehmen', noLabel: 'Ablehnen', expiresGameTime });
+  write([prompt('p1', sim.gameTime + MS_PER_GAME_HOUR), prompt('p2', sim.gameTime - 1)]);
+  sim.processInstructions();
+  sim.processInstructions();
+  assert.deepEqual(sim.prompts.map((p) => p.promptId), ['prm_p1']);
+  const acks = Object.fromEntries(read(sim.paths.ack).acks.map((a) => [a.instructionId, a]));
+  assert.equal(acks.p1.status, 'APPLIED');
+  assert.equal(acks.p2.message, 'EXPIRED');
+});
+
+test('the instruction schema describes the new types (R2-Q1)', () => {
+  const doc = (ins) => ({ savegameId: 's', instructions: [{ instructionId: 'i', ...ins }] });
+  assert.equal(validate('instructions', doc({ type: 'PROMPT', promptId: 'p', title: 't', text: 'x',
+    expiresGameTime: 1 })), null);
+  assert.notEqual(validate('instructions', doc({ type: 'PROMPT', promptId: 'p', title: 't', text: 'x' })), null);
+  assert.equal(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [],
+    helperWageMode: 'VANILLA', strictHelperLimit: true })), null);
+  assert.notEqual(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [] })), null);
+  assert.notEqual(validate('instructions', doc({ type: 'REPAIR_VEHICLE', vehicleId: 'v', targetDamage: 2 })), null);
+});

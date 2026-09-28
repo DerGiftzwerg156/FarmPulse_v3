@@ -3,7 +3,9 @@
 RPSimInstructions = {}
 
 RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLAND_TRANSFER = true,
-    NOTIFICATION = true, REPAIR_VEHICLE = true } -- NOTIFICATION: TODO T-21, REPAIR_VEHICLE: TODO T-22
+    NOTIFICATION = true, REPAIR_VEHICLE = true, -- NOTIFICATION: TODO T-21, REPAIR_VEHICLE: TODO T-22
+    -- Roadmap V2 (R2-Q1): validated now, executed with R2-A0 (EMPLOYEE_ROSTER) and R2-F2 (PROMPT)
+    EMPLOYEE_ROSTER = true, PROMPT = true }
 
 RPSimInstructions.MONEY_REASONS = {
     CREDIT_DISBURSEMENT = true, CREDIT_INSTALLMENT = true, CREDIT_PENALTY = true, CREDIT_CALLBACK = true,
@@ -12,15 +14,81 @@ RPSimInstructions.MONEY_REASONS = {
     -- TODO T-20 / T-22
     INSURANCE_PREMIUM = true, INSURANCE_PAYOUT = true, DAMAGE = true, WILDLIFE_COMPENSATION = true,
     VET_INVOICE = true, LIVESTOCK_PREMIUM = true, LEASE_PAYMENT = true, MAINTENANCE_FEE = true,
+    -- Roadmap V2 (R2-Q1): tax office (E1), authority (E2), family (E3), clubs (E4), vanilla field purchase (D2)
+    TAX_PAYMENT = true, TAX_REFUND = true, FINE = true, FAMILY = true, SPONSORING = true, COMPENSATION = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
 RPSimInstructions.DIRECTIONS = { TO_PLAYER = true, FROM_PLAYER = true }
 -- FSBaseMission.INGAME_NOTIFICATION_* used by FS25_MarketDynamics (INFO, OK, CRITICAL)
 RPSimInstructions.NOTIFICATION_LEVELS = { INFO = true, OK = true, CRITICAL = true }
+-- Roadmap V2 R2-A0: status of an employee in EMPLOYEE_ROSTER (STRIKE: R2-A5) and the helper wage mode (R2-A1)
+RPSimInstructions.EMPLOYEE_STATUSES = { ACTIVE = true, ON_LEAVE = true, STRIKE = true }
+RPSimInstructions.HELPER_WAGE_MODES = { EMPLOYEES = true, VANILLA = true }
 
 local function isNumber(v) return type(v) == "number" and v == v end
 local function isNonEmptyString(v) return type(v) == "string" and v ~= "" end
+local function isList(v)
+    if type(v) ~= "table" then
+        return false
+    end
+    local mt = getmetatable(v)
+    if mt ~= nil and mt.__jsontype == "array" then
+        return true
+    end
+    local n = 0
+    for k, _ in pairs(v) do
+        if type(k) ~= "number" then
+            return false
+        end
+        n = n + 1
+    end
+    return n == #v
+end
+
+--- Roadmap V2 R2-A0: the complete employee list with the switches helperWageMode (R2-A1) and strictHelperLimit (R2-A3).
+local function validateRoster(ins)
+    if not isList(ins.employees) then
+        return false, "employees must be an array"
+    end
+    for i, e in ipairs(ins.employees) do
+        if type(e) ~= "table" or not isNumber(e.employeeId) then
+            return false, string.format("employees[%d].employeeId must be a number", i)
+        end
+        if not isNonEmptyString(e.name) or not isNonEmptyString(e.role) then
+            return false, string.format("employees[%d]: name and role are required", i)
+        end
+        if not RPSimInstructions.EMPLOYEE_STATUSES[e.status] then
+            return false, string.format("employees[%d]: unknown status %s", i, tostring(e.status))
+        end
+    end
+    if not RPSimInstructions.HELPER_WAGE_MODES[ins.helperWageMode] then
+        return false, "unknown helperWageMode " .. tostring(ins.helperWageMode)
+    end
+    if type(ins.strictHelperLimit) ~= "boolean" then
+        return false, "strictHelperLimit must be a boolean"
+    end
+    return true
+end
+
+--- Roadmap V2 R2-F2: yes/no question shown in the game.
+local function validatePrompt(ins)
+    if not isNonEmptyString(ins.promptId) then
+        return false, "promptId is required"
+    end
+    if not isNonEmptyString(ins.title) or not isNonEmptyString(ins.text) then
+        return false, "title and text are required"
+    end
+    for _, f in ipairs({ "yesLabel", "noLabel" }) do
+        if ins[f] ~= nil and not isNonEmptyString(ins[f]) then
+            return false, f .. " must be a non-empty string"
+        end
+    end
+    if not isNumber(ins.expiresGameTime) then
+        return false, "expiresGameTime must be a number"
+    end
+    return true
+end
 
 --- Validates one instruction. Returns true or false, reason.
 function RPSimInstructions.validate(ins)
@@ -84,6 +152,10 @@ function RPSimInstructions.validate(ins)
         if not isNonEmptyString(ins.vehicleId) then
             return false, "vehicleId is required"
         end
+        -- Roadmap V2 R2-A6: partial repair down to this damage (0..1); missing = full repair
+        if ins.targetDamage ~= nil and (not isNumber(ins.targetDamage) or ins.targetDamage < 0 or ins.targetDamage > 1) then
+            return false, "targetDamage must be between 0 and 1"
+        end
     elseif ins.type == "NOTIFICATION" then
         if not isNonEmptyString(ins.text) then
             return false, "text is required"
@@ -94,6 +166,10 @@ function RPSimInstructions.validate(ins)
         if ins.expiresAtGameTime ~= nil and not isNumber(ins.expiresAtGameTime) then
             return false, "expiresAtGameTime must be a number"
         end
+    elseif ins.type == "EMPLOYEE_ROSTER" then
+        return validateRoster(ins)
+    elseif ins.type == "PROMPT" then
+        return validatePrompt(ins)
     end
     return true
 end

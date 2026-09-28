@@ -203,3 +203,21 @@ and check `log.txt` (lines with `[FS25_RPSim]`) and the bridge files.
 
 - Note deviations with scenario, step number and screenshot as an issue (template *Bug report*).
 - Before switching to a real FS25 savegame: [`docs/user-guide/installation.md`](../user-guide/installation.md) and [`offene-technische-punkte.md`](offene-technische-punkte.md).
+
+## 10. Roadmap V2 in the real FS25
+
+Every point of [`ROADMAP_V2.md`](../../ROADMAP_V2.md) marked 🟡 ("Im Spiel prüfen") has one row here. Check a row
+once the roadmap item named in the first column is built; until then the mod does not collect the value (the block
+is missing in `farm_facts.json`, see [bridge protocol](bridge-protocol.md#roadmap-v2-blocks-optional-r2-q1)). Note
+the result in the row's issue and, if the fallback is needed, switch the implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 10.1 | All bookings pass `Farm:changeBalance` (R2-B1) | Sell grain at a station, refuel, let a vanilla helper work, pay a lease; compare the finances page of the game with `farm_facts.json` → `finances.periods` of the current period | every booking of the game appears in `byType` with the same amount (sum per category); none is missing | hook `FSBaseMission.addMoney(amount, farmId, moneyType, addChange, forceShowChange)` instead |
+| 10.2 | Name of a money type (R2-B1) | Look at the keys of `finances.periods[].byType` after the bookings of 10.1 | the keys are the names from the global `MoneyType` table (`HARVEST_INCOME`, `SOLD_PRODUCTS`, `PURCHASE_FUEL`, `AI`, `LEASING_COSTS` …), tool bookings `RPSIM_<REASON>`; note which field of the money type object holds the statistic name (e.g. `harvestIncome`) | determine the name by a reverse lookup in the global `MoneyType` table (pattern of `RPSimGameAdapter.seasonName`) |
+| 10.3 | Helper name in HUD and map (R2-A2) | Hire a machine operator in the tool, start a helper in the game, open the HUD helper list and the map | the in-game messages (`%s hat die Arbeit beendet` …) show the employee's name; note whether the HUD and the map show it too or still `helper.title` | the name appears only in the messages; accepted |
+| 10.4 | `maxNumHirables` stays set (R2-A3) | Enable `strictHelperLimit` with one active machine operator, start two helpers; then change game settings, save and reload | the second helper cannot start; note the message the game shows at the limit and whether the limit is still 1 after the settings change and after loading | set the value again on every export |
+| 10.5 | Own stop message for a strike (R2-A5) | Let a machine operator go on strike while driving a helper | the helper stops and the game shows `%s legt die Arbeit nieder`; note how the mod reached `AIMessageManager` for `registerMessage` and whether `stopJob` accepted the own message class | stop with `AIMessageErrorUnknown.new()` and show the reason with a `NOTIFICATION` |
+| 10.6 | Field state after field work (R2-C1) | Harvest, plough or lime an own field, wait for the next field export | `farm_facts.json` → `fields[]` of that field shows the new state (`fruitType` gone, `plowLevel`, `limeLevel` changed); note how long it takes (`FieldManager` walks the fields round-robin) | own `FieldState.new()` sampled with `fieldState:update(field.posX, field.posZ)` at the field centre |
+| 10.7 | Yes/no dialog while playing (R2-F2) | Let a character call while driving a vehicle, while a menu is open and while walking | the dialog appears only when no menu or other dialog is open; note whether it disturbs while driving and how an open menu was detected | show prompts only when the player is not in a vehicle, or only after a key press (R2-F3) |
+| 10.8 | Global key for open decisions (R2-F3) | Outside a vehicle, press the key bound in the controls menu | the key appears in the key help and opens the next open question; note whether a global action (outside a vehicle) can be registered from the mod | no key; prompts only shown automatically (R2-F2) |

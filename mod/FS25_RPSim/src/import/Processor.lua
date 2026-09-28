@@ -163,6 +163,16 @@ function RPSimProcessor.applyOne(state, ins, ctx)
             return true, "NOT_SUPPORTED"
         end
         return ctx.actions.notify(ins)
+    elseif ins.type == "EMPLOYEE_ROSTER" or ins.type == "PROMPT" then
+        -- Roadmap V2: accepted by the validation (R2-Q1), executed once R2-A0 / R2-F2 provide the action
+        local action = ctx.actions.prompt
+        if ins.type == "EMPLOYEE_ROSTER" then
+            action = ctx.actions.employeeRoster
+        end
+        if action == nil then
+            return false, "NOT_SUPPORTED"
+        end
+        return action(ins)
     end
     return false, "unsupported type"
 end

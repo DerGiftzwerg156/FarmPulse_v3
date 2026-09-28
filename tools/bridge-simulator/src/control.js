@@ -19,7 +19,7 @@ export function startControlServer(sim, port, log = () => {}) {
       if (req.method === 'GET' && url.pathname === '/state') {
         return send(200, { savegameId: sim.savegameId, scenario: sim.scenario, gameTime: sim.gameTime,
           balance: sim.balance, priceEvents: sim.priceEvents, moneyLog: sim.moneyLog.slice(-50),
-          notifications: sim.notifications.slice(-50) });
+          notifications: sim.notifications.slice(-50), roster: sim.roster, prompts: sim.prompts.slice(-50) });
       }
       if (req.method === 'POST' && url.pathname === '/advance') {
         const b = await body(req);
@@ -64,6 +64,14 @@ export function startControlServer(sim, port, log = () => {}) {
         sim.exportFarmFacts();
         return send(200, m);
       }
+      // Roadmap V2 (R2-Q2): change the optional farm_facts blocks of the scenario
+      const patches = { '/weather': (b) => sim.setWeather(b), '/husbandry': (b) => sim.setHusbandry(b),
+        '/field': (b) => sim.setField(b), '/jobs': (b) => sim.setActiveJobs(b.activeJobs ?? []) };
+      if (req.method === 'POST' && patches[url.pathname]) {
+        const result = patches[url.pathname](await body(req));
+        sim.exportFarmFacts();
+        return send(200, result);
+      }
       if (req.method === 'POST' && url.pathname === '/balance') {
         const b = await body(req);
         sim.balance = Number(b.balance);
@@ -75,6 +83,6 @@ export function startControlServer(sim, port, log = () => {}) {
       return send(500, { error: e.message });
     }
   });
-  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving)`));
+  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving|/weather|/husbandry|/field|/jobs)`));
   return server;
 }

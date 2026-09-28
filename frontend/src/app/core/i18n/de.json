@@ -322,7 +322,13 @@
       "VET_INVOICE": "Tierarztrechnung",
       "LIVESTOCK_PREMIUM": "Vermittlungsprämie",
       "LEASE_PAYMENT": "Pacht",
-      "MAINTENANCE_FEE": "Wartungsvertrag"
+      "MAINTENANCE_FEE": "Wartungsvertrag",
+      "TAX_PAYMENT": "Steuerzahlung",
+      "TAX_REFUND": "Steuererstattung",
+      "FINE": "Bußgeld/Zuschlag",
+      "FAMILY": "Familie",
+      "SPONSORING": "Sponsoring",
+      "COMPENSATION": "Ausgleichszahlung"
     },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",

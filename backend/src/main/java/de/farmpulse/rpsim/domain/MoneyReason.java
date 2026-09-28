@@ -21,5 +21,12 @@ public enum MoneyReason {
     LIVESTOCK_PREMIUM,
     LEASE_PAYMENT,
     MAINTENANCE_FEE,
+    // Roadmap V2 (R2-Q1): tax office (E1), authority (E2), family (E3), clubs (E4), vanilla field purchase (D2)
+    TAX_PAYMENT,
+    TAX_REFUND,
+    FINE,
+    FAMILY,
+    SPONSORING,
+    COMPENSATION,
     OTHER
 }

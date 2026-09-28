@@ -1,6 +1,7 @@
 package de.farmpulse.rpsim.bridge;
 
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -11,13 +12,26 @@ public final class BridgeDtos {
     private BridgeDtos() {
     }
 
+    /**
+     * Roadmap V2 (R2-Q1): {@code finances}, {@code workforce}, {@code husbandries}, {@code fields} and {@code weather}
+     * are optional. {@code null} means "not present" (the mod is too old or does not collect the block yet) and must
+     * not be read as "empty": an empty block ({@code fields: []}) is a real answer of the game.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
-                            Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions) {
+                            Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
+                            Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
+                            Weather weather) {
 
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
                          Liabilities liabilities, List<Price> prices, Calendar calendar) {
             this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, null);
+        }
+
+        public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
+                         Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions) {
+            this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, missions,
+                    null, null, null, null, null);
         }
 
         public List<Mission> missionList() {
@@ -32,6 +46,61 @@ public final class BridgeDtos {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Mission(String uniqueId, String status, String title, String typeName, String field, Integer npcIndex,
                           String npcTitle, Double reward, Boolean success) {
+    }
+
+    /**
+     * Roadmap V2 R2-B1: booking journal of the last FS25 periods. {@code byType} maps the FS25 money type (e.g.
+     * {@code HARVEST_INCOME}) or {@code RPSIM_<REASON>} for tool bookings to the cumulative amount of the period.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Finances(List<FinancePeriod> periods) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FinancePeriod(Integer year, Integer period, Map<String, Double> byType) {
+    }
+
+    /**
+     * Roadmap V2 R2-A4: running FS25 helper jobs and the cumulative game time each employee drove a helper
+     * ({@code workedGameMs}, key = employee id as text).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Workforce(List<ActiveJob> activeJobs, Map<String, Long> workedGameMs) {
+    }
+
+    /** {@code employeeId} is missing for a helper without an assigned employee (R2-D3). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ActiveJob(Integer jobId, Long employeeId, String title) {
+    }
+
+    /**
+     * Roadmap V2 R2-A7: state of one husbandry ({@code husbandryUniqueId} as in {@code assets.animals}). health = mean
+     * cluster health (0..100 like the game's info box), productivity = production factor (missing for horses and
+     * pigs), food = total food / capacity.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
+                            List<HusbandryCondition> conditions) {
+    }
+
+    /** One entry of the game's getConditionInfos (water, straw, slurry, milk ...), title as shown in the game. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record HusbandryCondition(String title, Double ratio) {
+    }
+
+    /**
+     * Roadmap V2 R2-C1: state of an own field (FS25 FieldState). {@code fruitType} and the harvesting growth states are
+     * missing on a field without a crop.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Field(Integer farmlandId, String name, Double hectares, String fruitType, Integer growthState,
+                        Integer minHarvestingGrowthState, Integer maxHarvestingGrowthState, Integer weedState,
+                        Integer stoneLevel, Integer sprayLevel, Integer limeLevel, Integer plowLevel, String groundType) {
+    }
+
+    /** Roadmap V2 R2-C2: current weather (environment.weather getIsRaining / getRainFallScale / getGroundWetness). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Weather(Boolean raining, Double rainFallScale, Double groundWetness) {
     }
 
     /** TODO T-08: FS25 calendar of the savegame (game month = FS25 period, period 1 = March). */

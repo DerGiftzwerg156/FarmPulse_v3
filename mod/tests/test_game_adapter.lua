@@ -253,6 +253,19 @@ function T.TestGameAdapter:testRepairVehicleSetsTheDamageToZero()
     lu.assertEquals(game.vehicles[2].damage, 0.4)
 end
 
+-- Roadmap V2 R2-A6: partial repair down to targetDamage, never raising the damage
+function T.TestGameAdapter:testRepairVehicleToTargetDamage()
+    local game = helpers.fakeGame({ vehicles = {
+        { uniqueId = "veh_worn", propertyState = VehiclePropertyState.OWNED, sellPrice = 50000, damage = 0.6 },
+        { uniqueId = "veh_fine", propertyState = VehiclePropertyState.OWNED, sellPrice = 50000, damage = 0.1 },
+    } })
+    local a = RPSimGameAdapter.new()
+    lu.assertTrue(a:repairVehicle("veh_worn", 0.25))
+    lu.assertEquals(game.vehicles[1].damage, 0.25)
+    lu.assertTrue(a:repairVehicle("veh_fine", 0.25))
+    lu.assertEquals(game.vehicles[2].damage, 0.1)
+end
+
 -- T-22: production points as buyers are marked (spec_productionPoint of the owning placeable)
 function T.TestGameAdapter:testProductionSellPointsAreMarked()
     SellingStation = { PRICE_CLIMBING = 1, PRICE_FALLING = 2 }

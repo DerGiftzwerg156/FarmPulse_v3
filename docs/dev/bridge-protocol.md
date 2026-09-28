@@ -67,6 +67,91 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 - Sell points: only real selling stations (`station:isa(SellingStation)`) that are not hidden from the prices menu
   (`hideFromPricesMenu`), in `farm_facts.json` and in `market_context.json`.
 
+### Roadmap V2 blocks (optional, R2-Q1)
+
+`farm_facts.json` gets five more **optional** blocks for [`ROADMAP_V2.md`](../../ROADMAP_V2.md). `schemaVersion` stays
+`1` as long as every new block is optional. The contract is fixed now; the mod fills a block once the feature that
+collects it is built (named per block). Until then the block is **missing**.
+
+- **Missing ≠ empty.** A missing block means "not present" (older mod, or the feature is not built yet); the backend
+  keeps its V1 behaviour then. An empty block (`"fields": []`, `"workedGameMs": {}`) is a real answer of the game.
+  `BridgeDtos.FarmFacts` returns `null` for a missing block, `BridgeValidator` checks a block only when it is present.
+- `RPSimFarmFacts.build` normalises what the adapter collects (`raw.finances`, `raw.workforce`, `raw.husbandries`,
+  `raw.fields`, `raw.weather`): numbers are rounded, lists sorted, incomplete entries dropped. Ratios and weather
+  values are rounded to 3 decimals.
+- The bridge simulator exports the blocks only in the scenarios `helfer-hof`, `tierhof-krank` and `ernte-herbst`.
+
+```json
+{ "finances": { "periods": [{ "year": 2, "period": 8,
+                              "byType": { "HARVEST_INCOME": 48200, "PURCHASE_FUEL": -3100, "AI": -1250,
+                                          "RPSIM_SALARY_PAYMENT": -2400 } }] },
+  "workforce": { "activeJobs": [{ "jobId": 7, "employeeId": 12, "title": "Fendt 942 Vario" }, { "jobId": 8 }],
+                 "workedGameMs": { "12": 7200000 } },
+  "husbandries": [{ "husbandryUniqueId": "hus_00003", "health": 61.5, "productivity": 0.42, "food": 0.2,
+                    "conditions": [{ "title": "Wasser", "ratio": 0.05 }, { "title": "Stroh", "ratio": 0.2 }] }],
+  "fields": [{ "farmlandId": 12, "name": "12", "hectares": 4.5, "fruitType": "WHEAT", "growthState": 5,
+               "minHarvestingGrowthState": 7, "maxHarvestingGrowthState": 8, "weedState": 1, "stoneLevel": 0,
+               "sprayLevel": 1, "limeLevel": 0, "plowLevel": 1, "groundType": "SOWN" }],
+  "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7 } }
+```
+
+Sources: FS25 code dump `Dukefarming/FS25-lua-scripting` ("dump") and FS25 Community LUADOC
+`umbraprior/FS25-Community-LUADOC` ("LUADOC"). 🟡 = the API exists, a detail can only be checked in the running game
+([manual test plan, section 10](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)).
+
+**`finances`** (R2-B1, booking journal). Required: `periods[]` with `year`, `period` (1..12) and `byType`.
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `periods[].year` / `.period` | FS25 year and period (period 1 = March) of the bookings, like `calendar` | `environment.currentYear` / `currentPeriod` (see `calendar`) |
+| `periods[].byType` | Cumulative sum per money type in this period (signed, rounded). Key = name of the FS25 money type in the global `MoneyType` table, e.g. `HARVEST_INCOME`, `SOLD_PRODUCTS`, `MISSIONS`, `PURCHASE_FUEL`, `VEHICLE_RUNNING_COSTS`, `LEASING_COSTS`, `AI`; tool bookings as `RPSIM_<REASON>` | Hook on `Farm:changeBalance(amount, moneyType)` (LUADOC `script/Farms/Farm.md`); the categories appear as `g_currentMission:addMoney(..., MoneyType.X, ...)` in the game code (`AIJob.lua`, `Wearable`, `FillTrigger`, `Combine` …). 🟡 whether every booking passes `changeBalance` (fallback `FSBaseMission.addMoney`) and how the name of a money type is read (fallback: reverse lookup in `MoneyType`) |
+
+Only the last `financeJournalPeriods` periods are kept (proposal 13, mod config of R2-B1). The sums are stored in the
+savegame; after a reload without saving they jump back and the backend takes the new state as it is.
+
+**`workforce`** (R2-A4). Required: `activeJobs[]` (each with `jobId`) and `workedGameMs`.
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `activeJobs[].jobId` | Id of the running FS25 helper job | `AIJob.jobId` (`AIJob:setId`, dump `ai/jobs/AIJob.lua`); jobs from `g_currentMission.aiSystem:getActiveJobs()` (LUADOC `script/AI/AISystem.md`) |
+| `activeJobs[].employeeId` | Tool employee assigned to the job (R2-A2); missing = helper without employee (R2-D3) | mod state |
+| `activeJobs[].title` | Title of the job; missing when the game returns an empty title | `job:getTitle()`: vehicle name for field work (`AIJobFieldWork:getTitle` → `vehicle:getName()`), helper name otherwise (`AIJob:getTitle` → `helper.title`) |
+| `workedGameMs` | Cumulative game time (ms) each employee drove a helper; key = `employeeId` as text | game time between two exports (`RPSimGameAdapter:getGameTime()`), stored in the savegame |
+
+**`husbandries[]`** (R2-A7). Required per entry: `husbandryUniqueId`, `health`, `food`, `conditions`.
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `husbandryUniqueId` | Same id as `assets.animals[].husbandryUniqueId`; animal type and head count stay there | placeable `uniqueId` (as in V1) |
+| `health` | Mean `cluster.health` over all animal groups, 0..100 like the game's info box (`"%d %%"`) | `PlaceableHusbandryAnimals:updateInfo` (dump) |
+| `productivity` | `getGlobalProductionFactor() * getProductionFactor()`; **missing** for horses and pigs, like in the game | `PlaceableHusbandryAnimals:getConditionInfos` (dump) |
+| `food` | `getTotalFood() / getFoodCapacity()` | `PlaceableHusbandryFood.lua` (dump) |
+| `conditions[]` | Every entry of `getConditionInfos()` with `title` (as shown in the game, localised) and `ratio` | `getConditionInfos` of `PlaceableHusbandryWater` (ratio clamped to 0..1), `…Straw`, `…LiquidManure`, `…Milk` (dump) |
+
+**`fields[]`** (R2-C1). Only fields on farmlands the player owns. Required per entry: `farmlandId`, `name`,
+`hectares`, `growthState`, `weedState`, `stoneLevel`, `sprayLevel`, `limeLevel`, `plowLevel`.
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `farmlandId` | Farmland of the field | `field.farmland` (dump `field/Field.lua`) |
+| `name` | Field name as shown in the game | `field:getName()` (as for `missions[].field`) |
+| `hectares` | Field area, 2 decimals | `field.areaHa` (dump `field/Field.lua`) |
+| `fruitType` | Crop name; **missing** on a field without crop | `g_fruitTypeManager:getFruitTypeNameByIndex(state.fruitTypeIndex)` (dump `fruits/FruitTypeManager.lua`) |
+| `minHarvestingGrowthState` / `maxHarvestingGrowthState` | Growth states in which the crop can be harvested; only with `fruitType` | `getFruitTypeByIndex(...)` fields of the same name (dump `FruitTypeDesc.lua`, `MapOverlayGenerator.lua`) |
+| `growthState`, `weedState`, `stoneLevel`, `sprayLevel`, `limeLevel`, `plowLevel` | Raw levels of the field state (integers, units as in the game) | `FieldState` fields of the same name (dump `field/FieldState.lua`) via `field:getFieldState()` |
+| `groundType` | Name of the ground type in the global `FieldGroundType` table (e.g. `SOWN`, `CULTIVATED`, `PLOWED`); optional | `FieldState.groundType` (dump); names as used in `FieldManager.lua` |
+
+🟡 whether `field:getFieldState()` is updated soon after field work (the `FieldManager` walks the fields round-robin,
+`fieldStateUpdateIndex`); fallback: own `FieldState.new()` sampled at the field centre (`posX`/`posZ`).
+
+**`weather`** (R2-C2). All three fields required.
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `raining` | It is raining | `g_currentMission.environment.weather:getIsRaining()` (LUADOC: `BeehiveSystem`, `PlaceableSolarPanels`) |
+| `rainFallScale` | Rain intensity, 0 = dry (the game tests `> 0`) | `weather:getRainFallScale()` (LUADOC: `VehicleSystem`, `Wipers`, `Combine`) |
+| `groundWetness` | Ground wetness as the game uses it for wheels | `weather:getGroundWetness()` (LUADOC: `Wheels`, `Washable`) |
+
 ## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, and on every `farm_facts` cycle when its content changed)
 
 ```json
@@ -117,12 +202,14 @@ optional `savegameId`.
 
 | type | fields |
 | --- | --- |
-| `MONEY_TRANSACTION` | `amount` (signed), `reason` ∈ `CREDIT_DISBURSEMENT, CREDIT_INSTALLMENT, CREDIT_PENALTY, CREDIT_CALLBACK, SALARY_PAYMENT, EMPLOYEE_EFFECT, SUBSIDY, STARTING_CAPITAL_ADJUSTMENT, FARMLAND_PURCHASE, FARMLAND_SALE, OTHER`, since TODO T-20/T-22 also `INSURANCE_PREMIUM, INSURANCE_PAYOUT, DAMAGE, WILDLIFE_COMPENSATION, VET_INVOICE, LIVESTOCK_PREMIUM, LEASE_PAYMENT, MAINTENANCE_FEE`; `note` |
+| `MONEY_TRANSACTION` | `amount` (signed), `reason` ∈ `CREDIT_DISBURSEMENT, CREDIT_INSTALLMENT, CREDIT_PENALTY, CREDIT_CALLBACK, SALARY_PAYMENT, EMPLOYEE_EFFECT, SUBSIDY, STARTING_CAPITAL_ADJUSTMENT, FARMLAND_PURCHASE, FARMLAND_SALE, OTHER`, since TODO T-20/T-22 also `INSURANCE_PREMIUM, INSURANCE_PAYOUT, DAMAGE, WILDLIFE_COMPENSATION, VET_INVOICE, LIVESTOCK_PREMIUM, LEASE_PAYMENT, MAINTENANCE_FEE`, since Roadmap V2 (R2-Q1) also `TAX_PAYMENT, TAX_REFUND, FINE, FAMILY, SPONSORING, COMPENSATION`; `note`. Each reason has its booking title `rpsim_money_<REASON>` in `modDesc.xml` |
 | `PRICE_EVENT` / `MULTIPLIER` | `fillType`, `sellPoint`, `peakMultiplier`, `rampUpHours`, `holdHours`, `decayHours` (start = `gameTimeEarliest` or time of application) |
 | `PRICE_EVENT` / `FIXED` | `fillType`, `sellPoint`, `fixedPrice` (per 1000 l), `maxQuantity` (l), `deadlineGameTime`; precedence over `MULTIPLIER` for the same sell point/fill type |
 | `FARMLAND_TRANSFER` | `farmlandId`, `direction` ∈ `TO_PLAYER, FROM_PLAYER`, `price` (reference only) |
-| `REPAIR_VEHICLE` (TODO T-22) | `vehicleId` (uniqueId of an own vehicle). The mod calls `Wearable:setDamageAmount(0, true)` - the damage part of the game's `repairVehicle()` without its repair booking (the maintenance contract pays). `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` or `NOT_WEARABLE`. Not re-sent after a rewind (the next monthly service repairs again). |
+| `REPAIR_VEHICLE` (TODO T-22) | `vehicleId` (uniqueId of an own vehicle), optional `targetDamage` (0..1, R2-A6, default `0`). The mod calls `Wearable:setDamageAmount(min(targetDamage, getDamageAmount()), true)` - the damage part of the game's `repairVehicle()` without its repair booking (the maintenance contract pays); a repair never raises the damage. `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` or `NOT_WEARABLE`. Not re-sent after a rewind (the next monthly service repairs again). |
 | `NOTIFICATION` (TODO T-21) | `text` (German, ≤ 120 characters), optional `level` ∈ `INFO, OK, CRITICAL` (`FSBaseMission.INGAME_NOTIFICATION_*`), optional `expiresAtGameTime`. Shown with `g_currentMission:addIngameNotification`; processed after `expiresAtGameTime` it is acknowledged `APPLIED` with `message: "EXPIRED"` and not shown. Never re-sent after a reload without saving, a failure creates no notice. |
+| `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) | `employees[]` with `employeeId` (tool id, integer), `name`, `role` (`JobRole` name), `status` ∈ `ACTIVE, ON_LEAVE, STRIKE`; `helperWageMode` ∈ `EMPLOYEES, VANILLA` (R2-A1); `strictHelperLimit` (boolean, R2-A3). The complete list; the mod replaces its list (idempotent). **Validated since R2-Q1, executed with R2-A0** - until then the mod acknowledges it `FAILED` / `NOT_SUPPORTED`. |
+| `PROMPT` (Roadmap V2, R2-F2) | `promptId`, `title`, `text`, optional `yesLabel` / `noLabel`, `expiresGameTime`. Yes/no question shown in the game; an expired prompt is dropped without being shown. **Validated since R2-Q1, executed with R2-F2** - until then the mod acknowledges it `FAILED` / `NOT_SUPPORTED`. |
 
 **Batches:** instructions sharing a `batchId` are validated together and applied in the same cycle, or all
 rejected. The backend always sends `FARMLAND_TRANSFER` + its `MONEY_TRANSACTION` as one batch.

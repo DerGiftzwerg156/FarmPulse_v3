@@ -15,6 +15,22 @@ versions or this changelog do not match.
 - **Roadmap V2 (`ROADMAP_V2.md`):** plan for the next features, each checked against the FS25 code - staff as
   FS25 helpers, real farm finances from the game's bookings, field/crop/weather export, reactions to vanilla loan
   and field purchases, tax office / authority / family / clubs, yes/no decisions inside the game.
+- **Roadmap V2 groundwork (R2-Q):** the bridge contract for the next features, without game-visible changes yet.
+  - `farm_facts.json` knows five optional blocks - `finances` (booking journal), `workforce` (helper jobs and
+    worked time), `husbandries` (health, productivity, food, conditions), `fields` (crop and field state) and
+    `weather`. `schemaVersion` stays `1`; a missing block means "not present" (older mod), not "empty". The mod
+    normalises the blocks once a feature collects them; `BridgeDtos` / `BridgeValidator` read and check them.
+  - New instruction types `EMPLOYEE_ROSTER` and `PROMPT` are validated by the mod (executed with R2-A0 / R2-F2,
+    until then acknowledged `FAILED` / `NOT_SUPPORTED`); `REPAIR_VEHICLE` takes an optional `targetDamage` for
+    partial repairs and never raises the damage.
+  - New booking reasons `TAX_PAYMENT`, `TAX_REFUND`, `FINE`, `FAMILY`, `SPONSORING`, `COMPENSATION` in mod, backend,
+    booking titles (`modDesc.xml`) and the German UI labels.
+  - Bridge simulator: scenarios `helfer-hof`, `tierhof-krank` and `ernte-herbst` export the new blocks (journal and
+    worked time grow with the game time), understand the new instructions and offer the control endpoints
+    `/weather`, `/husbandry`, `/field`, `/jobs`. The simulator tests (JSON schema validation) now run in the backend
+    CI workflow.
+  - Docs: every new field with its source in the FS25 code (`docs/dev/bridge-protocol.md`) and section 10 of the
+    manual test plan with one check per "Im Spiel prüfen" point of the roadmap.
 
 ## [1.1.2] - 2026-09-28
 

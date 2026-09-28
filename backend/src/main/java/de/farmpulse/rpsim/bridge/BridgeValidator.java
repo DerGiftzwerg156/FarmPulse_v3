@@ -2,6 +2,8 @@ package de.farmpulse.rpsim.bridge;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import de.farmpulse.rpsim.bridge.BridgeDtos.AckDocument;
 import de.farmpulse.rpsim.bridge.BridgeDtos.FarmFacts;
@@ -68,7 +70,65 @@ public final class BridgeValidator {
                 if (p == null || blank(p.sellPoint()) || blank(p.fillType()) || p.currentPrice() == null) e.add("invalid price " + p);
             });
         }
+        validateRoadmapV2(f, e);
         return e;
+    }
+
+    /** Roadmap V2 (R2-Q1): the optional blocks are only checked when present; a missing block is no error. */
+    private static void validateRoadmapV2(FarmFacts f, List<String> e) {
+        if (f.finances() != null) {
+            if (f.finances().periods() == null) {
+                e.add("finances.periods missing");
+            } else {
+                f.finances().periods().forEach(p -> {
+                    if (p == null || p.year() == null || p.period() == null || p.period() < 1 || p.period() > 12
+                            || p.byType() == null || p.byType().values().stream().anyMatch(Objects::isNull)) {
+                        e.add("invalid finance period " + p);
+                    }
+                });
+            }
+        }
+        if (f.workforce() != null) {
+            var w = f.workforce();
+            if (w.activeJobs() == null || w.workedGameMs() == null) {
+                e.add("workforce.{activeJobs,workedGameMs} required");
+            } else {
+                w.activeJobs().forEach(j -> {
+                    if (j == null || j.jobId() == null) e.add("invalid active job " + j);
+                });
+                w.workedGameMs().forEach((id, ms) -> {
+                    if (ms == null || ms < 0) e.add("invalid workedGameMs of employee " + id);
+                });
+            }
+        }
+        if (f.husbandries() != null) {
+            f.husbandries().forEach(h -> {
+                if (h == null || blank(h.husbandryUniqueId()) || negativeOrNull(h.health()) || negativeOrNull(h.food())
+                        || (h.productivity() != null && h.productivity() < 0) || h.conditions() == null
+                        || h.conditions().stream().anyMatch(c -> c == null || c.title() == null || negativeOrNull(c.ratio()))) {
+                    e.add("invalid husbandry " + h);
+                }
+            });
+        }
+        if (f.fields() != null) {
+            f.fields().forEach(fd -> {
+                if (fd == null || fd.farmlandId() == null || fd.name() == null || negativeOrNull(fd.hectares())
+                        || Stream.of(fd.growthState(), fd.weedState(), fd.stoneLevel(), fd.sprayLevel(), fd.limeLevel(),
+                        fd.plowLevel()).anyMatch(v -> v == null || v < 0)) {
+                    e.add("invalid field " + fd);
+                }
+            });
+        }
+        if (f.weather() != null) {
+            var w = f.weather();
+            if (w.raining() == null || negativeOrNull(w.rainFallScale()) || negativeOrNull(w.groundWetness())) {
+                e.add("invalid weather " + w);
+            }
+        }
+    }
+
+    private static boolean negativeOrNull(Double v) {
+        return v == null || v < 0;
     }
 
     public static List<String> validate(MarketContext m) {

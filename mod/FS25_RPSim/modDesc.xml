@@ -96,5 +96,30 @@
             <en>Maintenance contract</en>
             <de>Wartungsvertrag</de>
         </text>
+        <!-- Roadmap V2 (R2-Q1) -->
+        <text name="rpsim_money_TAX_PAYMENT">
+            <en>Tax payment</en>
+            <de>Steuerzahlung</de>
+        </text>
+        <text name="rpsim_money_TAX_REFUND">
+            <en>Tax refund</en>
+            <de>Steuererstattung</de>
+        </text>
+        <text name="rpsim_money_FINE">
+            <en>Fine/surcharge</en>
+            <de>Bußgeld/Zuschlag</de>
+        </text>
+        <text name="rpsim_money_FAMILY">
+            <en>Family</en>
+            <de>Familie</de>
+        </text>
+        <text name="rpsim_money_SPONSORING">
+            <en>Sponsoring</en>
+            <de>Sponsoring</de>
+        </text>
+        <text name="rpsim_money_COMPENSATION">
+            <en>Compensation payment</en>
+            <de>Ausgleichszahlung</de>
+        </text>
     </l10n>
 </modDesc>

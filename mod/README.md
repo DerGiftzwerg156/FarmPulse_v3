@@ -19,9 +19,12 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   - `PRICE_EVENT` – Preis an **einer** Verkaufsstelle ändern (`MULTIPLIER` mit Ramp-Up/Hold/Decay oder
     `FIXED`-Sonderkontrakt mit Mengen-Tracking)
   - `FARMLAND_TRANSFER` – Feldbesitz übertragen (Kauf/Verkauf, Beginn und Ende einer Pacht)
-  - `REPAIR_VEHICLE` – eigenes Fahrzeug instand setzen (`Wearable:setDamageAmount(0, true)`, Wartungsvertrag)
+  - `REPAIR_VEHICLE` – eigenes Fahrzeug instand setzen (`Wearable:setDamageAmount(0, true)`, Wartungsvertrag);
+    mit `targetDamage` nur bis zu diesem Schaden (Roadmap V2, R2-A6), der Schaden steigt dabei nie
   - `NOTIFICATION` – Hinweis im Spiel einblenden (neue Mail, Anruf); zu spät verarbeitete Hinweise werden nicht
     gezeigt
+  - `EMPLOYEE_ROSTER` und `PROMPT` (Roadmap V2) werden schon geprüft, aber erst mit R2-A0 bzw. R2-F2 ausgeführt;
+    bis dahin quittiert der Mod sie mit `FAILED` / `NOT_SUPPORTED`
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.

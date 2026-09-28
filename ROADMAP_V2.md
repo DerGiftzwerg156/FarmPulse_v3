@@ -51,43 +51,56 @@ kleinen Mod-Eingriff braucht. D ist unabhängig und kann jederzeit dazwischen um
 
 Arbeiten, die jeder Bereich braucht. Einmal sauber anlegen, dann bei jedem Punkt nur ergänzen.
 
+**Stand 28.09.2026: umgesetzt.** Q legt den Vertrag an (Schemas, DTOs, Validator, Simulator, Doku). Das Auslesen der
+Spielwerte im Mod folgt mit B1, A4, A7, C1 und C2; bis dahin fehlen die Blöcke in `farm_facts.json`. Entscheidungen
+(siehe `QUESTIONS.md`): `finances = { periods: [{ year, period, byType }] }`, Einträge in `husbandries[]` tragen die
+`husbandryUniqueId` aus `assets.animals`, nur die neuen Simulator-Szenarien liefern die Blöcke.
+
 ### R2-Q1 Bridge-Schema erweitern, ohne alte Stände zu brechen
 
-- [ ] Neue Blöcke in `farm_facts.json` als optionale Felder anlegen (wie `calendar` und `missions` in V1):
+- [x] Neue Blöcke in `farm_facts.json` als optionale Felder anlegen (wie `calendar` und `missions` in V1):
   `finances` (B), `workforce` (A), `husbandries` (A7), `fields` und `weather` (C).
-- [ ] `schemaVersion` bleibt `1`, solange alle neuen Felder optional sind. `BridgeDtos` und `BridgeValidator` lesen
+  Mod: `RPSimFarmFacts.build` normalisiert die Blöcke, sobald der Adapter sie liefert.
+- [x] `schemaVersion` bleibt `1`, solange alle neuen Felder optional sind. `BridgeDtos` und `BridgeValidator` lesen
   fehlende Blöcke als „nicht vorhanden“ (nicht als leer), damit das Backend zwischen „Mod zu alt“ und „nichts da“
   unterscheiden kann.
-- [ ] Neue Anweisungstypen im Mod registrieren (`RPSimInstructions.TYPES`) und validieren:
+- [x] Neue Anweisungstypen im Mod registrieren (`RPSimInstructions.TYPES`) und validieren:
   `EMPLOYEE_ROSTER` (A), `PROMPT` (F). `REPAIR_VEHICLE` bekommt ein optionales Feld `targetDamage` (A6).
-- [ ] Neue `MoneyReason`-Werte in Mod (`RPSimInstructions.MONEY_REASONS`), Backend (`domain/MoneyReason.java`) und
+  `EMPLOYEE_ROSTER` und `PROMPT` quittiert der Mod bis A0 bzw. F2 mit `FAILED` / `NOT_SUPPORTED`; `targetDamage`
+  wirkt schon (eine Reparatur erhöht den Schaden nie).
+- [x] Neue `MoneyReason`-Werte in Mod (`RPSimInstructions.MONEY_REASONS`), Backend (`domain/MoneyReason.java`) und
   Buchungstiteln (`modDesc.xml`, `rpsim_money_<REASON>`): `TAX_PAYMENT`, `TAX_REFUND`, `FINE`, `FAMILY`,
   `SPONSORING`, `COMPENSATION`.
-- [ ] `docs/dev/bridge-protocol.md` je Feld mit Quelle im FS25-Code ergänzen.
+- [x] `docs/dev/bridge-protocol.md` je Feld mit Quelle im FS25-Code ergänzen.
 
 **Warum:** V1 hat gezeigt, dass optionale Felder (Kalender, Aufträge) problemlos nachrüstbar sind. Ein harter
 Versionssprung würde bestehende Spielstände und den Simulator gleichzeitig brechen.
 
 ### R2-Q2 Bridge-Simulator und Tests
 
-- [ ] `tools/bridge-simulator` erzeugt jeden neuen Block (Szenarien z. B. `helfer-hof`, `tierhof-krank`,
+- [x] `tools/bridge-simulator` erzeugt jeden neuen Block (Szenarien z. B. `helfer-hof`, `tierhof-krank`,
   `ernte-herbst`) und versteht die neuen Anweisungstypen.
-- [ ] JSON-Schemas des Simulators erweitern (Validierung in CI).
-- [ ] Mod-Tests (`mod/tests/`) für jede neue Adapter-Funktion mit gemockten FS25-Globals, wie in
-  `test_game_adapter.lua`.
-- [ ] Backend: Grenzwert-Tests für jede neue Formel (wie `CreditFormulaTest`), End-to-End-Test gegen den Simulator.
+- [x] JSON-Schemas des Simulators erweitern (Validierung in CI: `npm test` des Simulators läuft jetzt im
+  Backend-Workflow).
+- [x] Mod-Tests (`mod/tests/`) für jede neue Adapter-Funktion mit gemockten FS25-Globals, wie in
+  `test_game_adapter.lua`. In Q: Teilreparatur (`repairVehicle` mit `targetDamage`), Normalisierung der Blöcke,
+  Validierung der neuen Anweisungen. Gilt weiter für jede Adapter-Funktion der Features.
+- [x] Backend: Grenzwert-Tests für jede neue Formel (wie `CreditFormulaTest`), End-to-End-Test gegen den Simulator.
+  Q bringt keine Formel; `BridgeValidatorTest` und `SimulatorScenariosEndToEndTest` prüfen die neuen Blöcke.
 
 ### R2-Q3 Konfiguration und Doku
 
-- [ ] Alle neuen Werte unter `rpsim.formulas.*` in `backend/src/main/resources/application.yml` und
+- [x] Alle neuen Werte unter `rpsim.formulas.*` in `backend/src/main/resources/application.yml` und
   `config/RpsimProperties.java`. **Achtung:** `ConfigurationReferenceDocTest` schlägt fehl, wenn ein Schlüssel in
-  `docs/dev/configuration-reference.md` fehlt.
-- [ ] Neue Mod-Schalter in `RPSimConfig.DEFAULTS` (überschreibbar über `rpsim_config.xml`).
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md` je Feature, Eintrag in `CHANGELOG.md`.
+  `docs/dev/configuration-reference.md` fehlt. Q bringt keine neuen Werte; die Regel gilt für jedes Feature.
+- [x] Neue Mod-Schalter in `RPSimConfig.DEFAULTS` (überschreibbar über `rpsim_config.xml`). Q bringt keine neuen
+  Schalter (`financeJournalPeriods`, `fieldExportIntervalMs` kommen mit B1 bzw. C1).
+- [x] Spieler-Doku `docs/user-guide/funktionen.md` je Feature, Eintrag in `CHANGELOG.md`. Q ist für Spieler nicht
+  sichtbar, daher nur der `CHANGELOG`-Eintrag.
 
 ### R2-Q4 Prüfliste für den Spieltest erweitern
 
-- [ ] In `docs/dev/manual-test-plan.md` einen neuen Abschnitt **„10. Roadmap V2 im echten FS25“** anlegen. Jeder
+- [x] In `docs/dev/manual-test-plan.md` einen neuen Abschnitt **„10. Roadmap V2 im echten FS25“** anlegen. Jeder
   🟡-Punkt dieser Roadmap bekommt dort eine Zeile mit „Wie prüfen“ und „Erwartet“.
 
 ---

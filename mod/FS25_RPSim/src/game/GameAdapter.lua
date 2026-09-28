@@ -468,7 +468,9 @@ end
 --- Repair of an own vehicle paid by the maintenance contract (TODO T-22): Wearable:setDamageAmount(0, true) - the
 -- part of FS25 Wearable:repairVehicle() that removes the damage; repairVehicle() itself would also book the repair
 -- price (addMoney(-getRepairPrice(), ..., MoneyType.VEHICLE_REPAIR)), which the contract already covers.
-function RPSimGameAdapter:repairVehicle(uniqueId)
+-- Roadmap V2 R2-A6: targetDamage (0..1, default 0) repairs only down to that damage; a repair never raises the damage
+-- (getDamageAmount() as in the export).
+function RPSimGameAdapter:repairVehicle(uniqueId, targetDamage)
     local farmId = self:getFarmId()
     local target
     for _, v in pairs(vehicleList()) do
@@ -488,13 +490,17 @@ function RPSimGameAdapter:repairVehicle(uniqueId)
         if target.setDamageAmount == nil then
             error("NOT_WEARABLE")
         end
-        target:setDamageAmount(0, true)
+        local damage = targetDamage or 0
+        if target.getDamageAmount ~= nil then
+            damage = math.min(damage, target:getDamageAmount())
+        end
+        target:setDamageAmount(damage, true)
     end)
     if not ok then
         local msg = tostring(err)
         return false, msg:match("NOT_OWN_VEHICLE") and "NOT_OWN_VEHICLE" or msg:match("NOT_WEARABLE") and "NOT_WEARABLE" or msg
     end
-    RPSimLog.info("Vehicle %s repaired (maintenance contract)", tostring(uniqueId))
+    RPSimLog.info("Vehicle %s repaired (target damage %.2f)", tostring(uniqueId), targetDamage or 0)
     return true
 end
 

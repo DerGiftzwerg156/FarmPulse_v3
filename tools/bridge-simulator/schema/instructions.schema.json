@@ -13,7 +13,8 @@
         "instructionId": { "type": "string", "minLength": 1 },
         "batchId": { "type": "string" },
         "gameTimeEarliest": { "type": "number" },
-        "type": { "enum": ["MONEY_TRANSACTION", "PRICE_EVENT", "FARMLAND_TRANSFER", "NOTIFICATION", "REPAIR_VEHICLE"] }
+        "type": { "enum": ["MONEY_TRANSACTION", "PRICE_EVENT", "FARMLAND_TRANSFER", "NOTIFICATION", "REPAIR_VEHICLE",
+          "EMPLOYEE_ROSTER", "PROMPT"] }
       },
       "allOf": [
         { "if": { "properties": { "type": { "const": "MONEY_TRANSACTION" } } },
@@ -21,7 +22,8 @@
             "reason": { "enum": ["CREDIT_DISBURSEMENT", "CREDIT_INSTALLMENT", "CREDIT_PENALTY", "CREDIT_CALLBACK",
               "SALARY_PAYMENT", "EMPLOYEE_EFFECT", "SUBSIDY", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE",
               "FARMLAND_SALE", "OTHER", "INSURANCE_PREMIUM", "INSURANCE_PAYOUT", "DAMAGE", "WILDLIFE_COMPENSATION",
-              "VET_INVOICE", "LIVESTOCK_PREMIUM", "LEASE_PAYMENT", "MAINTENANCE_FEE"] }, "note": { "type": "string" } } } },
+              "VET_INVOICE", "LIVESTOCK_PREMIUM", "LEASE_PAYMENT", "MAINTENANCE_FEE", "TAX_PAYMENT", "TAX_REFUND", "FINE",
+              "FAMILY", "SPONSORING", "COMPENSATION"] }, "note": { "type": "string" } } } },
         { "if": { "properties": { "type": { "const": "PRICE_EVENT" }, "priceMode": { "const": "MULTIPLIER" } } },
           "then": { "required": ["fillType", "sellPoint", "peakMultiplier", "rampUpHours", "holdHours", "decayHours"] } },
         { "if": { "properties": { "type": { "const": "PRICE_EVENT" }, "priceMode": { "const": "FIXED" } } },
@@ -32,7 +34,20 @@
           "then": { "required": ["farmlandId", "direction"], "properties": { "farmlandId": { "type": "integer" },
             "direction": { "enum": ["TO_PLAYER", "FROM_PLAYER"] }, "price": { "type": "number" } } } },
         { "if": { "properties": { "type": { "const": "REPAIR_VEHICLE" } } },
-          "then": { "required": ["vehicleId"], "properties": { "vehicleId": { "type": "string", "minLength": 1 } } } },
+          "then": { "required": ["vehicleId"], "properties": { "vehicleId": { "type": "string", "minLength": 1 },
+            "targetDamage": { "type": "number", "minimum": 0, "maximum": 1 } } } },
+        { "if": { "properties": { "type": { "const": "EMPLOYEE_ROSTER" } } },
+          "then": { "required": ["employees", "helperWageMode", "strictHelperLimit"], "properties": {
+            "employees": { "type": "array", "items": { "type": "object",
+              "required": ["employeeId", "name", "role", "status"],
+              "properties": { "employeeId": { "type": "integer" }, "name": { "type": "string", "minLength": 1 },
+                "role": { "type": "string", "minLength": 1 }, "status": { "enum": ["ACTIVE", "ON_LEAVE", "STRIKE"] } } } },
+            "helperWageMode": { "enum": ["EMPLOYEES", "VANILLA"] }, "strictHelperLimit": { "type": "boolean" } } } },
+        { "if": { "properties": { "type": { "const": "PROMPT" } } },
+          "then": { "required": ["promptId", "title", "text", "expiresGameTime"], "properties": {
+            "promptId": { "type": "string", "minLength": 1 }, "title": { "type": "string", "minLength": 1 },
+            "text": { "type": "string", "minLength": 1 }, "yesLabel": { "type": "string", "minLength": 1 },
+            "noLabel": { "type": "string", "minLength": 1 }, "expiresGameTime": { "type": "number" } } } },
         { "if": { "properties": { "type": { "const": "NOTIFICATION" } } },
           "then": { "required": ["text"], "properties": { "text": { "type": "string", "minLength": 1 },
             "level": { "enum": ["INFO", "OK", "CRITICAL"] }, "expiresAtGameTime": { "type": "number" } } } }

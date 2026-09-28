@@ -111,12 +111,16 @@ market context), hiring + resignation escalation over 32 game days, village rota
 notice), `leasing-hof` (leased vehicles arrive as `liabilities.leasing`, not as assets) and `konflikt-mods`
 (`detectedMods` in the header context). "Reload without saving" is covered by `RewindIntegrationTest` (backend)
 and by the simulator's own tests (`POST /save`, `POST /reload-without-saving`).
+Roadmap V2 (R2-Q2): the same test checks that the optional blocks of `helfer-hof` (`workforce`), `tierhof-krank`
+(`husbandries`) and `ernte-herbst` (`fields`, `weather`) reach `FactsService`, and that a scenario without them
+(`wohlhabender-hof`) leaves every block `null` ("not present"). `BridgeValidatorTest` covers missing vs. empty vs.
+invalid blocks.
 
 ## Continuous integration (AP-11.1)
 
 | Workflow | Trigger | Runs |
 | --- | --- | --- |
-| `.github/workflows/backend.yml` | push to `main` / PR touching `backend/`, the simulator or the config reference | `mvn -B verify` (incl. the backend E2E vs. the simulator, JaCoCo artifact) |
+| `.github/workflows/backend.yml` | push to `main` / PR touching `backend/`, the simulator or the config reference | simulator `npm test` (every scenario and instruction against the JSON schemas), `mvn -B verify` (incl. the backend E2E vs. the simulator, JaCoCo artifact) |
 | `.github/workflows/frontend.yml` | push / PR touching `frontend/` | `npm ci`, `npm run lint`, `npm run build`, `npm test -- --watch=false` |
 | `.github/workflows/mod-lint.yml` | push / PR touching `mod/` | `luacheck .` and the luaunit suite with Lua 5.1 |
 | `.github/workflows/e2e.yml` | every push to `main`, PRs touching backend/frontend/simulator, manual | builds the jar, installs Chromium, `npm run e2e`; uploads the Playwright report on failure |

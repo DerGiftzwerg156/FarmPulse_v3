@@ -25,7 +25,7 @@ node src/cli.js --help
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--dir` | `./runtime/modSettings/FS25_RPSim` | Bridge folder (the backend `dev` profile points here) |
-| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods` |
+| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods`, `helfer-hof`, `tierhof-krank`, `ernte-herbst` |
 | `--interval` | `5000` | Real-time ms between cycles |
 | `--game-minutes-per-tick` | `60` | Game time advanced per cycle |
 | `--savegame-id` | `map_erlengrund_sim_<scenario>` | Simulated savegame id |
@@ -52,9 +52,31 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | `leasing-hof` | Part of the machines leased: exported as `liabilities.leasing`, not as assets (TODO T-04) |
 | `knappe-kasse` | Nearly empty account: debits fail with `INSUFFICIENT_FUNDS` (TODO T-03) |
 | `konflikt-mods` | `FS25_UsedPlus` and `FS25_MarketDynamics` reported in `detectedMods` (TODO T-09) |
+| `helfer-hof` | Roadmap V2 (R2-A): `workforce` with one helper driven by employee 1 and one vanilla helper without employee, `finances`, `weather` |
+| `tierhof-krank` | Roadmap V2 (R2-A7): `husbandries` with low health, little food and water (pigs without `productivity`), `finances`, `weather` |
+| `ernte-herbst` | Roadmap V2 (R2-C): starts in September; `fields` with ready maize, growing potatoes, withered wheat and a weedy empty field, rain in `weather`, `finances` |
 
 All scenarios share the map "Erlengrund" with 16 farmlands; farmland 16 is the village area
-(`showOnFarmlandsScreen: false`, TODO T-11). The calendar starts at monotonic day 0 with period 1 (March) of year 1.
+(`showOnFarmlandsScreen: false`, TODO T-11). The calendar starts at monotonic day 0 with period 1 (March) of year 1
+(`ernte-herbst`: period 7, September, on the first simulated day).
+
+**Roadmap V2 blocks** (`finances`, `workforce`, `husbandries`, `fields`, `weather`, see
+[`docs/dev/bridge-protocol.md`](../../docs/dev/bridge-protocol.md)): only the three Roadmap V2 scenarios export them.
+All other scenarios leave them out and stand for a mod that does not deliver them yet, so the backend must treat a
+missing block as "not present". The values are simulated examples, not numbers read from FS25:
+
+- `finances` (R2-B1): the daily income/expense drift, sales (`/sell`) and finished missions are summed per FS25
+  period under the scenario's money types; tool bookings land under `RPSIM_<REASON>`. The last 13 periods are kept.
+- `workforce` (R2-A4): every helper job with an `employeeId` adds the elapsed game time to `workedGameMs` of that
+  employee.
+- `fields` (R2-C1): only fields on farmlands the player owns are exported (a `FARMLAND_TRANSFER` changes the list).
+- Journal, worked time, fields, husbandries, weather and the last `EMPLOYEE_ROSTER` are part of the simulated savegame
+  and go back on `/reload-without-saving`.
+
+**Roadmap V2 instructions:** `EMPLOYEE_ROSTER` replaces the stored roster (`GET /state` → `roster`), `PROMPT` is
+"shown" once (`GET /state` → `prompts`; an expired one is acknowledged `APPLIED` / `EXPIRED` without being shown),
+`REPAIR_VEHICLE` with `targetDamage` repairs down to that damage and never raises it. The real mod validates
+`EMPLOYEE_ROSTER` and `PROMPT` but acknowledges them `FAILED` / `NOT_SUPPORTED` until R2-A0 / R2-F2 are built.
 
 ## Control API (manual testing / E2E)
 
@@ -68,6 +90,11 @@ All scenarios share the map "Erlengrund" with 16 farmlands; farmland 16 is the v
 | `POST /days-per-period {"daysPerPeriod": 3}` | The player changes "days per period" in FS25 (the current period keeps its start day) |
 | `POST /save` | "Save the game" in FS25 (snapshot of the game state incl. the mod's processed list) |
 | `POST /reload-without-saving` | Quit without saving and load the last save: game time, money and processed instructions go back (TODO T-02) |
+| `POST /mission {"uniqueId":"mission_001","status":"FINISHED","success":true}` | The player takes / finishes a vanilla contract (TODO T-22) |
+| `POST /weather {"raining":true,"rainFallScale":0.8}` | Change the exported weather (Roadmap V2 scenarios only) |
+| `POST /husbandry {"husbandryUniqueId":"hus_00001","health":80,"food":0.6}` | Change the values of a husbandry (`tierhof-krank`) |
+| `POST /field {"farmlandId":7,"weedState":0}` | Change the state of a field (`ernte-herbst`) |
+| `POST /jobs {"activeJobs":[{"jobId":5,"employeeId":2,"title":"John Deere 8R"}]}` | Replace the running helper jobs (`helfer-hof`) |
 
 ## Running the whole tool without FS25
 
