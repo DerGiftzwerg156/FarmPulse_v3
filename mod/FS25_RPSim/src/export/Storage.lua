@@ -1,30 +1,92 @@
--- Classic-silo storage inventory (functional concept "Silo-Warenbestand": ONLY classic silos,
--- explicitly NOT bunker silos / horizontal silos and NOT halls/sheds).
+-- Classic-silo storage inventory (functional concept "Silo-Warenbestand": ONLY classic silos and their silo
+-- extensions, explicitly NOT bunker silos / horizontal silos and NOT halls/sheds).
 RPSimStorage = {}
 
---- Decides whether a storage placeable is a classic silo.
--- descriptor: { hasSiloSpec, hasBunkerSiloSpec, hasObjectStorageSpec, hasHusbandrySpec,
---               hasProductionSpec, categoryName }
+-- Store categories of halls/sheds. A placeable listed only there is no classic silo even with spec_silo.
+RPSimStorage.HALL_CATEGORIES = { SHEDS = true, SHED = true }
+
+local function categoryList(d)
+    local out = {}
+    for _, c in ipairs(d.categoryNames or {}) do
+        if type(c) == "string" and c ~= "" then
+            out[#out + 1] = string.upper(c)
+        end
+    end
+    if #out == 0 and type(d.categoryName) == "string" and d.categoryName ~= "" then
+        out[1] = string.upper(d.categoryName)
+    end
+    return out
+end
+
+--- Why a storage placeable is not a classic silo, or nil when it is one.
+-- descriptor: { hasSiloSpec, hasSiloExtensionSpec, hasBunkerSiloSpec, hasObjectStorageSpec, hasHusbandrySpec,
+--               hasProductionSpec, categoryName?, categoryNames? }
 -- TODO(offene-frage): FS25 offers no documented "classic silo" flag. Best effort: a placeable with the
--- silo specialization (spec_silo) that is not a bunker silo, not an object storage (hall), not part of a
--- husbandry or production point, and - when the store category is known - is listed in the SILOS
--- category. Verified in the first real FS25 test (docs/dev/manual-test-plan.md), see offene-technische-punkte.md #8.
+-- silo specialization (spec_silo) or a silo extension (spec_siloExtension) that is not a bunker silo, not an
+-- object storage (hall), not part of a husbandry or production point. The store category only excludes
+-- placeables listed purely as sheds: FS25 stores several categories per item (storeItem.categoryNames) and mod
+-- silos use arbitrary ones; requiring "SILOS" is the suspected cause of the empty export in the 1.5.1 live test.
+-- See offene-technische-punkte.md #8.
+function RPSimStorage.exclusionReason(d)
+    if d == nil or not (d.hasSiloSpec or d.hasSiloExtensionSpec) then
+        return "no silo"
+    end
+    if d.hasBunkerSiloSpec then
+        return "bunker silo"
+    end
+    if d.hasObjectStorageSpec then
+        return "object storage"
+    end
+    if d.hasHusbandrySpec then
+        return "husbandry"
+    end
+    if d.hasProductionSpec then
+        return "production point"
+    end
+    local cats = categoryList(d)
+    if #cats == 0 then
+        return nil
+    end
+    for _, c in ipairs(cats) do
+        if not RPSimStorage.HALL_CATEGORIES[c] then
+            return nil
+        end
+    end
+    return "hall category " .. table.concat(cats, ",")
+end
+
+--- Decides whether a storage placeable is a classic silo (see exclusionReason).
 function RPSimStorage.isClassicSilo(d)
-    if d == nil or not d.hasSiloSpec then
-        return false
+    return RPSimStorage.exclusionReason(d) == nil
+end
+
+--- One log line per storage placeable for the manual test (open point #8): what was found and why it counts or not.
+function RPSimStorage.describe(silos)
+    local lines = {}
+    for _, silo in ipairs(silos or {}) do
+        local d = silo.descriptor or {}
+        local reason = RPSimStorage.exclusionReason(d)
+        local levels = {}
+        for _, storage in ipairs(silo.storages or {}) do
+            for fillType, amount in pairs(storage.fillLevels or {}) do
+                if (amount or 0) > 0 then
+                    levels[#levels + 1] = string.format("%s=%d", fillType, math.floor(amount + 0.5))
+                end
+            end
+        end
+        table.sort(levels)
+        lines[#lines + 1] = string.format("%s [%s, categories=%s]: %s, %d storages, fill levels: %s",
+            tostring(silo.uniqueId or "?"), d.hasSiloExtensionSpec and "silo extension" or "silo",
+            table.concat(categoryList(d), ","), reason == nil and "counted" or ("ignored (" .. reason .. ")"),
+            #(silo.storages or {}), #levels > 0 and table.concat(levels, " ") or "empty")
     end
-    if d.hasBunkerSiloSpec or d.hasObjectStorageSpec or d.hasHusbandrySpec or d.hasProductionSpec then
-        return false
-    end
-    if d.categoryName ~= nil and d.categoryName ~= "" then
-        local cat = string.upper(d.categoryName)
-        return cat == "SILOS" or cat == "SILO"
-    end
-    return true
+    return lines
 end
 
 --- Aggregates fill levels per fill type over all classic silos of the farm.
--- silos: list of { descriptor = {...}, storages = { { capacity = n, fillLevels = { [fillTypeName] = amount } } } }
+-- silos: list of { uniqueId?, descriptor = {...},
+--                  storages = { { capacity = n, capacityPerFillType = { [fillTypeName] = n }?,
+--                                 fillLevels = { [fillTypeName] = amount } } } }
 -- Returns a sorted JSON array of { fillType, amount, capacity }.
 -- Capacity: a storage's capacity is attributed to every fill type it currently holds or accepts
 -- (fillLevels entry present, even 0). It is exported as raw value only; V1 derives no formula from it.

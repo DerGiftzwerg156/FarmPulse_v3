@@ -10,6 +10,16 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Silo stock export (`assets.storage`) empty in the live test:** a silo only counted when its store category was exactly
+  `SILOS`, which could drop every silo with another category (mod silos, FS25 category lists). The category now only excludes
+  placeables listed purely as sheds; bunker silos, halls, husbandries and production points stay excluded by their
+  specialization. Silo extensions (`spec_siloExtension`) now count as well, the FS25 category list
+  (`storeItem.categoryNames`) is read, and per-fill-type storage capacities are exported.
+- The first export logs every silo found in `log.txt` (`Silo stock: …` plus one `Silo …` line each: counted or
+  ignored with the reason, fill levels), so a missing stock can be traced in the live test.
+
 ## [1.5.1] - 2026-09-28
 
 The mod exports every 10 s instead of every 60 s. Update the mod `FS25_RPSim` to 1.5.1.0; the backend needs no
