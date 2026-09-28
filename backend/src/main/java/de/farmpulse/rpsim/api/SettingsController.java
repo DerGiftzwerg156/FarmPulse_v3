@@ -7,7 +7,9 @@ import de.farmpulse.rpsim.ai.AiSettingsService;
 import de.farmpulse.rpsim.api.Requests.AiSettingsRequest;
 import de.farmpulse.rpsim.api.Views.AiSettingsView;
 import de.farmpulse.rpsim.api.Views.GameSettingsView;
+import de.farmpulse.rpsim.domain.HelperWageMode;
 import de.farmpulse.rpsim.domain.Savegame;
+import de.farmpulse.rpsim.employee.WorkforceService;
 import de.farmpulse.rpsim.savegame.SavegameContext;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +28,32 @@ public class SettingsController {
     private final AiSettingsService settings;
     private final AiProviderRegistry registry;
     private final SavegameContext context;
+    private final WorkforceService workforce;
 
-    public SettingsController(AiSettingsService settings, AiProviderRegistry registry, SavegameContext context) {
+    public SettingsController(AiSettingsService settings, AiProviderRegistry registry, SavegameContext context,
+                              WorkforceService workforce) {
         this.settings = settings;
         this.registry = registry;
         this.context = context;
+        this.workforce = workforce;
+    }
+
+    /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers and the strict helper limit. */
+    @GetMapping("/api/settings/helpers")
+    @Transactional(readOnly = true)
+    public Views.HelperSettingsView helpers() {
+        Savegame sg = context.requireActive();
+        return new Views.HelperSettingsView(sg.getHelperWageMode().name(), sg.isStrictHelperLimit(), sg.isWorkforceTracked());
+    }
+
+    @PutMapping("/api/settings/helpers")
+    @Transactional
+    public Views.HelperSettingsView saveHelpers(@Valid @RequestBody Requests.HelperSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setHelperWageMode(HelperWageMode.valueOf(r.helperWageMode()));
+        sg.setStrictHelperLimit(r.strictHelperLimit());
+        workforce.sync(sg);
+        return new Views.HelperSettingsView(sg.getHelperWageMode().name(), sg.isStrictHelperLimit(), sg.isWorkforceTracked());
     }
 
     private AiSettingsView view(AiSettingsService.View v) {

@@ -81,8 +81,21 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
   Arbeitsbedingungen = Zustand deiner Maschinen). Zufriedene Leute arbeiten besser, das zeigt sich monatlich im
   Geld.
 - **Gehalt:** wird zu Beginn jedes Spielmonats (FS25-Kalender) überwiesen.
-- **Gehaltserhöhung, freier Tag, Kündigen.** Bleibt jemand lange unzufrieden, kommt erst eine Warnung, dann die
-  Kündigung.
+- **Gehaltserhöhung, freier Tag, Kündigen.** Bleibt jemand lange unzufrieden, kommt erst eine Warnung, dann ein
+  **Streik** (Abzeichen *Streikt*, das Gehalt läuft weiter, die Person arbeitet nicht) und zuletzt die Kündigung.
+  Steigt die Zufriedenheit wieder, endet der Streik von selbst.
+- **Maschinenführer fahren deine Helfer.** Startest du im Spiel einen Helfer, übernimmt ihn der erste freie
+  Maschinenführer – die Liste ist nach Können sortiert. Die Meldungen im Spiel nennen seinen Namen, und du zahlst im
+  Spiel keinen Helferlohn (das Gehalt läuft ja schon). Gibt es keinen freien Maschinenführer, fährt ein normaler
+  Helfer zum normalen Spiellohn. Auf der Personal-Karte siehst du, wie viele Stunden jemand in diesem und im letzten
+  Monat gefahren ist: Mehr als 8 Stunden je Spieltag drücken auf die Arbeitsbelastung, weniger erholt. Wer wenig
+  fährt, bringt auch weniger zusätzlichen Nutzen. Ein Streikender stellt seinen Helfer sofort ab.
+- **Mechaniker:in.** Setzt zu jedem Monatsbeginn deine am stärksten abgenutzten Maschinen instand – so weit ihre
+  Zeit reicht (je besser das Können, desto mehr). Bleiben Maschinen liegen, steigt die Arbeitsbelastung. Über die
+  Arbeit kommt jeden Monat ein kurzer Werkstattbericht.
+- **Tierpfleger:in.** Kümmert sich um deine Ställe. Zu viele Tiere je Pfleger (ab etwa 80) belasten, kranke Tiere
+  drücken auf die Arbeitsbedingungen. Fehlt es in einem Stall an Futter oder Wasser, meldet sich der Pfleger.
+- Die Stundenzählung braucht die aktuelle Mod-Version; mit einer älteren gilt die bisherige Arbeitsbelastung.
 
 ## Felder & Verhandlung
 
@@ -126,8 +139,10 @@ findest du unter **Verträge & Vorgänge**.
   eine **gemeinsame Maßnahme** vereinbaren (eigener Beitrag, danach für einige Monate seltener Schäden, besseres
   Ansehen im Dorf) oder ablehnen – ein Streit spricht sich herum. Antwortest du nicht, zahlt er sein letztes Angebot.
 - **Tierarzt, Viehhändler:in und Zuchtberatung – nur wenn du Tiere hältst.** Der Tierarzt kommt alle paar Monate zur
-  Routineuntersuchung je Tierart und schickt eine Rechnung (Grundgebühr plus Betrag je Tier). Die Zuchtberatung
-  kommentiert, wie sich dein Bestand entwickelt hat. Der Viehhändler bietet ab und zu an, eine Anzahl Tiere zu kaufen
+  Routineuntersuchung je Tierart und schickt eine Rechnung (Grundgebühr plus Betrag je Tier). Sinkt die Gesundheit in
+  einem Stall stark (unter 40 %), rückt er zu einem **Notfall** aus – teurer als die Routine und höchstens alle paar
+  Tage je Stall. Die Zuchtberatung kommentiert, wie sich dein
+  Bestand entwickelt hat, und nennt die Produktivität deiner Ställe. Der Viehhändler bietet ab und zu an, eine Anzahl Tiere zu kaufen
   oder zu verkaufen, und zahlt dafür eine **Prämie je Tier**. Den Handel selbst erledigst du im Spiel wie gewohnt:
   Nimmst du das Angebot an, zählt bis zur Frist, um wie viele Tiere sich dein Bestand in die vereinbarte Richtung
   verändert hat – für jedes davon gibt es die Prämie (höchstens für die vereinbarte Anzahl).
@@ -176,6 +191,11 @@ Notizen sind reine Erinnerung und haben keinerlei Auswirkung aufs Spiel.
 
 KI-Anbieter, Modell und API-Schlüssel (siehe [Installation](installation.md#5-ki-anbieter-einrichten-optional)) und
 der Ton deines Spielstands (nur Anzeige).
+
+**Helfer im Spiel:** *Helferlohn über das Gehalt* (Standard an) – fährt ein Maschinenführer, bucht das Spiel keinen
+Helferlohn. Ausgeschaltet zahlst du zusätzlich den normalen Spiellohn. *Strenger Modus* (Standard aus) – höchstens so
+viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann keine Helfer, streikende oder freigestellte
+zählen nicht.
 
 ## Auf dem Handy
 

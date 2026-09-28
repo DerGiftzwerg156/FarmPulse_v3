@@ -199,25 +199,35 @@ Spieler für jeden FS25-Helfer den Stundenlohn des Spiels, also **doppelt**. Die
 **Idee:** Angestellte Maschinenführer *sind* die FS25-Helfer. Ihr Lohn läuft über das Tool, ihre Namen erscheinen im
 Spiel, ihre echte Arbeitszeit bestimmt die Arbeitsbelastung, und wer sehr unzufrieden ist, legt die Arbeit nieder.
 
+**Stand 28.09.2026: umgesetzt** (bis auf den Verweis auf E2). Entscheidungen (siehe `QUESTIONS.md`): Die Soll-Stunden
+gelten je Spieltag (`workload.target-hours-per-day`, Platzhalter 8; das Backend zählt die Stunden je Spieltag). Das
+Gehalt läuft während eines Streiks weiter, der positive Leistungseffekt entfällt. Der positive `EMPLOYEE_EFFECT` von
+Maschinenführern skaliert mit den gefahrenen Stunden des Monats. Die Reihenfolge der Liste ist die Priorität der
+Zuordnung: Das Backend sortiert nach Skill, die Liste selbst trägt kein Feld `skill`. `helperWageMode` ist immer
+`EMPLOYEES` voreingestellt; ohne Maschinenführer wird kein Job zugeordnet, es gilt also der Spiellohn. Die Zuordnung
+`jobId → employeeId` wird nicht gespeichert (Job-IDs sind nach dem Laden neu), laufende Jobs werden beim nächsten
+Export neu zugeordnet. Wasser erkennt das Backend am Titel der Bedingung (`livestock.water-condition-titles`,
+Testplan 10.12). Alle Zahlen sind Platzhalter aus der Konfiguration.
+
 ### R2-A0 Mitarbeiterliste an den Mod senden (`EMPLOYEE_ROSTER`)
 
-- [ ] Neuer Anweisungstyp `EMPLOYEE_ROSTER`: vollständige Liste
+- [x] Neuer Anweisungstyp `EMPLOYEE_ROSTER`: vollständige Liste
   `[{ employeeId, name, role, status }]` mit `status` = `ACTIVE`, `ON_LEAVE` (freier Tag), `STRIKE` (A5).
   Enthält außerdem die Schalter `helperWageMode` (A1) und `strictHelperLimit` (A3).
-- [ ] Das Backend sendet die Liste bei jeder Änderung (Einstellung, Kündigung, freier Tag, Streik) und nach jedem
+- [x] Das Backend sendet die Liste bei jeder Änderung (Einstellung, Kündigung, freier Tag, Streik) und nach jedem
   Neuladen des Spielstands.
-- [ ] Der Mod ersetzt seine Liste vollständig (idempotent) und speichert sie im Savegame-XML.
+- [x] Der Mod ersetzt seine Liste vollständig (idempotent) und speichert sie im Savegame-XML.
 
 ### R2-A1 Helferlohn über das Tool-Gehalt statt doppelt
 
-- [ ] `Utils.overwrittenFunction` auf `AIJob.getPricePerMs`, `AIJobFieldWork.getPricePerMs` und
+- [x] `Utils.overwrittenFunction` auf `AIJob.getPricePerMs`, `AIJobFieldWork.getPricePerMs` und
   `AIJobConveyor.getPricePerMs` (alle drei definieren die Funktion selbst; `AIJobDeliver`, `AIJobGoTo` und
   `AIJobLoadAndDeliver` erben von `AIJob`).
-- [ ] Ist dem Job ein Mitarbeiter zugeordnet (A2) und `helperWageMode = "EMPLOYEES"`, gibt der Hook `0` zurück. Sonst
+- [x] Ist dem Job ein Mitarbeiter zugeordnet (A2) und `helperWageMode = "EMPLOYEES"`, gibt der Hook `0` zurück. Sonst
   `superFunc` (normaler Spiellohn).
-- [ ] Standard: `helperWageMode = "EMPLOYEES"`, sobald mindestens ein Maschinenführer angestellt ist. Mit `"VANILLA"`
+- [x] Standard: `helperWageMode = "EMPLOYEES"`, sobald mindestens ein Maschinenführer angestellt ist. Mit `"VANILLA"`
   bleibt alles wie im Grundspiel.
-- [ ] Hinweis in der Oberfläche (Personal-Seite): „Deine Maschinenführer fahren die Helfer im Spiel. Helfer ohne
+- [x] Hinweis in der Oberfläche (Personal-Seite): „Deine Maschinenführer fahren die Helfer im Spiel. Helfer ohne
   freien Maschinenführer kosten den normalen Spiellohn.“
 
 **Beleg:** ✅ `ai/jobs/AIJob.lua`: `AIJob:updateCost(dt)` ruft `self:getPricePerMs()`, rechnet
@@ -231,11 +241,11 @@ Gehaltsverzug (T-03).
 
 ### R2-A2 Helfer bekommen den Namen des Mitarbeiters
 
-- [ ] `Utils.appendedFunction` auf `AIJob.start(farmId)`: Nur für die Spieler-Farm dem Job den ersten freien
+- [x] `Utils.appendedFunction` auf `AIJob.start(farmId)`: Nur für die Spieler-Farm dem Job den ersten freien
   Maschinenführer mit Status `ACTIVE` zuordnen (höchster Skill zuerst) und die Zuordnung `jobId → employeeId` im
   Mod-Zustand merken. Laufende Jobs nach dem Laden bei der ersten Abfrage nachträglich zuordnen.
-- [ ] `Utils.overwrittenFunction` auf `AIJob.getHelperName`: Name des zugeordneten Mitarbeiters, sonst `superFunc`.
-- [ ] Zuordnung beim Job-Ende freigeben (Abo auf `MessageType.AI_JOB_STOPPED` oder Hook auf `AIJob.stop`).
+- [x] `Utils.overwrittenFunction` auf `AIJob.getHelperName`: Name des zugeordneten Mitarbeiters, sonst `superFunc`.
+- [x] Zuordnung beim Job-Ende freigeben (Abo auf `MessageType.AI_JOB_STOPPED` oder Hook auf `AIJob.stop`).
 
 **Beleg:** ✅ `AIJob:start` wählt `g_helperManager:getRandomHelper()` und setzt `self.helperIndex` und
 `self.startedFarmId`. ✅ `AIJob:getHelperName()` gibt `helper.title` zurück. ✅ `ai/errors/AIMessage.lua` baut die
@@ -248,11 +258,11 @@ in den Meldungen wie der Mitarbeiter; das reicht für die Immersion.
 
 ### R2-A3 Helfer-Limit = Anzahl Maschinenführer (optionaler „strenger Modus“)
 
-- [ ] Schalter `strictHelperLimit` (Standard **aus**, einstellbar auf der Einstellungsseite).
-- [ ] Ist er an, setzt der Mod `g_currentMission.maxNumHirables` auf
+- [x] Schalter `strictHelperLimit` (Standard **aus**, einstellbar auf der Einstellungsseite).
+- [x] Ist er an, setzt der Mod `g_currentMission.maxNumHirables` auf
   `min(Originalwert, Anzahl Maschinenführer mit Status ACTIVE)`. Den Originalwert merken und beim Ausschalten bzw. in
   `deleteMap` zurückschreiben.
-- [ ] Kein Maschinenführer + strenger Modus = keine Helfer. Deshalb im Onboarding erklären.
+- [x] Kein Maschinenführer + strenger Modus = keine Helfer. Deshalb im Onboarding erklären.
 
 **Beleg:** ✅ `ai/AISystem.lua`: `getAILimitedReached()` = `#self.activeJobVehicles >= g_currentMission.maxNumHirables`.
 
@@ -261,31 +271,31 @@ Welche Meldung sieht der Spieler beim Limit? **Fallback:** Den Wert bei jedem Ex
 
 ### R2-A4 Echte Arbeitszeit → Arbeitsbelastung
 
-- [ ] Bei jedem Export über `g_currentMission.aiSystem:getActiveJobs()` laufen und für jeden zugeordneten Job die
+- [x] Bei jedem Export über `g_currentMission.aiSystem:getActiveJobs()` laufen und für jeden zugeordneten Job die
   seit dem letzten Export vergangene **Spielzeit** (`RPSimGameAdapter:getGameTime()`) dem Mitarbeiter gutschreiben.
   Spielzeit statt `dt`, damit Zeitraffer korrekt zählt und die Einheit eindeutig ist.
-- [ ] Kumulative Zähler `workedGameMs` je Mitarbeiter im Savegame-XML speichern und als
+- [x] Kumulative Zähler `workedGameMs` je Mitarbeiter im Savegame-XML speichern und als
   `farm_facts.workforce = { activeJobs: [{ jobId, employeeId, title }], workedGameMs: { "<employeeId>": 123 } }`
   exportieren. `title` kommt aus `job:getTitle()` (bei Feldarbeit der Fahrzeugname).
-- [ ] Backend: Die Arbeitsbelastung von Maschinenführern folgt den echten Stunden statt dem simulierten Zerfall.
+- [x] Backend: Die Arbeitsbelastung von Maschinenführern folgt den echten Stunden statt dem simulierten Zerfall.
   Konfig `rpsim.formulas.satisfaction.workload.*`: Soll-Stunden je Spielmonat, Abzug je Überstunde, leichte Erholung
   bei weniger Stunden. Freie Tage (`ON_LEAVE`) zählen weiter als Entlastung.
-- [ ] Optional: Die monatliche Leistungsbuchung `EMPLOYEE_EFFECT` von Maschinenführern skaliert mit den gearbeiteten
+- [x] Optional: Die monatliche Leistungsbuchung `EMPLOYEE_EFFECT` von Maschinenführern skaliert mit den gearbeiteten
   Stunden (wer nie fährt, bringt auch keinen Bonus).
-- [ ] Oberfläche: Stunden des Monats je Mitarbeiter auf der Personal-Seite.
+- [x] Oberfläche: Stunden des Monats je Mitarbeiter auf der Personal-Seite.
 
 **Beleg:** ✅ `AISystem:getActiveJobs()`, `AISystem:getNumActiveJobs()`; ✅ `AIJobFieldWork:getTitle()` =
 Fahrzeugname. ✅ Zähler im Savegame speichern wie die bestehende Idempotenz-Liste (`import/Persistence.lua`).
 
 ### R2-A5 Streik bei starker Unzufriedenheit
 
-- [ ] Backend: Neue Stufe zwischen Warnung und Kündigung in `SatisfactionService`. Liegt die Zufriedenheit
+- [x] Backend: Neue Stufe zwischen Warnung und Kündigung in `SatisfactionService`. Liegt die Zufriedenheit
   `strike-after-days` unter `strike-threshold`, geht der Mitarbeiter in `STRIKE`. Er meldet sich per Mail oder Anruf.
   Der Streik endet, wenn die Zufriedenheit über die Schwelle steigt (z. B. nach Gehaltserhöhung), sonst folgt wie
   bisher die Kündigung.
-- [ ] Mod: Wird einem Job ein streikender Mitarbeiter zugeordnet oder beginnt der Streik während eines Jobs, stoppt
+- [x] Mod: Wird einem Job ein streikender Mitarbeiter zugeordnet oder beginnt der Streik während eines Jobs, stoppt
   der Mod den Job mit `g_currentMission.aiSystem:stopJob(job, message)`.
-- [ ] Meldung: eigene Klasse `RPSimAIMessageStrike` (abgeleitet von `AIMessage`, `getI18NText` → Text aus
+- [x] Meldung: eigene Klasse `RPSimAIMessageStrike` (abgeleitet von `AIMessage`, `getI18NText` → Text aus
   `modDesc.xml`, z. B. „%s legt die Arbeit nieder“) über `AIMessageManager:registerMessage` registrieren.
 
 **Beleg:** ✅ `AISystem:stopJob(job, aiMessage)`; ✅ `ai/errors/AIMessageManager.lua` registriert alle Meldungen mit
@@ -298,14 +308,14 @@ Anweisung `NOTIFICATION` einblenden.
 
 ### R2-A6 Angestellter Mechaniker repariert teilweise
 
-- [ ] `REPAIR_VEHICLE` um ein optionales Feld `targetDamage` (0–1) erweitern. Standard `0` = V1-Verhalten des
+- [x] `REPAIR_VEHICLE` um ein optionales Feld `targetDamage` (0–1) erweitern. Standard `0` = V1-Verhalten des
   Wartungsvertrags.
-- [ ] Backend `MechanicService`: Zu jedem Monatsbeginn verteilt jeder angestellte Mechaniker eine
+- [x] Backend `MechanicService`: Zu jedem Monatsbeginn verteilt jeder angestellte Mechaniker eine
   **Reparaturleistung** (Konfig: Schadenspunkte je Monat × Skill × `effectMultiplier` aus der Zufriedenheit) auf die
   am stärksten abgenutzten eigenen Fahrzeuge (`assets.vehicles[].condition`).
-- [ ] Reihenfolge: zuerst der Wartungsvertrag (`MaintenanceService`), dann der Mechaniker für die übrigen Fahrzeuge.
+- [x] Reihenfolge: zuerst der Wartungsvertrag (`MaintenanceService`), dann der Mechaniker für die übrigen Fahrzeuge.
   Kein Fahrzeug wird doppelt bearbeitet.
-- [ ] Kurze Mail des Mechanikers („Hab den Frontlader wieder hinbekommen, der Rest muss warten“). Zu viele kaputte
+- [x] Kurze Mail des Mechanikers („Hab den Frontlader wieder hinbekommen, der Rest muss warten“). Zu viele kaputte
   Maschinen senken seine Arbeitsbelastung.
 
 **Beleg:** ✅ Bereits in V1 genutzt: `Wearable:setDamageAmount(amount, true)` in `RPSimGameAdapter:repairVehicle`,
@@ -313,20 +323,20 @@ Anweisung `NOTIFICATION` einblenden.
 
 ### R2-A7 Tierpfleger und Tierarzt reagieren auf echte Stallwerte
 
-- [ ] Export je Stall als `farm_facts.husbandries[]`:
+- [x] Export je Stall als `farm_facts.husbandries[]`:
   - `health`: Durchschnitt von `cluster.health` über alle Gruppen (Berechnung wie im Spiel selbst),
   - `productivity`: `getGlobalProductionFactor() × getProductionFactor()` (entfällt bei Pferd und Schwein wie im
     Spiel),
   - `food`: `getTotalFood()` / `getFoodCapacity()`,
   - `conditions`: generische Liste aus `getConditionInfos()` mit `title` und `ratio` (Wasser, Stroh, Gülle, Milch …).
-- [ ] **Tierarzt** (`LivestockService`): Liegt `health` unter `vet.emergency-health-threshold`, kommt ein
+- [x] **Tierarzt** (`LivestockService`): Liegt `health` unter `vet.emergency-health-threshold`, kommt ein
   Notfallbesuch mit höherer Rechnung. Die Routinebesuche bleiben.
-- [ ] **Tierpfleger** (angestellt, `JobRole.ANIMAL_KEEPER`): Er warnt per Mail, wenn Futter oder Wasser unter einen
+- [x] **Tierpfleger** (angestellt, `JobRole.ANIMAL_KEEPER`): Er warnt per Mail, wenn Futter oder Wasser unter einen
   Schwellwert fallen. Seine Arbeitsbelastung hängt an der Tierzahl je Pfleger, seine Zufriedenheit leidet bei
   dauerhaft schlechten Werten („Ich kann so nicht arbeiten“). Sein monatlicher Leistungseffekt skaliert mit der
   `productivity` der Ställe.
-- [ ] **Zuchtberatung:** Kommentare nutzen `productivity` und die Entwicklung der Tierzahl.
-- [ ] Die Werte fließen auch in E2 (Kontrollen).
+- [x] **Zuchtberatung:** Kommentare nutzen `productivity` und die Entwicklung der Tierzahl.
+- [ ] Die Werte fließen auch in E2 (Kontrollen). *(folgt mit E2)*
 
 **Beleg:** ✅ `animals/husbandry/placeables/PlaceableHusbandryAnimals.lua` (`updateInfo`: Mittelwert von
 `cluster.health`; `getConditionInfos`: `getGlobalProductionFactor() * getProductionFactor()`, nicht für

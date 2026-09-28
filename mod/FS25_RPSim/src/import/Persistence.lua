@@ -50,6 +50,32 @@ function RPSimPersistence.save(writer, state)
         writer:setString(k .. "#endReason", r.endReason)
         writer:setFloat(k .. "#endedAtGameTime", r.endedAtGameTime or 0)
     end
+    -- Roadmap V2 R2-A0 / R2-A4: employee list and worked game time
+    local wf = state.workforce
+    if wf ~= nil and wf.roster ~= nil then
+        local k = ROOT .. ".workforce"
+        writer:setString(k .. "#helperWageMode", wf.roster.helperWageMode or "VANILLA")
+        writer:setString(k .. "#strictHelperLimit", wf.roster.strictHelperLimit and "true" or "false")
+        for i, e in ipairs(wf.roster.employees) do
+            local ek = string.format("%s.employee(%d)", k, i - 1)
+            writer:setInt(ek .. "#id", e.employeeId)
+            writer:setString(ek .. "#name", e.name)
+            writer:setString(ek .. "#role", e.role)
+            writer:setString(ek .. "#status", e.status)
+        end
+    end
+    if wf ~= nil then
+        local workedIds = {}
+        for id, _ in pairs(wf.workedGameMs) do
+            workedIds[#workedIds + 1] = id
+        end
+        table.sort(workedIds)
+        for i, id in ipairs(workedIds) do
+            local wk = string.format("%s.workedTime.employee(%d)", ROOT, i - 1)
+            writer:setString(wk .. "#id", id)
+            writer:setFloat(wk .. "#gameMs", wf.workedGameMs[id])
+        end
+    end
     -- Roadmap V2 R2-B1: booking journal (a reload without saving goes back to these sums)
     for i, p in ipairs(state.financeJournal ~= nil and state.financeJournal.periods or {}) do
         local k = string.format("%s.financeJournal.period(%d)", ROOT, i - 1)
@@ -114,6 +140,30 @@ function RPSimPersistence.load(reader, state)
             maxQuantity = reader:getFloat(k .. "#maxQuantity") or 0,
             endReason = reader:getString(k .. "#endReason"),
             endedAtGameTime = reader:getFloat(k .. "#endedAtGameTime") or 0 }
+        i = i + 1
+    end
+    state.workforce = RPSimWorkforce.new()
+    local mode = reader:getString(ROOT .. ".workforce#helperWageMode")
+    if mode ~= nil then
+        local employees = {}
+        i = 0
+        while true do
+            local ek = string.format("%s.workforce.employee(%d)", ROOT, i)
+            local id = reader:getInt(ek .. "#id")
+            if id == nil then break end
+            employees[#employees + 1] = { employeeId = id, name = reader:getString(ek .. "#name") or "",
+                role = reader:getString(ek .. "#role") or "", status = reader:getString(ek .. "#status") or "ACTIVE" }
+            i = i + 1
+        end
+        state.workforce.roster = { employees = employees, helperWageMode = mode,
+            strictHelperLimit = reader:getString(ROOT .. ".workforce#strictHelperLimit") == "true" }
+    end
+    i = 0
+    while true do
+        local wk = string.format("%s.workedTime.employee(%d)", ROOT, i)
+        local id = reader:getString(wk .. "#id")
+        if id == nil then break end
+        state.workforce.workedGameMs[id] = reader:getFloat(wk .. "#gameMs") or 0
         i = i + 1
     end
     i = 0

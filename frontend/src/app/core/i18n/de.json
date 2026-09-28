@@ -541,7 +541,8 @@
     "noDetected": "Noch kein unverknüpfter Spielstand erkannt. Lade den Spielstand in FS25 und klicke auf „Aktualisieren“.",
     "unknownMap": "Unbekannte Karte",
     "lastSeen": "zuletzt gesehen {at}",
-    "confirm": "Bestätigen & verknüpfen"
+    "confirm": "Bestätigen & verknüpfen",
+    "helperIntro": "Maschinenführer fahren später die Helfer im Spiel – mit ihrem Namen und ohne zusätzlichen Helferlohn. Im strengen Modus (Einstellungen) gibt es ohne Maschinenführer keine Helfer."
   },
   "mailbox": {
     "filter": "Filter",
@@ -704,7 +705,10 @@
     "timeOffGranted": "{name} hat frei bekommen.",
     "dismissed": "{name} wurde gekündigt.",
     "dismissTitle": "Mitarbeiter kündigen",
-    "dismissText": "Willst du {name} wirklich kündigen? Das lässt sich nicht rückgängig machen."
+    "dismissText": "Willst du {name} wirklich kündigen? Das lässt sich nicht rückgängig machen.",
+    "helperHint": "Deine Maschinenführer fahren die Helfer im Spiel. Helfer ohne freien Maschinenführer kosten den normalen Spiellohn.",
+    "strike": "Streikt",
+    "hours": "Als Helfer gefahren: {hours} h in diesem Monat (Vormonat {last} h)"
   },
   "farmland": {
     "map": "Feldübersicht",
@@ -876,7 +880,15 @@
     "game": "Spielstand",
     "toneFixed": "Der Ton wurde im Onboarding festgelegt und bleibt für diesen Spielstand fest.",
     "detectedMods": "Erkannte Mods mit Überschneidungen",
-    "noDetectedMods": "Keine bekannten Konflikt-Mods aktiv."
+    "noDetectedMods": "Keine bekannten Konflikt-Mods aktiv.",
+    "helpers": {
+      "title": "Helfer im Spiel",
+      "intro": "Angestellte Maschinenführer fahren die FS25-Helfer: Im Spiel steht ihr Name, und ihre gefahrene Zeit bestimmt die Arbeitsbelastung.",
+      "wage": "Helferlohn über das Gehalt: Fährt ein Maschinenführer, bucht das Spiel keinen Helferlohn.",
+      "strict": "Strenger Modus: höchstens so viele Helfer wie aktive Maschinenführer",
+      "strictHint": "Ohne Maschinenführer gibt es im strengen Modus keine Helfer. Streikende oder freigestellte Mitarbeiter zählen nicht.",
+      "untracked": "Der Mod meldet noch keine Helfer – die Einstellungen wirken erst mit der aktuellen Mod-Version."
+    }
   },
   "notices": {
     "title": "Hinweise aus dem Spiel",

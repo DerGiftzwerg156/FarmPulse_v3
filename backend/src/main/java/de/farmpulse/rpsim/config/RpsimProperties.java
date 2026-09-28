@@ -120,6 +120,7 @@ public class RpsimProperties {
         private ProductionSupply productionSupply = new ProductionSupply();
         private Contractor contractor = new Contractor();
         private Finance finance = new Finance();
+        private Mechanic mechanic = new Mechanic();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -349,6 +350,37 @@ public class RpsimProperties {
         private double warningThreshold = 30;
         private double warningAfterDays = 14;
         private double terminationAfterDays = 30;
+        /**
+         * Roadmap V2 R2-A5: between warning and resignation - below strike-threshold for strike-after-days the employee
+         * goes on strike (the helper stops, the salary keeps running) until the score is back at the threshold.
+         */
+        private double strikeThreshold = 30;
+        private double strikeAfterDays = 21;
+        /** Roadmap V2 R2-A4 / R2-A7: workload from the real game (worked hours, animals per keeper). */
+        private Workload workload = new Workload();
+    }
+
+    /**
+     * Roadmap V2 R2-A4: with worked time from the mod, the workload of machine operators follows the real hours instead
+     * of the simulated decay (evaluated every game day). R2-A7: the workload of animal keepers follows the animals per
+     * keeper. Placeholders.
+     */
+    @Getter @Setter
+    public static class Workload {
+        /** Target hours of a machine operator per game day (a game month = days per period). */
+        private double targetHoursPerDay = 8;
+        /** Workload points lost per hour above the target of a day. */
+        private double overtimePenaltyPerHour = 2;
+        /** Workload points regained per hour below the target of a day (a light recovery). */
+        private double recoveryPerHour = 0.5;
+        /** The positive monthly EMPLOYEE_EFFECT of machine operators scales with min(1, hours / target hours). */
+        private boolean effectScalesWithHours = true;
+        /** R2-A7: animals one keeper can handle; more animals per keeper cost workload. */
+        private double animalsPerKeeper = 80;
+        /** Workload points lost per day and per 100 % overload (animals per keeper above animals-per-keeper). */
+        private double keeperOverloadPenaltyPerDay = 3;
+        /** Workload points regained per day when the keeper handles at most animals-per-keeper. */
+        private double keeperRecoveryPerDay = 0.5;
     }
 
     /** Technical concept "Kündigung & Bewerbung". */
@@ -576,6 +608,20 @@ public class RpsimProperties {
         private int traderDeadlineMonths = 1;
         /** Breeding advice every n game months per animal type. */
         private int breedingAdviceEveryMonths = 6;
+        /** Roadmap V2 R2-A7: emergency visit of the vet when a husbandry's health (0..100) falls below this value. */
+        private double vetEmergencyHealthThreshold = 40;
+        /** Invoice of an emergency visit = routine invoice x this factor. */
+        private double vetEmergencyFactor = 2.5;
+        /** At most one emergency visit per husbandry within this many game days. */
+        private double vetEmergencyCooldownDays = 5;
+        /** R2-A7: the animal keeper warns when food (ratio 0..1) of a husbandry falls below this value ... */
+        private double keeperFoodWarningRatio = 0.2;
+        /** ... or the water condition (getConditionInfos entry with one of water-condition-titles) below this value. */
+        private double keeperWaterWarningRatio = 0.2;
+        /** At most one warning mail of the keeper within this many game days. */
+        private double keeperWarningCooldownDays = 3;
+        /** Titles of the water condition as the game shows them (localised fill type title). */
+        private List<String> waterConditionTitles = new ArrayList<>(List.of("Wasser", "Water"));
     }
 
     /**
@@ -756,5 +802,18 @@ public class RpsimProperties {
             m.put("RPSIM_WILDLIFE_COMPENSATION", FinanceClass.IGNORE);
             return m;
         }
+    }
+
+    /**
+     * Roadmap V2 R2-A6: an employed mechanic repairs part of the machines every game month (after the maintenance
+     * contract, never the same vehicle twice). Capacity = repair-points-per-month x skill / 100 x effectMultiplier
+     * condition points, spent on the most worn own vehicles below repair-below-condition. Placeholders.
+     */
+    @Getter @Setter
+    public static class Mechanic {
+        private double repairPointsPerMonth = 60;
+        private double repairBelowCondition = 90;
+        /** Workload points lost per vehicle still below repair-below-condition after the month's repairs. */
+        private double overloadWorkloadPerVehicle = 2;
     }
 }

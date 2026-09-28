@@ -15,6 +15,13 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Führt ein **Buchungsjournal** (Roadmap V2, R2-B1): Jede Buchung der Spieler-Farm (`Farm:changeBalance`) wird je
   FS25-Monat und Buchungsart summiert, die eigenen Buchungen unter `RPSIM_<GRUND>`. Die letzten
   `financeJournalPeriods` Monate stehen im Spielstand und in `farm_facts.json` (`finances`).
+- Lässt angestellte **Maschinenführer die FS25-Helfer fahren** (Roadmap V2, R2-A0..A5): Ein gestarteter Helfer der
+  Spieler-Farm bekommt den ersten freien aktiven Maschinenführer der Mitarbeiterliste; die Spielmeldungen zeigen seinen
+  Namen, im Lohnmodus `EMPLOYEES` bucht das Spiel für ihn keinen Helferlohn (`AIJob.getPricePerMs` = 0), im strengen
+  Modus begrenzt der Mod `maxNumHirables` auf die Zahl der aktiven Maschinenführer. Die gefahrene Zeit je Mitarbeiter
+  steht im Spielstand und in `farm_facts.json` (`workforce`).
+- Exportiert den **Zustand der Ställe** (R2-A7, `husbandries`): Gesundheit, Produktivität, Futter und die
+  Bedingungen (Wasser, Stroh …) je Stall.
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -23,11 +30,14 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     `FIXED`-Sonderkontrakt mit Mengen-Tracking)
   - `FARMLAND_TRANSFER` – Feldbesitz übertragen (Kauf/Verkauf, Beginn und Ende einer Pacht)
   - `REPAIR_VEHICLE` – eigenes Fahrzeug instand setzen (`Wearable:setDamageAmount(0, true)`, Wartungsvertrag);
-    mit `targetDamage` nur bis zu diesem Schaden (Roadmap V2, R2-A6), der Schaden steigt dabei nie
+    mit `targetDamage` nur bis zu diesem Schaden (Roadmap V2, R2-A6, auch der angestellte Mechaniker), der Schaden
+    steigt dabei nie
   - `NOTIFICATION` – Hinweis im Spiel einblenden (neue Mail, Anruf); zu spät verarbeitete Hinweise werden nicht
     gezeigt
-  - `EMPLOYEE_ROSTER` und `PROMPT` (Roadmap V2) werden schon geprüft, aber erst mit R2-A0 bzw. R2-F2 ausgeführt;
-    bis dahin quittiert der Mod sie mit `FAILED` / `NOT_SUPPORTED`
+  - `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) – ersetzt die Mitarbeiterliste; Helfer streikender Mitarbeiter werden mit
+    der Meldung „%s legt die Arbeit nieder“ angehalten (R2-A5)
+  - `PROMPT` (Roadmap V2) wird schon geprüft, aber erst mit R2-F2 ausgeführt; bis dahin quittiert der Mod es mit
+    `FAILED` / `NOT_SUPPORTED`
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.

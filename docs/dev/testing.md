@@ -119,6 +119,12 @@ Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window b
 (journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
 month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,
 the frontend the card in `finance-card.spec.ts`.
+Roadmap V2 R2-A: `WorkforceServiceTest` (roster order and resend after a rewind, workload from the hours per game
+day and from animals per keeper, effect scaling, strike start and end), `MechanicServiceTest` (repair plan, no double
+repair after the maintenance contract, no repair on strike), `LivestockStablesTest` (vet emergency with cooldown,
+keeper warning, productivity in the breeding advice); the mod covers roster, assignment, wage, limit and worked
+time in `test_workforce.lua`, the simulator the roster-driven job assignment and strike stop in `instructions.test.js`,
+the frontend the helper settings and the staff hints in `settings.spec.ts` / `employees.spec.ts`.
 
 ## Continuous integration (AP-11.1)
 

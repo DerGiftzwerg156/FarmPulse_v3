@@ -152,4 +152,31 @@ public class Savegame {
     /** Highest harvest revenue of a complete month so far (record). */
     @Column(name = "fin_record_revenue")
     private Double finRecordRevenue;
+
+    // ---- Roadmap V2 R2-A: employees as FS25 helpers
+
+    /** A1: EMPLOYEES = helpers driven by an employee cost no game wage; VANILLA = game wage as in the base game. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "helper_wage_mode", nullable = false, length = 16)
+    private HelperWageMode helperWageMode = HelperWageMode.EMPLOYEES;
+
+    /** A3: strict mode - at most as many helpers as active machine operators. */
+    @Column(name = "strict_helper_limit", nullable = false)
+    private boolean strictHelperLimit;
+
+    /** A0: content of the last EMPLOYEE_ROSTER sent to the mod (sent again only when it changes or after a rewind). */
+    @Lob
+    @Column(name = "roster_json")
+    private String rosterJson;
+
+    @Column(name = "roster_sent_game_time")
+    private Long rosterSentGameTime;
+
+    /** A4: the mod reports worked time (farm_facts.workforce) - the workload of machine operators follows it. */
+    @Column(name = "workforce_tracked", nullable = false)
+    private boolean workforceTracked;
+
+    /** A7: the mod reports husbandry values (farm_facts.husbandries) - keepers work with the real stables. */
+    @Column(name = "husbandries_tracked", nullable = false)
+    private boolean husbandriesTracked;
 }

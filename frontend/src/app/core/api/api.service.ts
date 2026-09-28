@@ -231,6 +231,12 @@ export class ApiService {
   saveAiSettings(r: { provider: string; model?: string; apiKey?: string; baseUrl?: string }): Observable<M.AiSettingsView> {
     return this.http.put<M.AiSettingsView>(`${this.base}/settings/ai`, r);
   }
+  helperSettings(): Observable<M.HelperSettingsView> {
+    return this.get('/settings/helpers');
+  }
+  saveHelperSettings(r: { helperWageMode: string; strictHelperLimit: boolean }): Observable<M.HelperSettingsView> {
+    return this.http.put<M.HelperSettingsView>(`${this.base}/settings/helpers`, r);
+  }
   gameSettings(): Observable<M.GameSettingsView> {
     return this.get('/settings/game');
   }

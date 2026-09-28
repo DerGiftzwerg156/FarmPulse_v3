@@ -3,6 +3,7 @@
 -- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager g_npcManager
 -- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
 -- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
+-- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
 -- luacheck: globals g_i18n
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
@@ -288,7 +289,8 @@ end
 
 function RPSimGameAdapter:collectFarmFacts()
     local farmId = self:getFarmId()
-    local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, silos = {},
+    local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, husbandries = {},
+        silos = {},
         prices = {}, calendar = self:collectCalendar(), missions = self:collectMissions(50) }
     local farm = safe(function() return g_farmManager:getFarmById(farmId) end, nil)
     raw.balance = safe(function() return farm.money end, 0)
@@ -333,6 +335,10 @@ function RPSimGameAdapter:collectFarmFacts()
                 end
                 raw.animals[#raw.animals + 1] = { husbandryUniqueId = p:getUniqueId(), type = string.upper(typeName),
                     count = count, estimatedValue = value }
+                local state = RPSimGameAdapter.husbandryState(p)
+                if state ~= nil then
+                    raw.husbandries[#raw.husbandries + 1] = state
+                end
             end
             -- silos (classic-silo classification happens in RPSimStorage)
             if p.spec_silo ~= nil then
@@ -534,6 +540,142 @@ end
 
 --- In-game notification (TODO T-21): g_currentMission:addIngameNotification(FSBaseMission.INGAME_NOTIFICATION_*, text),
 -- the pattern of FS25_MarketDynamics (MarketDynamics.lua, FuturesMarket.lua).
+--- Roadmap V2 R2-A7: state of one husbandry, the way the game computes it itself (all functions are placeable functions
+-- registered by the husbandry specializations, FS25 animals/husbandry/placeables):
+--   health       mean of cluster.health over all clusters (PlaceableHusbandryAnimals:updateInfo, shown as "%d %")
+--   productivity getGlobalProductionFactor() * getProductionFactor(), not for AnimalType.HORSE / PIG
+--                (PlaceableHusbandryAnimals:getConditionInfos)
+--   food         getTotalFood() / getFoodCapacity() (PlaceableHusbandryFood)
+--   conditions   title + ratio of every getConditionInfos() entry (water, straw, slurry, milk, productivity ...)
+-- nil when the husbandry has no animals specialization; a missing part is left out.
+function RPSimGameAdapter.husbandryState(p)
+    return safe(function()
+        if p.spec_husbandryAnimals == nil then
+            return nil
+        end
+        local clusters = p:getClusters() or {}
+        local health, n = 0, 0
+        for _, cluster in pairs(clusters) do
+            health = health + (cluster.health or 0)
+            n = n + 1
+        end
+        local state = { husbandryUniqueId = p:getUniqueId(), health = n > 0 and health / n or 0, conditions = {} }
+        local typeIndex = p.getAnimalTypeIndex ~= nil and p:getAnimalTypeIndex() or nil
+        local noProductivity = AnimalType ~= nil and (typeIndex == AnimalType.HORSE or typeIndex == AnimalType.PIG)
+        if not noProductivity and p.getGlobalProductionFactor ~= nil and p.getProductionFactor ~= nil then
+            state.productivity = p:getGlobalProductionFactor() * p:getProductionFactor()
+        end
+        if p.getTotalFood ~= nil and p.getFoodCapacity ~= nil then
+            local capacity = p:getFoodCapacity()
+            state.food = capacity ~= nil and capacity > 0 and p:getTotalFood() / capacity or 0
+        else
+            state.food = 0
+        end
+        if p.getConditionInfos ~= nil then
+            for _, info in ipairs(p:getConditionInfos() or {}) do
+                if type(info.title) == "string" and type(info.ratio) == "number" then
+                    state.conditions[#state.conditions + 1] = { title = info.title, ratio = info.ratio }
+                end
+            end
+        end
+        return state
+    end, nil)
+end
+
+-- ------------------------------------------------------------------------ Roadmap V2 R2-A: employees as helpers
+
+--- Running helper jobs of the player farm: AISystem:getActiveJobs() (FS25 ai/AISystem.lua), job.jobId (set by
+-- AISystem:startJob via AIJob:setId), job.startedFarmId (AIJob:start), job:getTitle() (vehicle name for field work).
+function RPSimGameAdapter:collectAIJobs()
+    local farmId = self:getFarmId()
+    local jobs = {}
+    local list = safe(function() return g_currentMission.aiSystem:getActiveJobs() end, {})
+    for _, job in ipairs(list) do
+        safe(function()
+            if job.jobId ~= nil and job.startedFarmId == farmId then
+                local title = safe(function() return job:getTitle() end, nil)
+                jobs[#jobs + 1] = { jobId = job.jobId, title = title }
+            end
+            return true
+        end)
+    end
+    table.sort(jobs, function(a, b) return a.jobId < b.jobId end)
+    return jobs
+end
+
+--- R2-A3: g_currentMission.maxNumHirables limits the helpers (AISystem:getAILimitedReached). The original value is
+-- remembered the first time and written back when the strict mode is off or the map is unloaded.
+function RPSimGameAdapter:applyHelperLimit(workforce)
+    return safe(function()
+        if self.originalMaxHirables == nil then
+            self.originalMaxHirables = g_currentMission.maxNumHirables
+        end
+        if self.originalMaxHirables == nil then
+            return false
+        end
+        g_currentMission.maxNumHirables = RPSimWorkforce.helperLimit(workforce, self.originalMaxHirables)
+        return true
+    end, false)
+end
+
+function RPSimGameAdapter:restoreHelperLimit()
+    if self.originalMaxHirables ~= nil then
+        safe(function()
+            g_currentMission.maxNumHirables = self.originalMaxHirables
+            return true
+        end)
+    end
+end
+
+--- R2-A5: own AI message "%s legt die Arbeit nieder" (class pattern of AIMessageErrorUnknown: Class(x, AIMessage) with
+-- getI18NText), registered with g_currentMission.aiMessageManager:registerMessage (the manager AIJobStopEvent uses).
+function RPSimGameAdapter:registerStrikeMessage()
+    local ok = pcall(function()
+        if RPSimGameAdapter.StrikeMessage == nil then
+            local cls = {}
+            local mt = Class(cls, AIMessage)
+            function cls.new(customMt)
+                return AIMessage.new(customMt or mt)
+            end
+            function cls:getI18NText()
+                return g_i18n:getText("rpsim_ai_strike")
+            end
+            RPSimGameAdapter.StrikeMessage = cls
+        end
+        local registered = g_currentMission.aiMessageManager:registerMessage("RPSIM_STRIKE", RPSimGameAdapter.StrikeMessage)
+        if registered == nil then
+            error("registerMessage refused RPSIM_STRIKE")
+        end
+    end)
+    self.strikeMessageRegistered = ok
+    if not ok then
+        RPSimLog.warning("Strike message not registered - strikes stop helpers with the generic message")
+    end
+    return ok
+end
+
+--- R2-A5: stops the helper of a striking employee with AISystem:stopJob(job, aiMessage). Without the own message the
+-- job stops with AIMessageErrorUnknown and a notification names the reason.
+function RPSimGameAdapter:stopStrikingJob(jobId, name)
+    local ok, err = pcall(function()
+        local job = g_currentMission.aiSystem:getJobById(jobId)
+        if job == nil then
+            return
+        end
+        if self.strikeMessageRegistered and RPSimGameAdapter.StrikeMessage ~= nil then
+            g_currentMission.aiSystem:stopJob(job, RPSimGameAdapter.StrikeMessage.new())
+        else
+            g_currentMission.aiSystem:stopJob(job, AIMessageErrorUnknown.new())
+            self:notify(string.format("FarmPulse: %s streikt und hat die Arbeit niedergelegt.", tostring(name)),
+                "CRITICAL")
+        end
+    end)
+    if not ok then
+        RPSimLog.warning("Could not stop the helper of %s: %s", tostring(name), tostring(err))
+    end
+    return ok
+end
+
 function RPSimGameAdapter:notify(text, level)
     local ok, err = pcall(function()
         local kind = FSBaseMission ~= nil

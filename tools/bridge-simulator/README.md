@@ -73,10 +73,15 @@ missing block as "not present". The values are simulated examples, not numbers r
 - Journal, worked time, fields, husbandries, weather and the last `EMPLOYEE_ROSTER` are part of the simulated savegame
   and go back on `/reload-without-saving`.
 
-**Roadmap V2 instructions:** `EMPLOYEE_ROSTER` replaces the stored roster (`GET /state` → `roster`), `PROMPT` is
-"shown" once (`GET /state` → `prompts`; an expired one is acknowledged `APPLIED` / `EXPIRED` without being shown),
-`REPAIR_VEHICLE` with `targetDamage` repairs down to that damage and never raises it. The real mod validates
-`EMPLOYEE_ROSTER` and `PROMPT` but acknowledges them `FAILED` / `NOT_SUPPORTED` until R2-A0 / R2-F2 are built.
+**Roadmap V2 instructions:** `EMPLOYEE_ROSTER` replaces the stored roster (`GET /state` → `roster`) and acts on the
+running helper jobs like the mod (R2-A2 / R2-A5): the job of a `STRIKE` employee is stopped (removed from
+`activeJobs`, logged), the job of an employee no longer `ACTIVE` or no longer in the list keeps running as a vanilla
+helper (no `employeeId`), and jobs without employee get the first free `ACTIVE` `MACHINE_OPERATOR` in list order (the
+backend sends the list sorted by skill). Jobs started via `POST /jobs` without `employeeId` are assigned the same way.
+The strict helper limit (R2-A3) and the dropped game wage (R2-A1) are not simulated. `PROMPT` is "shown" once
+(`GET /state` → `prompts`; an expired one is acknowledged `APPLIED` / `EXPIRED` without being shown),
+`REPAIR_VEHICLE` with `targetDamage` repairs down to that damage and never raises it. The real mod validates `PROMPT`
+but acknowledges it `FAILED` / `NOT_SUPPORTED` until R2-F2 is built.
 
 ## Control API (manual testing / E2E)
 
@@ -95,7 +100,7 @@ missing block as "not present". The values are simulated examples, not numbers r
 | `POST /weather {"raining":true,"rainFallScale":0.8}` | Change the exported weather (Roadmap V2 scenarios only) |
 | `POST /husbandry {"husbandryUniqueId":"hus_00001","health":80,"food":0.6}` | Change the values of a husbandry (`tierhof-krank`) |
 | `POST /field {"farmlandId":7,"weedState":0}` | Change the state of a field (`ernte-herbst`) |
-| `POST /jobs {"activeJobs":[{"jobId":5,"employeeId":2,"title":"John Deere 8R"}]}` | Replace the running helper jobs (`helfer-hof`) |
+| `POST /jobs {"activeJobs":[{"jobId":5,"employeeId":2,"title":"John Deere 8R"}]}` | Replace the running helper jobs (`helfer-hof`); jobs without `employeeId` get a free operator of the last roster |
 
 ## Running the whole tool without FS25
 

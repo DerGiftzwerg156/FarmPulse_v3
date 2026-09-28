@@ -47,6 +47,8 @@ export class Employees {
   readonly roles = JOB_ROLES;
   readonly needKeys = NEED_KEYS;
   readonly employees = signal<EmployeeView[] | null>(null);
+  /** Roadmap V2 R2-A1: machine operators drive the FS25 helpers. */
+  readonly hasOperators = computed(() => (this.employees() ?? []).some((e) => e.status === 'ACTIVE' && e.jobRole === 'MACHINE_OPERATOR'));
   readonly postings = signal<JobPostingView[] | null>(null);
   readonly error = signal<PageError | null>(null);
   readonly openPosting = signal<number | null>(null);

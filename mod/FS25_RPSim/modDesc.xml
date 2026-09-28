@@ -121,5 +121,10 @@
             <en>Compensation payment</en>
             <de>Ausgleichszahlung</de>
         </text>
+        <!-- Roadmap V2 R2-A5: AI message when an employee goes on strike (%s = helper / employee name) -->
+        <text name="rpsim_ai_strike">
+            <en>%s has gone on strike</en>
+            <de>%s legt die Arbeit nieder</de>
+        </text>
     </l10n>
 </modDesc>

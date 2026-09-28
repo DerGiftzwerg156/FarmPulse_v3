@@ -258,6 +258,15 @@ period is assumed (FS25 default).
 | `rpsim.formulas.satisfaction.warning-threshold` | `30` | Score below this value counts as dissatisfied (strict "< 30"). | Kündigung & Bewerbung |
 | `rpsim.formulas.satisfaction.warning-after-days` | `14` | Days dissatisfied in a row until the warning mail (≥ 14). | Kündigung & Bewerbung |
 | `rpsim.formulas.satisfaction.termination-after-days` | `30` | Days dissatisfied in a row until the resignation (≥ 30). | Kündigung & Bewerbung |
+| `rpsim.formulas.satisfaction.strike-threshold` | `30` | Roadmap V2 R2-A5: below this satisfaction score for `strike-after-days` the employee goes on strike (the FS25 helper stops, the salary keeps running); back at the threshold the strike ends. | Roadmap V2 R2-A5 |
+| `rpsim.formulas.satisfaction.strike-after-days` | `21` | Days dissatisfied in a row until the strike (between the warning after 14 and the resignation after 30 days). | Roadmap V2 R2-A5 |
+| `rpsim.formulas.satisfaction.workload.target-hours-per-day` | `8` | Roadmap V2 R2-A4: target hours of a machine operator per game day; with worked time from the mod the workload follows the real hours instead of `workload-decay-per-day` (evaluated every game day). The target of a game month = hours × days per period. | Roadmap V2 R2-A4 |
+| `rpsim.formulas.satisfaction.workload.overtime-penalty-per-hour` | `2` | Workload points lost per hour driven above the daily target. | Roadmap V2 R2-A4 |
+| `rpsim.formulas.satisfaction.workload.recovery-per-hour` | `0.5` | Workload points regained per hour below the daily target (light recovery). | Roadmap V2 R2-A4 |
+| `rpsim.formulas.satisfaction.workload.effect-scales-with-hours` | `true` | The positive monthly `EMPLOYEE_EFFECT` of a machine operator × min(1, hours driven / target hours of the month); a malus stays unchanged. | Roadmap V2 R2-A4 |
+| `rpsim.formulas.satisfaction.workload.animals-per-keeper` | `80` | Roadmap V2 R2-A7: animals one keeper handles; with husbandry values from the mod the keeper's workload follows the animals per keeper (daily). | Roadmap V2 R2-A7 |
+| `rpsim.formulas.satisfaction.workload.keeper-overload-penalty-per-day` | `3` | Workload points lost per day and per 100 % overload above `animals-per-keeper`. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.satisfaction.workload.keeper-recovery-per-day` | `0.5` | Workload points regained per day at or below `animals-per-keeper`. | Roadmap V2 R2-A7 |
 
 ## `rpsim.formulas.hiring`
 
@@ -439,6 +448,13 @@ exported head count changed in the agreed direction. Vet invoices are booked as 
 | `rpsim.formulas.livestock.trader-answer-days` | `5` | Game days to answer an offer, afterwards it expires. | TODO T-20 |
 | `rpsim.formulas.livestock.trader-deadline-months` | `1` | Game months to carry out an accepted offer in the game; afterwards moved animals are paid (partial) or the offer lapses. | TODO T-20 |
 | `rpsim.formulas.livestock.breeding-advice-every-months` | `6` | Advice of the breeding advisor every n game months per animal type (head count development since the last advice). | TODO T-20 |
+| `rpsim.formulas.livestock.vet-emergency-health-threshold` | `40` | Roadmap V2 R2-A7: a husbandry below this health (0..100, `farm_facts.husbandries`) brings the vet for an emergency visit. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.vet-emergency-factor` | `2.5` | Invoice of the emergency visit = routine invoice (base fee + fee per animal) × factor (`VET_INVOICE`). | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.vet-emergency-cooldown-days` | `5` | At most one emergency visit per husbandry within this many game days. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.keeper-food-warning-ratio` | `0.2` | An employed animal keeper warns by mail when the food of a husbandry falls below this ratio … | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.keeper-water-warning-ratio` | `0.2` | … or its water condition below this ratio. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.keeper-warning-cooldown-days` | `3` | At most one warning mail of the keeper within this many game days. | Roadmap V2 R2-A7 |
+| `rpsim.formulas.livestock.water-condition-titles` | `[Wasser, Water]` | Titles of the water entry in `husbandries[].conditions` - the game shows the localised fill type title, so the list must contain the title of the game language (manual test plan 10.12). | Roadmap V2 R2-A7 |
 
 ## `rpsim.formulas.energy` (TODO T-20)
 
@@ -516,6 +532,18 @@ player takes them in the game's contracts menu. Nothing is started by the tool, 
 | `rpsim.formulas.contractor.completed-trust-delta` | `3` | Trust of the contractor when a referred contract is completed. | TODO T-22 |
 | `rpsim.formulas.contractor.client-trust-delta` | `2` | Trust of the client (FS25 NPC as village character, T-21) for a completed referred contract. | TODO T-22 |
 | `rpsim.formulas.contractor.failed-trust-delta` | `-3` | Trust of the contractor when a referred contract fails. | TODO T-22 |
+
+## `rpsim.formulas.mechanic` (Roadmap V2 R2-A6)
+
+An employed mechanic repairs part of the machines at the start of every game month, after the maintenance contract and
+never the same vehicle twice. Capacity = `repair-points-per-month` × skill / 100 × effectMultiplier condition points,
+spent on the most worn own vehicles below `repair-below-condition` (sent as `REPAIR_VEHICLE` with `targetDamage`).
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.mechanic.repair-points-per-month` | `60` | Condition points a mechanic with skill 100 and full satisfaction repairs per game month. | Roadmap V2 R2-A6 |
+| `rpsim.formulas.mechanic.repair-below-condition` | `90` | Only vehicles below this condition (0..100) are repaired. | Roadmap V2 R2-A6 |
+| `rpsim.formulas.mechanic.overload-workload-per-vehicle` | `2` | Workload points the mechanic loses per vehicle still below the threshold after the month's repairs. | Roadmap V2 R2-A6 |
 
 ## `rpsim.formulas.finance` (Roadmap V2 R2-B)
 

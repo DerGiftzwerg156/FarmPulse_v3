@@ -88,6 +88,7 @@
     @case (2) {
       <app-card [title]="'onboarding.steps.2' | t" data-testid="step-2">
         <p class="mb-3 font-body text-sm text-muted">{{ 'onboarding.staffIntro' | t }}</p>
+        <p class="mb-3 font-body text-[12px] text-muted" data-testid="helper-intro">{{ 'onboarding.helperIntro' | t }}</p>
         <div class="fp-label mb-2" data-testid="employee-count">{{ 'onboarding.staffCount' | t: { n: employees().length } }}</div>
         <ul class="space-y-2">
           @for (role of employees(); track $index) {

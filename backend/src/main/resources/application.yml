@@ -239,6 +239,16 @@ rpsim:
       warning-threshold: 30
       warning-after-days: 14
       termination-after-days: 30
+      strike-threshold: 30          # Roadmap V2 R2-A5
+      strike-after-days: 21
+      workload:                     # Roadmap V2 R2-A4 / R2-A7: workload from the real game (placeholders)
+        target-hours-per-day: 8
+        overtime-penalty-per-hour: 2
+        recovery-per-hour: 0.5
+        effect-scales-with-hours: true
+        animals-per-keeper: 80
+        keeper-overload-penalty-per-day: 3
+        keeper-recovery-per-day: 0.5
     hiring:                       # "Kündigung & Bewerbung"
       candidates-min: 3
       candidates-max: 5
@@ -357,6 +367,13 @@ rpsim:
       trader-answer-days: 5
       trader-deadline-months: 1
       breeding-advice-every-months: 6
+      vet-emergency-health-threshold: 40   # Roadmap V2 R2-A7 (placeholders)
+      vet-emergency-factor: 2.5
+      vet-emergency-cooldown-days: 5
+      keeper-food-warning-ratio: 0.2
+      keeper-water-warning-ratio: 0.2
+      keeper-warning-cooldown-days: 3
+      water-condition-titles: [Wasser, Water]
     lease:                        # TODO T-22: lease of NPC fields (placeholders)
       annual-rent-share: 0.05
       trust-influence: 0.1
@@ -388,6 +405,10 @@ rpsim:
       completed-trust-delta: 3
       client-trust-delta: 2
       failed-trust-delta: -3
+    mechanic:                     # Roadmap V2 R2-A6: employed mechanic repairs partially (placeholders)
+      repair-points-per-month: 60
+      repair-below-condition: 90
+      overload-workload-per-vehicle: 2
     finance:                      # Roadmap V2 R2-B: real farm finances from the booking journal (placeholders)
       categories:                 # FS25 money type or RPSIM_<REASON> -> class; unknown names: operating by sign
         HARVEST_INCOME: OPERATING_INCOME

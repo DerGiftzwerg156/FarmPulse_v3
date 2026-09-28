@@ -236,6 +236,28 @@ test('EMPLOYEE_ROSTER replaces the complete list (R2-A0)', () => {
   assert.equal(sim.roster.employees[0].status, 'STRIKE');
 });
 
+test('EMPLOYEE_ROSTER assigns helpers in list order and stops striking ones (R2-A2, R2-A5)', () => {
+  const { sim, write } = setup('helfer-hof');
+  const op = (employeeId, name, status = 'ACTIVE', role = 'MACHINE_OPERATOR') => ({ employeeId, name, role, status });
+  const roster = (id, employees) => ({ instructionId: id, type: 'EMPLOYEE_ROSTER', employees,
+    helperWageMode: 'EMPLOYEES', strictHelperLimit: false });
+  const jobs = () => sim.buildFarmFacts().workforce.activeJobs;
+  // the vanilla job 2 gets the first free ACTIVE operator in list order; the keeper never drives
+  write([roster('a1', [op(1, 'Klaus Berger'), op(4, 'Greta Lindner', 'ACTIVE', 'ANIMAL_KEEPER'),
+    op(3, 'Jonas Kramer'), op(2, 'Anna Vogt')])]);
+  sim.processInstructions();
+  assert.deepEqual(jobs().map((j) => [j.jobId, j.employeeId]), [[1, 1], [2, 3]]);
+  // Klaus strikes: his job is stopped; Jonas goes on leave: his job keeps running as a vanilla helper
+  write([roster('a2', [op(1, 'Klaus Berger', 'STRIKE'), op(3, 'Jonas Kramer', 'ON_LEAVE')])]);
+  sim.processInstructions();
+  assert.deepEqual(jobs(), [{ jobId: 2, title: 'CLAAS LEXION 8900' }]);
+  // a newly started helper gets a free operator of the last list
+  write([roster('a3', [op(2, 'Anna Vogt')])]);
+  sim.processInstructions();
+  sim.setActiveJobs([...jobs().map((j) => ({ jobId: j.jobId, title: j.title })), { jobId: 7, title: 'John Deere 8R' }]);
+  assert.deepEqual(jobs().map((j) => [j.jobId, j.employeeId]), [[2, 2], [7, undefined]]);
+});
+
 test('PROMPT is shown once; an expired one is acknowledged but not shown (R2-F2)', () => {
   const { sim, write } = setup();
   const prompt = (id, expiresGameTime) => ({ instructionId: id, type: 'PROMPT', promptId: `prm_${id}`,

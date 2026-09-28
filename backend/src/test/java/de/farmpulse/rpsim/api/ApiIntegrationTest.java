@@ -355,6 +355,16 @@ class ApiIntegrationTest {
         mvc.perform(put("/api/settings/ai").contentType(MediaType.APPLICATION_JSON).content("{\"provider\":\"SKYNET\"}"))
                 .andExpect(status().isBadRequest());
         mvc.perform(get("/api/settings/game")).andExpect(jsonPath("$.tonePreset").value("REALISTIC"));
+        // Roadmap V2 R2-A1 / R2-A3
+        mvc.perform(get("/api/settings/helpers")).andExpect(jsonPath("$.helperWageMode").value("EMPLOYEES"))
+                .andExpect(jsonPath("$.strictHelperLimit").value(false));
+        mvc.perform(put("/api/settings/helpers").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"helperWageMode\":\"VANILLA\",\"strictHelperLimit\":true}"))
+                .andExpect(jsonPath("$.helperWageMode").value("VANILLA"))
+                .andExpect(jsonPath("$.strictHelperLimit").value(true));
+        mvc.perform(put("/api/settings/helpers").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"helperWageMode\":\"FREE\",\"strictHelperLimit\":true}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

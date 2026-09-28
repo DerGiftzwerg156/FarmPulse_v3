@@ -10,6 +10,7 @@ import de.farmpulse.rpsim.domain.VillageRelation;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -90,5 +91,10 @@ public final class Requests {
     }
 
     public record AiSettingsRequest(@NotBlank String provider, String model, String apiKey, String baseUrl) {
+    }
+
+    /** Roadmap V2 R2-A1 / R2-A3: helperWageMode EMPLOYEES or VANILLA. */
+    public record HelperSettingsRequest(@NotBlank @Pattern(regexp = "EMPLOYEES|VANILLA")
+                                        String helperWageMode, boolean strictHelperLimit) {
     }
 }

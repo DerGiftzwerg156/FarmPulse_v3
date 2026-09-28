@@ -73,7 +73,7 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 `farm_facts.json` gets five more **optional** blocks for [`ROADMAP_V2.md`](../../ROADMAP_V2.md). `schemaVersion` stays
 `1` as long as every new block is optional. The contract is fixed now; the mod fills a block once the feature that
 collects it is built (named per block). Until then the block is **missing**. Filled by the mod so far: `finances`
-(R2-B1).
+(R2-B1), `workforce` (R2-A4) and `husbandries` (R2-A7).
 
 - **Missing ≠ empty.** A missing block means "not present" (older mod, or the feature is not built yet); the backend
   keeps its V1 behaviour then. An empty block (`"fields": []`, `"workedGameMs": {}`) is a real answer of the game.
@@ -131,6 +131,28 @@ investment, divestment, financing, ignore; unknown names count as operating by t
 | `activeJobs[].title` | Title of the job; missing when the game returns an empty title | `job:getTitle()`: vehicle name for field work (`AIJobFieldWork:getTitle` → `vehicle:getName()`), helper name otherwise (`AIJob:getTitle` → `helper.title`) |
 | `workedGameMs` | Cumulative game time (ms) each employee drove a helper; key = `employeeId` as text | game time between two exports (`RPSimGameAdapter:getGameTime()`), stored in the savegame |
 
+**Built (R2-A0..A5):** the mod keeps the last `EMPLOYEE_ROSTER` (stored in the savegame, `FS25_RPSim.workforce`) and
+hooks `AIJob` with `Utils`:
+
+- `AIJob.start` (appended): a job started by the player farm gets the first free `ACTIVE` `MACHINE_OPERATOR` of the
+  list, in list order (the backend sends the list sorted by skill, descending). No free operator = vanilla helper. Job
+  ids are new after loading, so the assignments are not saved; running jobs are assigned again at the next export.
+- `AIJob.getHelperName` (overwritten): returns the employee's name; the game messages (`AIMessage:getMessage`) use it.
+  🟡 whether HUD and map show the same name ([manual test plan 10.3](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)).
+- `AIJob.getPricePerMs` (overwritten, also on `AIJobFieldWork` / `AIJobConveyor`, which define their own): `0` for a
+  job driven by an employee while `helperWageMode` is `EMPLOYEES`, so `AIJob:updateCost` books no game wage (the salary
+  runs through the tool). `VANILLA` keeps the game wage.
+- `AIJob.stop` (appended): the employee is free again after the stop message.
+- `strictHelperLimit`: `g_currentMission.maxNumHirables` = min(original value, active machine operators); the original
+  value is remembered and written back when the switch is off or the map is unloaded. 🟡 whether the game resets it.
+- Worked time: at every export the game time since the last export is credited to the employees driving a running job
+  of the player farm (`aiSystem:getActiveJobs()`, `job.startedFarmId`). A rewound game time only resets the sample
+  point.
+
+The backend counts the worked hours per game day (`WorkforceService`, R2-A4): above `workload.target-hours-per-day` the
+WORKLOAD need drops per extra hour, below it recovers; the positive monthly effect of an operator scales with the
+hours of the month (`workload.effect-scales-with-hours`). Without the block (older mod) the V1 workload decay stays.
+
 **`husbandries[]`** (R2-A7). Required per entry: `husbandryUniqueId`, `health`, `food`, `conditions`.
 
 | Field | Meaning | Source |
@@ -140,6 +162,13 @@ investment, divestment, financing, ignore; unknown names count as operating by t
 | `productivity` | `getGlobalProductionFactor() * getProductionFactor()`; **missing** for horses and pigs, like in the game | `PlaceableHusbandryAnimals:getConditionInfos` (dump) |
 | `food` | `getTotalFood() / getFoodCapacity()` | `PlaceableHusbandryFood.lua` (dump) |
 | `conditions[]` | Every entry of `getConditionInfos()` with `title` (as shown in the game, localised) and `ratio` | `getConditionInfos` of `PlaceableHusbandryWater` (ratio clamped to 0..1), `…Straw`, `…LiquidManure`, `…Milk` (dump) |
+
+**Built (R2-A7):** `RPSimGameAdapter.husbandryState` reads every own placeable with `spec_husbandryAnimals` while the
+assets are collected (same loop as `assets.animals`). `getAnimalTypeIndex()` = `AnimalType.HORSE` / `AnimalType.PIG`
+leaves out `productivity`; a missing food capacity gives `food = 0`. The backend (`LivestockService`) uses the block for
+the animal keeper (workload from animals per keeper, stable warnings), the vet emergency (health below
+`livestock.vet-emergency-health`) and the productivity in the breeding advice. Water is found by the condition title
+(`livestock.water-condition-titles`, 🟡 localisation, [manual test plan 10.12](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)).
 
 **`fields[]`** (R2-C1). Only fields on farmlands the player owns. Required per entry: `farmlandId`, `name`,
 `hectares`, `growthState`, `weedState`, `stoneLevel`, `sprayLevel`, `limeLevel`, `plowLevel`.
@@ -219,9 +248,9 @@ optional `savegameId`.
 | `PRICE_EVENT` / `MULTIPLIER` | `fillType`, `sellPoint`, `peakMultiplier`, `rampUpHours`, `holdHours`, `decayHours` (start = `gameTimeEarliest` or time of application) |
 | `PRICE_EVENT` / `FIXED` | `fillType`, `sellPoint`, `fixedPrice` (per 1000 l), `maxQuantity` (l), `deadlineGameTime`; precedence over `MULTIPLIER` for the same sell point/fill type |
 | `FARMLAND_TRANSFER` | `farmlandId`, `direction` ∈ `TO_PLAYER, FROM_PLAYER`, `price` (reference only) |
-| `REPAIR_VEHICLE` (TODO T-22) | `vehicleId` (uniqueId of an own vehicle), optional `targetDamage` (0..1, R2-A6, default `0`). The mod calls `Wearable:setDamageAmount(min(targetDamage, getDamageAmount()), true)` - the damage part of the game's `repairVehicle()` without its repair booking (the maintenance contract pays); a repair never raises the damage. `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` or `NOT_WEARABLE`. Not re-sent after a rewind (the next monthly service repairs again). |
+| `REPAIR_VEHICLE` (TODO T-22) | `vehicleId` (uniqueId of an own vehicle), optional `targetDamage` (0..1, R2-A6, default `0`). The mod calls `Wearable:setDamageAmount(min(targetDamage, getDamageAmount()), true)` - the damage part of the game's `repairVehicle()` without its repair booking (the maintenance contract pays); a repair never raises the damage. `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` or `NOT_WEARABLE`. Not re-sent after a rewind (the next monthly service repairs again). Sent with `targetDamage` by the maintenance contract and, since R2-A6, by an employed mechanic (partial repair up to the mechanic's monthly capacity). |
 | `NOTIFICATION` (TODO T-21) | `text` (German, ≤ 120 characters), optional `level` ∈ `INFO, OK, CRITICAL` (`FSBaseMission.INGAME_NOTIFICATION_*`), optional `expiresAtGameTime`. Shown with `g_currentMission:addIngameNotification`; processed after `expiresAtGameTime` it is acknowledged `APPLIED` with `message: "EXPIRED"` and not shown. Never re-sent after a reload without saving, a failure creates no notice. |
-| `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) | `employees[]` with `employeeId` (tool id, integer), `name`, `role` (`JobRole` name), `status` ∈ `ACTIVE, ON_LEAVE, STRIKE`; `helperWageMode` ∈ `EMPLOYEES, VANILLA` (R2-A1); `strictHelperLimit` (boolean, R2-A3). The complete list; the mod replaces its list (idempotent). **Validated since R2-Q1, executed with R2-A0** - until then the mod acknowledges it `FAILED` / `NOT_SUPPORTED`. |
+| `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) | `employees[]` with `employeeId` (tool id, integer), `name`, `role` (`JobRole` name), `status` ∈ `ACTIVE, ON_LEAVE, STRIKE`; `helperWageMode` ∈ `EMPLOYEES, VANILLA` (R2-A1); `strictHelperLimit` (boolean, R2-A3). The complete list, sorted by assignment priority (skill, descending); the mod replaces its list (idempotent) and `APPLIED`s it. Running helpers of a `STRIKE` employee are stopped with the own AI message `RPSIM_STRIKE` ("%s legt die Arbeit nieder", R2-A5; fallback: the game's unknown-error message plus an in-game notification). Helpers of an employee no longer `ACTIVE` or no longer listed keep running as vanilla helpers. The backend sends the list after every change of an employee (hire, dismissal, leave, strike, settings) and again after a rewind; a failure raises no notice (the next change resends). |
 | `PROMPT` (Roadmap V2, R2-F2) | `promptId`, `title`, `text`, optional `yesLabel` / `noLabel`, `expiresGameTime`. Yes/no question shown in the game; an expired prompt is dropped without being shown. **Validated since R2-Q1, executed with R2-F2** - until then the mod acknowledges it `FAILED` / `NOT_SUPPORTED`. |
 
 **Batches:** instructions sharing a `batchId` are validated together and applied in the same cycle, or all

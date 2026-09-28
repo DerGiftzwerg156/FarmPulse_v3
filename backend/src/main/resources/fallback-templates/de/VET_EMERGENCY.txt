@@ -1,0 +1,6 @@
+Notfalleinsatz im Stall
+Guten Tag,
+
+ich musste zu einem Notfall ausrücken: Die Tiere ({{animalType}}) sind nur noch bei {{healthPercent}} % Gesundheit. Die Rechnung über {{invoice}} € folgt. Bitte achten Sie auf Futter, Wasser und Einstreu.
+
+{{characterName}}

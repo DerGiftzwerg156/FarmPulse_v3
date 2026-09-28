@@ -8,6 +8,7 @@ import de.farmpulse.rpsim.credit.LoanService;
 import de.farmpulse.rpsim.domain.*;
 import de.farmpulse.rpsim.domain.Character;
 import de.farmpulse.rpsim.employee.SatisfactionService;
+import de.farmpulse.rpsim.employee.WorkforceService;
 import de.farmpulse.rpsim.negotiation.NegotiationEngine;
 import de.farmpulse.rpsim.time.GameTime;
 import de.farmpulse.rpsim.trust.TrustScoreService;
@@ -92,7 +93,13 @@ public class ApiMapper {
         return new EmployeeView(e.getId(), ref(e.getCharacter()), e.getJobRole().name(), e.getSkill(), e.getMonthlySalary(),
                 e.getStatus().name(), new NeedsView(r(n.payFairness()), r(n.workload()), r(n.appreciation()),
                 r(n.workingConditions()), r(n.score()), r(n.effectiveSkill())), e.isWarningSent(), e.isSalaryOverdue(),
-                e.getTimeOffUntilGameTime());
+                e.getTimeOffUntilGameTime(), e.getStrikeSinceGameTime() != null,
+                hours(WorkforceService.hoursThisMonth(e)),
+                hours(WorkforceService.hoursLastMonth(e)));
+    }
+
+    private static Double hours(Double h) {
+        return h == null ? null : r(h);
     }
 
     private static double r(double v) {

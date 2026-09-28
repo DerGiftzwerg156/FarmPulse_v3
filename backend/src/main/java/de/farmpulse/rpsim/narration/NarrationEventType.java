@@ -23,6 +23,12 @@ public enum NarrationEventType {
     // Roadmap V2 R2-B5: real farm finances
     BANK_CASHFLOW_WARNING,
     COOPERATIVE_RECORD_HARVEST,
+    // Roadmap V2 R2-A: employees as FS25 helpers
+    EMPLOYEE_STRIKE,
+    EMPLOYEE_STRIKE_ENDED,
+    MECHANIC_REPORT,
+    ANIMAL_KEEPER_WARNING,
+    VET_EMERGENCY,
     // market
     MARKET_PRICE_EVENT,
     MARKET_SPECIAL_OFFER,

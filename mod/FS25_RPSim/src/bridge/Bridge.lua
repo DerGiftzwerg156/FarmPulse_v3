@@ -79,7 +79,51 @@ function RPSimBridge:exportFarmFacts()
     if self.financeJournalEnabled and self.state.financeJournal ~= nil then
         raw.finances = RPSimFinanceJournal.toRaw(self.state.financeJournal)
     end
+    if self.workforceEnabled then
+        raw.workforce = self:sampleWorkforce(raw.gameTime)
+    end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
+end
+
+--- Roadmap V2 R2-A2 / R2-A3 / R2-A4: running helper jobs of the player farm. Jobs that run after loading are assigned
+-- now (job ids are new after a reload), the worked time since the last export is credited, and the helper limit of the
+-- strict mode is set again (in case the game reset it).
+function RPSimBridge:sampleWorkforce(gameTime)
+    local wf = self.state.workforce
+    local ok, jobs = pcall(self.adapter.collectAIJobs, self.adapter)
+    if not ok or jobs == nil then
+        jobs = {}
+    end
+    local ids = {}
+    for _, j in ipairs(jobs) do
+        RPSimWorkforce.assign(wf, j.jobId)
+        ids[#ids + 1] = j.jobId
+    end
+    RPSimWorkforce.accrue(wf, ids, gameTime)
+    if wf.roster ~= nil and self.adapter.applyHelperLimit ~= nil then
+        self.adapter:applyHelperLimit(wf)
+    end
+    return RPSimWorkforce.toRaw(wf, jobs)
+end
+
+--- Roadmap V2 R2-A0: the complete employee list from the backend. Helpers of striking employees are stopped (R2-A5),
+-- the helper limit follows the new list (R2-A3).
+function RPSimBridge:applyRoster(ins)
+    local wf = self.state.workforce
+    local strike = RPSimWorkforce.setRoster(wf, ins)
+    for _, jobId in ipairs(strike) do
+        local name = RPSimWorkforce.helperName(wf, jobId)
+        if self.adapter.stopStrikingJob ~= nil then
+            self.adapter:stopStrikingJob(jobId, name)
+        end
+        RPSimWorkforce.release(wf, jobId)
+    end
+    if self.adapter.applyHelperLimit ~= nil then
+        self.adapter:applyHelperLimit(wf)
+    end
+    RPSimLog.info("Employee list: %d employees, helper wage %s, strict limit %s", #wf.roster.employees,
+        tostring(wf.roster.helperWageMode), tostring(wf.roster.strictHelperLimit))
+    return true
 end
 
 --- Roadmap V2 R2-B1: one booking of the game (Farm.changeBalance). Only the player farm is recorded; bookings of the
@@ -135,6 +179,9 @@ function RPSimBridge:onSavegameLoaded()
     self.started = true
     self.exportTimer = 0
     self.importTimer = 0
+    if self.workforceEnabled and self.adapter.registerStrikeMessage ~= nil then
+        self.adapter:registerStrikeMessage() -- R2-A5: the AI message manager exists once the mission runs
+    end
     self:exportMarketContext(true)
     self:exportFarmFacts()
     self:writeAck()
@@ -178,6 +225,7 @@ function RPSimBridge:pollInstructions()
                     money = function(ins) return adapter:addMoney(ins.amount, ins.reason, ins.note) end,
                     farmlandTransfer = function(ins) return adapter:transferFarmland(ins.farmlandId, ins.direction) end,
                     notify = adapter.notify ~= nil and function(ins) return adapter:notify(ins.text, ins.level) end or nil,
+                    employeeRoster = function(ins) return self:applyRoster(ins) end,
                     repairVehicle = adapter.repairVehicle ~= nil
                         and function(ins) return adapter:repairVehicle(ins.vehicleId, ins.targetDamage) end or nil,
                 },

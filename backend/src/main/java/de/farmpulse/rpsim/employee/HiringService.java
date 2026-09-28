@@ -33,6 +33,7 @@ import de.farmpulse.rpsim.repository.EmployeeRepository;
 import de.farmpulse.rpsim.repository.JobApplicationRepository;
 import de.farmpulse.rpsim.repository.JobPostingRepository;
 import de.farmpulse.rpsim.time.GameTime;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,10 +56,11 @@ public class HiringService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final ApplicationEventPublisher publisher;
 
     public HiringService(JobPostingRepository postings, JobApplicationRepository applications, EmployeeRepository employees,
                          CharacterGeneratorService generator, NarrationRequestService narration, DiaryService diary,
-                         RandomSource random, RpsimProperties props, GameTime gameTime) {
+                         RandomSource random, RpsimProperties props, GameTime gameTime, ApplicationEventPublisher publisher) {
         this.postings = postings;
         this.applications = applications;
         this.employees = employees;
@@ -68,6 +70,7 @@ public class HiringService {
         this.random = random;
         this.props = props;
         this.gameTime = gameTime;
+        this.publisher = publisher;
     }
 
     private RpsimProperties.Hiring cfg() {
@@ -186,7 +189,9 @@ public class HiringService {
         e.setLastEffectMultiplier(1.0);
         // T-08: salaries are paid at the start of each FS25 period
         e.setNextSalaryDueGameTime(gameTime.addMonths(sg, sg.getCurrentGameTime(), 1));
-        return employees.save(e);
+        Employee saved = employees.save(e);
+        publisher.publishEvent(new RosterChangedEvent(sg.getId())); // R2-A0
+        return saved;
     }
 
     /** Dismissal by the player. */
@@ -204,6 +209,7 @@ public class HiringService {
         e.getCharacter().setLeftAtGameTime(sg.getCurrentGameTime());
         diary.addAuto(sg, "EMPLOYEE", e.getCharacter().getName() + " entlassen", "Das Arbeitsverhältnis wurde beendet.",
                 SatisfactionService.RELATED, e.getId());
+        publisher.publishEvent(new RosterChangedEvent(sg.getId())); // R2-A0
         return e;
     }
 

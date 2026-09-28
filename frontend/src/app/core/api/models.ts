@@ -251,6 +251,19 @@ export interface EmployeeView {
   warningSent: boolean;
   salaryOverdue: boolean;
   timeOffUntilGameTime: number | null;
+  /** Roadmap V2 R2-A5: the employee laid down work (the FS25 helper stopped, the salary keeps running). */
+  onStrike: boolean;
+  /** Roadmap V2 R2-A4: hours driven as FS25 helper; null without worked time from the mod or for other roles. */
+  hoursThisMonth: number | null;
+  hoursLastMonth: number | null;
+}
+
+/** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
+export interface HelperSettingsView {
+  helperWageMode: 'EMPLOYEES' | 'VANILLA';
+  strictHelperLimit: boolean;
+  /** The mod reports helper jobs (farm_facts.workforce). */
+  workforceTracked: boolean;
 }
 
 export interface FarmlandView {

@@ -428,14 +428,56 @@ export class BridgeSimulator {
     return f;
   }
 
-  /** Control API: helpers are started / stopped in the game (R2-A4); worked time already counted stays. */
+  /**
+   * Control API: helpers are started / stopped in the game (R2-A4); worked time already counted stays. Like the mod, a
+   * job without employee gets the first free ACTIVE machine operator of the last roster (R2-A2).
+   */
   setActiveJobs(activeJobs) {
     if (!this.workforce) throw new Error(`scenario ${this.scenario} exports no workforce`);
     this.workforce.activeJobs = activeJobs.map((j) => ({ ...j }));
+    this.assignFreeOperators();
     for (const j of this.workforce.activeJobs) {
       if (j.employeeId !== undefined) this.workforce.workedGameMs[String(j.employeeId)] ??= 0;
     }
     return this.workforce;
+  }
+
+  /**
+   * R2-A0 / R2-A2 / R2-A5 like the mod: helpers of striking employees are stopped, helpers of employees no longer ACTIVE
+   * (dismissed, on leave) keep working as vanilla helpers, free jobs get the first free ACTIVE machine operator in list
+   * order.
+   */
+  applyRosterToJobs() {
+    if (!this.workforce) return;
+    const byId = new Map(this.roster.employees.map((e) => [e.employeeId, e]));
+    const kept = [];
+    for (const j of this.workforce.activeJobs) {
+      const e = j.employeeId === undefined ? undefined : byId.get(j.employeeId);
+      if (e?.status === 'STRIKE') {
+        this.log(`helper job ${j.jobId} stopped: ${e.name} is on strike`);
+        continue;
+      }
+      if (j.employeeId !== undefined && e?.status !== 'ACTIVE') delete j.employeeId;
+      kept.push(j);
+    }
+    this.workforce.activeJobs = kept;
+    this.assignFreeOperators();
+    for (const j of kept) {
+      if (j.employeeId !== undefined) this.workforce.workedGameMs[String(j.employeeId)] ??= 0;
+    }
+  }
+
+  assignFreeOperators() {
+    if (!this.roster || !this.workforce) return;
+    const busy = new Set(this.workforce.activeJobs.map((j) => j.employeeId).filter((id) => id !== undefined));
+    for (const j of this.workforce.activeJobs) {
+      if (j.employeeId !== undefined) continue;
+      const free = this.roster.employees.find((e) => e.role === 'MACHINE_OPERATOR' && e.status === 'ACTIVE'
+        && !busy.has(e.employeeId));
+      if (!free) return;
+      j.employeeId = free.employeeId;
+      busy.add(free.employeeId);
+    }
   }
 
   // --------------------------------------------------------------- exports
@@ -575,6 +617,7 @@ export class BridgeSimulator {
       case 'EMPLOYEE_ROSTER': // R2-A0: the list is replaced completely (idempotent)
         this.roster = { employees: ins.employees.map((e) => ({ ...e })), helperWageMode: ins.helperWageMode,
           strictHelperLimit: ins.strictHelperLimit };
+        this.applyRosterToJobs();
         return null;
       case 'PROMPT': // R2-F2: expired prompts are dropped without being shown
         if (this.gameTime > ins.expiresGameTime) {

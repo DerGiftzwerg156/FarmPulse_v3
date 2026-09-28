@@ -9,7 +9,8 @@ import { Employees, satisfactionBand } from './employees';
 const emp = (over: Partial<EmployeeView> = {}): EmployeeView => ({
   id: 1, character: character({ id: 11, name: 'Jonas Peters', role: 'EMPLOYEE' }), jobRole: 'MECHANIC', skill: 72, monthlySalary: 2800,
   status: 'ACTIVE', needs: { payFairness: 80, workload: 55, appreciation: 30, workingConditions: 70, satisfaction: 58.8, effectiveSkill: 70 },
-  warningSent: false, salaryOverdue: false, timeOffUntilGameTime: null, ...over,
+  warningSent: false, salaryOverdue: false, timeOffUntilGameTime: null, onStrike: false, hoursThisMonth: null,
+  hoursLastMonth: null, ...over,
 });
 const posting: JobPostingView = { id: 3, jobRole: 'ANIMAL_KEEPER', status: 'OPEN', createdAtGameTime: 0, filledEmployeeId: null };
 const applicant: ApplicationView = {
@@ -141,5 +142,20 @@ describe('Employees', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="employees-message"]')?.textContent).toContain('Lena Voss ist jetzt im Team');
     expect(el.querySelectorAll('[data-testid="employee"]').length).toBe(1);
+  });
+  // Roadmap V2 R2-A: machine operators drive the FS25 helpers
+  it('explains the helpers, shows the driven hours and a strike', () => {
+    const { el } = setup([emp({ jobRole: 'MACHINE_OPERATOR', onStrike: true, hoursThisMonth: 12.5, hoursLastMonth: 30 }),
+      emp({ id: 2 })]);
+    expect(el.querySelector('[data-testid="helper-hint"]')?.textContent).toContain('Helfer ohne freien Maschinenführer');
+    expect(el.querySelector('[data-testid="strike"]')?.textContent).toContain('Streikt');
+    const hours = el.querySelectorAll('[data-testid="hours"]');
+    expect(hours.length).toBe(1);
+    expect(hours[0].textContent).toContain('12.5 h in diesem Monat (Vormonat 30 h)');
+  });
+
+  it('shows no helper hint without machine operators', () => {
+    const { el } = setup([emp()]);
+    expect(el.querySelector('[data-testid="helper-hint"]')).toBeNull();
   });
 });

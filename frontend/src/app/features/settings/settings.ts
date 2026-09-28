@@ -2,7 +2,7 @@ import { GameStateStore } from '../../core/state/game-state.store';
 import { Component, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { AiSettingsView, GameSettingsView } from '../../core/api/models';
+import { AiSettingsView, GameSettingsView, HelperSettingsView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { LabelPipe } from '../../shared/format/label.pipe';
@@ -31,6 +31,7 @@ export class Settings {
 
   readonly ai = signal<AiSettingsView | null>(null);
   readonly game = signal<GameSettingsView | null>(null);
+  readonly helpers = signal<HelperSettingsView | null>(null);
   readonly provider = signal('');
   readonly model = signal('');
   readonly apiKey = signal('');
@@ -50,6 +51,15 @@ export class Settings {
       error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
     });
     this.api.gameSettings().subscribe({ next: (g) => this.game.set(g), error: () => this.game.set(null) });
+    this.api.helperSettings().subscribe({ next: (h) => this.helpers.set(h), error: () => this.helpers.set(null) });
+  }
+
+  /** Roadmap V2 R2-A1 / R2-A3: saves the helper switches (sent to the mod with the employee list). */
+  saveHelpers(r: { helperWageMode: string; strictHelperLimit: boolean }): void {
+    this.api.saveHelperSettings(r).subscribe({
+      next: (h) => this.helpers.set(h),
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
   }
 
   private apply(s: AiSettingsView): void {

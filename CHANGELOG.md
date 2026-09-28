@@ -21,7 +21,7 @@ versions or this changelog do not match.
     `weather`. `schemaVersion` stays `1`; a missing block means "not present" (older mod), not "empty". The mod
     normalises the blocks once a feature collects them; `BridgeDtos` / `BridgeValidator` read and check them.
   - New instruction types `EMPLOYEE_ROSTER` and `PROMPT` are validated by the mod (executed with R2-A0 / R2-F2,
-    until then acknowledged `FAILED` / `NOT_SUPPORTED`); `REPAIR_VEHICLE` takes an optional `targetDamage` for
+    until then acknowledged `FAILED` / `NOT_SUPPORTED`; `EMPLOYEE_ROSTER` is executed since R2-A); `REPAIR_VEHICLE` takes an optional `targetDamage` for
     partial repairs and never raises the damage.
   - New booking reasons `TAX_PAYMENT`, `TAX_REFUND`, `FINE`, `FAMILY`, `SPONSORING`, `COMPENSATION` in mod, backend,
     booking titles (`modDesc.xml`) and the German UI labels.
@@ -46,6 +46,27 @@ versions or this changelog do not match.
     operating result; the cooperative congratulates on a record harvest revenue month (small trust bonus); credit
     decisions and both messages get the real figures of the last month as narration facts.
   - Simulator: `POST /book` books a game money type (e.g. a purchase) into the journal.
+- **Staff as FS25 helpers (Roadmap V2, R2-A):**
+  - Mod: executes `EMPLOYEE_ROSTER` - a helper started by the player farm is driven by the first free active machine
+    operator (list sorted by skill), the game messages show the employee's name, and with the helper wage mode
+    `EMPLOYEES` (default) the game books no helper wage for it (`AIJob.getPricePerMs` = 0). A strict mode limits
+    `maxNumHirables` to the active machine operators. The worked game time per employee is stored in the savegame
+    and exported as `farm_facts.workforce`; the stable state (health, productivity, food, conditions) as
+    `farm_facts.husbandries`.
+  - Workload: the backend counts the driven hours per game day - above 8 h (`workload.target-hours-per-day`) the
+    workload need drops, below it recovers; the positive monthly effect of an operator scales with the hours of the
+    month. Without the block (older mod) the V1 workload decay stays.
+  - Strike: after 21 days below the satisfaction threshold an employee goes on strike (badge *Streikt*, mail); the
+    mod stops the running helper with "%s legt die Arbeit nieder", the salary keeps running, no positive effect. The
+    strike ends when the satisfaction is back at the threshold.
+  - Mechanic: repairs the most worn machines at every month start as far as the monthly capacity reaches (partial
+    repair via `targetDamage`), sends a workshop report; machines left broken raise the workload.
+  - Animal keeper: workload from animals per keeper, working conditions from the stable health, a warning mail when
+    food or water run low; the vet comes to an emergency (more expensive) when a stable's health drops below 40 %;
+    the breeding advice names the productivity.
+  - Settings: new card *Helfer im Spiel* (helper wage via salary, strict mode); *Personal* shows the helper hint, the
+    strike badge and the driven hours per month. New settings are documented in `configuration-reference.md`.
+  - Simulator: `EMPLOYEE_ROSTER` assigns running jobs in list order and stops the jobs of striking employees.
 
 ## [1.1.2] - 2026-09-28
 

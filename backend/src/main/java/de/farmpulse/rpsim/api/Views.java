@@ -73,8 +73,17 @@ public final class Views {
                             double satisfaction, double effectiveSkill) {
     }
 
+    /**
+     * Roadmap V2 R2-A: onStrike (A5); hoursThisMonth / hoursLastMonth = hours driven as FS25 helper (A4), null when the mod
+     * reports no worked time or the employee is no machine operator.
+     */
     public record EmployeeView(Long id, CharacterRef character, String jobRole, int skill, long monthlySalary, String status,
-                               NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime) {
+                               NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
+                               boolean onStrike, Double hoursThisMonth, Double hoursLastMonth) {
+    }
+
+    /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */
+    public record HelperSettingsView(String helperWageMode, boolean strictHelperLimit, boolean workforceTracked) {
     }
 
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,

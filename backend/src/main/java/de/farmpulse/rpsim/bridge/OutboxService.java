@@ -90,9 +90,29 @@ public class OutboxService {
     /** TODO T-22: repair of an own vehicle (maintenance contract). */
     @Transactional
     public OutboxInstruction repairVehicle(Savegame sg, String vehicleId, Related related) {
+        return repairVehicle(sg, vehicleId, null, related);
+    }
+
+    /** Roadmap V2 R2-A6: partial repair down to targetDamage (0..1); null = full repair. */
+    @Transactional
+    public OutboxInstruction repairVehicle(Savegame sg, String vehicleId, Double targetDamage, Related related) {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("vehicleId", vehicleId);
+        if (targetDamage != null) {
+            p.put("targetDamage", Math.max(0, Math.min(1, targetDamage)));
+        }
         return enqueue(sg, InstructionType.REPAIR_VEHICLE, p, null, null, related);
+    }
+
+    /** Roadmap V2 R2-A0: the complete employee list (the mod replaces its list). */
+    @Transactional
+    public OutboxInstruction employeeRoster(Savegame sg, List<Map<String, Object>> employees, String helperWageMode,
+                                            boolean strictHelperLimit) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("employees", employees);
+        p.put("helperWageMode", helperWageMode);
+        p.put("strictHelperLimit", strictHelperLimit);
+        return enqueue(sg, InstructionType.EMPLOYEE_ROSTER, p, null, null, Related.none());
     }
 
     /** TODO T-22: farmland transfer without money (lease start / return). */

@@ -73,4 +73,27 @@ public class Employee extends SavegameScoped {
 
     @Column(name = "next_salary_due_game_time", nullable = false)
     private long nextSalaryDueGameTime;
+
+    /** Roadmap V2 R2-A5: on strike since (null = working). The salary keeps running. */
+    @Column(name = "strike_since_game_time")
+    private Long strikeSinceGameTime;
+
+    /** R2-A4: last cumulative worked game time reported by the mod (farm_facts.workforce.workedGameMs). */
+    @Column(name = "worked_ms_seen")
+    private Long workedMsSeen;
+
+    /** R2-A4: worked game time since the last daily workload evaluation. */
+    @Column(name = "worked_ms_today", nullable = false)
+    private long workedMsToday;
+
+    /** R2-A4: worked game time in the current game month. */
+    @Column(name = "worked_ms_month", nullable = false)
+    private long workedMsMonth;
+
+    @Column(name = "worked_ms_last_month", nullable = false)
+    private long workedMsLastMonth;
+
+    /** R2-A7: last warning mail of an animal keeper about food / water in the stables. */
+    @Column(name = "last_stable_warning_game_time")
+    private Long lastStableWarningGameTime;
 }
