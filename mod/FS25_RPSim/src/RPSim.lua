@@ -4,8 +4,8 @@
 -- pattern as FS25_UsedPlus and FS25_MarketDynamics). Persistence via FSCareerMissionInfo.saveToXMLFile
 -- (appended) and the savegame XML loaded in loadMap.
 -- luacheck: globals g_currentMission g_modSettingsDirectory addModEventListener Utils getUserProfileAppPath
--- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00
-RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil }
+-- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00 Farm
+RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil, financeHook = false }
 
 local XML_NAME = "FS25_RPSim.xml"
 
@@ -62,6 +62,7 @@ local function loadMapImpl(self)
     end
 
     self.bridge = RPSimBridge.new(cfg, paths, self.adapter, state)
+    self.bridge.financeJournalEnabled = RPSim.financeHook
     self.bridge:bootstrap()
     if Mission00 == nil or Mission00.onStartMission == nil then
         -- No start hook available: start right away (degraded, first export may be incomplete).
@@ -143,6 +144,25 @@ if SellingStation ~= nil and Utils ~= nil then
     SellingStation.getEffectiveFillTypePrice = Utils.overwrittenFunction(SellingStation.getEffectiveFillTypePrice,
         effectivePriceHook)
     SellingStation.sellFillType = Utils.overwrittenFunction(SellingStation.sellFillType, RPSim.sellFillTypeHook)
+end
+--- Roadmap V2 R2-B1: every booking of the game passes Farm:changeBalance(amount, moneyType) (LUADOC
+-- script/Farms/Farm.md). A failure never disturbs the booking itself.
+function RPSim.changeBalanceHook(farm, amount, moneyType)
+    if RPSim.bridge == nil then
+        return
+    end
+    local ok, err = pcall(function()
+        RPSim.bridge:recordBooking(farm:getId(), amount, moneyType)
+    end)
+    if not ok and not RPSim.bookingHookWarned then
+        RPSim.bookingHookWarned = true
+        RPSimLog.warning("Booking journal: %s", tostring(err))
+    end
+end
+
+if Farm ~= nil and Farm.changeBalance ~= nil and Utils ~= nil then
+    Farm.changeBalance = Utils.appendedFunction(Farm.changeBalance, RPSim.changeBalanceHook)
+    RPSim.financeHook = true
 end
 if Mission00 ~= nil and Utils ~= nil then
     Mission00.onStartMission = Utils.appendedFunction(Mission00.onStartMission, RPSim.onStartMission)

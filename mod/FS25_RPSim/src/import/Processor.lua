@@ -12,6 +12,7 @@ function RPSimProcessor.newState(cfg)
         processed = {},        -- [instructionId] = { gameTime, status, message }
         contractReports = {},  -- list of ended FIXED contract reports (kept until retention)
         priceEvents = RPSimPriceEvents.new(cfg),
+        financeJournal = RPSimFinanceJournal.new(), -- Roadmap V2 R2-B1
     }
 end
 

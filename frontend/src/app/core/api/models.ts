@@ -332,6 +332,35 @@ export interface StorageView {
   value: number;
 }
 
+/** Roadmap V2 R2-B4: farm bookkeeping from the mod's booking journal (amounts signed, expenses negative). */
+export type FinanceClass = 'OPERATING_INCOME' | 'OPERATING_EXPENSE' | 'INVESTMENT' | 'DIVESTMENT' | 'FINANCING' | 'IGNORE';
+
+export interface FinanceLineView {
+  category: string;
+  amount: number;
+  financeClass: FinanceClass;
+}
+
+export interface FinanceMonthView {
+  year: number;
+  period: number;
+  complete: boolean;
+  operatingIncome: number;
+  operatingExpenses: number;
+  operatingResult: number;
+  investment: number;
+  divestment: number;
+  financing: number;
+  ignored: number;
+  lines: FinanceLineView[];
+}
+
+export interface FinanceOverview {
+  /** false: the mod exports no booking journal (older mod version). */
+  available: boolean;
+  months: FinanceMonthView[];
+}
+
 export interface StorageOverview {
   gameTime: number;
   totalValue: number;

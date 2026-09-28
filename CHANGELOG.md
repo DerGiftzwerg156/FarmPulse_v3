@@ -31,6 +31,21 @@ versions or this changelog do not match.
     CI workflow.
   - Docs: every new field with its source in the FS25 code (`docs/dev/bridge-protocol.md`) and section 10 of the
     manual test plan with one check per "Im Spiel prüfen" point of the roadmap.
+- **Real farm finances (Roadmap V2, R2-B):**
+  - Mod: booking journal - a hook on `Farm.changeBalance` sums every booking of the player farm per FS25 month and
+    money type (tool bookings as `RPSIM_<REASON>`), keeps the last `financeJournalPeriods` (13) months in the savegame
+    and exports them as `farm_facts.finances`.
+  - Credit check: with a journal the operating cash flow is the average of the complete months in the cash-flow
+    window; investments, financing and one-off damage bookings do not count, and the real `LEASING_COSTS` replace the
+    leasing estimate (T-04). Classes per category in `rpsim.formulas.finance.categories`; unknown categories count as
+    operating by their sign and are logged once. Only money type names evidenced in the FS25 code are classified -
+    a vehicle purchase counts as operating until its name is checked in the game (manual test plan 10.9).
+  - Bank page: new card *Hofbuchhaltung* - income and expenses of the running business per month as stacked columns
+    by category with the monthly result, a table with investments, divestments and financing, German category names.
+  - Characters: the bank warns (once per loss streak, only with a running bank loan) after two months with a negative
+    operating result; the cooperative congratulates on a record harvest revenue month (small trust bonus); credit
+    decisions and both messages get the real figures of the last month as narration facts.
+  - Simulator: `POST /book` books a game money type (e.g. a purchase) into the journal.
 
 ## [1.1.2] - 2026-09-28
 

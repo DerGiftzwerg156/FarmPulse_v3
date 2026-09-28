@@ -115,6 +115,10 @@ Roadmap V2 (R2-Q2): the same test checks that the optional blocks of `helfer-hof
 (`husbandries`) and `ernte-herbst` (`fields`, `weather`) reach `FactsService`, and that a scenario without them
 (`wohlhabender-hof`) leaves every block `null` ("not present"). `BridgeValidatorTest` covers missing vs. empty vs.
 invalid blocks.
+Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
+(journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
+month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,
+the frontend the card in `finance-card.spec.ts`.
 
 ## Continuous integration (AP-11.1)
 

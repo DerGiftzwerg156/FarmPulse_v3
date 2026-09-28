@@ -50,6 +50,22 @@ function RPSimPersistence.save(writer, state)
         writer:setString(k .. "#endReason", r.endReason)
         writer:setFloat(k .. "#endedAtGameTime", r.endedAtGameTime or 0)
     end
+    -- Roadmap V2 R2-B1: booking journal (a reload without saving goes back to these sums)
+    for i, p in ipairs(state.financeJournal ~= nil and state.financeJournal.periods or {}) do
+        local k = string.format("%s.financeJournal.period(%d)", ROOT, i - 1)
+        writer:setInt(k .. "#year", p.year)
+        writer:setInt(k .. "#period", p.period)
+        local names = {}
+        for name, _ in pairs(p.byType) do
+            names[#names + 1] = name
+        end
+        table.sort(names)
+        for j, name in ipairs(names) do
+            local e = string.format("%s.booking(%d)", k, j - 1)
+            writer:setString(e .. "#type", name)
+            writer:setFloat(e .. "#amount", p.byType[name])
+        end
+    end
 end
 
 function RPSimPersistence.load(reader, state)
@@ -98,6 +114,24 @@ function RPSimPersistence.load(reader, state)
             maxQuantity = reader:getFloat(k .. "#maxQuantity") or 0,
             endReason = reader:getString(k .. "#endReason"),
             endedAtGameTime = reader:getFloat(k .. "#endedAtGameTime") or 0 }
+        i = i + 1
+    end
+    i = 0
+    state.financeJournal = RPSimFinanceJournal.new()
+    while true do
+        local k = string.format("%s.financeJournal.period(%d)", ROOT, i)
+        local year = reader:getInt(k .. "#year")
+        if year == nil then break end
+        local p = { year = year, period = reader:getInt(k .. "#period") or 1, byType = {} }
+        local j = 0
+        while true do
+            local e = string.format("%s.booking(%d)", k, j)
+            local name = reader:getString(e .. "#type")
+            if name == nil then break end
+            p.byType[name] = (p.byType[name] or 0) + (reader:getFloat(e .. "#amount") or 0)
+            j = j + 1
+        end
+        state.financeJournal.periods[#state.financeJournal.periods + 1] = p
         i = i + 1
     end
 end

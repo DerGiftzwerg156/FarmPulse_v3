@@ -65,6 +65,7 @@ public class MemoryService {
             case WILDLIFE_DISPUTE -> "Streit um den Wildschaden";
             case MISSION_COMPLETED -> "vermittelter Auftrag erledigt";
             case MISSION_FAILED -> "vermittelter Auftrag nicht erledigt";
+            case RECORD_HARVEST -> "Rekord-Ernteerlös im Monat";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

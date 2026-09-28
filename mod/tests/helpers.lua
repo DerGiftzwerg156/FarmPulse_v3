@@ -7,7 +7,7 @@ function helpers.loadModules()
     for _, f in ipairs({
         "util/Json.lua", "util/Log.lua", "util/FileIO.lua",
         "bridge/Config.lua", "bridge/BridgePaths.lua",
-        "export/Storage.lua", "export/FarmFacts.lua", "export/MarketContext.lua",
+        "export/Storage.lua", "export/FarmFacts.lua", "export/MarketContext.lua", "export/FinanceJournal.lua",
         "import/Instructions.lua", "import/PriceEventMath.lua", "import/PriceEvents.lua",
         "import/Processor.lua", "import/Persistence.lua",
         "bridge/Bridge.lua",
@@ -112,6 +112,8 @@ function helpers.fakeAdapter(overrides)
     }
     for k, v in pairs(overrides or {}) do a[k] = v end
     function a:getGameTime() return self.gameTime end
+    function a:getFarmId() return 1 end
+    function a:currentPeriod() return self.year or 2, self.period or 8 end
     function a:collectFarmFacts()
         if self.failFacts then error("engine exploded") end
         return {

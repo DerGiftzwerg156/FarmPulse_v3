@@ -182,6 +182,11 @@ export class ApiService {
     return this.post(`/market-events/${id}/participation`, { participate });
   }
 
+  // Roadmap V2 R2-B4: farm bookkeeping
+  finances(): Observable<M.FinanceOverview> {
+    return this.get('/finances');
+  }
+
   // storage & prices
   storage(): Observable<M.StorageOverview> {
     return this.get('/storage');

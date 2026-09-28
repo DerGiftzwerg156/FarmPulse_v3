@@ -130,4 +130,26 @@ public class Savegame {
     /** TODO T-21: name of the current season from the game's Season table (e.g. WINTER), null if unknown. */
     @Column(name = "cal_season", length = 64)
     private String calSeason;
+
+    // ---- Roadmap V2 R2-B5: evaluation of the booking journal, one complete month after the other
+
+    /** Continuous month number (year * 12 + period - 1) of the last evaluated complete month. */
+    @Column(name = "fin_last_month_key")
+    private Long finLastMonthKey;
+
+    /** Number of complete months evaluated so far. */
+    @Column(name = "fin_months_seen", nullable = false)
+    private int finMonthsSeen;
+
+    /** Negative operating results in a row up to the last evaluated month. */
+    @Column(name = "fin_negative_streak", nullable = false)
+    private int finNegativeStreak;
+
+    /** The bank already warned about the current negative streak. */
+    @Column(name = "fin_warning_sent", nullable = false)
+    private boolean finWarningSent;
+
+    /** Highest harvest revenue of a complete month so far (record). */
+    @Column(name = "fin_record_revenue")
+    private Double finRecordRevenue;
 }

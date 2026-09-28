@@ -119,6 +119,7 @@ public class RpsimProperties {
         private Maintenance maintenance = new Maintenance();
         private ProductionSupply productionSupply = new ProductionSupply();
         private Contractor contractor = new Contractor();
+        private Finance finance = new Finance();
     }
 
     /** Technical concept "TrustScoreService": capped score from TrustEvent history, decay on inactivity. */
@@ -677,5 +678,83 @@ public class RpsimProperties {
         /** Trust of the client (FS25 NPC as village character) for a completed referred contract. */
         private double clientTrustDelta = 2;
         private double failedTrustDelta = -3;
+    }
+
+    /** Roadmap V2 R2-B2: class of a booking in the journal (farm_facts.finances). */
+    public enum FinanceClass {
+        OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING, IGNORE
+    }
+
+    /**
+     * Roadmap V2 R2-B (real farm finances from the mod's booking journal). Placeholders.
+     * <ul>
+     *   <li>categories: FS25 money type (name in the global MoneyType table) or RPSIM_&lt;REASON&gt; -> class. Only names
+     *   evidenced in the FS25 code are listed; unknown categories count as operating by their sign (logged once).</li>
+     *   <li>early warning (R2-B5): the bank writes when the operating result of this many complete months in a row was
+     *   negative while a bank loan runs - once per streak.</li>
+     *   <li>record (R2-B5): the cooperative congratulates on the highest HARVEST_INCOME + SOLD_PRODUCTS of a complete
+     *   month since the start, once at least record-min-months complete months were seen.</li>
+     * </ul>
+     */
+    @Getter @Setter
+    public static class Finance {
+        private Map<String, FinanceClass> categories = defaultCategories();
+        private boolean earlyWarningEnabled = true;
+        private int earlyWarningNegativeMonths = 2;
+        private boolean recordEnabled = true;
+        /** Money types that count as harvest revenue for the record. */
+        private List<String> recordCategories = new ArrayList<>(List.of("HARVEST_INCOME", "SOLD_PRODUCTS"));
+        private int recordMinMonths = 3;
+        private double recordTrustDelta = 2;
+
+        private static Map<String, FinanceClass> defaultCategories() {
+            Map<String, FinanceClass> m = new LinkedHashMap<>();
+            m.put("HARVEST_INCOME", FinanceClass.OPERATING_INCOME);
+            m.put("SOLD_PRODUCTS", FinanceClass.OPERATING_INCOME);
+            m.put("MISSIONS", FinanceClass.OPERATING_INCOME);
+            m.put("PROPERTY_INCOME", FinanceClass.OPERATING_INCOME);
+            m.put("SOLD_ANIMALS", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_EMPLOYEE_EFFECT", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_SUBSIDY", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_LIVESTOCK_PREMIUM", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_TAX_REFUND", FinanceClass.OPERATING_INCOME);
+            m.put("PURCHASE_FUEL", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_SEEDS", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_FERTILIZER", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_WATER", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_PALLETS", FinanceClass.OPERATING_EXPENSE);
+            m.put("PURCHASE_CONSUMABLES", FinanceClass.OPERATING_EXPENSE);
+            m.put("BOUGHT_MATERIALS", FinanceClass.OPERATING_EXPENSE);
+            m.put("VEHICLE_RUNNING_COSTS", FinanceClass.OPERATING_EXPENSE);
+            m.put("VEHICLE_REPAIR", FinanceClass.OPERATING_EXPENSE);
+            m.put("LEASING_COSTS", FinanceClass.OPERATING_EXPENSE);
+            m.put("PROPERTY_MAINTENANCE", FinanceClass.OPERATING_EXPENSE);
+            m.put("AI", FinanceClass.OPERATING_EXPENSE);
+            m.put("NEW_ANIMALS_COST", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_SALARY_PAYMENT", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_INSURANCE_PREMIUM", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_VET_INVOICE", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_LEASE_PAYMENT", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_MAINTENANCE_FEE", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_TAX_PAYMENT", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_FINE", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_FAMILY", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_SPONSORING", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_COMPENSATION", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
+            m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
+            m.put("RPSIM_FARMLAND_PURCHASE", FinanceClass.INVESTMENT);
+            m.put("SHOP_VEHICLE_SELL", FinanceClass.DIVESTMENT);
+            m.put("RPSIM_FARMLAND_SALE", FinanceClass.DIVESTMENT);
+            m.put("RPSIM_CREDIT_DISBURSEMENT", FinanceClass.FINANCING);
+            m.put("RPSIM_CREDIT_INSTALLMENT", FinanceClass.FINANCING);
+            m.put("RPSIM_CREDIT_PENALTY", FinanceClass.FINANCING);
+            m.put("RPSIM_CREDIT_CALLBACK", FinanceClass.FINANCING);
+            m.put("RPSIM_STARTING_CAPITAL_ADJUSTMENT", FinanceClass.FINANCING);
+            m.put("RPSIM_DAMAGE", FinanceClass.IGNORE);
+            m.put("RPSIM_INSURANCE_PAYOUT", FinanceClass.IGNORE);
+            m.put("RPSIM_WILDLIFE_COMPENSATION", FinanceClass.IGNORE);
+            return m;
+        }
     }
 }

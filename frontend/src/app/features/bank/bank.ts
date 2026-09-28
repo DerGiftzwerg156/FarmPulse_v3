@@ -14,6 +14,7 @@ import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { Stat } from '../../shared/ui/stat';
+import { FinanceCard } from './finance-card';
 
 export type ApplicationState = 'processing' | 'approved' | 'counter' | 'rejected' | 'accepted' | 'declined';
 
@@ -43,7 +44,7 @@ export const STATE_BADGE: Record<ApplicationState, BadgeVariant> = {
  */
 @Component({
   selector: 'app-bank',
-  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView],
+  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard],
   templateUrl: './bank.html',
 })
 export class Bank {

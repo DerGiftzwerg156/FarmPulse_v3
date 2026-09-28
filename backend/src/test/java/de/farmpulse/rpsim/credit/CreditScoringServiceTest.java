@@ -67,6 +67,26 @@ class CreditScoringServiceTest {
         assertThat(scoring.inputs(sg, 10_000, 12, 0.05).existingMonthlyInstallments()).isZero();
     }
 
+    /**
+     * Roadmap V2 R2-B2 / R2-B3 (acceptance B): with the booking journal the cash flow comes from the complete months;
+     * a machine/property purchase does not lower it, and the real leasing costs replace the estimate.
+     */
+    @Test
+    void journalCashflowIgnoresInvestmentsAndUsesTheRealLeasingCosts() {
+        snapshotAt(now - GameTime.days(2), 500_000);
+        String periods = """
+                [{ "year": 1, "period": 8, "byType": { "SOLD_PRODUCTS": 20000, "AI": -4000, "LEASING_COSTS": -2000 } },
+                 { "year": 1, "period": 9, "byType": { "SOLD_PRODUCTS": 20000, "PURCHASE_FUEL": -4000,
+                                                        "LEASING_COSTS": -2000, "SHOP_PROPERTY_BUY": -300000 } },
+                 { "year": 1, "period": 10, "byType": { "SOLD_PRODUCTS": 500 } }]""";
+        fx.snapshot(sg, now, 200_000, TestData.farmFactsWithJournal(sg.getBridgeSavegameId(), now, 200_000, 1, 10, periods));
+        CreditFormula.Inputs in = scoring.inputs(sg, 10_000, 12, 0.05);
+        assertThat(in.hasCashflowHistory()).isTrue();
+        // V1 would see -300,000 over 2 days; the journal gives (14,000 + 14,000) / 2
+        assertThat(in.monthlyOperatingCashflow()).isCloseTo(14_000, within(1e-6));
+        assertThat(in.existingMonthlyInstallments()).isCloseTo(2_000, within(1e-6));
+    }
+
     @Test
     void historyShorterThanTheMinimumCountsAsNoHistory() {
         snapshotAt(now - GameTime.hours(12), 100_000);

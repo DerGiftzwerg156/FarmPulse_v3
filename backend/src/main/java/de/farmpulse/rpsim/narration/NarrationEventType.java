@@ -20,6 +20,9 @@ public enum NarrationEventType {
     CREDIT_DEFERRAL_GRANTED,
     CREDIT_DEFERRAL_DENIED,
     CREDIT_PAID_OFF,
+    // Roadmap V2 R2-B5: real farm finances
+    BANK_CASHFLOW_WARNING,
+    COOPERATIVE_RECORD_HARVEST,
     // market
     MARKET_PRICE_EVENT,
     MARKET_SPECIAL_OFFER,

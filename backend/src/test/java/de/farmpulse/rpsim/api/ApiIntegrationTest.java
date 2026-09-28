@@ -296,6 +296,28 @@ class ApiIntegrationTest {
         mvc.perform(get("/api/prices/history").param("from", "notanumber")).andExpect(status().isBadRequest());
     }
 
+    /** Roadmap V2 R2-B4: farm bookkeeping from the booking journal; without journal "not available". */
+    @Test
+    void financesFromTheBookingJournal() throws Exception {
+        mvc.perform(get("/api/finances")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.available").value(false)).andExpect(jsonPath("$.months", hasSize(0)));
+        long t = sg.getCurrentGameTime() + 1000;
+        fx.snapshot(sg, t, 1, TestData.farmFactsWithJournal(sg.getBridgeSavegameId(), t, 1, 1, 3, """
+                [{ "year": 1, "period": 2, "byType": { "HARVEST_INCOME": 48200.4, "PURCHASE_FUEL": -3100,
+                                                       "SHOP_PROPERTY_BUY": -90000, "MY_MOD_TYPE": 50 } },
+                 { "year": 1, "period": 3, "byType": { "AI": -1250 } }]"""));
+        mvc.perform(get("/api/finances")).andExpect(jsonPath("$.available").value(true))
+                .andExpect(jsonPath("$.months", hasSize(2)))
+                .andExpect(jsonPath("$.months[0].complete").value(true))
+                .andExpect(jsonPath("$.months[0].operatingIncome").value(48250))
+                .andExpect(jsonPath("$.months[0].operatingExpenses").value(-3100))
+                .andExpect(jsonPath("$.months[0].operatingResult").value(45150))
+                .andExpect(jsonPath("$.months[0].investment").value(-90000))
+                .andExpect(jsonPath("$.months[0].lines[0].category").value("HARVEST_INCOME"))
+                .andExpect(jsonPath("$.months[0].lines[1].financeClass").value("OPERATING_INCOME"))
+                .andExpect(jsonPath("$.months[1].complete").value(false));
+    }
+
     // ------------------------------------------------------------------ village
 
     @Test

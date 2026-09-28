@@ -21,6 +21,8 @@ public enum TrustReason {
     /** TODO T-22: a contract referred by the contractor was completed / failed. */
     MISSION_COMPLETED,
     MISSION_FAILED,
+    /** Roadmap V2 R2-B5: record harvest revenue of a month, the cooperative congratulates. */
+    RECORD_HARVEST,
     INITIAL,
     OTHER
 }

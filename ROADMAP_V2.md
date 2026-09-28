@@ -115,17 +115,25 @@ der Hof sein Geld verdient.
 **Idee:** Der Mod protokolliert jede Buchung des Spiels nach FS25-Kategorie (`MoneyType`). Das Backend bekommt damit
 eine echte Einnahmen-/Ausgabenrechnung.
 
+**Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Als Investition zählen nur im FS25-Code
+belegte Namen (`SHOP_PROPERTY_BUY`, Desinvestition `SHOP_VEHICLE_SELL`). Der Name des Fahrzeugkaufs ist nicht belegt;
+bis er im Spiel geprüft ist (Testplan 10.9), zählt ein Fahrzeugkauf operativ. Die Akzeptanz „Maschinenkauf senkt den
+Cashflow nicht“ gilt deshalb erst, wenn der Name in `rpsim.formulas.finance.categories` steht. Der Cashflow ist der
+Durchschnitt der abgeschlossenen Monate im Fenster, die Frühwarnung kommt nur bei laufendem Bankkredit, das
+Monatsergebnis der Oberfläche ist das operative Ergebnis. Der Name eines `moneyType` wird per Rückwärts-Abgleich mit
+der Tabelle `MoneyType` bestimmt; nicht gefundene Buchungen heißen `UNKNOWN`.
+
 ### R2-B1 Buchungsjournal im Mod
 
-- [ ] Hook auf `Farm.changeBalance` (`Utils.appendedFunction`): Betrag und `moneyType` jeder Buchung der
+- [x] Hook auf `Farm.changeBalance` (`Utils.appendedFunction`): Betrag und `moneyType` jeder Buchung der
   Spieler-Farm erfassen.
-- [ ] Summen je FS25-Periode (Monat) und Kategorie bilden, z. B.
+- [x] Summen je FS25-Periode (Monat) und Kategorie bilden, z. B.
   `{ year: 2, period: 8, byType: { HARVEST_INCOME: 48200, PURCHASE_FUEL: -3100, AI: -1250 } }`.
-- [ ] Die letzten N Perioden (Konfig `financeJournalPeriods`, Vorschlag 13) im Savegame-XML speichern
+- [x] Die letzten N Perioden (Konfig `financeJournalPeriods`, Vorschlag 13) im Savegame-XML speichern
   (`import/Persistence.lua`) und als `farm_facts.finances` exportieren.
-- [ ] Eigene RPSim-Buchungen kennzeichnen: In `RPSimGameAdapter:addMoney` ein Flag um den Aufruf setzen, damit diese
+- [x] Eigene RPSim-Buchungen kennzeichnen: In `RPSimGameAdapter:addMoney` ein Flag um den Aufruf setzen, damit diese
   Beträge unter `RPSIM_<REASON>` statt unter der FS25-Kategorie landen.
-- [ ] Die Zähler sind kumulativ je Periode. Nach einem Neuladen ohne Speichern springen sie zurück, das Backend
+- [x] Die Zähler sind kumulativ je Periode. Nach einem Neuladen ohne Speichern springen sie zurück, das Backend
   übernimmt einfach den neuen Stand (kein Delta-Protokoll nötig).
 
 **Beleg:** ✅ `Farm:changeBalance(amount, moneyType)` ist in der LUADOC dokumentiert (`script/Farms/Farm.md`, „Add or
@@ -145,36 +153,36 @@ remove money from the farm“), ebenso `Farm:getId()`. ✅ Die Kategorien sind i
 
 ### R2-B2 Cashflow der Bank aus dem Journal
 
-- [ ] Neue Konfiguration `rpsim.formulas.finance.categories`: jede Kategorie gehört zu genau einer Klasse
+- [x] Neue Konfiguration `rpsim.formulas.finance.categories`: jede Kategorie gehört zu genau einer Klasse
   `OPERATING_INCOME`, `OPERATING_EXPENSE`, `INVESTMENT`, `DIVESTMENT`, `FINANCING` oder `IGNORE`.
   Vorschlag: `HARVEST_INCOME`, `SOLD_PRODUCTS`, `MISSIONS`, `PROPERTY_INCOME` → Einnahmen; `PURCHASE_*`, `AI`,
   `VEHICLE_RUNNING_COSTS`, `VEHICLE_REPAIR`, `LEASING_COSTS`, `BOUGHT_MATERIALS` → Ausgaben; Fahrzeug- und
   Gebäudekäufe → Investition; `RPSIM_CREDIT_*` → Finanzierung.
-- [ ] Unbekannte Kategorien (Mods, künftige FS25-Versionen) nach Vorzeichen als operativ werten und einmal loggen.
-- [ ] `CreditScoringService`: Liegt ein Journal vor, ist der operative Cashflow = Einnahmen + Ausgaben der letzten
+- [x] Unbekannte Kategorien (Mods, künftige FS25-Versionen) nach Vorzeichen als operativ werten und einmal loggen.
+- [x] `CreditScoringService`: Liegt ein Journal vor, ist der operative Cashflow = Einnahmen + Ausgaben der letzten
   `cashflow-window-days`. Sonst weiter das V1-Verfahren (Kontostand-Differenz).
-- [ ] Investitionen gehen **nicht** in den Cashflow ein, sondern verändern nur das Vermögen. So senkt ein
+- [x] Investitionen gehen **nicht** in den Cashflow ein, sondern verändern nur das Vermögen. So senkt ein
   Maschinenkauf die Bonität nicht mehr fälschlich wie ein Verlust.
 
 ### R2-B3 Echte Leasingkosten
 
-- [ ] `LEASING_COSTS` je Periode ersetzt die Schätzung `FactsService.leasingCostPerMonth` in der Bonitätsprüfung.
-- [ ] Die Kosten pro Fahrzeug bleiben unbekannt. Für die Bank reicht die Summe.
-- [ ] Offenen Punkt T-04 in `docs/dev/offene-technische-punkte.md` als gelöst markieren.
+- [x] `LEASING_COSTS` je Periode ersetzt die Schätzung `FactsService.leasingCostPerMonth` in der Bonitätsprüfung.
+- [x] Die Kosten pro Fahrzeug bleiben unbekannt. Für die Bank reicht die Summe.
+- [x] Offenen Punkt T-04 in `docs/dev/offene-technische-punkte.md` als gelöst markieren.
 
 ### R2-B4 Hofbuchhaltung in der Oberfläche
 
-- [ ] Neue Karte bzw. Tab unter **Bank & Finanzen**: Einnahmen und Ausgaben je Monat nach Kategorie (gestapeltes
+- [x] Neue Karte bzw. Tab unter **Bank & Finanzen**: Einnahmen und Ausgaben je Monat nach Kategorie (gestapeltes
   Balkendiagramm, mit *Tabelle* als Zahlen wie beim Preisverlauf) und ein Monatsergebnis.
-- [ ] Deutsche Namen der Kategorien in `frontend/src/app/core/i18n/de.json`; unbekannte zeigen den Rohnamen.
+- [x] Deutsche Namen der Kategorien in `frontend/src/app/core/i18n/de.json`; unbekannte zeigen den Rohnamen.
 
 ### R2-B5 Charaktere reagieren auf echte Zahlen
 
-- [ ] **Bank-Frühwarnung:** Ist der operative Cashflow zwei Perioden in Folge negativ, meldet sich die Bank, bevor
+- [x] **Bank-Frühwarnung:** Ist der operative Cashflow zwei Perioden in Folge negativ, meldet sich die Bank, bevor
   eine Rate platzt (Ton je nach Weltmodus).
-- [ ] **Genossenschaft:** Rekord-Ernteerlös in einer Periode (höchster `HARVEST_INCOME + SOLD_PRODUCTS` seit
+- [x] **Genossenschaft:** Rekord-Ernteerlös in einer Periode (höchster `HARVEST_INCOME + SOLD_PRODUCTS` seit
   Spielbeginn) → Glückwunsch, kleiner Vertrauensbonus.
-- [ ] Prompt-Fakten (`NarrationFacts`) um echte Kennzahlen ergänzen, damit Texte konkrete Beträge nennen können
+- [x] Prompt-Fakten (`NarrationFacts`) um echte Kennzahlen ergänzen, damit Texte konkrete Beträge nennen können
   („Ihre Verkaufserlöse im Oktober lagen bei …“). Die Zahlen kommen aus dem Backend, nie aus der KI.
 
 **Akzeptanz B:** Ein Maschinenkauf senkt den Cashflow in der Bonitätsprüfung nicht. Eine Ernte, die im Spiel verkauft

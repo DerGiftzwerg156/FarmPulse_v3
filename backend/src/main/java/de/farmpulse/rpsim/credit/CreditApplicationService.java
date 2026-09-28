@@ -5,6 +5,7 @@ import java.util.List;
 import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
+import de.farmpulse.rpsim.bridge.FactsService;
 import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.diary.DiaryService;
@@ -17,6 +18,7 @@ import de.farmpulse.rpsim.domain.EmployeeStatus;
 import de.farmpulse.rpsim.domain.JobRole;
 import de.farmpulse.rpsim.domain.Loan;
 import de.farmpulse.rpsim.domain.Savegame;
+import de.farmpulse.rpsim.finance.FinanceJournalService;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
@@ -48,11 +50,14 @@ public class CreditApplicationService {
     private final CharacterLookup lookup;
     private final DiaryService diary;
     private final RandomSource random;
+    private final FactsService facts;
+    private final FinanceJournalService journal;
 
     public CreditApplicationService(CreditApplicationRepository applications, CreditScoringService scoring,
                                     LoanService loanService, LoanRepository loans, EmployeeRepository employees,
                                     CreditConfigResolver configs, NarrationRequestService narration,
-                                    CharacterLookup lookup, DiaryService diary, RandomSource random) {
+                                    CharacterLookup lookup, DiaryService diary, RandomSource random,
+                                    FactsService facts, FinanceJournalService journal) {
         this.applications = applications;
         this.scoring = scoring;
         this.loanService = loanService;
@@ -63,6 +68,8 @@ public class CreditApplicationService {
         this.lookup = lookup;
         this.diary = diary;
         this.random = random;
+        this.facts = facts;
+        this.journal = journal;
     }
 
     @Transactional
@@ -133,6 +140,8 @@ public class CreditApplicationService {
                     .put("requestedAmount", a.getAmount())
                     .put("purpose", a.getPurpose())
                     .put("requestedTermMonths", a.getTermMonths());
+            // R2-B5: the advisor can name the real figures of the last month
+            facts.latest(sg).ifPresent(ff -> journal.putFacts(f, ff));
             NarrationEventType type;
             switch (a.getDecision()) {
                 case APPROVED -> {

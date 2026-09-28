@@ -169,4 +169,20 @@ public final class Views {
     /** Insurance tariff preview for the current farm. */
     public record InsuranceQuoteView(String level, long monthlyPremium, int coveragePercent, long deductible) {
     }
+
+    /**
+     * Roadmap V2 R2-B4: farm bookkeeping from the booking journal. {@code available} is false when the mod exports no
+     * journal (older mod); months are oldest first, amounts signed (expenses negative), rounded to whole euros.
+     */
+    public record FinanceOverview(boolean available, List<FinanceMonthView> months) {
+    }
+
+    public record FinanceMonthView(int year, int period, boolean complete, long operatingIncome, long operatingExpenses,
+                                   long operatingResult, long investment, long divestment, long financing, long ignored,
+                                   List<FinanceLineView> lines) {
+    }
+
+    /** financeClass: OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING or IGNORE. */
+    public record FinanceLineView(String category, long amount, String financeClass) {
+    }
 }

@@ -53,6 +53,19 @@ länger Zeit, passiert nichts Schlimmes. **Auflegen** beendet das Gespräch.
   jeweils zu Beginn eines Spielmonats. Ein Spielmonat ist der Monat im FS25-Kalender; stellst du im Spiel die
   „Tage pro Monat“ um, verschieben sich alle Termine passend mit.
 - Geleaste Fahrzeuge zählen nicht zum Vermögen.
+- **Hofbuchhaltung:** Der Mod schreibt jede Buchung des Spiels mit (Ernteverkauf, Kraftstoff, Saatgut, Helferlohn,
+  Leasing …) und summiert sie je Spielmonat. Unter *Bank & Finanzen* siehst du Einnahmen und Ausgaben des laufenden
+  Betriebs je Monat als Balken, das **Monatsergebnis** und in der *Tabelle* zusätzlich Investitionen,
+  Anlagenverkäufe und Kredite. Die Bank rechnet damit: Dein Cashflow ist der Durchschnitt der abgeschlossenen
+  Monate, Investitionen zählen nicht als Verlust, und die echten Leasingkosten gelten als laufende Verpflichtung.
+  Mit einem älteren Mod rechnet die Bank weiter mit dem Kontostand.
+- **Achtung Fahrzeugkauf:** Unter welcher Buchungsart FS25 einen Fahrzeugkauf verbucht, ist noch nicht geprüft. Bis
+  das geklärt ist, erscheint ein Fahrzeugkauf als Ausgabe (meist als *Unbekannte Buchung*) und senkt das
+  Monatsergebnis. Gebäudekäufe zählen schon als Investition.
+- **Die Bank warnt:** Macht dein Betrieb zwei Monate in Folge Verlust, während ein Kredit läuft, meldet sich die
+  Bank, bevor eine Rate platzt (einmal je Verlustphase).
+- **Rekordmonat:** Hast du den höchsten Ernteerlös eines Monats seit Beginn, gratuliert die Genossenschaft – das
+  stärkt ihr Vertrauen ein wenig.
 - **Zahlungsausfall:** Mahnung → Verzugsgebühr → Vertrauensverlust → bei wiederholtem Ausfall Fälligstellung der
   Restschuld (das spricht sich im Dorf herum) oder Kreditsperre.
 - **Stundung:** Einmal pro Kredit kannst du um eine Ratenpause bitten; die Bank entscheidet nach festen Regeln.

@@ -44,7 +44,8 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 - `vehicles`: only vehicles the farm **owns** (`VehiclePropertyState.OWNED`); leased vehicles are no assets.
 - `liabilities.leasing`: leased vehicles (`VehiclePropertyState.LEASED`). `costPerPeriod` (per FS25 period) is
   optional and currently not exported - there is no verified FS25 API for per-vehicle leasing costs yet (manual
-  test plan). The backend counts known costs as an obligation in the credit check.
+  test plan). The backend counts known costs as an obligation in the credit check. Roadmap V2 R2-B3: with a booking
+  journal the real `LEASING_COSTS` per month (sum of all vehicles) replace this estimate.
 - `condition`: 0–100 (100 = no damage).
 - `storage`: classic silos only, aggregated per fill type (liters).
 - `currentPrice`: price per 1000 liters currently paid at the sell point (incl. active RPSim events).
@@ -71,7 +72,8 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 
 `farm_facts.json` gets five more **optional** blocks for [`ROADMAP_V2.md`](../../ROADMAP_V2.md). `schemaVersion` stays
 `1` as long as every new block is optional. The contract is fixed now; the mod fills a block once the feature that
-collects it is built (named per block). Until then the block is **missing**.
+collects it is built (named per block). Until then the block is **missing**. Filled by the mod so far: `finances`
+(R2-B1).
 
 - **Missing ≠ empty.** A missing block means "not present" (older mod, or the feature is not built yet); the backend
   keeps its V1 behaviour then. An empty block (`"fields": []`, `"workedGameMs": {}`) is a real answer of the game.
@@ -106,8 +108,19 @@ Sources: FS25 code dump `Dukefarming/FS25-lua-scripting` ("dump") and FS25 Commu
 | `periods[].year` / `.period` | FS25 year and period (period 1 = March) of the bookings, like `calendar` | `environment.currentYear` / `currentPeriod` (see `calendar`) |
 | `periods[].byType` | Cumulative sum per money type in this period (signed, rounded). Key = name of the FS25 money type in the global `MoneyType` table, e.g. `HARVEST_INCOME`, `SOLD_PRODUCTS`, `MISSIONS`, `PURCHASE_FUEL`, `VEHICLE_RUNNING_COSTS`, `LEASING_COSTS`, `AI`; tool bookings as `RPSIM_<REASON>` | Hook on `Farm:changeBalance(amount, moneyType)` (LUADOC `script/Farms/Farm.md`); the categories appear as `g_currentMission:addMoney(..., MoneyType.X, ...)` in the game code (`AIJob.lua`, `Wearable`, `FillTrigger`, `Combine` …). 🟡 whether every booking passes `changeBalance` (fallback `FSBaseMission.addMoney`) and how the name of a money type is read (fallback: reverse lookup in `MoneyType`) |
 
-Only the last `financeJournalPeriods` periods are kept (proposal 13, mod config of R2-B1). The sums are stored in the
-savegame; after a reload without saving they jump back and the backend takes the new state as it is.
+**Built (R2-B1):** `Farm.changeBalance` is extended with `Utils.appendedFunction`; the hook records every booking of
+the player farm (`farm:getId()` = `g_currentMission:getFarmId()`) under the current `environment.currentYear` /
+`currentPeriod`. The name is found by a reverse lookup in the global `MoneyType` table (the roadmap's fallback, the name
+field of a money type object is not verified); a money type that is not in the table - e.g. one registered at runtime
+with `MoneyType.register`, like the fuel purchase of `FillTrigger` - is recorded as `UNKNOWN`. While
+`RPSimGameAdapter:addMoney` books for the tool, the booking lands under `RPSIM_<REASON>`. Only the last
+`financeJournalPeriods` periods are kept (mod config, default 13). The sums are stored in the savegame
+(`FS25_RPSim.financeJournal.period(i).booking(j)`); after a reload without saving they jump back and the backend takes
+the new state as it is. Without the hook (`Farm.changeBalance` missing) the block stays missing.
+
+The backend classifies each category with `rpsim.formulas.finance.categories` (operating income / expense,
+investment, divestment, financing, ignore; unknown names count as operating by their sign) - see
+[configuration reference](configuration-reference.md#rpsimformulasfinance-roadmap-v2-r2-b).
 
 **`workforce`** (R2-A4). Required: `activeJobs[]` (each with `jobId`) and `workedGameMs`.
 

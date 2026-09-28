@@ -42,6 +42,28 @@ public final class TestData {
             }""".formatted(gameTime, savegameId, balance);
     }
 
+    /** Adds top-level fields (e.g. {@code "calendar": {...}, "finances": {...}}) to a farm_facts document. */
+    public static String withFields(String farmFacts, String fields) {
+        int end = farmFacts.lastIndexOf('}');
+        return farmFacts.substring(0, end) + ", " + fields + "\n}";
+    }
+
+    /**
+     * Roadmap V2 R2-B: calendar of the given month (1 day per period, day in period 1) plus a booking journal
+     * ({@code periods} = JSON array of {@code { year, period, byType }}).
+     */
+    public static String farmFactsWithJournal(String savegameId, long gameTime, long balance, int year, int period,
+                                              String periods) {
+        long day = gameTime / GameTimeConstants.MS_PER_DAY;
+        return withFields(farmFacts(savegameId, gameTime, balance), """
+                "calendar": { "period": %d, "dayInPeriod": 1, "daysPerPeriod": 1, "year": %d, "monotonicDay": %d },
+                "finances": { "periods": %s }""".formatted(period, year, day, periods));
+    }
+
+    private static final class GameTimeConstants {
+        static final long MS_PER_DAY = 86_400_000L;
+    }
+
     public static String marketContext(String savegameId) {
         return """
             { "savegameId": "%s", "mapName": "Erlengrund",

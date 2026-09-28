@@ -196,3 +196,17 @@ test('Roadmap V2: journal and worked time go back on a reload without saving', (
   assert.deepEqual(reloaded.finances, saved.finances);
   assert.deepEqual(reloaded.workforce, saved.workforce);
 });
+
+test('Roadmap V2: game bookings land in the journal under their money type (R2-B1)', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'ernte-herbst' });
+  const before = sim.balance;
+  const res = sim.bookGame('SHOP_PROPERTY_BUY', -90000);
+  assert.equal(sim.balance, before - 90000);
+  assert.equal(res.finances.periods.at(-1).byType.SHOP_PROPERTY_BUY, -90000);
+  sim.bookGame('LEASING_COSTS', -1500);
+  assert.equal(sim.buildFarmFacts().finances.periods.at(-1).byType.LEASING_COSTS, -1500);
+  assert.throws(() => sim.bookGame('', 5), /required/);
+  // a scenario without journal only changes the balance
+  const old = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
+  assert.equal(old.bookGame('AI', -10).finances, null);
+});

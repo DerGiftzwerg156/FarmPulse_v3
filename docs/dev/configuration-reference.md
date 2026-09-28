@@ -517,6 +517,70 @@ player takes them in the game's contracts menu. Nothing is started by the tool, 
 | `rpsim.formulas.contractor.client-trust-delta` | `2` | Trust of the client (FS25 NPC as village character, T-21) for a completed referred contract. | TODO T-22 |
 | `rpsim.formulas.contractor.failed-trust-delta` | `-3` | Trust of the contractor when a referred contract fails. | TODO T-22 |
 
+## `rpsim.formulas.finance` (Roadmap V2 R2-B)
+
+Real farm finances from the mod's booking journal (`farm_facts.finances`, sums per FS25 period and money type). Each
+category belongs to exactly one class; the operating cash flow of the credit check is operating income + expenses of
+the complete months in `credit.cashflow-window-days` (without a journal the V1 balance method stays). Only money type
+names evidenced in the FS25 code are listed - vehicle purchases have no evidenced name yet ([manual test plan
+10.9](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)); unknown categories count as operating by their sign and are
+logged once (add them here). Tool bookings arrive as `RPSIM_<REASON>`; their classes follow the V1 list of
+non-operating reasons (`LiquidityService.NON_OPERATING`).
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.finance.categories.HARVEST_INCOME` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.SOLD_PRODUCTS` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.MISSIONS` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PROPERTY_INCOME` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.SOLD_ANIMALS` | `OPERATING_INCOME` | FS25 money type: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_EMPLOYEE_EFFECT` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_SUBSIDY` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_LIVESTOCK_PREMIUM` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_TAX_REFUND` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_FUEL` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_SEEDS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_FERTILIZER` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_WATER` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_PALLETS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PURCHASE_CONSUMABLES` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.BOUGHT_MATERIALS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.VEHICLE_RUNNING_COSTS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.VEHICLE_REPAIR` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.LEASING_COSTS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PROPERTY_MAINTENANCE` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.AI` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.NEW_ANIMALS_COST` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_SALARY_PAYMENT` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_INSURANCE_PREMIUM` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_VET_INVOICE` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_LEASE_PAYMENT` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_MAINTENANCE_FEE` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_TAX_PAYMENT` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_FINE` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_FAMILY` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_SPONSORING` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_COMPENSATION` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_OTHER` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.SHOP_PROPERTY_BUY` | `INVESTMENT` | FS25 money type: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_FARMLAND_PURCHASE` | `INVESTMENT` | tool booking: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.SHOP_VEHICLE_SELL` | `DIVESTMENT` | FS25 money type: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_FARMLAND_SALE` | `DIVESTMENT` | tool booking: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_DISBURSEMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_INSTALLMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_PENALTY` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_CALLBACK` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_STARTING_CAPITAL_ADJUSTMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_DAMAGE` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_INSURANCE_PAYOUT` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_WILDLIFE_COMPENSATION` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.early-warning-enabled` | `true` | The bank writes before an installment fails when the operating result was negative for several months (R2-B5). | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.early-warning-negative-months` | `2` | Complete months in a row with a negative operating result; only while a bank loan runs, once per streak. | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.record-enabled` | `true` | The cooperative congratulates on the highest harvest revenue of a complete month since the start. | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.record-categories` | `[HARVEST_INCOME, SOLD_PRODUCTS]` | Money types that count as harvest revenue for the record. | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.record-min-months` | `3` | Complete months of history before a record counts. | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.record-trust-delta` | `2` | Trust of the cooperative for a record month. | Roadmap V2 R2-B5 |
+
 ## Profiles
 
 | Profile | Purpose | Overrides |

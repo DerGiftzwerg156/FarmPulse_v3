@@ -75,7 +75,27 @@ function RPSimBridge:exportFarmFacts()
     end
     raw.savegameId = self.state.savegameId
     raw.gameTime = self.adapter:getGameTime()
+    -- Roadmap V2 R2-B1: only exported while the booking hook runs; otherwise the block stays missing ("not present")
+    if self.financeJournalEnabled and self.state.financeJournal ~= nil then
+        raw.finances = RPSimFinanceJournal.toRaw(self.state.financeJournal)
+    end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
+end
+
+--- Roadmap V2 R2-B1: one booking of the game (Farm.changeBalance). Only the player farm is recorded; bookings of the
+-- tool itself (adapter.bookingReason set in addMoney) land under RPSIM_<REASON>.
+function RPSimBridge:recordBooking(farmId, amount, moneyType)
+    if not self.started or farmId ~= self.adapter:getFarmId() then
+        return false
+    end
+    local year, period = self.adapter:currentPeriod()
+    if year == nil then
+        return false
+    end
+    local name = RPSimFinanceJournal.nameOf(self.adapter.bookingReason, moneyType, RPSimGameAdapter ~= nil
+        and RPSimGameAdapter.moneyTypeName or nil)
+    return RPSimFinanceJournal.record(self.state.financeJournal, year, period, name, amount,
+        self.cfg.financeJournalPeriods)
 end
 
 --- Writes market_context.json, but only when its content changed since the last successful write (the

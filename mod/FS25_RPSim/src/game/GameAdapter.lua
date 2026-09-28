@@ -232,6 +232,30 @@ end
 --- Name of the current season (T-21): environment.currentSeason compared with the values of the global Season
 -- table (FS25 BeehiveSystem / StonePickMission: environment.currentSeason == Season.WINTER). The name is looked up
 -- instead of assumed, so only names that really exist in the game are exported.
+--- Roadmap V2 R2-B1: name of a money type by reverse lookup in the global MoneyType table (the documented fallback of
+-- the roadmap; the name field of a money type object is not verified). nil when the object is not in the table, e.g.
+-- money types registered at runtime with MoneyType.register (FillTrigger: "finance_purchaseFuel").
+function RPSimGameAdapter.moneyTypeName(moneyType)
+    if moneyType == nil or MoneyType == nil or type(MoneyType) ~= "table" then
+        return nil
+    end
+    for name, value in pairs(MoneyType) do
+        if value == moneyType and type(name) == "string" then
+            return name
+        end
+    end
+    return nil
+end
+
+--- Roadmap V2 R2-B1: year and period of the current FS25 month (cheap - called for every booking), nil when unknown.
+function RPSimGameAdapter:currentPeriod()
+    local env = safe(function() return g_currentMission.environment end, nil)
+    if env == nil or type(env.currentPeriod) ~= "number" then
+        return nil
+    end
+    return env.currentYear or 1, env.currentPeriod
+end
+
 function RPSimGameAdapter.seasonName(current)
     if current == nil or Season == nil or type(Season) ~= "table" then
         return nil
@@ -454,10 +478,14 @@ function RPSimGameAdapter:moneyTypeFor(reason)
     return moneyType
 end
 
+--- Roadmap V2 R2-B1: while the tool books, bookingReason is set so the Farm.changeBalance hook records the amount as
+-- RPSIM_<REASON> instead of the FS25 money type.
 function RPSimGameAdapter:addMoney(amount, reason, note)
+    self.bookingReason = reason
     local ok, err = pcall(function()
         g_currentMission:addMoney(amount, self:getFarmId(), self:moneyTypeFor(reason), true, true)
     end)
+    self.bookingReason = nil
     if not ok then
         return false, tostring(err)
     end

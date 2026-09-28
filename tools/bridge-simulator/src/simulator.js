@@ -392,6 +392,19 @@ export class BridgeSimulator {
     return blocks;
   }
 
+  /**
+   * Control API: a booking of the game (R2-B1), e.g. a vehicle purchase or leasing costs. It changes the balance and
+   * lands in the journal under its FS25 money type, like Farm:changeBalance in the mod.
+   */
+  bookGame(moneyType, amount) {
+    if (typeof moneyType !== 'string' || !moneyType || typeof amount !== 'number' || !Number.isFinite(amount)) {
+      throw new Error('moneyType (string) and amount (number) are required');
+    }
+    this.balance += amount;
+    this.book(moneyType, amount);
+    return { balance: this.balance, finances: this.roadmapV2Blocks().finances ?? null };
+  }
+
   /** Control API: the weather changes in the game (R2-C2). */
   setWeather(patch) {
     if (!this.weather) throw new Error(`scenario ${this.scenario} exports no weather`);

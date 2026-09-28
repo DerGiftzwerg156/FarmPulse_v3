@@ -30,6 +30,9 @@ RPSimConfig.DEFAULTS = {
     -- T-21: finance statistic per reason, e.g. { "SALARY_PAYMENT": "wagePayment" }. Only "other" is verified in
     -- the FS25 code; other names must be checked in the game first (manual test plan). Empty = "other".
     moneyTypeStatistics = {},
+    -- Roadmap V2 R2-B1: number of FS25 periods (game months) kept in the booking journal (farm_facts.finances).
+    -- 13 = one year plus the current month.
+    financeJournalPeriods = 13,
 }
 
 function RPSimConfig.new(overrides)
