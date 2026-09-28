@@ -10,6 +10,13 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-28
+
+Roadmap V2 (`ROADMAP_V2.md`): real farm finances, staff as FS25 helpers, fields and weather, reactions to the game
+menus, new roleplay areas and yes/no decisions directly in the game. Update the mod `FS25_RPSim` to 1.5.0.0 together
+with the backend: with an older mod the blocks it does not export stay "not present" and the features built on them
+stay off.
+
 ### Added
 
 - **Roadmap V2 (`ROADMAP_V2.md`):** plan for the next features, each checked against the FS25 code - staff as
