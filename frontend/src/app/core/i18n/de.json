@@ -514,6 +514,7 @@
       "NEW_ANIMALS_COST": "Tierkauf",
       "SHOP_PROPERTY_BUY": "Kauf von Gebäuden",
       "SHOP_VEHICLE_SELL": "Fahrzeugverkauf",
+      "SHOP_PROPERTY_SELL": "Verkauf von Gebäuden",
       "UNKNOWN": "Unbekannte Buchung",
       "RPSIM_CREDIT_DISBURSEMENT": "Kreditauszahlung",
       "RPSIM_CREDIT_INSTALLMENT": "Kreditrate",
