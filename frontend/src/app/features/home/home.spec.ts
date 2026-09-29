@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { GameStateStore } from '../../core/state/game-state.store';
-import { DAY, message, savegame } from '../../../testing/fixtures';
+import { DAY, savegame } from '../../../testing/fixtures';
 import { APPS } from '../../layout/apps';
 import { Home } from './home';
 
@@ -24,9 +24,19 @@ describe('Home (start screen)', () => {
     return { fixture, http, store, el: fixture.nativeElement as HTMLElement };
   }
 
+  function flushTasks(http: HttpTestingController) {
+    http.match('/api/tasks').forEach((r) => r.flush({
+      waitingPrompts: 0,
+      items: [{ key: 'credit-1', type: 'CREDIT_COUNTER', kind: 'COUNTER_OFFER', deadlineGameTime: null, gameTime: 4 * DAY,
+        serviceCase: null, contract: null, application: { id: 1, amount: 80000, offeredAmount: 60000 }, call: null,
+        negotiation: null, marketEvent: null, posting: null, pendingApplicants: null }],
+    }));
+    http.match('/api/notices').forEach((r) => r.flush([]));
+  }
+
   function flushAll(http: HttpTestingController, phase: string | null = 'HARVESTABLE') {
-    http.expectOne('/api/mails').flush([message({ id: 1, subject: 'Kreditantrag', gameTime: 4 * DAY })]);
-    http.expectOne('/api/loans').flush([{ id: 1, status: 'ACTIVE', remainingAmount: 45000, overdue: true }]);
+    http.expectOne('/api/calendar').flush({ gameTime: 5 * DAY, currentPeriod: 2, year: 1, daysPerPeriod: 1, nextMonthStart: 6 * DAY,
+      nextPeriod: 3, agenda: [], monthStartDebits: [], monthStartTotal: 8315, yearEvents: [] });
     http.expectOne('/api/village-reputation').flush({ tier: 'GOOD', label: 'gut angesehen' });
     http.expectOne('/api/finances').flush({
       available: true,
@@ -55,21 +65,29 @@ describe('Home (start screen)', () => {
     const value = (id: string) => el.querySelector(`[data-testid="${id}"] [data-testid="stat-value"]`)?.textContent?.replace(/\s/g, ' ').trim();
     expect(value('kpi-result')).toBe('+8.420 €');
     expect(el.querySelector('[data-testid="kpi-result"]')?.textContent).toContain('April');
-    expect(value('kpi-loans')).toBe('45.000 €');
+    expect(value('kpi-debits')).toBe('−8.315 €');
+    expect(el.querySelector('[data-testid="kpi-debits"]')?.textContent).toContain('Mai');
     expect(value('kpi-reputation')).toBe('Gut angesehen');
     expect(el.querySelectorAll('[data-testid="app-grid"] app-tile').length).toBe(APPS.length);
     expect(el.querySelector('[data-testid="app-grid"] [data-testid="app-mail"] [data-testid="app-badge"]')?.textContent?.trim()).toBe('1');
+    flushTasks(http);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-grid"] [data-testid="app-bank"] [data-testid="app-badge"]')?.textContent?.trim()).toBe('1');
   });
 
-  it('shows unread mails and harvestable fields as widgets and reloads on live events', () => {
+  it('shows open tasks and harvestable fields as widgets and reloads on live events', () => {
     const { el, http, fixture, store } = setup();
     flushAll(http);
+    flushTasks(http);
     fixture.detectChanges();
-    expect(el.querySelector('[data-testid="mail-widget"]')?.textContent).toContain('Kreditantrag');
+    expect(el.querySelector('[data-testid="todo-count"]')?.textContent?.trim()).toBe('1');
+    expect(el.querySelector('[data-testid="todo"]')?.textContent).toContain('Gegenangebot der Bank');
+    expect(el.querySelector('[data-testid="todo"]')?.textContent).toContain('Bank');
     expect(el.querySelector('[data-testid="harvestable"]')?.textContent?.trim()).toBe('1');
-    store.mailVersion.update((v) => v + 1);
+    store.stateVersion.update((v) => v + 1);
     fixture.detectChanges();
     flushAll(http, 'GROWING');
+    flushTasks(http);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="harvestable"]')?.textContent?.trim()).toBe('0');
   });

@@ -39,9 +39,15 @@
               <div class="mt-1 font-mono text-[17px] text-muted" data-testid="stat-value">–</div>
             }
           </a>
-          <a routerLink="/bank" class="rounded-2xl border border-border bg-surface px-3.5 py-3 hover:border-accent/50" data-testid="kpi-loans">
-            <div class="fp-label">{{ 'home.openLoans' | t }}</div>
-            <div class="mt-1 font-mono text-[17px] text-text" data-testid="stat-value">{{ activeLoans().length ? (debt() | money) : ('home.noLoans' | t) }}</div>
+          <a routerLink="/kalender" class="rounded-2xl border border-border bg-surface px-3.5 py-3 hover:border-accent/50" data-testid="kpi-debits">
+            <div class="fp-label">
+              @if (calendar()?.nextPeriod; as p) {
+                {{ 'home.debitsOf' | t: { month: monthName(p) } }}
+              } @else {
+                {{ 'home.debits' | t }}
+              }
+            </div>
+            <div class="mt-1 font-mono text-[17px] text-text" data-testid="stat-value">{{ calendar() ? ('−' + (calendar()!.monthStartTotal | money)) : '–' }}</div>
           </a>
           <a routerLink="/village" class="rounded-2xl border border-border bg-surface px-3.5 py-3 hover:border-accent/50" data-testid="kpi-reputation">
             <div class="fp-label">{{ 'village.reputation' | t }}</div>
@@ -58,27 +64,22 @@
 
       <!-- Widgets -->
       <div class="order-2 flex w-full shrink-0 flex-col gap-4 lg:order-1 lg:w-[440px]" data-testid="widgets">
-        <app-notices-card />
-
-        <a routerLink="/mailbox" class="block rounded-[20px] border border-border bg-surface p-5 hover:border-accent/50" data-testid="mail-widget">
-          <div class="mb-3 flex items-center justify-between">
+        <a routerLink="/aufgaben" class="block rounded-[20px] border border-border bg-surface p-5 hover:border-accent/50" data-testid="todo-widget">
+          <div class="mb-3.5 flex items-center justify-between">
             <span class="flex items-center gap-2.5">
-              <app-icon name="mail" size="h-[18px] w-[18px]" class="text-app-com" />
-              <span class="font-display text-[12px] font-bold uppercase tracking-[0.16em] text-text">{{ 'nav.mailbox' | t }}</span>
-              @if (store.unreadMails() > 0) {
-                <span class="rounded-full bg-warn px-2 font-display text-[11px] font-bold text-bg">{{ store.unreadMails() }}</span>
+              <app-icon name="tasks" size="h-[18px] w-[18px]" class="text-app-money" />
+              <span class="font-display text-[12px] font-bold uppercase tracking-[0.16em] text-text">{{ 'home.todo' | t }}</span>
+              @if (tasks.count() > 0) {
+                <span class="rounded-full bg-warn px-2 font-display text-[11px] font-bold text-bg" data-testid="todo-count">{{ tasks.count() }}</span>
               }
             </span>
-            <span class="font-display text-[11px] uppercase tracking-[0.12em] text-accent">{{ 'home.open' | t }} →</span>
+            <span class="font-display text-[11px] uppercase tracking-[0.12em] text-accent">{{ 'home.openAll' | t }} →</span>
           </div>
           <div class="flex flex-col gap-2">
-            @for (m of unreadMails(); track m.id) {
-              <div class="rounded-xl border border-border/70 bg-chrome px-3 py-2.5">
-                <div class="truncate text-[14px] font-semibold text-text">{{ m.subject }}</div>
-                <div class="truncate text-[12px] text-[#8FA39A]">{{ m.character?.name }}</div>
-              </div>
+            @for (t of topTasks(); track t.key) {
+              <app-task-line [task]="t" [now]="store.savegame()!.gameTime" />
             } @empty {
-              <div class="text-sm text-muted">{{ 'home.allRead' | t }}</div>
+              <div class="text-sm text-muted">{{ 'tasks.empty' | t }}</div>
             }
           </div>
         </a>

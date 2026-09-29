@@ -17,6 +17,8 @@ export const APPS: AppDef[] = [
   { id: 'mail', label: 'nav.mailbox', path: '/mailbox', icon: 'mail', tone: 'com' },
   { id: 'phone', label: 'nav.calls', path: '/calls', icon: 'phone', tone: 'com' },
   { id: 'contacts', label: 'nav.village', path: '/village', icon: 'users', tone: 'com' },
+  { id: 'tasks', label: 'nav.tasks', path: '/aufgaben', icon: 'tasks', tone: 'money' },
+  { id: 'calendar', label: 'nav.calendar', path: '/kalender', icon: 'calendar', tone: 'sys' },
   { id: 'bank', label: 'nav.bank', path: '/bank', icon: 'bank', tone: 'money' },
   { id: 'market', label: 'nav.market', path: '/market', icon: 'chart', tone: 'money' },
   { id: 'contracts', label: 'nav.contracts', path: '/contracts', icon: 'shield', tone: 'money' },
@@ -27,7 +29,7 @@ export const APPS: AppDef[] = [
 ];
 
 /** Apps in the dock (start screen) and in the quick bar of every app. */
-export const DOCK_IDS = ['mail', 'phone'];
+export const DOCK_IDS = ['mail', 'phone', 'tasks', 'calendar'];
 
 export function appById(id: string): AppDef {
   const app = APPS.find((a) => a.id === id);

@@ -28,12 +28,16 @@
     "closeMenu": "Menü schließen",
     "contracts": "Verträge",
     "start": "Start",
-    "back": "Zurück zum Start"
+    "back": "Zurück zum Start",
+    "tasks": "Aufgaben",
+    "calendar": "Kalender"
   },
   "apps": {
     "mail": "Mails aus dem Dorf – antworten, wann du willst",
     "phone": "Anrufe annehmen, zurückrufen und nachlesen",
     "contacts": "Dorf, Familie und Vereine – Vertrauen und Ansehen",
+    "tasks": "Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert",
+    "calendar": "Fristen, Abbuchungen, Dorffeste und Familientermine im FS25-Kalender",
     "bank": "Kredite, Anträge und Hofbuchhaltung",
     "market": "Silo, Preise, Marktgeschehen und Kontrakte",
     "contracts": "Verträge und offene Vorgänge",
@@ -961,16 +965,16 @@
   "home": {
     "welcomeTitle": "Willkommen bei FarmPulse",
     "welcomeText": "Noch ist kein Spielstand verknüpft. Erzähle im Onboarding die Vorgeschichte deines Hofs, lerne dein Dorf kennen und verknüpfe anschließend deinen FS25-Spielstand.",
-    "allRead": "Alles gelesen",
-    "openLoans": "Offene Kredite",
-    "noLoans": "Schuldenfrei",
     "result": "Monatsergebnis",
     "resultOf": "Ergebnis {month}",
-    "open": "Öffnen",
     "fields": "Felder",
     "harvestable": "Felder erntereif",
     "withered": "{n} Ernte(n) verdorrt",
-    "ownFields": "eigene Felder"
+    "ownFields": "eigene Felder",
+    "todo": "Zu erledigen",
+    "openAll": "Alle öffnen",
+    "debits": "Nächste Abbuchung",
+    "debitsOf": "Abbuchung 1. {month}"
   },
   "settings": {
     "ai": "KI-Anbieter",
@@ -1102,5 +1106,85 @@
     "invitationHint": "Eine Zusage freut die Gastgeber. Absagen ist in Ordnung – nur gar nicht zu antworten kommt schlecht an.",
     "fine": "Bußgeld {amount}",
     "paid": "Bezahlt {amount}"
+  },
+  "tasks": {
+    "filter": "Aufgaben filtern",
+    "filters": {
+      "all": "Alle",
+      "today": "Heute",
+      "money": "Geld",
+      "farm": "Hof",
+      "village": "Dorf"
+    },
+    "groups": {
+      "today": "Heute",
+      "week": "Diese Woche",
+      "later": "Später"
+    },
+    "empty": "Nichts zu entscheiden – alles erledigt.",
+    "noDeadline": "offen",
+    "dueToday": "Heute {time}",
+    "openInApp": "In App",
+    "contractOffer": "Angebot: {kind}",
+    "leaseEnds": "Pacht Feld {id} läuft aus",
+    "leaseEndsHint": "Verlängern oder kaufen – ohne Antwort geht das Feld zum Ende zurück.",
+    "counterOffer": "Gegenangebot der Bank: {offered} statt {amount}",
+    "counterOfferDetail": "{months} Monate · {rate} %",
+    "calling": "{name} ruft an",
+    "round": "Runde {used} von {max}",
+    "lastCounter": "Gegenangebot {amount}",
+    "fixedPrice": "Festpreis {price}",
+    "maxQuantity": "bis {quantity} l",
+    "applicants": "{role}: {n} Bewerbung(en)",
+    "applicantsHint": "Gespräch per Mail oder Anruf, dann einstellen – in der App Personal.",
+    "inGame": "Fragen im Spiel",
+    "waitingPrompts": "{n} Frage(n) warten im Spiel",
+    "waitingPromptsHint": "Im Spiel mit „FarmPulse: offene Frage“ (Standard Alt+J) öffnen – oder hier entscheiden, dann verschwinden sie im Spiel.",
+    "todayDiary": "Heute im Tagebuch",
+    "nothingToday": "Heute ist noch nichts eingetragen.",
+    "toDiary": "Zum Tagebuch",
+    "counterOfferShort": "Gegenangebot der Bank"
+  },
+  "calendar": {
+    "nextDays": "Nächste Tage",
+    "nothingSoon": "In den nächsten Tagen steht nichts an.",
+    "monthStart": "Monatsbeginn {month} · {day}",
+    "debitedAutomatically": "Wird automatisch abgebucht",
+    "noDebits": "Keine Abbuchungen.",
+    "total": "Summe",
+    "balanceAfter": "Kontostand danach ungefähr {amount}",
+    "selfPay": "Selbst zahlen",
+    "yearOverview": "Jahr {year} im Überblick",
+    "clubs": "Vereine",
+    "taxOffice": "Finanzamt",
+    "legend": {
+      "festival": "Dorffest",
+      "tax": "Finanzamt",
+      "family": "Familie",
+      "authority": "Amt"
+    },
+    "agenda": {
+      "monthStart": "Monatsbeginn {month}: Abbuchungen",
+      "taxAssessment": "Steuerbescheid für das Vorjahr",
+      "taxPrepayment": "Steuer-Vorauszahlung fällig",
+      "loan": "Kreditrate {amount} · {title}",
+      "salaries": "Gehälter {amount}",
+      "contract": "{kind} {amount}",
+      "leaseEnd": "Pacht Feld {id} endet",
+      "deadline": "Frist: {what}"
+    },
+    "debits": {
+      "salaries": "Gehälter ({n})",
+      "loan": "Kreditrate · {title}",
+      "retirement": "Altenteil"
+    },
+    "year": {
+      "TAX_ASSESSMENT": "Steuerbescheid",
+      "TAX_PREPAYMENT": "Vorauszahlung",
+      "ROTATION_CHECK": "Fruchtfolge-Prüfung",
+      "birthday": "Geburtstag {name}",
+      "weddingDay": "Hochzeitstag",
+      "schoolStart": "Einschulung {name}"
+    }
   }
 }

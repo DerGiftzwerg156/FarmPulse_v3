@@ -275,4 +275,10 @@ export class ApiService {
   gameSettings(): Observable<M.GameSettingsView> {
     return this.get('/settings/game');
   }
+  tasks(): Observable<M.TasksView> {
+    return this.get('/tasks');
+  }
+  calendar(): Observable<M.CalendarOverviewView> {
+    return this.get('/calendar');
+  }
 }

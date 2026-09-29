@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, output, signal, untracked } from '@angular/core';
 import { ApiService } from '../../core/api/api.service';
 import { NoticeView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -54,6 +54,8 @@ export class NoticesCard {
 
   readonly notices = signal<NoticeView[]>([]);
   readonly busy = signal(false);
+  /** A notice was resolved (the tasks badge counts open notices). */
+  readonly resolved = output<void>();
   /** TODO T-09: installed mods with overlapping features (warning only, nothing is disabled). */
   readonly mods = computed(() => this.store.savegame()?.detectedMods ?? []);
 
@@ -75,6 +77,7 @@ export class NoticesCard {
       next: () => {
         this.busy.set(false);
         this.notices.update((all) => all.filter((x) => x.id !== n.id));
+        this.resolved.emit();
       },
       error: () => this.busy.set(false),
     });

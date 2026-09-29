@@ -12,6 +12,7 @@ import { Badge, BadgeVariant } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
+import { CaseCard } from './case-card';
 
 export const CONTRACT_BADGE: Record<string, BadgeVariant> = {
   OFFERED: 'warning',
@@ -31,7 +32,7 @@ const ROLEPLAY_CASES = ['TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST'
  */
 @Component({
   selector: 'app-contracts',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, PageErrorView],
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, PageErrorView, CaseCard],
   templateUrl: './contracts.html',
 })
 export class Contracts {
@@ -49,8 +50,6 @@ export class Contracts {
   readonly error = signal<PageError | null>(null);
   readonly actionError = signal<string | null>(null);
   readonly busy = signal(false);
-  /** Counter demand per case (form field; numbers only via inputs). */
-  readonly demand = signal<Record<number, number>>({});
 
   readonly insurance = computed(() => (this.contracts() ?? []).filter((c) => c.kind === 'INSURANCE'));
   readonly activeInsurance = computed(() => this.insurance().find((c) => c.status === 'ACTIVE') ?? null);
@@ -117,21 +116,9 @@ export class Contracts {
     this.run(this.api.contractAction(c.id, action, body));
   }
 
-  caseAction(c: CaseView, action: string, body: unknown = {}): void {
-    this.run(this.api.caseAction(c.id, action, body));
-  }
-
-  setDemand(id: number, value: number): void {
-    this.demand.update((d) => ({ ...d, [id]: Number.isFinite(value) ? value : 0 }));
-  }
-
   /** Roadmap V2 R2-E: tax bills, inspections, sponsoring requests and invitations have their own history line. */
   isRoleplayCase(c: CaseView): boolean {
     return ROLEPLAY_CASES.includes(c.kind);
-  }
-
-  isInsuranceCase(c: CaseView): boolean {
-    return c.kind === 'STORM_DAMAGE' || c.kind === 'HAIL_DAMAGE';
   }
 
   badge(status: string): BadgeVariant {

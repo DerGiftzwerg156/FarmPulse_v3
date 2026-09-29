@@ -1,0 +1,60 @@
+<section class="flex flex-col gap-4">
+  <div class="flex flex-wrap gap-2" role="group" [attr.aria-label]="'tasks.filter' | t" data-testid="task-filters">
+    @for (f of filters; track f) {
+      <button type="button" (click)="filter.set(f)" [attr.aria-pressed]="filter() === f" [attr.data-testid]="'task-filter-' + f"
+        class="h-8 rounded-full border px-3.5 font-display text-[11px] font-semibold uppercase tracking-[0.1em]"
+        [class.border-accent]="filter() === f" [class.bg-tile-active]="filter() === f" [class.text-app-farm]="filter() === f"
+        [class.border-border]="filter() !== f" [class.text-app-sys]="filter() !== f">
+        {{ 'tasks.filters.' + f | t }} {{ count(f) }}
+      </button>
+    }
+  </div>
+
+  <div class="flex flex-col gap-6 lg:flex-row">
+    <div class="flex min-w-0 flex-1 flex-col gap-5">
+      @if (tasks.loaded() && shown().length === 0) {
+        <p class="rounded-2xl border border-border bg-surface p-5 text-sm text-muted" data-testid="tasks-empty">{{ 'tasks.empty' | t }}</p>
+      }
+      @for (g of groups; track g) {
+        @if (inGroup(g).length) {
+          <div [attr.data-testid]="'task-group-' + g">
+            <div class="mb-2 flex items-center gap-3">
+              <span class="font-display text-[11px] font-bold uppercase tracking-[0.18em]" [class.text-warn]="g === 'today'" [class.text-app-sys]="g === 'week'" [class.text-muted]="g === 'later'">
+                {{ 'tasks.groups.' + g | t }}
+              </span>
+              <span class="h-px flex-1 bg-border"></span>
+            </div>
+            <div class="grid grid-cols-1 gap-2.5 xl:grid-cols-2">
+              @for (t of inGroup(g); track t.key) {
+                <app-task-card [task]="t" [now]="now()" (changed)="changed()" />
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <aside class="flex w-full shrink-0 flex-col gap-3.5 lg:w-[340px]">
+      <app-notices-card (resolved)="tasks.reload()" />
+      @if (tasks.waitingPrompts() > 0) {
+        <div class="rounded-2xl border border-warn/50 bg-surface p-4" data-testid="waiting-prompts">
+          <div class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-warn">{{ 'tasks.inGame' | t }}</div>
+          <div class="mt-1 text-[14px] font-semibold text-text">{{ 'tasks.waitingPrompts' | t: { n: tasks.waitingPrompts() } }}</div>
+          <div class="mt-1 text-[12px] text-muted">{{ 'tasks.waitingPromptsHint' | t }}</div>
+        </div>
+      }
+      <app-card [title]="'tasks.todayDiary' | t" data-testid="today-diary">
+        <ul class="space-y-1.5">
+          @for (d of today(); track d.id) {
+            <li class="flex items-start gap-2 text-[13px] text-muted">
+              <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"></span>{{ d.title }}
+            </li>
+          } @empty {
+            <li class="text-[13px] text-muted">{{ 'tasks.nothingToday' | t }}</li>
+          }
+        </ul>
+        <a routerLink="/diary" class="mt-3 inline-block font-display text-[10px] uppercase tracking-[0.12em] text-accent hover:underline">{{ 'tasks.toDiary' | t }} →</a>
+      </app-card>
+    </aside>
+  </div>
+</section>

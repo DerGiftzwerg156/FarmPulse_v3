@@ -144,4 +144,24 @@ public class ApiMapper {
         return new DiaryView(d.getId(), d.getGameTime(), GameTime.dayIndex(d.getGameTime()), d.getEntryType().name(),
                 d.getCategory(), d.getTitle(), d.getText());
     }
+
+    public ContractView contract(Contract c) {
+        return new ContractView(c.getId(), c.getKind().name(), c.getStatus().name(), ref(c.getCharacter()), c.getLevel(),
+                c.getFarmlandId(), c.getMonthlyAmount(),
+                c.getCoverageRate() == null ? null : (int) Math.round(c.getCoverageRate() * 100), c.getDeductible(),
+                c.getTermMonths(), c.getStartedAtGameTime(), c.getEndsAtGameTime(), c.getNextDueGameTime(),
+                c.getOfferExpiresAtGameTime(), c.getMissedPayments(), c.isPaymentOverdue(), c.getEndReason(),
+                c.getRenewalAmount(), c.getPurchasePrice());
+    }
+
+    public CaseView serviceCase(ServiceCase s) {
+        return new CaseView(s.getId(), s.getKind().name(), s.getStatus().name(), ref(s.getCharacter()), s.getFarmlandId(),
+                s.getHectares(), s.getDamageAmount(), s.getPayoutAmount(), s.getCostAmount(), s.getOfferAmount(),
+                s.getRoundsUsed(), s.isMeasureAgreed(), s.getReference(), s.getGameTime(), s.getDeadlineGameTime(),
+                s.getResolution(), s.getKind() == CaseKind.WILDLIFE_DAMAGE
+                        ? props.getFormulas().getHunting().getMeasureCost() : null,
+                s.getQuantity(), s.getDirection(), s.getBaselineCount(), s.getTitle(),
+                s.getKind() == CaseKind.SPONSORING_REQUEST
+                        ? List.copyOf(props.getFormulas().getClubs().getSponsoringTiers()) : null);
+    }
 }

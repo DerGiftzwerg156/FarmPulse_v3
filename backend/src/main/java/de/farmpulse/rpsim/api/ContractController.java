@@ -186,22 +186,10 @@ public class ContractController {
     }
 
     ContractView view(Contract c) {
-        return new ContractView(c.getId(), c.getKind().name(), c.getStatus().name(), mapper.ref(c.getCharacter()), c.getLevel(),
-                c.getFarmlandId(), c.getMonthlyAmount(),
-                c.getCoverageRate() == null ? null : (int) Math.round(c.getCoverageRate() * 100), c.getDeductible(),
-                c.getTermMonths(), c.getStartedAtGameTime(), c.getEndsAtGameTime(), c.getNextDueGameTime(),
-                c.getOfferExpiresAtGameTime(), c.getMissedPayments(), c.isPaymentOverdue(), c.getEndReason(),
-                c.getRenewalAmount(), c.getPurchasePrice());
+        return mapper.contract(c);
     }
 
     CaseView view(ServiceCase s) {
-        return new CaseView(s.getId(), s.getKind().name(), s.getStatus().name(), mapper.ref(s.getCharacter()), s.getFarmlandId(),
-                s.getHectares(), s.getDamageAmount(), s.getPayoutAmount(), s.getCostAmount(), s.getOfferAmount(),
-                s.getRoundsUsed(), s.isMeasureAgreed(), s.getReference(), s.getGameTime(), s.getDeadlineGameTime(),
-                s.getResolution(), s.getKind() == de.farmpulse.rpsim.domain.CaseKind.WILDLIFE_DAMAGE
-                        ? props.getFormulas().getHunting().getMeasureCost() : null,
-                s.getQuantity(), s.getDirection(), s.getBaselineCount(), s.getTitle(),
-                s.getKind() == de.farmpulse.rpsim.domain.CaseKind.SPONSORING_REQUEST
-                        ? List.copyOf(props.getFormulas().getClubs().getSponsoringTiers()) : null);
+        return mapper.serviceCase(s);
     }
 }

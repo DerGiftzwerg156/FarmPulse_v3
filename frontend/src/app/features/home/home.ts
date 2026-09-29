@@ -2,10 +2,11 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { RouterLink } from '@angular/router';
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
-import { FarmlandView, FinanceOverview, LoanView, MessageView, ReputationView } from '../../core/api/models';
+import { CalendarOverviewView, FarmlandView, FinanceOverview, ReputationView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
+import { TasksStore } from '../../core/state/tasks.store';
 import { calendarLabel } from '../../shared/format/calendar';
 import { clockTime } from '../../shared/format/format';
 import { MoneyPipe } from '../../shared/format/format.pipes';
@@ -13,7 +14,7 @@ import { LabelPipe } from '../../shared/format/label.pipe';
 import { Icon } from '../../shared/ui/icon';
 import { AppTile } from '../../layout/app-tile';
 import { APPS } from '../../layout/apps';
-import { NoticesCard } from './notices-card';
+import { TaskCardLine } from './task-line';
 
 /**
  * Start screen of the Hof-Tablet (replaces the dashboard): game clock, widgets and every app as a symbol with badge.
@@ -21,7 +22,7 @@ import { NoticesCard } from './notices-card';
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, Icon, AppTile, NoticesCard],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, Icon, AppTile, TaskCardLine],
   templateUrl: './home.html',
 })
 export class Home {
@@ -29,17 +30,16 @@ export class Home {
   readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
 
+  readonly tasks = inject(TasksStore);
   readonly apps = APPS;
-  readonly mails = signal<MessageView[]>([]);
-  readonly loans = signal<LoanView[]>([]);
+  readonly calendar = signal<CalendarOverviewView | null>(null);
   readonly reputation = signal<ReputationView | null>(null);
   readonly finances = signal<FinanceOverview | null>(null);
   readonly fields = signal<FarmlandView[]>([]);
   readonly loaded = signal(false);
 
-  readonly unreadMails = computed(() => this.mails().filter((m) => !m.read && m.initiatedBy === 'CHARACTER').slice(0, 3));
-  readonly activeLoans = computed(() => this.loans().filter((l) => l.status === 'ACTIVE'));
-  readonly debt = computed(() => this.activeLoans().reduce((s, l) => s + l.remainingAmount, 0));
+  /** The four most pressing open decisions (the list is sorted by deadline). */
+  readonly topTasks = computed(() => this.tasks.items().slice(0, 4));
   /** Last complete month of the farm bookkeeping (null without journal). */
   readonly lastMonth = computed(() => {
     const f = this.finances();
@@ -53,7 +53,6 @@ export class Home {
 
   constructor() {
     effect(() => {
-      this.store.mailVersion();
       this.store.stateVersion();
       const sg = this.store.savegame();
       if (sg) untracked(() => this.load());
@@ -63,14 +62,12 @@ export class Home {
   load(): void {
     const safe = <T>(o: Observable<T>, fallback: T) => o.pipe(catchError(() => of(fallback)));
     forkJoin({
-      mails: safe(this.api.mails(), [] as MessageView[]),
-      loans: safe(this.api.loans(), [] as LoanView[]),
+      calendar: safe(this.api.calendar(), null as CalendarOverviewView | null),
       reputation: safe(this.api.reputation(), null as ReputationView | null),
       finances: safe(this.api.finances(), null as FinanceOverview | null),
       fields: safe(this.api.farmlands(), [] as FarmlandView[]),
     }).subscribe((r) => {
-      this.mails.set(r.mails);
-      this.loans.set(r.loans);
+      this.calendar.set(r.calendar);
       this.reputation.set(r.reputation);
       this.finances.set(r.finances);
       this.fields.set(r.fields);

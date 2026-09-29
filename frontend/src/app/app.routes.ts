@@ -11,6 +11,8 @@ const pages: Routes = [
   { path: '', pathMatch: 'full', loadComponent: () => import('./features/home/home').then((m) => m.Home), title: 'nav.home' },
   { path: 'mailbox', loadComponent: () => import('./features/mailbox/mailbox').then((m) => m.Mailbox), title: 'nav.mailbox' },
   { path: 'calls', loadComponent: () => import('./features/calls/calls').then((m) => m.Calls), title: 'nav.calls' },
+  { path: 'aufgaben', loadComponent: () => import('./features/tasks/tasks').then((m) => m.Tasks), title: 'nav.tasks' },
+  { path: 'kalender', loadComponent: () => import('./features/calendar/calendar').then((m) => m.CalendarApp), title: 'nav.calendar' },
   { path: 'bank', loadComponent: () => import('./features/bank/bank').then((m) => m.Bank), title: 'nav.bank' },
   { path: 'employees', loadComponent: () => import('./features/employees/employees').then((m) => m.Employees), title: 'nav.employees' },
   { path: 'farmland', loadComponent: () => import('./features/farmland/farmland').then((m) => m.Farmland), title: 'nav.farmland' },

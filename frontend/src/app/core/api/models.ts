@@ -540,3 +540,65 @@ export interface ApiError {
   message: string;
   fields: Record<string, string>;
 }
+
+/** Hof-Tablet "Aufgaben": one open decision of any area (type names the payload that is set). */
+export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING';
+
+export interface TaskView {
+  key: string;
+  type: TaskType;
+  kind: string | null;
+  deadlineGameTime: number | null;
+  gameTime: number;
+  serviceCase: CaseView | null;
+  contract: ContractView | null;
+  application: CreditApplicationView | null;
+  call: MessageView | null;
+  negotiation: NegotiationView | null;
+  marketEvent: MarketEventView | null;
+  posting: JobPostingView | null;
+  pendingApplicants: number | null;
+}
+
+export interface TasksView {
+  items: TaskView[];
+  /** Yes/no questions waiting in the game (Alt+J). */
+  waitingPrompts: number;
+}
+
+/** Hof-Tablet "Kalender". */
+export interface AgendaEntryView {
+  gameTime: number;
+  kind: 'MONTH_START' | 'FESTIVAL' | 'TAX_ASSESSMENT' | 'TAX_PREPAYMENT' | 'LOAN_INSTALLMENT' | 'SALARIES' | 'CONTRACT_PAYMENT' | 'LEASE_END' | string;
+  subKind: string | null;
+  title: string | null;
+  amount: number | null;
+  reference: string | null;
+}
+
+export interface DebitView {
+  kind: 'SALARIES' | 'LOAN' | 'CONTRACT' | 'RETIREMENT' | string;
+  subKind: string | null;
+  label: string | null;
+  amount: number;
+  count: number;
+}
+
+export interface YearEventView {
+  period: number;
+  kind: 'FESTIVAL' | 'TAX_ASSESSMENT' | 'TAX_PREPAYMENT' | 'ROTATION_CHECK' | 'FAMILY_BIRTHDAY' | 'FAMILY_WEDDING_DAY' | 'SCHOOL_START' | string;
+  reference: string | null;
+}
+
+export interface CalendarOverviewView {
+  gameTime: number;
+  currentPeriod: number | null;
+  year: number | null;
+  daysPerPeriod: number;
+  nextMonthStart: number;
+  nextPeriod: number | null;
+  agenda: AgendaEntryView[];
+  monthStartDebits: DebitView[];
+  monthStartTotal: number;
+  yearEvents: YearEventView[];
+}

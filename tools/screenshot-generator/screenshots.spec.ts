@@ -90,6 +90,14 @@ test.describe.serial('screenshots', () => {
     await expect(page.getByTestId('app-grid')).toBeVisible();
     await shot(page, '10-dashboard');
 
+    await page.goto('/aufgaben');
+    await expect(page.getByTestId('task-filters')).toBeVisible();
+    await shot(page, '22-aufgaben');
+
+    await page.goto('/kalender');
+    await expect(page.getByTestId('month-start')).toBeVisible();
+    await shot(page, '23-kalender');
+
     await page.goto('/mailbox');
     await page.getByTestId('mail-thread').first().click();
     await expect(page.getByTestId('mail-detail')).toBeVisible();

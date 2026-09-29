@@ -231,4 +231,42 @@ public final class Views {
     /** financeClass: OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING or IGNORE. */
     public record FinanceLineView(String category, long amount, String financeClass) {
     }
+
+    /**
+     * Hof-Tablet "Aufgaben": one open decision (or announced deadline) of any area. {@code type} names the source and
+     * which of the optional payloads is set: CASE, CONTRACT_OFFER, LEASE_RENEWAL, CREDIT_COUNTER, CALL, NEGOTIATION,
+     * MARKET_OFFER, POSTING. {@code kind} is the case / contract / event kind where there is one.
+     */
+    public record TaskView(String key, String type, String kind, Long deadlineGameTime, long gameTime, CaseView serviceCase,
+                           ContractView contract, CreditApplicationView application, MessageView call,
+                           NegotiationView negotiation, MarketEventView marketEvent, JobPostingView posting,
+                           Integer pendingApplicants) {
+    }
+
+    /** Open tasks sorted by deadline (none last) plus the number of yes/no questions waiting in the game. */
+    public record TasksView(List<TaskView> items, int waitingPrompts) {
+    }
+
+    /**
+     * Hof-Tablet "Kalender": agenda of the next game days, the debits of the coming month start and the year with its
+     * fixed dates. Game times are in-game milliseconds; {@code period} is the FS25 period (1 = March).
+     */
+    public record CalendarOverviewView(long gameTime, Integer currentPeriod, Integer year, int daysPerPeriod,
+                                       long nextMonthStart, Integer nextPeriod, List<AgendaEntryView> agenda,
+                                       List<DebitView> monthStartDebits, long monthStartTotal, List<YearEventView> yearEvents) {
+    }
+
+    /** kind: e.g. CASE_DEADLINE, OFFER_EXPIRES, LOAN_INSTALLMENT, SALARY, CONTRACT_PAYMENT, LEASE_END, FESTIVAL. */
+    public record AgendaEntryView(long gameTime, String kind, String subKind, String title, Long amount, String reference) {
+    }
+
+    /** kind: SALARIES, LOAN, CONTRACT, RETIREMENT; subKind = contract kind; count = employees / loans. */
+    public record DebitView(String kind, String subKind, String label, long amount, int count) {
+    }
+
+    /** One fixed date of the FS25 year: FESTIVAL, TAX_ASSESSMENT, TAX_PREPAYMENT, FAMILY_BIRTHDAY, FAMILY_WEDDING_DAY,
+     * SCHOOL_START, ROTATION_CHECK. {@code reference} = festival key or family member name. */
+    public record YearEventView(int period, String kind, String reference) {
+    }
 }
+
