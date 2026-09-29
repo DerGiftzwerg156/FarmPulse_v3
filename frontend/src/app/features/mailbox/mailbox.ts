@@ -14,6 +14,7 @@ import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
+import { MailDecision } from './mail-decision';
 import { Icon } from '../../shared/ui/icon';
 import { ListItem } from '../../shared/ui/list-item';
 import { MailThread, groupThreads } from './mail-threads';
@@ -24,7 +25,7 @@ import { MailThread, groupThreads } from './mail-threads';
  */
 @Component({
   selector: 'app-mailbox',
-  imports: [FormsModule, RouterLink, TranslatePipe, LabelPipe, GameTimePipe, Card, ListItem, Badge, Button, Icon, PageErrorView],
+  imports: [FormsModule, RouterLink, TranslatePipe, LabelPipe, GameTimePipe, Card, ListItem, Badge, Button, Icon, PageErrorView, MailDecision],
   templateUrl: './mailbox.html',
 })
 export class Mailbox {
@@ -37,7 +38,7 @@ export class Mailbox {
 
   readonly mails = signal<MessageView[] | null>(null);
   readonly error = signal<PageError | null>(null);
-  readonly filter = signal<'all' | 'unread'>('all');
+  readonly filter = signal<'all' | 'unread' | 'decision' | 'villageLife'>('all');
   readonly openRoot = signal<number | null>(null);
   readonly thread = signal<ThreadView | null>(null);
   readonly replyText = signal('');
@@ -46,7 +47,14 @@ export class Mailbox {
 
   readonly threads = computed(() => groupThreads(this.mails() ?? []));
   readonly visibleThreads = computed(() =>
-    this.filter() === 'unread' ? this.threads().filter((t) => t.unreadIds.length > 0) : this.threads(),
+    this.threads().filter((t) => {
+      switch (this.filter()) {
+        case 'unread': return t.unreadIds.length > 0;
+        case 'decision': return !!t.formLink;
+        case 'villageLife': return t.villageLife;
+        default: return true;
+      }
+    }),
   );
   readonly current = computed(() => this.threads().find((t) => t.rootId === this.openRoot()) ?? null);
   readonly formLink = computed(() => {

@@ -3,6 +3,8 @@
     <div class="flex gap-1" role="group" [attr.aria-label]="'mailbox.filter' | t">
       <app-button [variant]="filter() === 'all' ? 'primary' : 'secondary'" (pressed)="filter.set('all')" data-testid="filter-all">{{ 'common.all' | t }}</app-button>
       <app-button [variant]="filter() === 'unread' ? 'primary' : 'secondary'" (pressed)="filter.set('unread')" data-testid="filter-unread">{{ 'mailbox.unread' | t }}</app-button>
+      <app-button [variant]="filter() === 'decision' ? 'primary' : 'secondary'" (pressed)="filter.set('decision')" data-testid="filter-decision">{{ 'mailbox.formRequired' | t }}</app-button>
+      <app-button [variant]="filter() === 'villageLife' ? 'primary' : 'secondary'" (pressed)="filter.set('villageLife')" data-testid="filter-village-life">{{ 'mailbox.villageLife' | t }}</app-button>
     </div>
   </header>
 
@@ -67,13 +69,7 @@
             </ol>
 
             @if (formLink(); as link) {
-              <div class="mt-4 flex items-center justify-between gap-3 rounded-md border border-warn/50 bg-bg p-3" data-testid="form-link">
-                <p class="font-body text-[12px] text-warn">{{ 'mailbox.formHint' | t }}</p>
-                <a [routerLink]="link.path" [queryParams]="link.queryParams"
-                  class="inline-flex shrink-0 items-center gap-1 rounded-sm bg-accent px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-bg">
-                  {{ 'mailbox.openForm' | t }} <app-icon name="arrowRight" size="h-3.5 w-3.5" />
-                </a>
-              </div>
+              <app-mail-decision [link]="link" />
             } @else if (canReply()) {
               <form class="mt-4 space-y-2" (ngSubmit)="send()" data-testid="reply-form">
                 <label class="fp-label" for="reply">{{ 'mailbox.reply' | t }}</label>

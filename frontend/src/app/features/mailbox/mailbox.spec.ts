@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { GameStateStore } from '../../core/state/game-state.store';
+import { TasksStore } from '../../core/state/tasks.store';
 import { character, message } from '../../../testing/fixtures';
 import { Mailbox } from './mailbox';
 
@@ -71,6 +72,30 @@ describe('Mailbox', () => {
     expect(link.getAttribute('href')).toBe('/bank?application=5');
     expect(el.querySelector('[data-testid="reply-form"]')).toBeNull();
     expect(el.querySelectorAll('[data-testid="mail-thread"]')[0].querySelector('[data-testid="unread-dot"]')).toBeNull();
+  });
+
+  it('shows the open decision of a mail right below it, with the same actions as in the app', () => {
+    const { http, el, fixture, flushSavegame } = setup();
+    http.expectOne('/api/mails').flush([credit, invite]);
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="filter-decision"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('[data-testid="mail-thread"]').length).toBe(1);
+    (el.querySelectorAll('[data-testid="mail-thread"]')[0] as HTMLButtonElement).click();
+    http.expectOne('/api/mails/1').flush({ message: credit, thread: [credit] });
+    flushSavegame();
+    fixture.detectChanges();
+    TestBed.inject(TasksStore).items.set([{ key: 'credit-5', type: 'CREDIT_COUNTER', kind: 'COUNTER_OFFER', deadlineGameTime: null, gameTime: 0,
+      serviceCase: null, contract: null, call: null, negotiation: null, marketEvent: null, posting: null, pendingApplicants: null,
+      application: { id: 5, amount: 80000, purpose: 'Stall', termMonths: 36, status: 'DECIDED', submittedAtGameTime: 0,
+        decisionVisibleAtGameTime: 0, decision: 'COUNTER_OFFER', reasonCategory: null, offeredAmount: 60000, offeredTermMonths: 36,
+        offeredInterestRatePercent: 4.9, loanId: null } }]);
+    fixture.detectChanges();
+    const decision = el.querySelector('[data-testid="mail-decision"]');
+    expect(decision?.textContent).toContain('Gegenangebot der Bank');
+    expect(el.querySelector('[data-testid="form-link"]')).toBeNull();
+    (decision!.querySelector('[data-testid="task-accept"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/credit-applications/5/accept-counter');
   });
 
   it('sends a free reply and appends it to the thread', async () => {

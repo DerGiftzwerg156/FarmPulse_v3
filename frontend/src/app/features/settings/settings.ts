@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import {
-  AiSettingsView, BypassSettingsView, FieldSettingsView, GameSettingsView, HelperSettingsView, PromptSettingsView,
+  AiSettingsView, BypassSettingsView, FieldSettingsView, GameSettingsView, PromptSettingsView,
 } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
@@ -33,7 +33,6 @@ export class Settings {
 
   readonly ai = signal<AiSettingsView | null>(null);
   readonly game = signal<GameSettingsView | null>(null);
-  readonly helpers = signal<HelperSettingsView | null>(null);
   readonly fields = signal<FieldSettingsView | null>(null);
   readonly bypass = signal<BypassSettingsView | null>(null);
   readonly prompts = signal<PromptSettingsView | null>(null);
@@ -56,7 +55,6 @@ export class Settings {
       error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
     });
     this.api.gameSettings().subscribe({ next: (g) => this.game.set(g), error: () => this.game.set(null) });
-    this.api.helperSettings().subscribe({ next: (h) => this.helpers.set(h), error: () => this.helpers.set(null) });
     this.api.fieldSettings().subscribe({ next: (f) => this.fields.set(f), error: () => this.fields.set(null) });
     this.api.bypassSettings().subscribe({ next: (b) => this.bypass.set(b), error: () => this.bypass.set(null) });
     this.api.promptSettings().subscribe({ next: (p) => this.prompts.set(p), error: () => this.prompts.set(null) });
@@ -84,14 +82,6 @@ export class Settings {
   saveFields(fieldHintsEnabled: boolean): void {
     this.api.saveFieldSettings({ fieldHintsEnabled }).subscribe({
       next: (f) => this.fields.set(f),
-      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
-    });
-  }
-
-  /** Roadmap V2 R2-A1 / R2-A3: saves the helper switches (sent to the mod with the employee list). */
-  saveHelpers(r: { helperWageMode: string; strictHelperLimit: boolean }): void {
-    this.api.saveHelperSettings(r).subscribe({
-      next: (h) => this.helpers.set(h),
       error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
     });
   }

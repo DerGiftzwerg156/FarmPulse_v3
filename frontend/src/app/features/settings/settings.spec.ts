@@ -9,7 +9,6 @@ const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, 
 
 describe('Settings', () => {
   function setup(game: unknown = { tonePreset: 'REALISTIC', toneLabel: 'realistisch-ausgewogen' },
-    helpers: unknown = { helperWageMode: 'EMPLOYEES', strictHelperLimit: false, workforceTracked: true },
     fields: FieldSettingsView = { fieldHintsEnabled: true, fieldsTracked: true },
     bypass: BypassSettingsView = { reactionsEnabled: true, interestSurchargePercent: 0 },
     prompts: PromptSettingsView = { available: true, kinds: ['CALL'], allKinds: ['CALL', 'CONTRACT_OFFER', 'TAX_BILL'] }) {
@@ -23,9 +22,6 @@ describe('Settings', () => {
     const g = http.expectOne('/api/settings/game');
     if (game) g.flush(game);
     else g.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
-    const h = http.expectOne('/api/settings/helpers');
-    if (helpers) h.flush(helpers);
-    else h.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
     http.expectOne('/api/settings/fields').flush(fields);
     http.expectOne('/api/settings/vanilla-bypass').flush(bypass);
     http.expectOne('/api/settings/prompts').flush(prompts);
@@ -94,21 +90,6 @@ describe('Settings', () => {
     const { el } = setup(null);
     expect(el.querySelector('[data-testid="tone"]')?.textContent).toContain('–');
   });
-  // Roadmap V2 R2-A1 / R2-A3
-  it('saves the helper switches', () => {
-    const { el, http, fixture } = setup();
-    const strict = el.querySelector('[data-testid="helper-strict"]') as HTMLInputElement;
-    strict.checked = true;
-    strict.dispatchEvent(new Event('change'));
-    const req = http.expectOne('/api/settings/helpers');
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ helperWageMode: 'EMPLOYEES', strictHelperLimit: true });
-    req.flush({ helperWageMode: 'EMPLOYEES', strictHelperLimit: true, workforceTracked: true });
-    fixture.detectChanges();
-    expect((el.querySelector('[data-testid="helper-strict"]') as HTMLInputElement).checked).toBe(true);
-    expect(el.querySelector('[data-testid="helper-untracked"]')).toBeNull();
-  });
-
   // Roadmap V2 R2-C6
   it('switches the field work hints off', () => {
     const { el, http, fixture } = setup();
@@ -124,9 +105,8 @@ describe('Settings', () => {
   });
 
   // Roadmap V2 R2-D
-  it('switches the reactions to the game menus off and shows a running surcharge', () => {
-    const { el, http, fixture } = setup(undefined, undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });
-    expect(el.querySelector('[data-testid="bypass-surcharge"]')?.textContent).toContain('1 Prozentpunkte');
+  it('switches the reactions to the game menus off', () => {
+    const { el, http, fixture } = setup(undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });
     const box = el.querySelector('[data-testid="bypass-reactions"]') as HTMLInputElement;
     box.checked = false;
     box.dispatchEvent(new Event('change'));
@@ -135,13 +115,6 @@ describe('Settings', () => {
     req.flush({ reactionsEnabled: false, interestSurchargePercent: 0 });
     fixture.detectChanges();
     expect((el.querySelector('[data-testid="bypass-reactions"]') as HTMLInputElement).checked).toBe(false);
-    expect(el.querySelector('[data-testid="bypass-surcharge"]')).toBeNull();
-  });
-
-  it('says when the mod reports no helpers yet', () => {
-    const { el } = setup(undefined, { helperWageMode: 'VANILLA', strictHelperLimit: false, workforceTracked: false });
-    expect((el.querySelector('[data-testid="helper-wage"]') as HTMLInputElement).checked).toBe(false);
-    expect(el.querySelector('[data-testid="helper-untracked"]')?.textContent).toContain('aktuellen Mod-Version');
   });
 
   // Roadmap V2 R2-F2
@@ -163,7 +136,7 @@ describe('Settings', () => {
   });
 
   it('says when the questions in the game are switched off in the configuration', () => {
-    const { el } = setup(undefined, undefined, undefined, undefined,
+    const { el } = setup(undefined, undefined, undefined,
       { available: false, kinds: ['CALL'], allKinds: ['CALL'] });
     expect(el.querySelector('[data-testid="prompts-off"]')).not.toBeNull();
     expect((el.querySelector('[data-testid="prompt-kind"]') as HTMLInputElement).disabled).toBe(true);

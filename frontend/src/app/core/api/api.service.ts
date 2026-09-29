@@ -284,4 +284,7 @@ export class ApiService {
   stables(): Observable<M.StablesView> {
     return this.get('/stables');
   }
+  fieldOverview(): Observable<M.FieldOverviewView> {
+    return this.get('/field-overview');
+  }
 }

@@ -14,6 +14,7 @@ import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { Modal } from '../../shared/ui/modal';
 import { PageErrorView } from '../../shared/ui/page-error';
+import { HelperSettingsCard } from './helper-settings-card';
 
 export const JOB_ROLES = ['MACHINE_OPERATOR', 'MECHANIC', 'ANIMAL_KEEPER', 'OFFICE_CLERK'] as const;
 export const NEED_KEYS = ['payFairness', 'workload', 'appreciation', 'workingConditions'] as const;
@@ -33,7 +34,7 @@ type Panel = { employeeId: number; kind: 'raise' | 'timeOff' } | null;
  */
 @Component({
   selector: 'app-employees',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, Modal, PageErrorView],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, Modal, PageErrorView, HelperSettingsCard],
   templateUrl: './employees.html',
 })
 export class Employees {

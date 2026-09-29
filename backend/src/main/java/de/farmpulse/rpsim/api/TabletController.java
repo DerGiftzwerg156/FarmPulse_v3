@@ -3,16 +3,18 @@ package de.farmpulse.rpsim.api;
 import java.util.List;
 
 import de.farmpulse.rpsim.api.Views.CalendarOverviewView;
+import de.farmpulse.rpsim.api.Views.FieldOverviewView;
 import de.farmpulse.rpsim.api.Views.StablesView;
 import de.farmpulse.rpsim.api.Views.TasksView;
 import de.farmpulse.rpsim.savegame.SavegameContext;
 import de.farmpulse.rpsim.tablet.CalendarPlanService;
+import de.farmpulse.rpsim.tablet.FieldOverviewService;
 import de.farmpulse.rpsim.tablet.StableService;
 import de.farmpulse.rpsim.tablet.TaskService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Hof-Tablet apps that combine several areas: "Aufgaben" (open decisions), "Kalender" (dates) and "Stall". */
+/** Hof-Tablet apps that combine several areas: "Aufgaben" (open decisions), "Kalender" (dates), "Stall" and the field table of "Flurkarte". */
 @RestController
 public class TabletController {
 
@@ -20,12 +22,15 @@ public class TabletController {
     private final TaskService tasks;
     private final CalendarPlanService calendar;
     private final StableService stables;
+    private final FieldOverviewService fields;
 
-    public TabletController(SavegameContext context, TaskService tasks, CalendarPlanService calendar, StableService stables) {
+    public TabletController(SavegameContext context, TaskService tasks, CalendarPlanService calendar, StableService stables,
+                            FieldOverviewService fields) {
         this.context = context;
         this.tasks = tasks;
         this.calendar = calendar;
         this.stables = stables;
+        this.fields = fields;
     }
 
     /** Open decisions of every area, sorted by deadline; empty without an active savegame. */
@@ -43,5 +48,11 @@ public class TabletController {
     @GetMapping("/api/stables")
     public StablesView stables() {
         return stables.stables(context.requireActive());
+    }
+
+    /** Fields the player farms with what needs doing and the crop rotation / premium preview of the running year. */
+    @GetMapping("/api/field-overview")
+    public FieldOverviewView fieldOverview() {
+        return fields.overview(context.requireActive());
     }
 }

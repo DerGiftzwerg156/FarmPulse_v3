@@ -14,6 +14,7 @@ import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { ServiceCases } from '../contracts/service-cases';
+import { FieldTable } from './field-table';
 
 /** Amount the counterpart currently offers/demands and that the player can accept with one click. */
 export function acceptableAmount(n: NegotiationView): number | null {
@@ -37,7 +38,7 @@ export function highestBid(n: NegotiationView): number | null {
  */
 @Component({
   selector: 'app-farmland',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases, FieldTable],
   templateUrl: './farmland.html',
 })
 export class Farmland {

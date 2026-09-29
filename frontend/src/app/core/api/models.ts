@@ -642,3 +642,38 @@ export interface BarnView {
   /** Announced animal welfare inspection of this husbandry (deadline). */
   inspectionDeadline: number | null;
 }
+
+/** Hof-Tablet "Flurkarte": fields the player farms with what needs doing and the crop rotation (R2-C / R2-E2). */
+export interface FieldOverviewView {
+  year: number | null;
+  tracked: boolean;
+  fields: FieldRowView[];
+  rotation: RotationPreviewView | null;
+}
+
+export interface FieldRowView {
+  farmlandId: number;
+  name: string | null;
+  hectares: number | null;
+  fruitType: string | null;
+  phase: FieldPhase;
+  leased: boolean;
+  familyField: boolean;
+  weedsHigh: boolean;
+  stonesHigh: boolean;
+  needsLime: boolean;
+  needsPlow: boolean;
+  previousCrop: string | null;
+  currentCrop: string | null;
+  /** CHANGED, SAME (violation at the end of the year) or UNKNOWN. */
+  rotation: 'CHANGED' | 'SAME' | 'UNKNOWN';
+  rotationViolations: number;
+}
+
+export interface RotationPreviewView {
+  changedHectares: number;
+  premium: number;
+  cut: boolean;
+  sameFields: number[];
+  premiumPerHa: number;
+}

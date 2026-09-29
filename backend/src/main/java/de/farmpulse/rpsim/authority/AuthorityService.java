@@ -117,7 +117,7 @@ public class AuthorityService {
     // ------------------------------------------------------------------------------------------ rotation
 
     /** Main crop of a field in a year: a harvested one first, otherwise the first seen. */
-    Optional<String> crop(Savegame sg, int farmlandId, int year) {
+    public Optional<String> crop(Savegame sg, int farmlandId, int year) {
         return history.findBySavegameAndFarmlandIdOrderByCropYearAsc(sg, farmlandId).stream()
                 .filter(h -> h.getCropYear() == year)
                 .min(Comparator.comparing((FieldCropHistory h) -> !h.isHarvested())

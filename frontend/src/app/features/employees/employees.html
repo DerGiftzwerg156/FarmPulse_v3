@@ -89,7 +89,9 @@
       }
     </app-card>
 
-    <app-card [title]="'employees.postings' | t" data-testid="postings">
+    <app-helper-settings-card />
+
+  <app-card [title]="'employees.postings' | t" data-testid="postings">
       <form class="mb-3 flex flex-wrap items-end gap-2" (submit)="$event.preventDefault(); createPosting()">
         <label class="space-y-1">
           <span class="fp-label">{{ 'employees.jobRole' | t }}</span>

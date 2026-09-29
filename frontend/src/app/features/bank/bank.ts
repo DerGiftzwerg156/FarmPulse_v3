@@ -64,6 +64,8 @@ export class Bank {
   readonly deferralText = signal<Record<number, string>>({});
   readonly deferralResult = signal<Record<number, DeferralView>>({});
   readonly openHistory = signal<number | null>(null);
+  /** Roadmap V2 R2-D1: interest surcharge on new loans while a vanilla loan taken on top is open. */
+  readonly surcharge = signal(0);
   readonly stateBadge = STATE_BADGE;
 
   readonly form = inject(FormBuilder).nonNullable.group({
@@ -88,6 +90,7 @@ export class Bank {
   }
 
   load(): void {
+    this.api.bypassSettings().subscribe({ next: (b) => this.surcharge.set(b.interestSurchargePercent), error: () => this.surcharge.set(0) });
     forkJoin({ apps: this.api.creditApplications(), loans: this.api.loans() }).subscribe({
       next: ({ apps, loans }) => {
         this.applications.set(apps);

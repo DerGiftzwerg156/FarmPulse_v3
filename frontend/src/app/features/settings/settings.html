@@ -72,26 +72,6 @@
     </app-card>
   </div>
 
-  <app-card [title]="'settings.helpers.title' | t" data-testid="helper-settings">
-    @if (helpers(); as h) {
-      <p class="text-[12px] text-muted">{{ 'settings.helpers.intro' | t }}</p>
-      <label class="mt-2 flex items-start gap-2 text-[12px] text-text">
-        <input type="checkbox" [checked]="h.helperWageMode === 'EMPLOYEES'" (change)="saveHelpers({ helperWageMode: $any($event.target).checked ? 'EMPLOYEES' : 'VANILLA', strictHelperLimit: h.strictHelperLimit })" data-testid="helper-wage" />
-        <span>{{ 'settings.helpers.wage' | t }}</span>
-      </label>
-      <label class="mt-2 flex items-start gap-2 text-[12px] text-text">
-        <input type="checkbox" [checked]="h.strictHelperLimit" (change)="saveHelpers({ helperWageMode: h.helperWageMode, strictHelperLimit: $any($event.target).checked })" data-testid="helper-strict" />
-        <span>{{ 'settings.helpers.strict' | t }}</span>
-      </label>
-      <p class="mt-1 text-[11px] text-muted">{{ 'settings.helpers.strictHint' | t }}</p>
-      @if (!h.workforceTracked) {
-        <p class="mt-1 text-[11px] text-warn" data-testid="helper-untracked">{{ 'settings.helpers.untracked' | t }}</p>
-      }
-    } @else {
-      <p class="text-[12px] text-muted">–</p>
-    }
-  </app-card>
-
   <app-card [title]="'settings.prompts.title' | t" data-testid="prompt-settings">
     @if (prompts(); as p) {
       <p class="mb-2 text-[11px] text-muted">{{ 'settings.prompts.hint' | t }}</p>
@@ -122,9 +102,6 @@
         <span>{{ 'settings.bypass.reactions' | t }}</span>
       </label>
       <p class="mt-1 text-[11px] text-muted">{{ 'settings.bypass.hint' | t }}</p>
-      @if (b.interestSurchargePercent > 0) {
-        <p class="mt-1 text-[11px] text-warn" data-testid="bypass-surcharge">{{ 'settings.bypass.surcharge' | t: { percent: b.interestSurchargePercent } }}</p>
-      }
     } @else {
       <p class="text-[12px] text-muted">–</p>
     }

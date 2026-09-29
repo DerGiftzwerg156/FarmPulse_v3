@@ -645,17 +645,18 @@
     "unread": "Ungelesen",
     "empty": "Keine Mails in diesem Filter.",
     "villageLife": "Dorfleben",
-    "formRequired": "Formular",
+    "formRequired": "Entscheidung",
     "messages": "{n} Nachrichten",
     "me": "Du",
     "system": "Hofverwaltung",
     "select": "Wähle links eine Mail aus.",
-    "formHint": "Hierauf antwortest du über das zugehörige Formular – Beträge werden nie aus Freitext übernommen.",
-    "openForm": "Zum Formular",
     "reply": "Antwort",
     "replyPlaceholder": "Schreib frei, wie du antworten möchtest …",
     "replyHint": "Die Antwort kommt nicht sofort – Charaktere melden sich in Spielzeit zurück.",
-    "noReply": "Auf diese Nachricht kann nicht geantwortet werden."
+    "noReply": "Auf diese Nachricht kann nicht geantwortet werden.",
+    "decision": "Deine Entscheidung",
+    "decided": "Diese Entscheidung ist schon getroffen oder abgelaufen.",
+    "openInApp": "In der App öffnen"
   },
   "calls": {
     "incoming": "Eingehender Anruf",
@@ -900,7 +901,28 @@
     "clearFamilyField": "Markierung entfernen",
     "familyFieldHint": "Das Familienfeld liegt deiner Familie am Herzen – verkaufst du es, kostet das viel Vertrauen.",
     "claims": "Forderungen und Aufträge",
-    "leases": "Pacht"
+    "leases": "Pacht",
+    "table": {
+      "title": "Meine Felder",
+      "field": "Feld",
+      "area": "Fläche",
+      "crop": "Kultur",
+      "phase": "Phase",
+      "todo": "Zu tun",
+      "rotation": "Fruchtfolge",
+      "owned": "Eigentum",
+      "leased": "Gepachtet",
+      "harvest": "Ernten",
+      "lime": "Kalken",
+      "plow": "Pflügen",
+      "weeds": "Unkraut",
+      "stones": "Steine",
+      "premium": "Fruchtfolgeprämie Jahr {year}",
+      "premiumHint": "voraussichtlich – {ha} ha mit Fruchtwechsel × {perHa} je ha",
+      "same": "Felder {fields}: dieselbe Kultur wie im Vorjahr – das Amt schickt einen Hinweis.",
+      "cut": "Felder {fields}: dieselbe Kultur zum zweiten Mal – die Prämie des Jahres wird gekürzt.",
+      "premiumNote": "Das Amt rechnet am Ende des FS25-Jahres mit der Hauptkultur jedes Feldes."
+    }
   },
   "market": {
     "storageValue": "Wert im Silo",

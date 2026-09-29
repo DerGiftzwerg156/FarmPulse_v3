@@ -295,5 +295,27 @@ public final class Views {
     /** Next routine visit of the vet per animal type (month start of the due month). */
     public record VetDueView(String type, long gameTime) {
     }
+
+    /**
+     * Hof-Tablet app "Flurkarte": the fields the player farms with their state from the last field sample (Roadmap V2
+     * R2-C) - what needs doing (weeds, stones, lime, plowing, only when the savegame has them switched on) and the crop
+     * rotation of the running FS25 year against the year before.
+     */
+    public record FieldOverviewView(Integer year, boolean tracked, List<FieldRowView> fields, RotationPreviewView rotation) {
+    }
+
+    /** rotation: CHANGED, SAME (a violation at the year's end) or UNKNOWN (no crop this or last year). */
+    public record FieldRowView(int farmlandId, String name, Double hectares, String fruitType, String phase, boolean leased,
+                               boolean familyField, boolean weedsHigh, boolean stonesHigh, boolean needsLime, boolean needsPlow,
+                               String previousCrop, String currentCrop, String rotation, int rotationViolations) {
+    }
+
+    /**
+     * Estimate of the rotation premium at the end of the year as the authority computes it (hectares with a changed main
+     * crop x premium per ha, cut when a field repeats its crop a second time). null while the authority is off.
+     */
+    public record RotationPreviewView(double changedHectares, long premium, boolean cut, List<Integer> sameFields,
+                                      double premiumPerHa) {
+    }
 }
 
