@@ -5,7 +5,7 @@
 -- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
 -- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
 -- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
--- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding
+-- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -288,6 +288,76 @@ function RPSimGameAdapter.detectMods(names)
     return found
 end
 
+--- Storage object (FS25 Storage.lua) -> { capacity, capacityPerFillType, fillLevels } keyed by fill type name.
+-- fillLevels/capacities are keyed by fill type index; `capacities` holds only the per-fill-type limits.
+local function storageInfo(storage)
+    local levels = {}
+    for ftIndex, level in pairs(storage.fillLevels or {}) do
+        levels[fillTypeName(ftIndex)] = level
+    end
+    local perType = {}
+    for ftIndex, cap in pairs(storage.capacities or {}) do
+        perType[fillTypeName(ftIndex)] = cap
+    end
+    return { capacity = storage.capacity or 0, capacityPerFillType = perType, fillLevels = levels }
+end
+
+--- Bunker silo (FS25 BunkerSilo.lua) as storage: fillLevel is the heap in liters; the game labels it with the
+-- input fill type while filling (CHAFF) and with the output fill type once closed (SILAGE), see BunkerSilo:update.
+local function bunkerSiloInfo(bunker)
+    local ftIndex = bunker.inputFillType
+    if BunkerSilo ~= nil and bunker.state ~= BunkerSilo.STATE_FILL then
+        ftIndex = bunker.outputFillType
+    end
+    return { capacity = 0, fillLevels = { [fillTypeName(ftIndex)] = bunker.fillLevel or 0 } }
+end
+
+--- Storage places of a placeable that hold goods of farm `farmId`, as raw entries for RPSimStorage.
+-- FS25 sources: PlaceableSilo (spec_silo.storages; with storages#perFarm the silo belongs to the map but each
+-- storage to one farm, storage.ownerFarmId), PlaceableSiloExtension (spec_siloExtension.storage),
+-- PlaceableProductionPoint (spec_productionPoint.productionPoint.storage, inputs and outputs) and
+-- PlaceableBunkerSilo (spec_bunkerSilo.bunkerSilo).
+function RPSimGameAdapter.storageSources(p, farmId)
+    local owner = safe(function() return p:getOwnerFarmId() end, nil)
+    local out = {}
+    local function add(kind, storages)
+        if #storages > 0 then
+            out[#out + 1] = {
+                uniqueId = safe(function() return p:getUniqueId() end, nil),
+                descriptor = { kind = kind, hasHusbandrySpec = p.spec_husbandryAnimals ~= nil,
+                    hasObjectStorageSpec = p.spec_objectStorage ~= nil },
+                storages = storages,
+            }
+        end
+    end
+    local function ownStorage(storage)
+        return storage ~= nil and (storage.ownerFarmId or owner) == farmId
+    end
+    if p.spec_silo ~= nil then
+        local storages = {}
+        for _, storage in ipairs(p.spec_silo.storages or {}) do
+            if ownStorage(storage) then
+                storages[#storages + 1] = storageInfo(storage)
+            end
+        end
+        add("SILO", storages)
+    end
+    if p.spec_siloExtension ~= nil and ownStorage(p.spec_siloExtension.storage) then
+        add("SILO_EXTENSION", { storageInfo(p.spec_siloExtension.storage) })
+    end
+    if owner ~= farmId then
+        return out
+    end
+    local pp = p.spec_productionPoint ~= nil and p.spec_productionPoint.productionPoint or nil
+    if pp ~= nil and pp.storage ~= nil then
+        add("PRODUCTION", { storageInfo(pp.storage) })
+    end
+    if p.spec_bunkerSilo ~= nil and p.spec_bunkerSilo.bunkerSilo ~= nil then
+        add("BUNKER_SILO", { bunkerSiloInfo(p.spec_bunkerSilo.bunkerSilo) })
+    end
+    return out
+end
+
 function RPSimGameAdapter:collectFarmFacts()
     local farmId = self:getFarmId()
     local raw = { vehicles = {}, leasedVehicles = {}, placeables = {}, farmland = {}, animals = {}, husbandries = {},
@@ -316,6 +386,13 @@ function RPSimGameAdapter:collectFarmFacts()
     end
 
     for _, p in pairs(placeableList()) do
+        -- storages first: a per-farm silo of the map is not the farm's placeable, its storage is
+        safe(function()
+            for _, entry in ipairs(RPSimGameAdapter.storageSources(p, farmId)) do
+                raw.silos[#raw.silos + 1] = entry
+            end
+            return true
+        end)
         safe(function()
             if p:getOwnerFarmId() ~= farmId then
                 return true
@@ -341,30 +418,6 @@ function RPSimGameAdapter:collectFarmFacts()
                 if state ~= nil then
                     raw.husbandries[#raw.husbandries + 1] = state
                 end
-            end
-            -- silos (classic-silo classification happens in RPSimStorage)
-            if p.spec_silo ~= nil then
-                local storages = {}
-                for _, storage in pairs(p.spec_silo.storages or {}) do
-                    local levels = {}
-                    for ftIndex, level in pairs(storage.fillLevels or {}) do
-                        levels[fillTypeName(ftIndex)] = level
-                    end
-                    storages[#storages + 1] = { capacity = storage.capacity or 0, fillLevels = levels,
-                        capacityPerFillType = nil }
-                end
-                local categoryName = safe(function() return p.storeItem.categoryName end, nil)
-                raw.silos[#raw.silos + 1] = {
-                    descriptor = {
-                        hasSiloSpec = true,
-                        hasBunkerSiloSpec = p.spec_bunkerSilo ~= nil,
-                        hasObjectStorageSpec = p.spec_objectStorage ~= nil,
-                        hasHusbandrySpec = p.spec_husbandryAnimals ~= nil,
-                        hasProductionSpec = p.spec_productionPoint ~= nil,
-                        categoryName = categoryName,
-                    },
-                    storages = storages,
-                }
             end
             return true
         end)

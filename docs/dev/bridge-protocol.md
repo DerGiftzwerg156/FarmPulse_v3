@@ -52,7 +52,10 @@ placeables of the savegame do not exist earlier). The first export writes `marke
   `remainingAmount` with the last export - an increase is a new vanilla loan (the bank reacts), a decrease a
   repayment; a rewound game time only moves the reference point.
 - `condition`: 0–100 (100 = no damage).
-- `storage`: classic silos only, aggregated per fill type (liters).
+- `storage`: the farm's stock, aggregated per fill type (liters): silos (including the farm's storage in per-farm
+  silos of the map), silo extensions, production points (input and output storage) and bunker silos (`CHAFF` while
+  filling, `SILAGE` once closed). Not included: husbandries and object storages (pallets/bales in halls).
+  `capacity` is 0 for bunker silos (no fixed capacity).
 - `currentPrice`: price per 1000 liters currently paid at the sell point (incl. active RPSim events).
 - `trend` (optional): price trend of the station as the game shows it - `SellingStation:getCurrentPricingTrend`
   bit flags `PRICE_CLIMBING` / `PRICE_FALLING` (as used by FS25_ProductionDirectSell) → `CLIMBING`, `FALLING`,

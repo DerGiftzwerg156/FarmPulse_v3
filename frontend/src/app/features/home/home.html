@@ -85,7 +85,7 @@
           <ul class="space-y-2">
             @for (s of storage()?.items ?? []; track s.fillType) {
               <li>
-                <div class="flex justify-between gap-2 text-[12px]"><span class="text-text">{{ s.fillType | label: 'fillType' }}</span><span class="font-mono text-[10px] text-muted">{{ s.amount | num }} / {{ s.capacity | num }} l</span></div>
+                <div class="flex justify-between gap-2 text-[12px]"><span class="text-text">{{ s.fillType | label: 'fillType' }}</span><span class="font-mono text-[10px] text-muted">{{ s.amount | num }}@if (s.capacity > 0) {<span> / {{ s.capacity | num }}</span>} l</span></div>
                 <div class="mt-1 h-1.5 rounded-full bg-bg"><div class="h-1.5 rounded-full" [class.bg-accent]="fill(s.amount, s.capacity) >= 25" [class.bg-warn]="fill(s.amount, s.capacity) < 25" [style.width.%]="fill(s.amount, s.capacity)"></div></div>
               </li>
             } @empty {

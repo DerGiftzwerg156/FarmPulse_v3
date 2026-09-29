@@ -226,6 +226,13 @@ function RPSimBridge:logFirstExport()
     local farmlands = okCtx and ctx ~= nil and #(ctx.farmlands or {}) or -1
     RPSimLog.info("First export: %d sell points, %d farmlands on the map, %d own vehicles, %d own fields",
         sellPoints, farmlands, vehicles, fields)
+    -- Stock (assets.storage): which storage places were found and whether they count
+    local silos = ok and facts ~= nil and facts.silos or {}
+    RPSimLog.info("Stock: %d storage places (silos, silo extensions, productions, bunker silos), %d fill types",
+        #silos, #RPSimStorage.aggregate(silos))
+    for _, line in ipairs(RPSimStorage.describe(silos)) do
+        RPSimLog.info("  Storage %s", line)
+    end
 end
 
 function RPSimBridge:writeAck()

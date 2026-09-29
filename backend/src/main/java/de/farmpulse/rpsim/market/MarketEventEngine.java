@@ -157,7 +157,7 @@ public class MarketEventEngine {
 
     /**
      * Target selection weighted by the stored silo stock: weight(fillType) = base + stockWeight * share of that fill
-     * type in the total classic-silo stock. A fill type without stock is chosen less often (technical concept
+     * type in the total stock (silos, productions, bunker silos). A fill type without stock is chosen less often (technical concept
      * "Warenbestand-Bewertung"/"Zielauswahl"). The sell point is then picked among those accepting it (regional).
      */
     public Optional<Target> pickTarget(MarketContext ctx, FarmFacts f, Set<String> excludedPairs) {

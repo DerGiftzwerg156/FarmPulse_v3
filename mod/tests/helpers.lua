@@ -123,7 +123,7 @@ function helpers.fakeAdapter(overrides)
             placeables = { { uniqueId = "plc_00011", value = 120000 } },
             farmland = self.farmland,
             animals = { { husbandryUniqueId = "hus_00003", type = "COW", count = 24, estimatedValue = 96000 } },
-            silos = { { descriptor = { hasSiloSpec = true, categoryName = "SILOS" },
+            silos = { { descriptor = { kind = "SILO" },
                 storages = { { capacity = 50000, fillLevels = { WHEAT = 42000 } } } } },
             vanillaLoan = 80000,
             prices = { { sellPoint = "MillNorth", fillType = "WHEAT", pricePerLiter = 0.215 } },

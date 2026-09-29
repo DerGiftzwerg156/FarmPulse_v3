@@ -10,6 +10,22 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+### Changed
+
+- **Stock export (`assets.storage`) covers productions and bunker silos:** besides silos, the farm's stock now
+  includes silo extensions, the input and output storage of own production points and bunker silos (`CHAFF` while
+  filling, `SILAGE` once closed, as the game shows it; capacity 0). Husbandries and halls (pallets/bales) stay out.
+  The storage page shows no capacity for entries without one.
+
+### Fixed
+
+- **Stock export empty in the live test:** only placeables owned by the farm were read, so the farm's storage in
+  per-farm silos of the map (the placeable belongs to the map) was missing; ownership is now checked per storage
+  (`storage.ownerFarmId`). Silo extensions were not read at all. Stock in productions and bunker silos was not
+  exported by design until now (see Changed).
+- The first export logs every storage place in `log.txt` (`Stock: …` plus one `Storage …` line each: kind, counted
+  or ignored with the reason, fill levels), so a missing stock can be traced in the live test.
+
 ## [1.5.1] - 2026-09-28
 
 The mod exports every 10 s instead of every 60 s. Update the mod `FS25_RPSim` to 1.5.1.0; the backend needs no

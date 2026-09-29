@@ -29,7 +29,7 @@
                 <div class="h-1.5 rounded-full bg-accent" [style.width.%]="fill(s.amount, s.capacity)"></div>
               </div>
               <div class="mt-0.5 flex justify-between gap-2 font-mono text-[10px] text-muted">
-                <span>{{ s.amount | num }} / {{ s.capacity | num }} l</span>
+                <span>{{ s.amount | num }}@if (s.capacity > 0) {<span> / {{ s.capacity | num }}</span>} l</span>
                 <span>{{ 'market.bestAt' | t: { price: (s.bestPrice | num), place: s.bestSellPoint ?? '–' } }}</span>
               </div>
             </li>
