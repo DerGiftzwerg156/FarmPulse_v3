@@ -821,6 +821,7 @@ public class RpsimProperties {
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
             m.put("RPSIM_FARMLAND_PURCHASE", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_SELL", FinanceClass.DIVESTMENT);
+            m.put("SHOP_PROPERTY_SELL", FinanceClass.DIVESTMENT);
             m.put("RPSIM_FARMLAND_SALE", FinanceClass.DIVESTMENT);
             m.put("RPSIM_CREDIT_DISBURSEMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_INSTALLMENT", FinanceClass.FINANCING);

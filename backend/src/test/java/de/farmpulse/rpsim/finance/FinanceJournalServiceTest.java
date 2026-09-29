@@ -34,6 +34,7 @@ class FinanceJournalServiceTest {
     void classesComeFromTheConfigurationAndUnknownCountByTheirSign() {
         assertThat(service.classify("HARVEST_INCOME", 5)).isEqualTo(FinanceClass.OPERATING_INCOME);
         assertThat(service.classify("SHOP_PROPERTY_BUY", -5)).isEqualTo(FinanceClass.INVESTMENT);
+        assertThat(service.classify("SHOP_PROPERTY_SELL", 5)).isEqualTo(FinanceClass.DIVESTMENT);
         assertThat(service.classify("RPSIM_CREDIT_DISBURSEMENT", 5)).isEqualTo(FinanceClass.FINANCING);
         assertThat(service.classify("RPSIM_DAMAGE", -5)).isEqualTo(FinanceClass.IGNORE);
         assertThat(service.classify("SOME_MOD_TYPE", 5)).isEqualTo(FinanceClass.OPERATING_INCOME);
