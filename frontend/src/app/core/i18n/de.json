@@ -985,7 +985,10 @@
     "todo": "Zu erledigen",
     "openAll": "Alle öffnen",
     "debits": "Nächste Abbuchung",
-    "debitsOf": "Abbuchung 1. {month}"
+    "debitsOf": "Abbuchung 1. {month}",
+    "stableHealth": "Gesundheit {animal}",
+    "stableFood": "Futter {food} %",
+    "animals": "Tiere"
   },
   "settings": {
     "ai": "KI-Anbieter",
@@ -1220,6 +1223,29 @@
     "inspectionsIntro": "Jede Kontrolle wird mit Frist angekündigt. Behebe den Mangel im Spiel – dann bleibt es ohne Beanstandung."
   },
   "stable": {
-    "trade": "Viehhandel und Tierarzt"
+    "trade": "Viehhandel und Tierarzt",
+    "health": "Gesundheit",
+    "food": "Futter",
+    "water": "Wasser",
+    "productivity": "Produktivität",
+    "value": "Wert {value}",
+    "inspection": "Tierwohl-Kontrolle angekündigt ({animal}) – Frist {time}",
+    "inspectionHint": "Gesundheit, Futter oder Wasser sind zu niedrig. Im Spiel auffüllen – zur Frist prüft das Amt erneut. Beim ersten Verstoß gibt es eine Auflage.",
+    "untracked": "Gesundheit, Futter und Wasser zeigt der Stall mit der aktuellen Mod-Version.",
+    "noAnimals": "Keine Tiere auf dem Hof.",
+    "keepers": "Tierpfleger:innen",
+    "noKeeper": "Niemand kümmert sich um {animals} Tiere.",
+    "perKeeper": "{n} Tiere je Person – ab etwa {limit} wird es eng.",
+    "vet": "Nächste Routine des Tierarztes",
+    "vetHint": "Sinkt die Gesundheit eines Stalls unter {health} %, rückt der Tierarzt zu einem Notfall aus."
+  },
+  "weather": {
+    "rain": "Regen",
+    "dry": "Trocken",
+    "ground": {
+      "dry": "Boden trocken",
+      "moist": "Boden feucht",
+      "wet": "Boden nass"
+    }
   }
 }

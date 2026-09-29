@@ -178,7 +178,7 @@ test('Roadmap V2: husbandries, fields and weather can be changed like in the gam
   const after = harvest.buildFarmFacts();
   assert.deepEqual(after.fields.map((f) => f.farmlandId), [2, 4, 7]);
   assert.equal(after.fields[2].weedState, 0);
-  assert.deepEqual(after.weather, { raining: false, rainFallScale: 0, groundWetness: 0.7 });
+  assert.deepEqual(after.weather, { raining: false, rainFallScale: 0, groundWetness: 0.7, temperature: 12 });
   assert.equal(validate('farmFacts', after), null);
   assert.throws(() => new BridgeSimulator({ dir: tmp(), scenario: 'leerer-hof' }).setWeather({}), /no weather/);
   // R2-C: crop details and the soil settings of the savegame

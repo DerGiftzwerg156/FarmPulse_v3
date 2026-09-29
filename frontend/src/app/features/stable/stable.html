@@ -1,0 +1,87 @@
+@let labels = { health: ('stable.health' | t), food: ('stable.food' | t), water: ('stable.water' | t), productivity: ('stable.productivity' | t) };
+<section class="flex flex-col gap-5">
+  @if (failed()) {
+    <p class="text-sm text-danger">{{ 'common.error' | t }}</p>
+  }
+  @if (stables(); as s) {
+    @for (b of inspections(); track b.husbandryUniqueId) {
+      <div class="flex items-center gap-3.5 rounded-2xl border border-warn/50 bg-[#1E1709] px-4 py-3.5" data-testid="inspection-banner">
+        <app-icon name="alert" size="h-6 w-6" class="shrink-0 text-warn" />
+        <div class="min-w-0 flex-1">
+          <div class="text-[15px] font-semibold text-text">{{ 'stable.inspection' | t: { animal: (b.type | label: 'animalType'), time: (b.inspectionDeadline | gameTime) } }}</div>
+          <div class="text-[13px] text-[#C9B48E]">{{ 'stable.inspectionHint' | t }}</div>
+        </div>
+        <a routerLink="/aemter" class="shrink-0 font-display text-[11px] uppercase tracking-[0.12em] text-accent hover:underline">{{ 'nav.authorities' | t }} →</a>
+      </div>
+    }
+
+    <div class="flex flex-col gap-5 lg:flex-row">
+      <div class="min-w-0 flex-1" data-testid="barns">
+        @if (!s.tracked && s.barns.length) {
+          <p class="mb-3 text-[12px] text-muted" data-testid="untracked">{{ 'stable.untracked' | t }}</p>
+        }
+        <div class="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3">
+          @for (b of s.barns; track b.husbandryUniqueId) {
+            <div class="rounded-2xl border bg-surface p-4" [class.border-warn/50]="barnWarn(b, s)" [class.border-border]="!barnWarn(b, s)" data-testid="barn">
+              <div class="flex items-baseline justify-between gap-2">
+                <span class="text-[16px] font-semibold text-text">{{ b.type | label: 'animalType' }}</span>
+                <span class="font-mono text-[13px] text-[#B9C8C2]">{{ b.count | num }}</span>
+              </div>
+              <div class="mb-3 text-[12px] text-muted">{{ 'stable.value' | t: { value: (b.value | money) } }}</div>
+              @for (bar of bars(b, s, labels); track bar.label) {
+                <div class="mb-2" data-testid="barn-bar">
+                  <div class="flex justify-between text-[12px]"><span class="text-[#B9C8C2]">{{ bar.label }}</span>
+                    <span class="font-mono" [class.text-warn]="bar.warn" [class.text-app-farm]="!bar.warn">{{ bar.value | num }} %</span></div>
+                  <div class="mt-1 h-1.5 rounded-full bg-bg"><div class="h-1.5 rounded-full" [class.bg-warn]="bar.warn" [class.bg-accent]="!bar.warn" [style.width.%]="bar.value"></div></div>
+                </div>
+              }
+              @if (otherConditions(b).length) {
+                <div class="mt-2 flex flex-wrap gap-1.5">
+                  @for (c of otherConditions(b); track c.title) {
+                    <span class="rounded-md border border-border px-1.5 py-0.5 text-[11px] text-muted">{{ c.title }} {{ c.ratio * 100 | num }} %</span>
+                  }
+                </div>
+              }
+            </div>
+          } @empty {
+            <p class="text-sm text-muted" data-testid="no-animals">{{ 'stable.noAnimals' | t }}</p>
+          }
+        </div>
+      </div>
+
+      <aside class="flex w-full shrink-0 flex-col gap-3 lg:w-[340px]">
+        @if (keeperLoad(); as k) {
+          <div class="rounded-2xl border bg-surface p-4" [class.border-warn/50]="k.over" [class.border-border]="!k.over" data-testid="keepers">
+            <div class="flex justify-between"><span class="text-[15px] font-semibold text-text">{{ 'stable.keepers' | t }}</span>
+              <span class="font-mono text-[13px] text-[#B9C8C2]">{{ s.keepers }}</span></div>
+            <div class="mt-1.5 text-[13px] leading-snug text-[#D3DED9]">
+              @if (k.perKeeper === null) {
+                {{ 'stable.noKeeper' | t: { animals: s.animals } }}
+              } @else {
+                {{ 'stable.perKeeper' | t: { n: k.perKeeper, limit: k.limit } }}
+              }
+            </div>
+            <a routerLink="/employees" class="mt-2 inline-block font-display text-[11px] uppercase tracking-[0.12em] text-accent hover:underline">{{ 'nav.employees' | t }} →</a>
+          </div>
+        }
+        @if (s.vetDue.length) {
+          <div class="rounded-2xl border border-border bg-surface p-4" data-testid="vet-due">
+            <div class="text-[15px] font-semibold text-text">{{ 'stable.vet' | t }}</div>
+            @for (v of s.vetDue; track v.type) {
+              <div class="mt-1.5 flex justify-between text-[13px]"><span class="text-[#D3DED9]">{{ v.type | label: 'animalType' }}</span>
+                <span class="font-mono text-muted">{{ v.gameTime | gameTime }}</span></div>
+            }
+            <p class="mt-2 text-[12px] text-muted">{{ 'stable.vetHint' | t: { health: s.healthWarnBelow } }}</p>
+          </div>
+        }
+      </aside>
+    </div>
+  } @else if (!failed()) {
+    <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
+  }
+
+  <app-service-cases [caseKinds]="['LIVESTOCK_OFFER', 'VET_VISIT', 'BREEDING_ADVICE']" openTitle="stable.trade"
+    [highlightCase]="highlightedCase()" testId="stable-cases">
+    <p open-intro class="mb-3 text-[12px] text-muted">{{ 'contracts.livestockHint' | t }}</p>
+  </app-service-cases>
+</section>

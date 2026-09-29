@@ -47,10 +47,12 @@ describe('Shell', () => {
     http.expectOne('/api/savegame').flush({
       id: 1, savegameId: 'x', mapName: 'Erlengrund', gameTime: 0, gameDay: 12, balance: 245000,
       tonePreset: 'REALISTIC', unreadMails: 2, pendingCalls: 1, reputationTier: 'NEUTRAL',
+      weather: { raining: false, rainFallScale: 0, groundWetness: 0.1, temperature: 16 },
     });
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="savegame-context"]')?.textContent).toContain('Tag 12 · 00:00');
     expect(el.querySelector('[data-testid="balance"]')?.textContent?.replace(/\s/g, ' ')).toContain('245.000 €');
+    expect(el.querySelector('[data-testid="weather"]')?.textContent?.replace(/\s/g, ' ')).toContain('Trocken · 16 °C');
     const badge = (id: string) => el.querySelector(`[data-testid="dock"] [data-testid="app-${id}"] [data-testid="app-badge"]`)?.textContent?.trim();
     expect(badge('mail')).toBe('2');
     expect(badge('phone')).toBe('1');

@@ -106,7 +106,7 @@ Object.assign(SCENARIOS, {
       activeJobs: [{ jobId: 1, employeeId: 1, title: 'Fendt 942 Vario' }, { jobId: 2, title: 'CLAAS LEXION 8900' }],
       workedGameMs: { 1: 0, 2: 0 },
     },
-    weather: { raining: false, rainFallScale: 0, groundWetness: 0.1 },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.1, temperature: 16 },
   },
   'tierhof-krank': {
     description: 'Tierhof mit schlechten Stallwerten: niedrige Gesundheit, wenig Futter und Wasser (R2-A7).',
@@ -125,7 +125,7 @@ Object.assign(SCENARIOS, {
           { title: 'Milch', ratio: 0.6 }] },
       { husbandryUniqueId: 'hus_00002', health: 55, food: 0.3, conditions: [{ title: 'Wasser', ratio: 0.4 }] },
     ],
-    weather: { raining: false, rainFallScale: 0, groundWetness: 0.2 },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.2, temperature: 9 },
   },
   'ernte-herbst': {
     description: 'Herbst (September): erntereifer Mais, wachsende Kartoffeln, verdorrter Weizen, ein brachliegendes Feld, Regen (R2-C).',
@@ -151,7 +151,7 @@ Object.assign(SCENARIOS, {
     ],
     // R2-C: game settings of the soil mechanics (all on, like a new career savegame with every option enabled)
     fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
-    weather: { raining: true, rainFallScale: 0.6, groundWetness: 0.7 },
+    weather: { raining: true, rainFallScale: 0.6, groundWetness: 0.7, temperature: 12 },
   },
 });
 

@@ -84,24 +84,46 @@
           </div>
         </a>
 
-        @if (ownFields().length) {
-          <a routerLink="/farmland" class="block rounded-[20px] border border-border bg-surface p-5 hover:border-accent/50" data-testid="fields-widget">
-            <div class="mb-3 flex items-center gap-2">
-              <app-icon name="map" size="h-4 w-4" class="text-app-farm" />
-              <span class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-text">{{ 'home.fields' | t }}</span>
-            </div>
-            @if (fieldsTracked()) {
-              <div class="font-display text-[28px] font-bold leading-none text-app-farm" data-testid="harvestable">{{ harvestable().length }}</div>
-              <div class="text-[13px] text-[#B9C8C2]">{{ 'home.harvestable' | t }}</div>
-              @if (withered().length) {
-                <div class="mt-2 text-[12px] text-warn">{{ 'home.withered' | t: { n: withered().length } }}</div>
+        <div class="grid grid-cols-2 gap-4">
+          @if (ownFields().length) {
+            <a routerLink="/farmland" class="block rounded-[20px] border border-border bg-surface p-5 hover:border-accent/50" data-testid="fields-widget">
+              <div class="mb-3 flex items-center gap-2">
+                <app-icon name="map" size="h-4 w-4" class="text-app-farm" />
+                <span class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-text">{{ 'home.fields' | t }}</span>
+              </div>
+              @if (fieldsTracked()) {
+                <div class="font-display text-[28px] font-bold leading-none text-app-farm" data-testid="harvestable">{{ harvestable().length }}</div>
+                <div class="text-[13px] text-[#B9C8C2]">{{ 'home.harvestable' | t }}</div>
+                @if (withered().length) {
+                  <div class="mt-2 text-[12px] text-warn">{{ 'home.withered' | t: { n: withered().length } }}</div>
+                }
+              } @else {
+                <div class="font-display text-[28px] font-bold leading-none text-app-farm">{{ ownFields().length }}</div>
+                <div class="text-[13px] text-[#B9C8C2]">{{ 'home.ownFields' | t }}</div>
               }
-            } @else {
-              <div class="font-display text-[28px] font-bold leading-none text-app-farm">{{ ownFields().length }}</div>
-              <div class="text-[13px] text-[#B9C8C2]">{{ 'home.ownFields' | t }}</div>
-            }
-          </a>
-        }
+            </a>
+          }
+
+          @if (weakestBarn(); as b) {
+            <a routerLink="/stall" class="block rounded-[20px] border bg-surface p-5 hover:border-accent/50" [class.border-warn/60]="stableAlarm()" [class.border-border]="!stableAlarm()"
+              data-testid="stable-widget">
+              <div class="mb-3 flex items-center gap-2">
+                <app-icon name="barn" size="h-4 w-4" [class]="stableAlarm() ? 'text-warn' : 'text-app-farm'" />
+                <span class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-text">{{ 'nav.stable' | t }}</span>
+              </div>
+              @if (b.health !== null) {
+                <div class="font-display text-[28px] font-bold leading-none" [class.text-warn]="stableAlarm()" [class.text-app-farm]="!stableAlarm()" data-testid="stable-health">{{ b.health | num }} %</div>
+                <div class="text-[13px] text-[#B9C8C2]">{{ 'home.stableHealth' | t: { animal: (b.type | label: 'animalType') } }}</div>
+                @if (b.food !== null) {
+                  <div class="mt-2 text-[12px] text-[#8FA39A]">{{ 'home.stableFood' | t: { food: (b.food * 100 | num) } }}</div>
+                }
+              } @else {
+                <div class="font-display text-[28px] font-bold leading-none text-app-farm">{{ stables()!.animals | num }}</div>
+                <div class="text-[13px] text-[#B9C8C2]">{{ 'home.animals' | t }}</div>
+              }
+            </a>
+          }
+        </div>
       </div>
     </div>
   }

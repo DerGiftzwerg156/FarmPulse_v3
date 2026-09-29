@@ -13,6 +13,8 @@ import { CalendarView } from '../core/api/models';
 import { TranslationService } from '../core/i18n/translation.service';
 import { calendarLabel } from '../shared/format/calendar';
 import { clockTime } from '../shared/format/format';
+import { weatherLong, weatherShort } from '../shared/format/weather';
+import { WeatherView } from '../core/api/models';
 import { AppDef, appForUrl, toneClass } from './apps';
 import { AppBadges } from './app-badges';
 import { Dock } from './dock';
@@ -55,6 +57,14 @@ export class Shell implements OnInit, OnDestroy {
 
   periodLabel(c: CalendarView): string {
     return calendarLabel(c, this.i18n);
+  }
+
+  weather(w: WeatherView): string {
+    return weatherShort(w, this.i18n);
+  }
+
+  weatherTitle(w: WeatherView): string {
+    return weatherLong(w, this.i18n);
   }
 
   clock(gameTime: number): string {

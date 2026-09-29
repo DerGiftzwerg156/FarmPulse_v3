@@ -54,7 +54,14 @@ public class SavegameController {
                 calls.pending(sg).stream().filter(c -> c.getCallStatus() == de.farmpulse.rpsim.domain.CallStatus.RINGING).count(),
                 reputation.tier(sg).name(), calendar(sg),
                 facts.marketContext(sg).map(c -> c.detectedMods() == null ? List.<String>of() : c.detectedMods())
-                        .orElse(List.of()));
+                        .orElse(List.of()), weather(sg));
+    }
+
+    private Views.WeatherView weather(Savegame sg) {
+        return facts.latest(sg).map(f -> f.weather()).filter(w -> w.raining() != null)
+                .map(w -> new Views.WeatherView(w.raining(), w.rainFallScale() == null ? 0 : w.rainFallScale(),
+                        w.groundWetness() == null ? 0 : w.groundWetness(), w.temperature()))
+                .orElse(null);
     }
 
     static CalendarView calendar(Savegame sg) {

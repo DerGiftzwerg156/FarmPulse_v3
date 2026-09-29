@@ -14,7 +14,14 @@ public final class Views {
      */
     public record SavegameView(Long id, String savegameId, String mapName, long gameTime, long gameDay, long balance,
                                String tonePreset, long unreadMails, long pendingCalls, String reputationTier,
-                               CalendarView calendar, List<String> detectedMods) {
+                               CalendarView calendar, List<String> detectedMods, WeatherView weather) {
+    }
+
+    /**
+     * Hof-Tablet status bar: weather of the last farm_facts (Roadmap V2 R2-C2). rain / groundWetness 0..1, temperature
+     * in °C (null with an older mod). The whole view is null before the first weather export.
+     */
+    public record WeatherView(boolean raining, double rainFallScale, double groundWetness, Double temperature) {
     }
 
     /** FS25 calendar: period 1..12 (1 = March), periodName as shown in the game. */
@@ -267,6 +274,26 @@ public final class Views {
     /** One fixed date of the FS25 year: FESTIVAL, TAX_ASSESSMENT, TAX_PREPAYMENT, FAMILY_BIRTHDAY, FAMILY_WEDDING_DAY,
      * SCHOOL_START, ROTATION_CHECK. {@code reference} = festival key or family member name. */
     public record YearEventView(int period, String kind, String reference) {
+    }
+
+    /**
+     * Hof-Tablet app "Stall": the husbandries of the last farm_facts (Roadmap V2 R2-A7) with the thresholds the tool
+     * reacts to. {@code tracked} is false with an older mod (no husbandry values, only the animals of assets.animals).
+     */
+    public record StablesView(boolean tracked, int animals, int keepers, double animalsPerKeeper, double healthWarnBelow,
+                              double foodWarnBelow, double waterWarnBelow, List<BarnView> barns, List<VetDueView> vetDue) {
+    }
+
+    /** One husbandry: health / productivity 0..100, food / water / conditions 0..1 (null = not reported). */
+    public record BarnView(String husbandryUniqueId, String type, int count, long value, Double health, Double productivity,
+                           Double food, Double water, List<ConditionView> conditions, Long inspectionDeadline) {
+    }
+
+    public record ConditionView(String title, double ratio) {
+    }
+
+    /** Next routine visit of the vet per animal type (month start of the due month). */
+    public record VetDueView(String type, long gameTime) {
     }
 }
 

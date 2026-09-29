@@ -153,13 +153,18 @@ function RPSimFarmFacts.buildFieldRules(raw)
     return rules
 end
 
---- R2-C2: raw = { raining, rainFallScale, groundWetness }. Incomplete weather is left out.
+--- R2-C2: raw = { raining, rainFallScale, groundWetness, temperature? }. Incomplete weather is left out; the
+-- temperature (°C, Hof-Tablet status bar) is optional and rounded to one decimal.
 function RPSimFarmFacts.buildWeather(raw)
     if type(raw.raining) ~= "boolean" or type(raw.rainFallScale) ~= "number" or type(raw.groundWetness) ~= "number" then
         return nil
     end
-    return { raining = raw.raining, rainFallScale = round3(raw.rainFallScale),
+    local weather = { raining = raw.raining, rainFallScale = round3(raw.rainFallScale),
         groundWetness = round3(raw.groundWetness) }
+    if type(raw.temperature) == "number" and raw.temperature == raw.temperature then
+        weather.temperature = math.floor(raw.temperature * 10 + 0.5) / 10
+    end
+    return weather
 end
 
 --- raw: {

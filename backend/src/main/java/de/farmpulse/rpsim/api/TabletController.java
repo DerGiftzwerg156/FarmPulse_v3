@@ -3,25 +3,29 @@ package de.farmpulse.rpsim.api;
 import java.util.List;
 
 import de.farmpulse.rpsim.api.Views.CalendarOverviewView;
+import de.farmpulse.rpsim.api.Views.StablesView;
 import de.farmpulse.rpsim.api.Views.TasksView;
 import de.farmpulse.rpsim.savegame.SavegameContext;
 import de.farmpulse.rpsim.tablet.CalendarPlanService;
+import de.farmpulse.rpsim.tablet.StableService;
 import de.farmpulse.rpsim.tablet.TaskService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Hof-Tablet apps that combine several areas: "Aufgaben" (open decisions) and "Kalender" (dates). */
+/** Hof-Tablet apps that combine several areas: "Aufgaben" (open decisions), "Kalender" (dates) and "Stall". */
 @RestController
 public class TabletController {
 
     private final SavegameContext context;
     private final TaskService tasks;
     private final CalendarPlanService calendar;
+    private final StableService stables;
 
-    public TabletController(SavegameContext context, TaskService tasks, CalendarPlanService calendar) {
+    public TabletController(SavegameContext context, TaskService tasks, CalendarPlanService calendar, StableService stables) {
         this.context = context;
         this.tasks = tasks;
         this.calendar = calendar;
+        this.stables = stables;
     }
 
     /** Open decisions of every area, sorted by deadline; empty without an active savegame. */
@@ -33,5 +37,11 @@ public class TabletController {
     @GetMapping("/api/calendar")
     public CalendarOverviewView calendar() {
         return calendar.overview(context.requireActive());
+    }
+
+    /** Stables with their values, announced animal welfare inspections, vet routine and keeper load. */
+    @GetMapping("/api/stables")
+    public StablesView stables() {
+        return stables.stables(context.requireActive());
     }
 }

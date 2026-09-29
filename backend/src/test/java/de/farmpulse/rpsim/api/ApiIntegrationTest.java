@@ -417,6 +417,34 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void stablesAndWeatherFromTheLastFarmFacts() throws Exception {
+        // older mod: animals only, no husbandry values and no weather
+        mvc.perform(get("/api/stables")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.tracked").value(false))
+                .andExpect(jsonPath("$.animals").value(24))
+                .andExpect(jsonPath("$.barns[0].type").value("COW"))
+                .andExpect(jsonPath("$.barns[0].health").value(nullValue()))
+                .andExpect(jsonPath("$.vetDue[0].type").value("COW"));
+        mvc.perform(get("/api/savegame")).andExpect(jsonPath("$.weather").value(nullValue()));
+        long t = sg.getCurrentGameTime() + 1000;
+        fx.snapshot(sg, t, 1, TestData.withFields(TestData.farmFacts(sg.getBridgeSavegameId(), t, 1), """
+                "husbandries": [{ "husbandryUniqueId": "hus_00003", "health": 38, "productivity": 61, "food": 0.12,
+                                  "conditions": [{ "title": "Wasser", "ratio": 0.86 }, { "title": "Stroh", "ratio": 0.4 }] }],
+                "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7, "temperature": 14.5 }"""));
+        mvc.perform(get("/api/stables")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.tracked").value(true))
+                .andExpect(jsonPath("$.barns[0].health").value(38.0))
+                .andExpect(jsonPath("$.barns[0].food").value(0.12))
+                .andExpect(jsonPath("$.barns[0].water").value(0.86))
+                .andExpect(jsonPath("$.barns[0].conditions", hasSize(2)))
+                .andExpect(jsonPath("$.healthWarnBelow").value(40.0))
+                .andExpect(jsonPath("$.keepers").value(0));
+        mvc.perform(get("/api/savegame")).andExpect(jsonPath("$.weather.raining").value(true))
+                .andExpect(jsonPath("$.weather.temperature").value(14.5))
+                .andExpect(jsonPath("$.weather.groundWetness").value(0.7));
+    }
+
+    @Test
     void onboardingWithFamily() throws Exception {
         JsonNode created = read(postJson("/api/onboarding", java.util.Map.of("startingCapitalTarget", 100000,
                 "farmOrigin", "INHERITED", "familyParents", true, "familyPartner", false, "familyChildren", false))

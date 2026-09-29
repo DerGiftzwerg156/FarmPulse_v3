@@ -281,4 +281,7 @@ export class ApiService {
   calendar(): Observable<M.CalendarOverviewView> {
     return this.get('/calendar');
   }
+  stables(): Observable<M.StablesView> {
+    return this.get('/stables');
+  }
 }

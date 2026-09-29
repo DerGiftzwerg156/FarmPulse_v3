@@ -738,11 +738,14 @@ end
 
 --- R2-C2: current weather (environment.weather:getIsRaining / getRainFallScale / getGroundWetness, used e.g. by
 -- PlaceableSolarPanels, Wipers and Wheels). nil when the weather is not available.
+-- Hof-Tablet: temperature in °C (weather:getCurrentTemperature, used by VehicleSystem, Washable and the Enterable
+-- outside temperature display); left out when the call fails, the rest of the weather stays.
 function RPSimGameAdapter:collectWeather()
     return safe(function()
         local weather = g_currentMission.environment.weather
         return { raining = weather:getIsRaining() == true, rainFallScale = weather:getRainFallScale(),
-            groundWetness = weather:getGroundWetness() }
+            groundWetness = weather:getGroundWetness(),
+            temperature = safe(function() return weather:getCurrentTemperature() end, nil) }
     end, nil)
 end
 

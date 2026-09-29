@@ -15,6 +15,16 @@ export interface SavegameView {
   calendar?: CalendarView | null;
   /** Installed mods with overlapping features (TODO T-09). */
   detectedMods?: string[];
+  /** Weather of the last farm_facts (R2-C2); null before the first weather export. */
+  weather?: WeatherView | null;
+}
+
+/** rain / groundWetness 0..1, temperature in °C (null with an older mod). */
+export interface WeatherView {
+  raining: boolean;
+  rainFallScale: number;
+  groundWetness: number;
+  temperature: number | null;
 }
 
 export interface CalendarView {
@@ -601,4 +611,34 @@ export interface CalendarOverviewView {
   monthStartDebits: DebitView[];
   monthStartTotal: number;
   yearEvents: YearEventView[];
+}
+
+/** Hof-Tablet "Stall": husbandries of the last farm_facts (R2-A7). */
+export interface StablesView {
+  /** false with an older mod: animals only, no husbandry values. */
+  tracked: boolean;
+  animals: number;
+  keepers: number;
+  animalsPerKeeper: number;
+  healthWarnBelow: number;
+  foodWarnBelow: number;
+  waterWarnBelow: number;
+  barns: BarnView[];
+  vetDue: { type: string; gameTime: number }[];
+}
+
+export interface BarnView {
+  husbandryUniqueId: string;
+  type: string;
+  count: number;
+  value: number;
+  /** 0..100 */
+  health: number | null;
+  productivity: number | null;
+  /** 0..1 */
+  food: number | null;
+  water: number | null;
+  conditions: { title: string; ratio: number }[];
+  /** Announced animal welfare inspection of this husbandry (deadline). */
+  inspectionDeadline: number | null;
 }

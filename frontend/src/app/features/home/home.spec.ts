@@ -16,7 +16,8 @@ describe('Home (start screen)', () => {
     const store = TestBed.inject(GameStateStore);
     store.loaded.set(true);
     if (active) {
-      store.savegame.set(savegame({ balance: 245000, unreadMails: 1, pendingCalls: 1, gameDay: 5, gameTime: 5 * DAY + 11.5 * 3_600_000 }));
+      store.savegame.set(savegame({ balance: 245000, unreadMails: 1, pendingCalls: 1, gameDay: 5, gameTime: 5 * DAY + 11.5 * 3_600_000,
+        weather: { raining: true, rainFallScale: 0.6, groundWetness: 0.7, temperature: 14.46 } }));
     }
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
@@ -49,6 +50,10 @@ describe('Home (start screen)', () => {
       { farmlandId: 3, hectares: 4, referencePrice: 1, ownerType: 'PLAYER', owner: null, inNegotiation: false, phase },
       { farmlandId: 4, hectares: 4, referencePrice: 1, ownerType: 'CHARACTER', owner: null, inNegotiation: false, phase: null },
     ]);
+    http.expectOne('/api/stables').flush({ tracked: true, animals: 162, keepers: 0, animalsPerKeeper: 80, healthWarnBelow: 40,
+      foodWarnBelow: 0.2, waterWarnBelow: 0.2, vetDue: [], barns: [
+        { husbandryUniqueId: 'h1', type: 'COW', count: 42, value: 1, health: 38, productivity: 61, food: 0.12, water: 0.86, conditions: [], inspectionDeadline: null },
+        { husbandryUniqueId: 'h2', type: 'CHICKEN', count: 120, value: 1, health: 94, productivity: 92, food: 0.7, water: 1, conditions: [], inspectionDeadline: null }] });
   }
 
   it('invites to the onboarding without a savegame', () => {
@@ -62,6 +67,7 @@ describe('Home (start screen)', () => {
     flushAll(http);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="clock"]')?.textContent?.trim()).toBe('11:30');
+    expect(el.querySelector('[data-testid="date-line"]')?.textContent).toContain('Regen, 14,5 °C, Boden nass');
     const value = (id: string) => el.querySelector(`[data-testid="${id}"] [data-testid="stat-value"]`)?.textContent?.replace(/\s/g, ' ').trim();
     expect(value('kpi-result')).toBe('+8.420 €');
     expect(el.querySelector('[data-testid="kpi-result"]')?.textContent).toContain('April');
@@ -84,6 +90,8 @@ describe('Home (start screen)', () => {
     expect(el.querySelector('[data-testid="todo"]')?.textContent).toContain('Gegenangebot der Bank');
     expect(el.querySelector('[data-testid="todo"]')?.textContent).toContain('Bank');
     expect(el.querySelector('[data-testid="harvestable"]')?.textContent?.trim()).toBe('1');
+    expect(el.querySelector('[data-testid="stable-health"]')?.textContent?.trim()).toBe('38 %');
+    expect(el.querySelector('[data-testid="stable-widget"]')?.textContent).toContain('Gesundheit Rinder');
     store.stateVersion.update((v) => v + 1);
     fixture.detectChanges();
     flushAll(http, 'GROWING');
