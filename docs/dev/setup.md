@@ -108,6 +108,11 @@ on GitHub.
 3. The workflow checks that the tag matches the project version, builds, and publishes the GitHub Release
    `v<v>` with `FarmPulse-<v>.zip` and `FS25_RPSim.zip`; the release notes are the `CHANGELOG.md` section of `<v>`.
 
+**Snapshots:** every push to `main` runs the same build (with tests) and replaces the pre-release `snapshot`
+(tag `snapshot`, moved to the pushed commit, never marked *latest*) with `FarmPulse-<v>-snapshot.zip` and
+`FS25_RPSim.zip`, where `<v>` is the current project version; the notes are the `[Unreleased]` section of
+`CHANGELOG.md`. Tagged releases are not affected.
+
 A manual run (Actions → release → *Run workflow*) only builds and attaches the ZIPs to the run as workflow
 artifact – useful to try a build without publishing.
 

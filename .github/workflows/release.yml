@@ -3,9 +3,12 @@ name: release
 # Builds the player bundle with tools/release/build-release.sh (see docs/dev/setup.md, "Release build").
 #   - push of a tag v<version> (e.g. v1.1.0): publishes a GitHub Release with FarmPulse-<version>.zip and
 #     FS25_RPSim.zip; the tag must match the project version, the release notes come from CHANGELOG.md
+#   - push to main: publishes the rolling pre-release "snapshot" (tag snapshot, moved to the pushed commit) with
+#     FarmPulse-<version>-snapshot.zip and FS25_RPSim.zip; the notes are the [Unreleased] section of CHANGELOG.md
 #   - manual run (workflow_dispatch): build only, the ZIPs are attached to the run as workflow artifact
 on:
   push:
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 
@@ -51,6 +54,7 @@ jobs:
       - name: Build release (incl. backend tests)
         run: tools/release/build-release.sh
       - name: Release notes from CHANGELOG.md
+        if: github.event_name != 'push' || github.ref_type == 'tag'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -60,6 +64,22 @@ jobs:
             f { print }
           ' CHANGELOG.md > release/RELEASE_NOTES.md
           test -s release/RELEASE_NOTES.md
+      - name: Snapshot notes from CHANGELOG.md
+        if: github.event_name == 'push' && github.ref_type == 'branch'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          {
+            echo "Snapshot build of \`main\` at ${GITHUB_SHA::7} ($(date -u '+%Y-%m-%d %H:%M UTC')), project version $VERSION."
+            echo "Not a release: this pre-release is replaced on every push to \`main\`."
+            echo
+            echo "## Unreleased changes"
+            awk '
+              index($0, "## [Unreleased]") == 1 { f = 1; next }
+              f && /^## \[/ { exit }
+              f { print }
+            ' CHANGELOG.md
+          } > release/RELEASE_NOTES.md
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
@@ -80,4 +100,21 @@ jobs:
             --title "FarmPulse $VERSION" \
             --notes-file release/RELEASE_NOTES.md \
             "release/FarmPulse-$VERSION.zip" \
+            release/FS25_RPSim.zip
+      # rolling pre-release: the previous snapshot and its tag are replaced by one on the pushed commit
+      - name: Publish snapshot pre-release
+        if: github.event_name == 'push' && github.ref_type == 'branch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cp "release/FarmPulse-$VERSION.zip" "release/FarmPulse-$VERSION-snapshot.zip"
+          gh release delete snapshot --cleanup-tag --yes || true
+          gh release create snapshot \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --latest=false \
+            --title "FarmPulse $VERSION Snapshot (${GITHUB_SHA::7})" \
+            --notes-file release/RELEASE_NOTES.md \
+            "release/FarmPulse-$VERSION-snapshot.zip" \
             release/FS25_RPSim.zip
