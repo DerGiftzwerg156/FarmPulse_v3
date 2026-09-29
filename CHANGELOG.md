@@ -10,8 +10,47 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+The web app becomes the **Hof-Tablet**: every function is an app on a tablet home screen. Update the mod
+`FS25_RPSim` for the temperature in the status bar; without it the status bar shows rain and ground wetness only.
+
+### Added
+
+- **Hof-Tablet shell:** sticky status bar (map, game day and time, FS25 month, weather, balance, live state), start
+  screen as home screen (clock, date line with weather, KPIs *Monatsergebnis* / *Nächste Abbuchung* / *Ansehen*, app
+  grid with badges, widgets *Zu erledigen*, *Felder*, *Stall*), app header with *Start*, dock with Post, Telefon,
+  Aufgaben and Kalender (floating on the start screen, bottom bar in every app). The tablet always fills the browser
+  window. The icon rail, the bell and the *Letzte Ereignisse* feed are gone.
+- **App Aufgaben** (`/aufgaben`, `GET /api/tasks`): every open decision of all areas in one list, sorted by
+  deadline and grouped into today / this week / later, with filters (today, money, farm, village), the app of each
+  entry, the notices from the game and the number of questions waiting in the game.
+- **App Kalender** (`/kalender`, `GET /api/calendar`): agenda of the next game days, the debits of the next month
+  start with total and estimated balance, bills to pay yourself, the fixed dates of the FS25 year (festivals, tax
+  dates, rotation check, family occasions) and the festival invitations.
+- **App Stall** (`/stall`, `GET /api/stables`): the stables as the game reports them (health, food, water,
+  productivity, value), animal keepers per animal count, the next vet routine, an announced animal welfare
+  inspection and the cases of vet, livestock trader and breeding advice.
+- **Apps Versicherung, Werkstatt and Ämter** (`/versicherung`, `/werkstatt`, `/aemter`): the former page *Verträge &
+  Vorgänge* is split by topic; the tax card moves from the bank to *Ämter*. Lease, compensation claims and contractor
+  referrals live in *Flurkarte*, sponsoring in *Kontakte*, invitations in *Kalender*. `/contracts` only redirects to
+  the app of a case or contract.
+- **Flurkarte:** table *Meine Felder* (`GET /api/field-overview`) with crop, phase, to-dos and the crop rotation
+  against the previous year, plus the expected rotation premium and a warning for repeated crops.
+- **Decisions in the mail:** a mail that needs a decision shows the decision card with the same actions as the app
+  (no free reply) and *In der App öffnen*; mailbox filter *Entscheidung* replaces *Formular*.
+- **Weather with temperature:** the mod exports `weather.temperature` (°C, `getCurrentTemperature`), the backend
+  passes the weather to the savegame context, the status bar and the start screen show it. There is no forecast
+  (FS25 offers no API for it).
+- Bridge simulator: scenario `wohlhabender-hof` carries booking journal, stable, fields, field rules and weather.
+
 ### Changed
 
+- **App names:** Post, Telefon, Kontakte, Agrarbörse, Flurkarte (the paths `/mailbox`, `/calls`, `/village`,
+  `/market`, `/farmland` stay). Mail templates and prompts name the app ("in der App „Ämter“"), `formLink`s point to
+  the new apps.
+- The helper settings move from *Einstellungen* to *Personal*; the surcharge after a loan from the game menu is shown
+  on the credit form of the bank.
+- Screenshots are renamed after the apps and extended by Aufgaben, Kalender, Versicherung, Ämter, Stall and
+  Werkstatt; full-page shots take the status bar and the dock out of the flow.
 - **Stock export (`assets.storage`) covers productions and bunker silos:** besides silos, the farm's stock now
   includes silo extensions, the input and output storage of own production points and bunker silos (`CHAFF` while
   filling, `SILAGE` once closed, as the game shows it; capacity 0). Husbandries and halls (pallets/bales) stay out.
@@ -23,6 +62,7 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- Bridge simulator: `--reset` cleared its state only after loading the saved one, so the old state survived.
 - **Stock export empty in the live test:** only placeables owned by the farm were read, so the farm's storage in
   per-farm silos of the map (the placeable belongs to the map) was missing; ownership is now checked per storage
   (`storage.ownerFarmId`). Silo extensions were not read at all. Stock in productions and bunker silos was not

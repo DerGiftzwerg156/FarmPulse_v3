@@ -1,6 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import { MessageView, ThreadView } from '../../core/api/models';
@@ -25,7 +24,7 @@ import { MailThread, groupThreads } from './mail-threads';
  */
 @Component({
   selector: 'app-mailbox',
-  imports: [FormsModule, RouterLink, TranslatePipe, LabelPipe, GameTimePipe, Card, ListItem, Badge, Button, Icon, PageErrorView, MailDecision],
+  imports: [FormsModule, TranslatePipe, LabelPipe, GameTimePipe, Card, ListItem, Badge, Button, Icon, PageErrorView, MailDecision],
   templateUrl: './mailbox.html',
 })
 export class Mailbox {

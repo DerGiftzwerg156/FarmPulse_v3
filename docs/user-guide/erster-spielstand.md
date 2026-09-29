@@ -59,10 +59,11 @@ Spielzeit. Den richtigen auswählen und **Bestätigen & verknüpfen**. Erscheint
 
 ## Und dann?
 
-![Dashboard](../screenshots/10-dashboard.png)
+![Startbildschirm](../screenshots/10-start.png)
 
+- Du landest auf dem Startbildschirm deines Hof-Tablets: Jede Funktion ist eine App.
 - Das Startkapital wird im Spiel gebucht, ein Alt-Kredit taucht unter **Bank** auf.
-- Die Bank schreibt dir eine Willkommensmail – dein Einstieg ins Postfach.
+- Die Bank schreibt dir eine Willkommensmail – dein Einstieg in die App **Post**.
 - Kleine Geschichten aus deiner Vorgeschichte melden sich verteilt über die ersten Spielwochen.
 - Das Tagebuch beginnt mit deiner Vorgeschichte.
 

@@ -25,7 +25,7 @@ Oben im Browser steht dauerhaft *Kein Spielstand verknüpft*, und im Onboarding 
 
 - Der Mod braucht nach dem Laden bis zu einer Minute. Im Onboarding-Schritt 5 **Aktualisieren** klicken.
 - Es werden nur Spielstände angezeigt, die **noch nicht verknüpft** sind. Wurde der Spielstand schon mit einem
-  früheren Onboarding verknüpft, ist er bereits aktiv – öffne einfach das Dashboard.
+  früheren Onboarding verknüpft, ist er bereits aktiv – öffne einfach den Startbildschirm.
 - Jeder Spielstand hat eine eigene Kennung (`savegameId`), die in allen Dateien steht. Hast du im Spiel einen
   anderen Spielstand geladen, meldet der Mod dessen Kennung – FarmPulse schaltet automatisch auf den dazu
   verknüpften Spielstand um bzw. bietet ihn im Onboarding an. Daten verschiedener Spielstände werden nie vermischt.
@@ -39,8 +39,8 @@ Kredit genehmigt, aber das Geld fehlt im Spiel?
 - Jede Anweisung wird genau einmal ausgeführt – auch nach einem Neustart des Spiels. Bereits ausgeführte stehen
   im Spielstand in `FS25_RPSim.xml`.
 - Zusammengehörige Buchungen (z. B. Feld und Kaufpreis) werden nur gemeinsam ausgeführt oder gar nicht.
-- **Zu wenig Geld:** Eine Abbuchung, die dein Kontostand nicht deckt, führt der Mod nicht aus. Das Dashboard zeigt
-  dann unter *Hinweise aus dem Spiel* „Buchung nicht ausgeführt“. FarmPulse behandelt das wie eine verpasste
+- **Zu wenig Geld:** Eine Abbuchung, die dein Kontostand nicht deckt, führt der Mod nicht aus. Die App **Aufgaben**
+  zeigt dann unter *Hinweise aus dem Spiel* „Buchung nicht ausgeführt“. FarmPulse behandelt das wie eine verpasste
   Zahlung: Eine Kreditrate bleibt fällig und läuft in die Mahnstufen, ein Gehalt bleibt offen, ein Feldkauf platzt.
 
 ## Spielstand ohne Speichern neu geladen
@@ -49,9 +49,9 @@ Hast du FS25 beendet, ohne zu speichern, oder einen älteren Spielstand geladen,
 seitdem ausgeführt wurden (z. B. eine Kreditauszahlung), obwohl FarmPulse sie schon kennt. FarmPulse erkennt den
 Zeitsprung zurück:
 
-- **Bis zu einem Spieltag** zurück: Die fehlenden Buchungen werden automatisch erneut gesendet. Das Dashboard
+- **Bis zu einem Spieltag** zurück: Die fehlenden Buchungen werden automatisch erneut gesendet. Die App **Aufgaben**
   zeigt einen Hinweis, wie viele es waren.
-- **Mehr als ein Spieltag** zurück: Das Dashboard fragt dich: **Nachbuchen** (die Buchungen werden im Spiel erneut
+- **Mehr als ein Spieltag** zurück: Die App **Aufgaben** fragt dich: **Nachbuchen** (die Buchungen werden im Spiel erneut
   ausgeführt) oder **Tool-Stand beibehalten** (nichts wird nachgebucht).
 
 Wichtig: Nur die Buchungen im Spiel werden wiederhergestellt. Mails, Vertrauen, Verhandlungen und alle anderen
@@ -60,7 +60,7 @@ Abläufe im Tool werden **nicht** zurückgedreht. Die Schwelle ist einstellbar
 
 ## Andere Mods mit Überschneidungen
 
-Das Dashboard zeigt unter *Hinweise aus dem Spiel* „Mods mit Überschneidungen erkannt“, wenn einer dieser Mods
+Die App **Aufgaben** zeigt unter *Hinweise aus dem Spiel* „Mods mit Überschneidungen erkannt“, wenn einer dieser Mods
 aktiv ist (Liste auch unter **Einstellungen → Spielstand**). FarmPulse schaltet nichts ab, aber die Effekte können
 sich überlagern:
 

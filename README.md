@@ -5,16 +5,23 @@
 **Dein Hof bekommt ein Dorf.** FarmPulse ergänzt Farming Simulator 25 um eine KI-gestützte Rollenspiel-Simulation:
 Die Bankberaterin prüft deinen Kreditantrag, der Nachbar ruft wegen des Nordfelds an, der Landhändler flüstert dir
 ein Gerücht über den Weizenpreis zu und dein Mechaniker beschwert sich, dass sein Gehalt zu spät kommt. Du
-antwortest per Mail oder am Telefon – in einem Begleit-Tool im Browser, während du ganz normal spielst.
+antwortest per Mail oder am Telefon – auf deinem **Hof-Tablet** im Browser, während du ganz normal spielst.
 **Alle Zahlen – Kredite, Preise, Gehälter, Vertrauen – berechnet FarmPulse nach festen Regeln; die KI schreibt nur,
 wie die Charaktere es dir sagen.** Deshalb lässt sich nichts „herbeiquatschen“, und ohne KI-Zugang funktioniert
 alles mit vorformulierten Texten.
 
-| Dashboard | Postfach | Warenbestand & Preise |
+| Startbildschirm | Aufgaben | Post |
 | --- | --- | --- |
-| ![Dashboard](docs/screenshots/10-dashboard.png) | ![Postfach](docs/screenshots/11-postfach.png) | ![Warenbestand & Preise](docs/screenshots/15-warenbestand-preise.png) |
+| ![Startbildschirm](docs/screenshots/10-start.png) | ![Aufgaben](docs/screenshots/22-aufgaben.png) | ![Post](docs/screenshots/11-post.png) |
 
 ## Funktionen
+
+**Das Hof-Tablet** – die Oberfläche sieht aus wie ein Tablet auf dem Hof: Statusleiste mit Spielzeit, Wetter und
+Kontostand, ein Startbildschirm mit Kennzahlen und Widgets, jede Funktion als eigene App (Post, Telefon, Kontakte,
+Aufgaben, Kalender, Bank, Ämter, Agrarbörse, Versicherung, Personal, Flurkarte, Stall, Werkstatt, Tagebuch,
+Einstellungen) und ein Dock für die wichtigsten. **Aufgaben** sammelt jede offene Entscheidung aus allen Apps nach
+Frist, der **Kalender** zeigt Abbuchungen, Dorffeste, Steuertermine und Familientermine, der **Stall** deine Tiere
+aus dem Spiel.
 
 **Fünf Kernmodule**
 
@@ -30,7 +37,7 @@ alles mit vorformulierten Texten.
 - **Verhandlungen** – Ackerland ersteigern, direkt mit Besitzern verhandeln oder eigene Felder verkaufen, bis zu
   drei Runden, formelbasierte Preisfindung.
 
-**Silo & Preise** – Warenbestand mit aktuellem Wert, Verkaufspreise je Verkaufsstelle und Preisverlauf als Diagramm.
+**Agrarbörse** – Warenbestand mit aktuellem Wert, Verkaufspreise je Verkaufsstelle und Preisverlauf als Diagramm.
 
 **Sechs Rollenspiel-Vertiefungen**
 
