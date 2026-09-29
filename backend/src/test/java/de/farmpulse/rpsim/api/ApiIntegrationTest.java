@@ -370,6 +370,81 @@ class ApiIntegrationTest {
                 .andExpect(jsonPath("$.status").value("SETTLED")).andExpect(jsonPath("$.payoutAmount").value(500));
     }
 
+    // ------------------------------------------------------------------ Hof-Tablet
+
+    @Test
+    void tasksCollectOpenDecisionsOfEveryArea() throws Exception {
+        long sponsoring = clubs.requestSponsoring(sg, "FIRE_BRIGADE").getId();
+        MarketEvent offer = createOffer();
+        Communication ring = mailFrom(bank, Channel.CALL);
+        mvc.perform(post("/api/tax/advisor/offer")).andExpect(status().isOk());
+        JsonNode tasks = read(mvc.perform(get("/api/tasks")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.waitingPrompts").value(0)));
+        List<String> keys = new java.util.ArrayList<>();
+        tasks.get("items").forEach(t -> keys.add(t.get("key").asString()));
+        org.hamcrest.MatcherAssert.assertThat(keys, org.hamcrest.Matchers.hasItems("case-" + sponsoring,
+                "market-" + offer.getId(), "call-" + ring.getId()));
+        mvc.perform(get("/api/tasks"))
+                .andExpect(jsonPath("$.items[?(@.key == 'case-%d')].serviceCase.kind".formatted(sponsoring))
+                        .value("SPONSORING_REQUEST"))
+                .andExpect(jsonPath("$.items[?(@.type == 'CONTRACT_OFFER')].contract.kind").value("TAX_ADVISOR"))
+                .andExpect(jsonPath("$.items[?(@.key == 'call-%d')].call.callStatus".formatted(ring.getId())).value("RINGING"));
+        // sorted by deadline: the advisor offer has none and comes after the sponsoring request (7 days)
+        org.hamcrest.MatcherAssert.assertThat(keys.indexOf("case-" + sponsoring),
+                org.hamcrest.Matchers.lessThan(keys.indexOf(keys.stream().filter(k -> k.startsWith("contract-")).findFirst().orElseThrow())));
+        // decided in its area -> gone from the list
+        postJson("/api/cases/" + sponsoring + "/sponsor", java.util.Map.of("amount", 500)).andExpect(status().isOk());
+        mvc.perform(get("/api/tasks"))
+                .andExpect(jsonPath("$.items[?(@.key == 'case-%d')]".formatted(sponsoring), hasSize(0)));
+    }
+
+    @Test
+    void calendarShowsMonthStartDebitsAndFixedDates() throws Exception {
+        mvc.perform(get("/api/calendar")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.nextMonthStart", greaterThan(0)))
+                .andExpect(jsonPath("$.monthStartDebits[?(@.kind == 'SALARIES')].count").value(1))
+                .andExpect(jsonPath("$.monthStartTotal", greaterThan(0)))
+                .andExpect(jsonPath("$.agenda[0].kind").value("MONTH_START"))
+                .andExpect(jsonPath("$.yearEvents", hasSize(0)));
+        // with the FS25 calendar: festivals, tax assessment and rotation check per period
+        long t = sg.getCurrentGameTime() + 1000;
+        fx.snapshot(sg, t, 1, TestData.farmFactsWithJournal(sg.getBridgeSavegameId(), t, 1, 1, 2, "[]"));
+        mvc.perform(get("/api/calendar")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.year").value(1))
+                .andExpect(jsonPath("$.yearEvents[?(@.kind == 'FESTIVAL' && @.reference == 'SCHUETZENFEST')].period").value(4))
+                .andExpect(jsonPath("$.yearEvents[?(@.kind == 'TAX_ASSESSMENT')].period").value(1))
+                .andExpect(jsonPath("$.yearEvents[?(@.kind == 'TAX_PREPAYMENT')]", hasSize(0)));
+    }
+
+    @Test
+    void stablesAndWeatherFromTheLastFarmFacts() throws Exception {
+        // older mod: animals only, no husbandry values and no weather
+        mvc.perform(get("/api/stables")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.tracked").value(false))
+                .andExpect(jsonPath("$.animals").value(24))
+                .andExpect(jsonPath("$.barns[0].type").value("COW"))
+                .andExpect(jsonPath("$.barns[0].health").value(nullValue()))
+                .andExpect(jsonPath("$.vetDue[0].type").value("COW"));
+        mvc.perform(get("/api/savegame")).andExpect(jsonPath("$.weather").value(nullValue()));
+        long t = sg.getCurrentGameTime() + 1000;
+        fx.snapshot(sg, t, 1, TestData.withFields(TestData.farmFacts(sg.getBridgeSavegameId(), t, 1), """
+                "husbandries": [{ "husbandryUniqueId": "hus_00003", "health": 38, "productivity": 0.61, "food": 0.12,
+                                  "conditions": [{ "title": "Wasser", "ratio": 0.86 }, { "title": "Stroh", "ratio": 0.4 }] }],
+                "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7, "temperature": 14.5 }"""));
+        mvc.perform(get("/api/stables")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.tracked").value(true))
+                .andExpect(jsonPath("$.barns[0].health").value(38.0))
+                .andExpect(jsonPath("$.barns[0].productivity").value(61.0))
+                .andExpect(jsonPath("$.barns[0].food").value(0.12))
+                .andExpect(jsonPath("$.barns[0].water").value(0.86))
+                .andExpect(jsonPath("$.barns[0].conditions", hasSize(2)))
+                .andExpect(jsonPath("$.healthWarnBelow").value(40.0))
+                .andExpect(jsonPath("$.keepers").value(0));
+        mvc.perform(get("/api/savegame")).andExpect(jsonPath("$.weather.raining").value(true))
+                .andExpect(jsonPath("$.weather.temperature").value(14.5))
+                .andExpect(jsonPath("$.weather.groundWetness").value(0.7));
+    }
+
     @Test
     void onboardingWithFamily() throws Exception {
         JsonNode created = read(postJson("/api/onboarding", java.util.Map.of("startingCapitalTarget", 100000,

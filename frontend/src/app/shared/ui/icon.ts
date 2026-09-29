@@ -3,6 +3,18 @@ import { Component, computed, input } from '@angular/core';
 /** Inline SVG icons (paths from the Lucide icon set, ISC license) - no runtime icon dependency. */
 const ICONS: Record<string, string[]> = {
   shield: ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
+  tasks: ['M9 6h11', 'M9 12h11', 'M9 18h11', 'm4 6 1 1 2-2', 'm4 12 1 1 2-2', 'm4 18 1 1 2-2'],
+  calendar: ['M4 6h16v14H4z', 'M4 10h16', 'M8 3v4', 'M16 3v4'],
+  landmark: ['M6 3h9l4 4v14H6z', 'M15 3v4h4', 'M9 12h7', 'M9 16h4'],
+  chart: ['M3 20h18', 'm4 16 5-5 4 3 7-8', 'M16 6h4v4'],
+  barn: ['m3 11 9-7 9 7', 'M5 9.5V20h14V9.5', 'M9 20v-6h6v6'],
+  userCheck: ['M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 'M3 21a7 7 0 0 1 14 0', 'm16 11 2 2 4-4'],
+  wrench: ['M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'],
+  shieldCheck: ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', 'm9 12 2 2 4-4'],
+  arrowLeft: ['m15 5-7 7 7 7'],
+  cloud: ['M7 18h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.5A3.5 3.5 0 0 0 7 18z'],
+  rain: ['M7 15h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.5A3.5 3.5 0 0 0 7 15z', 'M8 19v2', 'M12 18v3', 'M16 19v2'],
+  sun: ['M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 'M12 2v2', 'M12 20v2', 'm4.93 4.93 1.41 1.41', 'm17.66 17.66 1.41 1.41', 'M2 12h2', 'M20 12h2', 'm6.34 17.66-1.41 1.41', 'm19.07 4.93-1.41 1.41'],
   dashboard: ['M3 3h7v9H3z', 'M14 3h7v5h-7z', 'M14 12h7v9h-7z', 'M3 16h7v5H3z'],
   mail: ['M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z', 'm22 6-10 7L2 6'],
   phone: [

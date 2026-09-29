@@ -6,7 +6,7 @@ import { Component, input } from '@angular/core';
   host: { class: 'block' },
   template: `
     <section
-      class="fp-notch group relative rounded-md border p-4"
+      class="group relative rounded-2xl border p-4 md:p-5"
       [class.bg-surface]="variant() === 'surface'"
       [class.bg-bg]="variant() === 'inset'"
       [class.border-border]="!highlight()"

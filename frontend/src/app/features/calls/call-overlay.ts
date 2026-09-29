@@ -20,9 +20,9 @@ import { Icon } from '../../shared/ui/icon';
   imports: [TranslatePipe, LabelPipe, GameTimePipe, Button, Icon],
   template: `
     @if (ringing(); as call) {
-      <div class="fixed inset-x-3 bottom-3 z-50 sm:inset-x-auto sm:right-4 sm:w-96" role="alertdialog" aria-live="assertive"
+      <div class="fixed inset-x-3 top-12 z-50 sm:inset-x-auto sm:right-4 sm:w-96" role="alertdialog" aria-live="assertive"
         [attr.aria-label]="'calls.incoming' | t" data-testid="call-overlay">
-        <div class="fp-notch fp-glow relative rounded-md border border-accent/60 bg-surface p-4">
+        <div class="relative rounded-2xl border border-accent bg-surface p-4 shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
           <div class="flex items-center gap-3">
             <span class="flex h-10 w-10 items-center justify-center rounded-full border border-accent/60 text-accent fp-pulse-dot">
               <app-icon name="phone" />

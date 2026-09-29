@@ -83,6 +83,6 @@
         "weedsEnabled": { "type": "boolean" }, "stonesEnabled": { "type": "boolean" } } },
     "weather": { "type": "object", "required": ["raining", "rainFallScale", "groundWetness"], "properties": {
       "raining": { "type": "boolean" }, "rainFallScale": { "type": "number", "minimum": 0 },
-      "groundWetness": { "type": "number", "minimum": 0 } } }
+      "groundWetness": { "type": "number", "minimum": 0 }, "temperature": { "type": "number" } } }
   }
 }

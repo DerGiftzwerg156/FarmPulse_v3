@@ -33,7 +33,7 @@ describe('applicationState', () => {
 });
 
 describe('Bank', () => {
-  function setup(apps: CreditApplicationView[], loans: LoanView[] = []) {
+  function setup(apps: CreditApplicationView[], loans: LoanView[] = [], surcharge = 0) {
     TestBed.configureTestingModule({
       imports: [Bank],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -43,6 +43,7 @@ describe('Bank', () => {
     const http = TestBed.inject(HttpTestingController);
     http.expectOne('/api/credit-applications').flush(apps);
     http.expectOne('/api/loans').flush(loans);
+    http.expectOne('/api/settings/vanilla-bypass').flush({ reactionsEnabled: true, interestSurchargePercent: surcharge });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const btn = (id: string, i = 0) => el.querySelectorAll(`[data-testid="${id}"] button`)[i] as HTMLButtonElement;
@@ -155,5 +156,13 @@ describe('Bank', () => {
     const rows = el.querySelectorAll('[data-testid="application"]');
     expect(rows[1].className).toContain('border-accent');
     expect(rows[0].className).not.toContain('border-accent');
+  });
+
+  // Roadmap V2 R2-D1: moved from the settings to the credit form
+  it('shows the interest surcharge of a vanilla loan taken on top at the credit form', () => {
+    expect(setup([]).el.querySelector('[data-testid="bypass-surcharge"]')).toBeNull();
+    TestBed.resetTestingModule();
+    const { el } = setup([], [], 1);
+    expect(el.querySelector('[data-testid="credit-form"] [data-testid="bypass-surcharge"]')?.textContent).toContain('1 Prozentpunkte');
   });
 });

@@ -61,8 +61,9 @@ class BridgeValidatorTest {
                              "stoneLevel": 0, "sprayLevel": 1, "limeLevel": 0, "plowLevel": 1, "groundType": "SOWN",
                              "withered": false, "cut": false, "fillType": "WHEAT", "litersPerSqm": 0.9 }],
                 "fieldRules": { "plowingRequired": true, "limeRequired": false, "weedsEnabled": true, "stonesEnabled": true },
-                "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7 }""");
+                "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7, "temperature": -3.5 }""");
         assertThat(BridgeValidator.validate(f)).isEmpty();
+        assertThat(f.weather().temperature()).isEqualTo(-3.5);
         assertThat(f.finances().periods().get(0).byType()).containsEntry("PURCHASE_FUEL", -3100.0);
         assertThat(f.workforce().activeJobs().get(1).employeeId()).isNull();
         assertThat(f.workforce().workedGameMs()).containsEntry("12", 7_200_000L);

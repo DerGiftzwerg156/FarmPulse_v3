@@ -123,7 +123,7 @@ class SimulatorScenariosEndToEndTest {
             assertThat(f.weather().raining()).isTrue();
             assertThat(f.calendar().period()).isEqualTo(7);
         });
-        Savegame old = link("wohlhabender-hof", "sim_alt_" + System.nanoTime());
+        Savegame old = link("voller-silobestand", "sim_alt_" + System.nanoTime());
         tx.executeWithoutResult(s -> {
             var f = facts.latest(savegames.findById(old.getId()).orElseThrow()).orElseThrow();
             assertThat(f.finances()).isNull();

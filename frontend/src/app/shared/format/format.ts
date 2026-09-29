@@ -25,10 +25,18 @@ export function formatGameTime(gameTime: number | null | undefined): string {
   if (gameTime === null || gameTime === undefined) {
     return '–';
   }
+  return `Tag ${gameDay(gameTime)}, ${clockTime(gameTime)}`;
+}
+
+/** In-game milliseconds -> time of day "08:30". */
+export function clockTime(gameTime: number | null | undefined): string {
+  if (gameTime === null || gameTime === undefined) {
+    return '–';
+  }
   const inDay = gameTime % MS_PER_DAY;
   const h = Math.floor(inDay / 3_600_000);
   const m = Math.floor((inDay % 3_600_000) / 60_000);
-  return `Tag ${gameDay(gameTime)}, ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 export function hoursBetween(from: number, to: number): number {

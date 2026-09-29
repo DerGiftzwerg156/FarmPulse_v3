@@ -104,7 +104,7 @@ collects it is built (named per block). Until then the block is **missing**. Fil
                "fillType": "WHEAT", "litersPerSqm": 0.9, "weedState": 1, "stoneLevel": 0,
                "sprayLevel": 1, "limeLevel": 0, "plowLevel": 1, "groundType": "SOWN" }],
   "fieldRules": { "plowingRequired": true, "limeRequired": true, "weedsEnabled": true, "stonesEnabled": false },
-  "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7 } }
+  "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7, "temperature": 14.5 } }
 ```
 
 Sources: FS25 code dump `Dukefarming/FS25-lua-scripting` ("dump") and FS25 Community LUADOC
@@ -225,18 +225,22 @@ are switched on. The backend evaluates weeds, stones, lime and plowing only with
 "Needs plowing" / "needs lime" = `plowLevel` / `limeLevel` `0`: the soil map colours state value `0` of these layers
 (`MapOverlayGenerator`), `FieldManager` sets both to their maximum on a freshly worked field.
 
-**`weather`** (R2-C2). All three fields required.
+**`weather`** (R2-C2). `raining`, `rainFallScale` and `groundWetness` required; `temperature` optional (Hof-Tablet).
 
 | Field | Meaning | Source |
 | --- | --- | --- |
 | `raining` | It is raining | `g_currentMission.environment.weather:getIsRaining()` (LUADOC: `BeehiveSystem`, `PlaceableSolarPanels`) |
 | `rainFallScale` | Rain intensity, 0 = dry (the game tests `> 0`) | `weather:getRainFallScale()` (LUADOC: `VehicleSystem`, `Wipers`, `Combine`) |
 | `groundWetness` | Ground wetness as the game uses it for wheels | `weather:getGroundWetness()` (LUADOC: `Wheels`, `Washable`) |
+| `temperature` | Current temperature in °C, 1 decimal; left out when the call fails (older mod: missing) | `weather:getCurrentTemperature()` (LUADOC: `VehicleSystem`, `Washable`, `Enterable` outside temperature) |
 
 **Built (R2-C2):** `RPSimGameAdapter:collectWeather` reads the three values at every `farm_facts` export. The backend
 extrapolates the rain hours per game month (sample and hold: the game time since the last sample counts as rain when
 that sample said `raining`; gaps above `fields.rain-sample-max-gap-minutes` and a rewound game time only move the
 reference point). A rainy month raises the hail probability of the next one (`insurance.hail-rain-factor`).
+The Hof-Tablet shows rain, temperature and ground wetness of the last sample in the status bar
+(`GET /api/savegame` → `weather`). A weather forecast is not exported: no FS25 function for it is evidenced in the
+code dump or the LUADOC.
 
 ## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, and on every `farm_facts` cycle when its content changed)
 

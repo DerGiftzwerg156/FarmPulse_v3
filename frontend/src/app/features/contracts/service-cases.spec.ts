@@ -5,7 +5,17 @@ import { provideRouter } from '@angular/router';
 import { CaseView, ContractView } from '../../core/api/models';
 import { GameStateStore } from '../../core/state/game-state.store';
 import { DAY, savegame } from '../../../testing/fixtures';
-import { Contracts } from './contracts';
+import { Component, input } from '@angular/core';
+import { ServiceCases } from './service-cases';
+
+@Component({
+  imports: [ServiceCases],
+  template: '<app-service-cases [caseKinds]="cases()" [contractKinds]="contracts()" />',
+})
+class Host {
+  readonly cases = input<string[]>([]);
+  readonly contracts = input<string[]>([]);
+}
 
 const contract = (over: Partial<ContractView> = {}): ContractView => ({
   id: 1, kind: 'INSURANCE', status: 'OFFERED', character: null, level: 'BASIC', farmlandId: null, monthlyAmount: 50,
@@ -18,14 +28,21 @@ const damage = (over: Partial<CaseView> = {}): CaseView => ({
   gameTime: 10 * DAY, deadlineGameTime: 15 * DAY, resolution: null, measureCost: null, ...over,
 });
 
-describe('Contracts', () => {
+const ALL_CASES = ['STORM_DAMAGE', 'HAIL_DAMAGE', 'WILDLIFE_DAMAGE', 'LIVESTOCK_OFFER', 'VET_VISIT', 'BREEDING_ADVICE', 'REPAIR',
+  'MISSION_REFERRAL', 'COMPENSATION_CLAIM', 'TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION'];
+const ALL_CONTRACTS = ['LEASE', 'MAINTENANCE', 'TAX_ADVISOR'];
+
+/** The service cases and contracts section used by Versicherung, Werkstatt, Ämter, Stall, Flurkarte, Kontakte, Kalender. */
+describe('ServiceCases', () => {
   function setup(contracts: ContractView[], cases: CaseView[]) {
     TestBed.configureTestingModule({
-      imports: [Contracts],
+      imports: [Host],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     TestBed.inject(GameStateStore).savegame.set(savegame({}));
-    const fixture = TestBed.createComponent(Contracts);
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentRef.setInput('cases', ALL_CASES);
+    fixture.componentRef.setInput('contracts', ALL_CONTRACTS);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
     http.expectOne('/api/contracts').flush(contracts);
@@ -34,25 +51,17 @@ describe('Contracts', () => {
     return { fixture, http, el: fixture.nativeElement as HTMLElement };
   }
 
-  it('shows the insurance offer with its conditions and accepts it', () => {
-    const { fixture, http, el } = setup([contract()], []);
-    http.expectOne('/api/insurance/quotes').flush([{ level: 'COMFORT', monthlyPremium: 131, coveragePercent: 90, deductible: 500 }]);
-    fixture.detectChanges();
-    const offer = el.querySelector('[data-testid="insurance-offer"]')!;
-    expect(offer.textContent).toContain('Basis');
-    expect(offer.textContent).toContain('60 % Erstattung');
-    expect(el.querySelectorAll('[data-testid="insurance-quote"]').length).toBe(1);
-    (el.querySelector('[data-testid="offer-accept"] button') as HTMLButtonElement).click();
-    http.expectOne('/api/contracts/1/accept').flush(contract({ status: 'ACTIVE' }));
-    http.expectOne('/api/contracts').flush([contract({ status: 'ACTIVE', nextDueGameTime: 11 * DAY })]);
-    http.expectOne('/api/cases').flush([]);
-    fixture.detectChanges();
-    expect(el.querySelector('[data-testid="insurance-active"]')?.textContent).toContain('Aktiv');
-  });
+  /** After an action the section reloads, the task list and the header refresh. */
+  function reload(http: HttpTestingController, contracts: ContractView[], cases: CaseView[]) {
+    http.expectOne('/api/contracts').flush(contracts);
+    http.expectOne('/api/cases').flush(cases);
+    http.match('/api/tasks').forEach((r) => r.flush({ items: [], waitingPrompts: 0 }));
+    http.match('/api/notices').forEach((r) => r.flush([]));
+    http.match('/api/savegame').forEach((r) => r.flush(savegame({})));
+  }
 
   it('negotiates a wildlife damage: counter demand from the form field', () => {
     const { fixture, http, el } = setup([], [damage({ kind: 'WILDLIFE_DAMAGE', offerAmount: 900, measureCost: 400 })]);
-    http.expectOne('/api/insurance/quotes').flush([]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="wildlife-offer"]')?.textContent).toContain('900');
     expect(el.querySelector('[data-testid="case-measure"]')?.textContent).toContain('400');
@@ -73,9 +82,7 @@ describe('Contracts', () => {
     const req = http.expectOne('/api/cases/7/report');
     expect(req.request.body).toEqual({ channel: 'CALL' });
     req.flush(damage({ status: 'SETTLED' }));
-    http.expectOne('/api/contracts').flush([]);
-    http.expectOne('/api/cases').flush([]);
-    http.expectOne('/api/insurance/quotes').flush([]);
+    reload(http, [], []);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="case"]')).toBeNull();
   });
@@ -85,16 +92,13 @@ describe('Contracts', () => {
     const vet = damage({ id: 10, kind: 'VET_VISIT', status: 'SETTLED', farmlandId: null, damageAmount: null, reference: 'COW',
       quantity: 24, costAmount: 176, resolution: 'INVOICED' });
     const { fixture, http, el } = setup([], [offer, vet]);
-    http.expectOne('/api/insurance/quotes').flush([]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="livestock-offer"]')?.textContent).toContain('Verkaufen: 3 Rinder');
     expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('24 Rinder');
     expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Abgerechnet');
     (el.querySelector('[data-testid="case-accept"] button') as HTMLButtonElement).click();
     http.expectOne('/api/cases/9/accept').flush({ ...offer, status: 'IN_PROGRESS' });
-    http.expectOne('/api/contracts').flush([]);
-    http.expectOne('/api/cases').flush([{ ...offer, status: 'IN_PROGRESS', baselineCount: 24 }]);
-    http.expectOne('/api/insurance/quotes').flush([]);
+    reload(http, [], [{ ...offer, status: 'IN_PROGRESS', baselineCount: 24 }]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Läuft');
     expect(el.querySelector('[data-testid="case-accept"]')).toBeNull();
@@ -105,15 +109,12 @@ describe('Contracts', () => {
     const claim = damage({ id: 11, kind: 'COMPENSATION_CLAIM', farmlandId: 13, damageAmount: null, offerAmount: 7200,
       character: { id: 4, name: 'Bauer Jansen', role: 'NEIGHBOR_FARMER', status: 'ACTIVE' } });
     const { fixture, http, el } = setup([], [claim]);
-    http.expectOne('/api/insurance/quotes').flush([]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Ausgleichsforderung');
     expect(el.querySelector('[data-testid="compensation-claim"]')?.textContent).toContain('Bauer Jansen verlangt 7.200');
     (el.querySelector('[data-testid="case-accept"] button') as HTMLButtonElement).click();
     http.expectOne('/api/cases/11/accept').flush({ ...claim, status: 'SETTLED', resolution: 'PAID' });
-    http.expectOne('/api/contracts').flush([]);
-    http.expectOne('/api/cases').flush([{ ...claim, status: 'SETTLED', resolution: 'PAID' }]);
-    http.expectOne('/api/insurance/quotes').flush([]);
+    reload(http, [], [{ ...claim, status: 'SETTLED', resolution: 'PAID' }]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="compensation-claim"]')).toBeNull();
   });
@@ -123,7 +124,6 @@ describe('Contracts', () => {
       coveragePercent: null, deductible: null, termMonths: 12, endsAtGameTime: 40 * DAY, offerExpiresAtGameTime: null,
       renewalAmount: 320, purchasePrice: 75600 });
     const { fixture, http, el } = setup([lease], []);
-    http.expectOne('/api/insurance/quotes').flush([]);
     fixture.detectChanges();
     const row = el.querySelector('[data-testid="contract"][data-kind="LEASE"]')!;
     expect(row.textContent).toContain('Feld 13');
@@ -133,23 +133,14 @@ describe('Contracts', () => {
     http.expectOne('/api/contracts/5/buy').flush({ ...lease, status: 'ENDED', endReason: 'PURCHASED' });
   });
 
-  it('requests and accepts a maintenance contract, repairs appear in the history', () => {
+  it('accepts a maintenance offer, repairs appear in the history', () => {
     const repair = damage({ id: 11, kind: 'REPAIR', status: 'SETTLED', farmlandId: null, damageAmount: null, reference: 'veh_a',
       quantity: 30, resolution: 'INCLUDED' });
-    const { fixture, http, el } = setup([], [repair]);
-    http.expectOne('/api/insurance/quotes').flush([]);
-    fixture.detectChanges();
-    expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Fahrzeug veh_a (30 %)');
-    expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Im Wartungsvertrag repariert');
-    (el.querySelector('[data-testid="request-maintenance"] button') as HTMLButtonElement).click();
     const offer = contract({ id: 6, kind: 'MAINTENANCE', status: 'OFFERED', level: null, monthlyAmount: 600, coveragePercent: null,
       deductible: null });
-    http.expectOne('/api/maintenance/offer').flush(offer);
-    http.expectOne('/api/contracts').flush([offer]);
-    http.expectOne('/api/cases').flush([repair]);
-    http.expectOne('/api/insurance/quotes').flush([]);
-    fixture.detectChanges();
-    expect(el.querySelector('[data-testid="request-maintenance"]')).toBeNull();
+    const { el, http } = setup([offer], [repair]);
+    expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Fahrzeug veh_a (30 %)');
+    expect(el.querySelector('[data-testid="closed-case"]')?.textContent).toContain('Im Wartungsvertrag repariert');
     (el.querySelector('[data-testid="contract-accept"] button') as HTMLButtonElement).click();
     http.expectOne('/api/contracts/6/accept').flush({ ...offer, status: 'ACTIVE' });
   });
@@ -157,8 +148,7 @@ describe('Contracts', () => {
   it('shows a referred vanilla contract with the hint to take it in the game', () => {
     const ref = damage({ id: 12, kind: 'MISSION_REFERRAL', farmlandId: 7, damageAmount: null, offerAmount: 5200, title: 'Ernte',
       reference: 'm1', deadlineGameTime: null });
-    const { fixture, http, el } = setup([], [ref, { ...ref, id: 13, status: 'SETTLED', resolution: 'COMPLETED' }]);
-    http.expectOne('/api/insurance/quotes').flush([]);
+    const { fixture, el } = setup([], [ref, { ...ref, id: 13, status: 'SETTLED', resolution: 'COMPLETED' }]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="mission-referral"]')?.textContent).toContain('Ernte');
     expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Feld 7');
@@ -171,7 +161,6 @@ describe('Contracts', () => {
       reference: 'ASSESSMENT', title: 'Steuerbescheid Jahr 1', quantity: 1, roundsUsed: 1,
       character: { id: 9, name: 'Frau Kramer', role: 'TAX_OFFICE', status: 'ACTIVE' } });
     const { fixture, http, el } = setup([], [bill]);
-    http.expectOne('/api/insurance/quotes').flush([]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Steuerbescheid');
     expect(el.querySelector('[data-testid="tax-bill"]')?.textContent).toContain('4.000');
@@ -179,9 +168,7 @@ describe('Contracts', () => {
     expect(el.querySelector('[data-testid="case-accept"]')?.textContent).toContain('4.040');
     (el.querySelector('[data-testid="case-accept"] button') as HTMLButtonElement).click();
     http.expectOne('/api/cases/20/accept').flush({ ...bill, status: 'SETTLED', resolution: 'PAID', payoutAmount: 4040 });
-    http.expectOne('/api/contracts').flush([]);
-    http.expectOne('/api/cases').flush([{ ...bill, status: 'SETTLED', resolution: 'PAID', payoutAmount: 4040 }]);
-    http.expectOne('/api/insurance/quotes').flush([]);
+    reload(http, [], [{ ...bill, status: 'SETTLED', resolution: 'PAID', payoutAmount: 4040 }]);
     fixture.detectChanges();
     const closed = el.querySelector('[data-testid="closed-case"]')?.textContent ?? '';
     expect(closed).toContain('Steuerbescheid Jahr 1');
@@ -194,8 +181,7 @@ describe('Contracts', () => {
       title: 'ANIMAL_WELFARE', reference: 'h1', roundsUsed: 1 });
     const fined = damage({ id: 22, kind: 'AUTHORITY_INSPECTION', status: 'SETTLED', farmlandId: 7, damageAmount: null,
       title: 'CULTIVATION_DUTY', reference: '7', costAmount: 500, resolution: 'FINED' });
-    const { fixture, http, el } = setup([], [inspection, fined]);
-    http.expectOne('/api/insurance/quotes').flush([]);
+    const { fixture, el } = setup([], [inspection, fined]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="inspection"]')?.textContent).toContain('Kontrolle: Tierwohl');
     expect(el.querySelector('[data-testid="inspection-requirement"]')).not.toBeNull();
@@ -210,7 +196,6 @@ describe('Contracts', () => {
     const request = damage({ id: 23, kind: 'SPONSORING_REQUEST', farmlandId: null, damageAmount: null, reference: 'FIRE_BRIGADE',
       tiers: [250, 500, 1000] });
     const { fixture, http, el } = setup([], [request]);
-    http.expectOne('/api/insurance/quotes').flush([]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="sponsoring"]')?.textContent).toContain('Freiwillige Feuerwehr');
     const tiers = el.querySelectorAll('[data-testid="sponsor-tier"] button');
@@ -223,7 +208,6 @@ describe('Contracts', () => {
   it('answers an invitation to a festival', () => {
     const invitation = damage({ id: 24, kind: 'INVITATION', farmlandId: null, damageAmount: null, reference: 'SCHUETZENFEST' });
     const { fixture, http, el } = setup([], [invitation]);
-    http.expectOne('/api/insurance/quotes').flush([]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="invitation"]')?.textContent).toContain('Einladung zum Schützenfest');
     (el.querySelector('[data-testid="case-decline"] button') as HTMLButtonElement).click();
@@ -233,8 +217,7 @@ describe('Contracts', () => {
   it('cancels an active tax advisor contract', () => {
     const advisor = contract({ id: 30, kind: 'TAX_ADVISOR', status: 'ACTIVE', level: null, monthlyAmount: 150, coveragePercent: null,
       deductible: null, offerExpiresAtGameTime: null });
-    const { fixture, http, el } = setup([contract({ status: 'ACTIVE' }), advisor], []);
-    fixture.detectChanges();
+    const { http, el } = setup([contract({ status: 'ACTIVE' }), advisor], []);
     expect(el.querySelector('[data-testid="contract"][data-kind="TAX_ADVISOR"]')?.textContent).toContain('Steuerberatung');
     (el.querySelector('[data-testid="contract-cancel"] button') as HTMLButtonElement).click();
     http.expectOne('/api/contracts/30/cancel');

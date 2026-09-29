@@ -1,5 +1,4 @@
 <section class="space-y-4">
-  <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.bank' | t }}</h1>
 
   @if (error(); as err) {
     <app-page-error [error]="err" />
@@ -30,6 +29,9 @@
           }
           @if (formError()) {
             <p class="text-[12px] text-danger" data-testid="credit-error">{{ formError() }}</p>
+          }
+          @if (surcharge() > 0) {
+            <p class="rounded-lg border border-warn/40 px-2 py-1.5 text-[12px] text-warn" data-testid="bypass-surcharge">{{ 'settings.bypass.surcharge' | t: { percent: surcharge() } }}</p>
           }
           <p class="text-[11px] text-muted">{{ 'bank.processingHint' | t }}</p>
           <div class="flex justify-end">
@@ -166,6 +168,5 @@
     </app-card>
   }
 
-  <app-tax-card />
   <app-finance-card />
 </section>

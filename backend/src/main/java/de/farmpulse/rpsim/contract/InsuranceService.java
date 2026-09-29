@@ -161,7 +161,7 @@ public class InsuranceService {
                         .put("coveragePercent", Math.round(l.getCoverageRate() * 100)).put("deductible", l.getDeductible())
                         .put("validDays", Math.round(cfg().getOfferValidDays())).build())
                 .category(CommunicationCategory.INSURANCE).related(ContractBillingService.RELATED, c.getId())
-                .formLink("/contracts?contract=" + c.getId()).submit();
+                .formLink("/versicherung?contract=" + c.getId()).submit();
         return c;
     }
 
@@ -407,7 +407,7 @@ public class InsuranceService {
                         .put("reportDeadlineDays", covered ? Math.round(cfg().getReportDeadlineDays()) : null).build())
                 .channel(covered ? Channel.CALL : Channel.MAIL)
                 .category(CommunicationCategory.INSURANCE).related(RELATED, sc.getId())
-                .formLink(covered ? "/contracts?case=" + sc.getId() : null).submit();
+                .formLink(covered ? "/versicherung?case=" + sc.getId() : null).submit();
         diary.addAuto(sg, "INSURANCE", kind == CaseKind.HAIL_DAMAGE
                         ? "Hagel auf Feld " + fieldName + (crop == null ? "" : " (" + crop + ")") : "Sturmschaden",
                 "Schaden: " + damage + " €" + (covered ? " – versichert, Meldung ausstehend." : " – nicht versichert."),

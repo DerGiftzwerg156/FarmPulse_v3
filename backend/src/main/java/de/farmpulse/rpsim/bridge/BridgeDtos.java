@@ -116,9 +116,17 @@ public final class BridgeDtos {
     public record FieldRules(Boolean plowingRequired, Boolean limeRequired, Boolean weedsEnabled, Boolean stonesEnabled) {
     }
 
-    /** Roadmap V2 R2-C2: current weather (environment.weather getIsRaining / getRainFallScale / getGroundWetness). */
+    /**
+     * Roadmap V2 R2-C2: current weather (environment.weather getIsRaining / getRainFallScale / getGroundWetness).
+     * Hof-Tablet: {@code temperature} in °C (weather:getCurrentTemperature); missing with an older mod.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Weather(Boolean raining, Double rainFallScale, Double groundWetness) {
+    public record Weather(Boolean raining, Double rainFallScale, Double groundWetness, Double temperature) {
+
+        /** R2-C2 contract without the temperature (older mod). */
+        public Weather(Boolean raining, Double rainFallScale, Double groundWetness) {
+            this(raining, rainFallScale, groundWetness, null);
+        }
     }
 
     /** TODO T-08: FS25 calendar of the savegame (game month = FS25 period, period 1 = March). */

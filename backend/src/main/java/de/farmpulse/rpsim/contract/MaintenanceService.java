@@ -133,7 +133,7 @@ public class MaintenanceService {
                         .put("maxRepairsPerMonth", cfg().getMaxRepairsPerMonth())
                         .put("validDays", Math.round(cfg().getOfferValidDays())).build())
                 .category(CommunicationCategory.CONTRACT).related(ContractBillingService.RELATED, c.getId())
-                .formLink("/contracts?contract=" + c.getId()).submit();
+                .formLink("/werkstatt?contract=" + c.getId()).submit();
         return c;
     }
 

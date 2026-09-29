@@ -1,38 +1,109 @@
 # Funktionen im Überblick
 
-FarmPulse läuft neben dem Spiel: Du spielst Farming Simulator wie gewohnt, und im Browser melden sich die Menschen
-aus deinem Dorf. **Alle Zahlen – Kredite, Preise, Gehälter, Vertrauen – berechnet FarmPulse nach festen Regeln.**
-Die KI formuliert nur, *wie* die Charaktere es dir sagen. Deshalb gibst du Beträge immer in Formularen ein, nie im
-Freitext.
+FarmPulse läuft neben dem Spiel: Du spielst Farming Simulator wie gewohnt, und auf deinem **Hof-Tablet** im Browser
+melden sich die Menschen aus deinem Dorf. **Alle Zahlen – Kredite, Preise, Gehälter, Vertrauen – berechnet FarmPulse
+nach festen Regeln.** Die KI formuliert nur, *wie* die Charaktere es dir sagen. Deshalb gibst du Beträge immer in
+Formularen ein, nie im Freitext.
 
-Neues erscheint **live** (grüne Anzeige *Live* oben rechts), ohne dass du die Seite neu laden musst. Die Glocke
-zählt ungelesene Mails und anstehende Anrufe.
+## Das Hof-Tablet
 
-## Dashboard
+![Startbildschirm](../screenshots/10-start.png)
 
-![Dashboard](../screenshots/10-dashboard.png)
+FarmPulse sieht aus wie ein Tablet auf dem Hof: Jede Funktion ist eine **App**, der Startbildschirm ist der
+Homescreen.
 
-Kontostand, ungelesene Mails, anstehende Anrufe, offene Kredite, laufende Verhandlungen und dein Ansehen im Dorf auf
-einen Blick – dazu die letzten Ereignisse, eine Vorschau aufs Postfach und dein Silobestand.
+- **Statusleiste (oben, immer sichtbar):** Karte, Spieltag und Uhrzeit, FS25-Monat, das **Wetter** aus dem Spiel
+  (Temperatur, Regen oder trocken; mit der Maus darüber steht, wie nass der Boden ist), dein Kontostand und die
+  Anzeige *Live*. Neues erscheint live, ohne dass du die Seite neu laden musst. Ein Klick auf den Kartennamen führt
+  zurück zum Start. Die Temperatur braucht die aktuelle Mod-Version.
+- **Startbildschirm:** Uhrzeit und Datum im Spiel, darunter drei Kennzahlen – das **Monatsergebnis** (führt zur Bank),
+  die **nächste Abbuchung** zum Monatsbeginn (führt zum Kalender) und dein **Ansehen im Dorf** (führt zu den
+  Kontakten). Daneben die Widgets **Zu erledigen** (die dringendsten Aufgaben), **Felder** (wie viele erntereif sind)
+  und **Stall** (Gesundheit und Futter des Stalls, der am schlechtesten dasteht).
+- **Apps:** Eine Zahl am App-Symbol zählt, was dort auf dich wartet – ungelesene Mails, klingelnde Anrufe, offene
+  Entscheidungen.
+- **Dock:** Post, Telefon, Aufgaben und Kalender liegen immer griffbereit – auf dem Start unten schwebend, in jeder
+  App als Leiste am unteren Rand.
+- **In einer App** steht oben ihr Name mit einer kurzen Beschreibung; **Start** führt zurück zum Homescreen.
 
-## Postfach
+| App | Was du dort findest |
+| --- | --- |
+| **Post** | Mails aus dem Dorf, Entscheidungen direkt in der Mail |
+| **Telefon** | Anrufe annehmen, zurückrufen und nachlesen |
+| **Kontakte** | Dorf, Familie und Vereine, Vertrauen und Ansehen, Sponsoring |
+| **Aufgaben** | Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert |
+| **Kalender** | Die nächsten Tage, Abbuchungen zum Monatsbeginn, Dorffeste, Steuertermine, Familie, Einladungen |
+| **Bank** | Kredite, Anträge und Hofbuchhaltung |
+| **Ämter** | Finanzamt (Steuern, Bescheide, Steuerberatung) und Landwirtschaftsamt (Kontrollen) |
+| **Agrarbörse** | Silo, Preise, Marktgeschehen und Kontrakte |
+| **Versicherung** | Sturm- und Hagelversicherung, Schäden melden, Wildschaden |
+| **Personal** | Team, Helferstunden, Helfer im Spiel und Stellenausschreibungen |
+| **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen |
+| **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl |
+| **Werkstatt** | Wartung, Wartungsvertrag und Mechaniker |
+| **Tagebuch** | Die Chronik deines Hofs |
+| **Einstellungen** | KI, Fragen im Spiel, Hinweise und Reaktionen |
 
-![Postfach](../screenshots/11-postfach.png)
+Alte Lesezeichen (z. B. `/mailbox`, `/bank`, `/contracts`) funktionieren weiter und führen in die passende App.
 
-Mails sind ohne Zeitdruck: Antworte frei, wann du willst – die Antwort kommt in Spielzeit zurück. Mails, bei denen
-es um Geld geht (Gegenangebot der Bank, Bewerbungen, Gebote, Sonderkontrakte), tragen das Badge **Formular** und
-führen dich mit **Zum Formular** an die richtige Stelle. Glückwünsche, Einladungen und Klatsch erkennst du am Badge
-**Dorfleben**. Wie freundlich du schreibst, merkt sich dein Gegenüber – ein wenig.
+## Aufgaben
+
+![Aufgaben](../screenshots/22-aufgaben.png)
+
+Alles, was auf deine Entscheidung wartet, an einem Ort: Schadensmeldungen, Vertragsangebote, eine auslaufende Pacht,
+das Gegenangebot der Bank, klingelnde Anrufe, offene Verhandlungen, Sonderkontrakte, Stellen mit Bewerbungen,
+Einladungen, Steuerbescheide und angekündigte Kontrollen. Die Liste ist nach Frist sortiert und in **Heute**,
+**Diese Woche** und **Später** gegliedert; oben filterst du nach *Heute*, *Geld*, *Hof* und *Dorf*.
+
+Ganz oben stehen die **Hinweise aus dem Spiel** – z. B. eine Buchung, die der Mod mangels Geld nicht ausführen
+konnte, oder die Frage nach dem Nachbuchen, wenn du einen älteren Spielstand geladen hast (siehe
+[Fehlerbehebung](fehlerbehebung.md#spielstand-ohne-speichern-neu-geladen)).
+
+Jede Karte zeigt, aus welcher App sie kommt. Einfache Entscheidungen triffst du direkt auf der Karte; **In App**
+öffnet die App mit dem Eintrag markiert. Warten Fragen im Spiel (siehe **Einstellungen**), steht ihre Zahl oben –
+entscheidest du hier, verschwinden sie im Spiel. Daneben siehst du, was heute im Tagebuch steht.
+
+## Kalender
+
+![Kalender](../screenshots/23-kalender.png)
+
+- **Nächste Tage:** alles, was in den kommenden Spieltagen ansteht – Monatsbeginn, Kreditraten, Gehälter,
+  Vertragszahlungen, das Ende einer Pacht, Dorffeste, Steuertermine und die Fristen offener Entscheidungen.
+- **Monatsbeginn:** was zum nächsten Monatsbeginn automatisch abgebucht wird (Gehälter, Kreditraten, Prämien,
+  Pacht, Wartung, Altenteil), die Summe und ungefähr dein Kontostand danach. Was du **selbst zahlen** musst
+  (Steuerbescheide), steht extra.
+- **Das Jahr im Überblick:** die festen Termine des FS25-Jahres – Dorffeste der Vereine, Steuerbescheid und
+  Vorauszahlungen, die Fruchtfolge-Prüfung des Amts und Familientermine (Geburtstage, Hochzeitstag, Einschulung).
+- **Einladungen** zu den Dorffesten beantwortest du hier: **Zusagen** freut die Gastgeber, **Absagen** ist in
+  Ordnung, gar nicht zu antworten kostet ein wenig Vertrauen.
+
+Ein Spielmonat ist der Monat im FS25-Kalender; stellst du im Spiel die „Tage pro Monat“ um, verschieben sich alle
+Termine passend mit.
+
+## Post
+
+![Post](../screenshots/11-post.png)
+
+Mails sind ohne Zeitdruck: Antworte frei, wann du willst – die Antwort kommt in Spielzeit zurück. Wie freundlich du
+schreibst, merkt sich dein Gegenüber – ein wenig.
+
+Mails, bei denen es um eine Entscheidung geht (Gegenangebot der Bank, Vertragsangebote, Gebote, Sonderkontrakte,
+Ausgleichsforderungen …), tragen das Badge **Entscheidung**. Statt einer freien Antwort zeigen sie die Karte **Deine
+Entscheidung** mit den Bedingungen und den Knöpfen – du entscheidest also direkt in der Mail. **In der App öffnen**
+führt zum Eintrag in seiner App (z. B. für eine Bewerbung ins Personal). Ist die Entscheidung schon gefallen oder
+abgelaufen, steht das dort. Glückwünsche, Einladungen und Klatsch erkennst du am Badge **Dorfleben**. Oben filterst
+du nach *Ungelesen*, *Entscheidung* und *Dorfleben*.
 
 Während du spielst, blendet FS25 neue Mails und eingehende Anrufe kurz ein („FarmPulse: Neue Mail von …“), damit du
 nicht ständig in den Browser schauen musst. Abschalten lässt sich das mit `rpsim.bridge.ingame-notifications: false`.
 
-## Anrufe
+## Telefon
 
 ![Eingehender Anruf](../screenshots/19-anruf-eingehend.png)
 
-Anrufe klingeln – in Spielzeit. **Annehmen** öffnet das Gespräch. **Ablehnen** kostet etwas Vertrauen, und das
-Thema bleibt offen, bis du dich selbst meldest. Ignorierst du den Anruf, gilt er nach einer Weile als verpasst.
+Anrufe klingeln – in Spielzeit, egal in welcher App du gerade bist. **Annehmen** öffnet das Gespräch. **Ablehnen**
+kostet etwas Vertrauen, und das Thema bleibt offen, bis du dich selbst meldest. Ignorierst du den Anruf, gilt er
+nach einer Weile als verpasst. In der App **Telefon** stehen alle Anrufe zum Nachlesen und Zurückrufen.
 
 ![Gespräch](../screenshots/20-anruf-gespraech.png)
 
@@ -44,7 +115,7 @@ ob du annimmst – ohne in den Browser zu wechseln. *Ja* nimmt an (das Gespräch
 lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefragt werden, stellst du unter
 **Einstellungen** ein.
 
-## Bank & Finanzen
+## Bank
 
 ![Bank](../screenshots/12-bank.png)
 
@@ -55,15 +126,14 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
 - In die Prüfung fließen dein Vermögen (auch das Getreide im Silo), Liquidität, Einnahmen, Schulden (auch der
   Kredit aus dem Grundspiel), Zahlungshistorie und – nur als kleiner Zuschlag – dein Vertrauen bei der Bank.
 - **Laufende Kredite:** Rate, Restschuld, Tilgungsplan und Zahlungshistorie. Raten werden automatisch abgebucht –
-  jeweils zu Beginn eines Spielmonats. Ein Spielmonat ist der Monat im FS25-Kalender; stellst du im Spiel die
-  „Tage pro Monat“ um, verschieben sich alle Termine passend mit.
+  jeweils zu Beginn eines Spielmonats (was genau, zeigt der **Kalender**).
 - Geleaste Fahrzeuge zählen nicht zum Vermögen.
 - **Hofbuchhaltung:** Der Mod schreibt jede Buchung des Spiels mit (Ernteverkauf, Kraftstoff, Saatgut, Helferlohn,
-  Leasing …) und summiert sie je Spielmonat. Unter *Bank & Finanzen* siehst du Einnahmen und Ausgaben des laufenden
-  Betriebs je Monat als Balken, das **Monatsergebnis** und in der *Tabelle* zusätzlich Investitionen,
-  Anlagenverkäufe und Kredite. Die Bank rechnet damit: Dein Cashflow ist der Durchschnitt der abgeschlossenen
-  Monate, Investitionen zählen nicht als Verlust, und die echten Leasingkosten gelten als laufende Verpflichtung.
-  Mit einem älteren Mod rechnet die Bank weiter mit dem Kontostand.
+  Leasing …) und summiert sie je Spielmonat. In der Bank siehst du Einnahmen und Ausgaben des laufenden Betriebs je
+  Monat als Balken, das **Monatsergebnis** und in der *Tabelle* zusätzlich Investitionen, Anlagenverkäufe und
+  Kredite. Die Bank rechnet damit: Dein Cashflow ist der Durchschnitt der abgeschlossenen Monate, Investitionen
+  zählen nicht als Verlust, und die echten Leasingkosten gelten als laufende Verpflichtung. Mit einem älteren Mod
+  rechnet die Bank weiter mit dem Kontostand.
 - **Achtung Fahrzeugkauf:** Unter welcher Buchungsart FS25 einen Fahrzeugkauf verbucht, ist noch nicht geprüft. Bis
   das geklärt ist, erscheint ein Fahrzeugkauf als Ausgabe (meist als *Unbekannte Buchung*) und senkt das
   Monatsergebnis. Gebäudekäufe zählen schon als Investition.
@@ -77,8 +147,15 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
 - **Kredit aus dem Spielmenü:** Den Kredit im Finanzmenü von FS25 kannst du weiter nutzen – gesperrt wird nichts.
   Die Bank merkt es aber: Nimmst du dort Geld auf, meldet sich deine Bankberaterin („Sie haben sich woanders Geld
   geliehen?“) und ihr Vertrauen sinkt, je mehr du aufnimmst. Tust du es erneut, während der alte Kredit noch offen
-  ist, kosten neue Kredite der Bank einen Zinsaufschlag, bis der Kredit aus dem Spielmenü ganz getilgt ist (unter
-  **Einstellungen** siehst du, ob gerade ein Aufschlag gilt). Jede Rückzahlung nimmt sie wohlwollend zur Kenntnis.
+  ist, kosten neue Kredite der Bank einen Zinsaufschlag, bis der Kredit aus dem Spielmenü ganz getilgt ist – gilt
+  gerade ein Aufschlag, steht er direkt über dem Antragsformular. Jede Rückzahlung nimmt sie wohlwollend zur
+  Kenntnis.
+
+## Ämter
+
+![Ämter](../screenshots/25-aemter.png)
+
+**Finanzamt**
 
 - **Steuern:** Das Finanzamt meldet sich mit dem ersten Steuerbescheid. Das Steuerjahr ist das FS25-Jahr (ab März).
   Gerechnet wird mit der Hofbuchhaltung: Gewinn = Einnahmen − Ausgaben des laufenden Betriebs (ohne Steuern und
@@ -88,14 +165,30 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   gutgeschrieben). Ab dem zweiten Jahr zahlst du vierteljährlich **Vorauszahlungen** (März, Juni, September,
   Dezember) auf Basis des letzten Bescheids. Die Karte **Steuern** zeigt die voraussichtliche Steuer des laufenden
   Jahres, die nächste Vorauszahlung und den letzten Bescheid Zeile für Zeile.
-- **Bescheide bezahlst du selbst** unter **Verträge & Vorgänge** mit *Zahlen* – abgebucht wird nichts automatisch.
-  Nach der Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, das Finanzamt mahnt und droht später mit
-  Pfändung (nur als Brief und Vertrauensverlust, gesperrt wird nichts).
+- **Bescheide bezahlst du selbst** unter **Bescheide** mit *Zahlen* – abgebucht wird nichts automatisch. Nach der
+  Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, das Finanzamt mahnt und droht später mit Pfändung (nur
+  als Brief und Vertrauensverlust, gesperrt wird nichts). Vorauszahlungen, Nachzahlungen und Nachforderungen einer
+  Betriebsprüfung stehen dort mit Frist.
 - **Steuerberatung:** Mit *Steuerberatung anfragen* bekommst du ein Angebot mit Monatshonorar. Die Beratung senkt
   die Steuer um einen Anteil, erinnert dich kurz vor einer Frist und macht eine **Betriebsprüfung** unwahrscheinlicher.
   Eine Prüfung kann nach jedem Bescheid zufällig kommen; sie fordert Steuer nach auf Ausgaben unter unbekannten
   Buchungsarten und auf Monate, in denen die Ausgaben sprunghaft über dem Durchschnitt lagen.
 - Ohne Hofbuchhaltung (älterer Mod) gibt es keinen Bescheid.
+
+**Landwirtschaftsamt** – das Amt prüft nur, was das Spiel wirklich meldet:
+
+- **Fruchtfolge:** Am Ende jedes FS25-Jahres vergleicht das Amt die Hauptkultur jedes Feldes mit dem Vorjahr. Für
+  jeden Hektar mit Fruchtwechsel gibt es eine **Fruchtfolgeprämie**. Steht auf einem Feld zweimal dieselbe Kultur,
+  kommt ein Hinweis; passiert es auf einem Feld ein weiteres Mal, wird die gesamte Prämie des Jahres gekürzt. Die
+  Vorschau aufs laufende Jahr steht in der **Flurkarte**.
+- **Bewirtschaftungspflicht:** Liegt ein eigenes Feld mehrere Monate ohne Kultur und voller Unkraut oder Steine,
+  kündigt das Amt eine Kontrolle an. Ist das Feld zur Frist immer noch so, folgt ein Bußgeld.
+- **Tierwohl:** Ist die Gesundheit in einem Stall mehrere Tage sehr niedrig oder sind Futter oder Wasser leer, kündigt
+  das Amt eine Kontrolle an. Beim ersten Verstoß gibt es eine **Auflage** mit neuer Frist, danach ein Bußgeld – und
+  das Dorf redet darüber. Die Ankündigung steht auch im **Stall**.
+
+Jede Kontrolle wird vorher angekündigt (unter **Kontrollen** mit Frist), du hast also immer Zeit zu reagieren. Das
+Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als zwei Kontrollen im Monat gibt es nicht.
 
 ## Personal
 
@@ -118,41 +211,62 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   Monat gefahren ist: Mehr als 8 Stunden je Spieltag drücken auf die Arbeitsbelastung, weniger erholt. Wer wenig
   fährt, bringt auch weniger zusätzlichen Nutzen. Ein Streikender stellt seinen Helfer sofort ab. Fahren ständig
   Helfer ohne eigenen Mitarbeiter, fragt die Genossenschaft einmal nach, ob du nicht jemanden fest einstellen willst.
+- **Helfer im Spiel:** *Helferlohn über das Gehalt* (Standard an) – fährt ein Maschinenführer, bucht das Spiel keinen
+  Helferlohn. Ausgeschaltet zahlst du zusätzlich den normalen Spiellohn. *Strenger Modus* (Standard aus) – höchstens
+  so viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann keine Helfer, streikende oder
+  freigestellte zählen nicht.
 - **Mechaniker:in.** Setzt zu jedem Monatsbeginn deine am stärksten abgenutzten Maschinen instand – so weit ihre
   Zeit reicht (je besser das Können, desto mehr). Bleiben Maschinen liegen, steigt die Arbeitsbelastung. Über die
-  Arbeit kommt jeden Monat ein kurzer Werkstattbericht.
+  Arbeit kommt jeden Monat ein kurzer Werkstattbericht (siehe **Werkstatt**).
 - **Tierpfleger:in.** Kümmert sich um deine Ställe. Zu viele Tiere je Pfleger (ab etwa 80) belasten, kranke Tiere
-  drücken auf die Arbeitsbedingungen. Fehlt es in einem Stall an Futter oder Wasser, meldet sich der Pfleger.
+  drücken auf die Arbeitsbedingungen. Fehlt es in einem Stall an Futter oder Wasser, meldet sich der Pfleger (siehe
+  **Stall**).
 - Die Stundenzählung braucht die aktuelle Mod-Version; mit einer älteren gilt die bisherige Arbeitsbelastung.
 
-## Felder & Verhandlung
+## Flurkarte
 
-![Felder](../screenshots/14-felder-verhandlung.png)
+![Flurkarte](../screenshots/14-flurkarte.png)
 
-Die Feldübersicht zeigt alle Felder der Karte: deine eigenen, die der Dorfbewohner und freie. Felder, die
+Die Flurkarte zeigt alle Felder der Karte: deine eigenen, die der Dorfbewohner und freie. Felder, die
 jemandem gehören, gehören den Figuren, die das Spiel selbst dem Feld zuordnet – du triffst also dieselben Namen wie
 im Feld-Menü von FS25. Diese Figuren gehören zur Karte und ziehen nie weg.
+
+**Meine Felder:** Mit der aktuellen Mod-Version steht über der Karte eine Tabelle deiner eigenen und gepachteten
+Felder: Fläche, Kultur, Phase (leer, wächst, erntereif, abgeerntet, verdorrt), was zu tun ist (ernten, kalken,
+pflügen, Unkraut, Steine) und die **Fruchtfolge** gegenüber dem Vorjahr. Darunter die voraussichtliche
+**Fruchtfolgeprämie** des laufenden Jahres und eine Warnung, auf welchen Feldern dieselbe Kultur wie im Vorjahr steht
+(Hinweis des Amts) oder zum zweiten Mal steht (Kürzung der Prämie). Abgerechnet wird am Ende des FS25-Jahres mit der
+Hauptkultur jedes Feldes.
 
 - **Versteigerungen** werden per Mail angekündigt; andere bieten mit, du hast bis zu drei Runden.
 - **Direktverhandlung:** Bei Feldern, die jemandem aus dem Dorf gehören, eröffnest du selbst eine Verhandlung.
   Auf ein zu niedriges Angebot folgt ein Gegenangebot, das du mit einem Klick annehmen kannst.
 - **Eigene Felder verkaufen:** Wunschpreis nennen, Interessenten melden sich mit einem ersten Angebot.
 
-Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebucht.
+Einigt ihr euch, wechselt das Feld im Spiel den Besitzer und das Geld wird gebucht. Reicht dein Kontostand für einen
+Kauf nicht, platzt das Geschäft – das Feld bleibt beim bisherigen Besitzer. Flächen, die das Spiel selbst nicht zum
+Kauf anbietet (Ortschaft, Straßen), sind als „nicht handelbar“ markiert.
+
+**Pacht.** Felder, die jemandem aus dem Dorf gehören, kannst du mit **Pacht anfragen** pachten statt kaufen. Sagt der
+Besitzer zu, nimmst du das Angebot in der Flurkarte (oder in **Aufgaben**) an: Im Spiel gehört dir das Feld dann für
+die Laufzeit (du kannst es ganz normal bewirtschaften), die Pacht wird zu jedem Monatsbeginn abgebucht. Einen Monat
+vor dem Ende meldet sich der Besitzer mit einer Verlängerung zum neuen Pachtpreis und – wenn er verkaufen würde –
+einem Kaufangebot. Antwortest du nicht, geht das Feld zum Ende automatisch zurück. Bleibt die Pacht zweimal offen,
+nimmt er das Feld vorzeitig zurück.
 
 **Feldmenü des Spiels:** Du kannst Felder weiter direkt im Feldmenü von FS25 kaufen und verkaufen – gesperrt wird
 nichts, aber das Dorf merkt es. Kaufst du das Feld einer Figur über ihren Kopf hinweg, ist sie verärgert (weniger
 Vertrauen, dein Ansehen im Dorf sinkt etwas) und verlangt einen Ausgleich (10 % des Spielpreises). Die Forderung
-findest du unter **Verträge & Vorgänge**: *Ausgleich zahlen* oder *Ablehnen* – ablehnen oder die Frist verstreichen
-lassen kostet weiteres Vertrauen. Ein freies Feld im Spielmenü zu kaufen, landet nur im Tagebuch; verkaufst du ein
-eigenes Feld dort, redet das Dorf darüber.
- Reicht dein Kontostand für
-einen Kauf nicht, platzt das Geschäft – das Feld bleibt beim bisherigen Besitzer. Flächen, die das Spiel selbst
-nicht zum Kauf anbietet (Ortschaft, Straßen), sind als „nicht handelbar“ markiert.
+steht in der Flurkarte: *Ausgleich zahlen* oder *Ablehnen* – ablehnen oder die Frist verstreichen lassen kostet
+weiteres Vertrauen. Ein freies Feld im Spielmenü zu kaufen, landet nur im Tagebuch; verkaufst du ein eigenes Feld
+dort, redet das Dorf darüber.
 
-**Was auf deinen Feldern wächst:** Mit der aktuellen Mod-Version zeigt die Detailansicht eines Feldes, das du im
-Spiel bewirtschaftest, die Kultur und die Phase (leer, wächst, erntereif, abgeerntet, verdorrt). Das Dorf bekommt das
-mit:
+**Lohnunternehmer – Aufträge aus dem Spiel.** Der Lohnunternehmer macht dich ab und zu per Mail auf einen Auftrag
+aufmerksam, der gerade im Auftragsmenü des Spiels verfügbar ist (Titel, Feld, Auftraggeber, Lohn). Annehmen und
+erledigen tust du ihn wie gewohnt im Spiel. Schaffst du ihn, steigt dein Ansehen beim Lohnunternehmer und beim
+Auftraggeber; das Tool selbst startet nie einen Auftrag.
+
+**Was auf deinen Feldern wächst**, bekommt das Dorf mit (aktuelle Mod-Version):
 
 - **Hagel und Wildschweine** treffen nur Felder, auf denen etwas steht. Der Hagelschaden richtet sich nach Fläche,
   Ertrag und aktuellem Preis deiner Kultur, der Wildschaden nach Fläche und Wachstum; betroffen sind nur Mais,
@@ -174,23 +288,9 @@ Mit einer älteren Mod-Version bleibt alles wie bisher: Hagel und Wildschaden tr
 **Als Familienfeld markieren** („Das Feld am Bach war schon beim Großvater in der Familie“). Verkaufst du es später –
 im Tool oder im Feldmenü des Spiels –, sinkt das Vertrauen der ganzen Familie deutlich.
 
-**Das Amt** prüft nur, was das Spiel wirklich meldet:
+## Agrarbörse
 
-- **Fruchtfolge:** Am Ende jedes FS25-Jahres vergleicht das Amt die Hauptkultur jedes Feldes mit dem Vorjahr. Für
-  jeden Hektar mit Fruchtwechsel gibt es eine **Fruchtfolgeprämie**. Steht auf einem Feld zweimal dieselbe Kultur,
-  kommt ein Hinweis; passiert es auf einem Feld ein weiteres Mal, wird die gesamte Prämie des Jahres gekürzt.
-- **Bewirtschaftungspflicht:** Liegt ein eigenes Feld mehrere Monate ohne Kultur und voller Unkraut oder Steine,
-  kündigt das Amt eine Kontrolle an. Ist das Feld zur Frist immer noch so, folgt ein Bußgeld.
-- **Tierwohl:** Ist die Gesundheit in einem Stall mehrere Tage sehr niedrig oder sind Futter oder Wasser leer, kündigt
-  das Amt eine Kontrolle an. Beim ersten Verstoß gibt es eine **Auflage** mit neuer Frist, danach ein Bußgeld – und
-  das Dorf redet darüber.
-
-Jede Kontrolle wird vorher angekündigt (sie steht unter **Verträge & Vorgänge** mit Frist), du hast also immer Zeit
-zu reagieren. Mehr als zwei Kontrollen im Monat gibt es nicht.
-
-## Warenbestand & Preise
-
-![Warenbestand](../screenshots/15-warenbestand-preise.png)
+![Agrarbörse](../screenshots/15-agrarboerse.png)
 
 Was liegt im Silo, was ist es wert, wo zahlt man gerade am meisten? Der **Preisverlauf** zeigt die Preise je
 Verkaufsstelle über 7, 30, 90 Tage oder den ganzen Spielstand (mit *Tabelle* auch als Zahlen). Im
@@ -198,10 +298,19 @@ Verkaufsstelle über 7, 30, 90 Tage oder den ganzen Spielstand (mit *Tabelle* au
 denen du teilnehmen kannst. Ein volles Silo zählt übrigens bei der Bank als Vermögen, und Marktereignisse treffen
 bevorzugt die Früchte, die du wirklich lagerst.
 
-## Verträge & Vorgänge
+- **Energieversorger – nur wenn deine Karte eine passende Verkaufsstelle hat.** Nimmt eine Verkaufsstelle z. B.
+  Silage, Gärreste oder Methan an (Biogas-Anlage), bietet der Energieversorger Festpreis-Kontrakte an oder kündigt
+  Preisschwankungen an dieser Stelle an. Gibt es keine solche Verkaufsstelle, meldet er sich nicht.
+- **Lieferverträge mit Produktionen.** Gibt es auf der Karte Produktionen, die Waren ankaufen (z. B. Bäckerei oder
+  Molkerei), bietet die Genossenschaft gelegentlich einen Liefervertrag zum Festpreis an. Er erscheint wie ein
+  Sonderkontrakt; du entscheidest, ob du mitmachst.
 
-Neue Ansprechpartner stellen sich vor, sobald es für sie etwas zu tun gibt. Ihre Verträge und offenen Vorgänge
-findest du unter **Verträge & Vorgänge**.
+## Versicherung
+
+![Versicherung](../screenshots/24-versicherung.png)
+
+Neue Ansprechpartner stellen sich vor, sobald es für sie etwas zu tun gibt – ihre Verträge und offenen Vorgänge
+stehen in der App, zu der sie gehören.
 
 - **Versicherungsmakler:in – Sturm- und Hagelversicherung.** Unwetter werden simuliert: Hagel trifft im Frühjahr
   und Sommer eines deiner Felder, Stürme im Herbst und Winter deine Gebäude. Ein Schaden kostet immer Geld. Mit
@@ -212,61 +321,57 @@ findest du unter **Verträge & Vorgänge**.
   Schaden kostet Geld). Der Jagdpächter bietet Ersatz an. Du kannst annehmen, mehr fordern (bis zu zwei Runden),
   eine **gemeinsame Maßnahme** vereinbaren (eigener Beitrag, danach für einige Monate seltener Schäden, besseres
   Ansehen im Dorf) oder ablehnen – ein Streit spricht sich herum. Antwortest du nicht, zahlt er sein letztes Angebot.
+
+## Stall
+
+![Stall](../screenshots/26-stall.png)
+
+Der Stall zeigt deine Ställe so, wie das Spiel sie meldet: Tierart, Anzahl, **Gesundheit**, **Futter**, **Wasser**,
+**Produktivität** und den Wert der Tiere. Wird es in einem Stall knapp, ist er markiert; eine angekündigte
+**Tierwohl-Kontrolle** des Amts steht mit Frist darüber. Gesundheit, Futter und Wasser brauchen die aktuelle
+Mod-Version.
+
+- **Tierpfleger:innen:** wer sich kümmert und wie viele Tiere auf eine Person kommen (ab etwa 80 wird es eng).
 - **Tierarzt, Viehhändler:in und Zuchtberatung – nur wenn du Tiere hältst.** Der Tierarzt kommt alle paar Monate zur
-  Routineuntersuchung je Tierart und schickt eine Rechnung (Grundgebühr plus Betrag je Tier). Sinkt die Gesundheit in
-  einem Stall stark (unter 40 %), rückt er zu einem **Notfall** aus – teurer als die Routine und höchstens alle paar
-  Tage je Stall. Die Zuchtberatung kommentiert, wie sich dein
-  Bestand entwickelt hat, und nennt die Produktivität deiner Ställe. Der Viehhändler bietet ab und zu an, eine Anzahl Tiere zu kaufen
-  oder zu verkaufen, und zahlt dafür eine **Prämie je Tier**. Den Handel selbst erledigst du im Spiel wie gewohnt:
-  Nimmst du das Angebot an, zählt bis zur Frist, um wie viele Tiere sich dein Bestand in die vereinbarte Richtung
-  verändert hat – für jedes davon gibt es die Prämie (höchstens für die vereinbarte Anzahl).
-- **Energieversorger – nur wenn deine Karte eine passende Verkaufsstelle hat.** Nimmt eine Verkaufsstelle z. B.
-  Silage, Gärreste oder Methan an (Biogas-Anlage), bietet der Energieversorger Festpreis-Kontrakte an (du entscheidest
-  unter **Warenbestand & Preise**, ob du mitmachst) oder kündigt Preisschwankungen an dieser Stelle an. Gibt es keine
-  solche Verkaufsstelle, meldet er sich nicht.
-- **Pacht.** Felder, die jemandem aus dem Dorf gehören, kannst du auf der Feldseite mit **Pacht anfragen** pachten
-  statt kaufen. Sagt der Besitzer zu, nimmst du das Angebot unter **Verträge** an: Im Spiel gehört dir das Feld dann
-  für die Laufzeit (du kannst es ganz normal bewirtschaften), die Pacht wird zu jedem Monatsbeginn abgebucht. Einen
-  Monat vor dem Ende meldet sich der Besitzer mit einer Verlängerung zum neuen Pachtpreis und – wenn er verkaufen
-  würde – einem Kaufangebot. Antwortest du nicht, geht das Feld zum Ende automatisch zurück. Bleibt die Pacht zweimal
-  offen, nimmt er das Feld vorzeitig zurück.
-- **Werkstatt – Wartungsvertrag.** Für eine feste Monatsgebühr (abhängig vom Wert deiner Maschinen) setzt die
-  Werkstatt zu jedem Monatsbeginn die am stärksten abgenutzten Fahrzeuge instand – direkt im Spiel, ohne weitere
-  Kosten. Ohne Vertrag meldet sie sich ab und zu mit einem Hinweis, wenn eine Maschine stark abgenutzt ist. Das
-  Angebot forderst du unter **Verträge** an; kündigen kannst du jederzeit.
-- **Lieferverträge mit Produktionen.** Gibt es auf der Karte Produktionen, die Waren ankaufen (z. B. Bäckerei oder
-  Molkerei), bietet die Genossenschaft gelegentlich einen Liefervertrag zum Festpreis an. Er erscheint wie ein
-  Sonderkontrakt unter **Warenbestand & Preise**; du entscheidest, ob du mitmachst.
-- **Lohnunternehmer – Aufträge aus dem Spiel.** Der Lohnunternehmer macht dich ab und zu per Mail auf einen Auftrag
-  aufmerksam, der gerade im Auftragsmenü des Spiels verfügbar ist (Titel, Feld, Auftraggeber, Lohn). Annehmen und
-  erledigen tust du ihn wie gewohnt im Spiel. Schaffst du ihn, steigt dein Ansehen beim Lohnunternehmer und beim
-  Auftraggeber; das Tool selbst startet nie einen Auftrag.
+  Routineuntersuchung je Tierart und schickt eine Rechnung (Grundgebühr plus Betrag je Tier); wann er das nächste Mal
+  kommt, steht im Stall. Sinkt die Gesundheit in einem Stall stark (unter 40 %), rückt er zu einem **Notfall** aus –
+  teurer als die Routine und höchstens alle paar Tage je Stall. Die Zuchtberatung kommentiert, wie sich dein Bestand
+  entwickelt hat, und nennt die Produktivität deiner Ställe. Der Viehhändler bietet ab und zu an, eine Anzahl Tiere
+  zu kaufen oder zu verkaufen, und zahlt dafür eine **Prämie je Tier**. Den Handel selbst erledigst du im Spiel wie
+  gewohnt: Nimmst du das Angebot an, zählt bis zur Frist, um wie viele Tiere sich dein Bestand in die vereinbarte
+  Richtung verändert hat – für jedes davon gibt es die Prämie (höchstens für die vereinbarte Anzahl).
 
-- **Finanzamt – Steuerbescheide.** Vorauszahlungen, Nachzahlungen und Nachforderungen einer Betriebsprüfung
-  erscheinen hier mit Frist; mit *Zahlen* überweist du den Betrag samt Säumniszuschlag (siehe **Bank & Finanzen**).
-- **Amt – Kontrollen.** Angekündigte Kontrollen stehen mit Frist hier; das Ergebnis (ohne Beanstandung, Auflage oder
-  Bußgeld) landet im Verlauf.
-- **Vereine – Einladungen und Sponsoring.** Schützenverein, Freiwillige Feuerwehr und Sportverein haben je eine:n
-  Vorsitzende:n. Zu den Dorffesten im FS25-Kalender (Maibaumaufstellen im Mai, Schützenfest im Juni, Feuerwehrfest im
-  August, Erntedankfest im Oktober, Weihnachtsmarkt im Dezember) kommt eine Einladung: **Zusagen** freut die
-  Gastgeber, **Absagen** ist in Ordnung, gar nicht zu antworten kostet ein wenig Vertrauen. Ab und zu bittet ein
-  Verein um **Sponsoring** in festen Stufen (z. B. 250, 500 oder 1.000 €) – das hebt dein Ansehen im Dorf; ablehnen
-  kostet nur wenig.
+## Werkstatt
 
-## Dorf & Charaktere
+![Werkstatt](../screenshots/27-werkstatt.png)
 
-![Dorf](../screenshots/16-dorf-charakter.png)
+- **Mechaniker:innen:** wer bei dir schraubt und mit welchem Können (einstellen im **Personal**). Die monatlichen
+  Werkstattberichte kommen per Post.
+- **Wartungsvertrag.** Für eine feste Monatsgebühr (abhängig vom Wert deiner Maschinen) setzt die Werkstatt zu
+  jedem Monatsbeginn die am stärksten abgenutzten Fahrzeuge instand – direkt im Spiel, ohne weitere Kosten. Ohne
+  Vertrag meldet sie sich ab und zu mit einem Hinweis, wenn eine Maschine stark abgenutzt ist. Das Angebot forderst
+  du in der Werkstatt an; kündigen kannst du jederzeit.
+
+## Kontakte
+
+![Kontakte](../screenshots/16-kontakte.png)
 
 Alle Menschen im Dorf mit Rolle und Vertrauen (fünf Balken und ein Wort statt einer Zahl). In der Detailansicht
 stehen Charakterzüge, Sprachstil und Hintergrund. Mit **Nachricht verfassen** meldest du dich selbst – per Mail oder
 Anruf. Schreibst du jemandem mehrmals kurz hintereinander, antwortet er trotzdem; aufs Vertrauen wirkt nur der
-erste Kontakt des Tages. Dein **Ansehen im Dorf** siehst du oben rechts als Stufe (gut angesehen, neutral,
-umstritten). Gelegentlich ziehen Leute weg oder neu zu.
+erste Kontakt des Tages. Dein **Ansehen im Dorf** (gut angesehen, neutral, umstritten) steht auch auf dem
+Startbildschirm. Gelegentlich ziehen Leute weg oder neu zu.
+
+**Vereine:** Schützenverein, Freiwillige Feuerwehr und Sportverein haben je eine:n Vorsitzende:n. Zu den Dorffesten
+im FS25-Kalender (Maibaumaufstellen im Mai, Schützenfest im Juni, Feuerwehrfest im August, Erntedankfest im Oktober,
+Weihnachtsmarkt im Dezember) kommt eine Einladung – die beantwortest du im **Kalender**. Ab und zu bittet ein Verein
+um **Sponsoring** in festen Stufen (z. B. 250, 500 oder 1.000 €) – das hebt dein Ansehen im Dorf; ablehnen kostet
+nur wenig. Die Anfrage steht in den Kontakten.
 
 **Familie:** Deine Familie (aus dem Onboarding) steht mit im Dorf, zählt aber nicht zum Ansehen und zieht nie weg.
 Die Eltern auf dem Altenteil bekommen jeden Monat ihre Zahlung. Zu Geburtstagen, zum Hochzeitstag und zur Einschulung
-kommt eine Nachricht, zur Erntezeit bietet manchmal jemand Hilfe an, und zu Jahresbeginn schreibt das Tagebuch die
-Geschichte der Hofnachfolge fort.
+kommt eine Nachricht (die Termine stehen im **Kalender**), zur Erntezeit bietet manchmal jemand Hilfe an, und zu
+Jahresbeginn schreibt das Tagebuch die Geschichte der Hofnachfolge fort.
 
 ## Tagebuch
 
@@ -280,12 +385,7 @@ Notizen sind reine Erinnerung und haben keinerlei Auswirkung aufs Spiel.
 ![Einstellungen](../screenshots/18-einstellungen.png)
 
 KI-Anbieter, Modell und API-Schlüssel (siehe [Installation](installation.md#5-ki-anbieter-einrichten-optional)) und
-der Ton deines Spielstands (nur Anzeige).
-
-**Helfer im Spiel:** *Helferlohn über das Gehalt* (Standard an) – fährt ein Maschinenführer, bucht das Spiel keinen
-Helferlohn. Ausgeschaltet zahlst du zusätzlich den normalen Spiellohn. *Strenger Modus* (Standard aus) – höchstens so
-viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann keine Helfer, streikende oder freigestellte
-zählen nicht.
+der Ton deines Spielstands (nur Anzeige). Die Einstellungen für die Helfer im Spiel stehen im **Personal**.
 
 **Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
 
@@ -311,11 +411,11 @@ eine Frage wartet. Entscheidest du vorher im Browser, verschwindet die Frage im 
 der Kontostand nicht), meldet das Spiel es mit einem Hinweis. Lädst du einen Spielstand ohne zu speichern, kommen
 noch offene Fragen erneut.
 
-## Auf dem Handy
+## Auf dem Handy oder Tablet
 
-![Mobil](../screenshots/21-mobil-dashboard.png)
+![Mobil](../screenshots/21-mobil-start.png)
 
-Die Oberfläche passt sich an kleine Bildschirme an – z. B. auf einem Tablet neben dem Spiel. Standardmäßig ist
-FarmPulse nur auf dem eigenen PC erreichbar (`localhost`), weil es keine Anmeldung gibt. Für ein Tablet im
-Heimnetz `server.address: 0.0.0.0` in `application-local.yml` eintragen und am Tablet `http://<IP-des-PCs>:8080`
-öffnen – dann kann allerdings jeder in deinem Netz mitspielen.
+Das Hof-Tablet füllt immer das ganze Browserfenster und passt sich an kleine Bildschirme an – z. B. ein echtes Tablet
+neben dem Spiel. Standardmäßig ist FarmPulse nur auf dem eigenen PC erreichbar (`localhost`), weil es keine Anmeldung
+gibt. Für ein Tablet im Heimnetz `server.address: 0.0.0.0` in `application-local.yml` eintragen und am Tablet
+`http://<IP-des-PCs>:8080` öffnen – dann kann allerdings jeder in deinem Netz mitspielen.

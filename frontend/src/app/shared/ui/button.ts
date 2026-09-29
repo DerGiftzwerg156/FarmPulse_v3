@@ -7,7 +7,7 @@ import { Component, input, output } from '@angular/core';
     [type]="type()"
     [disabled]="disabled()"
     (click)="pressed.emit($event)"
-    class="inline-flex items-center justify-center gap-1.5 rounded-sm px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-40"
+    class="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-40"
     [class.bg-accent]="variant() === 'primary'"
     [class.text-bg]="variant() === 'primary'"
     [class.hover:brightness-110]="variant() === 'primary'"

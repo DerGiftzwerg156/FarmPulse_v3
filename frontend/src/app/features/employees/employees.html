@@ -1,5 +1,4 @@
 <section class="space-y-4">
-  <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.employees' | t }}</h1>
 
   @if (error(); as err) {
     <app-page-error [error]="err" />
@@ -90,7 +89,9 @@
       }
     </app-card>
 
-    <app-card [title]="'employees.postings' | t" data-testid="postings">
+    <app-helper-settings-card />
+
+  <app-card [title]="'employees.postings' | t" data-testid="postings">
       <form class="mb-3 flex flex-wrap items-end gap-2" (submit)="$event.preventDefault(); createPosting()">
         <label class="space-y-1">
           <span class="fp-label">{{ 'employees.jobRole' | t }}</span>

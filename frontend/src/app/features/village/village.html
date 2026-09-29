@@ -1,6 +1,5 @@
 <section class="space-y-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
-    <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.village' | t }}</h1>
     @if (reputation(); as rep) {
       <div class="flex items-center gap-2" data-testid="reputation">
         <span class="fp-label">{{ 'village.reputation' | t }}</span>
@@ -151,4 +150,6 @@
       </div>
     </div>
   }
+
+  <app-service-cases [caseKinds]="['SPONSORING_REQUEST']" openTitle="village.sponsoring" [showEmpty]="false" [highlightCase]="highlightedCase()" testId="club-cases" />
 </section>

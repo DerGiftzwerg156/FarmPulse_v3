@@ -44,7 +44,8 @@ export const SCENARIOS = {
     drift: { income: 900, expense: 1100 },
   },
   'wohlhabender-hof': {
-    description: 'Hohe Liquidität, großer Maschinenpark, volle Silos.',
+    description: 'Hohe Liquidität, großer Maschinenpark, volle Silos; mit Buchungsjournal, Stall-, Feld- und Wetterdaten '
+      + '(E2E-Tests und Screenshots des Hof-Tablets).',
     balance: 2400000, vanillaLoan: 0, ownedFarmlands: [1, 2, 4, 5, 7, 9],
     vehicles: [vehicle(1, 385000, 0.05), vehicle(2, 285000, 0.12), vehicle(3, 160000, 0.08), vehicle(4, 95000, 0.2)],
     placeables: [{ uniqueId: 'plc_00001', value: 220000 }, { uniqueId: 'plc_00002', value: 120000 }],
@@ -52,6 +53,33 @@ export const SCENARIOS = {
     storage: { WHEAT: { amount: 180000, capacity: 200000 }, CANOLA: { amount: 60000, capacity: 80000 },
       BARLEY: { amount: 90000, capacity: 100000 } },
     drift: { income: 9000, expense: 5000 },
+    // Hof-Tablet: the Roadmap V2 blocks of a current mod (the stable is healthy, so no vet emergency interferes)
+    journal: { income: 'SOLD_PRODUCTS', expense: 'PURCHASE_FUEL' },
+    husbandries: [
+      { husbandryUniqueId: 'hus_00001', health: 86, productivity: 0.78, food: 0.64,
+        conditions: [{ title: 'Wasser', ratio: 0.9 }, { title: 'Stroh', ratio: 0.55 }, { title: 'Milch', ratio: 0.4 }] },
+    ],
+    fields: [
+      { farmlandId: 1, fruitType: 'WHEAT', growthState: 8, minHarvestingGrowthState: 8, maxHarvestingGrowthState: 8,
+        withered: false, cut: false, fillType: 'WHEAT', litersPerSqm: 0.95,
+        weedState: 0, stoneLevel: 0, sprayLevel: 2, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+      { farmlandId: 2, fruitType: 'CANOLA', growthState: 4, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'CANOLA', litersPerSqm: 0.45,
+        weedState: 1, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+      { farmlandId: 4, fruitType: 'BARLEY', growthState: 5, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'BARLEY', litersPerSqm: 0.9,
+        weedState: 0, stoneLevel: 1, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+      { farmlandId: 5, growthState: 0, weedState: 1, stoneLevel: 0, sprayLevel: 0, limeLevel: 0, plowLevel: 0,
+        groundType: 'CULTIVATED' },
+      { farmlandId: 7, fruitType: 'MAIZE', growthState: 3, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'MAIZE', litersPerSqm: 1.1,
+        weedState: 0, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+      { farmlandId: 9, fruitType: 'POTATO', growthState: 6, minHarvestingGrowthState: 6, maxHarvestingGrowthState: 6,
+        withered: false, cut: false, fillType: 'POTATO', litersPerSqm: 4,
+        weedState: 0, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+    ],
+    fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.25, temperature: 18 },
   },
   'leasing-hof': {
     description: 'Maschinenpark teils geleast: geleaste Fahrzeuge zählen nicht als Vermögen (TODO T-04).',
@@ -89,7 +117,8 @@ export const SCENARIOS = {
 };
 
 // Roadmap V2 (R2-Q2): scenarios with the optional farm_facts blocks finances, workforce, husbandries, fields and
-// weather. All other scenarios leave these blocks out and stand for a mod without them ("not present").
+// weather (plus wohlhabender-hof above). All other scenarios leave these blocks out and stand for a mod without them
+// ("not present").
 // `journal` names the FS25 money types (MoneyType.*) the daily income/expense drift is booked under (R2-B1).
 // All numbers are simulated: growth states, health etc. are plausible examples, not values read from FS25.
 Object.assign(SCENARIOS, {
@@ -106,7 +135,7 @@ Object.assign(SCENARIOS, {
       activeJobs: [{ jobId: 1, employeeId: 1, title: 'Fendt 942 Vario' }, { jobId: 2, title: 'CLAAS LEXION 8900' }],
       workedGameMs: { 1: 0, 2: 0 },
     },
-    weather: { raining: false, rainFallScale: 0, groundWetness: 0.1 },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.1, temperature: 16 },
   },
   'tierhof-krank': {
     description: 'Tierhof mit schlechten Stallwerten: niedrige Gesundheit, wenig Futter und Wasser (R2-A7).',
@@ -125,7 +154,7 @@ Object.assign(SCENARIOS, {
           { title: 'Milch', ratio: 0.6 }] },
       { husbandryUniqueId: 'hus_00002', health: 55, food: 0.3, conditions: [{ title: 'Wasser', ratio: 0.4 }] },
     ],
-    weather: { raining: false, rainFallScale: 0, groundWetness: 0.2 },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.2, temperature: 9 },
   },
   'ernte-herbst': {
     description: 'Herbst (September): erntereifer Mais, wachsende Kartoffeln, verdorrter Weizen, ein brachliegendes Feld, Regen (R2-C).',
@@ -151,7 +180,7 @@ Object.assign(SCENARIOS, {
     ],
     // R2-C: game settings of the soil mechanics (all on, like a new career savegame with every option enabled)
     fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
-    weather: { raining: true, rainFallScale: 0.6, groundWetness: 0.7 },
+    weather: { raining: true, rainFallScale: 0.6, groundWetness: 0.7, temperature: 12 },
   },
 });
 

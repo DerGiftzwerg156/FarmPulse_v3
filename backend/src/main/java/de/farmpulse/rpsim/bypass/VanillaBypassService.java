@@ -273,11 +273,11 @@ public class VanillaBypassService {
                         .put("compensationClaim", sc == null ? null : claim)
                         .put("decisionDays", sc == null ? null : Math.round(cfg().getCompensationDecisionDays()))
                         .put("claimNote", sc == null ? null : "Ich erwarte einen Ausgleich von " + german(claim)
-                                + " € – unter „Verträge“ kannst du zahlen oder ablehnen. Du hast "
+                                + " € – in der App „Flurkarte“ kannst du zahlen oder ablehnen. Du hast "
                                 + Math.round(cfg().getCompensationDecisionDays()) + " Tage Zeit.").build())
                 .category(CommunicationCategory.NEGOTIATION)
                 .related(sc == null ? null : RELATED, sc == null ? null : sc.getId())
-                .formLink(sc == null ? null : "/contracts?case=" + sc.getId()).submit();
+                .formLink(sc == null ? null : "/farmland?case=" + sc.getId()).submit();
     }
 
     void soldInMenu(Savegame sg, FarmlandBypassEvent e) {

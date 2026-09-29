@@ -1,7 +1,7 @@
 Steuervorauszahlung Q{{quarter}}
 Guten Tag,
 
-für das Jahr {{taxYear}} ist die Vorauszahlung für das {{quarter}}. Quartal fällig: {{amount}} €. Bitte zahlen Sie innerhalb von {{paymentDays}} Tagen (unter „Verträge“).
+für das Jahr {{taxYear}} ist die Vorauszahlung für das {{quarter}}. Quartal fällig: {{amount}} €. Bitte zahlen Sie innerhalb von {{paymentDays}} Tagen (in der App „Ämter“).
 
 Mit freundlichen Grüßen
 {{characterName}}

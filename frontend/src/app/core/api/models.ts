@@ -15,6 +15,16 @@ export interface SavegameView {
   calendar?: CalendarView | null;
   /** Installed mods with overlapping features (TODO T-09). */
   detectedMods?: string[];
+  /** Weather of the last farm_facts (R2-C2); null before the first weather export. */
+  weather?: WeatherView | null;
+}
+
+/** rain / groundWetness 0..1, temperature in °C (null with an older mod). */
+export interface WeatherView {
+  raining: boolean;
+  rainFallScale: number;
+  groundWetness: number;
+  temperature: number | null;
 }
 
 export interface CalendarView {
@@ -539,4 +549,131 @@ export interface ApiError {
   code: string;
   message: string;
   fields: Record<string, string>;
+}
+
+/** Hof-Tablet "Aufgaben": one open decision of any area (type names the payload that is set). */
+export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING';
+
+export interface TaskView {
+  key: string;
+  type: TaskType;
+  kind: string | null;
+  deadlineGameTime: number | null;
+  gameTime: number;
+  serviceCase: CaseView | null;
+  contract: ContractView | null;
+  application: CreditApplicationView | null;
+  call: MessageView | null;
+  negotiation: NegotiationView | null;
+  marketEvent: MarketEventView | null;
+  posting: JobPostingView | null;
+  pendingApplicants: number | null;
+}
+
+export interface TasksView {
+  items: TaskView[];
+  /** Yes/no questions waiting in the game (Alt+J). */
+  waitingPrompts: number;
+}
+
+/** Hof-Tablet "Kalender". */
+export interface AgendaEntryView {
+  gameTime: number;
+  kind: 'MONTH_START' | 'FESTIVAL' | 'TAX_ASSESSMENT' | 'TAX_PREPAYMENT' | 'LOAN_INSTALLMENT' | 'SALARIES' | 'CONTRACT_PAYMENT' | 'LEASE_END' | string;
+  subKind: string | null;
+  title: string | null;
+  amount: number | null;
+  reference: string | null;
+}
+
+export interface DebitView {
+  kind: 'SALARIES' | 'LOAN' | 'CONTRACT' | 'RETIREMENT' | string;
+  subKind: string | null;
+  label: string | null;
+  amount: number;
+  count: number;
+}
+
+export interface YearEventView {
+  period: number;
+  kind: 'FESTIVAL' | 'TAX_ASSESSMENT' | 'TAX_PREPAYMENT' | 'ROTATION_CHECK' | 'FAMILY_BIRTHDAY' | 'FAMILY_WEDDING_DAY' | 'SCHOOL_START' | string;
+  reference: string | null;
+}
+
+export interface CalendarOverviewView {
+  gameTime: number;
+  currentPeriod: number | null;
+  year: number | null;
+  daysPerPeriod: number;
+  nextMonthStart: number;
+  nextPeriod: number | null;
+  agenda: AgendaEntryView[];
+  monthStartDebits: DebitView[];
+  monthStartTotal: number;
+  yearEvents: YearEventView[];
+}
+
+/** Hof-Tablet "Stall": husbandries of the last farm_facts (R2-A7). */
+export interface StablesView {
+  /** false with an older mod: animals only, no husbandry values. */
+  tracked: boolean;
+  animals: number;
+  keepers: number;
+  animalsPerKeeper: number;
+  healthWarnBelow: number;
+  foodWarnBelow: number;
+  waterWarnBelow: number;
+  barns: BarnView[];
+  vetDue: { type: string; gameTime: number }[];
+}
+
+export interface BarnView {
+  husbandryUniqueId: string;
+  type: string;
+  count: number;
+  value: number;
+  /** 0..100 */
+  health: number | null;
+  productivity: number | null;
+  /** 0..1 */
+  food: number | null;
+  water: number | null;
+  conditions: { title: string; ratio: number }[];
+  /** Announced animal welfare inspection of this husbandry (deadline). */
+  inspectionDeadline: number | null;
+}
+
+/** Hof-Tablet "Flurkarte": fields the player farms with what needs doing and the crop rotation (R2-C / R2-E2). */
+export interface FieldOverviewView {
+  year: number | null;
+  tracked: boolean;
+  fields: FieldRowView[];
+  rotation: RotationPreviewView | null;
+}
+
+export interface FieldRowView {
+  farmlandId: number;
+  name: string | null;
+  hectares: number | null;
+  fruitType: string | null;
+  phase: FieldPhase;
+  leased: boolean;
+  familyField: boolean;
+  weedsHigh: boolean;
+  stonesHigh: boolean;
+  needsLime: boolean;
+  needsPlow: boolean;
+  previousCrop: string | null;
+  currentCrop: string | null;
+  /** CHANGED, SAME (violation at the end of the year) or UNKNOWN. */
+  rotation: 'CHANGED' | 'SAME' | 'UNKNOWN';
+  rotationViolations: number;
+}
+
+export interface RotationPreviewView {
+  changedHectares: number;
+  premium: number;
+  cut: boolean;
+  sameFields: number[];
+  premiumPerHa: number;
 }

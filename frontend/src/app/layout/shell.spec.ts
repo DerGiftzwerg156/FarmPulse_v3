@@ -3,14 +3,18 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { Shell } from './shell';
-import { NAV_ITEMS } from './nav-items';
+import { Router } from '@angular/router';
+import { Component } from '@angular/core';
 import { FakeEventSource, provideFakeEventSource } from '../../testing/fake-event-source';
+
+@Component({ template: '' })
+class Blank {}
 
 describe('Shell', () => {
   function setup() {
     TestBed.configureTestingModule({
       imports: [Shell],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), provideFakeEventSource()],
+      providers: [provideRouter([{ path: '**', component: Blank }]), provideHttpClient(), provideHttpClientTesting(), provideFakeEventSource()],
     });
     const fixture = TestBed.createComponent(Shell);
     const http = TestBed.inject(HttpTestingController);
@@ -18,11 +22,24 @@ describe('Shell', () => {
     return { fixture, http, el: fixture.nativeElement as HTMLElement };
   }
 
-  it('renders all main areas in the icon rail', () => {
-    const { el, http } = setup();
+  it('shows the floating dock on the start screen and no app header', () => {
+    const { fixture, el, http } = setup();
     http.expectOne('/api/savegame').flush(null);
-    expect(el.querySelectorAll('[data-testid="icon-rail"] a').length).toBe(NAV_ITEMS.length);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="dock"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="app-header"]')).toBeNull();
     expect(el.textContent).toContain('Kein Spielstand verknüpft');
+  });
+
+  it('shows the app header with the way back and the quick bar inside an app', async () => {
+    const { fixture, el, http } = setup();
+    http.expectOne('/api/savegame').flush(null);
+    await TestBed.inject(Router).navigateByUrl('/bank?application=5');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-title"]')?.textContent?.trim()).toBe('Bank');
+    expect(el.querySelector('[data-testid="back-to-start"]')?.getAttribute('href')).toBe('/');
+    expect(el.querySelector('[data-testid="quick-bar"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="dock"]')).toBeNull();
   });
 
   it('shows savegame context, live balance and notification count', () => {
@@ -30,11 +47,15 @@ describe('Shell', () => {
     http.expectOne('/api/savegame').flush({
       id: 1, savegameId: 'x', mapName: 'Erlengrund', gameTime: 0, gameDay: 12, balance: 245000,
       tonePreset: 'REALISTIC', unreadMails: 2, pendingCalls: 1, reputationTier: 'NEUTRAL',
+      weather: { raining: false, rainFallScale: 0, groundWetness: 0.1, temperature: 16 },
     });
     fixture.detectChanges();
-    expect(el.querySelector('[data-testid="savegame-context"]')?.textContent).toContain('Tag 12');
+    expect(el.querySelector('[data-testid="savegame-context"]')?.textContent).toContain('Tag 12 · 00:00');
     expect(el.querySelector('[data-testid="balance"]')?.textContent?.replace(/\s/g, ' ')).toContain('245.000 €');
-    expect(el.querySelector('[data-testid="notification-count"]')?.textContent?.trim()).toBe('3');
+    expect(el.querySelector('[data-testid="weather"]')?.textContent?.replace(/\s/g, ' ')).toContain('Trocken · 16 °C');
+    const badge = (id: string) => el.querySelector(`[data-testid="dock"] [data-testid="app-${id}"] [data-testid="app-badge"]`)?.textContent?.trim();
+    expect(badge('mail')).toBe('2');
+    expect(badge('phone')).toBe('1');
   });
 
   it('shows the FS25 month of the savegame (TODO T-08)', () => {
@@ -46,18 +67,6 @@ describe('Shell', () => {
     });
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="calendar"]')?.textContent?.trim()).toBe('Oktober, Jahr 2 · Herbst');
-  });
-
-  it('toggles the mobile menu', () => {
-    const { fixture, el, http } = setup();
-    http.expectOne('/api/savegame').flush(null);
-    expect(el.querySelector('[data-testid="mobile-menu"]')).toBeNull();
-    (el.querySelector('[data-testid="menu-toggle"]') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    expect(el.querySelector('[data-testid="mobile-menu"]')).not.toBeNull();
-    (el.querySelector('[data-testid="menu-backdrop"]') as HTMLElement).click();
-    fixture.detectChanges();
-    expect(el.querySelector('[data-testid="mobile-menu"]')).toBeNull();
   });
 
   it('reacts to a live mail event: counter and live indicator update', () => {
@@ -73,6 +82,6 @@ describe('Shell', () => {
     });
     fixture.detectChanges();
     expect(el.textContent).toContain('Live');
-    expect(el.querySelector('[data-testid="notification-count"]')?.textContent?.trim()).toBe('1');
+    expect(el.querySelector('[data-testid="dock"] [data-testid="app-mail"] [data-testid="app-badge"]')?.textContent?.trim()).toBe('1');
   });
 });

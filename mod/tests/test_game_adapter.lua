@@ -434,6 +434,20 @@ function T.TestGameAdapter:testFieldRulesFollowTheGameSettings()
     Platform = nil
 end
 
+function T.TestGameAdapter:testWeatherCarriesTheTemperatureWhenTheGameReportsIt()
+    local game = helpers.fakeGame()
+    g_currentMission.environment.weather = { getIsRaining = function() return false end,
+        getRainFallScale = function() return 0 end, getGroundWetness = function() return 0.3 end,
+        getCurrentTemperature = function() return 12.34 end }
+    local bridge, fs, paths = realBridge(game)
+    bridge:exportFarmFacts()
+    local doc = RPSimJson.decode(fs.files[paths.farmFacts])
+    lu.assertEquals(doc.weather, { raining = false, rainFallScale = 0, groundWetness = 0.3, temperature = 12.3 })
+    -- a failing temperature call keeps the rest of the weather
+    g_currentMission.environment.weather.getCurrentTemperature = function() error("no temperature") end
+    lu.assertEquals(RPSimGameAdapter.new():collectWeather(), { raining = false, rainFallScale = 0, groundWetness = 0.3 })
+end
+
 function T.TestGameAdapter:testWeatherAndFieldsReachFarmFactsFieldsOnlyEveryInterval()
     local game = helpers.fakeGame()
     fakeFields(game)

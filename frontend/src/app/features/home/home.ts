@@ -2,58 +2,28 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { RouterLink } from '@angular/router';
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
-import { DiaryView, LoanView, MessageView, NegotiationView, ReputationView, StorageOverview } from '../../core/api/models';
+import { CalendarOverviewView, FarmlandView, FinanceOverview, ReputationView, StablesView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
-import { formatMoney } from '../../shared/format/format';
-import { GameTimePipe, MoneyPipe, NumberPipe } from '../../shared/format/format.pipes';
+import { TasksStore } from '../../core/state/tasks.store';
+import { calendarLabel } from '../../shared/format/calendar';
+import { clockTime } from '../../shared/format/format';
+import { weatherLong } from '../../shared/format/weather';
+import { MoneyPipe, NumberPipe } from '../../shared/format/format.pipes';
 import { LabelPipe } from '../../shared/format/label.pipe';
-import { Badge } from '../../shared/ui/badge';
-import { Card } from '../../shared/ui/card';
 import { Icon } from '../../shared/ui/icon';
-import { Stat } from '../../shared/ui/stat';
-import { NoticesCard } from './notices-card';
+import { AppTile } from '../../layout/app-tile';
+import { APPS } from '../../layout/apps';
+import { TaskCardLine } from './task-line';
 
-export interface FeedItem {
-  key: string;
-  kind: 'mail' | 'call' | 'diary';
-  icon: string;
-  title: string;
-  subtitle: string;
-  gameTime: number;
-  link: string;
-  query: Record<string, number>;
-  unread: boolean;
-}
-
-/** Merges mails, calls and diary entries into one "latest events" feed (newest first). */
-export function buildFeed(mails: MessageView[], calls: MessageView[], diary: DiaryView[], limit = 8): FeedItem[] {
-  const items: FeedItem[] = [
-    ...mails
-      .filter((m) => m.initiatedBy === 'CHARACTER')
-      .map((m) => ({
-        key: `m${m.id}`, kind: 'mail' as const, icon: 'mail', title: m.subject ?? '', subtitle: m.character?.name ?? '',
-        gameTime: m.gameTime, link: '/mailbox', query: { id: m.id }, unread: !m.read,
-      })),
-    ...calls
-      .filter((c) => c.callStatus !== null)
-      .map((c) => ({
-        key: `c${c.id}`, kind: 'call' as const, icon: 'phone', title: c.subject ?? '', subtitle: c.character?.name ?? '',
-        gameTime: c.gameTime, link: '/calls', query: { id: c.id }, unread: c.callStatus === 'RINGING' || c.callStatus === 'MISSED',
-      })),
-    ...diary.map((d) => ({
-      key: `d${d.id}`, kind: 'diary' as const, icon: 'book', title: d.title, subtitle: d.text ?? '', gameTime: d.gameTime,
-      link: '/diary', query: {}, unread: false,
-    })),
-  ];
-  return items.sort((a, b) => b.gameTime - a.gameTime).slice(0, limit);
-}
-
-/** Dashboard home (AP-8.10): pure composition of existing endpoints in the look of the design reference. */
+/**
+ * Start screen of the Hof-Tablet (replaces the dashboard): game clock, widgets and every app as a symbol with badge.
+ * Pure composition of existing endpoints.
+ */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Stat, Card, Badge, Icon, NoticesCard],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, Icon, AppTile, TaskCardLine],
   templateUrl: './home.html',
 })
 export class Home {
@@ -61,28 +31,41 @@ export class Home {
   readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
 
-  readonly mails = signal<MessageView[]>([]);
-  readonly calls = signal<MessageView[]>([]);
-  readonly diary = signal<DiaryView[]>([]);
-  readonly loans = signal<LoanView[]>([]);
-  readonly negotiations = signal<NegotiationView[]>([]);
+  readonly tasks = inject(TasksStore);
+  readonly apps = APPS;
+  readonly calendar = signal<CalendarOverviewView | null>(null);
   readonly reputation = signal<ReputationView | null>(null);
-  readonly storage = signal<StorageOverview | null>(null);
+  readonly finances = signal<FinanceOverview | null>(null);
+  readonly fields = signal<FarmlandView[]>([]);
+  readonly stables = signal<StablesView | null>(null);
   readonly loaded = signal(false);
 
-  readonly feed = computed(() => buildFeed(this.mails(), this.calls(), this.diary()));
-  readonly unreadMails = computed(() => this.mails().filter((m) => !m.read && m.initiatedBy === 'CHARACTER').slice(0, 3));
-  readonly activeLoans = computed(() => this.loans().filter((l) => l.status === 'ACTIVE'));
-  readonly debt = computed(() => this.activeLoans().reduce((s, l) => s + l.remainingAmount, 0));
-  readonly overdue = computed(() => this.activeLoans().some((l) => l.overdue));
-  readonly openNegotiations = computed(() => this.negotiations().filter((n) => n.status === 'OPEN'));
-  readonly ringing = computed(() => this.calls().filter((c) => c.callStatus === 'RINGING').length);
+  /** The four most pressing open decisions (the list is sorted by deadline). */
+  readonly topTasks = computed(() => this.tasks.items().slice(0, 4));
+  /** Last complete month of the farm bookkeeping (null without journal). */
+  readonly lastMonth = computed(() => {
+    const f = this.finances();
+    if (!f?.available) return null;
+    return [...f.months].reverse().find((m) => m.complete) ?? null;
+  });
+  readonly ownFields = computed(() => this.fields().filter((f) => f.ownerType === 'PLAYER' || f.leased));
+  readonly harvestable = computed(() => this.ownFields().filter((f) => f.phase === 'HARVESTABLE'));
+  readonly withered = computed(() => this.ownFields().filter((f) => f.phase === 'WITHERED'));
+  /** The barn with the lowest health (or the first one without values), for the start screen widget. */
+  readonly weakestBarn = computed(() => {
+    const barns = this.stables()?.barns ?? [];
+    return [...barns].sort((a, b) => (a.health ?? 101) - (b.health ?? 101))[0] ?? null;
+  });
+  readonly stableAlarm = computed(() => {
+    const s = this.stables();
+    const b = this.weakestBarn();
+    return !!s && !!b && ((b.health !== null && b.health < s.healthWarnBelow) || (b.food !== null && b.food < s.foodWarnBelow)
+      || s.barns.some((x) => x.inspectionDeadline !== null));
+  });
+  readonly fieldsTracked = computed(() => this.ownFields().some((f) => f.phase !== null && f.phase !== undefined));
 
   constructor() {
     effect(() => {
-      this.store.mailVersion();
-      this.store.callVersion();
-      this.store.diaryVersion();
       this.store.stateVersion();
       const sg = this.store.savegame();
       if (sg) untracked(() => this.load());
@@ -92,30 +75,34 @@ export class Home {
   load(): void {
     const safe = <T>(o: Observable<T>, fallback: T) => o.pipe(catchError(() => of(fallback)));
     forkJoin({
-      mails: safe(this.api.mails(), [] as MessageView[]),
-      calls: safe(this.api.callLog(), [] as MessageView[]),
-      diary: safe(this.api.diary(), [] as DiaryView[]),
-      loans: safe(this.api.loans(), [] as LoanView[]),
-      negotiations: safe(this.api.negotiations(), [] as NegotiationView[]),
+      calendar: safe(this.api.calendar(), null as CalendarOverviewView | null),
       reputation: safe(this.api.reputation(), null as ReputationView | null),
-      storage: safe(this.api.storage(), null as StorageOverview | null),
+      finances: safe(this.api.finances(), null as FinanceOverview | null),
+      fields: safe(this.api.farmlands(), [] as FarmlandView[]),
+      stables: safe(this.api.stables(), null as StablesView | null),
     }).subscribe((r) => {
-      this.mails.set(r.mails);
-      this.calls.set(r.calls);
-      this.diary.set(r.diary);
-      this.loans.set(r.loans);
-      this.negotiations.set(r.negotiations);
+      this.calendar.set(r.calendar);
       this.reputation.set(r.reputation);
-      this.storage.set(r.storage);
+      this.finances.set(r.finances);
+      this.fields.set(r.fields);
+      this.stables.set(r.stables);
       this.loaded.set(true);
     });
   }
 
-  debtHint(): string {
-    return this.activeLoans().length ? this.i18n.t('home.debtHint', { amount: formatMoney(this.debt()) }) : this.i18n.t('home.noLoans');
+  clock(): string {
+    return clockTime(this.store.savegame()?.gameTime);
   }
 
-  fill(amount: number, capacity: number): number {
-    return capacity > 0 ? Math.min(100, (amount / capacity) * 100) : 0;
+  dateLine(): string {
+    const sg = this.store.savegame();
+    if (!sg) return '';
+    const day = this.i18n.t('common.day', { day: sg.gameDay });
+    const date = sg.calendar ? `${day} · ${calendarLabel(sg.calendar, this.i18n)}` : day;
+    return sg.weather ? `${date} — ${weatherLong(sg.weather, this.i18n)}` : date;
+  }
+
+  monthName(period: number): string {
+    return this.i18n.t(`enums.period.${period}`);
   }
 }

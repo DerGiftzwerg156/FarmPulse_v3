@@ -15,7 +15,6 @@ import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { Stat } from '../../shared/ui/stat';
 import { FinanceCard } from './finance-card';
-import { TaxCard } from './tax-card';
 
 export type ApplicationState = 'processing' | 'approved' | 'counter' | 'rejected' | 'accepted' | 'declined';
 
@@ -45,7 +44,7 @@ export const STATE_BADGE: Record<ApplicationState, BadgeVariant> = {
  */
 @Component({
   selector: 'app-bank',
-  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard, TaxCard],
+  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard],
   templateUrl: './bank.html',
 })
 export class Bank {
@@ -65,6 +64,8 @@ export class Bank {
   readonly deferralText = signal<Record<number, string>>({});
   readonly deferralResult = signal<Record<number, DeferralView>>({});
   readonly openHistory = signal<number | null>(null);
+  /** Roadmap V2 R2-D1: interest surcharge on new loans while a vanilla loan taken on top is open. */
+  readonly surcharge = signal(0);
   readonly stateBadge = STATE_BADGE;
 
   readonly form = inject(FormBuilder).nonNullable.group({
@@ -89,6 +90,7 @@ export class Bank {
   }
 
   load(): void {
+    this.api.bypassSettings().subscribe({ next: (b) => this.surcharge.set(b.interestSurchargePercent), error: () => this.surcharge.set(0) });
     forkJoin({ apps: this.api.creditApplications(), loans: this.api.loans() }).subscribe({
       next: ({ apps, loans }) => {
         this.applications.set(apps);

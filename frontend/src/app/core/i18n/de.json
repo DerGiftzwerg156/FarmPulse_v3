@@ -13,20 +13,50 @@
     "components": "Komponenten"
   },
   "nav": {
-    "home": "Dashboard",
-    "mailbox": "Postfach",
-    "calls": "Anrufe",
-    "bank": "Bank & Finanzen",
+    "home": "Start",
+    "mailbox": "Post",
+    "calls": "Telefon",
+    "bank": "Bank",
     "employees": "Personal",
-    "farmland": "Felder & Verhandlung",
-    "market": "Warenbestand & Preise",
-    "village": "Dorf & Charaktere",
+    "farmland": "Flurkarte",
+    "market": "Agrarbörse",
+    "village": "Kontakte",
     "diary": "Tagebuch",
     "settings": "Einstellungen",
     "onboarding": "Neuer Spielstand",
     "menu": "Menü",
     "closeMenu": "Menü schließen",
-    "contracts": "Verträge & Vorgänge"
+    "start": "Start",
+    "back": "Zurück zum Start",
+    "tasks": "Aufgaben",
+    "calendar": "Kalender",
+    "authorities": "Ämter",
+    "insurance": "Versicherung",
+    "stable": "Stall",
+    "workshop": "Werkstatt"
+  },
+  "apps": {
+    "mail": "Mails aus dem Dorf – antworten, wann du willst",
+    "phone": "Anrufe annehmen, zurückrufen und nachlesen",
+    "contacts": "Dorf, Familie und Vereine – Vertrauen und Ansehen",
+    "tasks": "Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert",
+    "calendar": "Fristen, Abbuchungen, Dorffeste und Familientermine im FS25-Kalender",
+    "bank": "Kredite, Anträge und Hofbuchhaltung",
+    "authorities": "Finanzamt und Landwirtschaftsamt – Steuern, Bescheide und Kontrollen",
+    "market": "Silo, Preise, Marktgeschehen und Kontrakte",
+    "insurance": "Sturm- und Hagelversicherung, Schäden melden, Wildschaden",
+    "staff": "Team, Helferstunden und Stellenausschreibungen",
+    "fields": "Felder, Kulturen, Verhandlungen, Pacht und Forderungen",
+    "stable": "Tiere, Tierarzt, Viehhandel und Tierwohl",
+    "workshop": "Wartungsvertrag, Reparaturen und Mechaniker",
+    "diary": "Die Chronik deines Hofs",
+    "settings": "KI, Spielstand und Fragen im Spiel"
+  },
+  "tablet": {
+    "apps": "Apps",
+    "dock": "Dock",
+    "quickBar": "Schnellzugriff",
+    "today": "Heute"
   },
   "header": {
     "noSavegame": "Kein Spielstand verknüpft",
@@ -434,7 +464,9 @@
       "FINED": "Bußgeld verhängt",
       "DECLINED": "Abgesagt",
       "SPONSORED": "Gesponsert",
-      "IGNORED": "Nicht beantwortet"
+      "IGNORED": "Nicht beantwortet",
+      "EXPIRED": "Frist abgelaufen",
+      "EMERGENCY": "Notfall-Einsatz"
     },
     "animalType": {
       "COW": "Rinder",
@@ -613,17 +645,18 @@
     "unread": "Ungelesen",
     "empty": "Keine Mails in diesem Filter.",
     "villageLife": "Dorfleben",
-    "formRequired": "Formular",
+    "formRequired": "Entscheidung",
     "messages": "{n} Nachrichten",
     "me": "Du",
     "system": "Hofverwaltung",
     "select": "Wähle links eine Mail aus.",
-    "formHint": "Hierauf antwortest du über das zugehörige Formular – Beträge werden nie aus Freitext übernommen.",
-    "openForm": "Zum Formular",
     "reply": "Antwort",
     "replyPlaceholder": "Schreib frei, wie du antworten möchtest …",
     "replyHint": "Die Antwort kommt nicht sofort – Charaktere melden sich in Spielzeit zurück.",
-    "noReply": "Auf diese Nachricht kann nicht geantwortet werden."
+    "noReply": "Auf diese Nachricht kann nicht geantwortet werden.",
+    "decision": "Deine Entscheidung",
+    "decided": "Diese Entscheidung ist schon getroffen oder abgelaufen.",
+    "openInApp": "In der App öffnen"
   },
   "calls": {
     "incoming": "Eingehender Anruf",
@@ -731,7 +764,7 @@
       "dueIn": "fällig im {period}",
       "openBills": "Offene Bescheide",
       "estimateNote": "Schätzung aus den abgeschlossenen Monaten des laufenden Jahres, noch ohne Abschreibung und Zinsen. Der Bescheid kommt zu Beginn des nächsten Jahres.",
-      "payBills": "Bescheide unter „Verträge & Vorgänge“ bezahlen",
+      "payBills": "Offene Bescheide bezahlst du unter „Bescheide“.",
       "assessment": "Bescheid J{year} ({months} Monate)",
       "income": "Betriebseinnahmen",
       "expense": "Betriebsausgaben (ohne Steuern und Bußgelder)",
@@ -748,7 +781,7 @@
       "advisorActive": "Steuerberatung beauftragt",
       "requestAdvisor": "Steuerberatung anfragen",
       "advisorHint": "Senkt die Steuer, erinnert an Fristen und macht eine Betriebsprüfung unwahrscheinlicher – gegen ein Monatshonorar.",
-      "advisorRequested": "Das Angebot liegt unter"
+      "advisorRequested": "Das Angebot steht unter „Steuerberatung“ – dort nimmst du es an oder lehnst es ab."
     }
   },
   "employees": {
@@ -815,7 +848,7 @@
     "offerForSale": "Zum Verkauf anbieten",
     "startDirect": "Direktverhandlung starten",
     "requestLease": "Pacht anfragen",
-    "leaseOffered": "{name} bietet dir eine Pacht an – das Angebot findest du unter „Verträge“.",
+    "leaseOffered": "{name} bietet dir eine Pacht an – das Angebot findest du in der App „Flurkarte“ unter „Pacht“.",
     "leaseRefused": "{name} möchte das Feld gerade nicht verpachten.",
     "leasedHint": "Von dir gepachtet – im Spiel bewirtschaftest du das Feld, es gehört aber weiter dem Besitzer.",
     "toContracts": "Zum Pachtvertrag",
@@ -866,7 +899,30 @@
     "familyField": "Familienfeld",
     "markFamilyField": "Als Familienfeld markieren",
     "clearFamilyField": "Markierung entfernen",
-    "familyFieldHint": "Das Familienfeld liegt deiner Familie am Herzen – verkaufst du es, kostet das viel Vertrauen."
+    "familyFieldHint": "Das Familienfeld liegt deiner Familie am Herzen – verkaufst du es, kostet das viel Vertrauen.",
+    "claims": "Forderungen und Aufträge",
+    "leases": "Pacht",
+    "table": {
+      "title": "Meine Felder",
+      "field": "Feld",
+      "area": "Fläche",
+      "crop": "Kultur",
+      "phase": "Phase",
+      "todo": "Zu tun",
+      "rotation": "Fruchtfolge",
+      "owned": "Eigentum",
+      "leased": "Gepachtet",
+      "harvest": "Ernten",
+      "lime": "Kalken",
+      "plow": "Pflügen",
+      "weeds": "Unkraut",
+      "stones": "Steine",
+      "premium": "Fruchtfolgeprämie Jahr {year}",
+      "premiumHint": "voraussichtlich – {ha} ha mit Fruchtwechsel × {perHa} je ha",
+      "same": "Felder {fields}: dieselbe Kultur wie im Vorjahr – das Amt schickt einen Hinweis.",
+      "cut": "Felder {fields}: dieselbe Kultur zum zweiten Mal – die Prämie des Jahres wird gekürzt.",
+      "premiumNote": "Das Amt rechnet am Ende des FS25-Jahres mit der Hauptkultur jedes Feldes."
+    }
   },
   "market": {
     "storageValue": "Wert im Silo",
@@ -924,7 +980,8 @@
       "DYNAMIC": "Dorfbewohner",
       "EMPLOYEE": "Personal",
       "OTHER": "Weitere"
-    }
+    },
+    "sponsoring": "Anfragen der Vereine"
   },
   "diary": {
     "chronicle": "Chronik",
@@ -941,24 +998,19 @@
   "home": {
     "welcomeTitle": "Willkommen bei FarmPulse",
     "welcomeText": "Noch ist kein Spielstand verknüpft. Erzähle im Onboarding die Vorgeschichte deines Hofs, lerne dein Dorf kennen und verknüpfe anschließend deinen FS25-Spielstand.",
-    "unreadMails": "Ungelesene Mails",
-    "newMessages": "neue Nachrichten",
-    "allRead": "Alles gelesen",
-    "pendingCalls": "Anstehende Anrufe",
-    "ringing": "Es klingelt!",
-    "noCalls": "Keine offenen Anrufe",
-    "openLoans": "Offene Kredite",
-    "debtHint": "Restschuld {amount}",
-    "noLoans": "Schuldenfrei",
-    "negotiations": "Verhandlungen",
-    "negotiationsHint": "laufend",
-    "latest": "Letzte Ereignisse",
-    "noEvents": "Noch nichts passiert – das Dorf meldet sich bald.",
-    "mailbox": "Postfach",
-    "unreadCount": "{n} ungelesen",
-    "openMailbox": "Postfach öffnen",
-    "toMarket": "Zu Warenbestand & Preisen",
-    "callActive": "Gespräch läuft"
+    "result": "Monatsergebnis",
+    "resultOf": "Ergebnis {month}",
+    "fields": "Felder",
+    "harvestable": "Felder erntereif",
+    "withered": "{n} Ernte(n) verdorrt",
+    "ownFields": "eigene Felder",
+    "todo": "Zu erledigen",
+    "openAll": "Alle öffnen",
+    "debits": "Nächste Abbuchung",
+    "debitsOf": "Abbuchung 1. {month}",
+    "stableHealth": "Gesundheit {animal}",
+    "stableFood": "Futter {food} %",
+    "animals": "Tiere"
   },
   "settings": {
     "ai": "KI-Anbieter",
@@ -1090,5 +1142,132 @@
     "invitationHint": "Eine Zusage freut die Gastgeber. Absagen ist in Ordnung – nur gar nicht zu antworten kommt schlecht an.",
     "fine": "Bußgeld {amount}",
     "paid": "Bezahlt {amount}"
+  },
+  "tasks": {
+    "filter": "Aufgaben filtern",
+    "filters": {
+      "all": "Alle",
+      "today": "Heute",
+      "money": "Geld",
+      "farm": "Hof",
+      "village": "Dorf"
+    },
+    "groups": {
+      "today": "Heute",
+      "week": "Diese Woche",
+      "later": "Später"
+    },
+    "empty": "Nichts zu entscheiden – alles erledigt.",
+    "noDeadline": "offen",
+    "dueToday": "Heute {time}",
+    "openInApp": "In App",
+    "contractOffer": "Angebot: {kind}",
+    "leaseEnds": "Pacht Feld {id} läuft aus",
+    "leaseEndsHint": "Verlängern oder kaufen – ohne Antwort geht das Feld zum Ende zurück.",
+    "counterOffer": "Gegenangebot der Bank: {offered} statt {amount}",
+    "counterOfferDetail": "{months} Monate · {rate} %",
+    "calling": "{name} ruft an",
+    "round": "Runde {used} von {max}",
+    "lastCounter": "Gegenangebot {amount}",
+    "fixedPrice": "Festpreis {price}",
+    "maxQuantity": "bis {quantity} l",
+    "applicants": "{role}: {n} Bewerbung(en)",
+    "applicantsHint": "Gespräch per Mail oder Anruf, dann einstellen – in der App Personal.",
+    "inGame": "Fragen im Spiel",
+    "waitingPrompts": "{n} Frage(n) warten im Spiel",
+    "waitingPromptsHint": "Im Spiel mit „FarmPulse: offene Frage“ (Standard Alt+J) öffnen – oder hier entscheiden, dann verschwinden sie im Spiel.",
+    "todayDiary": "Heute im Tagebuch",
+    "nothingToday": "Heute ist noch nichts eingetragen.",
+    "toDiary": "Zum Tagebuch",
+    "counterOfferShort": "Gegenangebot der Bank"
+  },
+  "calendar": {
+    "nextDays": "Nächste Tage",
+    "nothingSoon": "In den nächsten Tagen steht nichts an.",
+    "monthStart": "Monatsbeginn {month} · {day}",
+    "debitedAutomatically": "Wird automatisch abgebucht",
+    "noDebits": "Keine Abbuchungen.",
+    "total": "Summe",
+    "balanceAfter": "Kontostand danach ungefähr {amount}",
+    "selfPay": "Selbst zahlen",
+    "yearOverview": "Jahr {year} im Überblick",
+    "clubs": "Vereine",
+    "taxOffice": "Finanzamt",
+    "legend": {
+      "festival": "Dorffest",
+      "tax": "Finanzamt",
+      "family": "Familie",
+      "authority": "Amt"
+    },
+    "agenda": {
+      "monthStart": "Monatsbeginn {month}: Abbuchungen",
+      "taxAssessment": "Steuerbescheid für das Vorjahr",
+      "taxPrepayment": "Steuer-Vorauszahlung fällig",
+      "loan": "Kreditrate {amount} · {title}",
+      "salaries": "Gehälter {amount}",
+      "contract": "{kind} {amount}",
+      "leaseEnd": "Pacht Feld {id} endet",
+      "deadline": "Frist: {what}"
+    },
+    "debits": {
+      "salaries": "Gehälter ({n})",
+      "loan": "Kreditrate · {title}",
+      "retirement": "Altenteil"
+    },
+    "year": {
+      "TAX_ASSESSMENT": "Steuerbescheid",
+      "TAX_PREPAYMENT": "Vorauszahlung",
+      "ROTATION_CHECK": "Fruchtfolge-Prüfung",
+      "birthday": "Geburtstag {name}",
+      "weddingDay": "Hochzeitstag",
+      "schoolStart": "Einschulung {name}"
+    },
+    "invitations": "Einladungen"
+  },
+  "insurance": {
+    "damages": "Schäden",
+    "damagesIntro": "Hagel, Sturm und Wildschweine: Melde einen versicherten Schaden rechtzeitig, beim Wildschaden verhandelst du mit dem Jagdpächter."
+  },
+  "workshop": {
+    "maintenance": "Wartung",
+    "contracts": "Wartungsvertrag",
+    "mechanics": "Mechaniker:innen",
+    "noMechanic": "Keine Mechaniker:in eingestellt.",
+    "toStaff": "Zum Personal",
+    "reports": "Werkstattberichte kommen jeden Monat per"
+  },
+  "authorities": {
+    "taxOffice": "Finanzamt",
+    "agriOffice": "Landwirtschaftsamt",
+    "taxBills": "Bescheide",
+    "advisor": "Steuerberatung",
+    "inspections": "Kontrollen",
+    "inspectionsIntro": "Jede Kontrolle wird mit Frist angekündigt. Behebe den Mangel im Spiel – dann bleibt es ohne Beanstandung."
+  },
+  "stable": {
+    "trade": "Viehhandel und Tierarzt",
+    "health": "Gesundheit",
+    "food": "Futter",
+    "water": "Wasser",
+    "productivity": "Produktivität",
+    "value": "Wert {value}",
+    "inspection": "Tierwohl-Kontrolle angekündigt ({animal}) – Frist {time}",
+    "inspectionHint": "Gesundheit, Futter oder Wasser sind zu niedrig. Im Spiel auffüllen – zur Frist prüft das Amt erneut. Beim ersten Verstoß gibt es eine Auflage.",
+    "untracked": "Gesundheit, Futter und Wasser zeigt der Stall mit der aktuellen Mod-Version.",
+    "noAnimals": "Keine Tiere auf dem Hof.",
+    "keepers": "Tierpfleger:innen",
+    "noKeeper": "Niemand kümmert sich um {animals} Tiere.",
+    "perKeeper": "{n} Tiere je Person – ab etwa {limit} wird es eng.",
+    "vet": "Nächste Routine des Tierarztes",
+    "vetHint": "Sinkt die Gesundheit eines Stalls unter {health} %, rückt der Tierarzt zu einem Notfall aus."
+  },
+  "weather": {
+    "rain": "Regen",
+    "dry": "Trocken",
+    "ground": {
+      "dry": "Boden trocken",
+      "moist": "Boden feucht",
+      "wet": "Boden nass"
+    }
   }
 }

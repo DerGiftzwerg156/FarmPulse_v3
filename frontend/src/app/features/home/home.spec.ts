@@ -3,22 +3,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { GameStateStore } from '../../core/state/game-state.store';
-import { DAY, message, savegame } from '../../../testing/fixtures';
-import { Home, buildFeed } from './home';
+import { DAY, savegame } from '../../../testing/fixtures';
+import { APPS } from '../../layout/apps';
+import { Home } from './home';
 
-describe('buildFeed', () => {
-  it('merges mails, calls and diary newest first and skips own messages', () => {
-    const feed = buildFeed(
-      [message({ id: 1, gameTime: 3 * DAY }), message({ id: 2, gameTime: 9 * DAY, initiatedBy: 'PLAYER' })],
-      [message({ id: 3, channel: 'CALL', callStatus: 'MISSED', gameTime: 5 * DAY })],
-      [{ id: 4, gameTime: 4 * DAY, gameDay: 4, entryType: 'AUTO', category: 'CREDIT', title: 'Kredit', text: null }],
-    );
-    expect(feed.map((f) => f.key)).toEqual(['c3', 'd4', 'm1']);
-    expect(feed[0]).toMatchObject({ link: '/calls', query: { id: 3 }, unread: true });
-  });
-});
-
-describe('Home', () => {
+describe('Home (start screen)', () => {
   function setup(active = true) {
     TestBed.configureTestingModule({
       imports: [Home],
@@ -26,21 +15,45 @@ describe('Home', () => {
     });
     const store = TestBed.inject(GameStateStore);
     store.loaded.set(true);
-    if (active) store.savegame.set(savegame({ balance: 245000, unreadMails: 1, pendingCalls: 1, gameDay: 5 }));
+    if (active) {
+      store.savegame.set(savegame({ balance: 245000, unreadMails: 1, pendingCalls: 1, gameDay: 5, gameTime: 5 * DAY + 11.5 * 3_600_000,
+        weather: { raining: true, rainFallScale: 0.6, groundWetness: 0.7, temperature: 14.46 } }));
+    }
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
     return { fixture, http, store, el: fixture.nativeElement as HTMLElement };
   }
 
-  function flushAll(http: HttpTestingController) {
-    http.expectOne('/api/mails').flush([message({ id: 1, subject: 'Kreditantrag', gameTime: 4 * DAY })]);
-    http.expectOne('/api/calls').flush([message({ id: 2, channel: 'CALL', callStatus: 'RINGING', subject: 'Kurze Frage', gameTime: 5 * DAY })]);
-    http.expectOne('/api/diary').flush([{ id: 3, gameTime: 0, gameDay: 0, entryType: 'AUTO', category: 'BACKSTORY', title: 'Wie alles begann', text: '…' }]);
-    http.expectOne('/api/loans').flush([{ id: 1, status: 'ACTIVE', remainingAmount: 45000, overdue: true }]);
-    http.expectOne('/api/negotiations').flush([{ id: 1, status: 'OPEN' }, { id: 2, status: 'ACCEPTED' }]);
+  function flushTasks(http: HttpTestingController) {
+    http.match('/api/tasks').forEach((r) => r.flush({
+      waitingPrompts: 0,
+      items: [{ key: 'credit-1', type: 'CREDIT_COUNTER', kind: 'COUNTER_OFFER', deadlineGameTime: null, gameTime: 4 * DAY,
+        serviceCase: null, contract: null, application: { id: 1, amount: 80000, offeredAmount: 60000 }, call: null,
+        negotiation: null, marketEvent: null, posting: null, pendingApplicants: null }],
+    }));
+    http.match('/api/notices').forEach((r) => r.flush([]));
+  }
+
+  function flushAll(http: HttpTestingController, phase: string | null = 'HARVESTABLE') {
+    http.expectOne('/api/calendar').flush({ gameTime: 5 * DAY, currentPeriod: 2, year: 1, daysPerPeriod: 1, nextMonthStart: 6 * DAY,
+      nextPeriod: 3, agenda: [], monthStartDebits: [], monthStartTotal: 8315, yearEvents: [] });
     http.expectOne('/api/village-reputation').flush({ tier: 'GOOD', label: 'gut angesehen' });
-    http.expectOne('/api/storage').flush({ gameTime: 5 * DAY, totalValue: 41400, items: [{ fillType: 'WHEAT', amount: 180000, capacity: 200000, bestPrice: 230, bestSellPoint: 'Mühle', value: 41400 }] });
+    http.expectOne('/api/finances').flush({
+      available: true,
+      months: [
+        { year: 1, period: 2, complete: true, operatingResult: 8420, operatingIncome: 0, operatingExpenses: 0, investment: 0, divestment: 0, financing: 0, ignored: 0, lines: [] },
+        { year: 1, period: 3, complete: false, operatingResult: -100, operatingIncome: 0, operatingExpenses: 0, investment: 0, divestment: 0, financing: 0, ignored: 0, lines: [] },
+      ],
+    });
+    http.expectOne('/api/farmlands').flush([
+      { farmlandId: 3, hectares: 4, referencePrice: 1, ownerType: 'PLAYER', owner: null, inNegotiation: false, phase },
+      { farmlandId: 4, hectares: 4, referencePrice: 1, ownerType: 'CHARACTER', owner: null, inNegotiation: false, phase: null },
+    ]);
+    http.expectOne('/api/stables').flush({ tracked: true, animals: 162, keepers: 0, animalsPerKeeper: 80, healthWarnBelow: 40,
+      foodWarnBelow: 0.2, waterWarnBelow: 0.2, vetDue: [], barns: [
+        { husbandryUniqueId: 'h1', type: 'COW', count: 42, value: 1, health: 38, productivity: 61, food: 0.12, water: 0.86, conditions: [], inspectionDeadline: null },
+        { husbandryUniqueId: 'h2', type: 'CHICKEN', count: 120, value: 1, health: 94, productivity: 92, food: 0.7, water: 1, conditions: [], inspectionDeadline: null }] });
   }
 
   it('invites to the onboarding without a savegame', () => {
@@ -49,29 +62,41 @@ describe('Home', () => {
     http.expectNone('/api/mails');
   });
 
-  it('shows the key figure tiles', () => {
+  it('shows the game clock, the key figures and every app', () => {
     const { el, http, fixture } = setup();
     flushAll(http);
     fixture.detectChanges();
+    expect(el.querySelector('[data-testid="clock"]')?.textContent?.trim()).toBe('11:30');
+    expect(el.querySelector('[data-testid="date-line"]')?.textContent).toContain('Regen, 14,5 °C, Boden nass');
     const value = (id: string) => el.querySelector(`[data-testid="${id}"] [data-testid="stat-value"]`)?.textContent?.replace(/\s/g, ' ').trim();
-    expect(value('kpi-balance')).toBe('245.000 €');
-    expect(value('kpi-mails')).toBe('1');
-    expect(value('kpi-calls')).toBe('1');
-    expect(value('kpi-loans')).toBe('1');
-    expect(value('kpi-negotiations')).toBe('1');
+    expect(value('kpi-result')).toBe('+8.420 €');
+    expect(el.querySelector('[data-testid="kpi-result"]')?.textContent).toContain('April');
+    expect(value('kpi-debits')).toBe('−8.315 €');
+    expect(el.querySelector('[data-testid="kpi-debits"]')?.textContent).toContain('Mai');
     expect(value('kpi-reputation')).toBe('Gut angesehen');
-    expect(el.querySelector('[data-testid="kpi-loans"]')?.textContent?.replace(/\s/g, ' ')).toContain('45.000 €');
+    expect(el.querySelectorAll('[data-testid="app-grid"] app-tile').length).toBe(APPS.length);
+    expect(el.querySelector('[data-testid="app-grid"] [data-testid="app-mail"] [data-testid="app-badge"]')?.textContent?.trim()).toBe('1');
+    flushTasks(http);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-grid"] [data-testid="app-bank"] [data-testid="app-badge"]')?.textContent?.trim()).toBe('1');
   });
 
-  it('lists the latest events and refreshes on live events', () => {
+  it('shows open tasks and harvestable fields as widgets and reloads on live events', () => {
     const { el, http, fixture, store } = setup();
     flushAll(http);
+    flushTasks(http);
     fixture.detectChanges();
-    const kinds = [...el.querySelectorAll('[data-testid="feed-item"]')].map((i) => i.getAttribute('data-kind'));
-    expect(kinds).toEqual(['call', 'mail', 'diary']);
-    store.mailVersion.update((v) => v + 1);
+    expect(el.querySelector('[data-testid="todo-count"]')?.textContent?.trim()).toBe('1');
+    expect(el.querySelector('[data-testid="todo"]')?.textContent).toContain('Gegenangebot der Bank');
+    expect(el.querySelector('[data-testid="todo"]')?.textContent).toContain('Bank');
+    expect(el.querySelector('[data-testid="harvestable"]')?.textContent?.trim()).toBe('1');
+    expect(el.querySelector('[data-testid="stable-health"]')?.textContent?.trim()).toBe('38 %');
+    expect(el.querySelector('[data-testid="stable-widget"]')?.textContent).toContain('Gesundheit Rinder');
+    store.stateVersion.update((v) => v + 1);
     fixture.detectChanges();
-    flushAll(http);
-    expect(el.querySelector('[data-testid="silo-preview"]')?.textContent).toContain('Weizen');
+    flushAll(http, 'GROWING');
+    flushTasks(http);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="harvestable"]')?.textContent?.trim()).toBe('0');
   });
 });

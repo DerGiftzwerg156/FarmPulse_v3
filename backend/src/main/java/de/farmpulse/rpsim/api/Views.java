@@ -14,7 +14,14 @@ public final class Views {
      */
     public record SavegameView(Long id, String savegameId, String mapName, long gameTime, long gameDay, long balance,
                                String tonePreset, long unreadMails, long pendingCalls, String reputationTier,
-                               CalendarView calendar, List<String> detectedMods) {
+                               CalendarView calendar, List<String> detectedMods, WeatherView weather) {
+    }
+
+    /**
+     * Hof-Tablet status bar: weather of the last farm_facts (Roadmap V2 R2-C2). rain / groundWetness 0..1, temperature
+     * in °C (null with an older mod). The whole view is null before the first weather export.
+     */
+    public record WeatherView(boolean raining, double rainFallScale, double groundWetness, Double temperature) {
     }
 
     /** FS25 calendar: period 1..12 (1 = March), periodName as shown in the game. */
@@ -231,4 +238,87 @@ public final class Views {
     /** financeClass: OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING or IGNORE. */
     public record FinanceLineView(String category, long amount, String financeClass) {
     }
+
+    /**
+     * Hof-Tablet "Aufgaben": one open decision (or announced deadline) of any area. {@code type} names the source and
+     * which of the optional payloads is set: CASE, CONTRACT_OFFER, LEASE_RENEWAL, CREDIT_COUNTER, CALL, NEGOTIATION,
+     * MARKET_OFFER, POSTING. {@code kind} is the case / contract / event kind where there is one.
+     */
+    public record TaskView(String key, String type, String kind, Long deadlineGameTime, long gameTime, CaseView serviceCase,
+                           ContractView contract, CreditApplicationView application, MessageView call,
+                           NegotiationView negotiation, MarketEventView marketEvent, JobPostingView posting,
+                           Integer pendingApplicants) {
+    }
+
+    /** Open tasks sorted by deadline (none last) plus the number of yes/no questions waiting in the game. */
+    public record TasksView(List<TaskView> items, int waitingPrompts) {
+    }
+
+    /**
+     * Hof-Tablet "Kalender": agenda of the next game days, the debits of the coming month start and the year with its
+     * fixed dates. Game times are in-game milliseconds; {@code period} is the FS25 period (1 = March).
+     */
+    public record CalendarOverviewView(long gameTime, Integer currentPeriod, Integer year, int daysPerPeriod,
+                                       long nextMonthStart, Integer nextPeriod, List<AgendaEntryView> agenda,
+                                       List<DebitView> monthStartDebits, long monthStartTotal, List<YearEventView> yearEvents) {
+    }
+
+    /** kind: e.g. CASE_DEADLINE, OFFER_EXPIRES, LOAN_INSTALLMENT, SALARY, CONTRACT_PAYMENT, LEASE_END, FESTIVAL. */
+    public record AgendaEntryView(long gameTime, String kind, String subKind, String title, Long amount, String reference) {
+    }
+
+    /** kind: SALARIES, LOAN, CONTRACT, RETIREMENT; subKind = contract kind; count = employees / loans. */
+    public record DebitView(String kind, String subKind, String label, long amount, int count) {
+    }
+
+    /** One fixed date of the FS25 year: FESTIVAL, TAX_ASSESSMENT, TAX_PREPAYMENT, FAMILY_BIRTHDAY, FAMILY_WEDDING_DAY,
+     * SCHOOL_START, ROTATION_CHECK. {@code reference} = festival key or family member name. */
+    public record YearEventView(int period, String kind, String reference) {
+    }
+
+    /**
+     * Hof-Tablet app "Stall": the husbandries of the last farm_facts (Roadmap V2 R2-A7) with the thresholds the tool
+     * reacts to. {@code tracked} is false with an older mod (no husbandry values, only the animals of assets.animals).
+     */
+    public record StablesView(boolean tracked, int animals, int keepers, double animalsPerKeeper, double healthWarnBelow,
+                              double foodWarnBelow, double waterWarnBelow, List<BarnView> barns, List<VetDueView> vetDue) {
+    }
+
+    /**
+     * One husbandry: health and productivity 0..100 (the mod exports productivity as factor 0..1, like the game's info
+     * box shows it x 100), food / water / conditions 0..1 (null = not reported).
+     */
+    public record BarnView(String husbandryUniqueId, String type, int count, long value, Double health, Double productivity,
+                           Double food, Double water, List<ConditionView> conditions, Long inspectionDeadline) {
+    }
+
+    public record ConditionView(String title, double ratio) {
+    }
+
+    /** Next routine visit of the vet per animal type (month start of the due month). */
+    public record VetDueView(String type, long gameTime) {
+    }
+
+    /**
+     * Hof-Tablet app "Flurkarte": the fields the player farms with their state from the last field sample (Roadmap V2
+     * R2-C) - what needs doing (weeds, stones, lime, plowing, only when the savegame has them switched on) and the crop
+     * rotation of the running FS25 year against the year before.
+     */
+    public record FieldOverviewView(Integer year, boolean tracked, List<FieldRowView> fields, RotationPreviewView rotation) {
+    }
+
+    /** rotation: CHANGED, SAME (a violation at the year's end) or UNKNOWN (no crop this or last year). */
+    public record FieldRowView(int farmlandId, String name, Double hectares, String fruitType, String phase, boolean leased,
+                               boolean familyField, boolean weedsHigh, boolean stonesHigh, boolean needsLime, boolean needsPlow,
+                               String previousCrop, String currentCrop, String rotation, int rotationViolations) {
+    }
+
+    /**
+     * Estimate of the rotation premium at the end of the year as the authority computes it (hectares with a changed main
+     * crop x premium per ha, cut when a field repeats its crop a second time). null while the authority is off.
+     */
+    public record RotationPreviewView(double changedHectares, long premium, boolean cut, List<Integer> sameFields,
+                                      double premiumPerHa) {
+    }
 }
+

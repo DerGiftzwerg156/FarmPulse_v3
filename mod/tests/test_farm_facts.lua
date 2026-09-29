@@ -196,6 +196,13 @@ function T.TestFarmFacts:testWeatherOnlyWhenComplete()
     local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
         weather = { raining = true, rainFallScale = 0.66666, groundWetness = 0.4 } }, cfg)
     lu.assertEquals(doc.weather, { raining = true, rainFallScale = 0.667, groundWetness = 0.4 })
+    -- Hof-Tablet: the temperature is optional and rounded to one decimal
+    doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        weather = { raining = false, rainFallScale = 0, groundWetness = 0.1, temperature = 14.46 } }, cfg)
+    lu.assertEquals(doc.weather, { raining = false, rainFallScale = 0, groundWetness = 0.1, temperature = 14.5 })
+    doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        weather = { raining = false, rainFallScale = 0, groundWetness = 0.1, temperature = 0 / 0 } }, cfg)
+    lu.assertNil(doc.weather.temperature)
     doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, weather = { raining = true } }, cfg)
     lu.assertNil(doc.weather)
 end

@@ -113,7 +113,8 @@ test('vanilla contracts are exported and follow the player (TODO T-22)', () => {
 
 // ------------------------------------------------------------------ Roadmap V2 (R2-Q2)
 const V2_BLOCKS = ['finances', 'workforce', 'husbandries', 'fields', 'fieldRules', 'weather'];
-const V2_SCENARIOS = { 'helfer-hof': ['finances', 'workforce', 'weather'],
+const V2_SCENARIOS = { 'wohlhabender-hof': ['finances', 'husbandries', 'fields', 'fieldRules', 'weather'],
+  'helfer-hof': ['finances', 'workforce', 'weather'],
   'tierhof-krank': ['finances', 'husbandries', 'weather'], 'ernte-herbst': ['finances', 'fields', 'fieldRules', 'weather'] };
 
 test('Roadmap V2: the new scenarios export their blocks, all others leave them out (older mod)', () => {
@@ -178,7 +179,7 @@ test('Roadmap V2: husbandries, fields and weather can be changed like in the gam
   const after = harvest.buildFarmFacts();
   assert.deepEqual(after.fields.map((f) => f.farmlandId), [2, 4, 7]);
   assert.equal(after.fields[2].weedState, 0);
-  assert.deepEqual(after.weather, { raining: false, rainFallScale: 0, groundWetness: 0.7 });
+  assert.deepEqual(after.weather, { raining: false, rainFallScale: 0, groundWetness: 0.7, temperature: 12 });
   assert.equal(validate('farmFacts', after), null);
   assert.throws(() => new BridgeSimulator({ dir: tmp(), scenario: 'leerer-hof' }).setWeather({}), /no weather/);
   // R2-C: crop details and the soil settings of the savegame
@@ -215,7 +216,7 @@ test('Roadmap V2: game bookings land in the journal under their money type (R2-B
   assert.equal(sim.buildFarmFacts().finances.periods.at(-1).byType.LEASING_COSTS, -1500);
   assert.throws(() => sim.bookGame('', 5), /required/);
   // a scenario without journal only changes the balance
-  const old = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof' });
+  const old = new BridgeSimulator({ dir: tmp(), scenario: 'voller-silobestand' });
   assert.equal(old.bookGame('AI', -10).finances, null);
 });
 
@@ -236,4 +237,16 @@ test('Roadmap V2: vanilla loan and field menu can be used like in the game (R2-D
   sim.vanillaFarmland(free.farmlandId, false);
   assert.ok(!sim.buildFarmFacts().assets.farmland.some((f) => f.farmlandId === free.farmlandId));
   assert.equal(validate('farmFacts', facts), null);
+});
+
+test('reset forgets the previous run before loading its savegame', () => {
+  const dir = tmp();
+  const first = new BridgeSimulator({ dir, scenario: 'wohlhabender-hof' });
+  first.weather = null; // like a savegame written by a simulator version without the block
+  first.balance = 1;
+  first.saveSavegame();
+  assert.equal(new BridgeSimulator({ dir, scenario: 'wohlhabender-hof' }).balance, 1);
+  const fresh = new BridgeSimulator({ dir, scenario: 'wohlhabender-hof', reset: true });
+  assert.equal(fresh.balance, 2400000);
+  assert.equal(fresh.buildFarmFacts().weather.temperature, 18);
 });

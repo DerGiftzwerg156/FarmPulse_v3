@@ -14,6 +14,7 @@ import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { TrustMeter } from './trust-meter';
+import { ServiceCases } from '../contracts/service-cases';
 
 export const CATEGORY_ORDER = ['MANDATORY', 'SUBSTITUTE', 'DYNAMIC', 'EMPLOYEE'];
 
@@ -23,7 +24,7 @@ export const CATEGORY_ORDER = ['MANDATORY', 'SUBSTITUTE', 'DYNAMIC', 'EMPLOYEE']
  */
 @Component({
   selector: 'app-village',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, TrustMeter, PageErrorView],
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, TrustMeter, PageErrorView, ServiceCases],
   templateUrl: './village.html',
 })
 export class Village {
@@ -34,6 +35,9 @@ export class Village {
 
   /** `?character=` opens a character (links from calls, applicants, fields). */
   readonly character = input<string>();
+  /** `?case=` highlights a sponsoring request (links from mails and "Aufgaben"). */
+  readonly case = input<string>();
+  readonly highlightedCase = computed(() => Number(this.case()) || null);
 
   readonly characters = signal<CharacterView[] | null>(null);
   readonly reputation = signal<ReputationView | null>(null);

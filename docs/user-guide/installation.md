@@ -6,7 +6,7 @@ FarmPulse besteht aus drei Teilen, die du einmal einrichtest:
 | --- | --- | --- |
 | **Mod `FS25_RPSim`** | liest Kontostand, Maschinen, Felder, Silo und Preise aus dem Spiel und führt Buchungen/Preisänderungen aus | in Farming Simulator 25 |
 | **Backend** (`rpsim-backend.jar`) | das „Gehirn“: Bank, Markt, Dorf, Personal, KI-Texte | als kleines Programm auf deinem PC |
-| **Oberfläche** | Postfach, Anrufe, Bank … im Browser | wird vom Backend mitgeliefert: <http://localhost:8080> |
+| **Oberfläche** | Hof-Tablet mit Post, Telefon, Bank … im Browser | wird vom Backend mitgeliefert: <http://localhost:8080> |
 
 Mod und Backend unterhalten sich nur über Dateien im Ordner `modSettings/FS25_RPSim` – es gibt keine
 Netzwerkverbindung ins Spiel und dein API-Schlüssel landet nie im Mod-Ordner.

@@ -53,7 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Roadmap V2 R2-E1: tax office and tax advisor. Tax year = FS25 year (period 1 = March), data from the booking journal
- * (R2-B). Owner decisions: taxes and fines do not count for the profit, bills are paid by button (Verträge), an audit
+ * (R2-B). Owner decisions: taxes and fines do not count for the profit, bills are paid by button (app "Ämter"), an audit
  * disputes a share of the expenses under unknown categories and of the excess of expense jump months.
  * <ul>
  *   <li>Start of period 1: the finished year is assessed (bill for a back payment, refund booked at once); prepayments
@@ -182,7 +182,7 @@ public class TaxService {
                 .facts(NarrationFacts.builder().put("taxYear", y.getTaxYear()).put("quarter", quarter)
                         .put("amount", amount).put("paymentDays", Math.round(cfg().getPaymentDays())).build())
                 .category(CommunicationCategory.CONTRACT).related(RELATED, bill.getId())
-                .formLink("/contracts?case=" + bill.getId()).submit();
+                .formLink("/aemter?case=" + bill.getId()).submit();
     }
 
     // ------------------------------------------------------------------------------------------ assessment
@@ -294,7 +294,7 @@ public class TaxService {
                         .put("tax", c.tax()).put("prepayments", prepaid).put("balance", y.getBalance())
                         .put("paymentDays", bill == null ? null : Math.round(cfg().getPaymentDays())).build())
                 .category(CommunicationCategory.CONTRACT).related(RELATED, bill == null ? null : bill.getId())
-                .formLink(bill == null ? "/bank" : "/contracts?case=" + bill.getId()).submit();
+                .formLink(bill == null ? "/aemter" : "/aemter?case=" + bill.getId()).submit();
         diary.addAuto(sg, "CREDIT", "Steuerbescheid Jahr " + y.getTaxYear(), "Gewinn " + c.profit() + " € (Einnahmen "
                 + c.income() + " €, Ausgaben " + c.expense() + " €, Abschreibung " + c.depreciation() + " €, Zinsen "
                 + c.interest() + " €), zu versteuern " + c.taxable() + " €, Steuer " + c.tax() + " €, Vorauszahlungen "
@@ -364,7 +364,7 @@ public class TaxService {
                     .facts(NarrationFacts.builder().put("taxYear", y.getTaxYear()).put("backPayment", claim)
                             .put("paymentDays", bill == null ? null : Math.round(cfg().getPaymentDays())).build())
                     .category(CommunicationCategory.CONTRACT).related(RELATED, bill == null ? null : bill.getId())
-                    .formLink(bill == null ? null : "/contracts?case=" + bill.getId()).submit();
+                    .formLink(bill == null ? null : "/aemter?case=" + bill.getId()).submit();
             diary.addAuto(sg, "CREDIT", "Betriebsprüfung Jahr " + y.getTaxYear(),
                     claim > 0 ? "Der Prüfer fordert " + claim + " € nach." : "Die Prüfung verlief ohne Beanstandung.",
                     null, null);
@@ -444,7 +444,7 @@ public class TaxService {
                                 .put("daysLeft", Math.max(0, Math.round(GameTime.toDays(b.getDeadlineGameTime() - now))))
                                 .build())
                         .category(CommunicationCategory.CONTRACT).related(RELATED, b.getId())
-                        .formLink("/contracts?case=" + b.getId()).submit();
+                        .formLink("/aemter?case=" + b.getId()).submit();
             }
             if (now > b.getDeadlineGameTime()) {
                 overdue(sg, b, now);
@@ -473,7 +473,7 @@ public class TaxService {
                 .facts(NarrationFacts.builder().put("billTitle", b.getTitle()).put("amount", b.getOfferAmount())
                         .put("lateFees", b.getCostAmount()).put("overdueMonths", months).build())
                 .category(CommunicationCategory.CONTRACT).related(RELATED, b.getId())
-                .formLink("/contracts?case=" + b.getId()).submit();
+                .formLink("/aemter?case=" + b.getId()).submit();
     }
 
     // ------------------------------------------------------------------------------------------ tax advisor
@@ -508,7 +508,7 @@ public class TaxService {
                         .put("taxReductionPercent", Math.round(cfg().getAdvisorTaxReduction() * 100))
                         .put("validDays", Math.round(cfg().getAdvisorOfferValidDays())).build())
                 .category(CommunicationCategory.CONTRACT).related(ContractBillingService.RELATED, c.getId())
-                .formLink("/contracts?contract=" + c.getId()).submit();
+                .formLink("/aemter?contract=" + c.getId()).submit();
         return c;
     }
 

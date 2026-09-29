@@ -1,5 +1,4 @@
 <section class="space-y-4">
-  <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.farmland' | t }}</h1>
 
   @if (error(); as err) {
     <app-page-error [error]="err" />
@@ -96,6 +95,8 @@
         </div>
       }
     </app-card>
+
+    <app-field-table />
 
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
       <app-card [title]="'farmland.negotiations' | t" data-testid="negotiation-list">
@@ -210,4 +211,9 @@
       }
     </div>
   }
+
+  <app-service-cases [caseKinds]="['COMPENSATION_CLAIM', 'MISSION_REFERRAL']" [contractKinds]="['LEASE']" openTitle="farmland.claims"
+    contractsTitle="farmland.leases" [showEmpty]="false" [highlightCase]="highlightedCase()" [highlightContract]="highlightedContract()" testId="field-cases">
+    <p contracts-intro class="mb-3 text-[12px] text-muted">{{ 'contracts.leaseHint' | t }}</p>
+  </app-service-cases>
 </section>

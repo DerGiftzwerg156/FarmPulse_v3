@@ -60,7 +60,7 @@ describe('TaxCard', () => {
     (el.querySelector('[data-testid="tax-advisor-request"] button') as HTMLButtonElement).click();
     http.expectOne('/api/tax/advisor/offer').flush({});
     fixture.detectChanges();
-    expect(el.querySelector('[data-testid="tax-advisor-requested"]')?.textContent).toContain('Verträge & Vorgänge');
+    expect(el.querySelector('[data-testid="tax-advisor-requested"]')?.textContent).toContain('Steuerberatung');
   });
 
   it('shows an active advisor instead of the request button', () => {

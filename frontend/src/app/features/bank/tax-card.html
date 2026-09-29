@@ -16,7 +16,7 @@
     </div>
     <p class="mb-3 text-[11px] text-muted">{{ 'bank.tax.estimateNote' | t }}</p>
     @if (o.openBills > 0) {
-      <a routerLink="/contracts" class="mb-3 inline-block fp-label text-accent hover:underline" data-testid="tax-bills-link">{{ 'bank.tax.payBills' | t }}</a>
+      <p class="mb-3 fp-label text-warn" data-testid="tax-bills-link">{{ 'bank.tax.payBills' | t }}</p>
     }
 
     @if (o.lastAssessment; as a) {
@@ -50,8 +50,7 @@
       @if (o.advisorActive) {
         <app-badge variant="positive" data-testid="tax-advisor-active">{{ 'bank.tax.advisorActive' | t }}</app-badge>
       } @else if (advisorRequested()) {
-        <p class="text-[12px] text-muted" data-testid="tax-advisor-requested">{{ 'bank.tax.advisorRequested' | t }}
-          <a routerLink="/contracts" class="text-accent hover:underline">{{ 'nav.contracts' | t }}</a></p>
+        <p class="text-[12px] text-muted" data-testid="tax-advisor-requested">{{ 'bank.tax.advisorRequested' | t }}</p>
       } @else {
         <app-button variant="secondary" [disabled]="busy()" (pressed)="requestAdvisor()" data-testid="tax-advisor-request">{{ 'bank.tax.requestAdvisor' | t }}</app-button>
         <span class="text-[11px] text-muted">{{ 'bank.tax.advisorHint' | t }}</span>
