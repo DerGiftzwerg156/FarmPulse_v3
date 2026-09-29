@@ -13,6 +13,7 @@ import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
+import { ServiceCases } from '../contracts/service-cases';
 
 /** Amount the counterpart currently offers/demands and that the player can accept with one click. */
 export function acceptableAmount(n: NegotiationView): number | null {
@@ -36,7 +37,7 @@ export function highestBid(n: NegotiationView): number | null {
  */
 @Component({
   selector: 'app-farmland',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases],
   templateUrl: './farmland.html',
 })
 export class Farmland {
@@ -46,6 +47,11 @@ export class Farmland {
 
   /** `?negotiation=` selects a negotiation (link from mails / village). */
   readonly negotiation = input<string>();
+  /** `?contract=` (lease) / `?case=` (compensation claim, referred contract) highlight an entry. */
+  readonly contract = input<string>();
+  readonly case = input<string>();
+  readonly highlightedContract = computed(() => Number(this.contract()) || null);
+  readonly highlightedCase = computed(() => Number(this.case()) || null);
 
   readonly fields = signal<FarmlandView[] | null>(null);
   readonly negotiations = signal<NegotiationView[] | null>(null);

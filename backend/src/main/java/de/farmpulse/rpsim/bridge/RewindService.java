@@ -143,7 +143,7 @@ public class RewindService {
             r.setStatus(RewindStatus.AWAITING_PLAYER);
             notices.raise(sg, NoticeKind.REWIND_DECISION, details, RELATED, r.getId());
             diary.addAuto(sg, "BRIDGE", "Älterer Spielstand geladen",
-                    lost.size() + " Buchungen fehlen im Spiel. Entscheidung im Dashboard: nachbuchen oder Tool-Stand beibehalten.",
+                    lost.size() + " Buchungen fehlen im Spiel. Entscheidung in der App „Aufgaben“: nachbuchen oder Tool-Stand beibehalten.",
                     RELATED, r.getId());
         }
     }

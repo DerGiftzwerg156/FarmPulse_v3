@@ -98,6 +98,22 @@ test.describe.serial('screenshots', () => {
     await expect(page.getByTestId('month-start')).toBeVisible();
     await shot(page, '23-kalender');
 
+    await page.goto('/versicherung');
+    await expect(page.getByTestId('insurance')).toBeVisible();
+    await shot(page, '24-versicherung');
+
+    await page.goto('/aemter');
+    await expect(page.getByTestId('tax-card')).toBeVisible();
+    await shot(page, '25-aemter');
+
+    await page.goto('/stall');
+    await expect(page.getByTestId('stable-cases')).toBeVisible();
+    await shot(page, '26-stall');
+
+    await page.goto('/werkstatt');
+    await expect(page.getByTestId('maintenance')).toBeVisible();
+    await shot(page, '27-werkstatt');
+
     await page.goto('/mailbox');
     await page.getByTestId('mail-thread').first().click();
     await expect(page.getByTestId('mail-detail')).toBeVisible();

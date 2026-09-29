@@ -167,7 +167,7 @@ public class ClubService {
                     .facts(NarrationFacts.builder().put("occasion", f.getKey())
                             .put("rsvpDays", Math.round(cfg().getInvitationDays())).build())
                     .category(CommunicationCategory.VILLAGE_LIFE).related(RELATED, sc.getId())
-                    .formLink("/contracts?case=" + sc.getId()).submit();
+                    .formLink("/kalender?case=" + sc.getId()).submit();
             any = true;
         }
         return any;
@@ -247,7 +247,7 @@ public class ClubService {
                         .put("largestTier", tiers.getLast())
                         .put("decisionDays", Math.round(cfg().getSponsoringDecisionDays())).build())
                 .category(CommunicationCategory.VILLAGE_LIFE).related(RELATED, sc.getId())
-                .formLink("/contracts?case=" + sc.getId()).submit();
+                .formLink("/village?case=" + sc.getId()).submit();
         return sc;
     }
 

@@ -1,7 +1,7 @@
 Mahnung: {{billTitle}}
 Guten Tag,
 
-„{{billTitle}}“ über {{amount}} € ist überfällig. Bisher angefallener Säumniszuschlag: {{lateFees}} €. Bitte zahlen Sie umgehend unter „Verträge“.
+„{{billTitle}}“ über {{amount}} € ist überfällig. Bisher angefallener Säumniszuschlag: {{lateFees}} €. Bitte zahlen Sie umgehend in der App „Ämter“.
 
 Mit freundlichen Grüßen
 {{characterName}}

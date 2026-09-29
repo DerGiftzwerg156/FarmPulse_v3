@@ -34,17 +34,26 @@ const TYPE_APP: Record<string, string> = {
   POSTING: 'staff',
 };
 
-/** Where a case / contract lives while its app does not exist yet. */
-const FALLBACK_APP = 'contracts';
+/** Where an unknown kind shows up: the task list itself. */
+const FALLBACK_APP = 'tasks';
 
 function known(id: string): string {
   return APPS.some((a) => a.id === id) ? id : FALLBACK_APP;
 }
 
+/** App id of a service case / contract kind (also used by the redirect of old `/contracts` links). */
+export function caseAppId(kind: string): string {
+  return known(CASE_APP[kind] ?? FALLBACK_APP);
+}
+
+export function contractAppId(kind: string): string {
+  return known(CONTRACT_APP[kind] ?? FALLBACK_APP);
+}
+
 /** Id of the app a task belongs to (badge, card header and "in app" link). */
 export function taskAppId(t: TaskView): string {
-  if (t.type === 'CASE') return known(CASE_APP[t.kind ?? ''] ?? FALLBACK_APP);
-  if (t.type === 'CONTRACT_OFFER') return known(CONTRACT_APP[t.kind ?? ''] ?? FALLBACK_APP);
+  if (t.type === 'CASE') return caseAppId(t.kind ?? '');
+  if (t.type === 'CONTRACT_OFFER') return contractAppId(t.kind ?? '');
   return known(TYPE_APP[t.type] ?? FALLBACK_APP);
 }
 

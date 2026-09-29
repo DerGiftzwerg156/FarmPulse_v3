@@ -195,7 +195,7 @@ public class HuntingService {
                         .put("offer", sc.getOfferAmount()).put("decisionDays", Math.round(cfg().getDecisionDays())).build())
                 .channel(random.chance(0.5) ? Channel.CALL : Channel.MAIL)
                 .category(CommunicationCategory.HUNTING).related(RELATED, sc.getId())
-                .formLink("/contracts?case=" + sc.getId()).submit();
+                .formLink("/versicherung?case=" + sc.getId()).submit();
         diary.addAuto(sg, "HUNTING", "Wildschaden auf Feld " + field.fieldName() + (crop == null ? "" : " (" + crop + ")"),
                 "Wildschweine haben Schaden von "
                 + damage + " € angerichtet. " + hunter.getName() + " bietet " + sc.getOfferAmount() + " € Ersatz.",

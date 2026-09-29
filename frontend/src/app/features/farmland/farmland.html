@@ -209,4 +209,9 @@
       }
     </div>
   }
+
+  <app-service-cases [caseKinds]="['COMPENSATION_CLAIM', 'MISSION_REFERRAL']" [contractKinds]="['LEASE']" openTitle="farmland.claims"
+    contractsTitle="farmland.leases" [showEmpty]="false" [highlightCase]="highlightedCase()" [highlightContract]="highlightedContract()" testId="field-cases">
+    <p contracts-intro class="mb-3 text-[12px] text-muted">{{ 'contracts.leaseHint' | t }}</p>
+  </app-service-cases>
 </section>

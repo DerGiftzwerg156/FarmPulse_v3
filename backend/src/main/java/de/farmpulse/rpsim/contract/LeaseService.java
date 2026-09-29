@@ -154,7 +154,7 @@ public class LeaseService {
                         .put("monthlyRent", c.getMonthlyAmount()).put("termMonths", c.getTermMonths())
                         .put("validDays", Math.round(cfg().getOfferValidDays())).build())
                 .category(CommunicationCategory.CONTRACT).related(ContractBillingService.RELATED, c.getId())
-                .formLink("/contracts?contract=" + c.getId()).submit();
+                .formLink("/farmland?contract=" + c.getId()).submit();
         return c;
     }
 
@@ -325,7 +325,7 @@ public class LeaseService {
                         .put("endsInDays", Math.max(1, Math.round(GameTime.toDays(c.getEndsAtGameTime() - sg.getCurrentGameTime()))))
                         .put("renewalRent", c.getRenewalAmount()).put("purchasePrice", c.getPurchasePrice()).build())
                 .category(CommunicationCategory.CONTRACT).related(ContractBillingService.RELATED, c.getId())
-                .formLink("/contracts?contract=" + c.getId()).submit();
+                .formLink("/farmland?contract=" + c.getId()).submit();
     }
 
     @EventListener

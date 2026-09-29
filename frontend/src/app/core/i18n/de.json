@@ -26,11 +26,14 @@
     "onboarding": "Neuer Spielstand",
     "menu": "Menü",
     "closeMenu": "Menü schließen",
-    "contracts": "Verträge",
     "start": "Start",
     "back": "Zurück zum Start",
     "tasks": "Aufgaben",
-    "calendar": "Kalender"
+    "calendar": "Kalender",
+    "authorities": "Ämter",
+    "insurance": "Versicherung",
+    "stable": "Stall",
+    "workshop": "Werkstatt"
   },
   "apps": {
     "mail": "Mails aus dem Dorf – antworten, wann du willst",
@@ -39,10 +42,13 @@
     "tasks": "Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert",
     "calendar": "Fristen, Abbuchungen, Dorffeste und Familientermine im FS25-Kalender",
     "bank": "Kredite, Anträge und Hofbuchhaltung",
+    "authorities": "Finanzamt und Landwirtschaftsamt – Steuern, Bescheide und Kontrollen",
     "market": "Silo, Preise, Marktgeschehen und Kontrakte",
-    "contracts": "Verträge und offene Vorgänge",
+    "insurance": "Sturm- und Hagelversicherung, Schäden melden, Wildschaden",
     "staff": "Team, Helferstunden und Stellenausschreibungen",
-    "fields": "Felder, Kulturen, Verhandlungen und Pacht",
+    "fields": "Felder, Kulturen, Verhandlungen, Pacht und Forderungen",
+    "stable": "Tiere, Tierarzt, Viehhandel und Tierwohl",
+    "workshop": "Wartungsvertrag, Reparaturen und Mechaniker",
     "diary": "Die Chronik deines Hofs",
     "settings": "KI, Spielstand und Fragen im Spiel"
   },
@@ -458,7 +464,9 @@
       "FINED": "Bußgeld verhängt",
       "DECLINED": "Abgesagt",
       "SPONSORED": "Gesponsert",
-      "IGNORED": "Nicht beantwortet"
+      "IGNORED": "Nicht beantwortet",
+      "EXPIRED": "Frist abgelaufen",
+      "EMERGENCY": "Notfall-Einsatz"
     },
     "animalType": {
       "COW": "Rinder",
@@ -755,7 +763,7 @@
       "dueIn": "fällig im {period}",
       "openBills": "Offene Bescheide",
       "estimateNote": "Schätzung aus den abgeschlossenen Monaten des laufenden Jahres, noch ohne Abschreibung und Zinsen. Der Bescheid kommt zu Beginn des nächsten Jahres.",
-      "payBills": "Bescheide unter „Verträge & Vorgänge“ bezahlen",
+      "payBills": "Offene Bescheide bezahlst du unter „Bescheide“.",
       "assessment": "Bescheid J{year} ({months} Monate)",
       "income": "Betriebseinnahmen",
       "expense": "Betriebsausgaben (ohne Steuern und Bußgelder)",
@@ -772,7 +780,7 @@
       "advisorActive": "Steuerberatung beauftragt",
       "requestAdvisor": "Steuerberatung anfragen",
       "advisorHint": "Senkt die Steuer, erinnert an Fristen und macht eine Betriebsprüfung unwahrscheinlicher – gegen ein Monatshonorar.",
-      "advisorRequested": "Das Angebot liegt unter"
+      "advisorRequested": "Das Angebot steht unter „Steuerberatung“ – dort nimmst du es an oder lehnst es ab."
     }
   },
   "employees": {
@@ -839,7 +847,7 @@
     "offerForSale": "Zum Verkauf anbieten",
     "startDirect": "Direktverhandlung starten",
     "requestLease": "Pacht anfragen",
-    "leaseOffered": "{name} bietet dir eine Pacht an – das Angebot findest du unter „Verträge“.",
+    "leaseOffered": "{name} bietet dir eine Pacht an – das Angebot findest du in der App „Flurkarte“ unter „Pacht“.",
     "leaseRefused": "{name} möchte das Feld gerade nicht verpachten.",
     "leasedHint": "Von dir gepachtet – im Spiel bewirtschaftest du das Feld, es gehört aber weiter dem Besitzer.",
     "toContracts": "Zum Pachtvertrag",
@@ -890,7 +898,9 @@
     "familyField": "Familienfeld",
     "markFamilyField": "Als Familienfeld markieren",
     "clearFamilyField": "Markierung entfernen",
-    "familyFieldHint": "Das Familienfeld liegt deiner Familie am Herzen – verkaufst du es, kostet das viel Vertrauen."
+    "familyFieldHint": "Das Familienfeld liegt deiner Familie am Herzen – verkaufst du es, kostet das viel Vertrauen.",
+    "claims": "Forderungen und Aufträge",
+    "leases": "Pacht"
   },
   "market": {
     "storageValue": "Wert im Silo",
@@ -948,7 +958,8 @@
       "DYNAMIC": "Dorfbewohner",
       "EMPLOYEE": "Personal",
       "OTHER": "Weitere"
-    }
+    },
+    "sponsoring": "Anfragen der Vereine"
   },
   "diary": {
     "chronicle": "Chronik",
@@ -1185,6 +1196,30 @@
       "birthday": "Geburtstag {name}",
       "weddingDay": "Hochzeitstag",
       "schoolStart": "Einschulung {name}"
-    }
+    },
+    "invitations": "Einladungen"
+  },
+  "insurance": {
+    "damages": "Schäden",
+    "damagesIntro": "Hagel, Sturm und Wildschweine: Melde einen versicherten Schaden rechtzeitig, beim Wildschaden verhandelst du mit dem Jagdpächter."
+  },
+  "workshop": {
+    "maintenance": "Wartung",
+    "contracts": "Wartungsvertrag",
+    "mechanics": "Mechaniker:innen",
+    "noMechanic": "Keine Mechaniker:in eingestellt.",
+    "toStaff": "Zum Personal",
+    "reports": "Werkstattberichte kommen jeden Monat per"
+  },
+  "authorities": {
+    "taxOffice": "Finanzamt",
+    "agriOffice": "Landwirtschaftsamt",
+    "taxBills": "Bescheide",
+    "advisor": "Steuerberatung",
+    "inspections": "Kontrollen",
+    "inspectionsIntro": "Jede Kontrolle wird mit Frist angekündigt. Behebe den Mangel im Spiel – dann bleibt es ohne Beanstandung."
+  },
+  "stable": {
+    "trade": "Viehhandel und Tierarzt"
   }
 }

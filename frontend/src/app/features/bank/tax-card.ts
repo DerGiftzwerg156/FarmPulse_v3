@@ -1,5 +1,4 @@
 import { Component, effect, inject, signal, untracked } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import { TaxOverviewView } from '../../core/api/models';
@@ -20,7 +19,7 @@ import { Stat } from '../../shared/ui/stat';
  */
 @Component({
   selector: 'app-tax-card',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, RouterLink, Card, Stat, Badge, Button],
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, Card, Stat, Badge, Button],
   templateUrl: './tax-card.html',
   host: { class: 'block' },
 })

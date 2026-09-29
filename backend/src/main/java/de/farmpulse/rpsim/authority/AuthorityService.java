@@ -221,7 +221,7 @@ public class AuthorityService {
                 .facts(NarrationFacts.builder().put("rule", rule).put("subject", label)
                         .put("inspectionDays", Math.round(cfg().getInspectionDays())).build())
                 .category(CommunicationCategory.CONTRACT).related(RELATED, sc.getId())
-                .formLink("/contracts?case=" + sc.getId()).submit();
+                .formLink("/aemter?case=" + sc.getId()).submit();
         return sc;
     }
 

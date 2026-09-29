@@ -1,51 +1,41 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Observable, forkJoin } from 'rxjs';
+import { Observable } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { CaseView, ContractView, InsuranceQuoteView } from '../../core/api/models';
+import { ContractView, InsuranceQuoteView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
+import { TasksStore } from '../../core/state/tasks.store';
 import { GameTimePipe, MoneyPipe } from '../../shared/format/format.pipes';
 import { LabelPipe } from '../../shared/format/label.pipe';
-import { Badge, BadgeVariant } from '../../shared/ui/badge';
+import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
-import { CaseCard } from './case-card';
-
-export const CONTRACT_BADGE: Record<string, BadgeVariant> = {
-  OFFERED: 'warning',
-  ACTIVE: 'positive',
-  DECLINED: 'neutral',
-  CANCELLED: 'neutral',
-  ENDED: 'neutral',
-};
-
-/** Cases still shown under "open": waiting for an answer, or accepted and running (trader offer). */
-const OPEN_CASE = ['AWAITING_PLAYER', 'IN_PROGRESS'];
-const ROLEPLAY_CASES = ['TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION'];
+import { ServiceCases } from '../contracts/service-cases';
 
 /**
- * Contracts & service cases (TODO T-20 / T-22): insurance (offer, accept, cancel), damage reports, and the cases and
- * contracts of the other service characters. All amounts come from the backend formulas.
+ * Hof-Tablet app "Versicherung" (TODO T-20): storm and hail insurance (tariffs, offer, cancel) and the damages -
+ * storm, hail and wildlife - with report, counter demand and joint measure.
  */
 @Component({
-  selector: 'app-contracts',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, PageErrorView, CaseCard],
-  templateUrl: './contracts.html',
+  selector: 'app-insurance',
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases],
+  templateUrl: './insurance.html',
 })
-export class Contracts {
+export class Insurance {
   private readonly api = inject(ApiService);
   private readonly store = inject(GameStateStore);
+  private readonly tasks = inject(TasksStore);
   private readonly i18n = inject(TranslationService);
 
-  /** `?contract=` / `?case=` highlight an entry (links from mails). */
+  /** `?contract=` / `?case=` highlight an entry (links from mails and "Aufgaben"). */
   readonly contract = input<string>();
   readonly case = input<string>();
 
+  readonly damageKinds = ['STORM_DAMAGE', 'HAIL_DAMAGE', 'WILDLIFE_DAMAGE'];
   readonly contracts = signal<ContractView[] | null>(null);
-  readonly cases = signal<CaseView[] | null>(null);
   readonly quotes = signal<InsuranceQuoteView[]>([]);
   readonly error = signal<PageError | null>(null);
   readonly actionError = signal<string | null>(null);
@@ -54,28 +44,23 @@ export class Contracts {
   readonly insurance = computed(() => (this.contracts() ?? []).filter((c) => c.kind === 'INSURANCE'));
   readonly activeInsurance = computed(() => this.insurance().find((c) => c.status === 'ACTIVE') ?? null);
   readonly insuranceOffers = computed(() => this.insurance().filter((c) => c.status === 'OFFERED'));
-  readonly otherContracts = computed(() => (this.contracts() ?? []).filter((c) => c.kind !== 'INSURANCE'));
-  readonly openCases = computed(() => (this.cases() ?? []).filter((c) => OPEN_CASE.includes(c.status)));
-  readonly closedCases = computed(() => (this.cases() ?? []).filter((c) => !OPEN_CASE.includes(c.status)));
   readonly highlightedContract = computed(() => Number(this.contract()) || null);
   readonly highlightedCase = computed(() => Number(this.case()) || null);
 
   constructor() {
     effect(() => {
       this.store.mailVersion();
-      this.store.callVersion();
       this.store.stateVersion();
       if (this.store.savegame()) untracked(() => this.load());
     });
   }
 
   load(): void {
-    forkJoin({ contracts: this.api.contracts(), cases: this.api.cases() }).subscribe({
-      next: (r) => {
-        this.contracts.set(r.contracts);
-        this.cases.set(r.cases);
+    this.api.contracts().subscribe({
+      next: (c) => {
+        this.contracts.set(c);
         this.error.set(null);
-        if (!r.contracts.some((c) => c.kind === 'INSURANCE' && c.status === 'ACTIVE')) this.loadQuotes();
+        if (!c.some((x) => x.kind === 'INSURANCE' && x.status === 'ACTIVE')) this.loadQuotes();
       },
       error: (e) => this.error.set(toPageError(e, this.i18n.t('common.error'))),
     });
@@ -92,6 +77,7 @@ export class Contracts {
       next: () => {
         this.busy.set(false);
         this.load();
+        this.tasks.reload();
       },
       error: (e) => {
         this.busy.set(false);
@@ -100,28 +86,11 @@ export class Contracts {
     });
   }
 
-  readonly hasMaintenance = computed(() =>
-    (this.contracts() ?? []).some((c) => c.kind === 'MAINTENANCE' && (c.status === 'ACTIVE' || c.status === 'OFFERED')),
-  );
-
-  requestMaintenance(): void {
-    this.run(this.api.requestMaintenanceOffer());
-  }
-
   requestOffer(level: string): void {
     this.run(this.api.requestInsuranceOffer(level));
   }
 
-  contractAction(c: ContractView, action: string, body: unknown = {}): void {
-    this.run(this.api.contractAction(c.id, action, body));
-  }
-
-  /** Roadmap V2 R2-E: tax bills, inspections, sponsoring requests and invitations have their own history line. */
-  isRoleplayCase(c: CaseView): boolean {
-    return ROLEPLAY_CASES.includes(c.kind);
-  }
-
-  badge(status: string): BadgeVariant {
-    return CONTRACT_BADGE[status] ?? 'neutral';
+  contractAction(c: ContractView, action: string): void {
+    this.run(this.api.contractAction(c.id, action));
   }
 }

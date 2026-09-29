@@ -360,7 +360,7 @@ public class LivestockService {
                         .put("answerDays", Math.round(cfg().getTraderAnswerDays()))
                         .put("deadlineMonths", cfg().getTraderDeadlineMonths()).build())
                 .category(CommunicationCategory.LIVESTOCK).related(RELATED, sc.getId())
-                .formLink("/contracts?case=" + sc.getId()).submit();
+                .formLink("/stall?case=" + sc.getId()).submit();
         return Optional.of(sc);
     }
 

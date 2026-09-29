@@ -71,6 +71,8 @@
       </div>
     </div>
 
+    <app-service-cases [caseKinds]="['INVITATION']" openTitle="calendar.invitations" [showEmpty]="false" [highlightCase]="highlightedCase()" testId="invitations" />
+
     <!-- Jahresleiste -->
     @if (o.currentPeriod !== null) {
       <div class="rounded-[18px] border border-border bg-surface px-5 py-4" data-testid="year">

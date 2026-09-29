@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { AgendaEntryView, CalendarOverviewView, DebitView, TaskView, YearEventView } from '../../core/api/models';
@@ -8,8 +8,10 @@ import { GameStateStore } from '../../core/state/game-state.store';
 import { TasksStore } from '../../core/state/tasks.store';
 import { clockTime, formatMoney, gameDay } from '../../shared/format/format';
 import { MoneyPipe } from '../../shared/format/format.pipes';
-import { taskApp, taskLink } from '../../layout/task-apps';
+import { contractAppId, taskApp, taskLink } from '../../layout/task-apps';
+import { APPS } from '../../layout/apps';
 import { taskTitle } from '../tasks/task-groups';
+import { ServiceCases } from '../contracts/service-cases';
 
 const DAY = 24 * 3_600_000;
 const AGENDA_DAYS = 7;
@@ -45,7 +47,7 @@ export function yearTone(kind: string): EventTone {
  */
 @Component({
   selector: 'app-calendar',
-  imports: [RouterLink, TranslatePipe, MoneyPipe],
+  imports: [RouterLink, TranslatePipe, MoneyPipe, ServiceCases],
   templateUrl: './calendar.html',
 })
 export class CalendarApp {
@@ -54,6 +56,9 @@ export class CalendarApp {
   readonly store = inject(GameStateStore);
   private readonly tasks = inject(TasksStore);
 
+  /** `?case=` highlights an invitation (links from mails and "Aufgaben"). */
+  readonly case = input<string>();
+  readonly highlightedCase = computed(() => Number(this.case()) || null);
   readonly overview = signal<CalendarOverviewView | null>(null);
   readonly failed = signal(false);
   readonly now = computed(() => this.overview()?.gameTime ?? this.store.savegame()?.gameTime ?? 0);
@@ -102,10 +107,11 @@ export class CalendarApp {
       CONTRACT_PAYMENT: () => this.i18n.t('calendar.agenda.contract', { kind: this.i18n.t('enums.contractKind.' + e.subKind), amount }),
       LEASE_END: () => this.i18n.t('calendar.agenda.leaseEnd', { id: e.reference ?? '' }),
     };
+    const contractApp = e.subKind ? APPS.find((a) => a.id === contractAppId(e.subKind!)) : undefined;
     const apps: Record<string, [string, string | null]> = {
-      MONTH_START: ['nav.bank', '/bank'], FESTIVAL: ['calendar.clubs', '/village'], TAX_ASSESSMENT: ['calendar.taxOffice', '/bank'],
-      TAX_PREPAYMENT: ['calendar.taxOffice', '/bank'], LOAN_INSTALLMENT: ['nav.bank', '/bank'], SALARIES: ['nav.employees', '/employees'],
-      CONTRACT_PAYMENT: ['nav.contracts', '/contracts'], LEASE_END: ['nav.farmland', '/farmland'],
+      MONTH_START: ['nav.bank', '/bank'], FESTIVAL: ['calendar.clubs', null], TAX_ASSESSMENT: ['calendar.taxOffice', '/aemter'],
+      TAX_PREPAYMENT: ['calendar.taxOffice', '/aemter'], LOAN_INSTALLMENT: ['nav.bank', '/bank'], SALARIES: ['nav.employees', '/employees'],
+      CONTRACT_PAYMENT: [contractApp?.label ?? 'nav.bank', contractApp?.path ?? null], LEASE_END: ['nav.farmland', '/farmland'],
     };
     const [app, link] = apps[e.kind] ?? ['nav.calendar', null];
     return { gameTime: e.gameTime, text: (texts[e.kind] ?? (() => e.kind))(), app: this.i18n.t(app), tone: yearTone(e.kind), link, query: null };
