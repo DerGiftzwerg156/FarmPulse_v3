@@ -29,6 +29,7 @@ FarmPulse-<version>/
   web/                            Oberfläche (wird vom Backend ausgeliefert)
   FS25_RPSim.zip                  der Mod
   start.bat / start.sh            Startskripte
+  Desktop-Verknuepfung.bat        legt die Desktop-Verknüpfung „FarmPulse“ mit Icon an (Windows, optional)
   application-local.yml.example   Vorlage für eigene Einstellungen
 ```
 
@@ -45,6 +46,10 @@ dort etwa jede Minute die Hofdaten.
 
 Doppelklick auf **`start.bat`** (Windows) bzw. `./start.sh` (Linux/macOS). Ein Konsolenfenster zeigt nach einigen
 Sekunden `Started RpsimApplication`. Das Fenster offen lassen, solange du spielst – Schließen beendet das Backend.
+
+Tipp (Windows): Ein Doppelklick auf **`Desktop-Verknuepfung.bat`** legt einmalig die Verknüpfung „FarmPulse“ mit dem
+FarmPulse-Icon auf dem Desktop an – darüber startest du künftig `start.bat`. Den FarmPulse-Ordner danach nicht mehr
+verschieben (sonst die Verknüpfung neu anlegen).
 
 Das Backend sucht die Mod-Dateien unter `<Benutzerordner>\Documents\My Games\FarmingSimulator2025\modSettings\FS25_RPSim`.
 Liegt dein Dokumente-Ordner woanders (z. B. in OneDrive), trage den Pfad ein – siehe

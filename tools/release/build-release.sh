@@ -59,6 +59,7 @@ cp -r "$WEB/." "$B/web/"
 cp "$OUT/FS25_RPSim.zip" "$B/"
 cp "$ROOT/backend/application-local.yml.example" "$ROOT/LICENSE" "$ROOT/CHANGELOG.md" "$B/"
 cp -r "$ROOT/docs/user-guide" "$B/anleitung"
+cp "$ROOT/frontend/public/favicon.ico" "$B/farmpulse.ico"
 mkdir -p "$B/screenshots" && cp "$ROOT"/docs/screenshots/*.png "$B/screenshots/" 2>/dev/null || true
 
 cat > "$B/start.sh" <<'SH'
@@ -72,10 +73,23 @@ chmod +x "$B/start.sh"
 printf '%s\r\n' \
   '@echo off' \
   'rem Startet FarmPulse (Backend + Oberflaeche) - danach http://localhost:8080 im Browser oeffnen' \
+  'title FarmPulse' \
   'cd /d "%~dp0"' \
   'echo FarmPulse startet ... danach im Browser http://localhost:8080 oeffnen. Fenster offen lassen.' \
   'java -jar rpsim-backend.jar --spring.profiles.active=prod --rpsim.web.static-dir=web %*' \
   'pause' > "$B/start.bat"
+
+# A .bat cannot carry an icon itself - this creates a desktop shortcut to start.bat with the FarmPulse icon
+# (the console window then shows it in the taskbar, too). The folder goes through an env var so paths with
+# quotes (e.g. C:\Users\O'Brien) do not break the PowerShell string.
+sed 's/$/\r/' > "$B/Desktop-Verknuepfung.bat" <<'BAT'
+@echo off
+rem Legt auf dem Desktop die Verknuepfung "FarmPulse" (mit FarmPulse-Icon) an, die start.bat startet
+set "FP_DIR=%~dp0"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$d=$env:FP_DIR; $l=(New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'FarmPulse.lnk')); $l.TargetPath=(Join-Path $d 'start.bat'); $l.WorkingDirectory=$d; $l.IconLocation=(Join-Path $d 'farmpulse.ico')+',0'; $l.Description='FarmPulse starten'; $l.Save()"
+if errorlevel 1 (echo Verknuepfung konnte nicht angelegt werden.) else (echo Verknuepfung "FarmPulse" auf dem Desktop angelegt.)
+pause
+BAT
 
 cat > "$B/LIESMICH.txt" <<TXT
 FarmPulse $VERSION - KI-Rollenspiel fuer Farming Simulator 25
@@ -83,6 +97,7 @@ FarmPulse $VERSION - KI-Rollenspiel fuer Farming Simulator 25
 1. FS25_RPSim.zip (ungeoeffnet) nach  Dokumente\\My Games\\FarmingSimulator2025\\mods\\  kopieren
    und im Spielstand aktivieren.
 2. Java 21 installieren (https://adoptium.net), dann start.bat (Windows) bzw. start.sh starten.
+   Tipp (Windows): Desktop-Verknuepfung.bat legt einmalig eine Desktop-Verknuepfung "FarmPulse" mit Icon an.
 3. Im Browser http://localhost:8080 oeffnen und das Onboarding durchlaufen.
 
 Ausfuehrliche Anleitung: Ordner "anleitung" (installation.md, erster-spielstand.md, funktionen.md,
