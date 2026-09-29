@@ -88,4 +88,4 @@ Path abbreviations: `B/` = `backend/src/main/java/de/farmpulse/rpsim/`, `BT/` = 
 
 68 of 71 items implemented, 3 items consciously not implemented as decided by the concept (#22 collateral, #45
 leasing, #68 multiplayer). Remaining assumptions that can only be verified in the real game are listed in
-[`offene-technische-punkte.md`](offene-technische-punkte.md); open product questions in [`QUESTIONS.md`](../../QUESTIONS.md).
+[`offene-technische-punkte.md`](offene-technische-punkte.md); open product questions in [`QUESTIONS.md`](../architecture/QUESTIONS.md).

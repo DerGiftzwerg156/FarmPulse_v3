@@ -242,7 +242,7 @@ and check `log.txt` (lines with `[FS25_RPSim]`) and the bridge files.
 
 ## 10. Roadmap V2 in the real FS25
 
-Every point of [`ROADMAP_V2.md`](../../ROADMAP_V2.md) marked 🟡 ("Im Spiel prüfen") has one row here. Check a row
+Every point of [`ROADMAP_V2.md`](../architecture/ROADMAP_V2.md) marked 🟡 ("Im Spiel prüfen") has one row here. Check a row
 once the roadmap item named in the first column is built; until then the mod does not collect the value (the block
 is missing in `farm_facts.json`, see [bridge protocol](bridge-protocol.md#roadmap-v2-blocks-optional-r2-q1)). Note
 the result in the row's issue and, if the fallback is needed, switch the implementation to it.

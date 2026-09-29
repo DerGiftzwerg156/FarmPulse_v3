@@ -27,5 +27,5 @@ are marked `TODO(offene-frage)` (`grep -rn "TODO(offene-frage)" mod backend`).
 State after the FS25 compatibility analysis of 26.09.2026 (`TODO.md`, T-12): the points that can only be verified in
 the running game are collected in the [manual test plan, section 8](manual-test-plan.md#8-first-test-in-the-real-fs25-todo-t-13).
 
-Product decisions that are open (not technical) are tracked in [`QUESTIONS.md`](../../QUESTIONS.md), e.g. the
+Product decisions that are open (not technical) are tracked in [`QUESTIONS.md`](../architecture/QUESTIONS.md), e.g. the
 Gemini free-tier model name, the satisfaction category maximum or the Anthropic default model.

@@ -14,4 +14,4 @@ rpsim:
 server:
   # No login in V1: only reachable from this PC. To use a tablet in your home network set
   # server.address: 0.0.0.0 in application-local.yml (at your own risk - anyone in the network can then play along).
-  address: 127.0.0.1
+  address: 0.0.0.0

@@ -41,6 +41,6 @@ Code, comments, commit messages and developer docs are English. UI texts and the
 
 ## Open questions
 
-Decisions not covered by the concept documents go to [`QUESTIONS.md`](QUESTIONS.md) before being
+Decisions not covered by the concept documents go to [`QUESTIONS.md`](docs/architecture/QUESTIONS.md) before being
 implemented. Open technical points that only affect the implementation are marked in code with
 `TODO(offene-frage)` and listed in [`docs/dev/offene-technische-punkte.md`](docs/dev/offene-technische-punkte.md).

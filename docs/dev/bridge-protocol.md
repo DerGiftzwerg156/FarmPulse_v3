@@ -78,7 +78,7 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 
 ### Roadmap V2 blocks (optional, R2-Q1)
 
-`farm_facts.json` gets five more **optional** blocks for [`ROADMAP_V2.md`](../../ROADMAP_V2.md). `schemaVersion` stays
+`farm_facts.json` gets five more **optional** blocks for [`ROADMAP_V2.md`](../architecture/ROADMAP_V2.md). `schemaVersion` stays
 `1` as long as every new block is optional. The contract is fixed now; the mod fills a block once the feature that
 collects it is built (named per block). Until then the block is **missing**. Filled by the mod so far: `finances`
 (R2-B1), `workforce` (R2-A4), `husbandries` (R2-A7), `fields`, `fieldRules` (R2-C1) and `weather` (R2-C2).
