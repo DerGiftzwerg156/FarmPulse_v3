@@ -16,6 +16,10 @@ versions or this changelog do not match.
   includes silo extensions, the input and output storage of own production points and bunker silos (`CHAFF` while
   filling, `SILAGE` once closed, as the game shows it; capacity 0). Husbandries and halls (pallets/bales) stay out.
   The storage page shows no capacity for entries without one.
+- **FarmPulse icon everywhere:** the web app uses the mod icon as favicon (`favicon.ico`, `favicon.svg`,
+  `apple-touch-icon.png`); the release bundle ships `farmpulse.ico` and `Desktop-Verknuepfung.bat`, which creates a
+  desktop shortcut "FarmPulse" to `start.bat` with that icon (a `.bat` cannot carry an icon itself). `start.bat` sets
+  the console title to "FarmPulse". All icons come from `tools/release/make-icons.py` (was `make-mod-icon.py`).
 
 ### Fixed
 
