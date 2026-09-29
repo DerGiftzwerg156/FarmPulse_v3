@@ -6,7 +6,7 @@ const devRoutes: Routes = environment.styleGuide
   ? [{ path: 'dev/style-guide', loadComponent: () => import('./dev/style-guide').then((m) => m.StyleGuide) }]
   : [];
 
-/** Feature modules (Phase 8), lazily loaded; paths match NAV_ITEMS. Titles are i18n keys (I18nTitleStrategy). */
+/** Feature modules (Phase 8), lazily loaded; paths match APPS (layout/apps.ts). Titles are i18n keys (I18nTitleStrategy). */
 const pages: Routes = [
   { path: '', pathMatch: 'full', loadComponent: () => import('./features/home/home').then((m) => m.Home), title: 'nav.home' },
   { path: 'mailbox', loadComponent: () => import('./features/mailbox/mailbox').then((m) => m.Mailbox), title: 'nav.mailbox' },

@@ -14,6 +14,14 @@ module.exports = {
         text: '#E2ECE9', // Primärtext
         muted: '#7C9088', // Sekundärtext/Platzhalter
         danger: '#dc2626', // Fehler/negative Werte
+        // Hof-Tablet: Symbolfarben der App-Gruppen (Kommunikation, Geld, Hof, System)
+        'app-com': '#8CC8EA',
+        'app-money': '#FFB547',
+        'app-farm': '#6FE03A',
+        'app-sys': '#B9C8C2',
+        tile: '#151D19', // App-Kachel
+        'tile-active': '#1F2A1A', // aktive App in der Schnellleiste
+        chrome: '#0E1311', // Statusleiste, Schnellleiste
       },
       fontFamily: {
         body: ['Barlow', 'ui-sans-serif', 'system-ui', 'sans-serif'],

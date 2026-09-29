@@ -21,7 +21,7 @@ describe('I18nTitleStrategy', () => {
     const router = TestBed.inject(Router);
     const title = TestBed.inject(Title);
     await router.navigateByUrl('/mailbox');
-    expect(title.getTitle()).toBe('Postfach · FarmPulse');
+    expect(title.getTitle()).toBe('Post · FarmPulse');
     await router.navigateByUrl('/');
     expect(title.getTitle()).toBe('FarmPulse');
   });

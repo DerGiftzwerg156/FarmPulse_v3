@@ -87,7 +87,7 @@ test.describe.serial('screenshots', () => {
 
   test('pages', async ({ page, request }) => {
     await page.goto('/');
-    await expect(page.getByTestId('feed-item').first()).toBeVisible();
+    await expect(page.getByTestId('app-grid')).toBeVisible();
     await shot(page, '10-dashboard');
 
     await page.goto('/mailbox');

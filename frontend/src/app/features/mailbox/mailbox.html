@@ -1,6 +1,5 @@
 <section class="space-y-4">
   <header class="flex flex-wrap items-center justify-between gap-2">
-    <h1 class="font-display text-xl font-bold uppercase tracking-[0.12em] text-text">{{ 'nav.mailbox' | t }}</h1>
     <div class="flex gap-1" role="group" [attr.aria-label]="'mailbox.filter' | t">
       <app-button [variant]="filter() === 'all' ? 'primary' : 'secondary'" (pressed)="filter.set('all')" data-testid="filter-all">{{ 'common.all' | t }}</app-button>
       <app-button [variant]="filter() === 'unread' ? 'primary' : 'secondary'" (pressed)="filter.set('unread')" data-testid="filter-unread">{{ 'mailbox.unread' | t }}</app-button>

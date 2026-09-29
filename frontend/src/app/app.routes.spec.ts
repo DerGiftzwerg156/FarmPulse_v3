@@ -1,11 +1,12 @@
 import { routes } from './app.routes';
-import { NAV_ITEMS } from './layout/nav-items';
+import { APPS } from './layout/apps';
 
 describe('routes', () => {
-  it('has a lazily loaded feature page for every main area and the onboarding', () => {
+  it('has a lazily loaded feature page for every app and the onboarding', () => {
     const children = routes[0].children ?? [];
     const paths = children.filter((r) => r.loadComponent).map((r) => r.path);
-    NAV_ITEMS.forEach((item) => expect(paths).toContain(item.path === '/' ? '' : item.path.substring(1)));
+    expect(paths).toContain('');
+    APPS.forEach((app) => expect(paths).toContain(app.path.substring(1)));
     expect(paths).toContain('onboarding');
   });
 

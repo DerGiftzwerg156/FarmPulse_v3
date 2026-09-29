@@ -6,7 +6,7 @@ import { RouterLink } from '@angular/router';
   selector: 'app-stat',
   imports: [RouterLink],
   template: `
-    <div class="fp-notch group relative rounded-md border border-border bg-surface p-4">
+    <div class="group relative rounded-2xl border border-border bg-surface p-4">
       <div class="flex items-start justify-between">
         <div class="fp-label">{{ label() }}</div>
         @if (link()) {
