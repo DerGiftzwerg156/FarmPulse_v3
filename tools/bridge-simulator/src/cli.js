@@ -51,11 +51,9 @@ const sim = new BridgeSimulator({
   savegameId: values['savegame-id'],
   seed: Number(values.seed),
   daysPerPeriod: Number(values['days-per-period']),
+  reset: values.reset,
   log: (m) => console.log(`[sim] ${m}`),
 });
-if (values.reset) {
-  sim.reset();
-}
 sim.start();
 console.log(`[sim] scenario=${values.scenario} savegameId=${sim.savegameId} dir=${sim.dir}`);
 

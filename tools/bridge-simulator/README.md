@@ -47,7 +47,7 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | --- | --- |
 | `leerer-hof` | Start without assets: balance 0, no machines, no fields, no silo stock |
 | `verschuldeter-hof` | Active vanilla loan (320 000), little equity, tight liquidity |
-| `wohlhabender-hof` | High liquidity, large machine park, full silos |
+| `wohlhabender-hof` | High liquidity, large machine park, full silos; booking journal, stable, fields and weather (Hof-Tablet e2e tests and screenshots) |
 | `voller-silobestand` | Focus on storage valuation: very full silos with several fill types |
 | `leasing-hof` | Part of the machines leased: exported as `liabilities.leasing`, not as assets (TODO T-04) |
 | `knappe-kasse` | Nearly empty account: debits fail with `INSUFFICIENT_FUNDS` (TODO T-03) |

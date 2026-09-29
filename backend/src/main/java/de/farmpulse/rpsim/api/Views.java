@@ -284,7 +284,10 @@ public final class Views {
                               double foodWarnBelow, double waterWarnBelow, List<BarnView> barns, List<VetDueView> vetDue) {
     }
 
-    /** One husbandry: health / productivity 0..100, food / water / conditions 0..1 (null = not reported). */
+    /**
+     * One husbandry: health and productivity 0..100 (the mod exports productivity as factor 0..1, like the game's info
+     * box shows it x 100), food / water / conditions 0..1 (null = not reported).
+     */
     public record BarnView(String husbandryUniqueId, String type, int count, long value, Double health, Double productivity,
                            Double food, Double water, List<ConditionView> conditions, Long inspectionDeadline) {
     }

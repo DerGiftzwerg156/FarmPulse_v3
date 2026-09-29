@@ -11,6 +11,12 @@ async function shot(page: Page, name: string, fullPage = true, showCalls = false
   await page.waitForLoadState('networkidle').catch(() => undefined);
   // random incoming calls (market news, story hooks) would cover the page - only the call shots show them
   await page.addStyleTag({ content: `[data-testid="call-overlay"] { display: ${showCalls ? 'block' : 'none'} !important; }` });
+  if (fullPage) {
+    // a full-page shot stitches the scrolled page: the sticky status bar and the fixed quick bar / dock would appear in
+    // the middle - take them out of the flow (status bar on top, bar at the end of the page)
+    await page.addStyleTag({ content: `[data-testid="status-bar"] { position: static !important; }
+      [data-testid="quick-bar"], [data-testid="dock"] { position: static !important; transform: none !important; margin: 16px auto; }` });
+  }
   await page.waitForTimeout(400); // let charts measure their width and animations settle
   await page.screenshot({ path: `${OUT}/${name}.png`, fullPage });
 }
@@ -88,7 +94,7 @@ test.describe.serial('screenshots', () => {
   test('pages', async ({ page, request }) => {
     await page.goto('/');
     await expect(page.getByTestId('app-grid')).toBeVisible();
-    await shot(page, '10-dashboard');
+    await shot(page, '10-start');
 
     await page.goto('/aufgaben');
     await expect(page.getByTestId('task-filters')).toBeVisible();
@@ -117,7 +123,7 @@ test.describe.serial('screenshots', () => {
     await page.goto('/mailbox');
     await page.getByTestId('mail-thread').first().click();
     await expect(page.getByTestId('mail-detail')).toBeVisible();
-    await shot(page, '11-postfach', false);
+    await shot(page, '11-post', false);
 
     await page.goto('/bank');
     await expect(page.getByTestId('application').first()).not.toHaveAttribute('data-state', 'processing');
@@ -135,17 +141,17 @@ test.describe.serial('screenshots', () => {
       await page.getByTestId('closed-row').first().click();
       await expect(page.getByTestId('negotiation-detail')).toBeVisible();
     }
-    await shot(page, '14-felder-verhandlung');
+    await shot(page, '14-flurkarte');
 
     await page.goto('/market');
     await expect(page.getByTestId('chart-line').first()).toBeAttached(); // a flat series has a zero-height box
-    await shot(page, '15-warenbestand-preise');
+    await shot(page, '15-agrarboerse');
 
     const characters = (await (await request.get(`${API}/characters`)).json()) as { id: number; category: string; farmlands: unknown[] }[];
     const person = characters.find((c) => c.farmlands.length > 0) ?? characters.find((c) => c.category === 'DYNAMIC') ?? characters[0];
     await page.goto(`/village?character=${person.id}`);
     await expect(page.getByTestId('character-detail')).toBeVisible();
-    await shot(page, '16-dorf-charakter');
+    await shot(page, '16-kontakte');
 
     await page.goto('/diary');
     await expect(page.getByTestId('diary-entry').first()).toBeVisible();
@@ -177,7 +183,7 @@ test.describe.serial('screenshots', () => {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: 'dark', locale: 'de-DE' });
     await page.goto('http://localhost:' + (process.env.RPSIM_SHOTS_FRONTEND_PORT ?? 4202) + '/');
     await expect(page.getByTestId('kpis')).toBeVisible();
-    await shot(page, '21-mobil-dashboard', false);
+    await shot(page, '21-mobil-start', false);
     await page.close();
   });
 });

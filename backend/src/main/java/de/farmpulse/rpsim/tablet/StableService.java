@@ -83,7 +83,8 @@ public class StableService {
             long value = (prev == null ? 0 : prev.value()) + Math.round(a.estimatedValue() == null ? 0 : a.estimatedValue());
             BridgeDtos.Husbandry h = byId.get(a.husbandryUniqueId());
             barns.put(id, new BarnView(id, a.type() == null ? "UNKNOWN" : a.type(), count, value,
-                    h == null ? null : h.health(), h == null ? null : h.productivity(), h == null ? null : h.food(),
+                    h == null ? null : h.health(), h == null || h.productivity() == null ? null : Math.round(h.productivity() * 1000) / 10.0,
+                    h == null ? null : h.food(),
                     h == null ? null : livestock.water(h), h == null ? List.of() : conditions(h),
                     inspections.get(a.husbandryUniqueId())));
         }

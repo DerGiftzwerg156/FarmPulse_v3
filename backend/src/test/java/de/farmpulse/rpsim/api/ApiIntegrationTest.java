@@ -428,12 +428,13 @@ class ApiIntegrationTest {
         mvc.perform(get("/api/savegame")).andExpect(jsonPath("$.weather").value(nullValue()));
         long t = sg.getCurrentGameTime() + 1000;
         fx.snapshot(sg, t, 1, TestData.withFields(TestData.farmFacts(sg.getBridgeSavegameId(), t, 1), """
-                "husbandries": [{ "husbandryUniqueId": "hus_00003", "health": 38, "productivity": 61, "food": 0.12,
+                "husbandries": [{ "husbandryUniqueId": "hus_00003", "health": 38, "productivity": 0.61, "food": 0.12,
                                   "conditions": [{ "title": "Wasser", "ratio": 0.86 }, { "title": "Stroh", "ratio": 0.4 }] }],
                 "weather": { "raining": true, "rainFallScale": 0.6, "groundWetness": 0.7, "temperature": 14.5 }"""));
         mvc.perform(get("/api/stables")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.tracked").value(true))
                 .andExpect(jsonPath("$.barns[0].health").value(38.0))
+                .andExpect(jsonPath("$.barns[0].productivity").value(61.0))
                 .andExpect(jsonPath("$.barns[0].food").value(0.12))
                 .andExpect(jsonPath("$.barns[0].water").value(0.86))
                 .andExpect(jsonPath("$.barns[0].conditions", hasSize(2)))

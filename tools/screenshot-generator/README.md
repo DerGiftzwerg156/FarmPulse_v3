@@ -25,15 +25,15 @@ The run is deterministic enough for documentation (seeded simulator, fixed scena
 | --- | --- |
 | `00-willkommen.png` | Dashboard without a savegame |
 | `01`–`05-onboarding-*.png` | Onboarding wizard, all five steps |
-| `10-dashboard.png` | Home dashboard |
-| `11-postfach.png` | Mailbox with an open thread |
+| `10-start.png` | Home dashboard |
+| `11-post.png` | Mailbox with an open thread |
 | `12-bank.png` | Bank & credit |
 | `13-personal.png` | Staff, job posting with applicants |
-| `14-felder-verhandlung.png` | Field map and negotiation |
-| `15-warenbestand-preise.png` | Silo stock, prices, price history chart |
-| `16-dorf-charakter.png` | Village with character detail |
+| `14-flurkarte.png` | Field map and negotiation |
+| `15-agrarboerse.png` | Silo stock, prices, price history chart |
+| `16-kontakte.png` | Village with character detail |
 | `17-tagebuch.png` | Diary |
 | `18-einstellungen.png` | Settings |
 | `19-anruf-eingehend.png` | Incoming call overlay |
 | `20-anruf-gespraech.png` | Call conversation |
-| `21-mobil-dashboard.png` | Dashboard on a phone |
+| `21-mobil-start.png` | Dashboard on a phone |

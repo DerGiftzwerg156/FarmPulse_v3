@@ -177,4 +177,35 @@ test.describe.serial('FarmPulse core flows', () => {
     // the table re-renders after the range reload - wait for it instead of counting once
     await expect.poll(() => page.getByTestId('chart-table').locator('tbody tr').count()).toBeGreaterThan(2);
   });
+
+  test('Hof-Tablet: start screen, apps, tasks, calendar, stable and fields', async ({ page, request }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('app-grid')).toBeVisible();
+    // weather with temperature from the (simulated) mod in the status bar
+    await expect(page.getByTestId('weather')).toContainText('18');
+    // every area is an app; the old addresses stay valid
+    await page.getByTestId('app-grid').getByTestId('app-tasks').click();
+    await expect(page).toHaveURL(/\/aufgaben$/);
+    await expect(page.getByTestId('app-title')).toHaveText('Aufgaben');
+    await expect(page.getByTestId('task-filters')).toBeVisible();
+    const tasks = (await (await request.get(`${API}/tasks`)).json()) as { items: unknown[] };
+    await expect(page.getByTestId('task')).toHaveCount(tasks.items.length);
+
+    await page.getByTestId('quick-bar').getByTestId('app-calendar').click();
+    await expect(page.getByTestId('month-start')).toBeVisible();
+    await expect(page.getByTestId('year-month')).toHaveCount(12);
+
+    await page.goto('/stall');
+    await expect(page.getByTestId('barn').first()).toContainText('Rinder');
+    await expect(page.getByTestId('barn-bar').first()).toBeVisible();
+
+    await page.goto('/farmland');
+    await expect(page.getByTestId('field-row')).toHaveCount(6);
+
+    // a stored mail link to the former "Verträge & Vorgänge" lands in the tasks
+    await page.goto('/contracts');
+    await expect(page).toHaveURL(/\/aufgaben$/);
+    await page.getByTestId('back-to-start').click();
+    await expect(page.getByTestId('clock')).toBeVisible();
+  });
 });

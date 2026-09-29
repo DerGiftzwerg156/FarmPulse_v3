@@ -117,7 +117,7 @@ export function fundsCover(balance, items) {
 
 export class BridgeSimulator {
   constructor({ dir, scenario = 'wohlhabender-hof', savegameId, seed = 42, startGameTime = MS_PER_GAME_DAY,
-    retentionGameDays = 30, daysPerPeriod = 1, log = () => {} } = {}) {
+    retentionGameDays = 30, daysPerPeriod = 1, reset = false, log = () => {} } = {}) {
     const preset = SCENARIOS[scenario];
     if (!preset) throw new Error(`unknown scenario '${scenario}' (${Object.keys(SCENARIOS).join(', ')})`);
     this.dir = dir;
@@ -174,6 +174,9 @@ export class BridgeSimulator {
     this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
     this.handledPrompts = {}; // R2-F1: answered / withdrawn questions (promptId -> expiresGameTime)
     this.lastMarketContextJson = null;
+    // --reset: forget the previous run before loading, otherwise its state (e.g. without the blocks of a newer
+    // scenario) would survive in memory
+    if (reset) this.reset();
     this.loadSavegame();
     this.savedGame = this.gameState();
   }
