@@ -5,7 +5,7 @@
 -- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
 -- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
 -- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
--- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo
+-- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -639,8 +639,35 @@ end
 
 -- ------------------------------------------------------------------------ Roadmap V2 R2-A: employees as helpers
 
+--- "Schulungen": the vehicle a helper job drives and its FS25 shop categories. Every vehicle job type (AIJobFieldWork,
+-- AIJobGoTo, AIJobDeliver, AIJobLoadAndDeliver, AIJobConveyor; dump ai/jobs/*.lua) keeps it in
+-- job.vehicleParameter:getVehicle() (AIParameterVehicle); the store item of vehicle.configFileName
+-- (g_storeManager:getItemByXMLFilename, LUADOC script/Shop/StoreManager.md) carries categoryNames and categoryName (the
+-- first entry, upper case). Returns { farmId, categories = { ... }, name } or nil without a vehicle.
+function RPSimGameAdapter:jobVehicleInfo(job)
+    return safe(function()
+        local vehicle = job.vehicleParameter ~= nil and job.vehicleParameter:getVehicle() or nil
+        if vehicle == nil then
+            return nil
+        end
+        local categories = {}
+        local item = g_storeManager:getItemByXMLFilename(vehicle.configFileName)
+        if item ~= nil then
+            for _, c in ipairs(item.categoryNames or {}) do
+                categories[#categories + 1] = string.upper(c)
+            end
+            if #categories == 0 and item.categoryName ~= nil then
+                categories[1] = string.upper(item.categoryName)
+            end
+        end
+        return { farmId = safe(function() return vehicle:getOwnerFarmId() end, nil), categories = categories,
+            name = safe(function() return vehicle:getFullName() end, nil) }
+    end, nil)
+end
+
 --- Running helper jobs of the player farm: AISystem:getActiveJobs() (FS25 ai/AISystem.lua), job.jobId (set by
--- AISystem:startJob via AIJob:setId), job.startedFarmId (AIJob:start), job:getTitle() (vehicle name for field work).
+-- AISystem:startJob via AIJob:setId), job.startedFarmId (AIJob:start), job:getTitle() (vehicle name for field work),
+-- "Schulungen": the shop categories of the vehicle (jobVehicleInfo).
 function RPSimGameAdapter:collectAIJobs()
     local farmId = self:getFarmId()
     local jobs = {}
@@ -649,7 +676,9 @@ function RPSimGameAdapter:collectAIJobs()
         safe(function()
             if job.jobId ~= nil and job.startedFarmId == farmId then
                 local title = safe(function() return job:getTitle() end, nil)
-                jobs[#jobs + 1] = { jobId = job.jobId, title = title }
+                local info = self:jobVehicleInfo(job)
+                jobs[#jobs + 1] = { jobId = job.jobId, title = title,
+                    categories = info ~= nil and info.categories or {} }
             end
             return true
         end)

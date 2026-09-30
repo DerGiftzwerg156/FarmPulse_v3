@@ -10,6 +10,21 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training
+is cancelled again) and lets every machine operator drive every vehicle.
+
+### Added
+
+- **Trainings for machine operators ("Schulungen"):** without a training a machine operator drives small and medium
+  tractors as FS25 helper; large tractors, combines, forage harvesters, special harvesters, trucks and self-propelled
+  machines / loaders need the matching training (FS25 shop category of the driven vehicle, configurable in
+  `rpsim.formulas.training.categories`). The mod assigns a helper only to an operator with the training (the one with
+  the fewest trainings first); in the strict helper limit the start is refused with a message, otherwise the vanilla
+  helper drives. *Personal* → *Schulung* books one (`POST /api/employees/{id}/training`, catalog `GET /api/trainings`):
+  money reason `TRAINING` (1,500–4,000 €), one game day away (`ON_LEAVE` for the mod), +appreciation, thank-you mail and
+  diary entry. Machine operator applicants bring a training along with 30 % and expect 8 % more salary. Employees hired
+  before have no training.
+
 ## [1.7.0] - 2026-09-30
 
 The web app becomes the **Hof-Tablet**: every function is an app on a tablet home screen. Update the mod

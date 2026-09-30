@@ -266,6 +266,15 @@ export interface ApplicationView {
   skill: number;
   expectedSalary: number;
   status: string;
+  /** "Schulungen": training a machine operator applicant brings along, null = none. */
+  training: string | null;
+}
+
+/** "Schulungen": one training of the catalog with its price and the FS25 shop categories it unlocks. */
+export interface TrainingOfferView {
+  training: string;
+  cost: number;
+  vehicleCategories: string[];
 }
 
 export interface NeedsView {
@@ -293,6 +302,10 @@ export interface EmployeeView {
   /** Roadmap V2 R2-A4: hours driven as FS25 helper; null without worked time from the mod or for other roles. */
   hoursThisMonth: number | null;
   hoursLastMonth: number | null;
+  /** "Schulungen": finished trainings, the running one and its end (away until then, no helper). */
+  trainings: string[];
+  trainingInProgress: string | null;
+  trainingUntilGameTime: number | null;
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */

@@ -18,6 +18,8 @@ RPSimInstructions.MONEY_REASONS = {
     VET_INVOICE = true, LIVESTOCK_PREMIUM = true, LEASE_PAYMENT = true, MAINTENANCE_FEE = true,
     -- Roadmap V2 (R2-Q1): tax office (E1), authority (E2), family (E3), clubs (E4), vanilla field purchase (D2)
     TAX_PAYMENT = true, TAX_REFUND = true, FINE = true, FAMILY = true, SPONSORING = true, COMPENSATION = true,
+    -- "Schulungen": training of a machine operator
+    TRAINING = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
@@ -62,6 +64,21 @@ local function validateRoster(ins)
         end
         if not RPSimInstructions.EMPLOYEE_STATUSES[e.status] then
             return false, string.format("employees[%d]: unknown status %s", i, tostring(e.status))
+        end
+        -- "Schulungen": optional list of finished trainings
+        if e.trainings ~= nil and not isList(e.trainings) then
+            return false, string.format("employees[%d].trainings must be an array", i)
+        end
+    end
+    -- "Schulungen": optional object training -> array of FS25 shop categories
+    if ins.trainingCategories ~= nil then
+        if type(ins.trainingCategories) ~= "table" then
+            return false, "trainingCategories must be an object"
+        end
+        for code, cats in pairs(ins.trainingCategories) do
+            if type(code) ~= "string" or not isList(cats) then
+                return false, "trainingCategories." .. tostring(code) .. " must be an array"
+            end
         end
     end
     if not RPSimInstructions.HELPER_WAGE_MODES[ins.helperWageMode] then

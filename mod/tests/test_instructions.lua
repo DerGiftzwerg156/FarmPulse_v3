@@ -226,7 +226,15 @@ function T.TestInstructions:testEmployeeRosterValidation()
         lu.assertTrue(RPSimInstructions.validate(roster({ { employeeId = 1, name = "A", role = "MECHANIC",
             status = status } })), status)
     end
+    -- "Schulungen": optional trainings per employee and categories per training
+    lu.assertTrue(RPSimInstructions.validate(roster({ { employeeId = 1, name = "A", role = "MACHINE_OPERATOR",
+        status = "ACTIVE", trainings = { "COMBINE" } } }, { trainingCategories = { COMBINE = { "HARVESTERS" } } })))
+    lu.assertTrue(RPSimInstructions.validate(roster({ { employeeId = 1, name = "A", role = "MACHINE_OPERATOR",
+        status = "ACTIVE", trainings = RPSimJson.array({}) } }, { trainingCategories = {} })))
     local cases = {
+        roster({ { employeeId = 1, name = "A", role = "MACHINE_OPERATOR", status = "ACTIVE", trainings = "COMBINE" } }),
+        roster({ klaus }, { trainingCategories = "COMBINE" }),
+        roster({ klaus }, { trainingCategories = { COMBINE = "HARVESTERS" } }),
         roster(nil),
         roster({ { employeeId = "12", name = "A", role = "MECHANIC", status = "ACTIVE" } }),
         roster({ { employeeId = 12, name = "", role = "MECHANIC", status = "ACTIVE" } }),

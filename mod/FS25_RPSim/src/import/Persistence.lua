@@ -6,6 +6,15 @@ RPSimPersistence = {}
 
 local ROOT = "FS25_RPSim"
 
+--- "a,b" -> { "a", "b" } (nil / "" -> {}).
+local function splitList(text)
+    local list = {}
+    for part in string.gmatch(text or "", "[^,]+") do
+        list[#list + 1] = part
+    end
+    return list
+end
+
 function RPSimPersistence.save(writer, state)
     writer:setString(ROOT .. "#savegameId", state.savegameId or "")
     local ids = {}
@@ -62,6 +71,23 @@ function RPSimPersistence.save(writer, state)
             writer:setString(ek .. "#name", e.name)
             writer:setString(ek .. "#role", e.role)
             writer:setString(ek .. "#status", e.status)
+            -- "Schulungen": finished trainings, comma separated
+            local codes = {}
+            for code, _ in pairs(e.trainings or {}) do
+                codes[#codes + 1] = code
+            end
+            table.sort(codes)
+            writer:setString(ek .. "#trainings", table.concat(codes, ","))
+        end
+        local codes = {}
+        for code, _ in pairs(wf.roster.trainingCategories or {}) do
+            codes[#codes + 1] = code
+        end
+        table.sort(codes)
+        for i, code in ipairs(codes) do
+            local tk = string.format("%s.trainingCategory(%d)", k, i - 1)
+            writer:setString(tk .. "#training", code)
+            writer:setString(tk .. "#categories", table.concat(wf.roster.trainingCategories[code], ","))
         end
     end
     if wf ~= nil then
@@ -186,11 +212,23 @@ function RPSimPersistence.load(reader, state)
             local id = reader:getInt(ek .. "#id")
             if id == nil then break end
             employees[#employees + 1] = { employeeId = id, name = reader:getString(ek .. "#name") or "",
-                role = reader:getString(ek .. "#role") or "", status = reader:getString(ek .. "#status") or "ACTIVE" }
+                role = reader:getString(ek .. "#role") or "", status = reader:getString(ek .. "#status") or "ACTIVE",
+                trainings = splitList(reader:getString(ek .. "#trainings")) }
             i = i + 1
         end
-        state.workforce.roster = { employees = employees, helperWageMode = mode,
-            strictHelperLimit = reader:getString(ROOT .. ".workforce#strictHelperLimit") == "true" }
+        local trainingCategories = {}
+        i = 0
+        while true do
+            local tk = string.format("%s.workforce.trainingCategory(%d)", ROOT, i)
+            local code = reader:getString(tk .. "#training")
+            if code == nil then break end
+            trainingCategories[code] = splitList(reader:getString(tk .. "#categories"))
+            i = i + 1
+        end
+        -- setRoster builds the training sets and the category index exactly as for a list from the backend
+        RPSimWorkforce.setRoster(state.workforce, { employees = employees, helperWageMode = mode,
+            strictHelperLimit = reader:getString(ROOT .. ".workforce#strictHelperLimit") == "true",
+            trainingCategories = trainingCategories })
     end
     i = 0
     while true do

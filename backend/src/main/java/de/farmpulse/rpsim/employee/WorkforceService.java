@@ -37,6 +37,8 @@ import tools.jackson.databind.json.JsonMapper;
  *   <li>A4: the worked game time from {@code farm_facts.workforce} is counted per employee (today / this month); every
  *   game day the workload of machine operators follows the real hours instead of the simulated decay.</li>
  *   <li>A7: every game day the workload of animal keepers follows the animals per keeper.</li>
+ *   <li>"Schulungen": every employee carries his finished trainings, the list the FS25 shop categories per training;
+ *   an employee at a training is ON_LEAVE for the mod.</li>
  * </ul>
  */
 @Service
@@ -51,11 +53,14 @@ public class WorkforceService {
     private final FactsService facts;
     private final OutboxService outbox;
     private final SatisfactionService satisfaction;
+    private final TrainingService training;
     private final JsonMapper json;
     private final RpsimProperties props;
 
     public WorkforceService(SavegameRepository savegames, EmployeeRepository employees, FactsService facts,
-                            OutboxService outbox, SatisfactionService satisfaction, JsonMapper json, RpsimProperties props) {
+                            OutboxService outbox, SatisfactionService satisfaction, TrainingService training,
+                            JsonMapper json, RpsimProperties props) {
+        this.training = training;
         this.savegames = savegames;
         this.employees = employees;
         this.facts = facts;
@@ -77,6 +82,9 @@ public class WorkforceService {
         if (e.getTimeOffUntilGameTime() != null && e.getTimeOffUntilGameTime() > now) {
             return STATUS_ON_LEAVE;
         }
+        if (TrainingService.inTraining(e, now)) {
+            return STATUS_ON_LEAVE; // at a training: no helper
+        }
         return STATUS_ACTIVE;
     }
 
@@ -92,6 +100,7 @@ public class WorkforceService {
                     m.put("name", e.getCharacter().getName());
                     m.put("role", e.getJobRole().name());
                     m.put("status", rosterStatus(e, now));
+                    m.put("trainings", e.trainingSet().stream().map(Enum::name).toList());
                     list.add(m);
                 });
         return list;
@@ -100,6 +109,7 @@ public class WorkforceService {
     /** A0: sends the list when its content changed since the last one sent. Returns true when sent. */
     @Transactional
     public boolean sync(Savegame sg) {
+        training.completeDue(sg); // a finished training changes the list
         List<Map<String, Object>> list = roster(sg);
         String mode = (sg.getHelperWageMode() == null ? HelperWageMode.EMPLOYEES : sg.getHelperWageMode()).name();
         if (sg.getRosterJson() == null && list.isEmpty() && HelperWageMode.EMPLOYEES.name().equals(mode)
@@ -110,11 +120,13 @@ public class WorkforceService {
         content.put("employees", list);
         content.put("helperWageMode", mode);
         content.put("strictHelperLimit", sg.isStrictHelperLimit());
+        Map<String, List<String>> categories = training.vehicleCategories();
+        content.put("trainingCategories", categories);
         String text = json.writeValueAsString(content);
         if (Objects.equals(text, sg.getRosterJson())) {
             return false;
         }
-        outbox.employeeRoster(sg, list, mode, sg.isStrictHelperLimit());
+        outbox.employeeRoster(sg, list, mode, sg.isStrictHelperLimit(), categories);
         sg.setRosterJson(text);
         sg.setRosterSentGameTime(sg.getCurrentGameTime());
         return true;

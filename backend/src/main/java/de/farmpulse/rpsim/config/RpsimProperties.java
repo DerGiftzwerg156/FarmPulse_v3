@@ -109,6 +109,7 @@ public class RpsimProperties {
         private Negotiation negotiation = new Negotiation();
         private Satisfaction satisfaction = new Satisfaction();
         private Hiring hiring = new Hiring();
+        private Trainings training = new Trainings();
         private Reputation reputation = new Reputation();
         private Rotation rotation = new Rotation();
         private Absence absence = new Absence();
@@ -422,6 +423,42 @@ public class RpsimProperties {
                 "MACHINE_OPERATOR", 2400.0, "MECHANIC", 2700.0, "ANIMAL_KEEPER", 2200.0, "OFFICE_CLERK", 2300.0));
         /** Expected salary = baseSalary * (1 + salarySkillFactor * (skill - 50) / 50). */
         private double salarySkillFactor = 0.3;
+    }
+
+    /**
+     * Owner decision "Schulungen": without a training a machine operator drives small and medium tractors and every
+     * vehicle whose FS25 shop category no training lists. A training costs money, the employee is away for
+     * duration-days (no helper) and appreciates it. Machine operator applicants bring a training along with
+     * applicant-chance and expect applicant-salary-premium more salary then. Placeholders.
+     */
+    @Getter @Setter
+    public static class Trainings {
+        private double durationDays = 1;
+        private double appreciationPoints = 8;
+        /** Price (€) per training, key = Training name. */
+        private Map<String, Long> cost = new LinkedHashMap<>(Map.of(
+                "LARGE_TRACTOR", 1500L, "SELF_PROPELLED", 2000L, "SPECIAL_HARVESTER", 2500L,
+                "COMBINE", 3000L, "FORAGE_HARVESTER", 3000L, "TRUCK", 4000L));
+        private double applicantChance = 0.3;
+        private double applicantSalaryPremium = 0.08;
+        /**
+         * FS25 shop categories (StoreItem.categoryName, upper case) per training; the mod sends a helper of a vehicle in
+         * one of these categories only with an employee who has the training. Categories not listed need no training.
+         */
+        private Map<String, List<String>> categories = defaultCategories();
+
+        private static Map<String, List<String>> defaultCategories() {
+            Map<String, List<String>> m = new LinkedHashMap<>();
+            m.put("LARGE_TRACTOR", List.of("TRACTORSL"));
+            m.put("COMBINE", List.of("HARVESTERS"));
+            m.put("FORAGE_HARVESTER", List.of("FORAGEHARVESTERS"));
+            m.put("SPECIAL_HARVESTER", List.of("BEETVEHICLES", "POTATOVEHICLES", "VEGETABLEVEHICLES", "COTTONVEHICLES",
+                    "SUGARCANEVEHICLES", "GRAPEVEHICLES", "OLIVEVEHICLES"));
+            m.put("TRUCK", List.of("TRUCKS"));
+            m.put("SELF_PROPELLED", List.of("SPRAYERVEHICLES", "MOWERVEHICLES", "FRONTLOADERVEHICLES",
+                    "TELELOADERVEHICLES", "SKIDSTEERVEHICLES", "WHEELLOADERVEHICLES"));
+            return m;
+        }
     }
 
     /** Technical concept "Dorf-Ansehen". */
@@ -826,6 +863,7 @@ public class RpsimProperties {
             m.put("RPSIM_FAMILY", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_SPONSORING", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_COMPENSATION", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_TRAINING", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_BUY", FinanceClass.INVESTMENT);

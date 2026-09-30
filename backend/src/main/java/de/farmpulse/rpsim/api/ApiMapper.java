@@ -88,7 +88,7 @@ public class ApiMapper {
 
     public ApplicationView application(JobApplication a) {
         return new ApplicationView(a.getId(), ref(a.getCharacter()), a.getCharacter().getBackstory(), a.getSkill(),
-                a.getExpectedSalary(), a.getStatus().name());
+                a.getExpectedSalary(), a.getStatus().name(), a.getTraining() == null ? null : a.getTraining().name());
     }
 
     public EmployeeView employee(Employee e) {
@@ -98,7 +98,10 @@ public class ApiMapper {
                 r(n.workingConditions()), r(n.score()), r(n.effectiveSkill())), e.isWarningSent(), e.isSalaryOverdue(),
                 e.getTimeOffUntilGameTime(), e.getStrikeSinceGameTime() != null,
                 hours(WorkforceService.hoursThisMonth(e)),
-                hours(WorkforceService.hoursLastMonth(e)));
+                hours(WorkforceService.hoursLastMonth(e)),
+                e.trainingSet().stream().map(Enum::name).toList(),
+                e.getTrainingInProgress() == null ? null : e.getTrainingInProgress().name(),
+                e.getTrainingUntilGameTime());
     }
 
     private static Double hours(Double h) {

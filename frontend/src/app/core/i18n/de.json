@@ -111,6 +111,14 @@
       "REALISTIC": "Realistisch",
       "HARSH": "Hart"
     },
+    "training": {
+      "LARGE_TRACTOR": "Große Traktoren",
+      "COMBINE": "Mähdrescher",
+      "FORAGE_HARVESTER": "Feldhäcksler",
+      "SPECIAL_HARVESTER": "Spezialernter",
+      "TRUCK": "LKW",
+      "SELF_PROPELLED": "Selbstfahrer & Lader"
+    },
     "jobRole": {
       "MACHINE_OPERATOR": "Maschinenführer:in",
       "MECHANIC": "Mechaniker:in",
@@ -366,7 +374,8 @@
       "FINE": "Bußgeld/Zuschlag",
       "FAMILY": "Familie",
       "SPONSORING": "Sponsoring",
-      "COMPENSATION": "Ausgleichszahlung"
+      "COMPENSATION": "Ausgleichszahlung",
+      "TRAINING": "Mitarbeiterschulung"
     },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
@@ -550,7 +559,8 @@
       "RPSIM_FINE": "Bußgeld/Zuschlag",
       "RPSIM_FAMILY": "Familie",
       "RPSIM_SPONSORING": "Sponsoring",
-      "RPSIM_COMPENSATION": "Ausgleichszahlung"
+      "RPSIM_COMPENSATION": "Ausgleichszahlung",
+      "RPSIM_TRAINING": "Mitarbeiterschulung"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",
@@ -862,7 +872,19 @@
     "dismissText": "Willst du {name} wirklich kündigen? Das lässt sich nicht rückgängig machen.",
     "helperHint": "Deine Maschinenführer fahren die Helfer im Spiel. Helfer ohne freien Maschinenführer kosten den normalen Spiellohn.",
     "strike": "Streikt",
-    "hours": "Als Helfer gefahren: {hours} h in diesem Monat (Vormonat {last} h)"
+    "hours": "Als Helfer gefahren: {hours} h in diesem Monat (Vormonat {last} h)",
+    "trainings": "Schulungen",
+    "noTrainings": "Keine Schulung – fährt als Helfer nur kleine und mittlere Traktoren und Fahrzeuge ohne Schulungspflicht.",
+    "inTraining": "Auf Schulung ({training}) bis {at}",
+    "training": "Schulung",
+    "trainingChoice": "Schulung wählen",
+    "trainingOption": "{training} – {cost}",
+    "trainingBook": "Kostenpflichtig buchen",
+    "trainingHint": "Die Schulung kostet {cost} und dauert einen Spieltag – so lange fährt {name} keinen Helfer. Danach darf {name} diese Maschinen fahren.",
+    "trainingAllDone": "{name} hat bereits alle Schulungen.",
+    "trainingBooked": "{name} ist jetzt auf der Schulung „{training}“.",
+    "applicantTraining": "Bringt Schulung mit: {training}",
+    "trainingInfo": "Ohne Schulung fahren Maschinenführer nur kleine und mittlere Traktoren. Große Traktoren, Mähdrescher, Feldhäcksler, Spezialernter, LKW sowie Selbstfahrer und Lader brauchen die passende Schulung. Im strengen Helferlimit startet so ein Helfer nur mit geschultem Fahrer."
   },
   "farmland": {
     "map": "Feldübersicht",

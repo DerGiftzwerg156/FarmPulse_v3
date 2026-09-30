@@ -13,6 +13,7 @@ import de.farmpulse.rpsim.domain.NoticeKind;
 import de.farmpulse.rpsim.domain.OutboxInstruction;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.SatisfactionService;
+import de.farmpulse.rpsim.employee.TrainingService;
 import de.farmpulse.rpsim.negotiation.NegotiationEngine;
 import de.farmpulse.rpsim.payroll.PayrollScheduler;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
@@ -31,6 +32,7 @@ import tools.jackson.databind.json.JsonMapper;
  * <ul>
  *   <li>loan bookings: {@link LoanService#onBookingFailed} (installment due again, penalty/call-back escalate)</li>
  *   <li>salaries: {@link PayrollScheduler#onSalaryFailed} (salary stays due, salary-delay logic)</li>
+ *   <li>trainings: {@link TrainingService#onBookingFailed} (training cancelled)</li>
  *   <li>farmland deals: {@link NegotiationEngine#onDealFailed} (ownership back to the previous owner)</li>
  *   <li>everything: a notice on the dashboard and a log line</li>
  * </ul>
@@ -51,12 +53,14 @@ public class FailedInstructionService {
     private final ContractBillingService billing;
     private final LeaseService lease;
     private final MaintenanceService maintenance;
+    private final TrainingService training;
     private final JsonMapper json;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
                                     ContractBillingService billing, LeaseService lease, MaintenanceService maintenance,
-                                    JsonMapper json) {
+                                    TrainingService training, JsonMapper json) {
+        this.training = training;
         this.outbox = outbox;
         this.savegames = savegames;
         this.loans = loans;
@@ -105,6 +109,8 @@ public class FailedInstructionService {
             handled = loans.onBookingFailed(sg, relatedId, ins.getInstructionId(), reason);
         } else if (SatisfactionService.RELATED.equals(related) && relatedId != null && "SALARY_PAYMENT".equals(reason)) {
             handled = payroll.onSalaryFailed(relatedId);
+        } else if (SatisfactionService.RELATED.equals(related) && relatedId != null && "TRAINING".equals(reason)) {
+            handled = training.onBookingFailed(relatedId, p.path("note").asString(""));
         } else if (ContractBillingService.RELATED.equals(related) && relatedId != null) {
             handled = billing.onPaymentFailed(relatedId);
         } else if (MaintenanceService.RELATED.equals(related) && relatedId != null) {

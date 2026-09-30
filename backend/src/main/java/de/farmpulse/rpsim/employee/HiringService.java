@@ -26,6 +26,7 @@ import de.farmpulse.rpsim.domain.JobRole;
 import de.farmpulse.rpsim.domain.NarrationJob;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.TerminationReason;
+import de.farmpulse.rpsim.domain.Training;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
@@ -88,6 +89,24 @@ public class HiringService {
         return new Offer(skill, salary);
     }
 
+    /**
+     * "Schulungen": a machine operator applicant brings one random training along with applicant-chance and expects
+     * applicant-salary-premium more salary then (rounded to 10 €). Other roles bring none.
+     */
+    public record TrainedOffer(int skill, long salary, Training training) {
+    }
+
+    public TrainedOffer rollApplicant(JobRole role, RandomSource r) {
+        Offer o = rollOffer(role, r);
+        RpsimProperties.Trainings t = props.getFormulas().getTraining();
+        if (role != JobRole.MACHINE_OPERATOR || !r.chance(t.getApplicantChance())) {
+            return new TrainedOffer(o.skill(), o.salary(), null);
+        }
+        Training training = r.pick(List.of(Training.values()));
+        long salary = Math.round(o.salary() * (1 + t.getApplicantSalaryPremium()) / 10.0) * 10;
+        return new TrainedOffer(o.skill(), salary, training);
+    }
+
     @Transactional
     public JobPosting createPosting(Savegame sg, JobRole role) {
         JobPosting p = new JobPosting();
@@ -100,19 +119,21 @@ public class HiringService {
         for (int i = 0; i < count; i++) {
             long seed = random.nextLong();
             Character c = generator.generate(sg, new Spec(CharacterRole.APPLICANT, CharacterCategory.APPLICANT, 0, role), seed);
-            Offer o = rollOffer(role, RandomSource.seeded(seed));
+            TrainedOffer o = rollApplicant(role, RandomSource.seeded(seed));
             JobApplication a = new JobApplication();
             a.setSavegame(sg);
             a.setPosting(p);
             a.setCharacter(c);
             a.setSkill(o.skill());
             a.setExpectedSalary(o.salary());
+            a.setTraining(o.training());
             a.setStatus(JobApplicationStatus.PENDING);
             a.setCreatedAtGameTime(sg.getCurrentGameTime());
             applications.save(a);
             narration.request(sg, NarrationEventType.JOB_APPLICATION).from(c)
                     .facts(NarrationFacts.builder().put("jobRole", generator.jobRoleTitle(role)).put("skill", o.skill())
-                            .put("expectedSalary", o.salary()).build())
+                            .put("expectedSalary", o.salary()).put("training", trainingTitle(o.training()))
+                            .put("trainingNote", trainingNote(o.training())).build())
                     .category(CommunicationCategory.EMPLOYEE).related(RELATED, p.getId())
                     .formLink("/employees?posting=" + p.getId()).submit();
         }
@@ -132,7 +153,8 @@ public class HiringService {
         }
         return narration.request(sg, NarrationEventType.INTERVIEW_ANSWER).from(a.getCharacter())
                 .facts(NarrationFacts.builder().put("jobRole", generator.jobRoleTitle(a.getPosting().getJobRole()))
-                        .put("skill", a.getSkill()).put("expectedSalary", a.getExpectedSalary()).build())
+                        .put("skill", a.getSkill()).put("expectedSalary", a.getExpectedSalary())
+                        .put("training", trainingTitle(a.getTraining())).build())
                 .playerMessage(question).channel(channel == null ? Channel.MAIL : channel)
                 .category(CommunicationCategory.EMPLOYEE).related(RELATED, postingId).submit();
     }
@@ -145,6 +167,10 @@ public class HiringService {
         }
         JobApplication chosen = application(sg, postingId, applicationId);
         Employee e = createEmployee(sg, chosen.getCharacter(), p.getJobRole(), chosen.getSkill(), chosen.getExpectedSalary());
+        if (chosen.getTraining() != null) {
+            e.addTraining(chosen.getTraining());
+            publisher.publishEvent(new RosterChangedEvent(sg.getId())); // the list for the mod with the training
+        }
         chosen.setStatus(JobApplicationStatus.HIRED);
         p.setStatus(JobPostingStatus.FILLED);
         p.setFilledEmployeeId(e.getId());
@@ -211,6 +237,16 @@ public class HiringService {
                 SatisfactionService.RELATED, e.getId());
         publisher.publishEvent(new RosterChangedEvent(sg.getId())); // R2-A0
         return e;
+    }
+
+    /** Title of a training for the narration facts, "keine" without one (the AI must not invent a training). */
+    private static String trainingTitle(Training t) {
+        return t == null ? "keine" : t.title();
+    }
+
+    /** Sentence of the fallback application text. */
+    private static String trainingNote(Training t) {
+        return t == null ? "" : "Die Schulung „" + t.title() + "“ habe ich bereits absolviert.";
     }
 
     public List<JobPosting> postings(Savegame sg) {

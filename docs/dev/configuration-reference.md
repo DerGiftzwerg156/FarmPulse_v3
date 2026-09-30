@@ -295,6 +295,27 @@ period is assumed (FS25 default).
 | `rpsim.formulas.hiring.base-salary.OFFICE_CLERK` | `2300.0` | Monthly base salary (€) of job role `OFFICE_CLERK`. | Kündigung & Bewerbung |
 | `rpsim.formulas.hiring.salary-skill-factor` | `0.3` | Salary expectation = base × (1 + factor × (skill − 50) / 50), rounded to 10 €. | Kündigung & Bewerbung |
 
+## `rpsim.formulas.training`
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.training.duration-days` | `1` | Game days a machine operator is away at a training (ON_LEAVE for the mod, no helper); the qualification counts afterwards. | Schulungen |
+| `rpsim.formulas.training.appreciation-points` | `8` | Appreciation points a booked training brings. | Schulungen |
+| `rpsim.formulas.training.cost.LARGE_TRACTOR` | `1500` | Price (€) of the training `LARGE_TRACTOR`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.SELF_PROPELLED` | `2000` | Price (€) of the training `SELF_PROPELLED`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.SPECIAL_HARVESTER` | `2500` | Price (€) of the training `SPECIAL_HARVESTER`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.COMBINE` | `3000` | Price (€) of the training `COMBINE`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.FORAGE_HARVESTER` | `3000` | Price (€) of the training `FORAGE_HARVESTER`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.TRUCK` | `4000` | Price (€) of the training `TRUCK`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.applicant-chance` | `0.3` | Probability that a machine operator applicant brings one random training along. | Schulungen |
+| `rpsim.formulas.training.applicant-salary-premium` | `0.08` | Extra salary expectation of an applicant with a training (+8 %, rounded to 10 €). | Schulungen |
+| `rpsim.formulas.training.categories.LARGE_TRACTOR` | `[TRACTORSL]` | FS25 shop categories (`StoreItem.categoryName`, upper case) that need the training `LARGE_TRACTOR` for a helper; sent to the mod with `EMPLOYEE_ROSTER`. Categories no training lists (small/medium tractors, cars, forklifts, forestry, mod categories) need none. | Schulungen |
+| `rpsim.formulas.training.categories.COMBINE` | `[HARVESTERS]` | FS25 shop categories (`StoreItem.categoryName`, upper case) that need the training `COMBINE` for a helper; sent to the mod with `EMPLOYEE_ROSTER`. Categories no training lists (small/medium tractors, cars, forklifts, forestry, mod categories) need none. | Schulungen |
+| `rpsim.formulas.training.categories.FORAGE_HARVESTER` | `[FORAGEHARVESTERS]` | FS25 shop categories (`StoreItem.categoryName`, upper case) that need the training `FORAGE_HARVESTER` for a helper; sent to the mod with `EMPLOYEE_ROSTER`. Categories no training lists (small/medium tractors, cars, forklifts, forestry, mod categories) need none. | Schulungen |
+| `rpsim.formulas.training.categories.SPECIAL_HARVESTER` | `[BEETVEHICLES, POTATOVEHICLES, VEGETABLEVEHICLES, COTTONVEHICLES, SUGARCANEVEHICLES, GRAPEVEHICLES, OLIVEVEHICLES]` | FS25 shop categories (`StoreItem.categoryName`, upper case) that need the training `SPECIAL_HARVESTER` for a helper; sent to the mod with `EMPLOYEE_ROSTER`. Categories no training lists (small/medium tractors, cars, forklifts, forestry, mod categories) need none. | Schulungen |
+| `rpsim.formulas.training.categories.TRUCK` | `[TRUCKS]` | FS25 shop categories (`StoreItem.categoryName`, upper case) that need the training `TRUCK` for a helper; sent to the mod with `EMPLOYEE_ROSTER`. Categories no training lists (small/medium tractors, cars, forklifts, forestry, mod categories) need none. | Schulungen |
+| `rpsim.formulas.training.categories.SELF_PROPELLED` | `[SPRAYERVEHICLES, MOWERVEHICLES, FRONTLOADERVEHICLES, TELELOADERVEHICLES, SKIDSTEERVEHICLES, WHEELLOADERVEHICLES]` | FS25 shop categories (`StoreItem.categoryName`, upper case) that need the training `SELF_PROPELLED` for a helper; sent to the mod with `EMPLOYEE_ROSTER`. Categories no training lists (small/medium tractors, cars, forklifts, forestry, mod categories) need none. | Schulungen |
+
 ## `rpsim.formulas.reputation`
 
 | Key | Default | Meaning | Concept |
@@ -743,6 +764,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_FAMILY` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_SPONSORING` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_COMPENSATION` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_TRAINING` | `OPERATING_EXPENSE` | tool booking: operating expense (training of a machine operator). | Schulungen |
 | `rpsim.formulas.finance.categories.RPSIM_OTHER` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_PROPERTY_BUY` | `INVESTMENT` | FS25 money type: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_VEHICLE_BUY` | `INVESTMENT` | FS25 money type: vehicle purchase in the shop (seen in the game's journal), investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2, manual test 10.9 |
