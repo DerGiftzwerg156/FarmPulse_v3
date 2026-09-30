@@ -155,6 +155,12 @@ export class ApiService {
   timeOff(id: number, days: number): Observable<M.EmployeeView> {
     return this.post(`/employees/${id}/time-off`, { days });
   }
+  trainings(): Observable<M.TrainingOfferView[]> {
+    return this.get('/trainings');
+  }
+  bookTraining(id: number, training: string): Observable<M.EmployeeView> {
+    return this.post(`/employees/${id}/training`, { training });
+  }
   dismiss(id: number): Observable<M.EmployeeView> {
     return this.http.delete<M.EmployeeView>(`${this.base}/employees/${id}`);
   }

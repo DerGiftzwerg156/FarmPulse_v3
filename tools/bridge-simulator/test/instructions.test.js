@@ -228,7 +228,7 @@ test('EMPLOYEE_ROSTER replaces the complete list (R2-A0)', () => {
   write([roster('ro2', [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR', status: 'STRIKE' }])]);
   sim.processInstructions();
   assert.deepEqual(sim.roster, { employees: [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR',
-    status: 'STRIKE' }], helperWageMode: 'EMPLOYEES', strictHelperLimit: false });
+    status: 'STRIKE' }], helperWageMode: 'EMPLOYEES', strictHelperLimit: false, trainingCategories: {} });
   writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
     { ...roster('ro3', [{ employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR', status: 'SICK' }]) }] }));
   sim.processInstructions();
@@ -258,6 +258,23 @@ test('EMPLOYEE_ROSTER assigns helpers in list order and stops striking ones (R2-
   assert.deepEqual(jobs().map((j) => [j.jobId, j.employeeId]), [[2, 2], [7, undefined]]);
 });
 
+test('EMPLOYEE_ROSTER: machines that need a training only get a trained operator ("Schulungen")', () => {
+  const { sim, write } = setup('helfer-hof');
+  const op = (employeeId, name, trainings) => ({ employeeId, name, role: 'MACHINE_OPERATOR', status: 'ACTIVE', trainings });
+  write([{ instructionId: 't1', type: 'EMPLOYEE_ROSTER', helperWageMode: 'EMPLOYEES', strictHelperLimit: false,
+    employees: [op(1, 'Klaus Berger', ['COMBINE', 'TRUCK']), op(2, 'Anna Vogt', [])],
+    trainingCategories: { COMBINE: ['HARVESTERS'], TRUCK: ['TRUCKS'] } }]);
+  sim.processInstructions();
+  sim.setActiveJobs([{ jobId: 1, title: 'John Deere 8R', categories: ['TRACTORSL'] },
+    { jobId: 2, title: 'CLAAS LEXION 8900', categories: ['harvesters'] },
+    { jobId: 3, title: 'MAN TGS', categories: ['TRUCKS'] }]);
+  const jobs = sim.buildFarmFacts().workforce.activeJobs;
+  // the operator without trainings takes the tractor, the combine gets Klaus, the truck finds nobody (vanilla helper)
+  assert.deepEqual(jobs.map((j) => [j.jobId, j.employeeId]), [[1, 2], [2, 1], [3, undefined]]);
+  assert.equal(jobs[0].categories, undefined, 'the categories are not exported');
+  assert.equal(validate('farmFacts', sim.buildFarmFacts()), null);
+});
+
 test('PROMPT is shown once; an expired one is acknowledged but not shown (R2-F2)', () => {
   const { sim, write } = setup();
   const prompt = (id, expiresGameTime) => ({ instructionId: id, type: 'PROMPT', promptId: `prm_${id}`,
@@ -279,6 +296,12 @@ test('the instruction schema describes the new types (R2-Q1)', () => {
   assert.equal(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [],
     helperWageMode: 'VANILLA', strictHelperLimit: true })), null);
   assert.notEqual(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [] })), null);
+  assert.equal(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [{ employeeId: 1, name: 'A',
+    role: 'MACHINE_OPERATOR', status: 'ACTIVE', trainings: ['COMBINE'] }], helperWageMode: 'EMPLOYEES',
+  strictHelperLimit: false, trainingCategories: { COMBINE: ['HARVESTERS'] } })), null);
+  assert.notEqual(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [], helperWageMode: 'EMPLOYEES',
+    strictHelperLimit: false, trainingCategories: { COMBINE: 'HARVESTERS' } })), null);
+  assert.equal(validate('instructions', doc({ type: 'MONEY_TRANSACTION', amount: -3000, reason: 'TRAINING' })), null);
   assert.notEqual(validate('instructions', doc({ type: 'REPAIR_VEHICLE', vehicleId: 'v', targetDamage: 2 })), null);
 });
 

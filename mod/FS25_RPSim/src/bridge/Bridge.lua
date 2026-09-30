@@ -122,7 +122,7 @@ function RPSimBridge:sampleWorkforce(gameTime)
     end
     local ids = {}
     for _, j in ipairs(jobs) do
-        RPSimWorkforce.assign(wf, j.jobId)
+        RPSimWorkforce.assign(wf, j.jobId, RPSimWorkforce.requiredTrainings(wf, j.categories))
         ids[#ids + 1] = j.jobId
     end
     RPSimWorkforce.accrue(wf, ids, gameTime)

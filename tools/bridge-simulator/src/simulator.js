@@ -16,7 +16,9 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   'FARMLAND_SALE', 'OTHER', 'INSURANCE_PREMIUM', 'INSURANCE_PAYOUT', 'DAMAGE', 'WILDLIFE_COMPENSATION', 'VET_INVOICE',
   'LIVESTOCK_PREMIUM', 'LEASE_PAYMENT', 'MAINTENANCE_FEE',
   // Roadmap V2 (R2-Q1)
-  'TAX_PAYMENT', 'TAX_REFUND', 'FINE', 'FAMILY', 'SPONSORING', 'COMPENSATION']);
+  'TAX_PAYMENT', 'TAX_REFUND', 'FINE', 'FAMILY', 'SPONSORING', 'COMPENSATION',
+  // "Schulungen"
+  'TRAINING']);
 // Roadmap V2 R2-B1: number of FS25 periods kept in the booking journal (proposed mod config financeJournalPeriods)
 export const FINANCE_JOURNAL_PERIODS = 13;
 
@@ -89,6 +91,15 @@ export function validateInstruction(ins) {
           return `employees[${i + 1}]: name and role are required`;
         }
         if (!['ACTIVE', 'ON_LEAVE', 'STRIKE'].includes(e.status)) return `employees[${i + 1}]: unknown status ${e.status}`;
+        if (e.trainings !== undefined && !Array.isArray(e.trainings)) return `employees[${i + 1}].trainings must be an array`;
+      }
+      if (ins.trainingCategories !== undefined) { // "Schulungen"
+        if (!ins.trainingCategories || typeof ins.trainingCategories !== 'object' || Array.isArray(ins.trainingCategories)) {
+          return 'trainingCategories must be an object';
+        }
+        for (const [code, cats] of Object.entries(ins.trainingCategories)) {
+          if (!Array.isArray(cats)) return `trainingCategories.${code} must be an array`;
+        }
       }
       if (!['EMPLOYEES', 'VANILLA'].includes(ins.helperWageMode)) return `unknown helperWageMode ${ins.helperWageMode}`;
       if (typeof ins.strictHelperLimit !== 'boolean') return 'strictHelperLimit must be a boolean';
@@ -384,7 +395,9 @@ export class BridgeSimulator {
         byType: Object.fromEntries(Object.entries(p.byType).map(([k, v]) => [k, Math.round(v)])) })) };
     }
     if (this.workforce) {
-      blocks.workforce = { activeJobs: this.workforce.activeJobs.map((j) => ({ ...j })).sort((a, b) => a.jobId - b.jobId),
+      // the shop categories ("Schulungen") only steer the assignment - the mod does not export them
+      blocks.workforce = { activeJobs: this.workforce.activeJobs.map(({ categories, ...j }) => ({ ...j }))
+        .sort((a, b) => a.jobId - b.jobId),
         workedGameMs: Object.fromEntries(Object.entries(this.workforce.workedGameMs).map(([k, v]) => [k, Math.round(v)])) };
     }
     if (this.husbandries) {
@@ -512,14 +525,31 @@ export class BridgeSimulator {
     }
   }
 
+  /** "Schulungen" like the mod: trainings a job needs for the FS25 shop categories of its vehicle (job.categories). */
+  requiredTrainings(categories) {
+    const byTraining = this.roster?.trainingCategories ?? {};
+    const upper = new Set((categories ?? []).map((c) => String(c).toUpperCase()));
+    return Object.keys(byTraining).filter((t) => byTraining[t].some((c) => upper.has(String(c).toUpperCase()))).sort();
+  }
+
+  /**
+   * Free ACTIVE machine operator with the required trainings; the one with the fewest trainings first (specialists
+   * stay free), ties in list order - as RPSimWorkforce.assign.
+   */
   assignFreeOperators() {
     if (!this.roster || !this.workforce) return;
     const busy = new Set(this.workforce.activeJobs.map((j) => j.employeeId).filter((id) => id !== undefined));
     for (const j of this.workforce.activeJobs) {
       if (j.employeeId !== undefined) continue;
-      const free = this.roster.employees.find((e) => e.role === 'MACHINE_OPERATOR' && e.status === 'ACTIVE'
-        && !busy.has(e.employeeId));
-      if (!free) return;
+      const required = this.requiredTrainings(j.categories);
+      let free;
+      for (const e of this.roster.employees) {
+        const trainings = e.trainings ?? [];
+        if (e.role !== 'MACHINE_OPERATOR' || e.status !== 'ACTIVE' || busy.has(e.employeeId)
+          || !required.every((t) => trainings.includes(t))) continue;
+        if (!free || trainings.length < (free.trainings ?? []).length) free = e;
+      }
+      if (!free) continue;
       j.employeeId = free.employeeId;
       busy.add(free.employeeId);
     }
@@ -661,7 +691,7 @@ export class BridgeSimulator {
         return null;
       case 'EMPLOYEE_ROSTER': // R2-A0: the list is replaced completely (idempotent)
         this.roster = { employees: ins.employees.map((e) => ({ ...e })), helperWageMode: ins.helperWageMode,
-          strictHelperLimit: ins.strictHelperLimit };
+          strictHelperLimit: ins.strictHelperLimit, trainingCategories: ins.trainingCategories ?? {} };
         this.applyRosterToJobs();
         return null;
       case 'PROMPT': // R2-F2: expired prompts are dropped without being shown

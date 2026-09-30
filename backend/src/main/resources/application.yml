@@ -273,6 +273,25 @@ rpsim:
         ANIMAL_KEEPER: 2200.0
         OFFICE_CLERK: 2300.0
       salary-skill-factor: 0.3
+    training:                     # owner decision "Schulungen" (placeholders)
+      duration-days: 1
+      appreciation-points: 8
+      cost:
+        LARGE_TRACTOR: 4500
+        SELF_PROPELLED: 6000
+        SPECIAL_HARVESTER: 7500
+        COMBINE: 9000
+        FORAGE_HARVESTER: 9000
+        TRUCK: 12000
+      applicant-chance: 0.3
+      applicant-salary-premium: 0.08
+      categories:                 # FS25 shop categories (upper case) per training; unlisted categories need none
+        LARGE_TRACTOR: [TRACTORSL]
+        COMBINE: [HARVESTERS]
+        FORAGE_HARVESTER: [FORAGEHARVESTERS]
+        SPECIAL_HARVESTER: [BEETVEHICLES, POTATOVEHICLES, VEGETABLEVEHICLES, COTTONVEHICLES, SUGARCANEVEHICLES, GRAPEVEHICLES, OLIVEVEHICLES]
+        TRUCK: [TRUCKS]
+        SELF_PROPELLED: [SPRAYERVEHICLES, MOWERVEHICLES, FRONTLOADERVEHICLES, TELELOADERVEHICLES, SKIDSTEERVEHICLES, WHEELLOADERVEHICLES]
     reputation:                   # "Dorf-Ansehen"
       trust-weight: 0.6
       public-weight: 0.4
@@ -459,6 +478,7 @@ rpsim:
         RPSIM_FAMILY: OPERATING_EXPENSE
         RPSIM_SPONSORING: OPERATING_EXPENSE
         RPSIM_COMPENSATION: OPERATING_EXPENSE
+        RPSIM_TRAINING: OPERATING_EXPENSE
         RPSIM_OTHER: OPERATING_EXPENSE
         SHOP_PROPERTY_BUY: INVESTMENT
         SHOP_VEHICLE_BUY: INVESTMENT

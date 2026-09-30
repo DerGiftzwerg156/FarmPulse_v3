@@ -36,4 +36,10 @@ public class JobApplication extends SavegameScoped {
 
     @Column(name = "created_at_game_time", nullable = false)
     private long createdAtGameTime;
+
+    /** Training a machine operator applicant brings along (null = none); the salary expectation is higher then. */
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "training", length = 32)
+    private Training training;
 }

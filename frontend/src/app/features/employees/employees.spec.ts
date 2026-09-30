@@ -10,12 +10,12 @@ const emp = (over: Partial<EmployeeView> = {}): EmployeeView => ({
   id: 1, character: character({ id: 11, name: 'Jonas Peters', role: 'EMPLOYEE' }), jobRole: 'MECHANIC', skill: 72, monthlySalary: 2800,
   status: 'ACTIVE', needs: { payFairness: 80, workload: 55, appreciation: 30, workingConditions: 70, satisfaction: 58.8, effectiveSkill: 70 },
   warningSent: false, salaryOverdue: false, timeOffUntilGameTime: null, onStrike: false, hoursThisMonth: null,
-  hoursLastMonth: null, ...over,
+  hoursLastMonth: null, trainings: [], trainingInProgress: null, trainingUntilGameTime: null, ...over,
 });
 const posting: JobPostingView = { id: 3, jobRole: 'ANIMAL_KEEPER', status: 'OPEN', createdAtGameTime: 0, filledEmployeeId: null };
 const applicant: ApplicationView = {
   id: 8, applicant: character({ id: 20, name: 'Lena Voss', role: 'APPLICANT' }), description: 'Hat lange auf einem Milchhof gearbeitet.',
-  skill: 64, expectedSalary: 2500, status: 'PENDING',
+  skill: 64, expectedSalary: 2500, status: 'PENDING', training: null,
 };
 
 describe('satisfactionBand', () => {
@@ -73,6 +73,57 @@ describe('Employees', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="employees-message"]')?.textContent).toContain('Jonas Peters');
     expect(el.querySelector('[data-testid="employee"]')?.textContent?.replace(/\s/g, ' ')).toContain('3.100 €');
+  });
+
+  it('shows the trainings of machine operators and books a paid training', () => {
+    const op = emp({ jobRole: 'MACHINE_OPERATOR', trainings: ['COMBINE'] });
+    const { el, btn, fixture, http } = setup([op, emp({ id: 2 })]);
+    expect(el.querySelector('[data-testid="training-info"]')).not.toBeNull();
+    const cards = el.querySelectorAll('[data-testid="employee"]');
+    expect(cards[0].querySelector('[data-testid="trainings"]')?.textContent).toContain('Mähdrescher');
+    expect(cards[1].querySelector('[data-testid="trainings"]')).toBeNull();
+    expect(cards[1].querySelector('[data-testid="training-open"]')).toBeNull();
+    btn('training-open').click();
+    fixture.detectChanges();
+    http.expectOne('/api/trainings').flush([
+      { training: 'LARGE_TRACTOR', cost: 1500, vehicleCategories: ['TRACTORSL'] },
+      { training: 'COMBINE', cost: 3000, vehicleCategories: ['HARVESTERS'] },
+      { training: 'TRUCK', cost: 4000, vehicleCategories: ['TRUCKS'] },
+    ]);
+    fixture.detectChanges();
+    const select = el.querySelector('[data-testid="training-select"]') as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(['LARGE_TRACTOR', 'TRUCK']);
+    expect(el.querySelector('[data-testid="training-hint"]')?.textContent?.replace(/\s/g, ' ')).toContain('1.500 €');
+    select.value = 'TRUCK';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="training-hint"]')?.textContent?.replace(/\s/g, ' ')).toContain('4.000 €');
+    btn('training-submit').click();
+    const req = http.expectOne('/api/employees/1/training');
+    expect(req.request.body).toEqual({ training: 'TRUCK' });
+    req.flush({ ...op, trainingInProgress: 'TRUCK', trainingUntilGameTime: 86_400_000 });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="employees-message"]')?.textContent).toContain('LKW');
+    expect(el.querySelector('[data-testid="in-training"]')?.textContent).toContain('LKW');
+    expect(el.querySelector('[data-testid="training-open"]')).toBeNull();
+  });
+
+  it('shows the training an applicant brings along', () => {
+    TestBed.configureTestingModule({
+      imports: [Employees],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(Employees);
+    fixture.componentRef.setInput('posting', '3');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.match('/api/job-postings/3/applications').forEach((r) => r.flush([{ ...applicant, training: 'TRUCK' }]));
+    http.expectOne('/api/employees').flush([]);
+    http.expectOne('/api/job-postings').flush([{ ...posting, jobRole: 'MACHINE_OPERATOR' }]);
+    http.match('/api/job-postings/3/applications').forEach((r) => r.flush([{ ...applicant, training: 'TRUCK' }]));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="applicant-training"]')?.textContent).toContain('LKW');
   });
 
   it('grants time off', () => {

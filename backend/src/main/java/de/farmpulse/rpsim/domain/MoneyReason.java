@@ -31,5 +31,7 @@ public enum MoneyReason {
     FAMILY,
     SPONSORING,
     COMPENSATION,
+    /** Training of a machine operator. */
+    TRAINING,
     OTHER
 }

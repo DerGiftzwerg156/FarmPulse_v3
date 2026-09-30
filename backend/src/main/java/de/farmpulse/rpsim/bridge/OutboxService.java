@@ -107,11 +107,12 @@ public class OutboxService {
     /** Roadmap V2 R2-A0: the complete employee list (the mod replaces its list). */
     @Transactional
     public OutboxInstruction employeeRoster(Savegame sg, List<Map<String, Object>> employees, String helperWageMode,
-                                            boolean strictHelperLimit) {
+                                            boolean strictHelperLimit, Map<String, List<String>> trainingCategories) {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("employees", employees);
         p.put("helperWageMode", helperWageMode);
         p.put("strictHelperLimit", strictHelperLimit);
+        p.put("trainingCategories", trainingCategories); // "Schulungen": FS25 shop categories per training
         return enqueue(sg, InstructionType.EMPLOYEE_ROSTER, p, null, null, Related.none());
     }
 

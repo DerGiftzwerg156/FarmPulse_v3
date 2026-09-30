@@ -219,10 +219,23 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
   Monat gefahren ist: Mehr als 8 Stunden je Spieltag drücken auf die Arbeitsbelastung, weniger erholt. Wer wenig
   fährt, bringt auch weniger zusätzlichen Nutzen. Ein Streikender stellt seinen Helfer sofort ab. Fahren ständig
   Helfer ohne eigenen Mitarbeiter, fragt die Genossenschaft einmal nach, ob du nicht jemanden fest einstellen willst.
+- **Schulungen für Maschinenführer.** Ohne Schulung fährt ein Maschinenführer als Helfer nur kleine und mittlere
+  Traktoren (und Fahrzeuge ohne Schulungspflicht wie PKW oder Stapler). Für **große Traktoren, Mähdrescher,
+  Feldhäcksler, Spezialernter** (Rüben, Kartoffeln, Gemüse, Baumwolle, Zuckerrohr, Trauben, Oliven), **LKW** sowie
+  **Selbstfahrer & Lader** (Selbstfahrspritzen, Selbstfahrmäher, Radlader, Teleskoplader, Hoflader) braucht er die
+  passende Schulung. Es zählt das Fahrzeug, das der Helfer fährt – ein Traktor mit gezogenem Roder braucht also nur
+  die Traktor-Stufe. Auf der Personal-Karte buchst du mit *Schulung* eine Weiterbildung: Sie kostet Geld (von 4.500 €
+  für große Traktoren bis 12.000 € für den LKW-Führerschein), dauert **einen Spieltag** – so lange fährt die Person
+  keinen Helfer – und steigert die Wertschätzung. Danach steht die Schulung auf der Karte. Bewerber für die Stelle
+  Maschinenführer bringen manchmal schon eine Schulung mit (sichtbar in der Bewerbung) und möchten dafür etwas mehr
+  Gehalt. Wer schon vor diesem Update angestellt war, hat noch keine Schulung. Findet sich kein geschulter
+  Maschinenführer, fährt wie bisher ein normaler Helfer zum Spiellohn – im *strengen Modus* startet der Helfer dann
+  gar nicht, und das Spiel meldet, welche Schulung fehlt.
 - **Helfer im Spiel:** *Helferlohn über das Gehalt* (Standard an) – fährt ein Maschinenführer, bucht das Spiel keinen
   Helferlohn. Ausgeschaltet zahlst du zusätzlich den normalen Spiellohn. *Strenger Modus* (Standard aus) – höchstens
   so viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann keine Helfer, streikende oder
-  freigestellte zählen nicht.
+  freigestellte zählen nicht. Maschinen mit Schulungspflicht starten im strengen Modus nur mit einem freien,
+  geschulten Maschinenführer.
 - **Mechaniker:in.** Setzt zu jedem Monatsbeginn deine am stärksten abgenutzten Maschinen instand – so weit ihre
   Zeit reicht (je besser das Können, desto mehr). Bleiben Maschinen liegen, steigt die Arbeitsbelastung. Über die
   Arbeit kommt jeden Monat ein kurzer Werkstattbericht (siehe **Werkstatt**).

@@ -5,6 +5,7 @@
 -- (appended) and the savegame XML loaded in loadMap.
 -- luacheck: globals g_currentMission g_modSettingsDirectory addModEventListener Utils getUserProfileAppPath
 -- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00 Farm AIJob AIJobFieldWork AIJobConveyor
+-- luacheck: globals AIJobGoTo AIJobDeliver AIJobLoadAndDeliver
 -- luacheck: globals PlayerInputComponent InputAction g_inputBinding g_i18n
 RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil, financeHook = false,
     helperHooks = false, promptKeyHook = false }
@@ -184,18 +185,64 @@ function RPSim.pricePerMsHook(job, superFunc, ...)
     return superFunc(job, ...)
 end
 
---- R2-A2: AIJob:start(farmId) picks a random FS25 helper; for the player farm the first free active machine operator
--- is assigned to the job as well.
+--- R2-A2: AIJob:start(farmId) picks a random FS25 helper; for the player farm a free active machine operator is
+-- assigned to the job as well - "Schulungen": one with the trainings the vehicle needs.
 function RPSim.jobStartHook(job, farmId)
     local wf = workforce()
     if wf == nil or RPSim.bridge.adapter == nil then
         return
     end
     pcall(function()
-        if farmId == RPSim.bridge.adapter:getFarmId() then
-            RPSimWorkforce.assign(wf, job.jobId)
+        local adapter = RPSim.bridge.adapter
+        if farmId == adapter:getFarmId() then
+            local info = adapter:jobVehicleInfo(job)
+            RPSimWorkforce.assign(wf, job.jobId, RPSimWorkforce.requiredTrainings(wf, info ~= nil and info.categories))
         end
     end)
+end
+
+--- "Schulungen": own start state of AIJob*:getIsStartable, sent to the client as UInt8 (AIJobStartRequestEvent).
+RPSim.START_ERROR_NO_TRAINING = 201
+
+--- "Schulungen": in the strict mode (R2-A3) the start of a helper is refused when the vehicle needs a training and no
+-- free machine operator has it. The map menu and the key in the vehicle (AIJobVehicle:toggleAIVehicle) both send an
+-- AIJobStartRequestEvent, whose server side asks job:getIsStartable(connection) first.
+function RPSim.startableHook(job, superFunc, connection)
+    local ok, state = superFunc(job, connection)
+    local wf = workforce()
+    if not ok or wf == nil or RPSim.bridge.adapter == nil then
+        return ok, state
+    end
+    local adapter = RPSim.bridge.adapter
+    local blocked, required, info = false, nil, nil
+    pcall(function()
+        info = adapter:jobVehicleInfo(job)
+        if info ~= nil and info.farmId == adapter:getFarmId() then
+            required = RPSimWorkforce.requiredTrainings(wf, info.categories)
+            blocked = RPSimWorkforce.startBlocked(wf, required)
+        end
+    end)
+    if not blocked then
+        return ok, state
+    end
+    local titles = {}
+    for _, t in ipairs(required) do
+        titles[#titles + 1] = RPSimWorkforce.trainingTitle(t)
+    end
+    adapter:notify(string.format("FarmPulse: Für %s ist kein Maschinenführer mit der Schulung „%s“ frei.",
+        tostring(info.name or "dieses Fahrzeug"), table.concat(titles, "“, „")), "CRITICAL")
+    return false, RPSim.START_ERROR_NO_TRAINING
+end
+
+--- "Schulungen": text of the own start state in the game dialog. AIJob*.getIsStartErrorText(state) is defined static;
+-- the calling menu is not part of the code dump, so a call on a job instance (job:getIsStartErrorText(state)) works too.
+function RPSim.startErrorTextHook(first, superFunc, second)
+    local state = type(first) == "table" and second or first
+    if state == RPSim.START_ERROR_NO_TRAINING then
+        local ok, text = pcall(function() return g_i18n:getText("rpsim_ai_noTraining") end)
+        return ok and text or "Kein geschulter Maschinenführer frei"
+    end
+    return superFunc(first, second)
 end
 
 --- R2-A2: the helper name of the game messages (AIMessage:getMessage uses job:getHelperName()).
@@ -221,6 +268,15 @@ if AIJob ~= nil and Utils ~= nil and AIJob.getPricePerMs ~= nil and AIJob.start 
     for _, cls in ipairs({ AIJob, AIJobFieldWork, AIJobConveyor }) do
         if cls ~= nil and rawget(cls, "getPricePerMs") ~= nil then
             cls.getPricePerMs = Utils.overwrittenFunction(cls.getPricePerMs, RPSim.pricePerMsHook)
+        end
+    end
+    -- "Schulungen": every job type with its own getIsStartable / getIsStartErrorText (the others inherit AIJob's)
+    for _, cls in ipairs({ AIJob, AIJobFieldWork, AIJobGoTo, AIJobDeliver, AIJobLoadAndDeliver, AIJobConveyor }) do
+        if cls ~= nil and rawget(cls, "getIsStartable") ~= nil then
+            cls.getIsStartable = Utils.overwrittenFunction(cls.getIsStartable, RPSim.startableHook)
+        end
+        if cls ~= nil and rawget(cls, "getIsStartErrorText") ~= nil then
+            cls.getIsStartErrorText = Utils.overwrittenFunction(cls.getIsStartErrorText, RPSim.startErrorTextHook)
         end
     end
     AIJob.start = Utils.appendedFunction(AIJob.start, RPSim.jobStartHook)

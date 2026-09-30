@@ -85,8 +85,13 @@ public final class Views {
     public record JobPostingView(Long id, String jobRole, String status, long createdAtGameTime, Long filledEmployeeId) {
     }
 
+    /** training = the training a machine operator applicant brings along ("Schulungen"), null = none. */
     public record ApplicationView(Long id, CharacterRef applicant, String description, int skill, long expectedSalary,
-                                  String status) {
+                                  String status, String training) {
+    }
+
+    /** "Schulungen": one training of the catalog with its price and the FS25 shop categories it unlocks. */
+    public record TrainingOfferView(String training, long cost, List<String> vehicleCategories) {
     }
 
     public record NeedsView(double payFairness, double workload, double appreciation, double workingConditions,
@@ -95,11 +100,13 @@ public final class Views {
 
     /**
      * Roadmap V2 R2-A: onStrike (A5); hoursThisMonth / hoursLastMonth = hours driven as FS25 helper (A4), null when the mod
-     * reports no worked time or the employee is no machine operator.
+     * reports no worked time or the employee is no machine operator. "Schulungen": finished trainings, the running one
+     * and its end (the employee is away until then).
      */
     public record EmployeeView(Long id, CharacterRef character, String jobRole, int skill, long monthlySalary, String status,
                                NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
-                               boolean onStrike, Double hoursThisMonth, Double hoursLastMonth) {
+                               boolean onStrike, Double hoursThisMonth, Double hoursLastMonth, List<String> trainings,
+                               String trainingInProgress, Long trainingUntilGameTime) {
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */

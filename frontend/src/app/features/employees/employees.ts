@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { ApplicationView, EmployeeView, JobPostingView, NeedsView } from '../../core/api/models';
+import { ApplicationView, EmployeeView, JobPostingView, NeedsView, TrainingOfferView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -25,12 +25,14 @@ export function satisfactionBand(score: number): 'high' | 'ok' | 'low' {
   return score >= 66 ? 'high' : score >= 40 ? 'ok' : 'low';
 }
 
-type Panel = { employeeId: number; kind: 'raise' | 'timeOff' } | null;
+type PanelKind = 'raise' | 'timeOff' | 'training';
+type Panel = { employeeId: number; kind: PanelKind } | null;
 
 /**
  * Employees (AP-8.5): job postings with applicants (skill and salary expectation visible, fixed), interview
  * questions by mail or call (they never change skill/salary), hiring; staff list with aggregated and per-category
- * satisfaction, raise, time off and dismissal.
+ * satisfaction, raise, time off and dismissal. "Schulungen": machine operators show their trainings and can be sent to a
+ * paid training (one game day away); applicants show a training they bring along.
  */
 @Component({
   selector: 'app-employees',
@@ -64,6 +66,9 @@ export class Employees {
   readonly interviewText = signal('');
   readonly interviewChannel = signal<'MAIL' | 'CALL'>('MAIL');
   readonly showFormer = signal(false);
+  /** "Schulungen": catalog (price per training), loaded when the training panel opens the first time. */
+  readonly trainingCatalog = signal<TrainingOfferView[] | null>(null);
+  readonly panelTraining = signal<string | null>(null);
 
   readonly active = computed(() => (this.employees() ?? []).filter((e) => e.status === 'ACTIVE'));
   readonly former = computed(() => (this.employees() ?? []).filter((e) => e.status !== 'ACTIVE'));
@@ -160,14 +165,53 @@ export class Employees {
     });
   }
 
-  openPanel(e: EmployeeView, kind: 'raise' | 'timeOff'): void {
+  openPanel(e: EmployeeView, kind: PanelKind): void {
     const same = this.panel()?.employeeId === e.id && this.panel()?.kind === kind;
     this.panel.set(same ? null : { employeeId: e.id, kind });
     this.panelValue.set(kind === 'raise' ? Math.round(e.monthlySalary * 1.05) : 1);
+    if (kind === 'training' && !same) {
+      this.panelTraining.set(this.openTrainings(e)[0]?.training ?? null);
+      if (this.trainingCatalog() === null) {
+        this.api.trainings().subscribe({
+          next: (c) => {
+            this.trainingCatalog.set(c);
+            if (this.panelTraining() === null) this.panelTraining.set(this.openTrainings(e)[0]?.training ?? null);
+          },
+          error: (err) => this.fail(err),
+        });
+      }
+    }
+  }
+
+  /** Trainings of the catalog the employee does not have yet. */
+  openTrainings(e: EmployeeView): TrainingOfferView[] {
+    return (this.trainingCatalog() ?? []).filter((t) => !e.trainings.includes(t.training));
+  }
+
+  trainingCost(training: string | null): number {
+    return this.trainingCatalog()?.find((t) => t.training === training)?.cost ?? 0;
+  }
+
+  submitTraining(e: EmployeeView): void {
+    const training = this.panelTraining();
+    if (!training) return;
+    this.api.bookTraining(e.id, training).subscribe({
+      next: (updated) => {
+        this.replace(updated);
+        this.panel.set(null);
+        this.flash('employees.trainingBooked', { name: e.character.name, training: this.i18n.t(`enums.training.${training}`) });
+        this.store.refresh();
+      },
+      error: (err) => this.fail(err),
+    });
   }
 
   submitPanel(e: EmployeeView): void {
     const p = this.panel();
+    if (p?.kind === 'training') {
+      this.submitTraining(e);
+      return;
+    }
     const v = Number(this.panelValue());
     if (!p || !Number.isFinite(v) || v <= 0) return;
     const obs = p.kind === 'raise' ? this.api.raise(e.id, Math.round(v)) : this.api.timeOff(e.id, Math.round(v));

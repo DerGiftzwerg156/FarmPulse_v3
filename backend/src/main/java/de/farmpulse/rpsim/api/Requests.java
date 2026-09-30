@@ -6,6 +6,7 @@ import de.farmpulse.rpsim.domain.Channel;
 import de.farmpulse.rpsim.domain.FarmOrigin;
 import de.farmpulse.rpsim.domain.JobRole;
 import de.farmpulse.rpsim.domain.TonePreset;
+import de.farmpulse.rpsim.domain.Training;
 import de.farmpulse.rpsim.domain.VillageRelation;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -78,6 +79,10 @@ public final class Requests {
     }
 
     public record TimeOffRequest(@NotNull @Min(1) @Max(30) Integer days) {
+    }
+
+    /** "Schulungen": the training to book for a machine operator. */
+    public record TrainingRequest(@NotNull Training training) {
     }
 
     public record SellOfferRequest(@NotNull @Positive Long askingPrice) {

@@ -144,7 +144,10 @@ local function fakeAIGame()
     local jobs = {}
     AIJob = { getPricePerMs = function() return 0.0004 end, start = function(job, farmId) job.startedFarmId = farmId end,
         getHelperName = function() return "Helfer Paul" end, stop = function(job, msg) job.stoppedWith = msg end }
-    AIJobFieldWork = setmetatable({ getPricePerMs = function() return 0.0005 end }, { __index = AIJob })
+    AIJobFieldWork = setmetatable({ getPricePerMs = function() return 0.0005 end,
+        -- FS25 AIJobFieldWork:getIsStartable / .getIsStartErrorText (reduced to the helper limit)
+        getIsStartable = function() return true, 0 end,
+        getIsStartErrorText = function(state) return "vanilla " .. tostring(state) end }, { __index = AIJob })
     AIJobConveyor = setmetatable({ getPricePerMs = function() return 0.00005 end }, { __index = AIJob })
     Utils = {
         appendedFunction = function(orig, fn) return function(...) orig(...); fn(...) end end,
@@ -173,7 +176,7 @@ end
 
 local function cleanup()
     RPSim.bridge = nil
-    AIJob, AIJobFieldWork, AIJobConveyor, Utils = nil, nil, nil, nil
+    AIJob, AIJobFieldWork, AIJobConveyor, Utils, g_storeManager = nil, nil, nil, nil, nil
 end
 
 function T.TestWorkforce:testHooksDropTheWageAndNameTheHelper()
@@ -259,7 +262,7 @@ function T.TestWorkforce:testCollectAIJobsOfThePlayerFarm()
     mine:start(1)
     function mine.getTitle() return "Fendt 942 Vario" end
     newJob(AIJob, 6):start(2)
-    lu.assertEquals(adapter:collectAIJobs(), { { jobId = 5, title = "Fendt 942 Vario" } })
+    lu.assertEquals(adapter:collectAIJobs(), { { jobId = 5, title = "Fendt 942 Vario", categories = {} } })
     cleanup()
 end
 
@@ -283,6 +286,123 @@ function T.TestWorkforce:testHusbandryStateLikeTheGame()
     lu.assertEquals(pigs.health, 0)
     lu.assertNil(RPSimGameAdapter.husbandryState({ getUniqueId = function() return "plc" end }))
     AnimalType = nil
+end
+
+-- ------------------------------------------------------------------ "Schulungen": trainings of machine operators
+local CATEGORIES = { LARGE_TRACTOR = { "TRACTORSL" }, COMBINE = { "HARVESTERS" }, TRUCK = { "trucks" } }
+local PETER = { employeeId = 20, name = "Peter Mahler", role = "MACHINE_OPERATOR", status = "ACTIVE",
+    trainings = { "COMBINE", "TRUCK" } }
+local JONAS = { employeeId = 21, name = "Jonas Kurz", role = "MACHINE_OPERATOR", status = "ACTIVE",
+    trainings = { "COMBINE" } }
+
+function T.TestWorkforce:testRequiredTrainingsFollowTheShopCategories()
+    local wf = RPSimWorkforce.new()
+    lu.assertEquals(RPSimWorkforce.requiredTrainings(wf, { "HARVESTERS" }), {}, "no list yet")
+    RPSimWorkforce.setRoster(wf, roster({ KLAUS }, { trainingCategories = CATEGORIES }))
+    lu.assertEquals(RPSimWorkforce.requiredTrainings(wf, { "HARVESTERS" }), { "COMBINE" })
+    lu.assertEquals(RPSimWorkforce.requiredTrainings(wf, { "Trucks" }), { "TRUCK" }, "case does not matter")
+    lu.assertEquals(RPSimWorkforce.requiredTrainings(wf, { "TRACTORSM" }), {}, "medium tractors need none")
+    lu.assertEquals(RPSimWorkforce.requiredTrainings(wf, { "MY_MOD_CATEGORY" }), {}, "unknown categories need none")
+    lu.assertEquals(RPSimWorkforce.requiredTrainings(wf, { "TRUCKS", "HARVESTERS" }), { "COMBINE", "TRUCK" })
+    lu.assertEquals(RPSimWorkforce.requiredTrainings(wf, nil), {})
+end
+
+function T.TestWorkforce:testOnlyTrainedOperatorsDriveMachinesThatNeedATraining()
+    local wf = RPSimWorkforce.new()
+    RPSimWorkforce.setRoster(wf, roster({ KLAUS, PETER }, { trainingCategories = CATEGORIES }))
+    lu.assertEquals(RPSimWorkforce.assign(wf, 1, { "COMBINE" }), 20, "Klaus has no combine training")
+    lu.assertNil(RPSimWorkforce.assign(wf, 2, { "COMBINE" }), "Peter is busy: vanilla helper")
+    lu.assertEquals(RPSimWorkforce.assign(wf, 3, {}), 12)
+    lu.assertNil(RPSimWorkforce.assign(wf, 4, { "LARGE_TRACTOR" }))
+end
+
+function T.TestWorkforce:testSimpleJobsLeaveTheSpecialistsFree()
+    local wf = RPSimWorkforce.new()
+    RPSimWorkforce.setRoster(wf, roster({ PETER, JONAS, KLAUS }, { trainingCategories = CATEGORIES }))
+    lu.assertEquals(RPSimWorkforce.assign(wf, 1, {}), 12, "the operator without trainings takes the tractor")
+    lu.assertEquals(RPSimWorkforce.assign(wf, 2, { "COMBINE" }), 21, "fewest trainings first")
+    lu.assertEquals(RPSimWorkforce.assign(wf, 3, { "TRUCK" }), 20)
+end
+
+function T.TestWorkforce:testTheStartIsOnlyBlockedInTheStrictMode()
+    local wf = RPSimWorkforce.new()
+    RPSimWorkforce.setRoster(wf, roster({ KLAUS }, { trainingCategories = CATEGORIES }))
+    lu.assertFalse(RPSimWorkforce.startBlocked(wf, { "COMBINE" }), "normal mode: vanilla helper drives")
+    RPSimWorkforce.setRoster(wf, roster({ KLAUS, JONAS }, { trainingCategories = CATEGORIES, strictHelperLimit = true }))
+    lu.assertTrue(RPSimWorkforce.startBlocked(wf, { "TRUCK" }))
+    lu.assertFalse(RPSimWorkforce.startBlocked(wf, { "COMBINE" }))
+    lu.assertFalse(RPSimWorkforce.startBlocked(wf, {}), "no training needed: the helper limit decides")
+    RPSimWorkforce.assign(wf, 1, { "COMBINE" })
+    lu.assertTrue(RPSimWorkforce.startBlocked(wf, { "COMBINE" }), "the trained operator is busy")
+end
+
+function T.TestWorkforce:testTrainingsSurviveTheSavegame()
+    local x = { data = {} }
+    function x:setString(k, v) self.data[k] = v end
+    function x:setInt(k, v) self.data[k] = v end
+    function x:setFloat(k, v) self.data[k] = v end
+    function x:getString(k) local v = self.data[k]; return v ~= nil and tostring(v) or nil end
+    function x:getInt(k) return self.data[k] end
+    function x:getFloat(k) return self.data[k] end
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    RPSimWorkforce.setRoster(state.workforce, roster({ KLAUS, PETER }, { trainingCategories = CATEGORIES }))
+    RPSimPersistence.save(x, state)
+    local loaded = RPSimProcessor.newState(RPSimConfig.new())
+    RPSimPersistence.load(x, loaded)
+    lu.assertEquals(loaded.workforce.roster, state.workforce.roster)
+    lu.assertEquals(loaded.workforce.roster.employees[2].trainings, { COMBINE = true, TRUCK = true })
+    lu.assertEquals(RPSimWorkforce.requiredTrainings(loaded.workforce, { "TRUCKS" }), { "TRUCK" })
+end
+
+--- Fake vehicle of a helper job: job.vehicleParameter:getVehicle() and the store item of its xml file.
+local function withVehicle(job, category, farmId)
+    local vehicle = { configFileName = "data/vehicles/" .. category .. ".xml",
+        getOwnerFarmId = function() return farmId or 1 end, getFullName = function() return "Test " .. category end }
+    job.vehicleParameter = { getVehicle = function() return vehicle end }
+    return job
+end
+
+local function storeManager()
+    g_storeManager = { getItemByXMLFilename = function(_, file)
+        local category = string.match(file, "([%w_]+)%.xml$")
+        return { categoryName = string.upper(category), categoryNames = { string.upper(category) } }
+    end }
+end
+
+function T.TestWorkforce:testTheStartHookAssignsATrainedOperator()
+    local _, bridge, adapter, newJob = fakeAIGame()
+    storeManager()
+    bridge:applyRoster(roster({ KLAUS, PETER }, { trainingCategories = CATEGORIES }))
+    lu.assertEquals(adapter:jobVehicleInfo(withVehicle(newJob(AIJobFieldWork, 1), "harvesters")).categories,
+        { "HARVESTERS" })
+    local combine = withVehicle(newJob(AIJobFieldWork, 1), "harvesters")
+    combine:start(1)
+    lu.assertEquals(combine:getHelperName(), "Peter Mahler")
+    local truck = withVehicle(newJob(AIJobFieldWork, 2), "trucks")
+    lu.assertEquals({ truck:getIsStartable(nil) }, { true, 0 }, "normal mode: never blocked")
+    truck:start(1)
+    lu.assertEquals(truck:getHelperName(), "Helfer Paul", "no trained operator free: vanilla helper")
+    cleanup()
+end
+
+function T.TestWorkforce:testTheStrictModeRefusesTheStartWithAMessage()
+    local game, bridge, _, newJob = fakeAIGame()
+    storeManager()
+    bridge:applyRoster(roster({ KLAUS }, { trainingCategories = CATEGORIES, strictHelperLimit = true }))
+    local combine = withVehicle(newJob(AIJobFieldWork, 1), "harvesters")
+    local ok, state = combine:getIsStartable(nil)
+    lu.assertFalse(ok)
+    lu.assertEquals(state, RPSim.START_ERROR_NO_TRAINING)
+    lu.assertStrContains(game.notifications[1].text, "Mähdrescher")
+    lu.assertStrContains(game.notifications[1].text, "Test harvesters")
+    lu.assertEquals(AIJobFieldWork.getIsStartErrorText(state), "Kein geschulter Maschinenführer frei")
+    lu.assertEquals(combine:getIsStartErrorText(state), "Kein geschulter Maschinenführer frei", "instance call")
+    lu.assertEquals(AIJobFieldWork.getIsStartErrorText(1), "vanilla 1")
+    local tractor = withVehicle(newJob(AIJobFieldWork, 2), "tractorsM")
+    lu.assertEquals({ tractor:getIsStartable(nil) }, { true, 0 })
+    local foreign = withVehicle(newJob(AIJobFieldWork, 3), "harvesters", 2)
+    lu.assertEquals({ foreign:getIsStartable(nil) }, { true, 0 }, "other farms are not checked")
+    cleanup()
 end
 
 return T

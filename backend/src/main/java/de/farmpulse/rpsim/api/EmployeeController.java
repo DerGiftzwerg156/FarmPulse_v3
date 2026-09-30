@@ -6,15 +6,18 @@ import de.farmpulse.rpsim.api.Requests.InterviewRequest;
 import de.farmpulse.rpsim.api.Requests.JobPostingRequest;
 import de.farmpulse.rpsim.api.Requests.RaiseRequest;
 import de.farmpulse.rpsim.api.Requests.TimeOffRequest;
+import de.farmpulse.rpsim.api.Requests.TrainingRequest;
 import de.farmpulse.rpsim.api.Views.ApplicationView;
 import de.farmpulse.rpsim.api.Views.EmployeeView;
 import de.farmpulse.rpsim.api.Views.JobPostingView;
+import de.farmpulse.rpsim.api.Views.TrainingOfferView;
 import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.domain.Employee;
 import de.farmpulse.rpsim.domain.EmployeeStatus;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.HiringService;
 import de.farmpulse.rpsim.employee.SatisfactionService;
+import de.farmpulse.rpsim.employee.TrainingService;
 import de.farmpulse.rpsim.repository.EmployeeRepository;
 import de.farmpulse.rpsim.savegame.SavegameContext;
 import jakarta.validation.Valid;
@@ -32,11 +35,13 @@ public class EmployeeController {
     private final SavegameContext context;
     private final HiringService hiring;
     private final SatisfactionService satisfaction;
+    private final TrainingService training;
     private final EmployeeRepository employees;
     private final ApiMapper mapper;
 
     public EmployeeController(SavegameContext context, HiringService hiring, SatisfactionService satisfaction,
-                              EmployeeRepository employees, ApiMapper mapper) {
+                              TrainingService training, EmployeeRepository employees, ApiMapper mapper) {
+        this.training = training;
         this.context = context;
         this.hiring = hiring;
         this.satisfaction = satisfaction;
@@ -99,6 +104,22 @@ public class EmployeeController {
     public EmployeeView timeOff(@PathVariable Long id, @Valid @RequestBody TimeOffRequest r) {
         Employee e = active(context.requireActive(), id);
         satisfaction.timeOff(e, r.days());
+        return mapper.employee(e);
+    }
+
+    /** "Schulungen": catalog of the trainings with price and unlocked FS25 shop categories. */
+    @GetMapping("/api/trainings")
+    public List<TrainingOfferView> trainings() {
+        return training.catalog().stream()
+                .map(o -> new TrainingOfferView(o.training().name(), o.cost(), o.categories())).toList();
+    }
+
+    /** "Schulungen": books a training for a machine operator (money, one game day away, appreciation). */
+    @PostMapping("/api/employees/{id}/training")
+    @Transactional
+    public EmployeeView train(@PathVariable Long id, @Valid @RequestBody TrainingRequest r) {
+        Employee e = active(context.requireActive(), id);
+        training.book(e, r.training());
         return mapper.employee(e);
     }
 

@@ -1,5 +1,10 @@
 package de.farmpulse.rpsim.domain;
 
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -96,4 +101,47 @@ public class Employee extends SavegameScoped {
     /** R2-A7: last warning mail of an animal keeper about food / water in the stables. */
     @Column(name = "last_stable_warning_game_time")
     private Long lastStableWarningGameTime;
+
+    /** Finished trainings of a machine operator, comma separated {@link Training} names ("" = none). */
+    @Column(name = "trainings", nullable = false, length = 255)
+    private String trainings = "";
+
+    /** The training the employee is attending right now (away until trainingUntilGameTime), null = none. */
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "training_in_progress", length = 32)
+    private Training trainingInProgress;
+
+    @Column(name = "training_until_game_time")
+    private Long trainingUntilGameTime;
+
+    public Set<Training> trainingSet() {
+        Set<Training> set = EnumSet.noneOf(Training.class);
+        if (trainings != null && !trainings.isBlank()) {
+            Arrays.stream(trainings.split(",")).map(String::strip).filter(s -> !s.isEmpty()).forEach(s -> {
+                try {
+                    set.add(Training.valueOf(s));
+                } catch (IllegalArgumentException ignored) {
+                    // a training removed from the catalog is dropped silently
+                }
+            });
+        }
+        return set;
+    }
+
+    public boolean hasTraining(Training t) {
+        return trainingSet().contains(t);
+    }
+
+    public void addTraining(Training t) {
+        Set<Training> set = trainingSet();
+        set.add(t);
+        trainings = set.stream().map(Enum::name).collect(Collectors.joining(","));
+    }
+
+    public void removeTraining(Training t) {
+        Set<Training> set = trainingSet();
+        set.remove(t);
+        trainings = set.stream().map(Enum::name).collect(Collectors.joining(","));
+    }
 }
