@@ -21,7 +21,7 @@ is cancelled again) and lets every machine operator drive every vehicle.
   `rpsim.formulas.training.categories`). The mod assigns a helper only to an operator with the training (the one with
   the fewest trainings first); in the strict helper limit the start is refused with a message, otherwise the vanilla
   helper drives. *Personal* → *Schulung* books one (`POST /api/employees/{id}/training`, catalog `GET /api/trainings`):
-  money reason `TRAINING` (1,500–4,000 €), one game day away (`ON_LEAVE` for the mod), +appreciation, thank-you mail and
+  money reason `TRAINING` (4,500–12,000 €), one game day away (`ON_LEAVE` for the mod), +appreciation, thank-you mail and
   diary entry. Machine operator applicants bring a training along with 30 % and expect 8 % more salary. Employees hired
   before have no training.
 

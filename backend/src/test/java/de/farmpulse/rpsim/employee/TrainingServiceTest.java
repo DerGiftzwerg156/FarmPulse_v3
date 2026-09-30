@@ -97,7 +97,7 @@ class TrainingServiceTest {
 
         assertThat(trainingBookings()).hasSize(1);
         JsonNode payload = json.readTree(trainingBookings().getFirst().getPayloadJson());
-        assertThat(payload.path("amount").asLong()).isEqualTo(-3000);
+        assertThat(payload.path("amount").asLong()).isEqualTo(-9000);
         assertThat(e.getTrainingInProgress()).isEqualTo(Training.COMBINE);
         assertThat(e.getTrainingUntilGameTime()).isEqualTo(start + GameTime.days(1));
         assertThat(e.hasTraining(Training.COMBINE)).as("only after the training").isFalse();

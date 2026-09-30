@@ -224,8 +224,8 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
   Feldhäcksler, Spezialernter** (Rüben, Kartoffeln, Gemüse, Baumwolle, Zuckerrohr, Trauben, Oliven), **LKW** sowie
   **Selbstfahrer & Lader** (Selbstfahrspritzen, Selbstfahrmäher, Radlader, Teleskoplader, Hoflader) braucht er die
   passende Schulung. Es zählt das Fahrzeug, das der Helfer fährt – ein Traktor mit gezogenem Roder braucht also nur
-  die Traktor-Stufe. Auf der Personal-Karte buchst du mit *Schulung* eine Weiterbildung: Sie kostet Geld (von 1.500 €
-  für große Traktoren bis 4.000 € für den LKW-Führerschein), dauert **einen Spieltag** – so lange fährt die Person
+  die Traktor-Stufe. Auf der Personal-Karte buchst du mit *Schulung* eine Weiterbildung: Sie kostet Geld (von 4.500 €
+  für große Traktoren bis 12.000 € für den LKW-Führerschein), dauert **einen Spieltag** – so lange fährt die Person
   keinen Helfer – und steigert die Wertschätzung. Danach steht die Schulung auf der Karte. Bewerber für die Stelle
   Maschinenführer bringen manchmal schon eine Schulung mit (sichtbar in der Bewerbung) und möchten dafür etwas mehr
   Gehalt. Wer schon vor diesem Update angestellt war, hat noch keine Schulung. Findet sich kein geschulter

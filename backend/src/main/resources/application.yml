@@ -277,12 +277,12 @@ rpsim:
       duration-days: 1
       appreciation-points: 8
       cost:
-        LARGE_TRACTOR: 1500
-        SELF_PROPELLED: 2000
-        SPECIAL_HARVESTER: 2500
-        COMBINE: 3000
-        FORAGE_HARVESTER: 3000
-        TRUCK: 4000
+        LARGE_TRACTOR: 4500
+        SELF_PROPELLED: 6000
+        SPECIAL_HARVESTER: 7500
+        COMBINE: 9000
+        FORAGE_HARVESTER: 9000
+        TRUCK: 12000
       applicant-chance: 0.3
       applicant-salary-premium: 0.08
       categories:                 # FS25 shop categories (upper case) per training; unlisted categories need none

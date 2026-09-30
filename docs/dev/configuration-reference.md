@@ -301,12 +301,12 @@ period is assumed (FS25 default).
 | --- | --- | --- | --- |
 | `rpsim.formulas.training.duration-days` | `1` | Game days a machine operator is away at a training (ON_LEAVE for the mod, no helper); the qualification counts afterwards. | Schulungen |
 | `rpsim.formulas.training.appreciation-points` | `8` | Appreciation points a booked training brings. | Schulungen |
-| `rpsim.formulas.training.cost.LARGE_TRACTOR` | `1500` | Price (€) of the training `LARGE_TRACTOR`, booked as `TRAINING`. | Schulungen |
-| `rpsim.formulas.training.cost.SELF_PROPELLED` | `2000` | Price (€) of the training `SELF_PROPELLED`, booked as `TRAINING`. | Schulungen |
-| `rpsim.formulas.training.cost.SPECIAL_HARVESTER` | `2500` | Price (€) of the training `SPECIAL_HARVESTER`, booked as `TRAINING`. | Schulungen |
-| `rpsim.formulas.training.cost.COMBINE` | `3000` | Price (€) of the training `COMBINE`, booked as `TRAINING`. | Schulungen |
-| `rpsim.formulas.training.cost.FORAGE_HARVESTER` | `3000` | Price (€) of the training `FORAGE_HARVESTER`, booked as `TRAINING`. | Schulungen |
-| `rpsim.formulas.training.cost.TRUCK` | `4000` | Price (€) of the training `TRUCK`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.LARGE_TRACTOR` | `4500` | Price (€) of the training `LARGE_TRACTOR`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.SELF_PROPELLED` | `6000` | Price (€) of the training `SELF_PROPELLED`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.SPECIAL_HARVESTER` | `7500` | Price (€) of the training `SPECIAL_HARVESTER`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.COMBINE` | `9000` | Price (€) of the training `COMBINE`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.FORAGE_HARVESTER` | `9000` | Price (€) of the training `FORAGE_HARVESTER`, booked as `TRAINING`. | Schulungen |
+| `rpsim.formulas.training.cost.TRUCK` | `12000` | Price (€) of the training `TRUCK`, booked as `TRAINING`. | Schulungen |
 | `rpsim.formulas.training.applicant-chance` | `0.3` | Probability that a machine operator applicant brings one random training along. | Schulungen |
 | `rpsim.formulas.training.applicant-salary-premium` | `0.08` | Extra salary expectation of an applicant with a training (+8 %, rounded to 10 €). | Schulungen |
 | `rpsim.formulas.training.categories.LARGE_TRACTOR` | `[TRACTORSL]` | FS25 shop categories (`StoreItem.categoryName`, upper case) that need the training `LARGE_TRACTOR` for a helper; sent to the mod with `EMPLOYEE_ROSTER`. Categories no training lists (small/medium tractors, cars, forklifts, forestry, mod categories) need none. | Schulungen |

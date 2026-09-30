@@ -437,8 +437,8 @@ public class RpsimProperties {
         private double appreciationPoints = 8;
         /** Price (€) per training, key = Training name. */
         private Map<String, Long> cost = new LinkedHashMap<>(Map.of(
-                "LARGE_TRACTOR", 1500L, "SELF_PROPELLED", 2000L, "SPECIAL_HARVESTER", 2500L,
-                "COMBINE", 3000L, "FORAGE_HARVESTER", 3000L, "TRUCK", 4000L));
+                "LARGE_TRACTOR", 4500L, "SELF_PROPELLED", 6000L, "SPECIAL_HARVESTER", 7500L,
+                "COMBINE", 9000L, "FORAGE_HARVESTER", 9000L, "TRUCK", 12000L));
         private double applicantChance = 0.3;
         private double applicantSalaryPremium = 0.08;
         /**
