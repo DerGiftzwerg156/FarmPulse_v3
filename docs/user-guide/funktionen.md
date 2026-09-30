@@ -144,6 +144,14 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
 - **Zahlungsausfall:** Mahnung → Verzugsgebühr → Vertrauensverlust → bei wiederholtem Ausfall Fälligstellung der
   Restschuld (das spricht sich im Dorf herum) oder Kreditsperre.
 - **Stundung:** Einmal pro Kredit kannst du um eine Ratenpause bitten; die Bank entscheidet nach festen Regeln.
+- **Sondertilgung:** Bei jedem laufenden Kredit (auch der Altlast) kannst du zusätzlich einen beliebigen Betrag bis
+  zur Restschuld zurückzahlen. Die Monatsrate bleibt gleich, die Laufzeit wird kürzer – der Tilgungsplan zeigt die
+  verbleibenden Raten. Je Spieljahr (FS25-Kalender) sind 10 % des ursprünglichen Kreditbetrags gebührenfrei; auf den
+  Teil darüber berechnet die Bank 1 % Vorfälligkeitsentschädigung, die zusätzlich abgebucht wird. Zahlst du die
+  komplette Restschuld, kommen die anteiligen Zinsen des laufenden Monats dazu. Vor dem Abschicken siehst du, was
+  genau abgebucht wird; reicht dein Guthaben nicht, lehnt die Bank ab. Während eine Rate überfällig ist oder eine
+  Stundung läuft, geht keine Sondertilgung. Die Bankberaterin bestätigt per Mail, und ab 5 % der Restschuld steigt
+  ihr Vertrauen etwas.
 - **Kredit aus dem Spielmenü:** Den Kredit im Finanzmenü von FS25 kannst du weiter nutzen – gesperrt wird nichts.
   Die Bank merkt es aber: Nimmst du dort Geld auf, meldet sich deine Bankberaterin („Sie haben sich woanders Geld
   geliehen?“) und ihr Vertrauen sinkt, je mehr du aufnimmst. Tust du es erneut, während der alte Kredit noch offen

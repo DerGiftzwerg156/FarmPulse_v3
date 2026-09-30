@@ -36,6 +36,14 @@
             <en>Loan called in</en>
             <de>Kreditkündigung</de>
         </text>
+        <text name="rpsim_money_CREDIT_SPECIAL_REPAYMENT">
+            <en>Special loan repayment</en>
+            <de>Sondertilgung</de>
+        </text>
+        <text name="rpsim_money_CREDIT_PREPAYMENT_FEE">
+            <en>Early repayment fee</en>
+            <de>Vorfälligkeitsentschädigung</de>
+        </text>
         <text name="rpsim_money_SALARY_PAYMENT">
             <en>Wages</en>
             <de>Gehälter</de>

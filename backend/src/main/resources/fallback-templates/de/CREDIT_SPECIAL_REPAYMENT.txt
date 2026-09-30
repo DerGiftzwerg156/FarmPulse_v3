@@ -1,0 +1,7 @@
+Sondertilgung erhalten
+Guten Tag,
+
+vielen Dank, wir haben Ihre Sondertilgung über {{repaidAmount}} € für den Kredit „{{purpose}}“ erhalten. {{detailNote}} {{feeNote}}
+
+Mit freundlichen Grüßen
+{{characterName}}

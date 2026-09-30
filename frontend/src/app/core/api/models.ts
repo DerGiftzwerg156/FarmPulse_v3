@@ -223,11 +223,32 @@ export interface LoanView {
   paidInstallments: number;
   deferredUntilGameTime: number | null;
   history: LoanPaymentView[];
+  /** Installments left with the current installment (a Sondertilgung shortens the term). */
+  remainingInstallments: number;
+  specialRepayment: SpecialRepaymentTermsView;
 }
 
 export interface DeferralView {
   granted: boolean;
   reasonCategory: string | null;
+}
+
+/** Sondertilgung conditions: refusal = LOAN_NOT_ACTIVE / LOAN_DEFERRED / LOAN_OVERDUE when not allowed. */
+export interface SpecialRepaymentTermsView {
+  allowed: boolean;
+  refusal: string | null;
+  freeAmountLeft: number;
+  feeRatePercent: number;
+  payoffInterest: number;
+}
+
+export interface SpecialRepaymentView {
+  amount: number;
+  interest: number;
+  fee: number;
+  remainingAmount: number;
+  remainingInstallments: number;
+  paidOff: boolean;
 }
 
 export interface JobPostingView {

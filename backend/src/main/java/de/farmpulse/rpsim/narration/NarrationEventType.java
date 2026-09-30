@@ -19,6 +19,7 @@ public enum NarrationEventType {
     CREDIT_BLOCKED,
     CREDIT_DEFERRAL_GRANTED,
     CREDIT_DEFERRAL_DENIED,
+    CREDIT_SPECIAL_REPAYMENT,
     CREDIT_PAID_OFF,
     // Roadmap V2 R2-B5: real farm finances
     BANK_CASHFLOW_WARNING,

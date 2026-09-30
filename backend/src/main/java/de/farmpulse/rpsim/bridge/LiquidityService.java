@@ -24,7 +24,7 @@ public class LiquidityService {
 
     /** Money reasons that are not operating cash flow (financing / one-off transactions). */
     public static final Set<String> NON_OPERATING = Set.of("CREDIT_DISBURSEMENT", "CREDIT_INSTALLMENT", "CREDIT_PENALTY",
-            "CREDIT_CALLBACK", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE", "FARMLAND_SALE",
+            "CREDIT_CALLBACK", "CREDIT_SPECIAL_REPAYMENT", "CREDIT_PREPAYMENT_FEE", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE", "FARMLAND_SALE",
             // one-off damage/compensation bookings of simulated incidents (TODO T-20)
             "DAMAGE", "INSURANCE_PAYOUT", "WILDLIFE_COMPENSATION");
 

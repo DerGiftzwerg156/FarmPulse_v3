@@ -12,6 +12,7 @@ end
 
 function T.TestInstructions:testAllMoneyReasonsAccepted()
     for _, r in ipairs({ "CREDIT_DISBURSEMENT", "CREDIT_INSTALLMENT", "CREDIT_PENALTY", "CREDIT_CALLBACK",
+        "CREDIT_SPECIAL_REPAYMENT", "CREDIT_PREPAYMENT_FEE",
         "SALARY_PAYMENT", "EMPLOYEE_EFFECT", "SUBSIDY", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE",
         "FARMLAND_SALE", "OTHER", "TAX_PAYMENT", "TAX_REFUND", "FINE", "FAMILY", "SPONSORING", "COMPENSATION" }) do
         lu.assertTrue(RPSimInstructions.validate(money("i", 1, r)), r)

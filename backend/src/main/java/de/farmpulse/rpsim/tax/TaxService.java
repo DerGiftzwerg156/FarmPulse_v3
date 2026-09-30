@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import de.farmpulse.rpsim.bridge.BridgeDtos.FarmFacts;
 import de.farmpulse.rpsim.bridge.FactsService;
@@ -236,8 +237,10 @@ public class TaxService {
     }
 
     long interest(Savegame sg, long from, long to) {
-        return payments.findBySavegameAndTypeAndGameTimeGreaterThanEqualAndGameTimeLessThan(sg, LoanPaymentType.INSTALLMENT,
-                        from, to).stream()
+        // installments and the pro-rata interest of a full Sondertilgung
+        return Stream.of(LoanPaymentType.INSTALLMENT, LoanPaymentType.SPECIAL_REPAYMENT)
+                .flatMap(t -> payments.findBySavegameAndTypeAndGameTimeGreaterThanEqualAndGameTimeLessThan(sg, t, from, to)
+                        .stream())
                 .filter(p -> p.getPrincipalPart() != null)
                 .mapToLong(p -> Math.max(0, p.getAmount() - p.getPrincipalPart())).sum();
     }

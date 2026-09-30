@@ -41,9 +41,21 @@ The web app becomes the **Hof-Tablet**: every function is an app on a tablet hom
   passes the weather to the savegame context, the status bar and the start screen show it. There is no forecast
   (FS25 offers no API for it).
 - Bridge simulator: scenario `wohlhabender-hof` carries booking journal, stable, fields, field rules and weather.
+- **Sondertilgung** (`POST /api/loans/{id}/sondertilgung`): every running loan (legacy loan included) can be repaid
+  early by any amount up to the remaining debt. The installment stays, the term gets shorter (`LoanView` carries
+  `remainingInstallments` and the current conditions). Per FS25 year 10 % of the original principal are free of
+  charge, above that the bank books 1 % Vorfälligkeitsentschädigung on top (same batch). A full repayment adds the
+  pro-rata interest of the running month (counts as deductible interest for the tax office). Refused while an
+  installment is overdue, during a deferral or when the liquidity does not cover it. The bank advisor confirms by
+  mail (`CREDIT_SPECIAL_REPAYMENT`, plus `CREDIT_PAID_OFF` on full repayment), the diary records it, and from 5 % of
+  the remaining debt her trust rises by 3. All values are configurable (`rpsim.formulas.credit.special-repayment-*`).
+  New money reasons `CREDIT_SPECIAL_REPAYMENT` and `CREDIT_PREPAYMENT_FEE`: **update the mod `FS25_RPSim`** – an
+  older mod rejects them and the backend reverses the Sondertilgung.
 
 ### Changed
 
+- Loan plan: the bank shows the installments actually left (computed from the remaining debt) instead of term minus
+  paid installments, and the booking note of an installment counts against them (`Kreditrate 5/40`).
 - **App names:** Post, Telefon, Kontakte, Agrarbörse, Flurkarte (the paths `/mailbox`, `/calls`, `/village`,
   `/market`, `/farmland` stay). Mail templates and prompts name the app ("in der App „Ämter“"), `formLink`s point to
   the new apps.

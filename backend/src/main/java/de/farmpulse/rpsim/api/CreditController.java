@@ -4,9 +4,11 @@ import java.util.List;
 
 import de.farmpulse.rpsim.api.Requests.CreditApplicationRequest;
 import de.farmpulse.rpsim.api.Requests.DeferralRequest;
+import de.farmpulse.rpsim.api.Requests.SpecialRepaymentRequest;
 import de.farmpulse.rpsim.api.Views.CreditApplicationView;
 import de.farmpulse.rpsim.api.Views.DeferralView;
 import de.farmpulse.rpsim.api.Views.LoanView;
+import de.farmpulse.rpsim.api.Views.SpecialRepaymentView;
 import de.farmpulse.rpsim.credit.CreditApplicationService;
 import de.farmpulse.rpsim.credit.LoanService;
 import de.farmpulse.rpsim.savegame.SavegameContext;
@@ -70,5 +72,13 @@ public class CreditController {
     public DeferralView deferral(@PathVariable Long id, @Valid @RequestBody(required = false) DeferralRequest r) {
         LoanService.DeferralResult d = loans.requestDeferral(context.requireActive(), id, r == null ? null : r.message());
         return new DeferralView(d.granted(), d.reasonCategory());
+    }
+
+    @PostMapping("/api/loans/{id}/sondertilgung")
+    @Transactional
+    public SpecialRepaymentView specialRepayment(@PathVariable Long id, @Valid @RequestBody SpecialRepaymentRequest r) {
+        LoanService.SpecialRepaymentResult s = loans.specialRepayment(context.requireActive(), id, r.amount());
+        return new SpecialRepaymentView(s.amount(), s.interest(), s.fee(), s.remainingAmount(), s.remainingInstallments(),
+                s.paidOff());
     }
 }

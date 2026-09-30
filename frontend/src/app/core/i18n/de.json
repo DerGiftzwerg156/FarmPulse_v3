@@ -210,6 +210,8 @@
       "PENALTY": "Mahngebühr",
       "CALLBACK": "Fälligstellung",
       "DEFERRAL": "Stundung",
+      "SPECIAL_REPAYMENT": "Sondertilgung",
+      "PREPAYMENT_FEE": "Vorfälligkeitsentschädigung",
       "REVERSED": "Nicht gebucht"
     },
     "postingStatus": {
@@ -342,6 +344,8 @@
       "CREDIT_INSTALLMENT": "Kreditrate",
       "CREDIT_PENALTY": "Mahngebühr",
       "CREDIT_CALLBACK": "Fälligstellung",
+      "CREDIT_SPECIAL_REPAYMENT": "Sondertilgung",
+      "CREDIT_PREPAYMENT_FEE": "Vorfälligkeitsentschädigung",
       "SALARY_PAYMENT": "Gehalt",
       "EMPLOYEE_EFFECT": "Arbeitsleistung",
       "SUBSIDY": "Förderung",
@@ -520,6 +524,8 @@
       "RPSIM_CREDIT_INSTALLMENT": "Kreditrate",
       "RPSIM_CREDIT_PENALTY": "Mahngebühr",
       "RPSIM_CREDIT_CALLBACK": "Fälligstellung",
+      "RPSIM_CREDIT_SPECIAL_REPAYMENT": "Sondertilgung",
+      "RPSIM_CREDIT_PREPAYMENT_FEE": "Vorfälligkeitsentschädigung",
       "RPSIM_SALARY_PAYMENT": "Gehälter",
       "RPSIM_EMPLOYEE_EFFECT": "Arbeitsleistung",
       "RPSIM_SUBSIDY": "Förderung",
@@ -735,6 +741,23 @@
     "requestDeferral": "Stundung anfragen",
     "deferralGranted": "Stundung gewährt – die nächste Rate wird verschoben.",
     "deferralDenied": "Stundung abgelehnt",
+    "special": {
+      "title": "Sondertilgung",
+      "amount": "Betrag in €",
+      "payOff": "Restschuld komplett",
+      "submit": "Sondertilgen",
+      "terms": "Die Rate bleibt gleich, die Laufzeit wird kürzer. Dieses Jahr noch gebührenfrei: {free}, darüber {rate} % Vorfälligkeitsentschädigung. Bei vollständiger Tilgung kommen die anteiligen Zinsen des laufenden Monats dazu.",
+      "preview": "Abbuchung: {total}",
+      "previewInterest": "(inkl. {interest} anteilige Zinsen)",
+      "previewFee": "(inkl. {fee} Vorfälligkeitsentschädigung)",
+      "invalid": "Bitte einen Betrag zwischen 1 € und {max} eingeben.",
+      "done": "Sondertilgung gebucht – Restschuld {remaining}, offene Raten: {left}.",
+      "refusal": {
+        "LOAN_OVERDUE": "Solange eine Rate überfällig ist, ist keine Sondertilgung möglich.",
+        "LOAN_DEFERRED": "Während der Stundung ist keine Sondertilgung möglich.",
+        "LOAN_NOT_ACTIVE": "Nur laufende Kredite können sondergetilgt werden."
+      }
+    },
     "finance": {
       "title": "Hofbuchhaltung",
       "unavailable": "Die Hofbuchhaltung braucht die aktuelle Version des Mods FS25_RPSim. Bis dahin rechnet die Bank wie bisher mit dem Kontostand.",

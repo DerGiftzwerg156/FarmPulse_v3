@@ -1,6 +1,9 @@
 package de.farmpulse.rpsim.credit;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.bridge.OutboxService;
@@ -35,7 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Loan lifecycle: disbursement, automatic monthly installments until repayment, the complete default
- * escalation ladder (technical concept "Zahlungsausfall-Eskalation") and deferral requests (Stundung).
+ * escalation ladder (technical concept "Zahlungsausfall-Eskalation"), deferral requests (Stundung) and early repayments
+ * (Sondertilgung: same installment, shorter term; fee above a yearly free limit).
  * <pre>
  * installment overdue    -> reminder (NarrationJob, no money)                           level 1
  * still overdue          -> penalty fee (MONEY_TRANSACTION CREDIT_PENALTY)              level 2
@@ -181,12 +185,14 @@ public class LoanService {
     private void pay(Savegame sg, Loan l, long installment) {
         long interest = interest(l);
         long principalPart = Math.max(0, installment - interest);
+        // a Sondertilgung shortens the term: count the installments that are actually left
+        int total = l.getPaidInstallments() + remainingInstallments(l);
         l.setRemainingAmount(Math.max(0, l.getRemainingAmount() - principalPart));
         l.setPaidInstallments(l.getPaidInstallments() + 1);
         boolean wasOverdue = l.getOverdueSinceGameTime() != null;
         l.setNextDueGameTime(gameTime.addMonths(sg, l.getNextDueGameTime(), 1));
         var ins = outbox.money(sg, -installment, MoneyReason.CREDIT_INSTALLMENT,
-                "Kreditrate " + l.getPaidInstallments() + "/" + l.getTermMonths(), new Related(RELATED, l.getId()));
+                "Kreditrate " + l.getPaidInstallments() + "/" + total, new Related(RELATED, l.getId()));
         LoanPayment p = payment(l, installment, LoanPaymentType.INSTALLMENT, ins.getInstructionId());
         p.setPrincipalPart(principalPart);
         p.setTrustBonusGiven(!wasOverdue);
@@ -195,12 +201,21 @@ public class LoanService {
                     TrustReason.ON_TIME_PAYMENT, "Rate pünktlich"));
         }
         if (l.getRemainingAmount() <= 0) {
-            l.setStatus(LoanStatus.PAID_OFF);
-            narrate(sg, l, NarrationEventType.CREDIT_PAID_OFF, NarrationFacts.builder()
-                    .put("principal", l.getPrincipal()).put("purpose", l.getPurpose()).build());
-            diary.addAuto(sg, "CREDIT", "Kredit vollständig getilgt", "Der Kredit \"" + l.getPurpose() + "\" über "
-                    + l.getPrincipal() + " € ist abbezahlt.", RELATED, l.getId());
+            paidOff(sg, l);
         }
+    }
+
+    private void paidOff(Savegame sg, Loan l) {
+        l.setStatus(LoanStatus.PAID_OFF);
+        narrate(sg, l, NarrationEventType.CREDIT_PAID_OFF, NarrationFacts.builder()
+                .put("principal", l.getPrincipal()).put("purpose", l.getPurpose()).build());
+        diary.addAuto(sg, "CREDIT", "Kredit vollständig getilgt", "Der Kredit \"" + l.getPurpose() + "\" über "
+                + l.getPrincipal() + " € ist abbezahlt.", RELATED, l.getId());
+    }
+
+    /** Installments left with the current installment (a Sondertilgung shortens the term, the installment stays). */
+    public int remainingInstallments(Loan l) {
+        return CreditFormula.remainingInstallments(l.getRemainingAmount(), l.getInterestRate(), l.getMonthlyInstallment());
     }
 
     /** Counts each unpaid due date exactly once. */
@@ -272,6 +287,9 @@ public class LoanService {
         RpsimProperties.Credit cfg = configs.forSavegame(sg);
         switch (p.getType()) {
             case INSTALLMENT -> reverseInstallment(sg, l, p);
+            case SPECIAL_REPAYMENT -> reverseSpecialRepayment(sg, l, p, cfg);
+            // the fee is part of the same batch - the Sondertilgung itself is reversed with its own ack
+            case PREPAYMENT_FEE -> p.setType(LoanPaymentType.REVERSED);
             case PENALTY -> {
                 // unpaid penalty -> next escalation stage right away
                 p.setType(LoanPaymentType.REVERSED);
@@ -314,6 +332,21 @@ public class LoanService {
         }
         diary.addAuto(sg, "CREDIT", "Kreditrate nicht gebucht", "Die Rate über " + p.getAmount()
                 + " € konnte nicht abgebucht werden und ist wieder fällig.", RELATED, l.getId());
+    }
+
+    /** The Sondertilgung was not booked: the debt is back, a trust bonus is taken back. Mails already sent stay. */
+    private void reverseSpecialRepayment(Savegame sg, Loan l, LoanPayment p, RpsimProperties.Credit cfg) {
+        p.setType(LoanPaymentType.REVERSED);
+        l.setRemainingAmount(l.getRemainingAmount() + (p.getPrincipalPart() != null ? p.getPrincipalPart() : p.getAmount()));
+        if (l.getStatus() == LoanStatus.PAID_OFF) {
+            l.setStatus(LoanStatus.ACTIVE);
+        }
+        if (Boolean.TRUE.equals(p.getTrustBonusGiven())) {
+            lookup.bank(sg).ifPresent(b -> trust.recordEvent(b, -cfg.getSpecialRepaymentTrustDelta(),
+                    TrustReason.SPECIAL_REPAYMENT_REVERSED, "Sondertilgung nicht gebucht"));
+        }
+        diary.addAuto(sg, "CREDIT", "Sondertilgung nicht gebucht", "Die Sondertilgung über " + p.getAmount()
+                + " € konnte nicht abgebucht werden. Die Restschuld bleibt unverändert.", RELATED, l.getId());
     }
 
     private void callBack(Savegame sg, Loan l, RpsimProperties.Credit cfg) {
@@ -376,6 +409,128 @@ public class LoanService {
                     .put("reasonCategory", reason).put("purpose", l.getPurpose()).build(), playerMessage);
         }
         return new DeferralResult(granted, reason);
+    }
+
+    /**
+     * What a Sondertilgung of this loan costs right now: the fee-free amount left in the current FS25 year, the fee
+     * rate above it and the pro-rata interest a full repayment adds. {@code refusal}: null when allowed, else the code.
+     */
+    public record SpecialRepaymentTerms(String refusal, long freeAmountLeft, double feeRate, long payoffInterest) {
+
+        public long fee(long amount) {
+            return Math.round(Math.max(0, amount - freeAmountLeft) * feeRate);
+        }
+    }
+
+    public record SpecialRepaymentResult(long amount, long interest, long fee, long remainingAmount,
+                                         int remainingInstallments, boolean paidOff, boolean trustBonus) {
+    }
+
+    public SpecialRepaymentTerms specialRepaymentTerms(Savegame sg, Loan l) {
+        RpsimProperties.Credit cfg = configs.forSavegame(sg);
+        long now = sg.getCurrentGameTime();
+        String refusal;
+        if (l.getStatus() != LoanStatus.ACTIVE || l.getRemainingAmount() <= 0) {
+            refusal = "LOAN_NOT_ACTIVE";
+        } else if (l.getDeferredUntilGameTime() != null && now < l.getDeferredUntilGameTime()) {
+            refusal = "LOAN_DEFERRED";
+        } else if (l.getOverdueSinceGameTime() != null || l.getNextDueGameTime() <= now) {
+            refusal = "LOAN_OVERDUE";
+        } else {
+            refusal = null;
+        }
+        long yearStart = gameTime.addMonths(sg, now, -(gameTime.periodOfYear(sg, now) - 1));
+        long usedThisYear = payments.findByLoanOrderByGameTimeAscIdAsc(l).stream()
+                .filter(p -> p.getType() == LoanPaymentType.SPECIAL_REPAYMENT && p.getGameTime() >= yearStart)
+                .mapToLong(p -> p.getPrincipalPart() != null ? p.getPrincipalPart() : p.getAmount()).sum();
+        long freeLeft = Math.max(0, Math.round(l.getPrincipal() * cfg.getSpecialRepaymentFreeShare()) - usedThisYear);
+        return new SpecialRepaymentTerms(refusal, freeLeft, cfg.getSpecialRepaymentFeeRate(), payoffInterest(sg, l));
+    }
+
+    /** Interest of the running month up to now (since the last due date, or since the start of the loan). */
+    private long payoffInterest(Savegame sg, Loan l) {
+        long next = l.getNextDueGameTime();
+        long from = Math.max(gameTime.addMonths(sg, next, -1), l.getStartedAtGameTime());
+        if (next <= from) {
+            return 0;
+        }
+        double share = Math.clamp((sg.getCurrentGameTime() - from) / (double) (next - from), 0.0, 1.0);
+        return Math.round(interest(l) * share);
+    }
+
+    /**
+     * Sondertilgung: {@code amount} (1..remaining debt) reduces the debt, the installment stays and the term gets
+     * shorter. A full repayment adds the pro-rata interest of the running month. Above the fee-free share of the FS25
+     * year the bank books a fee on top (same batch). Refused before booking when the liquidity does not cover it.
+     */
+    @Transactional
+    public SpecialRepaymentResult specialRepayment(Savegame sg, Long loanId, long amount) {
+        Loan l = loans.findById(loanId).filter(x -> x.getSavegame().getId().equals(sg.getId()))
+                .orElseThrow(() -> new NotFoundException("loan " + loanId));
+        SpecialRepaymentTerms terms = specialRepaymentTerms(sg, l);
+        if (terms.refusal() != null) {
+            throw new BusinessRuleException(terms.refusal(), switch (terms.refusal()) {
+                case "LOAN_DEFERRED" -> "Während einer Stundung ist keine Sondertilgung möglich.";
+                case "LOAN_OVERDUE" -> "Solange eine Rate überfällig ist, ist keine Sondertilgung möglich.";
+                default -> "Nur laufende Kredite können sondergetilgt werden.";
+            });
+        }
+        long remainingBefore = l.getRemainingAmount();
+        if (amount <= 0 || amount > remainingBefore) {
+            throw new BusinessRuleException("INVALID_AMOUNT",
+                    "Der Betrag muss zwischen 1 € und der Restschuld von " + euro(remainingBefore) + " liegen.");
+        }
+        boolean paidOff = amount == remainingBefore;
+        long interest = paidOff ? terms.payoffInterest() : 0;
+        long fee = terms.fee(amount);
+        long total = amount + interest + fee;
+        if (liquidity.available(sg) < total) {
+            throw new BusinessRuleException("INSUFFICIENT_LIQUIDITY", "Das Guthaben reicht für die Sondertilgung von "
+                    + euro(total) + " nicht aus.");
+        }
+        RpsimProperties.Credit cfg = configs.forSavegame(sg);
+        String batchId = fee > 0 ? "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12) : null;
+        var ins = outbox.money(sg, -(amount + interest), MoneyReason.CREDIT_SPECIAL_REPAYMENT,
+                "Sondertilgung Kredit: " + l.getPurpose(), new Related(RELATED, l.getId()), batchId, null);
+        LoanPayment p = payment(l, amount + interest, LoanPaymentType.SPECIAL_REPAYMENT, ins.getInstructionId());
+        p.setPrincipalPart(amount);
+        if (fee > 0) {
+            var feeIns = outbox.money(sg, -fee, MoneyReason.CREDIT_PREPAYMENT_FEE, "Vorfälligkeitsentschädigung",
+                    new Related(RELATED, l.getId()), batchId, null);
+            payment(l, fee, LoanPaymentType.PREPAYMENT_FEE, feeIns.getInstructionId());
+        }
+        l.setRemainingAmount(remainingBefore - amount);
+        boolean trustBonus = amount >= remainingBefore * cfg.getSpecialRepaymentTrustMinShare();
+        p.setTrustBonusGiven(trustBonus);
+        if (trustBonus) {
+            lookup.bank(sg).ifPresent(b -> trust.recordEvent(b, cfg.getSpecialRepaymentTrustDelta(),
+                    TrustReason.SPECIAL_REPAYMENT, "Sondertilgung"));
+        }
+        int left = remainingInstallments(l);
+        narrate(sg, l, NarrationEventType.CREDIT_SPECIAL_REPAYMENT, NarrationFacts.builder()
+                .put("purpose", l.getPurpose()).put("repaidAmount", amount).put("interestAmount", interest)
+                .put("feeAmount", fee).put("remainingAmount", l.getRemainingAmount()).put("remainingInstallments", left)
+                .put("paidOff", paidOff)
+                .put("detailNote", paidOff
+                        ? "Damit ist der Kredit vollständig zurückgezahlt; für den laufenden Monat haben wir anteilige "
+                                + "Zinsen von " + euro(interest) + " berechnet."
+                        : "Ihre Restschuld beträgt jetzt " + euro(l.getRemainingAmount()) + ". Die monatliche Rate bleibt "
+                                + "gleich, dadurch sind es nur noch " + left + " Raten.")
+                .put("feeNote", fee > 0 ? "Da Sie die gebührenfreie Sondertilgung für dieses Jahr überschritten haben, "
+                        + "berechnen wir eine Vorfälligkeitsentschädigung von " + euro(fee) + "." : "")
+                .build());
+        diary.addAuto(sg, "CREDIT", "Sondertilgung", "Sondertilgung von " + euro(amount) + " auf den Kredit \""
+                + l.getPurpose() + "\"" + (interest > 0 ? " zuzüglich " + euro(interest) + " anteiliger Zinsen" : "")
+                + (fee > 0 ? " und " + euro(fee) + " Vorfälligkeitsentschädigung" : "") + ". Restschuld: "
+                + euro(l.getRemainingAmount()) + ".", RELATED, l.getId());
+        if (paidOff) {
+            paidOff(sg, l);
+        }
+        return new SpecialRepaymentResult(amount, interest, fee, l.getRemainingAmount(), left, paidOff, trustBonus);
+    }
+
+    private static String euro(long amount) {
+        return NumberFormat.getIntegerInstance(Locale.GERMANY).format(amount) + " €";
     }
 
     private void narrate(Savegame sg, Loan l, NarrationEventType type, NarrationFacts facts) {

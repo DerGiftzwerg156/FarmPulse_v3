@@ -23,6 +23,9 @@ import de.farmpulse.rpsim.domain.CreditReasonCategory;
  */
 public final class CreditFormula {
 
+    /** Upper bound of {@link #remainingInstallments} (installment does not even cover the interest). */
+    static final int MAX_INSTALLMENTS = 9_999;
+
     private CreditFormula() {
     }
 
@@ -127,6 +130,24 @@ public final class CreditFormula {
             return (long) Math.ceil(principal / (double) termMonths);
         }
         return (long) Math.ceil(principal * r / (1 - Math.pow(1 + r, -termMonths)));
+    }
+
+    /**
+     * Installments still needed to repay {@code remaining} with the given installment, booked like
+     * {@code LoanService.pay} (interest of the month first, the rest reduces the debt). A Sondertilgung keeps the
+     * installment, so this is how its shortened term is shown. Capped when the installment does not cover the interest.
+     */
+    public static int remainingInstallments(long remaining, double annualRate, long installment) {
+        int n = 0;
+        for (long r = remaining; r > 0 && n < MAX_INSTALLMENTS; n++) {
+            long interest = Math.round(r * annualRate / 12.0);
+            long principalPart = Math.min(installment, r + interest) - interest;
+            if (principalPart <= 0) {
+                return MAX_INSTALLMENTS;
+            }
+            r -= principalPart;
+        }
+        return n;
     }
 
     /** Payment history: neutral start, + per on-time installment, - per missed installment. */
