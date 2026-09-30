@@ -39,6 +39,11 @@ is cancelled again) and lets every machine operator drive every vehicle.
 
 ### Fixed
 
+- **Mod: missing booking titles in the money popup** (`Missing 'rpsim_money_TRAINING' in l10n_de.xml`): FS25 loads
+  the texts of `modDesc.xml` only into the i18n of the mod environment, while the HUD looks booking titles up in the
+  global `g_i18n`. The mod now copies its texts into the global text table at load time (existing game texts are never
+  overwritten), so all `rpsim_money_*` titles and the own AI messages show their German/English text.
+
 - **Strict helper limit also holds for Courseplay and AutoDrive:** the limit (as many helpers as active machine
   operators) only lowered `maxNumHirables`, which the game checks in its own start menu and key only; mods that start
   helpers their own way could exceed it. The mod now refuses such a start itself (*Kein freier Maschinenführer (strenger

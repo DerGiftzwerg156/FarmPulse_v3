@@ -276,6 +276,32 @@ function T.TestGameAdapter:testEveryMoneyReasonHasATitleInModDesc()
     end
 end
 
+-- modDesc l10n texts live in the mod i18n only; the money popup looks them up in the global g_i18n
+function T.TestGameAdapter:testModTextsAreSharedWithTheGlobalI18n()
+    local modI18n = { texts = { rpsim_money_TRAINING = "Mitarbeiterschulung", finance_other = "Mod-Text" } }
+    local globalI18n = { texts = { finance_other = "Sonstiges" } }
+    lu.assertEquals(RPSimGameAdapter.shareModTexts(modI18n, globalI18n), 1)
+    lu.assertEquals(globalI18n.texts.rpsim_money_TRAINING, "Mitarbeiterschulung")
+    lu.assertEquals(globalI18n.texts.finance_other, "Sonstiges")
+    lu.assertEquals(RPSimGameAdapter.shareModTexts(modI18n, globalI18n), 0)
+    lu.assertEquals(RPSimGameAdapter.shareModTexts(modI18n, modI18n), 0)
+    lu.assertEquals(RPSimGameAdapter.shareModTexts(nil, globalI18n), 0)
+    lu.assertEquals(RPSimGameAdapter.shareModTexts(modI18n, nil), 0)
+end
+
+function T.TestGameAdapter:testModTextsGoToTheGlobalEnvironmentOfTheModSandbox()
+    local globalI18n = { texts = {} }
+    local oldI18n, oldMt = g_i18n, getmetatable(_G)
+    g_i18n = { texts = { rpsim_money_SUBSIDY = "Förderung" } }
+    setmetatable(_G, { __index = { g_i18n = globalI18n } })
+    local copied = RPSimGameAdapter.shareModTextsGlobally()
+    setmetatable(_G, oldMt)
+    g_i18n = oldI18n
+    lu.assertEquals(copied, 1)
+    lu.assertEquals(globalI18n.texts.rpsim_money_SUBSIDY, "Förderung")
+    lu.assertEquals(RPSimGameAdapter.shareModTextsGlobally(), 0)
+end
+
 -- T-21: season name looked up in the game's Season table
 function T.TestGameAdapter:testSeasonNameComesFromTheSeasonTable()
     Season = { SPRING = 0, SUMMER = 1, AUTUMN = 2, WINTER = 3 }
