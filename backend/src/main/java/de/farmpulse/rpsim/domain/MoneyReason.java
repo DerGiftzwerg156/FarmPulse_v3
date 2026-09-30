@@ -6,6 +6,9 @@ public enum MoneyReason {
     CREDIT_INSTALLMENT,
     CREDIT_PENALTY,
     CREDIT_CALLBACK,
+    /** Sondertilgung and its fee above the yearly free limit. */
+    CREDIT_SPECIAL_REPAYMENT,
+    CREDIT_PREPAYMENT_FEE,
     SALARY_PAYMENT,
     EMPLOYEE_EFFECT,
     SUBSIDY,

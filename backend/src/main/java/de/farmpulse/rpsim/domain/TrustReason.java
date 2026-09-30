@@ -5,6 +5,9 @@ public enum TrustReason {
     ON_TIME_PAYMENT,
     /** T-03: an installment rewarded as on time was not executed by the mod. */
     ON_TIME_PAYMENT_REVERSED,
+    /** A substantial Sondertilgung / its reversal when the mod could not book it. */
+    SPECIAL_REPAYMENT,
+    SPECIAL_REPAYMENT_REVERSED,
     MISSED_PAYMENT,
     PAYMENT_ESCALATION,
     PROMISE_KEPT,

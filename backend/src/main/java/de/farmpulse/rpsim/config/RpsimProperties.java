@@ -231,6 +231,15 @@ public class RpsimProperties {
          * progress x this discount.
          */
         private double standingCropDiscount = 0.5;
+        /**
+         * Sondertilgung: share of the original principal that may be repaid early per FS25 year without a fee; the
+         * part above it costs {@code specialRepaymentFeeRate} (Vorfälligkeitsentschädigung, booked on top).
+         */
+        private double specialRepaymentFreeShare = 0.10;
+        private double specialRepaymentFeeRate = 0.01;
+        /** Trust bonus at the bank advisor for a Sondertilgung of at least this share of the remaining debt. */
+        private double specialRepaymentTrustDelta = 3;
+        private double specialRepaymentTrustMinShare = 0.05;
 
         static Credit hardDefaults() {
             Credit c = new Credit();
@@ -827,6 +836,8 @@ public class RpsimProperties {
             m.put("RPSIM_CREDIT_INSTALLMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_PENALTY", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_CALLBACK", FinanceClass.FINANCING);
+            m.put("RPSIM_CREDIT_SPECIAL_REPAYMENT", FinanceClass.FINANCING);
+            m.put("RPSIM_CREDIT_PREPAYMENT_FEE", FinanceClass.FINANCING);
             m.put("RPSIM_STARTING_CAPITAL_ADJUSTMENT", FinanceClass.FINANCING);
             m.put("RPSIM_DAMAGE", FinanceClass.IGNORE);
             m.put("RPSIM_INSURANCE_PAYOUT", FinanceClass.IGNORE);

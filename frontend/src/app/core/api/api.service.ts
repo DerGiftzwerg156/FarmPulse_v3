@@ -126,6 +126,9 @@ export class ApiService {
   requestDeferral(id: number, message: string): Observable<M.DeferralView> {
     return this.post(`/loans/${id}/stundung`, { message });
   }
+  specialRepayment(id: number, amount: number): Observable<M.SpecialRepaymentView> {
+    return this.post(`/loans/${id}/sondertilgung`, { amount });
+  }
 
   // employees
   createJobPosting(jobRole: string): Observable<M.JobPostingView> {

@@ -9,6 +9,8 @@ RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLA
 
 RPSimInstructions.MONEY_REASONS = {
     CREDIT_DISBURSEMENT = true, CREDIT_INSTALLMENT = true, CREDIT_PENALTY = true, CREDIT_CALLBACK = true,
+    -- Sondertilgung and its fee above the yearly free limit
+    CREDIT_SPECIAL_REPAYMENT = true, CREDIT_PREPAYMENT_FEE = true,
     SALARY_PAYMENT = true, EMPLOYEE_EFFECT = true, SUBSIDY = true, STARTING_CAPITAL_ADJUSTMENT = true,
     FARMLAND_PURCHASE = true, FARMLAND_SALE = true, OTHER = true,
     -- TODO T-20 / T-22

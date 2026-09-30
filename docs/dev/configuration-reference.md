@@ -129,6 +129,10 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit.payment-history-missed-penalty` | `15` | `paymentHistoryScore` points lost per missed installment. | Bonitäts-Score |
 | `rpsim.formulas.credit.payment-history-on-time-gain` | `2` | `paymentHistoryScore` points gained per on-time installment. | Bonitäts-Score |
 | `rpsim.formulas.credit.standing-crop-discount` | `0.5` | Standing crops count as asset in the credit check: harvest value (area × yield × best price) × growth progress × this discount; only with the field export. | Roadmap V2 R2-C5 |
+| `rpsim.formulas.credit.special-repayment-free-share` | `0.10` | Sondertilgung: share of the original principal that can be repaid early per FS25 year without a fee. | Sondertilgung |
+| `rpsim.formulas.credit.special-repayment-fee-rate` | `0.01` | Sondertilgung: fee (Vorfälligkeitsentschädigung) on the part above the free share, booked on top as `CREDIT_PREPAYMENT_FEE`. | Sondertilgung |
+| `rpsim.formulas.credit.special-repayment-trust-delta` | `3` | Sondertilgung: trust bonus at the bank advisor ... | Sondertilgung |
+| `rpsim.formulas.credit.special-repayment-trust-min-share` | `0.05` | ... when the Sondertilgung is at least this share of the remaining debt. | Sondertilgung |
 
 ## `rpsim.formulas.credit-hard`
 
@@ -177,6 +181,10 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit-hard.payment-history-missed-penalty` | `15` | HART profile (tone preset *Hart*): same as `formulas.credit.payment-history-missed-penalty`. | Ton-/Genre-Konfigurationsprofile |
 | `rpsim.formulas.credit-hard.payment-history-on-time-gain` | `2` | HART profile (tone preset *Hart*): same as `formulas.credit.payment-history-on-time-gain`. | Ton-/Genre-Konfigurationsprofile |
 | `rpsim.formulas.credit-hard.standing-crop-discount` | `0.5` | HART profile: same as `formulas.credit.standing-crop-discount`. | Roadmap V2 R2-C5 |
+| `rpsim.formulas.credit-hard.special-repayment-free-share` | `0.10` | HART profile: same as `formulas.credit.special-repayment-free-share`. | Sondertilgung |
+| `rpsim.formulas.credit-hard.special-repayment-fee-rate` | `0.01` | HART profile: same as `formulas.credit.special-repayment-fee-rate`. | Sondertilgung |
+| `rpsim.formulas.credit-hard.special-repayment-trust-delta` | `3` | HART profile: same as `formulas.credit.special-repayment-trust-delta`. | Sondertilgung |
+| `rpsim.formulas.credit-hard.special-repayment-trust-min-share` | `0.05` | HART profile: same as `formulas.credit.special-repayment-trust-min-share`. | Sondertilgung |
 
 ## `rpsim.formulas.market`
 
@@ -744,6 +752,8 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_INSTALLMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_PENALTY` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_CALLBACK` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_SPECIAL_REPAYMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
+| `rpsim.formulas.finance.categories.RPSIM_CREDIT_PREPAYMENT_FEE` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
 | `rpsim.formulas.finance.categories.RPSIM_STARTING_CAPITAL_ADJUSTMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_DAMAGE` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_INSURANCE_PAYOUT` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |

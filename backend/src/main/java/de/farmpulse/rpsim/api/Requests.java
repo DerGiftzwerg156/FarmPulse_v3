@@ -64,6 +64,10 @@ public final class Requests {
     public record DeferralRequest(@Size(max = 4000) String message) {
     }
 
+    /** Sondertilgung: amount that reduces the remaining debt (fee and pro-rata interest come on top). */
+    public record SpecialRepaymentRequest(@NotNull @Positive Long amount) {
+    }
+
     public record JobPostingRequest(@NotNull JobRole jobRole) {
     }
 

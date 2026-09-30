@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { CreditApplicationView, DeferralView, LoanView } from '../../core/api/models';
+import { CreditApplicationView, DeferralView, LoanView, SpecialRepaymentView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -40,7 +40,7 @@ export const STATE_BADGE: Record<ApplicationState, BadgeVariant> = {
 /**
  * Bank & credit (AP-8.4): application form (numbers only via form fields), processing state until the decision
  * is visible, result with coarse reason category (never a score), counter-offer handling, running loans with
- * repayment plan/history and deferral requests.
+ * repayment plan/history, deferral requests and Sondertilgungen (same installment, shorter term).
  */
 @Component({
   selector: 'app-bank',
@@ -63,6 +63,9 @@ export class Bank {
   readonly actionError = signal<Record<number, string>>({});
   readonly deferralText = signal<Record<number, string>>({});
   readonly deferralResult = signal<Record<number, DeferralView>>({});
+  readonly specialAmount = signal<Record<number, number | null>>({});
+  readonly specialResult = signal<Record<number, SpecialRepaymentView>>({});
+  readonly specialBusy = signal<number | null>(null);
   readonly openHistory = signal<number | null>(null);
   /** Roadmap V2 R2-D1: interest surcharge on new loans while a vanilla loan taken on top is open. */
   readonly surcharge = signal(0);
@@ -155,12 +158,52 @@ export class Bank {
     });
   }
 
+  setSpecialAmount(loanId: number, value: string): void {
+    const n = Math.floor(Number(value));
+    this.specialAmount.update((m) => ({ ...m, [loanId]: value === '' || !Number.isFinite(n) ? null : n }));
+  }
+
+  /** Fills in the complete remaining debt (the pro-rata interest of the month comes on top). */
+  payOffCompletely(l: LoanView): void {
+    this.specialAmount.update((m) => ({ ...m, [l.id]: l.remainingAmount }));
+  }
+
+  /** What the Sondertilgung will debit: fee above the free amount of this year, interest only on full repayment. */
+  specialPreview(l: LoanView): { amount: number; fee: number; interest: number; total: number } | null {
+    const amount = this.specialAmount()[l.id];
+    if (amount == null || amount < 1 || amount > l.remainingAmount) return null;
+    const t = l.specialRepayment;
+    const fee = Math.round((Math.max(0, amount - t.freeAmountLeft) * t.feeRatePercent) / 100);
+    const interest = amount === l.remainingAmount ? t.payoffInterest : 0;
+    return { amount, fee, interest, total: amount + fee + interest };
+  }
+
+  makeSpecialRepayment(l: LoanView): void {
+    const preview = this.specialPreview(l);
+    if (!preview) return;
+    this.specialBusy.set(l.id);
+    this.actionError.update((m) => ({ ...m, [l.id]: '' }));
+    this.api.specialRepayment(l.id, preview.amount).subscribe({
+      next: (r) => {
+        this.specialBusy.set(null);
+        this.specialResult.update((m) => ({ ...m, [l.id]: r }));
+        this.specialAmount.update((m) => ({ ...m, [l.id]: null }));
+        this.load();
+        this.store.refresh();
+      },
+      error: (e) => {
+        this.specialBusy.set(null);
+        this.setActionError(l.id, e);
+      },
+    });
+  }
+
   toggleHistory(id: number): void {
     this.openHistory.update((v) => (v === id ? null : id));
   }
 
   remainingInstallments(l: LoanView): number {
-    return Math.max(0, l.termMonths - l.paidInstallments);
+    return l.remainingInstallments;
   }
 
   progress(l: LoanView): number {

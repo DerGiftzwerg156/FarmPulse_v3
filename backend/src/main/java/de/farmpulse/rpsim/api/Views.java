@@ -63,10 +63,23 @@ public final class Views {
     public record LoanView(Long id, long principal, long remainingAmount, double interestRatePercent, int termMonths,
                            long monthlyInstallment, String purpose, String status, boolean legacy, boolean blocksNewCredit,
                            long nextDueGameTime, boolean overdue, int escalationLevel, int missedInstallments,
-                           int paidInstallments, Long deferredUntilGameTime, List<LoanPaymentView> history) {
+                           int paidInstallments, Long deferredUntilGameTime, List<LoanPaymentView> history,
+                           int remainingInstallments, SpecialRepaymentTermsView specialRepayment) {
     }
 
     public record DeferralView(boolean granted, String reasonCategory) {
+    }
+
+    /**
+     * Sondertilgung conditions right now: {@code refusal} = null when allowed (else LOAN_NOT_ACTIVE / LOAN_DEFERRED /
+     * LOAN_OVERDUE), fee-free amount left in this FS25 year, fee rate above it, pro-rata interest of a full repayment.
+     */
+    public record SpecialRepaymentTermsView(boolean allowed, String refusal, long freeAmountLeft, double feeRatePercent,
+                                            long payoffInterest) {
+    }
+
+    public record SpecialRepaymentView(long amount, long interest, long fee, long remainingAmount,
+                                       int remainingInstallments, boolean paidOff) {
     }
 
     public record JobPostingView(Long id, String jobRole, String status, long createdAtGameTime, Long filledEmployeeId) {

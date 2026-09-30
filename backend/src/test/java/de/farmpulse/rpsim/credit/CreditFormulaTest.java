@@ -182,4 +182,17 @@ class CreditFormulaTest {
         assertThat(CreditFormula.monthlyInstallment(12_000, 0.05, 0)).isEqualTo(12_000);
         assertThat(CreditFormula.monthlyInstallment(12_000, 0.0, 12)).isEqualTo(1_000);
     }
+
+    /** Sondertilgung: the installment stays, the term shrinks - the plan must end exactly when the debt does. */
+    @Test
+    void remainingInstallmentsFollowTheAnnuity() {
+        long installment = CreditFormula.monthlyInstallment(100_000, 0.05, 60);
+        assertThat(CreditFormula.remainingInstallments(100_000, 0.05, installment)).isEqualTo(60);
+        assertThat(CreditFormula.remainingInstallments(50_000, 0.05, installment)).isLessThan(30);
+        assertThat(CreditFormula.remainingInstallments(11_000, 0.0, 1_000)).isEqualTo(11);
+        assertThat(CreditFormula.remainingInstallments(10_500, 0.0, 1_000)).isEqualTo(11);
+        assertThat(CreditFormula.remainingInstallments(0, 0.05, 1_000)).isZero();
+        // an installment that does not even cover the interest never ends
+        assertThat(CreditFormula.remainingInstallments(100_000, 0.24, 1_000)).isEqualTo(CreditFormula.MAX_INSTALLMENTS);
+    }
 }

@@ -123,6 +123,10 @@ rpsim:
       payment-history-missed-penalty: 15
       payment-history-on-time-gain: 2
       standing-crop-discount: 0.5   # Roadmap V2 R2-C5
+      special-repayment-free-share: 0.10       # Sondertilgung: fee-free share of the principal per FS25 year
+      special-repayment-fee-rate: 0.01         # fee on the part above it (booked on top)
+      special-repayment-trust-delta: 3         # trust bonus at the bank advisor ...
+      special-repayment-trust-min-share: 0.05  # ... from this share of the remaining debt
     credit-hard:                  # "Ton-/Genre-Konfigurationsprofile": CreditConfig.HART
       weight-debt-service-coverage: 0.30
       weight-equity-ratio: 0.25
@@ -167,6 +171,10 @@ rpsim:
       payment-history-missed-penalty: 15
       payment-history-on-time-gain: 2
       standing-crop-discount: 0.5   # Roadmap V2 R2-C5
+      special-repayment-free-share: 0.10       # Sondertilgung: fee-free share of the principal per FS25 year
+      special-repayment-fee-rate: 0.01         # fee on the part above it (booked on top)
+      special-repayment-trust-delta: 3         # trust bonus at the bank advisor ...
+      special-repayment-trust-min-share: 0.05  # ... from this share of the remaining debt
     market:                       # "Preis-Events & Sonderkontrakte"
       daily-spawn-probability: 0.15
       max-active-events: 3
@@ -461,6 +469,8 @@ rpsim:
         RPSIM_CREDIT_INSTALLMENT: FINANCING
         RPSIM_CREDIT_PENALTY: FINANCING
         RPSIM_CREDIT_CALLBACK: FINANCING
+        RPSIM_CREDIT_SPECIAL_REPAYMENT: FINANCING
+        RPSIM_CREDIT_PREPAYMENT_FEE: FINANCING
         RPSIM_STARTING_CAPITAL_ADJUSTMENT: FINANCING
         RPSIM_DAMAGE: IGNORE
         RPSIM_INSURANCE_PAYOUT: IGNORE

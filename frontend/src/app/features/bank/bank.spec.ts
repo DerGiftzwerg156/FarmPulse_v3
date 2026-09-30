@@ -18,6 +18,8 @@ const loan = (over: Partial<LoanView> = {}): LoanView => ({
   purpose: 'Mähdrescher', status: 'ACTIVE', legacy: false, blocksNewCredit: false, nextDueGameTime: 10 * DAY, overdue: false,
   escalationLevel: 0, missedInstallments: 0, paidInstallments: 8, deferredUntilGameTime: null,
   history: [{ gameTime: DAY, amount: 60000, type: 'DISBURSEMENT' }, { gameTime: 2 * DAY, amount: 1812, type: 'INSTALLMENT' }],
+  remainingInstallments: 28,
+  specialRepayment: { allowed: true, refusal: null, freeAmountLeft: 6000, feeRatePercent: 1, payoffInterest: 120 },
   ...over,
 });
 
@@ -137,6 +139,64 @@ describe('Bank', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="deferral-result"]')?.textContent).toContain('Stundung abgelehnt');
     expect(el.querySelector('[data-testid="deferral-result"]')?.textContent).toContain('Schwache Zahlungshistorie');
+  });
+
+  it('makes a Sondertilgung with fee preview and shows the shortened plan', () => {
+    const { el, http, btn, fixture } = setup([], [loan()]);
+    expect(el.querySelector('[data-testid="special-terms"]')?.textContent?.replace(/\s/g, ' ')).toContain('gebührenfrei: 6.000 €, darüber 1 %');
+    expect(btn('special-submit').disabled).toBe(true);
+    const input = el.querySelector('[data-testid="special-amount"]') as HTMLInputElement;
+    input.value = '10000';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    // 4,000 above the free amount -> 40 fee, no interest for a partial repayment
+    const preview = el.querySelector('[data-testid="special-preview"]')?.textContent?.replace(/\s+/g, ' ');
+    expect(preview).toContain('Abbuchung: 10.040 €');
+    expect(preview).toContain('40 € Vorfälligkeitsentschädigung');
+    expect(preview).not.toContain('Zinsen');
+    btn('special-submit').click();
+    const req = http.expectOne('/api/loans/4/sondertilgung');
+    expect(req.request.body).toEqual({ amount: 10000 });
+    req.flush({ amount: 10000, interest: 0, fee: 40, remainingAmount: 35000, remainingInstallments: 21, paidOff: false });
+    http.expectOne('/api/credit-applications').flush([]);
+    http.expectOne('/api/loans').flush([loan({ remainingAmount: 35000, remainingInstallments: 21 })]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="special-result"]')?.textContent?.replace(/\s/g, ' ')).toContain('Restschuld 35.000 €, offene Raten: 21');
+    expect(el.querySelector('[data-testid="loan-plan"]')?.textContent).toContain('8 bezahlt · 21 offen');
+  });
+
+  it('adds the pro-rata interest when the whole remaining debt is repaid', () => {
+    const { el, btn, fixture } = setup([], [loan()]);
+    btn('special-payoff').click();
+    fixture.detectChanges();
+    const preview = el.querySelector('[data-testid="special-preview"]')?.textContent?.replace(/\s+/g, ' ');
+    // 45,000 + 390 fee (1 % of 39,000) + 120 interest
+    expect(preview).toContain('Abbuchung: 45.510 €');
+    expect(preview).toContain('120 € anteilige Zinsen');
+  });
+
+  it('rejects amounts above the remaining debt and explains why a Sondertilgung is not possible', () => {
+    const { el, btn, fixture } = setup([], [loan()]);
+    const input = el.querySelector('[data-testid="special-amount"]') as HTMLInputElement;
+    input.value = '45001';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="special-invalid"]')).not.toBeNull();
+    expect(btn('special-submit').disabled).toBe(true);
+    TestBed.resetTestingModule();
+    const overdue = setup([], [loan({ overdue: true, specialRepayment: { allowed: false, refusal: 'LOAN_OVERDUE', freeAmountLeft: 6000, feeRatePercent: 1, payoffInterest: 0 } })]);
+    expect(overdue.el.querySelector('[data-testid="special-amount"]')).toBeNull();
+    expect(overdue.el.querySelector('[data-testid="special-refusal"]')?.textContent).toContain('überfällig');
+  });
+
+  it('shows the backend message when the Sondertilgung is refused', () => {
+    const { el, http, btn, fixture } = setup([], [loan()]);
+    btn('special-payoff').click();
+    fixture.detectChanges();
+    btn('special-submit').click();
+    http.expectOne('/api/loans/4/sondertilgung').flush({ code: 'INSUFFICIENT_LIQUIDITY', message: 'Das Guthaben reicht für die Sondertilgung von 45.510 € nicht aus.', fields: {} }, { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Das Guthaben reicht');
   });
 
   it('reloads when game time advances (decision becomes visible)', () => {

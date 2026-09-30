@@ -72,10 +72,13 @@ public class ApiMapper {
     public LoanView loan(Loan l) {
         List<LoanPaymentView> history = loans.history(l).stream()
                 .map(p -> new LoanPaymentView(p.getGameTime(), p.getAmount(), p.getType().name())).toList();
+        LoanService.SpecialRepaymentTerms t = loans.specialRepaymentTerms(l.getSavegame(), l);
         return new LoanView(l.getId(), l.getPrincipal(), l.getRemainingAmount(), Math.round(l.getInterestRate() * 10000) / 100.0,
                 l.getTermMonths(), l.getMonthlyInstallment(), l.getPurpose(), l.getStatus().name(), l.isLegacy(),
                 l.isBlocksNewCredit(), l.getNextDueGameTime(), l.getOverdueSinceGameTime() != null, l.getEscalationLevel(),
-                l.getMissedInstallments(), l.getPaidInstallments(), l.getDeferredUntilGameTime(), history);
+                l.getMissedInstallments(), l.getPaidInstallments(), l.getDeferredUntilGameTime(), history,
+                loans.remainingInstallments(l), new SpecialRepaymentTermsView(t.refusal() == null, t.refusal(),
+                        t.freeAmountLeft(), Math.round(t.feeRate() * 10000) / 100.0, t.payoffInterest()));
     }
 
     public JobPostingView posting(JobPosting p) {

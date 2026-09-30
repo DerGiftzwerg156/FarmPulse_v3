@@ -141,6 +141,40 @@
               </table>
             }
             @if (l.status === 'ACTIVE') {
+              <div class="mt-3 space-y-2 border-t border-border pt-3" data-testid="special-repayment">
+                <span class="fp-label">{{ 'bank.special.title' | t }}</span>
+                @if (l.specialRepayment.allowed) {
+                  <div class="flex flex-wrap items-end gap-2">
+                    <label class="block min-w-40 flex-1 space-y-1">
+                      <span class="sr-only">{{ 'bank.special.amount' | t }}</span>
+                      <input class="fp-input font-mono" type="number" min="1" [max]="l.remainingAmount" step="1"
+                        [value]="specialAmount()[l.id] ?? ''" (input)="setSpecialAmount(l.id, $any($event.target).value)"
+                        [placeholder]="'bank.special.amount' | t" data-testid="special-amount" />
+                    </label>
+                    <app-button variant="secondary" (pressed)="payOffCompletely(l)" data-testid="special-payoff">{{ 'bank.special.payOff' | t }}</app-button>
+                    <app-button [disabled]="!specialPreview(l) || specialBusy() === l.id" (pressed)="makeSpecialRepayment(l)" data-testid="special-submit">{{ 'bank.special.submit' | t }}</app-button>
+                  </div>
+                  <p class="text-[11px] text-muted" data-testid="special-terms">
+                    {{ 'bank.special.terms' | t: { free: (l.specialRepayment.freeAmountLeft | money), rate: (l.specialRepayment.feeRatePercent | num: 2) } }}
+                  </p>
+                  @if (specialPreview(l); as p) {
+                    <p class="text-[12px] text-text" data-testid="special-preview">
+                      {{ 'bank.special.preview' | t: { total: (p.total | money) } }}
+                      @if (p.interest > 0) { {{ 'bank.special.previewInterest' | t: { interest: (p.interest | money) } }} }
+                      @if (p.fee > 0) { {{ 'bank.special.previewFee' | t: { fee: (p.fee | money) } }} }
+                    </p>
+                  } @else if ((specialAmount()[l.id] ?? null) !== null) {
+                    <p class="text-[12px] text-danger" data-testid="special-invalid">{{ 'bank.special.invalid' | t: { max: (l.remainingAmount | money) } }}</p>
+                  }
+                } @else {
+                  <p class="text-[11px] text-muted" data-testid="special-refusal">{{ 'bank.special.refusal.' + l.specialRepayment.refusal | t }}</p>
+                }
+                @if (specialResult()[l.id]; as r) {
+                  <p class="text-[12px] text-accent" data-testid="special-result">
+                    {{ 'bank.special.done' | t: { remaining: (r.remainingAmount | money), left: r.remainingInstallments } }}
+                  </p>
+                }
+              </div>
               <div class="mt-3 space-y-2 border-t border-border pt-3">
                 <label class="block space-y-1">
                   <span class="fp-label">{{ 'bank.deferral' | t }}</span>
