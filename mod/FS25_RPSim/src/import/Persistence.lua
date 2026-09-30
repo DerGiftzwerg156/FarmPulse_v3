@@ -31,6 +31,10 @@ function RPSimPersistence.save(writer, state)
         if e.message ~= nil then
             writer:setString(k .. "#message", e.message)
         end
+        if e.result ~= nil then
+            -- Roadmap V3 (R3-Q1): result of the action (e.g. vehicleId) as JSON, so the ack still carries it after loading
+            writer:setString(k .. "#result", RPSimJson.encode(e.result))
+        end
     end
     for i, ev in ipairs(state.priceEvents.events) do
         local k = string.format("%s.activePriceEvents.event(%d)", ROOT, i - 1)
@@ -166,6 +170,11 @@ function RPSimPersistence.load(reader, state)
         if id == nil then break end
         state.processed[id] = { gameTime = reader:getFloat(k .. "#gameTime") or 0,
             status = reader:getString(k .. "#status") or "APPLIED", message = reader:getString(k .. "#message") }
+        local resultJson = reader:getString(k .. "#result")
+        if resultJson ~= nil and resultJson ~= "" then
+            local res = RPSimJson.tryDecode(resultJson)
+            state.processed[id].result = RPSimProcessor.normalizeResult(res)
+        end
         i = i + 1
     end
     i = 0

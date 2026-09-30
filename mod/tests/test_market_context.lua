@@ -47,4 +47,21 @@ function T.TestMarketContext:testFarmlandFlagsAndDetectedModsAreExported()
     lu.assertStrContains(RPSimJson.encode(doc), '"detectedMods":["FS25_BetterContracts","FS25_UsedPlus"]')
 end
 
+-- Roadmap V3 (R3-Q1 / R3-V1): shop vehicle catalog, optional
+function T.TestMarketContext:testStoreVehiclesAreOptionalAndNormalized()
+    local doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "Erlengrund" })
+    lu.assertNil(doc.storeVehicles)
+    doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "Erlengrund", storeVehicles = {
+        { xmlFilename = "data/vehicles/fendt/vario700/vario700.xml", name = "Fendt 700 Vario", price = 245000.4,
+            lifetime = 600, categoryName = "TRACTORSL", isMod = false, motorized = true },
+        { xmlFilename = "data/vehicles/amazone/catros/catros.xml", name = "Catros", price = 32000, lifetime = 600,
+            categoryName = "CULTIVATORS" },
+        { name = "no file", price = 1 } } })
+    lu.assertEquals(doc.storeVehicles, {
+        { xmlFilename = "data/vehicles/amazone/catros/catros.xml", name = "Catros", price = 32000, lifetime = 600,
+            categoryName = "CULTIVATORS", isMod = false },
+        { xmlFilename = "data/vehicles/fendt/vario700/vario700.xml", name = "Fendt 700 Vario", price = 245000,
+            lifetime = 600, categoryName = "TRACTORSL", isMod = false, motorized = true } })
+end
+
 return T

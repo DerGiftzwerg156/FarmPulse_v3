@@ -115,6 +115,12 @@ Roadmap V2 (R2-Q2): the same test checks that the optional blocks of `helfer-hof
 (`husbandries`) and `ernte-herbst` (`fields`, `weather`) reach `FactsService`, and that a scenario without them
 (`voller-silobestand`) leaves every block `null` ("not present"). `BridgeValidatorTest` covers missing vs. empty vs.
 invalid blocks.
+Roadmap V3 (R3-Q2): `SimulatorScenariosEndToEndTest` checks that `npcFields`, `tradeStorage` and `storeVehicles` of
+`nachbarhandel` arrive (and stay `null` for `wohlhabender-hof`) and that the `vehicleId` of a `VEHICLE_SPAWN` comes back
+as ack `result`; `BridgeSyncIntegrationTest.ackResultIsStoredWithTheInstruction`, `BridgeValidatorTest` (the new
+blocks) and `FailedInstructionTest` (notice "Mod aktualisieren") cover the backend side. The mod covers normalisation,
+validation, `NOT_SUPPORTED` and `result` in `test_farm_facts.lua`, `test_market_context.lua`, `test_instructions.lua`
+and `test_persistence.lua`, the simulator the execution in `test/roadmap-v3.test.js`.
 Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
 (journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
 month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,

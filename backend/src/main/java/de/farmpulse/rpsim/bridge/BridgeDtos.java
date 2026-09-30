@@ -15,13 +15,24 @@ public final class BridgeDtos {
     /**
      * Roadmap V2 (R2-Q1): {@code finances}, {@code workforce}, {@code husbandries}, {@code fields} and {@code weather}
      * are optional. {@code null} means "not present" (the mod is too old or does not collect the block yet) and must
-     * not be read as "empty": an empty block ({@code fields: []}) is a real answer of the game.
+     * not be read as "empty": an empty block ({@code fields: []}) is a real answer of the game. Roadmap V3 (R3-Q1):
+     * {@code npcFields} (R3-H1) and {@code tradeStorage} (R3-H2) follow the same rule.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
                             Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
                             Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
-                            Weather weather, FieldRules fieldRules) {
+                            Weather weather, FieldRules fieldRules, List<Field> npcFields,
+                            List<TradeStorageEntry> tradeStorage) {
+
+        /** Roadmap V2 contract without the blocks of Roadmap V3 (older mod). */
+        public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
+                         Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
+                         Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
+                         Weather weather, FieldRules fieldRules) {
+            this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, missions, finances,
+                    workforce, husbandries, fields, weather, fieldRules, null, null);
+        }
 
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
                          Liabilities liabilities, List<Price> prices, Calendar calendar) {
@@ -129,6 +140,14 @@ public final class BridgeDtos {
         }
     }
 
+    /**
+     * Roadmap V3 R3-H2 (contract R3-Q1): tradeable goods = fill level ({@code amount}, l) and free capacity (l) of one
+     * fill type summed over the own silos and silo extensions only. An entry means an own silo accepts the fill type.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record TradeStorageEntry(String fillType, Double amount, Double freeCapacity) {
+    }
+
     /** TODO T-08: FS25 calendar of the savegame (game month = FS25 period, period 1 = March). */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Calendar(Integer period, Integer dayInPeriod, Integer daysPerPeriod, Integer year, Long monotonicDay,
@@ -185,9 +204,26 @@ public final class BridgeDtos {
     public record Price(String sellPoint, String fillType, Double currentPrice, String trend) {
     }
 
+    /** Roadmap V3 (R3-Q1): {@code storeVehicles} (R3-V1) is optional; null = not present (older mod or switched off). */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
-                                List<MapFarmland> farmlands, List<String> detectedMods) {
+                                List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles) {
+
+        /** Contract without the vehicle catalog (older mod). */
+        public MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
+                             List<MapFarmland> farmlands, List<String> detectedMods) {
+            this(savegameId, mapName, sellPoints, fillTypes, farmlands, detectedMods, null);
+        }
+    }
+
+    /**
+     * Roadmap V3 R3-V1 (contract R3-Q1): vehicle of the shop catalog (g_storeManager:getItems(), species VEHICLE, shown in
+     * the shop). {@code price} = list price, {@code lifetime} = the store item's lifetime, {@code motorized} = engine
+     * present (storeItem.specs.power); motorized is missing when the mod could not read the specs.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record StoreVehicle(String xmlFilename, String name, Double price, Double lifetime, String categoryName,
+                               Boolean isMod, Boolean motorized) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -229,8 +265,14 @@ public final class BridgeDtos {
     public record AckDocument(String savegameId, List<Ack> acks, List<ContractReport> contractReports) {
     }
 
+    /** Roadmap V3 (R3-Q1): {@code result} = optional result of the action (vehicleId, missionId); null = none. */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Ack(String instructionId, Long appliedAtGameTime, String status, String message) {
+    public record Ack(String instructionId, Long appliedAtGameTime, String status, String message,
+                      Map<String, Object> result) {
+
+        public Ack(String instructionId, Long appliedAtGameTime, String status, String message) {
+            this(instructionId, appliedAtGameTime, status, message, null);
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

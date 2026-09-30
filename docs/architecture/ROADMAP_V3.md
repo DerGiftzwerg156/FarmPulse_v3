@@ -65,50 +65,68 @@ können jederzeit dazwischen umgesetzt werden.
 
 Arbeiten, die mehrere Bereiche brauchen. Einmal sauber anlegen, dann bei jedem Punkt nur ergänzen (Muster aus R2-Q).
 
+**Stand 30.09.2026: umgesetzt.** Q legt wie R2-Q nur den Vertrag an (Schemas, DTOs, Validator, Normalisierung im Mod,
+Simulator, Doku). Das Auslesen im Mod folgt mit H1 (`npcFields`), H2 (`tradeStorage`) und V1 (`storeVehicles`), bis
+dahin fehlen die Blöcke. Die vier neuen Anweisungen quittiert der Mod bis H3/H5/V2/V3 mit `FAILED` / `NOT_SUPPORTED`.
+Entscheidungen (siehe `QUESTIONS.md`): Die Mod-Schalter `npcFieldExport` und `storeCatalogExport` kommen mit H1 bzw.
+V1. Der Hinweis „Mod aktualisieren“ ist ein Merkmal (`modOutdated`) des bestehenden Hinweises `INSTRUCTION_FAILED`.
+`result` wird an der Anweisung gespeichert. Die Buchungstitel folgen dem Vorschlag. Der Simulator führt die neuen
+Anweisungen aus wie der spätere Mod. Nur `nachbarhandel` liefert die neuen Blöcke. `VEHICLE_SPAWN.price` ist positiv.
+
 ### R3-Q1 Bridge-Schema erweitern, ohne alte Stände zu brechen
 
-- [ ] `farm_facts.json`, neue optionale Blöcke:
+- [x] `farm_facts.json`, neue optionale Blöcke:
   - `npcFields` (H1): Felder ohne Besitzer, gleiche Felder wie `fields`.
   - `tradeStorage` (H2): je Fruchtsorte Menge und freie Kapazität **nur** der eigenen Silos und Silo-Erweiterungen.
-- [ ] `market_context.json`, neuer optionaler Block `storeVehicles` (V1): Fahrzeug-Katalog des Shops.
-- [ ] Neue Anweisungstypen in Mod (`RPSimInstructions.TYPES`) und Backend (`domain/InstructionType.java`):
+- [x] `market_context.json`, neuer optionaler Block `storeVehicles` (V1): Fahrzeug-Katalog des Shops.
+- [x] Neue Anweisungstypen in Mod (`RPSimInstructions.TYPES`) und Backend (`domain/InstructionType.java`):
   `STORAGE_TRANSFER` (H3/H4/M3), `MISSION_CREATE` (H5), `VEHICLE_SPAWN` (V2), `VEHICLE_REMOVE` (V3). Ein älterer Mod
-  lehnt einen unbekannten Typ bei der Prüfung ab (`RPSimInstructions.validate`: „unknown type …“, Quittung `FAILED`).
+  lehnt einen unbekannten Typ bei der Prüfung ab (`RPSimInstructions.validate`: „unknown type …“, Quittung `REJECTED`;
+  ein Mod mit R3-Q, aber ohne das Feature quittiert `FAILED` / `NOT_SUPPORTED`).
   Das Backend storniert dann den Vorgang (Geld wird wegen des Batches nicht gebucht) und erklärt es per Hinweis:
-  „Mod aktualisieren“.
-- [ ] Die Quittung (`instructions_ack.json`) bekommt ein optionales Feld `result` (z. B. `vehicleId` nach
-  `VEHICLE_SPAWN`, `missionId` nach `MISSION_CREATE`).
-- [ ] Neue `MoneyReason`-Werte in Mod, Backend und `modDesc.xml` (`rpsim_money_<REASON>`):
+  „Mod aktualisieren“. Umgesetzt in Q: der Hinweis (`FailedInstructionService`, Merkmal `modOutdated`). Das
+  Stornieren des Vorgangs kommt mit dem jeweiligen Feature.
+- [x] Die Quittung (`instructions_ack.json`) bekommt ein optionales Feld `result` (z. B. `vehicleId` nach
+  `VEHICLE_SPAWN`, `missionId` nach `MISSION_CREATE`). Der Mod speichert es im Spielstand, das Backend an der
+  Anweisung (`outbox_instruction.ack_result_json`).
+- [x] Neue `MoneyReason`-Werte in Mod, Backend und `modDesc.xml` (`rpsim_money_<REASON>`):
   - `LEASE_INCOME` (L)
   - `GOODS_PURCHASE`, `GOODS_SALE` (H, M3)
   - `VEHICLE_PURCHASE`, `VEHICLE_SALE` (V)
   - `CONTRACT_PENALTY` (M2)
-- [ ] Die Klassen für `rpsim.formulas.finance.categories` festlegen:
+- [x] Die Klassen für `rpsim.formulas.finance.categories` festlegen:
   - `RPSIM_LEASE_INCOME`, `RPSIM_GOODS_*` → operativ
   - `RPSIM_VEHICLE_PURCHASE` → Investition, `RPSIM_VEHICLE_SALE` → Desinvestition
   - `RPSIM_CONTRACT_PENALTY` → operative Ausgabe
-- [ ] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code ergänzen.
+- [x] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code ergänzen.
 
 ### R3-Q2 Bridge-Simulator und Tests
 
-- [ ] `tools/bridge-simulator`: neue Szenarien, z. B. `nachbarhandel` (Nachbarfelder, Silos mit freier Kapazität,
+- [x] `tools/bridge-simulator`: neue Szenarien, z. B. `nachbarhandel` (Nachbarfelder, Silos mit freier Kapazität,
   Shop-Katalog) und `duerre-sommer` (Monate ohne Regen). Der Simulator versteht die neuen Anweisungen und
-  JSON-Schemas.
-- [ ] Mod-Tests (`mod/tests/`) für jede neue Adapter-Funktion mit gemockten FS25-Globals, wie in
-  `test_game_adapter.lua`.
-- [ ] Backend: Grenzwert-Tests für jede neue Formel (wie `CreditFormulaTest`), End-to-End-Test gegen den Simulator.
+  JSON-Schemas. Umgesetzt: `nachbarhandel` und `duerre-sommer` (Start im Juni, kein Regen). Der Simulator führt die
+  neuen Anweisungen aus wie der spätere Mod.
+- [x] Mod-Tests (`mod/tests/`) für jede neue Adapter-Funktion mit gemockten FS25-Globals, wie in
+  `test_game_adapter.lua`. In Q: Normalisierung der Blöcke, Prüfung der neuen Anweisungen, `NOT_SUPPORTED`, `result`
+  in Quittung und Spielstand. Gilt weiter für jede Adapter-Funktion der Features.
+- [x] Backend: Grenzwert-Tests für jede neue Formel (wie `CreditFormulaTest`), End-to-End-Test gegen den Simulator.
+  Q bringt keine Formel. `BridgeValidatorTest`, `FailedInstructionTest`, `BridgeSyncIntegrationTest` und
+  `SimulatorScenariosEndToEndTest` prüfen die neuen Blöcke, den Hinweis und `result`.
 
 ### R3-Q3 Konfiguration und Doku
 
-- [ ] Alle neuen Werte unter `rpsim.formulas.*` in `backend/src/main/resources/application.yml` und
+- [x] Alle neuen Werte unter `rpsim.formulas.*` in `backend/src/main/resources/application.yml` und
   `config/RpsimProperties.java`. **Achtung:** `ConfigurationReferenceDocTest` schlägt fehl, wenn ein Schlüssel in
-  `docs/dev/configuration-reference.md` fehlt.
-- [ ] Neue Mod-Schalter in `RPSimConfig.DEFAULTS` (z. B. `npcFieldExport`, `storeCatalogExport`).
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md` je Feature, Eintrag in `CHANGELOG.md`.
+  `docs/dev/configuration-reference.md` fehlt. Q bringt nur die Klassen der neuen Buchungsgründe unter
+  `rpsim.formulas.finance.categories`. Die Regel gilt für jedes Feature.
+- [x] Neue Mod-Schalter in `RPSimConfig.DEFAULTS` (z. B. `npcFieldExport`, `storeCatalogExport`). Q bringt keine
+  Schalter (`npcFieldExport` kommt mit H1, `storeCatalogExport` mit V1).
+- [x] Spieler-Doku `docs/user-guide/funktionen.md` je Feature, Eintrag in `CHANGELOG.md`. Q ist für Spieler nicht
+  sichtbar, daher nur der `CHANGELOG`-Eintrag.
 
 ### R3-Q4 Prüfliste für den Spieltest erweitern
 
-- [ ] In `docs/dev/manual-test-plan.md` einen neuen Abschnitt **„11. Roadmap V3 im echten FS25“** anlegen. Jeder
+- [x] In `docs/dev/manual-test-plan.md` einen neuen Abschnitt **„11. Roadmap V3 im echten FS25“** anlegen. Jeder
   🟡-Punkt dieser Roadmap bekommt dort eine Zeile mit „Wie prüfen“ und „Erwartet“.
 
 ---

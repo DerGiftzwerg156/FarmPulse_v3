@@ -184,6 +184,80 @@ Object.assign(SCENARIOS, {
   },
 });
 
+// Roadmap V3 (R3-Q2): nachbarhandel exports the optional blocks npcFields and tradeStorage and the shop vehicle catalog
+// storeVehicles; duerre-sommer is a dry summer (no rain, growing crops) and exports only the Roadmap V2 blocks fields,
+// fieldRules and weather. All other scenarios leave the Roadmap V3 blocks out and stand for a mod without them.
+// All numbers are simulated examples, not values read from FS25.
+Object.assign(SCENARIOS, {
+  nachbarhandel: {
+    description: 'Handel mit den Nachbarn: Nachbarfelder in verschiedenen Phasen, eigene Silos mit freier Kapazität, '
+      + 'Fahrzeug-Katalog des Shops (R3-H, R3-V).',
+    balance: 150000, vanillaLoan: 0, ownedFarmlands: [1, 2],
+    vehicles: [vehicle(1, 180000, 0.15), vehicle(2, 60000, 0.3)],
+    placeables: [{ uniqueId: 'plc_00001', value: 110000 }],
+    animals: [],
+    // assets.storage = everything the farm stores; tradeStorage = only the own silos and silo extensions
+    storage: { WHEAT: { amount: 40000, capacity: 100000 }, BARLEY: { amount: 12000, capacity: 50000 } },
+    tradeStorage: { WHEAT: { amount: 40000, capacity: 100000 }, BARLEY: { amount: 12000, capacity: 50000 },
+      // an own silo accepts straw but holds none
+      STRAW: { amount: 0, capacity: 25000 } },
+    drift: { income: 2500, expense: 2000 },
+    // fields of farmlands without an owner (the game's NPCs farm them); exported only while no farm owns the farmland
+    npcFields: [
+      // harvested barley, not plowed yet (candidate for a plowing contract)
+      { farmlandId: 3, fruitType: 'BARLEY', growthState: 10, minHarvestingGrowthState: 9, maxHarvestingGrowthState: 9,
+        withered: false, cut: true, fillType: 'BARLEY', litersPerSqm: 0.97,
+        weedState: 0, stoneLevel: 1, sprayLevel: 1, limeLevel: 1, plowLevel: 0, groundType: 'HARVEST_READY' },
+      // growing wheat
+      { farmlandId: 5, fruitType: 'WHEAT', growthState: 4, minHarvestingGrowthState: 8, maxHarvestingGrowthState: 8,
+        withered: false, cut: false, fillType: 'WHEAT', litersPerSqm: 0.95,
+        weedState: 1, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+      // empty field with many stones (candidate for a stone picking contract)
+      { farmlandId: 6, growthState: 0, weedState: 0, stoneLevel: 3, sprayLevel: 0, limeLevel: 1, plowLevel: 1,
+        groundType: 'CULTIVATED' },
+      // harvestable canola
+      { farmlandId: 8, fruitType: 'CANOLA', growthState: 7, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'CANOLA', litersPerSqm: 0.45,
+        weedState: 0, stoneLevel: 0, sprayLevel: 2, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+    ],
+    // shop vehicle catalog (motorized is missing when the mod could not read the specs, fallback of R3-V1)
+    storeVehicles: [
+      { xmlFilename: 'data/vehicles/fendt/vario700/vario700.xml', name: 'Fendt 700 Vario', price: 245000,
+        lifetime: 600, categoryName: 'TRACTORSL', isMod: false, motorized: true },
+      { xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml', name: 'Deutz-Fahr Serie 5', price: 98000,
+        lifetime: 600, categoryName: 'TRACTORSM', isMod: false, motorized: true },
+      { xmlFilename: 'data/vehicles/claas/lexion8000/lexion8000.xml', name: 'CLAAS LEXION 8900', price: 780000,
+        lifetime: 600, categoryName: 'HARVESTERS', isMod: false, motorized: true },
+      { xmlFilename: 'data/vehicles/amazone/catros/catros.xml', name: 'Amazone Catros', price: 32000,
+        lifetime: 600, categoryName: 'CULTIVATORS', isMod: false, motorized: false },
+      { xmlFilename: 'data/vehicles/krampe/bandit750/bandit750.xml', name: 'Krampe Bandit 750', price: 41000,
+        lifetime: 600, categoryName: 'TRAILERS', isMod: false },
+    ],
+  },
+  'duerre-sommer': {
+    description: 'Trockener Sommer (Juni): kein Regen, trockener Boden, eigene Kulturen noch im Wachstum (R3-W).',
+    balance: 110000, vanillaLoan: 0, ownedFarmlands: [2, 4, 7], startPeriod: 4,
+    vehicles: [vehicle(1, 210000, 0.2)],
+    placeables: [{ uniqueId: 'plc_00001', value: 70000 }],
+    animals: [], storage: { WHEAT: { amount: 15000, capacity: 80000 } },
+    drift: { income: 2000, expense: 2400 },
+    fields: [
+      { farmlandId: 2, fruitType: 'WHEAT', growthState: 5, minHarvestingGrowthState: 8, maxHarvestingGrowthState: 8,
+        withered: false, cut: false, fillType: 'WHEAT', litersPerSqm: 0.95,
+        weedState: 0, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+      { farmlandId: 4, fruitType: 'MAIZE', growthState: 3, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'MAIZE', litersPerSqm: 1.1,
+        weedState: 1, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+      { farmlandId: 7, fruitType: 'SUNFLOWER', growthState: 2, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'SUNFLOWER', litersPerSqm: 0.4,
+        weedState: 0, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
+    ],
+    fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
+    // no rain during the whole run: the weather of a scenario only changes through the control API
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.05, temperature: 29 },
+  },
+});
+
 // Simulated vanilla contracts (TODO T-22); the mod reads them from g_missionManager:getMissions().
 export const MISSIONS = [
   { uniqueId: 'mission_001', title: 'Ernte', typeName: 'harvestMission', field: '7', npcIndex: 3, npcTitle: 'Otto Wendler',

@@ -33,5 +33,12 @@ public enum MoneyReason {
     COMPENSATION,
     /** Training of a machine operator. */
     TRAINING,
+    // Roadmap V3 (R3-Q1): lease income (L), goods trade (H, M3), used vehicles (V), forward contract penalty (M2)
+    LEASE_INCOME,
+    GOODS_PURCHASE,
+    GOODS_SALE,
+    VEHICLE_PURCHASE,
+    VEHICLE_SALE,
+    CONTRACT_PENALTY,
     OTHER
 }

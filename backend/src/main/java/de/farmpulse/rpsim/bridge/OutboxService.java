@@ -31,6 +31,26 @@ public class OutboxService {
         this.json = json;
     }
 
+    /**
+     * Roadmap V3 (R3-Q1): the optional result of an ack (e.g. vehicleId after VEHICLE_SPAWN) as JSON for
+     * {@link OutboxInstruction#getAckResultJson()}; null when the ack carries none.
+     */
+    public String ackResultJson(Map<String, Object> result) {
+        if (result == null || result.isEmpty()) {
+            return null;
+        }
+        return json.writeValueAsString(result);
+    }
+
+    /** Roadmap V3 (R3-Q1): the stored result of an ack, empty when there is none. */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> ackResult(OutboxInstruction ins) {
+        if (ins.getAckResultJson() == null || ins.getAckResultJson().isBlank()) {
+            return Map.of();
+        }
+        return json.readValue(ins.getAckResultJson(), Map.class);
+    }
+
     public static String newInstructionId() {
         return "ins_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }

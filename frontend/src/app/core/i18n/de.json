@@ -375,7 +375,13 @@
       "FAMILY": "Familie",
       "SPONSORING": "Sponsoring",
       "COMPENSATION": "Ausgleichszahlung",
-      "TRAINING": "Mitarbeiterschulung"
+      "TRAINING": "Mitarbeiterschulung",
+      "LEASE_INCOME": "Pachteinnahme",
+      "GOODS_PURCHASE": "Warenkauf",
+      "GOODS_SALE": "Warenverkauf",
+      "VEHICLE_PURCHASE": "Maschinenkauf (gebraucht)",
+      "VEHICLE_SALE": "Maschinenverkauf",
+      "CONTRACT_PENALTY": "Vertragsstrafe"
     },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
@@ -560,7 +566,13 @@
       "RPSIM_FAMILY": "Familie",
       "RPSIM_SPONSORING": "Sponsoring",
       "RPSIM_COMPENSATION": "Ausgleichszahlung",
-      "RPSIM_TRAINING": "Mitarbeiterschulung"
+      "RPSIM_TRAINING": "Mitarbeiterschulung",
+      "RPSIM_LEASE_INCOME": "Pachteinnahme",
+      "RPSIM_GOODS_PURCHASE": "Warenkauf",
+      "RPSIM_GOODS_SALE": "Warenverkauf",
+      "RPSIM_VEHICLE_PURCHASE": "Maschinenkauf (gebraucht)",
+      "RPSIM_VEHICLE_SALE": "Maschinenverkauf",
+      "RPSIM_CONTRACT_PENALTY": "Vertragsstrafe"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",
@@ -1121,6 +1133,7 @@
       "text": "{what} {amount} wurde im Spiel nicht ausgeführt: {reason}."
     },
     "insufficientFunds": "zu wenig Geld auf dem Konto",
+    "modOutdated": "Mod aktualisieren – der installierte Mod FS25_RPSim kennt diese Anweisung noch nicht",
     "rewindHint": "Nur die Buchungen im Spiel werden wiederhergestellt – Mails, Vertrauen und Verhandlungen bleiben auf dem Stand des Tools.",
     "resend": "Nachbuchen",
     "keep": "Tool-Stand beibehalten",

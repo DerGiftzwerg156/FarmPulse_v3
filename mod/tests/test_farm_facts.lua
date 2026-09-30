@@ -122,6 +122,47 @@ function T.TestFarmFacts:testRoadmapV2EmptyBlocksStayEmptyNotMissing()
     lu.assertStrContains(json, '"fields":[]')
 end
 
+-- Roadmap V3 (R3-Q1): npcFields and tradeStorage are optional like the V2 blocks
+function T.TestFarmFacts:testRoadmapV3BlocksAreAbsentWhenNotCollected()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0 }, RPSimConfig.new())
+    lu.assertNil(doc.npcFields)
+    lu.assertNil(doc.tradeStorage)
+    local json = RPSimJson.encode(RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, npcFields = {},
+        tradeStorage = {} }, RPSimConfig.new()))
+    lu.assertStrContains(json, '"npcFields":[]')
+    lu.assertStrContains(json, '"tradeStorage":[]')
+end
+
+function T.TestFarmFacts:testNpcFieldsUseTheFieldEntries()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, npcFields = {
+        { farmlandId = 9, name = "9", hectares = 3.456, fruitType = "BARLEY", growthState = 9,
+            minHarvestingGrowthState = 9, maxHarvestingGrowthState = 9, withered = false, cut = true,
+            fillType = "BARLEY", litersPerSqm = 0.97, weedState = 0, stoneLevel = 1, sprayLevel = 0, limeLevel = 1,
+            plowLevel = 0, groundType = "HARVEST_READY" },
+        { farmlandId = 8, name = "8", hectares = 2, growthState = 0, weedState = 0, stoneLevel = 0, sprayLevel = 0,
+            limeLevel = 0, plowLevel = 0 },
+        { farmlandId = 10, name = "incomplete" } } }, RPSimConfig.new())
+    lu.assertEquals(#doc.npcFields, 2)
+    lu.assertEquals(doc.npcFields[1].farmlandId, 8)
+    lu.assertNil(doc.npcFields[1].fruitType)
+    lu.assertEquals(doc.npcFields[2].hectares, 3.46)
+    lu.assertEquals(doc.npcFields[2].fillType, "BARLEY")
+    lu.assertTrue(doc.npcFields[2].cut)
+    lu.assertEquals(doc.npcFields[2].litersPerSqm, 0.97)
+end
+
+function T.TestFarmFacts:testTradeStorageKeepsOnlyGoodsAnOwnSiloAccepts()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, tradeStorage = {
+        { fillType = "WHEAT", amount = 40000.4, freeCapacity = 60000 },
+        { fillType = "STRAW", amount = 0, freeCapacity = 25000 },
+        { fillType = "CANOLA", amount = 0, freeCapacity = 0 },
+        { fillType = "BARLEY", amount = 12000 },
+        { amount = 5, freeCapacity = 5 } } }, RPSimConfig.new())
+    lu.assertEquals(doc.tradeStorage, {
+        { fillType = "STRAW", amount = 0, freeCapacity = 25000 },
+        { fillType = "WHEAT", amount = 40000, freeCapacity = 60000 } })
+end
+
 function T.TestFarmFacts:testFinancesAreRoundedAndSortedByPeriod()
     local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, finances = { periods = {
         { year = 2, period = 8, byType = { HARVEST_INCOME = 48200.4, PURCHASE_FUEL = -3100.6, AI = "x" } },

@@ -5,7 +5,10 @@ RPSimInstructions = {}
 RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLAND_TRANSFER = true,
     NOTIFICATION = true, REPAIR_VEHICLE = true, -- NOTIFICATION: TODO T-21, REPAIR_VEHICLE: TODO T-22
     -- Roadmap V2 (R2-Q1): validated now, executed with R2-A0 (EMPLOYEE_ROSTER) and R2-F2 (PROMPT)
-    EMPLOYEE_ROSTER = true, PROMPT = true }
+    EMPLOYEE_ROSTER = true, PROMPT = true,
+    -- Roadmap V3 (R3-Q1): validated now, executed with R3-H3/H4/M3 (STORAGE_TRANSFER), R3-H5 (MISSION_CREATE),
+    -- R3-V2 (VEHICLE_SPAWN) and R3-V3 (VEHICLE_REMOVE); until then acknowledged FAILED / NOT_SUPPORTED
+    STORAGE_TRANSFER = true, MISSION_CREATE = true, VEHICLE_SPAWN = true, VEHICLE_REMOVE = true }
 
 RPSimInstructions.MONEY_REASONS = {
     CREDIT_DISBURSEMENT = true, CREDIT_INSTALLMENT = true, CREDIT_PENALTY = true, CREDIT_CALLBACK = true,
@@ -20,6 +23,10 @@ RPSimInstructions.MONEY_REASONS = {
     TAX_PAYMENT = true, TAX_REFUND = true, FINE = true, FAMILY = true, SPONSORING = true, COMPENSATION = true,
     -- "Schulungen": training of a machine operator
     TRAINING = true,
+    -- Roadmap V3 (R3-Q1): lease income (L), goods trade with neighbours and the farm shop (H, M3), used vehicles (V),
+    -- contract penalty of a forward contract (M2)
+    LEASE_INCOME = true, GOODS_PURCHASE = true, GOODS_SALE = true, VEHICLE_PURCHASE = true, VEHICLE_SALE = true,
+    CONTRACT_PENALTY = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
@@ -29,6 +36,8 @@ RPSimInstructions.NOTIFICATION_LEVELS = { INFO = true, OK = true, CRITICAL = tru
 -- Roadmap V2 R2-A0: status of an employee in EMPLOYEE_ROSTER (STRIKE: R2-A5) and the helper wage mode (R2-A1)
 RPSimInstructions.EMPLOYEE_STATUSES = { ACTIVE = true, ON_LEAVE = true, STRIKE = true }
 RPSimInstructions.HELPER_WAGE_MODES = { EMPLOYEES = true, VANILLA = true }
+-- Roadmap V3 R3-H3/H4: IN = into the own silos (purchase), OUT = out of the own silos (sale)
+RPSimInstructions.STORAGE_DIRECTIONS = { IN = true, OUT = true }
 
 local function isNumber(v) return type(v) == "number" and v == v end
 local function isNonEmptyString(v) return type(v) == "string" and v ~= "" end
@@ -105,6 +114,30 @@ local function validatePrompt(ins)
     end
     if not isNumber(ins.expiresGameTime) then
         return false, "expiresGameTime must be a number"
+    end
+    return true
+end
+
+--- Roadmap V3 R3-V2: used vehicle from the shop catalog. price > 0 is booked by the mod as -price with moneyReason.
+local function validateVehicleSpawn(ins)
+    if not isNonEmptyString(ins.storeXmlFilename) then
+        return false, "storeXmlFilename is required"
+    end
+    for _, f in ipairs({ "ageMonths", "operatingHours" }) do
+        if not isNumber(ins[f]) or ins[f] < 0 then
+            return false, f .. " must be >= 0"
+        end
+    end
+    for _, f in ipairs({ "damage", "wear" }) do
+        if not isNumber(ins[f]) or ins[f] < 0 or ins[f] > 1 then
+            return false, f .. " must be between 0 and 1"
+        end
+    end
+    if not isNumber(ins.price) or ins.price <= 0 then
+        return false, "price must be > 0"
+    end
+    if not RPSimInstructions.MONEY_REASONS[ins.moneyReason] then
+        return false, "unknown moneyReason " .. tostring(ins.moneyReason)
     end
     return true
 end
@@ -189,6 +222,32 @@ function RPSimInstructions.validate(ins)
         return validateRoster(ins)
     elseif ins.type == "PROMPT" then
         return validatePrompt(ins)
+    elseif ins.type == "STORAGE_TRANSFER" then
+        -- Roadmap V3 R3-H3/H4/M3: amount in liters, moved into / out of the own silos
+        if not RPSimInstructions.STORAGE_DIRECTIONS[ins.direction] then
+            return false, "unknown direction " .. tostring(ins.direction)
+        end
+        if not isNonEmptyString(ins.fillType) then
+            return false, "fillType is required"
+        end
+        if not isNumber(ins.amount) or ins.amount <= 0 then
+            return false, "amount must be > 0"
+        end
+    elseif ins.type == "MISSION_CREATE" then
+        -- Roadmap V3 R3-H5: real contract of the game on the field of an NPC farmland
+        if not isNonEmptyString(ins.missionType) then
+            return false, "missionType is required"
+        end
+        if not isNumber(ins.farmlandId) then
+            return false, "farmlandId must be a number"
+        end
+    elseif ins.type == "VEHICLE_SPAWN" then
+        return validateVehicleSpawn(ins)
+    elseif ins.type == "VEHICLE_REMOVE" then
+        -- Roadmap V3 R3-V3: own vehicle by its uniqueId (as in assets.vehicles)
+        if not isNonEmptyString(ins.vehicleId) then
+            return false, "vehicleId is required"
+        end
     end
     return true
 end

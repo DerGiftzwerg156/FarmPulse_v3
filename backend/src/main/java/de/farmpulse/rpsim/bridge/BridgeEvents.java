@@ -14,8 +14,16 @@ public final class BridgeEvents {
     public record MarketContextUpdated(Long savegameId) {
     }
 
-    /** The mod acknowledged an instruction (APPLIED / REJECTED / FAILED). */
-    public record InstructionAcked(Long savegameId, String instructionId, String status, String relatedType, Long relatedId) {
+    /**
+     * The mod acknowledged an instruction (APPLIED / REJECTED / FAILED). Roadmap V3 (R3-Q1): {@code result} = optional
+     * result of the action (e.g. vehicleId), empty when the ack carries none.
+     */
+    public record InstructionAcked(Long savegameId, String instructionId, String status, String relatedType, Long relatedId,
+                                   java.util.Map<String, Object> result) {
+
+        public InstructionAcked(Long savegameId, String instructionId, String status, String relatedType, Long relatedId) {
+            this(savegameId, instructionId, status, relatedType, relatedId, java.util.Map.of());
+        }
     }
 
     /** Roadmap V2 R2-F1: new answers of the yes/no questions were read (not yet processed ones only). */

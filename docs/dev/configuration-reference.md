@@ -741,6 +741,8 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_SUBSIDY` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_LIVESTOCK_PREMIUM` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_TAX_REFUND` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_LEASE_INCOME` | `OPERATING_INCOME` | tool booking: operating income (lease of an own field, R3-L1). | Roadmap V3 R3-Q1 |
+| `rpsim.formulas.finance.categories.RPSIM_GOODS_SALE` | `OPERATING_INCOME` | tool booking: operating income (goods to a neighbour or the farm shop, R3-H4 / R3-M3). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.PURCHASE_FUEL` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_SEEDS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_FERTILIZER` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
@@ -765,15 +767,19 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_SPONSORING` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_COMPENSATION` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_TRAINING` | `OPERATING_EXPENSE` | tool booking: operating expense (training of a machine operator). | Schulungen |
+| `rpsim.formulas.finance.categories.RPSIM_GOODS_PURCHASE` | `OPERATING_EXPENSE` | tool booking: operating expense (goods from a neighbour, R3-H3). | Roadmap V3 R3-Q1 |
+| `rpsim.formulas.finance.categories.RPSIM_CONTRACT_PENALTY` | `OPERATING_EXPENSE` | tool booking: operating expense (shortfall of a forward contract, R3-M2). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_OTHER` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_PROPERTY_BUY` | `INVESTMENT` | FS25 money type: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_VEHICLE_BUY` | `INVESTMENT` | FS25 money type: vehicle purchase in the shop (seen in the game's journal), investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2, manual test 10.9 |
 | `rpsim.formulas.finance.categories.FIELD_BUY` | `INVESTMENT` | FS25 money type: field purchase in the farmland menu (seen in the game's journal), investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2, manual test 10.11 |
 | `rpsim.formulas.finance.categories.RPSIM_FARMLAND_PURCHASE` | `INVESTMENT` | tool booking: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_PURCHASE` | `INVESTMENT` | tool booking: investment (used vehicle, R3-V2). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.SHOP_VEHICLE_SELL` | `DIVESTMENT` | FS25 money type: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_PROPERTY_SELL` | `DIVESTMENT` | FS25 money type: sale of a building (counterpart of `SHOP_PROPERTY_BUY`), divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.FIELD_SELL` | `DIVESTMENT` | FS25 money type: field sale in the farmland menu (counterpart of `FIELD_BUY`), divestment (not part of the cash flow). | Roadmap V2 R2-B2, manual test 10.11 |
 | `rpsim.formulas.finance.categories.RPSIM_FARMLAND_SALE` | `DIVESTMENT` | tool booking: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_SALE` | `DIVESTMENT` | tool booking: divestment (own vehicle to a neighbour, R3-V3). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_DISBURSEMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_INSTALLMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_PENALTY` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |

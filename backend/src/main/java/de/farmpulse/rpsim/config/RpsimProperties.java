@@ -840,6 +840,8 @@ public class RpsimProperties {
             m.put("RPSIM_SUBSIDY", FinanceClass.OPERATING_INCOME);
             m.put("RPSIM_LIVESTOCK_PREMIUM", FinanceClass.OPERATING_INCOME);
             m.put("RPSIM_TAX_REFUND", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_LEASE_INCOME", FinanceClass.OPERATING_INCOME); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_GOODS_SALE", FinanceClass.OPERATING_INCOME); // Roadmap V3 (R3-Q1)
             m.put("PURCHASE_FUEL", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_SEEDS", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_FERTILIZER", FinanceClass.OPERATING_EXPENSE);
@@ -864,15 +866,19 @@ public class RpsimProperties {
             m.put("RPSIM_SPONSORING", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_COMPENSATION", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_TRAINING", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_GOODS_PURCHASE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_CONTRACT_PENALTY", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_BUY", FinanceClass.INVESTMENT);
             m.put("FIELD_BUY", FinanceClass.INVESTMENT);
             m.put("RPSIM_FARMLAND_PURCHASE", FinanceClass.INVESTMENT);
+            m.put("RPSIM_VEHICLE_PURCHASE", FinanceClass.INVESTMENT); // Roadmap V3 (R3-Q1)
             m.put("SHOP_VEHICLE_SELL", FinanceClass.DIVESTMENT);
             m.put("SHOP_PROPERTY_SELL", FinanceClass.DIVESTMENT);
             m.put("FIELD_SELL", FinanceClass.DIVESTMENT);
             m.put("RPSIM_FARMLAND_SALE", FinanceClass.DIVESTMENT);
+            m.put("RPSIM_VEHICLE_SALE", FinanceClass.DIVESTMENT); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_CREDIT_DISBURSEMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_INSTALLMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_PENALTY", FinanceClass.FINANCING);

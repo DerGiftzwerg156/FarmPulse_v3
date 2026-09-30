@@ -1,7 +1,9 @@
 package de.farmpulse.rpsim.notice;
 
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import de.farmpulse.rpsim.bridge.BridgeEvents;
 import de.farmpulse.rpsim.contract.ContractBillingService;
@@ -36,11 +38,18 @@ import tools.jackson.databind.json.JsonMapper;
  *   <li>farmland deals: {@link NegotiationEngine#onDealFailed} (ownership back to the previous owner)</li>
  *   <li>everything: a notice on the dashboard and a log line</li>
  * </ul>
+ * Roadmap V3 (R3-Q1): an older mod refuses the new instruction types ({@link #ROADMAP_V3_TYPES}) with "unknown type …"
+ * (REJECTED) or NOT_SUPPORTED; the notice then carries {@code modOutdated = true} and says "Mod aktualisieren". The
+ * features that send these types cancel their deal themselves.
  */
 @Service
 public class FailedInstructionService {
 
     public static final String RELATED = "INSTRUCTION";
+
+    /** Roadmap V3 (R3-Q1): instruction types an older mod does not know. */
+    public static final Set<InstructionType> ROADMAP_V3_TYPES = EnumSet.of(InstructionType.STORAGE_TRANSFER,
+            InstructionType.MISSION_CREATE, InstructionType.VEHICLE_SPAWN, InstructionType.VEHICLE_REMOVE);
 
     private static final Logger log = LoggerFactory.getLogger(FailedInstructionService.class);
 
@@ -100,6 +109,11 @@ public class FailedInstructionService {
             // the money part of a farmland deal is reported together with its transfer
             return;
         }
+        if (ins.getBatchId() != null && ins.getType() == InstructionType.MONEY_TRANSACTION
+                && outbox.findByBatchId(ins.getBatchId()).stream().anyMatch(o -> ROADMAP_V3_TYPES.contains(o.getType()))) {
+            // Roadmap V3 (R3-Q1): likewise the money part of a goods or vehicle deal is reported with its instruction
+            return;
+        }
         log.warn("Mod did not execute {} {} {} ({}): {}", ins.getInstructionId(), ins.getType(), reason, e.status(),
                 ins.getAckMessage());
         String related = ins.getRelatedEntityType();
@@ -135,13 +149,33 @@ public class FailedInstructionService {
             d.put("farmlandId", p.path("farmlandId").asInt());
             d.put("direction", p.path("direction").asString(""));
             d.put("price", p.path("price").asLong(0));
+        } else if (ROADMAP_V3_TYPES.contains(ins.getType())) {
+            // Roadmap V3 (R3-Q1): the payload fields that name the deal
+            for (String field : new String[] { "direction", "fillType", "amount", "missionType", "farmlandId",
+                    "storeXmlFilename", "price", "vehicleId" }) {
+                if (p.has(field)) {
+                    d.put(field, p.get(field).isNumber() ? (Object) p.get(field).asDouble() : p.get(field).asString(""));
+                }
+            }
         } else {
             d.put("fillType", p.path("fillType").asString(""));
             d.put("sellPoint", p.path("sellPoint").asString(""));
         }
+        d.put("modOutdated", modOutdated(ins.getType(), ins.getAckMessage()));
         d.put("relatedType", related);
         d.put("relatedId", relatedId);
         d.put("handled", handled);
         notices.raise(sg, NoticeKind.INSTRUCTION_FAILED, d, RELATED, ins.getId());
+    }
+
+    /**
+     * Roadmap V3 (R3-Q1): true when the mod refused a Roadmap V3 instruction because it does not know or execute the
+     * type yet (validation "unknown type …" → REJECTED, or an action missing in the mod → NOT_SUPPORTED).
+     */
+    static boolean modOutdated(InstructionType type, String ackMessage) {
+        if (!ROADMAP_V3_TYPES.contains(type) || ackMessage == null) {
+            return false;
+        }
+        return ackMessage.contains("unknown type") || ackMessage.contains("NOT_SUPPORTED");
     }
 }

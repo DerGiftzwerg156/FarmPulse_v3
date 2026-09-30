@@ -133,6 +133,31 @@
             <en>Employee training</en>
             <de>Mitarbeiterschulung</de>
         </text>
+        <!-- Roadmap V3 (R3-Q1) -->
+        <text name="rpsim_money_LEASE_INCOME">
+            <en>Lease income</en>
+            <de>Pachteinnahme</de>
+        </text>
+        <text name="rpsim_money_GOODS_PURCHASE">
+            <en>Goods purchase</en>
+            <de>Warenkauf</de>
+        </text>
+        <text name="rpsim_money_GOODS_SALE">
+            <en>Goods sale</en>
+            <de>Warenverkauf</de>
+        </text>
+        <text name="rpsim_money_VEHICLE_PURCHASE">
+            <en>Used vehicle purchase</en>
+            <de>Maschinenkauf (gebraucht)</de>
+        </text>
+        <text name="rpsim_money_VEHICLE_SALE">
+            <en>Vehicle sale</en>
+            <de>Maschinenverkauf</de>
+        </text>
+        <text name="rpsim_money_CONTRACT_PENALTY">
+            <en>Contract penalty</en>
+            <de>Vertragsstrafe</de>
+        </text>
         <!-- Schulungen: start of a helper refused in the strict mode (no free machine operator with the training) -->
         <text name="rpsim_ai_noTraining">
             <en>No trained machine operator available</en>

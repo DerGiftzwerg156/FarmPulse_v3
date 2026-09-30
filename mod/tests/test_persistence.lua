@@ -18,6 +18,7 @@ function T.TestPersistence:testRoundTrip()
     state.savegameId = "sg1"
     state.processed.ins_0231 = { gameTime = 48214000, status = "APPLIED" }
     state.processed.ins_bad = { gameTime = 5, status = "REJECTED", message = "why" }
+    state.processed.ins_vs = { gameTime = 7, status = "APPLIED", result = { vehicleId = "veh_9" } } -- R3-Q1
     state.priceEvents:add({ id = "ins_0232", priceMode = "MULTIPLIER", fillType = "WHEAT", sellPoint = "MillNorth",
         gameTimeStart = 48213000, peakMultiplier = 1.18, rampUpHours = 24, holdHours = 120, decayHours = 96 })
     state.priceEvents:add({ id = "ins_0298", priceMode = "FIXED", fillType = "WHEAT", sellPoint = "MillNorth",
@@ -33,6 +34,7 @@ function T.TestPersistence:testRoundTrip()
     lu.assertEquals(loaded.savegameId, "sg1")
     lu.assertEquals(loaded.processed.ins_0231, { gameTime = 48214000, status = "APPLIED" })
     lu.assertEquals(loaded.processed.ins_bad.message, "why")
+    lu.assertEquals(loaded.processed.ins_vs.result, { vehicleId = "veh_9" })
     lu.assertEquals(#loaded.priceEvents.events, 2)
     lu.assertEquals(loaded.priceEvents.events[1].peakMultiplier, 1.18)
     lu.assertEquals(loaded.priceEvents.events[2].deliveredQuantity, 8200)

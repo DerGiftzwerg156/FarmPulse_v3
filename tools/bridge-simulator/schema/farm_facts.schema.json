@@ -83,6 +83,22 @@
         "weedsEnabled": { "type": "boolean" }, "stonesEnabled": { "type": "boolean" } } },
     "weather": { "type": "object", "required": ["raining", "rainFallScale", "groundWetness"], "properties": {
       "raining": { "type": "boolean" }, "rainFallScale": { "type": "number", "minimum": 0 },
-      "groundWetness": { "type": "number", "minimum": 0 }, "temperature": { "type": "number" } } }
+      "groundWetness": { "type": "number", "minimum": 0 }, "temperature": { "type": "number" } } },
+    "npcFields": { "type": "array", "items": { "type": "object",
+      "required": ["farmlandId", "name", "hectares", "growthState", "weedState", "stoneLevel", "sprayLevel",
+        "limeLevel", "plowLevel"],
+      "properties": { "farmlandId": { "type": "integer" }, "name": { "type": "string" },
+        "hectares": { "type": "number", "minimum": 0 }, "fruitType": { "type": "string", "minLength": 1 },
+        "growthState": { "type": "integer", "minimum": 0 },
+        "minHarvestingGrowthState": { "type": "integer", "minimum": 0 },
+        "maxHarvestingGrowthState": { "type": "integer", "minimum": 0 },
+        "weedState": { "type": "integer", "minimum": 0 }, "stoneLevel": { "type": "integer", "minimum": 0 },
+        "sprayLevel": { "type": "integer", "minimum": 0 }, "limeLevel": { "type": "integer", "minimum": 0 },
+        "plowLevel": { "type": "integer", "minimum": 0 }, "groundType": { "type": "string" },
+        "withered": { "type": "boolean" }, "cut": { "type": "boolean" }, "fillType": { "type": "string", "minLength": 1 },
+        "litersPerSqm": { "type": "number", "minimum": 0 } } } },
+    "tradeStorage": { "type": "array", "items": { "type": "object", "required": ["fillType", "amount", "freeCapacity"],
+      "properties": { "fillType": { "type": "string", "minLength": 1 }, "amount": { "type": "number", "minimum": 0 },
+        "freeCapacity": { "type": "number", "minimum": 0 } } } }
   }
 }

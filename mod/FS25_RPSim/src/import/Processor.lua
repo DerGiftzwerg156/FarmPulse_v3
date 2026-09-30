@@ -97,19 +97,20 @@ function RPSimProcessor.process(state, doc, ctx)
                 --    not executed (the backend always puts the FARMLAND_TRANSFER before its MONEY_TRANSACTION)
                 local aborted = nil
                 for _, ins in ipairs(pending) do
-                    local ok, err
+                    local ok, err, res
                     if aborted ~= nil then
                         ok, err = false, "BATCH_ABORTED: " .. aborted
                     else
-                        ok, err = RPSimProcessor.applyOne(state, ins, ctx)
+                        ok, err, res = RPSimProcessor.applyOne(state, ins, ctx)
                         if not ok and #pending > 1 then
                             aborted = tostring(ins.instructionId)
                         end
                     end
                     if ok then
                         -- err doubles as an optional note on success (e.g. NOTIFICATION "EXPIRED")
+                        -- Roadmap V3 (R3-Q1): optional result of the action (e.g. vehicleId, missionId) for the ack
                         state.processed[ins.instructionId] = { gameTime = ctx.gameTime, status = "APPLIED",
-                            message = err }
+                            message = err, result = RPSimProcessor.normalizeResult(res) }
                         result.applied = result.applied + 1
                         if ins.type == "FARMLAND_TRANSFER" then
                             result.marketContextDirty = true
@@ -176,8 +177,40 @@ function RPSimProcessor.applyOne(state, ins, ctx)
             return false, "NOT_SUPPORTED"
         end
         return action(ins)
+    elseif RPSimProcessor.V3_ACTIONS[ins.type] ~= nil then
+        -- Roadmap V3 (R3-Q1): executed once the feature brings its adapter action; until then NOT_SUPPORTED
+        local action = ctx.actions[RPSimProcessor.V3_ACTIONS[ins.type]]
+        if action == nil then
+            return false, "NOT_SUPPORTED"
+        end
+        return action(ins)
     end
     return false, "unsupported type"
+end
+
+--- Roadmap V3 (R3-Q1): instruction type -> adapter action (ctx.actions) that executes it. An action returns
+-- ok, err, result; result is an optional object for the ack (vehicleId after VEHICLE_SPAWN, missionId after
+-- MISSION_CREATE).
+RPSimProcessor.V3_ACTIONS = { STORAGE_TRANSFER = "storageTransfer", MISSION_CREATE = "missionCreate",
+    VEHICLE_SPAWN = "vehicleSpawn", VEHICLE_REMOVE = "vehicleRemove" }
+
+--- Keeps only the plain values (string, number, boolean) of an action result; nil when nothing is left.
+function RPSimProcessor.normalizeResult(res)
+    if type(res) ~= "table" then
+        return nil
+    end
+    local out, any = {}, false
+    for k, v in pairs(res) do
+        local t = type(v)
+        if type(k) == "string" and (t == "string" or t == "boolean" or (t == "number" and v == v)) then
+            out[k] = v
+            any = true
+        end
+    end
+    if not any then
+        return nil
+    end
+    return out
 end
 
 --- Moves ended FIXED contracts into the report list (reverse channel for delivered quantities).
@@ -212,6 +245,9 @@ function RPSimProcessor.buildAckDocument(state)
         local a = { instructionId = id, appliedAtGameTime = entry.gameTime, status = entry.status }
         if entry.message ~= nil then
             a.message = entry.message
+        end
+        if entry.result ~= nil then
+            a.result = entry.result -- Roadmap V3 (R3-Q1)
         end
         acks[#acks + 1] = a
     end

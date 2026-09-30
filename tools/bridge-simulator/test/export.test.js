@@ -115,7 +115,9 @@ test('vanilla contracts are exported and follow the player (TODO T-22)', () => {
 const V2_BLOCKS = ['finances', 'workforce', 'husbandries', 'fields', 'fieldRules', 'weather'];
 const V2_SCENARIOS = { 'wohlhabender-hof': ['finances', 'husbandries', 'fields', 'fieldRules', 'weather'],
   'helfer-hof': ['finances', 'workforce', 'weather'],
-  'tierhof-krank': ['finances', 'husbandries', 'weather'], 'ernte-herbst': ['finances', 'fields', 'fieldRules', 'weather'] };
+  'tierhof-krank': ['finances', 'husbandries', 'weather'], 'ernte-herbst': ['finances', 'fields', 'fieldRules', 'weather'],
+  // Roadmap V3 (R3-Q2): the dry summer uses the V2 blocks fields and weather
+  'duerre-sommer': ['fields', 'fieldRules', 'weather'] };
 
 test('Roadmap V2: the new scenarios export their blocks, all others leave them out (older mod)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {

@@ -11,7 +11,8 @@ versions or this changelog do not match.
 ## [Unreleased]
 
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training
-is cancelled again) and lets every machine operator drive every vehicle.
+is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
+types and booking reasons; the notice then says "Mod aktualisieren".
 
 ### Added
 
@@ -27,6 +28,25 @@ is cancelled again) and lets every machine operator drive every vehicle.
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Roadmap V3 groundwork (R3-Q):** the bridge contract for the next features, without game-visible changes yet.
+  - `farm_facts.json` knows two more optional blocks - `npcFields` (fields without an owner, same entries as `fields`,
+    R3-H1) and `tradeStorage` (fill level and free capacity of the own silos per fill type, R3-H2);
+    `market_context.json` knows `storeVehicles` (vehicle catalog of the shop, R3-V1). `schemaVersion` stays `1`; a
+    missing block means "not present". The mod normalises the blocks once a feature collects them; `BridgeDtos` /
+    `BridgeValidator` read and check them.
+  - New instruction types `STORAGE_TRANSFER`, `MISSION_CREATE`, `VEHICLE_SPAWN` and `VEHICLE_REMOVE` are validated by
+    the mod and acknowledged `FAILED` / `NOT_SUPPORTED` until R3-H3 / R3-H5 / R3-V2 / R3-V3 execute them. An ack may
+    carry an optional `result` (e.g. `vehicleId`, `missionId`); the mod keeps it in the savegame, the backend stores it
+    with the instruction. When a mod refuses one of the new types (unknown type or not supported), the dashboard notice
+    says "Mod aktualisieren".
+  - New booking reasons `LEASE_INCOME`, `GOODS_PURCHASE`, `GOODS_SALE`, `VEHICLE_PURCHASE`, `VEHICLE_SALE`,
+    `CONTRACT_PENALTY` in mod, backend, booking titles (`modDesc.xml`) and the German UI labels; journal classes in
+    `rpsim.formulas.finance.categories` (lease income and goods operating, vehicle purchase investment, vehicle sale
+    divestment, contract penalty operating expense).
+  - Bridge simulator: scenarios `nachbarhandel` (neighbour fields, own silos with free capacity, shop catalog) and
+    `duerre-sommer` (dry summer without rain); the simulator executes the new instructions like the planned mod.
+  - Docs: every new field and instruction with its source in the FS25 code (`docs/dev/bridge-protocol.md`) and
+    section 11 of the manual test plan with one check per "Im Spiel prüfen" point of the roadmap.
 - **Trainings for machine operators ("Schulungen"):** without a training a machine operator drives small and medium
   tractors as FS25 helper; large tractors, combines, forage harvesters, special harvesters, trucks and self-propelled
   machines / loaders need the matching training (FS25 shop category of the driven vehicle, configurable in

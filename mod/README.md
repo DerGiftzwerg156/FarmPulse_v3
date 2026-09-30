@@ -44,6 +44,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     Die Antwort schreibt der Mod sofort nach `export/player_responses.json` (R2-F1); vom Backend quittierte Antworten
     (`ackedResponses`) und zurückgezogene Fragen (`withdrawnPrompts`) verschwinden. Die Taste „FarmPulse: offene
     Frage“ (Standard Alt+J, in der Steuerung änderbar; R2-F3) öffnet die nächste Frage, auch im Fahrzeug
+  - `STORAGE_TRANSFER`, `MISSION_CREATE`, `VEHICLE_SPAWN`, `VEHICLE_REMOVE` (Roadmap V3, R3-Q1) – werden geprüft und
+    bis zur Umsetzung von R3-H3/H4, R3-H5, R3-V2 und R3-V3 mit `FAILED` / `NOT_SUPPORTED` quittiert. Eine Quittung kann
+    ein Ergebnis `result` tragen (z. B. `vehicleId`, `missionId`); es wird mit im Spielstand gespeichert
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.
