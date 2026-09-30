@@ -234,7 +234,8 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
 - **Helfer im Spiel:** *Helferlohn über das Gehalt* (Standard an) – fährt ein Maschinenführer, bucht das Spiel keinen
   Helferlohn. Ausgeschaltet zahlst du zusätzlich den normalen Spiellohn. *Strenger Modus* (Standard aus) – höchstens
   so viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann keine Helfer, streikende oder
-  freigestellte zählen nicht. Maschinen mit Schulungspflicht starten im strengen Modus nur mit einem freien,
+  freigestellte zählen nicht. Das gilt auch für Helfer von Mods wie Courseplay oder AutoDrive: Ist das Limit erreicht,
+  startet der Helfer nicht oder hält direkt nach dem Start wieder an („kein freier Maschinenführer“). Maschinen mit Schulungspflicht starten im strengen Modus nur mit einem freien,
   geschulten Maschinenführer.
 - **Mechaniker:in.** Setzt zu jedem Monatsbeginn deine am stärksten abgenutzten Maschinen instand – so weit ihre
   Zeit reicht (je besser das Können, desto mehr). Bleiben Maschinen liegen, steigt die Arbeitsbelastung. Über die

@@ -170,6 +170,15 @@ hooks `AIJob` with `Utils`:
 - `AIJob.stop` (appended): the employee is free again after the stop message.
 - `strictHelperLimit`: `g_currentMission.maxNumHirables` = min(original value, active machine operators); the original
   value is remembered and written back when the switch is off or the map is unloaded. 🟡 whether the game resets it.
+  The game only reads `maxNumHirables` in `AISystem:getAILimitedReached()`, which the map menu and the key in the
+  vehicle ask before a start; mods like Courseplay or AutoDrive start helpers their own way. So the mod enforces the
+  limit itself as well: `getIsStartable` refuses a job of the player farm with the own state `202`
+  (`rpsim_ai_helperLimitStart`, plus a `CRITICAL` notification) while the farm already runs as many helpers as it has
+  active operators; and `AIJob.start` (appended) queues a job of the player farm started over that limit on the server,
+  which `RPSim:update` stops in the next frame (not inside `AISystem:startJob`) with the own AI message
+  `RPSIM_HELPER_LIMIT` ("%s hält an: kein freier Maschinenführer (strenger Modus)"; fallback: the unknown-error message)
+  plus a notification. That job gets no operator. 🟡 whether the Courseplay / AutoDrive jobs run through `AIJob:start`
+  ([manual test plan 10.22](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)).
 - Worked time: at every export the game time since the last export is credited to the employees driving a running job
   of the player farm (`aiSystem:getActiveJobs()`, `job.startedFarmId`). A rewound game time only resets the sample
   point.
