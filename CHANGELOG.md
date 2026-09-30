@@ -15,6 +15,18 @@ is cancelled again) and lets every machine operator drive every vehicle.
 
 ### Added
 
+- **Roadmap V3 (`docs/architecture/ROADMAP_V3.md`):** plan for the next features, each checked against the FS25 code -
+  tablet access inside the home network (PIN, address, home-screen icon), trade with neighbours from and into own silos
+  for every fill type with a silo, real field contracts created by neighbours, leasing out own fields, loan collateral,
+  12-month liquidity plan and annual report, price alerts, forward contracts, farm shop, drought with aid and index
+  insurance, used machines bought from / sold to NPCs, office clerk and apprentice, milestones and a chronicle export.
+  Open decisions are listed in `QUESTIONS.md`.
+- **Roadmap V3.1 (`docs/architecture/ROADMAP_V3.1.md`):** addition to V3, checked against the FS25 code - contractor
+  field work on own fields (field finish task like a completed contract, harvest into the silo), borrowed and demo
+  machines, livestock trade with neighbours, winter service on snow days, seasonal workers, area payment application,
+  investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
+  with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
+  farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
 - **Trainings for machine operators ("Schulungen"):** without a training a machine operator drives small and medium
   tractors as FS25 helper; large tractors, combines, forage harvesters, special harvesters, trucks and self-propelled
   machines / loaders need the matching training (FS25 shop category of the driven vehicle, configurable in
