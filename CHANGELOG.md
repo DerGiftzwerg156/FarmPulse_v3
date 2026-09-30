@@ -10,8 +10,11 @@ versions or this changelog do not match.
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-30
+
 The web app becomes the **Hof-Tablet**: every function is an app on a tablet home screen. Update the mod
-`FS25_RPSim` for the temperature in the status bar; without it the status bar shows rain and ground wetness only.
+`FS25_RPSim` to 1.7.0.0 together with the backend: without it the status bar shows rain and ground wetness only (no
+temperature) and a Sondertilgung is reversed because the older mod rejects its money reasons.
 
 ### Added
 
@@ -81,6 +84,11 @@ The web app becomes the **Hof-Tablet**: every function is an app on a tablet hom
   exported by design until now (see Changed).
 - The first export logs every storage place in `log.txt` (`Stock: …` plus one `Storage …` line each: kind, counted
   or ignored with the reason, fill levels), so a missing stock can be traced in the live test.
+- **Booking journal: asset purchases and sales counted as operating business.** The FS25 money types seen in the
+  live test were unknown to the backend, so a vehicle or field purchase lowered the monthly result and the cash flow
+  of the credit check. `SHOP_VEHICLE_BUY` and `FIELD_BUY` now count as investment, `SHOP_PROPERTY_SELL` and
+  `FIELD_SELL` as divestment (`rpsim.formulas.finance.categories`). `OTHER` (*Sonstiges*) stays unclassified and
+  counts by its sign. The bridge simulator books farmland-menu trades as `FIELD_BUY` / `FIELD_SELL`.
 
 ## [1.5.1] - 2026-09-28
 

@@ -134,9 +134,9 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   Kredite. Die Bank rechnet damit: Dein Cashflow ist der Durchschnitt der abgeschlossenen Monate, Investitionen
   zählen nicht als Verlust, und die echten Leasingkosten gelten als laufende Verpflichtung. Mit einem älteren Mod
   rechnet die Bank weiter mit dem Kontostand.
-- **Achtung Fahrzeugkauf:** Unter welcher Buchungsart FS25 einen Fahrzeugkauf verbucht, ist noch nicht geprüft. Bis
-  das geklärt ist, erscheint ein Fahrzeugkauf als Ausgabe (meist als *Unbekannte Buchung*) und senkt das
-  Monatsergebnis. Gebäudekäufe zählen schon als Investition.
+- **Käufe und Verkäufe von Anlagen:** Fahrzeug-, Gebäude- und Feldkäufe zählen als Investition, ihre Verkäufe als
+  Anlagenverkauf – beides senkt oder hebt dein Monatsergebnis nicht. Buchungen unter *Sonstiges* zählen je nach
+  Vorzeichen als Einnahme oder Ausgabe des laufenden Betriebs.
 - **Die Bank warnt:** Macht dein Betrieb zwei Monate in Folge Verlust, während ein Kredit läuft, meldet sich die
   Bank, bevor eine Rate platzt (einmal je Verlustphase).
 - **Rekordmonat:** Hast du den höchsten Ernteerlös eines Monats seit Beginn, gratuliert die Genossenschaft – das

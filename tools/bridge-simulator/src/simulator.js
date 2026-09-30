@@ -430,7 +430,7 @@ export class BridgeSimulator {
 
   /**
    * Control API (Roadmap V2 R2-D2): the player buys (toPlayer) or sells a farmland in the field menu of the game at its
-   * price. A purchase is booked as SHOP_PROPERTY_BUY (the money type the FS25 code uses for property purchases).
+   * price. Booked as FIELD_BUY / FIELD_SELL (the money types the game's journal shows for the farmland menu).
    */
   vanillaFarmland(farmlandId, toPlayer) {
     const f = this.farmlands.find((x) => x.farmlandId === farmlandId);
@@ -439,7 +439,7 @@ export class BridgeSimulator {
     f.ownerFarmId = toPlayer ? 1 : 0;
     const amount = toPlayer ? -f.price : f.price;
     this.balance += amount;
-    if (toPlayer) this.book('SHOP_PROPERTY_BUY', amount);
+    this.book(toPlayer ? 'FIELD_BUY' : 'FIELD_SELL', amount);
     return { farmlandId, ownerFarmId: f.ownerFarmId, balance: this.balance };
   }
 

@@ -703,8 +703,9 @@ placeholders.
 Real farm finances from the mod's booking journal (`farm_facts.finances`, sums per FS25 period and money type). Each
 category belongs to exactly one class; the operating cash flow of the credit check is operating income + expenses of
 the complete months in `credit.cashflow-window-days` (without a journal the V1 balance method stays). Only money type
-names evidenced in the FS25 code are listed - vehicle purchases have no evidenced name yet ([manual test plan
-10.9](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)); unknown categories count as operating by their sign and are
+names evidenced in the FS25 code or in the game's journal are listed (vehicle and field purchases were checked in the
+game, [manual test plan 10.9 / 10.11](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)); `OTHER` (*Sonstiges*) stays
+unlisted on purpose because it can be anything; unknown categories count as operating by their sign and are
 logged once (add them here). Tool bookings arrive as `RPSIM_<REASON>`; their classes follow the V1 list of
 non-operating reasons (`LiquidityService.NON_OPERATING`).
 
@@ -744,9 +745,12 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_COMPENSATION` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_OTHER` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_PROPERTY_BUY` | `INVESTMENT` | FS25 money type: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.SHOP_VEHICLE_BUY` | `INVESTMENT` | FS25 money type: vehicle purchase in the shop (seen in the game's journal), investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2, manual test 10.9 |
+| `rpsim.formulas.finance.categories.FIELD_BUY` | `INVESTMENT` | FS25 money type: field purchase in the farmland menu (seen in the game's journal), investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2, manual test 10.11 |
 | `rpsim.formulas.finance.categories.RPSIM_FARMLAND_PURCHASE` | `INVESTMENT` | tool booking: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_VEHICLE_SELL` | `DIVESTMENT` | FS25 money type: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_PROPERTY_SELL` | `DIVESTMENT` | FS25 money type: sale of a building (counterpart of `SHOP_PROPERTY_BUY`), divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.FIELD_SELL` | `DIVESTMENT` | FS25 money type: field sale in the farmland menu (counterpart of `FIELD_BUY`), divestment (not part of the cash flow). | Roadmap V2 R2-B2, manual test 10.11 |
 | `rpsim.formulas.finance.categories.RPSIM_FARMLAND_SALE` | `DIVESTMENT` | tool booking: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_DISBURSEMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_INSTALLMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |

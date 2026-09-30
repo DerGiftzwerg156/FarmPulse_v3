@@ -774,7 +774,7 @@ public class RpsimProperties {
      * Roadmap V2 R2-B (real farm finances from the mod's booking journal). Placeholders.
      * <ul>
      *   <li>categories: FS25 money type (name in the global MoneyType table) or RPSIM_&lt;REASON&gt; -> class. Only names
-     *   evidenced in the FS25 code are listed; unknown categories count as operating by their sign (logged once).</li>
+     *   evidenced in the FS25 code or the game's journal are listed; unknown categories count as operating by their sign (logged once).</li>
      *   <li>early warning (R2-B5): the bank writes when the operating result of this many complete months in a row was
      *   negative while a bank loan runs - once per streak.</li>
      *   <li>record (R2-B5): the cooperative congratulates on the highest HARVEST_INCOME + SOLD_PRODUCTS of a complete
@@ -828,9 +828,12 @@ public class RpsimProperties {
             m.put("RPSIM_COMPENSATION", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
+            m.put("SHOP_VEHICLE_BUY", FinanceClass.INVESTMENT);
+            m.put("FIELD_BUY", FinanceClass.INVESTMENT);
             m.put("RPSIM_FARMLAND_PURCHASE", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_SELL", FinanceClass.DIVESTMENT);
             m.put("SHOP_PROPERTY_SELL", FinanceClass.DIVESTMENT);
+            m.put("FIELD_SELL", FinanceClass.DIVESTMENT);
             m.put("RPSIM_FARMLAND_SALE", FinanceClass.DIVESTMENT);
             m.put("RPSIM_CREDIT_DISBURSEMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_INSTALLMENT", FinanceClass.FINANCING);

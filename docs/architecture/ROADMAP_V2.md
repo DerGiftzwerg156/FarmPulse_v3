@@ -116,9 +116,10 @@ der Hof sein Geld verdient.
 eine echte Einnahmen-/Ausgabenrechnung.
 
 **Stand 28.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Als Investition zählen nur im FS25-Code
-belegte Namen (`SHOP_PROPERTY_BUY`, Desinvestition `SHOP_VEHICLE_SELL`). Der Name des Fahrzeugkaufs ist nicht belegt;
-bis er im Spiel geprüft ist (Testplan 10.9), zählt ein Fahrzeugkauf operativ. Die Akzeptanz „Maschinenkauf senkt den
-Cashflow nicht“ gilt deshalb erst, wenn der Name in `rpsim.formulas.finance.categories` steht. Der Cashflow ist der
+belegte Namen (`SHOP_PROPERTY_BUY`, Desinvestition `SHOP_VEHICLE_SELL`). Der Name des Fahrzeugkaufs war nicht belegt;
+seit dem 30.09.2026 ist er im Spiel geprüft (Testplan 10.9): `SHOP_VEHICLE_BUY` zählt als Investition, ebenso
+`FIELD_BUY` (Feldkauf, Desinvestition `FIELD_SELL`, Testplan 10.11). `OTHER` bleibt ungelistet und zählt nach
+Vorzeichen. Damit gilt die Akzeptanz „Maschinenkauf senkt den Cashflow nicht“. Der Cashflow ist der
 Durchschnitt der abgeschlossenen Monate im Fenster, die Frühwarnung kommt nur bei laufendem Bankkredit, das
 Monatsergebnis der Oberfläche ist das operative Ergebnis. Der Name eines `moneyType` wird per Rückwärts-Abgleich mit
 der Tabelle `MoneyType` bestimmt; nicht gefundene Buchungen heißen `UNKNOWN`.
