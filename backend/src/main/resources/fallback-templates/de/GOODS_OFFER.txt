@@ -1,0 +1,6 @@
+Ware von mir: {{fillType}}
+Moin,
+
+{{intro}} Ich kann dir {{amount}} Liter {{fillType}} abgeben, für {{price}} € ({{unitPrice}} € je 1.000 Liter). Die Ware kommt direkt in dein Silo. Das Angebot gilt {{answerDays}} Tage – sag in der App „Handel“ Bescheid.
+
+{{characterName}}

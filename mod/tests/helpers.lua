@@ -224,6 +224,12 @@ function helpers.fakeGame(opts)
     FarmlandManager = { NO_OWNER_FARM_ID = 0 }
     g_fillTypeManager = {
         getFillTypeNameByIndex = function(_, i) return fillTypes[i] end,
+        getFillTypeIndexByName = function(_, name)
+            for i, n in pairs(fillTypes) do
+                if n == name then return i end
+            end
+            return nil
+        end,
     }
     local farm = { farmId = 1, money = opts.money or 100000, loan = opts.loan or 0 }
     game.farm = farm

@@ -566,6 +566,42 @@ export interface ReputationView {
   label: string;
 }
 
+/** Roadmap V3 R3-H: app "Handel" - neighbours, own silo goods and the offers, requests and contracts. */
+export interface TradeStockView {
+  fillType: string;
+  amount: number;
+  /** Price per 1000 l the neighbour asks from the player; null = no price known. */
+  unitPrice: number | null;
+}
+
+export interface TradeNeighborView {
+  id: number;
+  name: string;
+  /** DAIRY / ARABLE / MIXED */
+  role: string | null;
+  trustLevel: TrustLevel;
+  stock: TradeStockView[];
+  needs: string[];
+  farmlands: number[];
+}
+
+export interface TradeSiloView {
+  fillType: string;
+  amount: number;
+  freeCapacity: number;
+}
+
+export interface TradeView {
+  /** The mod reports the own silos (else no trade: older mod). */
+  silosTracked: boolean;
+  /** The mod reports the neighbour fields (else no stock from harvests, no contracts). */
+  fieldsTracked: boolean;
+  missionLimitReached: boolean | null;
+  silos: TradeSiloView[];
+  neighbors: TradeNeighborView[];
+  cases: CaseView[];
+}
+
 /** Roadmap V3 R3-N1..N3: home-network access (card "Tablet & Netzwerk", PIN login). */
 export interface LanStatusView {
   enabled: boolean;

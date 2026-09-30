@@ -17,6 +17,8 @@ import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.SatisfactionService;
 import de.farmpulse.rpsim.employee.TrainingService;
 import de.farmpulse.rpsim.negotiation.NegotiationEngine;
+import de.farmpulse.rpsim.neighbor.NeighborMissionService;
+import de.farmpulse.rpsim.neighbor.NeighborTradeService;
 import de.farmpulse.rpsim.payroll.PayrollScheduler;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
@@ -64,11 +66,16 @@ public class FailedInstructionService {
     private final MaintenanceService maintenance;
     private final TrainingService training;
     private final JsonMapper json;
+    private final NeighborTradeService trade;
+    private final NeighborMissionService neighborMissions;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
                                     ContractBillingService billing, LeaseService lease, MaintenanceService maintenance,
-                                    TrainingService training, JsonMapper json) {
+                                    TrainingService training, NeighborTradeService trade,
+                                    NeighborMissionService neighborMissions, JsonMapper json) {
+        this.trade = trade;
+        this.neighborMissions = neighborMissions;
         this.training = training;
         this.outbox = outbox;
         this.savegames = savegames;
@@ -132,6 +139,12 @@ public class FailedInstructionService {
         } else if (LeaseService.RELATED.equals(related) && relatedId != null) {
             handled = lease.onInstructionFailed(relatedId, ins.getType(),
                     "TO_PLAYER".equals(p.path("direction").asString("")), reason);
+        } else if (NeighborTradeService.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.STORAGE_TRANSFER) {
+            handled = trade.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-H3 / R3-H4
+        } else if (NeighborMissionService.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.MISSION_CREATE) {
+            handled = neighborMissions.onInstructionFailed(relatedId); // R3-H5
         } else if (NegotiationEngine.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.FARMLAND_TRANSFER) {
             handled = negotiations.onDealFailed(sg, relatedId);

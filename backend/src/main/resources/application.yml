@@ -448,6 +448,51 @@ rpsim:
       completed-trust-delta: 3
       client-trust-delta: 2
       failed-trust-delta: -3
+    neighbor-trade:               # Roadmap V3 R3-H2..H4: trade with the neighbours (owner decisions, placeholders)
+      roles:                      # role -> goods the neighbour needs (only goods an own silo accepts are traded)
+        DAIRY: [STRAW, SILAGE, DRYGRASS_WINDROW]
+        ARABLE: [SEEDS, FERTILIZER, LIQUIDFERTILIZER]
+        MIXED: [STRAW, SEEDS]
+      neighbor-sell-share: 1.05   # neighbour sells at 105 % of the best sell point price
+      neighbor-buy-share: 0.95    # neighbour buys at 95 %
+      trust-divisor: 20           # price bonus/malus = trust / 20, capped (like the negotiation engine)
+      trust-cap: 0.05
+      harvest-share: 0.3          # share of a neighbour's harvest that goes into his stock
+      by-products:                # fruit -> by-product of the harvest
+        WHEAT: STRAW
+        BARLEY: STRAW
+        OAT: STRAW
+      by-product-share: 0.5       # by-product litres = 50 % of the grain litres
+      monthly-decay: 0.2          # the stock sinks by 20 % per game month (sales, own use)
+      reference-prices:           # EUR per 1000 l for goods without a sell point on the map
+        STRAW: 120
+        SILAGE: 180
+        DRYGRASS_WINDROW: 250
+        SEEDS: 900
+        FERTILIZER: 1500
+        LIQUIDFERTILIZER: 1200
+      max-messages-per-month: 2
+      offer-probability-per-month: 0.3
+      request-probability-per-month: 0.3
+      amount-min: 2000            # litres, rounded to amount-step
+      amount-max: 10000
+      amount-step: 500
+      max-share: 0.5              # at most 50 % of the neighbour's stock / of the player's stock
+      answer-days: 5
+      trade-trust-delta: 2
+      decline-trust-delta: -1
+      ignore-trust-delta: -2
+      stock-missing-trust-delta: -1
+      reputation-delta: 1         # village reputation per fulfilled request of a neighbour ...
+      reputation-max-per-year: 3  # ... at most 3 times per FS25 year
+    neighbor-missions:            # Roadmap V3 R3-H5: real contracts of the neighbours (owner decisions, placeholders)
+      types: [PLOW, STONE_PICK]
+      probability-per-month: 0.4
+      max-per-month: 1
+      answer-days: 5
+      success-bonus: 250          # EUR, booked as OTHER
+      success-trust-delta: 3
+      failure-trust-delta: -3
     mechanic:                     # Roadmap V2 R2-A6: employed mechanic repairs partially (placeholders)
       repair-points-per-month: 60
       repair-below-condition: 90

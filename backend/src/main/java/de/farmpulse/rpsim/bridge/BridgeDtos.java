@@ -16,14 +16,25 @@ public final class BridgeDtos {
      * Roadmap V2 (R2-Q1): {@code finances}, {@code workforce}, {@code husbandries}, {@code fields} and {@code weather}
      * are optional. {@code null} means "not present" (the mod is too old or does not collect the block yet) and must
      * not be read as "empty": an empty block ({@code fields: []}) is a real answer of the game. Roadmap V3 (R3-Q1):
-     * {@code npcFields} (R3-H1) and {@code tradeStorage} (R3-H2) follow the same rule.
+     * {@code npcFields} (R3-H1) and {@code tradeStorage} (R3-H2) follow the same rule. {@code missionLimitReached}
+     * (R3-H5): the game's contract limit of the player farm (MissionManager:hasFarmReachedMissionLimit), null = unknown.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
                             Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
                             Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
                             Weather weather, FieldRules fieldRules, List<Field> npcFields,
-                            List<TradeStorageEntry> tradeStorage) {
+                            List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached) {
+
+        /** Roadmap V3 R3-Q1 contract without the contract limit of R3-H5 (older mod). */
+        public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
+                         Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
+                         Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
+                         Weather weather, FieldRules fieldRules, List<Field> npcFields,
+                         List<TradeStorageEntry> tradeStorage) {
+            this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, missions, finances,
+                    workforce, husbandries, fields, weather, fieldRules, npcFields, tradeStorage, null);
+        }
 
         /** Roadmap V2 contract without the blocks of Roadmap V3 (older mod). */
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,

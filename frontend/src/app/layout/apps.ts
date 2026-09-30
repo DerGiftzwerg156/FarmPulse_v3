@@ -27,6 +27,8 @@ export const APPS: AppDef[] = [
   { id: 'fields', label: 'nav.farmland', path: '/farmland', icon: 'map', tone: 'farm' },
   { id: 'stable', label: 'nav.stable', path: '/stall', icon: 'barn', tone: 'farm' },
   { id: 'workshop', label: 'nav.workshop', path: '/werkstatt', icon: 'wrench', tone: 'farm' },
+  // Roadmap V3 R3-H (owner decision: own app): trade and contracts of the neighbours
+  { id: 'trade', label: 'nav.trade', path: '/handel', icon: 'coins', tone: 'farm' },
   { id: 'diary', label: 'nav.diary', path: '/diary', icon: 'book', tone: 'sys' },
   { id: 'settings', label: 'nav.settings', path: '/settings', icon: 'settings', tone: 'sys' },
 ];

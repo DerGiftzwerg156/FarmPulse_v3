@@ -53,6 +53,18 @@ describe('Village', () => {
     expect(el.querySelectorAll('[data-testid="character-row"]').length).toBe(3);
   });
 
+  it('links an active neighbour to the trade app', () => {
+    const { el, fixture, http } = setup();
+    (el.querySelectorAll('[data-testid="character-row"]')[1] as HTMLButtonElement).click();
+    http.expectOne('/api/characters/4').flush(detail(gerd));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="trade-link"]')?.getAttribute('href')).toBe('/handel?neighbor=4');
+    (el.querySelectorAll('[data-testid="character-row"]')[0] as HTMLButtonElement).click();
+    http.expectOne('/api/characters/1').flush(detail(heike));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="trade-link"]')).toBeNull();
+  });
+
   it('opens the detail with personality information', () => {
     const { el, fixture, http } = setup();
     (el.querySelectorAll('[data-testid="character-row"]')[1] as HTMLButtonElement).click();

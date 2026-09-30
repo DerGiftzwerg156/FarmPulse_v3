@@ -97,6 +97,7 @@
         "plowLevel": { "type": "integer", "minimum": 0 }, "groundType": { "type": "string" },
         "withered": { "type": "boolean" }, "cut": { "type": "boolean" }, "fillType": { "type": "string", "minLength": 1 },
         "litersPerSqm": { "type": "number", "minimum": 0 } } } },
+    "missionLimitReached": { "type": "boolean" },
     "tradeStorage": { "type": "array", "items": { "type": "object", "required": ["fillType", "amount", "freeCapacity"],
       "properties": { "fillType": { "type": "string", "minLength": 1 }, "amount": { "type": "number", "minimum": 0 },
         "freeCapacity": { "type": "number", "minimum": 0 } } } }

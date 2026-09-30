@@ -312,3 +312,22 @@ device outside it (phone on mobile data). See [installation](../user-guide/insta
 | 12.10 | Open the address from a device outside the home network (phone on mobile data via a port forwarding, if available) | always 403 |
 | 12.11 | Tablet browser menu *Zum Startbildschirm hinzufügen* | FarmPulse symbol on the home screen; it opens the app without the address bar (`display: standalone`) in the dark Hof-Tablet colours |
 | 12.12 | Tablet in the guest WLAN of the router | the address does not load (the router separates the networks) - as described in the troubleshooting |
+
+## 13. Trade and contracts with the neighbours (Roadmap V3 R3-H)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section H. Needs the current mod, an own silo (straw
+and wheat) and at least one neighbour in *Kontakte*. With the bridge simulator: scenario `nachbarhandel`, harvest a
+neighbour field with `POST /npc-field` and advance a month with `POST /advance`.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 13.1 | Open *Handel* | own silos with fill level and free space; every neighbour with role, trust, stock (price per 1000 l) and needs; no warning about the mod |
+| 13.2 | Let a neighbour field be harvested (game or `POST /npc-field`), open *Handel* again | the owner's stock shows the grain (30 % of the harvest) and, for wheat / barley / oat, straw |
+| 13.3 | A dairy neighbour asks for straw (wait for the monthly request or play a few months); answer *Verkaufen* | the amount is gone from the own silo, the money is booked as *Warenverkauf*, a diary entry and a thank-you appear, trust goes up |
+| 13.4 | *Ware anfragen* at a neighbour with wheat, then *Kaufen* | the offer names quantity and price; after buying the wheat is in the own silo, the money is booked as *Warenkauf*; his stock is smaller |
+| 13.5 | Empty the silo in the game before answering a request with *Verkaufen* | the transfer fails (`INSUFFICIENT_STOCK`), nothing is booked, the neighbour is disappointed |
+| 13.6 | Sell or give away the own straw silo, open *Handel* | straw is no longer listed for requests (no own silo) and no neighbour offers it |
+| 13.7 | A neighbour with a harvested, unplowed field asks for help (or *Nach Arbeit fragen*); answer *Zusagen* | the contract appears in the game's contract menu with this neighbour as client |
+| 13.8 | Finish the contract in the game | a thank-you with 250 € bonus, trust goes up; a failed or expired contract disappoints him |
+| 13.9 | Reach the game's contract limit, then *Nach Arbeit fragen* | the app says the limit is reached, no request comes |
+| 13.10 | *Einstellungen → Fragen im Spiel*: switch on the neighbour occasions, wait for an offer | the yes / no question appears in the game; *Ja* buys / sells or promises like the button |

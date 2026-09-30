@@ -135,6 +135,14 @@ public enum NarrationEventType {
     MISSION_REFERRAL,
     MISSION_THANKS,
     MISSION_FAILED,
+    // Roadmap V3 R3-H: trade and contracts of the neighbours
+    GOODS_OFFER,
+    GOODS_REQUEST,
+    GOODS_TRADE_DONE,
+    GOODS_REQUEST_FAILED,
+    NEIGHBOR_MISSION_REQUEST,
+    NEIGHBOR_MISSION_THANKS,
+    NEIGHBOR_MISSION_DISAPPOINTED,
     // conversation
     REPLY,
     CALL_CONVERSATION

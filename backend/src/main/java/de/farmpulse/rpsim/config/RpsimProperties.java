@@ -152,6 +152,8 @@ public class RpsimProperties {
         private Maintenance maintenance = new Maintenance();
         private ProductionSupply productionSupply = new ProductionSupply();
         private Contractor contractor = new Contractor();
+        private NeighborTrade neighborTrade = new NeighborTrade();
+        private NeighborMissions neighborMissions = new NeighborMissions();
         private Finance finance = new Finance();
         private Mechanic mechanic = new Mechanic();
         private Fields fields = new Fields();
@@ -824,6 +826,99 @@ public class RpsimProperties {
         /** Trust of the client (FS25 NPC as village character) for a completed referred contract. */
         private double clientTrustDelta = 2;
         private double failedTrustDelta = -3;
+    }
+
+    /**
+     * Roadmap V3 R3-H2..H4: trade with the neighbours (owner decisions, QUESTIONS.md; placeholders). Stock and needs of a
+     * neighbour are backend fiction derived from his real fields; the goods move for real in the own silos.
+     * <ul>
+     *   <li>roles: role -> fill types the neighbour needs (only goods an own silo accepts are traded).</li>
+     *   <li>price per 1000 l: best current price of the sell points, else reference-prices; the neighbour sells at
+     *   neighbor-sell-share and buys at neighbor-buy-share of it; trust moves the price by trust / trust-divisor,
+     *   capped at trust-cap (like the negotiation engine) in the player's favour.</li>
+     *   <li>stock: harvest-share of a harvest (area x litersPerSqm) goes into the neighbour's stock, by-products (fruit ->
+     *   by-product) add by-product-share of it; the stock sinks by monthly-decay every game month.</li>
+     * </ul>
+     */
+    @Getter @Setter
+    public static class NeighborTrade {
+        private Map<String, List<String>> roles = defaultRoles();
+        private double neighborSellShare = 1.05;
+        private double neighborBuyShare = 0.95;
+        private double trustDivisor = 20;
+        private double trustCap = 0.05;
+        private double harvestShare = 0.3;
+        private Map<String, String> byProducts = defaultByProducts();
+        private double byProductShare = 0.5;
+        private double monthlyDecay = 0.2;
+        /** € per 1000 l for goods without a sell point on the map. */
+        private Map<String, Double> referencePrices = defaultReferencePrices();
+        /** Messages of neighbours about trade (offers and requests) per game month. */
+        private int maxMessagesPerMonth = 2;
+        /** Chance per game month that a neighbour offers goods of his stock on his own (R3-H3). */
+        private double offerProbabilityPerMonth = 0.3;
+        /** Chance per game month that a neighbour asks for goods of the player (R3-H4). */
+        private double requestProbabilityPerMonth = 0.3;
+        private int amountMin = 2000;
+        private int amountMax = 10000;
+        private int amountStep = 500;
+        /** At most this share of the neighbour's stock (offer) or the player's stock (request). */
+        private double maxShare = 0.5;
+        /** Game days to answer an offer or a request; the price holds that long. */
+        private double answerDays = 5;
+        private double tradeTrustDelta = 2;
+        private double declineTrustDelta = -1;
+        private double ignoreTrustDelta = -2;
+        /** R3-H4: the goods were no longer in the silo when the sale was executed - the neighbour is disappointed. */
+        private double stockMissingTrustDelta = -1;
+        /** R3-H4: village reputation per fulfilled request of a neighbour ... */
+        private double reputationDelta = 1;
+        /** ... at most this many times per FS25 year. */
+        private int reputationMaxPerYear = 3;
+
+        private static Map<String, List<String>> defaultRoles() {
+            Map<String, List<String>> m = new LinkedHashMap<>();
+            m.put("DAIRY", new ArrayList<>(List.of("STRAW", "SILAGE", "DRYGRASS_WINDROW")));
+            m.put("ARABLE", new ArrayList<>(List.of("SEEDS", "FERTILIZER", "LIQUIDFERTILIZER")));
+            m.put("MIXED", new ArrayList<>(List.of("STRAW", "SEEDS")));
+            return m;
+        }
+
+        private static Map<String, String> defaultByProducts() {
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("WHEAT", "STRAW");
+            m.put("BARLEY", "STRAW");
+            m.put("OAT", "STRAW");
+            return m;
+        }
+
+        private static Map<String, Double> defaultReferencePrices() {
+            Map<String, Double> m = new LinkedHashMap<>();
+            m.put("STRAW", 120.0);
+            m.put("SILAGE", 180.0);
+            m.put("DRYGRASS_WINDROW", 250.0);
+            m.put("SEEDS", 900.0);
+            m.put("FERTILIZER", 1500.0);
+            m.put("LIQUIDFERTILIZER", 1200.0);
+            return m;
+        }
+    }
+
+    /**
+     * Roadmap V3 R3-H5: neighbours ask for help with real contracts of the game on their own fields (owner decisions,
+     * placeholders). The game pays the reward; the tool adds a bonus on success and moves trust.
+     */
+    @Getter @Setter
+    public static class NeighborMissions {
+        /** Tool names of the evidenced contract types (the mod maps them to PlowMission / StonePickMission). */
+        private List<String> types = new ArrayList<>(List.of("PLOW", "STONE_PICK"));
+        private double probabilityPerMonth = 0.4;
+        private int maxPerMonth = 1;
+        private double answerDays = 5;
+        /** Booked as OTHER when the contract finished successfully. */
+        private long successBonus = 250;
+        private double successTrustDelta = 3;
+        private double failureTrustDelta = -3;
     }
 
     /** Roadmap V2 R2-B2: class of a booking in the journal (farm_facts.finances). */

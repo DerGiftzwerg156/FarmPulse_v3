@@ -33,7 +33,8 @@
     "authorities": "Ämter",
     "insurance": "Versicherung",
     "stable": "Stall",
-    "workshop": "Werkstatt"
+    "workshop": "Werkstatt",
+    "trade": "Handel"
   },
   "apps": {
     "mail": "Mails aus dem Dorf – antworten, wann du willst",
@@ -50,7 +51,8 @@
     "stable": "Tiere, Tierarzt, Viehhandel und Tierwohl",
     "workshop": "Wartungsvertrag, Reparaturen und Mechaniker",
     "diary": "Die Chronik deines Hofs",
-    "settings": "KI, Spielstand und Fragen im Spiel"
+    "settings": "KI, Spielstand und Fragen im Spiel",
+    "trade": "Ware und Arbeit mit den Nachbarn"
   },
   "tablet": {
     "apps": "Apps",
@@ -176,7 +178,8 @@
       "HUNTING": "Jagd",
       "LIVESTOCK": "Tiere",
       "ENERGY": "Energie",
-      "CONTRACT": "Vertrag"
+      "CONTRACT": "Vertrag",
+      "TRADE": "Handel"
     },
     "callStatus": {
       "RINGING": "Klingelt",
@@ -335,7 +338,10 @@
       "HONEY": "Honig",
       "WOODCHIPS": "Hackschnitzel",
       "FLOUR": "Mehl",
-      "BREAD": "Brot"
+      "BREAD": "Brot",
+      "SEEDS": "Saatgut",
+      "FERTILIZER": "Dünger",
+      "LIQUIDFERTILIZER": "Flüssigdünger"
     },
     "diaryCategory": {
       "BACKSTORY": "Vorgeschichte",
@@ -345,7 +351,8 @@
       "NEGOTIATION": "Felder",
       "ROTATION": "Dorf",
       "PLAYER_NOTE": "Eigene Notizen",
-      "OTHER": "Sonstiges"
+      "OTHER": "Sonstiges",
+      "TRADE": "Handel"
     },
     "moneyReason": {
       "CREDIT_DISBURSEMENT": "Kreditauszahlung",
@@ -444,7 +451,10 @@
       "TAX_BILL": "Steuerbescheid",
       "AUTHORITY_INSPECTION": "Kontrolle des Amts",
       "SPONSORING_REQUEST": "Sponsoring-Anfrage",
-      "INVITATION": "Einladung"
+      "INVITATION": "Einladung",
+      "GOODS_OFFER": "Ware vom Nachbarn",
+      "GOODS_REQUEST": "Anfrage eines Nachbarn",
+      "NEIGHBOR_MISSION": "Arbeit beim Nachbarn"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -485,7 +495,11 @@
       "SPONSORED": "Gesponsert",
       "IGNORED": "Nicht beantwortet",
       "EXPIRED": "Frist abgelaufen",
-      "EMERGENCY": "Notfall-Einsatz"
+      "EMERGENCY": "Notfall-Einsatz",
+      "DONE": "erledigt",
+      "NO_STOCK": "zu wenig im Silo",
+      "NOT_AVAILABLE": "im Spiel nicht möglich",
+      "LOST": "durch Neuladen verloren"
     },
     "animalType": {
       "COW": "Rinder",
@@ -622,7 +636,18 @@
       "INVITATION": "Einladungen zu Festen zu- oder absagen",
       "COMPENSATION_CLAIM": "Ausgleichsforderung für einen Feldkauf zahlen oder ablehnen",
       "TAX_BILL": "Steuerbescheide bezahlen",
-      "TAX_ADVISOR": "Angebot der Steuerberatung annehmen oder ablehnen"
+      "TAX_ADVISOR": "Angebot der Steuerberatung annehmen oder ablehnen",
+      "NEIGHBOR_TRADE": "Handel mit Nachbarn",
+      "NEIGHBOR_MISSION": "Aufträge der Nachbarn"
+    },
+    "neighborRole": {
+      "DAIRY": "Milchviehbetrieb",
+      "ARABLE": "Ackerbau",
+      "MIXED": "Gemischtbetrieb"
+    },
+    "missionType": {
+      "PLOW": "Pflügen",
+      "STONE_PICK": "Steine sammeln"
     }
   },
   "onboarding": {
@@ -1356,5 +1381,45 @@
       "wrong": "PIN falsch.",
       "locked": "Zu viele Fehlversuche – bitte in {minutes} Minuten erneut versuchen."
     }
+  },
+  "trade": {
+    "intro": "Die Nachbarn verkaufen dir Ware aus ihrer Ernte und fragen nach Ware aus deinen Silos. Gehandelt wird nur, wofür du ein eigenes Silo hast; die Ware wird im Spiel echt ein- oder ausgebucht.",
+    "noSilos": "Der Mod meldet deine Silos nicht – bitte FS25_RPSim aktualisieren. Ohne diese Daten gibt es keinen Handel.",
+    "noFields": "Der Mod meldet die Felder der Nachbarn nicht (älterer Mod oder npcFieldExport aus). Ohne sie haben die Nachbarn keinen Vorrat aus der Ernte und keine Aufträge.",
+    "limitReached": "Du hast im Spiel die Höchstzahl an Aufträgen erreicht – solange bitten die Nachbarn um keine Hilfe.",
+    "silos": "Deine Silos",
+    "silo": "{fillType}: {amount} l, frei {free} l",
+    "noSiloGoods": "Keine eigenen Silos gemeldet.",
+    "neighbors": "Nachbarn",
+    "noNeighbors": "Noch keine Nachbarn im Dorf.",
+    "role": "Betrieb",
+    "stock": "Vorrat",
+    "noStock": "Kein Vorrat – der Vorrat entsteht aus der Ernte seiner Felder.",
+    "stockItem": "{fillType}: {amount} l · {price} je 1.000 l",
+    "stockItemNoPrice": "{fillType}: {amount} l · kein Preis",
+    "needs": "Braucht",
+    "fields": "Felder: {ids}",
+    "requestTitle": "Ware anfragen",
+    "fillTypeLabel": "Sorte",
+    "amountLabel": "Menge (Liter)",
+    "maxHint": "höchstens {max} l (Vorrat und Platz in deinen Silos)",
+    "request": "Anfragen",
+    "noRoom": "Für seine Ware hast du gerade keinen Platz in einem eigenen Silo.",
+    "askWork": "Nach Arbeit fragen",
+    "cases": "Angebote, Anfragen und Aufträge",
+    "offerText": "{name} verkauft dir {quantity} l {fillType} für {amount} ({unit} je 1.000 l).",
+    "requestText": "{name} möchte {quantity} l {fillType} aus deinem Silo für {amount} ({unit} je 1.000 l).",
+    "buy": "Kaufen",
+    "sell": "Verkaufen",
+    "inTransfer": "wird im Spiel gebucht",
+    "offerHint": "Die Ware kommt in deine eigenen Silos, das Geld wird im selben Moment abgebucht. Ablehnen kostet etwas Vertrauen, Ignorieren mehr.",
+    "requestHint": "Die Ware wird aus deinen Silos abgebucht, das Geld gutgeschrieben. Liegt beim Buchen zu wenig im Silo, ist der Nachbar enttäuscht.",
+    "missionText": "{name} bittet dich: {type} auf seinem Feld ({hectares} ha), Bonus bei Erfolg {bonus}.",
+    "acceptMission": "Zusagen",
+    "missionRunning": "im Auftragsmenü des Spiels",
+    "missionHint": "Nach der Zusage steht der Auftrag im Auftragsmenü des Spiels, mit dem Nachbarn als Auftraggeber. Die Vergütung zahlt das Spiel.",
+    "contactLink": "Handel & Arbeit mit diesem Nachbarn →",
+    "requested": "{name} hat geantwortet – sein Angebot steht unten bei den Angeboten.",
+    "workOffered": "{name} hat Arbeit für dich – seine Anfrage steht unten bei den Aufträgen."
   }
 }

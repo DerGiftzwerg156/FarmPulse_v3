@@ -108,4 +108,8 @@ public class Character extends SavegameScoped {
 
     @Column(name = "fs25_npc_index")
     private Integer fs25NpcIndex;
+
+    /** Roadmap V3 R3-H2: role of a NEIGHBOR_FARMER (DAIRY / ARABLE / MIXED); decides what the neighbour needs. */
+    @Column(name = "neighbor_role", length = 32)
+    private String neighborRole;
 }

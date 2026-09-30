@@ -121,6 +121,13 @@ as ack `result`; `BridgeSyncIntegrationTest.ackResultIsStoredWithTheInstruction`
 blocks) and `FailedInstructionTest` (notice "Mod aktualisieren") cover the backend side. The mod covers normalisation,
 validation, `NOT_SUPPORTED` and `result` in `test_farm_facts.lua`, `test_market_context.lua`, `test_instructions.lua`
 and `test_persistence.lua`, the simulator the execution in `test/roadmap-v3.test.js`.
+Roadmap V3 R3-H (neighbour trade and contracts): `NeighborTradeTest` (backend) covers the neighbour fields and the stock
+from a harvest, prices and roles, the purchase on request (H3) with its checks, a refused transfer, the spawner, decline
+and expiry, the sale (H4) with the reputation cap, the disappointed neighbour, the contracts (H5: matching field,
+`MISSION_CREATE`, evaluation from `farm_facts.missions`, lost after a rewind, refused) and the in-game question. The mod
+covers `npcFields`, `tradeStorage`, `STORAGE_TRANSFER` and `MISSION_CREATE` in `test_game_adapter.lua`, the simulator
+`missionLimitReached` and the control endpoints in `test/roadmap-v3.test.js`; the frontend `features/trade/trade.spec.ts`
+(app „Handel“). In the game: manual test plan section 11.
 Roadmap V3 R3-N (tablet in the home network): `NetworkAddressesTest` (loopback / private / public sender addresses),
 `LanAccessTest` (MockMvc with `setRemoteAddr`: switch off → 403, internet always 403, without PIN direct access, with
 PIN session cookie for API and live updates, game-PC-only settings, PIN format and hash, lock after five wrong PINs,

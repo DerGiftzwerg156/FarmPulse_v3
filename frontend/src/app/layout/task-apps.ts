@@ -16,6 +16,10 @@ const CASE_APP: Record<string, string> = {
   AUTHORITY_INSPECTION: 'authorities',
   SPONSORING_REQUEST: 'contacts',
   INVITATION: 'calendar',
+  // Roadmap V3 R3-H
+  GOODS_OFFER: 'trade',
+  GOODS_REQUEST: 'trade',
+  NEIGHBOR_MISSION: 'trade',
 };
 
 const CONTRACT_APP: Record<string, string> = {

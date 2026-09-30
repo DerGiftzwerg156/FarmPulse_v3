@@ -99,6 +99,10 @@ public class CharacterGeneratorService {
             c.setVirtualWealth(Math.round(r.uniform(n.getVirtualWealthMin(), n.getVirtualWealthMax()) / 1000.0) * 1000);
             c.setSellWilling(r.chance(n.getSellWillingProbability()));
         }
+        if (spec.role() == CharacterRole.NEIGHBOR_FARMER) {
+            // Roadmap V3 R3-H2: the role decides what the neighbour needs (rolled when he is created)
+            c.setNeighborRole(r.pick(new ArrayList<>(props.getFormulas().getNeighborTrade().getRoles().keySet())));
+        }
         c.setGenerationSeed(seed);
         c.setJoinedAtGameTime(sg.getCurrentGameTime());
         c.setShortDescription(shortDescription(c, spec.jobRole()));

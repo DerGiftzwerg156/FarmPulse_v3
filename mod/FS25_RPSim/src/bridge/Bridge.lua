@@ -11,6 +11,9 @@
 --   canShowPrompt(inVehicleAllowed) -> bool      (optional, R2-F2: no menu or dialog open, vehicle rule)
 --   showYesNo(text, title, callback(yes)) -> ok, err (optional, R2-F2)
 --   notify(text, level) -> ok, err                (optional)
+--   collectNpcFields() -> list | nil              (optional, R3-H1)
+--   transferStorage(fillType, amount, direction) -> ok, err          (optional, R3-H3/H4)
+--   createMission(missionType, farmlandId) -> ok, err, {missionId}   (optional, R3-H5)
 RPSimBridge = {}
 RPSimBridge.__index = RPSimBridge
 
@@ -91,6 +94,7 @@ function RPSimBridge:exportFarmFacts()
     local fields = self:sampleFields()
     if fields ~= nil then
         raw.fields, raw.fieldRules = fields.fields, fields.rules
+        raw.npcFields = fields.npcFields -- Roadmap V3 R3-H1 (nil when switched off)
     end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
 end
@@ -107,6 +111,11 @@ function RPSimBridge:sampleFields()
         end
         local okRules, rules = pcall(self.adapter.collectFieldRules, self.adapter)
         self.fieldCache = { fields = fields, rules = okRules and rules or nil }
+        -- Roadmap V3 R3-H1: fields of the game's NPCs, same sampling (mod switch npcFieldExport)
+        if self.cfg.npcFieldExport and self.adapter.collectNpcFields ~= nil then
+            local okNpc, npc = pcall(self.adapter.collectNpcFields, self.adapter)
+            self.fieldCache.npcFields = okNpc and npc or nil
+        end
     end
     return self.fieldCache
 end
@@ -267,6 +276,11 @@ function RPSimBridge:pollInstructions()
                     prompt = function(ins) return self:queuePrompt(ins, gameTime) end,
                     repairVehicle = adapter.repairVehicle ~= nil
                         and function(ins) return adapter:repairVehicle(ins.vehicleId, ins.targetDamage) end or nil,
+                    -- Roadmap V3 R3-H3/H4 and R3-H5
+                    storageTransfer = adapter.transferStorage ~= nil
+                        and function(ins) return adapter:transferStorage(ins.fillType, ins.amount, ins.direction) end or nil,
+                    missionCreate = adapter.createMission ~= nil
+                        and function(ins) return adapter:createMission(ins.missionType, ins.farmlandId) end or nil,
                 },
             })
             -- R2-F1 / R2-F2: processed answers and questions decided in the browser

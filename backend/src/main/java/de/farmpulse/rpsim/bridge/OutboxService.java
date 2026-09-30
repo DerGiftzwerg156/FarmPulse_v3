@@ -165,6 +165,33 @@ public class OutboxService {
     }
 
     /**
+     * Roadmap V3 R3-H3 / R3-H4 / R3-M3: goods into (IN) or out of (OUT) the own silos and the matching money booking as
+     * one batch - STORAGE_TRANSFER first, so a refused transfer aborts the money part. {@code price} is the positive
+     * amount; IN is booked as expense, OUT as income.
+     */
+    @Transactional
+    public List<OutboxInstruction> storageDeal(Savegame sg, boolean in, String fillType, long liters, long price,
+                                               MoneyReason reason, String note, Related related) {
+        String batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("direction", in ? "IN" : "OUT");
+        p.put("fillType", fillType);
+        p.put("amount", liters);
+        OutboxInstruction transfer = enqueue(sg, InstructionType.STORAGE_TRANSFER, p, batchId, null, related);
+        OutboxInstruction money = money(sg, in ? -price : price, reason, note, related, batchId, null);
+        return List.of(transfer, money);
+    }
+
+    /** Roadmap V3 R3-H5: a real contract of the game on the field of an NPC farmland (result.missionId in the ack). */
+    @Transactional
+    public OutboxInstruction missionCreate(Savegame sg, String missionType, int farmlandId, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("missionType", missionType);
+        p.put("farmlandId", farmlandId);
+        return enqueue(sg, InstructionType.MISSION_CREATE, p, null, null, related);
+    }
+
+    /**
      * TODO T-21: in-game notification ({@code g_currentMission:addIngameNotification}). The mod skips it without
      * showing when the game time is past {@code expiresAtGameTime} (e.g. processed late after loading a savegame).
      */

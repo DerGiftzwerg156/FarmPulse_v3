@@ -281,6 +281,19 @@ public class PromptService {
                 case INVITATION -> list.add(new Candidate(PromptKind.INVITATION, "CASE:" + s.getId(), s.getId(),
                         "Einladung", from + " lädt dich zum " + labels.label(s.getReference()) + " ein.",
                         "Zusagen", "Absagen", deadline));
+                // Roadmap V3 R3-H3 / R3-H4 / R3-H5 (owner decision: own occasions, default off)
+                case GOODS_OFFER -> list.add(new Candidate(PromptKind.NEIGHBOR_TRADE, "CASE:" + s.getId(), s.getId(),
+                        "Ware vom Nachbarn", from + " verkauft dir " + s.getQuantity() + " l "
+                        + labels.label(s.getReference()) + " für " + money(s.getOfferAmount()) + ".",
+                        "Kaufen", "Ablehnen", deadline));
+                case GOODS_REQUEST -> list.add(new Candidate(PromptKind.NEIGHBOR_TRADE, "CASE:" + s.getId(), s.getId(),
+                        "Anfrage vom Nachbarn", from + " möchte " + s.getQuantity() + " l "
+                        + labels.label(s.getReference()) + " aus deinem Silo für " + money(s.getOfferAmount()) + ".",
+                        "Verkaufen", "Ablehnen", deadline));
+                case NEIGHBOR_MISSION -> list.add(new Candidate(PromptKind.NEIGHBOR_MISSION, "CASE:" + s.getId(),
+                        s.getId(), "Arbeit beim Nachbarn", from + " bittet dich: " + labels.label(s.getReference())
+                        + " auf Feld " + s.getFarmlandId() + " (Bonus " + money(s.getOfferAmount()) + ").",
+                        "Zusagen", "Absagen", deadline));
                 default -> {
                     // other cases are decided in the browser only
                 }
@@ -384,7 +397,7 @@ public class PromptService {
                 }
                 actions.acceptCase(sg, id);
             }
-            case COMPENSATION_CLAIM, INVITATION -> {
+            case COMPENSATION_CLAIM, INVITATION, NEIGHBOR_TRADE, NEIGHBOR_MISSION -> {
                 if (yes) {
                     actions.acceptCase(sg, id);
                 } else {

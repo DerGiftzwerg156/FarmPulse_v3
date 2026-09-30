@@ -313,5 +313,9 @@ function RPSimFarmFacts.build(raw, cfg)
     if type(raw.tradeStorage) == "table" then
         doc.tradeStorage = RPSimFarmFacts.buildTradeStorage(raw.tradeStorage)
     end
+    -- Roadmap V3 R3-H5: the game's contract limit of the player farm (hasFarmReachedMissionLimit)
+    if type(raw.missionLimitReached) == "boolean" then
+        doc.missionLimitReached = raw.missionLimitReached
+    end
     return doc
 end

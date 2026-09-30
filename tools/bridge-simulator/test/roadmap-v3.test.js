@@ -226,3 +226,16 @@ test('a reload without saving forgets silo changes, contracts and the result of 
   assert.equal(sim.toolMissions.length, 0);
   assert.equal(read(sim.paths.ack).acks.length, 0);
 });
+
+test('neighbour fields change through the control API and the mission limit is exported (R3-H1 / R3-H5)', () => {
+  const { sim } = setup();
+  assert.equal(read(sim.paths.farmFacts).missionLimitReached, false);
+  sim.setNpcField({ farmlandId: 8, cut: true, growthState: 9 });
+  sim.setMissionLimit(true);
+  sim.exportFarmFacts();
+  const facts = read(sim.paths.farmFacts);
+  assert.equal(facts.npcFields.find((f) => f.farmlandId === 8).cut, true);
+  assert.equal(facts.missionLimitReached, true);
+  assert.throws(() => sim.setNpcField({ farmlandId: 1 }), /unknown neighbour field/);
+  assert.equal(read(setup('wohlhabender-hof').sim.paths.farmFacts).missionLimitReached, undefined);
+});

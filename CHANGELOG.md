@@ -12,7 +12,7 @@ versions or this changelog do not match.
 
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training
 is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
-types and booking reasons; the notice then says "Mod aktualisieren".
+types and booking reasons (the neighbour trade and contracts then fail); the notice then says "Mod aktualisieren".
 
 The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
 filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
@@ -31,6 +31,30 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Trade and contracts with the neighbours (Roadmap V3, R3-H):** the neighbours become trading partners.
+  - Mod: exports the fields the game's NPCs farm (`farm_facts.npcFields`, same entries and interval as `fields`,
+    switch `npcFieldExport`, default on), the own silo goods (`farm_facts.tradeStorage`: fill level and free capacity
+    per fill type, only silos and silo extensions of the own farm) and the game's contract limit
+    (`farm_facts.missionLimitReached`, new optional field). It now executes `STORAGE_TRANSFER` (fills or empties the
+    own silo storages via `setFillLevel`, without the game's own booking; `NO_CAPACITY`, `INSUFFICIENT_STOCK`,
+    `UNKNOWN_FILLTYPE`) and `MISSION_CREATE` (plowing and stone picking on a neighbour field like the game's
+    `tryGenerateMission`; the ack `result` carries the `missionId`; `NOT_AVAILABLE` when the field does not fit).
+  - Backend: the neighbour fields with their growth phase (`npc_field_record`, `npc_field_crop`); every neighbour gets
+    a role (dairy, arable, mixed) that decides what he needs; his stock grows from his harvests (30 %, straw from
+    grain) and sinks 20 % per game month (`neighbor_stock`, migration V25). Prices from the best sell point
+    (neighbour sells at 105 %, buys at 95 %, trust ± 5 %) or a reference price per 1000 l. Neighbours offer goods
+    and ask for goods from the own silos (at most two messages per month, 5 days to answer); the player asks for goods
+    himself. A deal is one batch `STORAGE_TRANSFER` + `MONEY_TRANSACTION` (`GOODS_PURCHASE` / `GOODS_SALE`), with
+    trust, diary entry and village reputation (`NEIGHBOR_HELP`, at most three per FS25 year). A neighbour with a
+    harvested, unplowed or stony field asks for help (at most one per month, never above the game's limit); after the
+    promise the contract appears in the game's contract menu with him as client; success pays a 250 € bonus and
+    trust, failure disappoints him; a contract lost after loading is offered again. All values under
+    `rpsim.formulas.neighbor-trade.*` / `neighbor-missions.*`; two new in-game question occasions (off by default).
+  - New Hof-Tablet app **„Handel“** (`/handel`, `GET /api/trade`, `POST /api/trade/neighbors/{id}/request`,
+    `POST /api/trade/neighbors/{id}/work`): own silos, neighbours with role, stock, price and needs, „Ware anfragen“,
+    „Nach Arbeit fragen“, the offers, requests and contracts; the contact page of a neighbour links to it.
+  - Bridge simulator: `missionLimitReached` in the scenario `nachbarhandel`, control endpoints `/npc-field` and
+    `/mission-limit`.
 - **Tablet in the home network (Roadmap V3, R3-N):** FarmPulse can be opened on a tablet or phone in the same WLAN.
   - *Einstellungen → Tablet & Netzwerk*: switch **Im Heimnetz erreichbar** (default off), an optional PIN (4–8
     digits) and the tablet address with a QR code (generated in the browser, new frontend dependency

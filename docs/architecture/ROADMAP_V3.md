@@ -223,6 +223,16 @@ Jede Fruchtsorte und jedes Produkt ist möglich, **sofern du dafür ein eigenes 
 echt aus deinen Silos ab oder in sie ein. Braucht ein Nachbar Hilfe, erzeugt er einen **echten Auftrag im Spiel** auf
 seinem eigenen Feld.
 
+**Stand 30.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Rollen Milchviehbetrieb (Stroh, Silage, Heu),
+Ackerbau (Saatgut, Dünger, Flüssigdünger) und Gemischtbetrieb (Stroh, Saatgut). Ein Nachbar verkauft zu 105 % und
+kauft zu 95 % der besten Verkaufsstelle, Vertrauen wirkt mit höchstens ± 5 %. 30 % einer Nachbarernte gehen in seinen
+Vorrat, bei Weizen, Gerste und Hafer dazu 50 % davon als Stroh; der Vorrat sinkt um 20 % je Spielmonat. Höchstens
+zwei Handelsnachrichten und ein Auftrag je Monat, Antwortfrist 5 Tage. Aufträge nur Pflügen und Steine sammeln, 250 €
+Bonus bei Erfolg. Handel und Aufträge stehen in der eigenen App **„Handel“** (`/handel`), die Kontaktseite eines
+Nachbarn verlinkt dorthin. Die Ja/Nein-Fragen im Spiel sind zwei neue Anlässe, standardmäßig aus. Der Mod-Schalter
+`npcFieldExport` ist standardmäßig an. Die Auftragsgrenze des Spiels exportiert der Mod als optionales
+`farm_facts.missionLimitReached`.
+
 **Befund der Prüfung (30.09.2026):**
 
 - ✅ FS25 bewirtschaftet Felder ohne Besitzer selbst. `field/FieldManager.lua` beschreibt sich als Klasse für „AI
@@ -239,13 +249,17 @@ seinem eigenen Feld.
 
 ### R3-H1 Nachbarfelder exportieren
 
-- [ ] `RPSimGameAdapter:collectFields` liest zusätzlich die Felder, für die `field:getHasOwner()` `false` ist und
+- [x] `RPSimGameAdapter:collectFields` liest zusätzlich die Felder, für die `field:getHasOwner()` `false` ist und
   `field.isMissionAllowed` gilt. Export als `farm_facts.npcFields[]` mit denselben Feldern wie `fields[]`
   (`farmlandId`, `name`, `hectares`, `fruitType`, `growthState`, min/max, `withered`, `cut`, `fillType`,
-  `litersPerSqm`, `groundType`).
-- [ ] Gleiche Taktung wie `fields` (`fieldExportIntervalMs`), abschaltbar über den Mod-Schalter `npcFieldExport`.
-- [ ] Backend: `FieldService` führt die Nachbarfelder wie die eigenen (Phase, Kultur je Erntejahr). Wem ein Feld gehört,
-  sagt die vorhandene Zuordnung Farmland → Charakter (`FarmlandOwnership`, `use-game-npc-owners`, T-21).
+  `litersPerSqm`, `groundType`). Umgesetzt: `RPSimGameAdapter:collectNpcFields` (gemeinsame Sammlung
+  `collectFieldsWhere` mit den eigenen Feldern).
+- [x] Gleiche Taktung wie `fields` (`fieldExportIntervalMs`), abschaltbar über den Mod-Schalter `npcFieldExport`
+  (Standard an). Ohne Schalter fehlt der Block `npcFields` ganz.
+- [x] Backend: `FieldService` führt die Nachbarfelder wie die eigenen (Phase, Kultur je Erntejahr). Wem ein Feld gehört,
+  sagt die vorhandene Zuordnung Farmland → Charakter (`FarmlandOwnership`, `use-game-npc-owners`, T-21). Umgesetzt:
+  eigener `neighbor/NpcFieldService` mit denselben Phasen (Tabellen `npc_field_record`, `npc_field_crop`), damit die
+  eigenen Feld-Nachrichten und Fruchtfolge-Regeln die Nachbarfelder nicht erfassen.
 
 **Beleg:** ✅ `field/FieldManager.lua` (Dump): `field:getHasOwner()`, `field.isMissionAllowed`, Planung der NPC-Frucht
 über `FieldUpdateTask`. ✅ Die Feldwerte selbst wie in R2-C1 (`field/FieldState.lua`, `field:getFieldState()`).
@@ -256,22 +270,24 @@ gesehenen Kultur und dem Erntejahr, wie die Fruchtfolge-Historie aus C1.
 
 ### R3-H2 Vorrat und Bedarf der Nachbarn (Backend)
 
-- [ ] **Handelsfähige Ware des Spielers:** Der Mod exportiert `farm_facts.tradeStorage[]` =
+- [x] **Handelsfähige Ware des Spielers:** Der Mod exportiert `farm_facts.tradeStorage[]` =
   `{ fillType, amount, freeCapacity }`. Er summiert dafür **nur** eigene Silos (`spec_silo.storages`) und
   Silo-Erweiterungen (`spec_siloExtension.storage`) und nutzt `storage:getFillLevel` / `storage:getFreeCapacity` je
-  Fruchtsorte.
+  Fruchtsorte. Umgesetzt: `RPSimGameAdapter:collectTradeStorage` (nur Lager, die der eigenen Farm gehören).
   - „Du hast ein Silo dafür“ heißt: `freeCapacity + amount > 0`, das Silo nimmt diese Fruchtsorte also an.
   - Das gilt für **jede** Fruchtsorte und jedes Produkt, das ein eigenes Silo annimmt, nicht nur für Stroh.
-- [ ] **Vorrat eines Nachbarn:** entsteht aus seinen Feldern in H1. Eine Ernte (Phase `HARVESTED` nach `HARVESTABLE`)
+- [x] **Vorrat eines Nachbarn:** entsteht aus seinen Feldern in H1. Eine Ernte (Phase `HARVESTED` nach `HARVESTABLE`)
   bringt Fläche × `litersPerSqm` × Anteil (Konfig) in seinen Vorrat, bei Getreide auch Stroh (Konfig-Tabelle
-  Frucht → Nebenprodukt). Der Vorrat sinkt über die Zeit (Verkauf, Eigenbedarf).
-- [ ] **Bedarf eines Nachbarn:** feste Rollen je Nachbar (Konfig bzw. beim Anlegen des Charakters ausgewürfelt), z. B.
+  Frucht → Nebenprodukt). Der Vorrat sinkt über die Zeit (Verkauf, Eigenbedarf). Umgesetzt: Tabelle
+  `neighbor_stock`; eine Ernte zählt nicht, solange ein Rückspulen läuft.
+- [x] **Bedarf eines Nachbarn:** feste Rollen je Nachbar (Konfig bzw. beim Anlegen des Charakters ausgewürfelt), z. B.
   „Milchviehbetrieb“ braucht Stroh, Silage und Heu, „Ackerbau“ braucht Saatgut und Dünger, sofern es diese als
-  Silo-Ware gibt. Die Tiere sind Erzählung, keine Spielobjekte.
-- [ ] Preise: aktueller Preis der besten Verkaufsstelle (`prices`) × Spanne (Konfig, z. B. Nachbar verkauft zu 105 %,
+  Silo-Ware gibt. Die Tiere sind Erzählung, keine Spielobjekte. Umgesetzt: `game_character.neighbor_role`,
+  ausgewürfelt beim Anlegen eines Nachbarn (ältere Nachbarn beim ersten Bedarf).
+- [x] Preise: aktueller Preis der besten Verkaufsstelle (`prices`) × Spanne (Konfig, z. B. Nachbar verkauft zu 105 %,
   kauft zu 95 %), Vertrauen als gedeckelter Bonus/Malus wie in der Verhandlungs-Engine. Ohne Preis im Spiel (Ware
   ohne Verkaufsstelle) nennt die Konfig einen Richtpreis je 1000 l.
-- [ ] Alle Werte unter `rpsim.formulas.neighbor-trade.*`, Häufigkeit gedeckelt wie bei den anderen Spawnern.
+- [x] Alle Werte unter `rpsim.formulas.neighbor-trade.*`, Häufigkeit gedeckelt wie bei den anderen Spawnern.
 
 **Beleg:** ✅ `Specializations/PlaceableSilo.md` und `PlaceableSiloExtension.md` (LUADOC): beide legen ihr Lager mit
 `Storage.new(...)` an. `PlaceableSilo` nutzt `storage:getFillLevels()`, `getFillLevel`, `getFreeCapacity` und
@@ -279,18 +295,19 @@ gesehenen Kultur und dem Erntejahr, wie die Fruchtfolge-Historie aus C1.
 
 ### R3-H3 Ware beim Nachbarn kaufen
 
-- [ ] Auf der Kontaktseite eines Nachbarn: **„Ware anfragen“** mit Formular (Fruchtsorte aus dem Nachbarvorrat,
+- [x] Auf der Kontaktseite eines Nachbarn (Entscheidung: in der App „Handel“, verlinkt von der Kontaktseite): **„Ware anfragen“** mit Formular (Fruchtsorte aus dem Nachbarvorrat,
   Menge). Angeboten wird nur Ware, für die du laut `tradeStorage` Platz hast. Außerdem bietet ein Nachbar von sich aus
   an, was er übrig hat.
-- [ ] Das Backend prüft Vorrat, freie Kapazität und Kontostand und nennt den Preis (H2). Antwort per Mail oder Anruf,
+- [x] Das Backend prüft Vorrat, freie Kapazität und Kontostand und nennt den Preis (H2). Antwort per Mail oder Anruf,
   Annahme per Knopf (optional als Ja/Nein-Frage im Spiel, F2).
-- [ ] Ausführung als Batch: `STORAGE_TRANSFER { direction: "IN", fillType, amount }` + `MONEY_TRANSACTION`
+- [x] Ausführung als Batch: `STORAGE_TRANSFER { direction: "IN", fillType, amount }` + `MONEY_TRANSACTION`
   (`GOODS_PURCHASE`).
-- [ ] Mod: verteilt die Menge wie `PlaceableSilo:refillAmount` auf die eigenen Silo-Lager mit freier Kapazität
+- [x] Mod: verteilt die Menge wie `PlaceableSilo:refillAmount` auf die eigenen Silo-Lager mit freier Kapazität
   (`getFreeCapacity` → `setFillLevel(getFillLevel + moved)`), aber **ohne** die Spielbuchung `BOUGHT_MATERIALS`. Das
   Geld bucht die `MONEY_TRANSACTION`. Reicht die freie Kapazität nicht für die ganze Menge: `FAILED` mit
   `NO_CAPACITY`, der ganze Batch wird abgelehnt.
-- [ ] Vertrauen und Tagebucheintrag („Stroh von Otto Wendler gekauft“).
+- [x] Vertrauen und Tagebucheintrag („Stroh von Otto Wendler gekauft“). Die Ware des Nachbarn ist ab der Zusage
+  reserviert und geht bei einer abgelehnten Anweisung zurück in seinen Vorrat.
 
 **Beleg:** ✅ `PlaceableSilo:refillAmount(fillTypeIndex, amount, price)` (LUADOC): Schleife über `spec.storages`,
 `getFreeCapacity` → `setFillLevel(fillLevel + moved, fillTypeIndex)`, danach `addMoney(..., MoneyType.BOUGHT_MATERIALS)`.
@@ -298,15 +315,16 @@ Den Buchungsteil übernimmt das Tool.
 
 ### R3-H4 Nachbar fragt nach deiner Ware
 
-- [ ] Hat ein Nachbar Bedarf (H2) und du genug davon in deinen Silos (`tradeStorage.amount`), fragt er per Mail oder
+- [x] Hat ein Nachbar Bedarf (H2) und du genug davon in deinen Silos (`tradeStorage.amount`), fragt er per Mail oder
   Anruf: „Mir geht das Stroh aus, kannst du mir 8.000 Liter abgeben?“ Menge und Preis legt das Backend fest.
-- [ ] Zusage per Knopf (optional als Ja/Nein-Frage im Spiel, F2). Ausführung als Batch:
+- [x] Zusage per Knopf (optional als Ja/Nein-Frage im Spiel, F2). Ausführung als Batch:
   `STORAGE_TRANSFER { direction: "OUT", fillType, amount }` + `MONEY_TRANSACTION` (`GOODS_SALE`).
-- [ ] Mod: entnimmt die Menge aus den eigenen Silo-Lagern (`setFillLevel(getFillLevel - moved)`). Liegt inzwischen zu
+- [x] Mod: entnimmt die Menge aus den eigenen Silo-Lagern (`setFillLevel(getFillLevel - moved)`). Liegt inzwischen zu
   wenig im Silo: `FAILED` mit `INSUFFICIENT_STOCK`, keine Buchung. Der Nachbar bedankt sich trotzdem oder ist
   enttäuscht (Text und Vertrauen).
-- [ ] Absage kostet wenig Vertrauen, Ignorieren bis zur Frist etwas mehr. Häufige Hilfe stärkt das Dorf-Ansehen
-  (Formel des Dorf-Ansehens, `PublicActionType`).
+- [x] Absage kostet wenig Vertrauen, Ignorieren bis zur Frist etwas mehr. Häufige Hilfe stärkt das Dorf-Ansehen
+  (Formel des Dorf-Ansehens, `PublicActionType`). Umgesetzt: `PublicActionType.NEIGHBOR_HELP`, höchstens dreimal je
+  FS25-Jahr.
 
 **Beleg:** ✅ wie H3 (`storage:getFillLevel`, `storage:setFillLevel` in `PlaceableSilo`).
 
@@ -317,7 +335,7 @@ ruft `setFillLevel` nur auf dem Server-Pfad (`self.isServer`), ein Client schick
 
 ### R3-H5 Nachbarn vergeben echte Aufträge
 
-- [ ] Neue Anweisung `MISSION_CREATE { missionType, farmlandId }`. Der Mod sucht das Feld des Farmlands und prüft:
+- [x] Neue Anweisung `MISSION_CREATE { missionType, farmlandId }`. Der Mod sucht das Feld des Farmlands und prüft:
   - das Feld hat keinen Besitzer (`getHasOwner()` = `false`),
   - auf dem Feld läuft kein Auftrag (`field.currentMission == nil`),
   - der Auftragstyp passt zum Feldzustand (`<Klasse>.isAvailableForField(field, nil)`).
@@ -325,19 +343,21 @@ ruft `setFillLevel` nur auf dem Server-Pfad (`self.isServer`), ein Client schick
   Dann erzeugt er den Auftrag wie das Spiel selbst:
   `classObject.new(true, g_client ~= nil)` → `mission:init(field)` → `mission:setDefaultEndDate()` →
   `g_missionManager:registerMission(mission, missionType)`. Die Quittung trägt die `uniqueId` des Auftrags (`result`).
-  Passt etwas nicht: `FAILED` mit `NOT_AVAILABLE`.
-- [ ] Backend: Ein Nachbar mit passendem Feld (H1: z. B. abgeerntet und ungepflügt → Pflügen; Steine → Steine
+  Passt etwas nicht: `FAILED` mit `NOT_AVAILABLE`. Umgesetzt: `RPSimGameAdapter:createMission` mit den Klassen
+  `PlowMission` / `StonePickMission` und `g_missionManager:getMissionType(<Klasse>.NAME)`.
+- [x] Backend: Ein Nachbar mit passendem Feld (H1: z. B. abgeerntet und ungepflügt → Pflügen; Steine → Steine
   sammeln) bittet per Mail um Hilfe. Die Anweisung geht erst nach der Zusage raus. Der Auftrag erscheint dann im
   Auftragsmenü des Spiels.
-- [ ] Der Auftraggeber im Spiel ist automatisch der Nachbar, dem das Farmland gehört (`AbstractFieldMission:getNPC()` =
+- [x] Der Auftraggeber im Spiel ist automatisch der Nachbar, dem das Farmland gehört (`AbstractFieldMission:getNPC()` =
   `field.farmland:getNPC()`). Das Tool führt denselben NPC schon als Charakter (T-21).
-- [ ] Belohnung: Die Vergütung zahlt das Spiel nach seiner eigenen Formel. Das Tool bewertet den Abschluss über
+- [x] Belohnung: Die Vergütung zahlt das Spiel nach seiner eigenen Formel. Das Tool bewertet den Abschluss über
   `farm_facts.missions` (`FINISHED`, `success`): Vertrauen, Dank-Mail, bei Erfolg optional ein kleiner Bonus
   (Konfig, `MONEY_TRANSACTION` `OTHER`). Bei Misserfolg oder Ablauf ist der Nachbar enttäuscht.
-- [ ] Umgekehrt (optional): Der Spieler fragt einen Nachbarn auf dessen Kontaktseite nach Arbeit. Das Backend wählt
-  ein passendes Nachbarfeld.
-- [ ] Werte unter `rpsim.formulas.neighbor-missions.*` (Häufigkeit, Bonus, Vertrauen), Obergrenze je Monat. Die
-  Obergrenze des Spiels `g_missionManager:hasFarmReachedMissionLimit` wird vor dem Angebot geprüft.
+- [x] Umgekehrt (optional): Der Spieler fragt einen Nachbarn auf dessen Kontaktseite nach Arbeit. Das Backend wählt
+  ein passendes Nachbarfeld. Umgesetzt: Knopf „Nach Arbeit fragen“ in der App „Handel“.
+- [x] Werte unter `rpsim.formulas.neighbor-missions.*` (Häufigkeit, Bonus, Vertrauen), Obergrenze je Monat. Die
+  Obergrenze des Spiels `g_missionManager:hasFarmReachedMissionLimit` wird vor dem Angebot geprüft (Export als
+  `farm_facts.missionLimitReached`). Ein nach dem Laden verlorener Auftrag wird erneut angeboten.
 
 **Beleg:** ✅ `Field/PlowMission.md` und `Field/StonePickMission.md` (LUADOC): `tryGenerateMission` =
 `g_fieldManager:getFieldForMission()` → `field.currentMission`-Prüfung → `isAvailableForField(field, nil)` →

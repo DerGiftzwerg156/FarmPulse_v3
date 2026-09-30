@@ -19,5 +19,11 @@ public enum CaseKind {
     /** Roadmap V2 R2-E4: sponsoring request of a club with fixed tiers. */
     SPONSORING_REQUEST,
     /** Roadmap V2 R2-E4: invitation to a festival (accept / decline). */
-    INVITATION
+    INVITATION,
+    /** Roadmap V3 R3-H3: a neighbour offers goods of his stock (on his own or asked by the player) - the player buys. */
+    GOODS_OFFER,
+    /** Roadmap V3 R3-H4: a neighbour asks for goods of the player's silos - the player sells. */
+    GOODS_REQUEST,
+    /** Roadmap V3 R3-H5: a neighbour asks for help with a real contract of the game on his field. */
+    NEIGHBOR_MISSION
 }

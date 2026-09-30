@@ -103,6 +103,30 @@ import { Button } from '../../shared/ui/button';
         </div>
         <p class="mt-1 text-[11px] text-muted">{{ 'contracts.invitationHint' | t }}</p>
       }
+      @if (c().kind === 'GOODS_OFFER' || c().kind === 'GOODS_REQUEST') {
+        <div class="mt-1 text-[12px] text-text" data-testid="goods-case">{{ (c().kind === 'GOODS_OFFER' ? 'trade.offerText' : 'trade.requestText') | t: { name: c().character?.name ?? '–', quantity: c().quantity, fillType: (c().reference | label: 'fillType'), amount: (c().offerAmount | money), unit: (c().costAmount | money) } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ (c().kind === 'GOODS_OFFER' ? 'trade.buy' : 'trade.sell') | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        } @else {
+          <app-badge variant="positive">{{ 'trade.inTransfer' | t }}</app-badge>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ (c().kind === 'GOODS_OFFER' ? 'trade.offerHint' : 'trade.requestHint') | t }}</p>
+      }
+      @if (c().kind === 'NEIGHBOR_MISSION') {
+        <div class="mt-1 text-[12px] text-text" data-testid="neighbor-mission">{{ 'trade.missionText' | t: { name: c().character?.name ?? '–', type: (c().reference | label: 'missionType'), hectares: c().hectares ?? '–', bonus: (c().offerAmount | money) } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'trade.acceptMission' | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        } @else {
+          <app-badge variant="positive">{{ 'trade.missionRunning' | t }}</app-badge>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'trade.missionHint' | t }}</p>
+      }
       @if (isInsuranceCase()) {
         <div class="mt-2 flex flex-wrap gap-2">
           <app-button [disabled]="busy()" (pressed)="act('report', { channel: 'MAIL' })" data-testid="report-mail">{{ 'contracts.reportMail' | t }}</app-button>

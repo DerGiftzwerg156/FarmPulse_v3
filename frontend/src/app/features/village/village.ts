@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
@@ -24,7 +24,7 @@ export const CATEGORY_ORDER = ['MANDATORY', 'SUBSTITUTE', 'DYNAMIC', 'EMPLOYEE']
  */
 @Component({
   selector: 'app-village',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, TrustMeter, PageErrorView, ServiceCases],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, TrustMeter, PageErrorView, ServiceCases],
   templateUrl: './village.html',
 })
 export class Village {

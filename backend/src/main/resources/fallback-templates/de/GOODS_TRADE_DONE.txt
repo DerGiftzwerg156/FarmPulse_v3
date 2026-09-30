@@ -1,0 +1,6 @@
+Danke für den Handel
+Moin,
+
+der Handel ist erledigt: {{amount}} Liter {{fillType}} für {{price}} €. Hat gut geklappt – gern wieder.
+
+{{characterName}}

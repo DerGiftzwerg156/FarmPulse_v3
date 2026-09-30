@@ -45,6 +45,11 @@ public enum TrustReason {
     SPONSORING_DECLINED,
     INVITATION_ACCEPTED,
     INVITATION_IGNORED,
+    /** Roadmap V3 R3-H: trade with a neighbour done / offer declined / ignored / goods missing in the silo. */
+    NEIGHBOR_TRADE,
+    NEIGHBOR_TRADE_DECLINED,
+    NEIGHBOR_TRADE_IGNORED,
+    NEIGHBOR_DISAPPOINTED,
     INITIAL,
     OTHER
 }

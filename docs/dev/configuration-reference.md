@@ -577,6 +577,63 @@ player takes them in the game's contracts menu. Nothing is started by the tool, 
 | `rpsim.formulas.contractor.client-trust-delta` | `2` | Trust of the client (FS25 NPC as village character, T-21) for a completed referred contract. | TODO T-22 |
 | `rpsim.formulas.contractor.failed-trust-delta` | `-3` | Trust of the contractor when a referred contract fails. | TODO T-22 |
 
+## `rpsim.formulas.neighbor-trade` (Roadmap V3 R3-H2..H4)
+
+Trade with the neighbours (owner decisions, placeholders). Stock and needs of a neighbour are backend fiction derived from
+his real fields in the game (`farm_facts.npcFields`, R3-H1); the goods move for real in the own silos (`STORAGE_TRANSFER`
++ `MONEY_TRANSACTION` as one batch). Only goods an own silo accepts are traded (`farm_facts.tradeStorage`).
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.neighbor-trade.roles.DAIRY` | `[STRAW, SILAGE, DRYGRASS_WINDROW]` | Needs of a dairy farm (Milchviehbetrieb). A role is rolled when the neighbour is created (older neighbours: when first needed). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.roles.ARABLE` | `[SEEDS, FERTILIZER, LIQUIDFERTILIZER]` | Needs of an arable farm (Ackerbau). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.roles.MIXED` | `[STRAW, SEEDS]` | Needs of a mixed farm (Gemischtbetrieb). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.neighbor-sell-share` | `1.05` | The neighbour sells at this share of the price per 1000 l (best sell point price, else reference price). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.neighbor-buy-share` | `0.95` | The neighbour buys at this share of the price. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.trust-divisor` | `20` | Price bonus / malus from trust = trust / trust-divisor (in the player's favour) … | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.trust-cap` | `0.05` | … capped at ± this share (like the negotiation engine). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.harvest-share` | `0.3` | Share of a neighbour's harvest (hectares × 10,000 × litersPerSqm) that goes into his stock. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.by-products.WHEAT` | `STRAW` | By-product of a wheat harvest. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.by-products.BARLEY` | `STRAW` | By-product of a barley harvest. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.by-products.OAT` | `STRAW` | By-product of an oat harvest. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.by-product-share` | `0.5` | By-product litres = this share of the grain litres that went into the stock. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.monthly-decay` | `0.2` | The stock of every neighbour sinks by this share at the start of every game month (sales, own use). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.STRAW` | `120` | € per 1000 l for straw when no sell point of the map buys it. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.SILAGE` | `180` | € per 1000 l for silage without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.DRYGRASS_WINDROW` | `250` | € per 1000 l for hay without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.SEEDS` | `900` | € per 1000 l for seeds without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.FERTILIZER` | `1500` | € per 1000 l for fertiliser without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.LIQUIDFERTILIZER` | `1200` | € per 1000 l for liquid fertiliser without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.max-messages-per-month` | `2` | Offers and requests the neighbours send on their own per game month (the player's own requests do not count). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.offer-probability-per-month` | `0.3` | Chance per game month that a neighbour offers goods of his stock the player has room for (R3-H3). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.request-probability-per-month` | `0.3` | Chance per game month that a neighbour asks for goods of his needs the player has in his silos (R3-H4). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.amount-min` | `2000` | Smallest amount (litres) of an offer or request. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.amount-max` | `10000` | Largest amount (litres). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.amount-step` | `500` | Amounts are multiples of this (litres). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.max-share` | `0.5` | At most this share of the neighbour's stock (offer) or of the player's stock (request). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.answer-days` | `5` | Game days to answer; the price holds that long. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.trade-trust-delta` | `2` | Trust of the neighbour when a trade is done. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.decline-trust-delta` | `-1` | Trust when the player declines an offer or request. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.ignore-trust-delta` | `-2` | Trust when the player lets the deadline pass. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.stock-missing-trust-delta` | `-1` | R3-H4: the goods were no longer in the silo when the sale was executed (`INSUFFICIENT_STOCK`). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reputation-delta` | `1` | Village reputation (`NEIGHBOR_HELP`) per fulfilled request of a neighbour … | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reputation-max-per-year` | `3` | … at most this many times per FS25 year. | Roadmap V3 R3-H |
+
+## `rpsim.formulas.neighbor-missions` (Roadmap V3 R3-H5)
+
+Neighbours ask for help with a real contract of the game on their own field (`MISSION_CREATE`); the contract appears in
+the game's contract menu with the neighbour as client.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.neighbor-missions.types` | `[PLOW, STONE_PICK]` | Contract types the neighbours offer (evidenced in the LUADOC; the mod maps them to `PlowMission` / `StonePickMission`). PLOW = harvested field with `plowLevel` 0, STONE_PICK = `stoneLevel` ≥ `fields.stone-high-level`. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.probability-per-month` | `0.4` | Chance per game month that a neighbour asks for help (only below the game's contract limit, `farm_facts.missionLimitReached`). | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.max-per-month` | `1` | Requests of the neighbours on their own per game month. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.answer-days` | `5` | Game days to answer a request. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.success-bonus` | `250` | Bonus of the neighbour (€, `MONEY_TRANSACTION` `OTHER`) when the contract finished successfully; the game pays its own reward. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.success-trust-delta` | `3` | Trust of the neighbour when the contract finished successfully. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.failure-trust-delta` | `-3` | Trust when the contract failed or expired in the game. | Roadmap V3 R3-H5 |
+
 ## `rpsim.formulas.mechanic` (Roadmap V2 R2-A6)
 
 An employed mechanic repairs part of the machines at the start of every game month, after the maintenance contract and

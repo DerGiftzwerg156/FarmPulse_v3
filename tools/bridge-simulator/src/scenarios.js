@@ -220,6 +220,7 @@ Object.assign(SCENARIOS, {
         withered: false, cut: false, fillType: 'CANOLA', litersPerSqm: 0.45,
         weedState: 0, stoneLevel: 0, sprayLevel: 2, limeLevel: 1, plowLevel: 1, groundType: 'SOWN' },
     ],
+    missionLimitReached: false, // R3-H5: hasFarmReachedMissionLimit of the player farm
     // shop vehicle catalog (motorized is missing when the mod could not read the specs, fallback of R3-V1)
     storeVehicles: [
       { xmlFilename: 'data/vehicles/fendt/vario700/vario700.xml', name: 'Fendt 700 Vario', price: 245000,

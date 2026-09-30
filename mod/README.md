@@ -25,6 +25,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Exportiert **Felder und Wetter** (R2-C, `fields`, `fieldRules`, `weather`): Kultur, Wachstum, Unkraut, Steine,
   Kalk und Pflug je eigenem Feld (dazu verdorrt/abgeerntet, Fülltyp und Ertrag je m²), die Bodeneinstellungen des
   Spielstands und das aktuelle Wetter. Die Felder werden nur alle `fieldExportIntervalMs` neu gelesen.
+- Exportiert für den **Handel mit den Nachbarn** (Roadmap V3, R3-H): die Felder ohne Besitzer, die die NPCs des
+  Spiels bewirtschaften (`npcFields`, Schalter `npcFieldExport`), Füllstand und freien Platz der eigenen Silos je
+  Sorte (`tradeStorage`) und ob die Höchstzahl an Aufträgen erreicht ist (`missionLimitReached`).
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -44,8 +47,13 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     Die Antwort schreibt der Mod sofort nach `export/player_responses.json` (R2-F1); vom Backend quittierte Antworten
     (`ackedResponses`) und zurückgezogene Fragen (`withdrawnPrompts`) verschwinden. Die Taste „FarmPulse: offene
     Frage“ (Standard Alt+J, in der Steuerung änderbar; R2-F3) öffnet die nächste Frage, auch im Fahrzeug
-  - `STORAGE_TRANSFER`, `MISSION_CREATE`, `VEHICLE_SPAWN`, `VEHICLE_REMOVE` (Roadmap V3, R3-Q1) – werden geprüft und
-    bis zur Umsetzung von R3-H3/H4, R3-H5, R3-V2 und R3-V3 mit `FAILED` / `NOT_SUPPORTED` quittiert. Eine Quittung kann
+  - `STORAGE_TRANSFER` (Roadmap V3, R3-H3/H4) – füllt die Ware in die eigenen Silos (`IN`) oder entnimmt sie
+    (`OUT`), ohne Spielbuchung; das Geld bucht die `MONEY_TRANSACTION` desselben Batches. `FAILED` mit `NO_CAPACITY`,
+    `INSUFFICIENT_STOCK` oder `UNKNOWN_FILLTYPE`, dann bucht der Batch nichts
+  - `MISSION_CREATE` (Roadmap V3, R3-H5) – legt einen Auftrag (Pflügen, Steine sammeln) auf dem Feld eines Nachbarn an
+    wie das Spiel selbst; die Quittung trägt die `missionId`, `FAILED` mit `NOT_AVAILABLE`, wenn das Feld nicht passt
+  - `VEHICLE_SPAWN`, `VEHICLE_REMOVE` (Roadmap V3, R3-Q1) – werden geprüft und bis zur Umsetzung von R3-V2 und R3-V3
+    mit `FAILED` / `NOT_SUPPORTED` quittiert. Eine Quittung kann
     ein Ergebnis `result` tragen (z. B. `vehicleId`, `missionId`); es wird mit im Spielstand gespeichert
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
@@ -107,6 +115,7 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | `moneyTypeTitles` | `true` | Buchungen bekommen eigene Bezeichnungen (`MoneyType.register(statistik, "rpsim_money_<GRUND>")`, Texte in `modDesc.xml`); `false` = alles als „Sonstiges“ (`MoneyType.OTHER`) |
 | `financeJournalPeriods` | `13` | Roadmap V2 R2-B1: so viele FS25-Monate behält das Buchungsjournal (`farm_facts.finances`) |
 | `fieldExportIntervalMs` | `10000` | Roadmap V2 R2-C1: so oft (Echtzeit, ms) werden die Felder neu gelesen; jeder Export dazwischen übernimmt den letzten Stand |
+| `npcFieldExport` | `true` | Roadmap V3 R3-H1: die Felder der Nachbarn (ohne Besitzer) mit exportieren (`npcFields`, gleiche Taktung wie die eigenen Felder); aus = keine Ernte-Vorräte und keine Aufträge der Nachbarn |
 | `promptsInVehicle` | `true` | Roadmap V2 R2-F2: Ja/Nein-Fragen erscheinen auch, während du im Fahrzeug sitzt; `false` = nur zu Fuß (die Taste öffnet sie trotzdem) |
 | `moneyTypeStatistics` | `{}` | Finanzstatistik je Buchungsgrund, z. B. `{ "SALARY_PAYMENT": "wagePayment" }`. Belegt ist nur `other` (FS25 `FillTrigger.lua`); andere Namen erst im Spiel prüfen (Testplan 8.18) |
 

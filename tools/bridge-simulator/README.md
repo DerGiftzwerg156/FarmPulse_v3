@@ -90,7 +90,7 @@ queued, answered or withdrawn `DUPLICATE`); answer it with `POST /answer` - like
 `withdrawnPrompts` (R2-F1). `REPAIR_VEHICLE` with `targetDamage` repairs down to that damage and never raises it.
 
 **Roadmap V3 blocks** (`npcFields`, `tradeStorage` in `farm_facts.json`, `storeVehicles` in `market_context.json`):
-only `nachbarhandel` exports them. `npcFields` lists only farmlands no farm owns (a `FARMLAND_TRANSFER` changes the
+only `nachbarhandel` exports them (plus `missionLimitReached: false`, R3-H5). `npcFields` lists only farmlands no farm owns (a `FARMLAND_TRANSFER` changes the
 list); `tradeStorage` = own silos per fill type with `freeCapacity = capacity - amount`. Silo contents and contracts
 created by `MISSION_CREATE` are part of the simulated savegame and go back on `/reload-without-saving`.
 
@@ -124,6 +124,8 @@ created by `MISSION_CREATE` are part of the simulated savegame and go back on `/
 | `POST /husbandry {"husbandryUniqueId":"hus_00001","health":80,"food":0.6}` | Change the values of a husbandry (`tierhof-krank`) |
 | `POST /field {"farmlandId":7,"weedState":0}` | Change the state of a field (`ernte-herbst`), e.g. `{"farmlandId":2,"growthState":9,"cut":true}` = harvested |
 | `POST /field-rules {"limeRequired":false}` | The player changes the soil settings of the savegame (`ernte-herbst`) |
+| `POST /npc-field {"farmlandId":3,"growthState":10,"cut":true}` | Roadmap V3 R3-H1: change a neighbour field (`nachbarhandel`), e.g. harvest it (`HARVESTABLE` → `HARVESTED` fills the neighbour's stock) or `{"farmlandId":3,"stoneLevel":2}`; `null` removes a value |
+| `POST /mission-limit {"reached": true}` | Roadmap V3 R3-H5: the player farm reaches the game's contract limit (`missionLimitReached`) or not |
 | `POST /vanilla-loan {"change": 30000}` | Roadmap V2 R2-D1: the player takes (positive) or repays (negative) the vanilla loan in the finance menu; the balance moves by the same amount |
 | `POST /vanilla-farmland {"farmlandId": 13, "toPlayer": true}` | Roadmap V2 R2-D2: the player buys (`true`) or sells a farmland in the game's field menu at its price (booked as `FIELD_BUY` / `FIELD_SELL`), market context re-exported |
 | `POST /answer {"promptId":"prm_…","answer":"YES"}` | Roadmap V2 R2-F: the player answers a yes/no question in the game (`YES` / `NO`); 400 for an unknown question |

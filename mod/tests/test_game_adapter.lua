@@ -548,4 +548,223 @@ function T.TestGameAdapter:testFirstExportLogsTheStoragePlaces()
     lu.assertEquals(helpers.countLogs("info", "Storage silo [SILO]: counted, 1 storages, fill levels: WHEAT=40"), 1)
 end
 
+-- Roadmap V3 R3-H1: fields of the game's NPCs (no owner, missions allowed)
+function T.TestGameAdapter:testNpcFieldsAreTheFieldsWithoutOwner()
+    local game = helpers.fakeGame()
+    fakeFields(game)
+    local function owned(f, hasOwner, allowed)
+        f.getHasOwner = function() return hasOwner end
+        f.isMissionAllowed = allowed
+    end
+    owned(g_fieldManager.fields[1], true, true)
+    owned(g_fieldManager.fields[2], false, true)
+    owned(g_fieldManager.fields[3], false, true) -- invalid state
+    owned(g_fieldManager.fields[4], false, true) -- no farmland
+    local npc = RPSimGameAdapter.new():collectNpcFields()
+    lu.assertEquals(#npc, 1)
+    lu.assertEquals({ npc[1].farmlandId, npc[1].fruitType, npc[1].growthState }, { 2, "WHEAT", 5 })
+    owned(g_fieldManager.fields[2], false, false) -- the map forbids missions there
+    lu.assertEquals(#RPSimGameAdapter.new():collectNpcFields(), 0)
+    g_fieldManager = nil
+end
+
+function T.TestGameAdapter:testNpcFieldsFollowTheSwitchAndTheFieldInterval()
+    local game = helpers.fakeGame()
+    fakeFields(game)
+    for _, f in ipairs(g_fieldManager.fields) do
+        f.getHasOwner = function() return false end
+        f.isMissionAllowed = true
+    end
+    local bridge, fs, paths = realBridge(game)
+    bridge:exportFarmFacts()
+    local doc = RPSimJson.decode(fs.files[paths.farmFacts])
+    lu.assertEquals(#doc.npcFields, 2)
+    bridge.cfg.npcFieldExport = false
+    bridge.fieldTimer = bridge.cfg.fieldExportIntervalMs
+    bridge:exportFarmFacts()
+    lu.assertNil(RPSimJson.decode(fs.files[paths.farmFacts]).npcFields)
+    g_fieldManager = nil
+end
+
+-- Roadmap V3 R3-H2..H4: own silos and silo extensions only, fill level and free capacity per fill type
+local function storage(owner, levels, free)
+    local s = { ownerFarmId = owner, levels = levels, free = free, set = {} }
+    function s:getFillLevels() return self.levels end
+    function s:getFillLevel(i) return self.levels[i] or 0 end
+    function s:getFreeCapacity(i) return self.free[i] or 0 end
+    function s:setFillLevel(level, i)
+        self.free[i] = (self.free[i] or 0) - (level - (self.levels[i] or 0))
+        self.levels[i] = level
+        self.set[#self.set + 1] = { i, level }
+    end
+    return s
+end
+
+local function tradeGame()
+    local a = storage(1, { [1] = 40000, [2] = 0 }, { [1] = 10000, [2] = 50000 })
+    local b = storage(1, { [1] = 5000 }, { [1] = 45000 })
+    local foreign = storage(2, { [1] = 99999 }, { [1] = 1 })
+    local ext = storage(1, { [3] = 2000 }, { [3] = 8000 })
+    helpers.fakeGame({ fillTypes = { [1] = "WHEAT", [2] = "STRAW", [3] = "BARLEY", [4] = "SUGAR" }, placeables = {
+        placeable("silo", { spec_silo = { storages = { a, b, foreign } } }),
+        placeable("ext", { spec_siloExtension = { storage = ext } }),
+        -- productions do not count for the trade
+        placeable("sugar", { spec_productionPoint = { productionPoint = { storage = storage(1, { [4] = 500 }, { [4] = 1 }) } } }),
+    } })
+    return a, b, ext
+end
+
+function T.TestGameAdapter:testTradeStorageSumsOnlyOwnSilos()
+    tradeGame()
+    local doc = RPSimFarmFacts.build(RPSimGameAdapter.new():collectFarmFacts())
+    lu.assertEquals(doc.tradeStorage, {
+        { fillType = "BARLEY", amount = 2000, freeCapacity = 8000 },
+        { fillType = "STRAW", amount = 0, freeCapacity = 50000 },
+        { fillType = "WHEAT", amount = 45000, freeCapacity = 55000 },
+    })
+end
+
+function T.TestGameAdapter:testStorageTransferInSpreadsOverFreeCapacityWithoutGameBooking()
+    local a, b = tradeGame()
+    local adapter = RPSimGameAdapter.new()
+    local balance = adapter:getBalance()
+    lu.assertTrue(adapter:transferStorage("WHEAT", 30000, "IN"))
+    lu.assertEquals(a.levels[1], 50000) -- first storage filled up (10,000 free)
+    lu.assertEquals(b.levels[1], 25000) -- the rest into the next one
+    lu.assertEquals(adapter:getBalance(), balance)
+    local ok, why = adapter:transferStorage("WHEAT", 30001, "IN")
+    lu.assertFalse(ok)
+    lu.assertEquals(why, "NO_CAPACITY")
+    lu.assertEquals(a.levels[1], 50000) -- nothing moved
+    lu.assertEquals(select(2, adapter:transferStorage("SUGAR", 1, "IN")), "NO_CAPACITY") -- no own silo for it
+    lu.assertEquals(select(2, adapter:transferStorage("OATS", 1, "IN")), "UNKNOWN_FILLTYPE")
+end
+
+function T.TestGameAdapter:testStorageTransferOutTakesTheGoodsOrNothing()
+    local a, b = tradeGame()
+    local adapter = RPSimGameAdapter.new()
+    local ok, why = adapter:transferStorage("WHEAT", 45001, "OUT")
+    lu.assertFalse(ok)
+    lu.assertEquals(why, "INSUFFICIENT_STOCK")
+    lu.assertEquals(#a.set + #b.set, 0)
+    lu.assertTrue(adapter:transferStorage("WHEAT", 42000, "OUT"))
+    lu.assertEquals({ a.levels[1], b.levels[1] }, { 0, 3000 })
+end
+
+function T.TestGameAdapter:testStorageTransferIsExecutedAsBatchWithTheMoney()
+    tradeGame()
+    local bridge, fs, paths = realBridge()
+    local state = bridge.state
+    local instructions = { savegameId = SG, instructions = {
+        { instructionId = "st", batchId = "b", type = "STORAGE_TRANSFER", direction = "IN", fillType = "STRAW",
+            amount = 8000 },
+        { instructionId = "m", batchId = "b", type = "MONEY_TRANSACTION", amount = -960, reason = "GOODS_PURCHASE" },
+        { instructionId = "st2", batchId = "c", type = "STORAGE_TRANSFER", direction = "OUT", fillType = "BARLEY",
+            amount = 5000 },
+        { instructionId = "m2", batchId = "c", type = "MONEY_TRANSACTION", amount = 900, reason = "GOODS_SALE" } } }
+    helpers.writeInstructions(fs, paths, instructions)
+    local before = bridge.adapter:getBalance()
+    bridge:pollInstructions()
+    lu.assertEquals(state.processed.st.status, "APPLIED")
+    lu.assertEquals(state.processed.m.status, "APPLIED")
+    lu.assertEquals(state.processed.st2.message, "INSUFFICIENT_STOCK")
+    lu.assertStrContains(state.processed.m2.message, "BATCH_ABORTED")
+    lu.assertEquals(bridge.adapter:getBalance(), before - 960)
+end
+
+-- Roadmap V3 R3-H5: real contracts on the field of an NPC farmland
+local function missionGame(opts)
+    opts = opts or {}
+    helpers.fakeGame()
+    local registered = {}
+    local function class(name, available)
+        local c = { NAME = name }
+        c.canRun = function() return opts.canRun ~= false end
+        c.isAvailableForField = function(field, mission) return available and mission == nil and field ~= nil end
+        c.new = function(isServer, isClient)
+            local m = { isServer = isServer, isClient = isClient, ended = false }
+            function m:init(field) self.field = field; return opts.initOk ~= false end
+            function m:setDefaultEndDate() self.ended = true end
+            function m:getUniqueId() return "mission_" .. name end
+            function m:delete() self.deleted = true end
+            return m
+        end
+        return c
+    end
+    PlowMission = class("plowMission", true)
+    StonePickMission = class("stonePickMission", false)
+    local types = { PLOWMISSION = { name = "plowMission", classObject = PlowMission },
+        STONEPICKMISSION = { name = "stonePickMission", classObject = StonePickMission } }
+    g_missionManager = {
+        getMissionType = function(_, name) return types[string.upper(name)] end,
+        registerMission = function(_, mission, missionType) registered[#registered + 1] = { mission, missionType } end,
+        hasFarmReachedMissionLimit = function(_, farmId) return farmId == 1 and opts.limit == true end,
+        getMissions = function() return {} end,
+    }
+    g_client = {}
+    local field = { farmland = { id = 7 }, currentMission = opts.currentMission,
+        getHasOwner = function() return opts.hasOwner == true end }
+    g_fieldManager = { fields = { field } }
+    return registered, field
+end
+
+local function clearMissionGame()
+    PlowMission, StonePickMission, g_missionManager, g_client, g_fieldManager = nil, nil, nil, nil, nil
+end
+
+function T.TestGameAdapter:testMissionCreateRegistersAPlowContractLikeTheGame()
+    local registered, field = missionGame()
+    local ok, err, result = RPSimGameAdapter.new():createMission("PLOW", 7)
+    lu.assertTrue(ok, err)
+    lu.assertEquals(result, { missionId = "mission_plowMission" })
+    lu.assertEquals(#registered, 1)
+    local mission, missionType = registered[1][1], registered[1][2]
+    lu.assertEquals(missionType.name, "plowMission")
+    lu.assertIs(mission.field, field)
+    lu.assertTrue(mission.isServer)
+    lu.assertTrue(mission.isClient)
+    lu.assertTrue(mission.ended)
+    clearMissionGame()
+end
+
+function T.TestGameAdapter:testMissionCreateRefusesWhatTheGameWouldNotGenerate()
+    local cases = {
+        { opts = { hasOwner = true }, type = "PLOW" },
+        { opts = { currentMission = {} }, type = "PLOW" },
+        { opts = { canRun = false }, type = "PLOW" },
+        { opts = {}, type = "STONE_PICK" }, -- not available for this field
+        { opts = { initOk = false }, type = "PLOW" },
+        { opts = {}, type = "PLOW", farmlandId = 8 }, -- no field on that farmland
+    }
+    for i, c in ipairs(cases) do
+        local registered = missionGame(c.opts)
+        local ok, why = RPSimGameAdapter.new():createMission(c.type, c.farmlandId or 7)
+        lu.assertFalse(ok, "case " .. i)
+        lu.assertEquals(why, "NOT_AVAILABLE", "case " .. i)
+        lu.assertEquals(#registered, 0, "case " .. i)
+        clearMissionGame()
+    end
+    missionGame()
+    lu.assertEquals(select(2, RPSimGameAdapter.new():createMission("HARVEST", 7)), "UNKNOWN_MISSION_TYPE")
+    -- another type by its FS25 name (activated after a playtest): classObject of getMissionType
+    lu.assertTrue(RPSimGameAdapter.new():createMission("plowMission", 7))
+    clearMissionGame()
+end
+
+function T.TestGameAdapter:testMissionCreateAcksTheMissionIdAndTheLimitIsExported()
+    missionGame({ limit = true })
+    local bridge, fs, paths = realBridge()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        { instructionId = "mc", type = "MISSION_CREATE", missionType = "PLOW", farmlandId = 7 } } })
+    bridge:pollInstructions()
+    local ack = RPSimJson.decode(fs.files[paths.instructionsAck])
+    lu.assertEquals(ack.acks[1].status, "APPLIED")
+    lu.assertEquals(ack.acks[1].result, { missionId = "mission_plowMission" })
+    bridge:exportFarmFacts()
+    lu.assertTrue(RPSimJson.decode(fs.files[paths.farmFacts]).missionLimitReached)
+    clearMissionGame()
+    helpers.fakeGame()
+    lu.assertNil(RPSimGameAdapter.new():missionLimitReached())
+end
+
 return T

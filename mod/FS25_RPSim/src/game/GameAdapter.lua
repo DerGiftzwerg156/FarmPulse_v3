@@ -3,6 +3,7 @@
 -- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager g_npcManager
 -- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
 -- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
+-- luacheck: globals PlowMission StonePickMission g_client
 -- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
 -- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
 -- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
@@ -483,6 +484,9 @@ function RPSimGameAdapter:collectFarmFacts()
             return true
         end)
     end
+    -- Roadmap V3 R3-H2 / R3-H5
+    raw.tradeStorage = self:collectTradeStorage()
+    raw.missionLimitReached = self:missionLimitReached()
     return raw
 end
 
@@ -732,6 +736,23 @@ end
 -- getIsWithered / getIsCut (FruitTypeDesc). Fields without a valid state are left out. nil = no field manager.
 function RPSimGameAdapter:collectFields()
     local farmId = self:getFarmId()
+    return self:collectFieldsWhere(function(field)
+        local farmland = field.farmland
+        return farmland ~= nil and g_farmlandManager:getFarmlandOwner(farmland.id) == farmId
+    end)
+end
+
+--- Roadmap V3 R3-H1: fields the game's NPCs farm - no owner and missions allowed, the same selection FS25
+-- FieldManager.lua uses to plan the NPC fruit (not field:getHasOwner() and field.isMissionAllowed). Same entries as
+-- collectFields. nil = no field manager.
+function RPSimGameAdapter:collectNpcFields()
+    return self:collectFieldsWhere(function(field)
+        return field.farmland ~= nil and not field:getHasOwner() and field.isMissionAllowed
+    end)
+end
+
+--- One export entry per field that passes `accept(field)` (errors of a single field are skipped).
+function RPSimGameAdapter:collectFieldsWhere(accept)
     local fields = safe(function() return g_fieldManager.fields end, nil)
     if fields == nil then
         return nil
@@ -739,10 +760,10 @@ function RPSimGameAdapter:collectFields()
     local list = {}
     for _, field in pairs(fields) do
         safe(function()
-            local farmland = field.farmland
-            if farmland == nil or g_farmlandManager:getFarmlandOwner(farmland.id) ~= farmId then
+            if not accept(field) then
                 return true
             end
+            local farmland = field.farmland
             local state = field:getFieldState()
             if state == nil or not state.isValid then
                 return true
@@ -769,6 +790,173 @@ function RPSimGameAdapter:collectFields()
         end)
     end
     return list
+end
+
+--- Roadmap V3 R3-H2: storages of the own silos and silo extensions only (FS25 Storage objects) - the same ownership
+-- rule as storageSources (spec_silo.storages with storage.ownerFarmId, spec_siloExtension.storage).
+function RPSimGameAdapter:ownSiloStorages()
+    local farmId = self:getFarmId()
+    local out = {}
+    for _, p in pairs(placeableList()) do
+        safe(function()
+            local owner = safe(function() return p:getOwnerFarmId() end, nil)
+            local function own(storage)
+                return storage ~= nil and (storage.ownerFarmId or owner) == farmId
+            end
+            if p.spec_silo ~= nil then
+                for _, storage in ipairs(p.spec_silo.storages or {}) do
+                    if own(storage) then
+                        out[#out + 1] = storage
+                    end
+                end
+            end
+            if p.spec_siloExtension ~= nil and own(p.spec_siloExtension.storage) then
+                out[#out + 1] = p.spec_siloExtension.storage
+            end
+            return true
+        end)
+    end
+    return out
+end
+
+--- R3-H2: fill level and free capacity per fill type of the own silos (storage:getFillLevels lists every fill type a
+-- storage accepts, storage:getFreeCapacity(fillTypeIndex) - LUADOC PlaceableSilo:getFillLevels / refillAmount).
+-- Returns { {fillType, amount, freeCapacity} } (normalised by RPSimFarmFacts.buildTradeStorage).
+function RPSimGameAdapter:collectTradeStorage()
+    local byType, list = {}, {}
+    for _, storage in ipairs(self:ownSiloStorages()) do
+        safe(function()
+            for index, level in pairs(storage:getFillLevels() or {}) do
+                local name = fillTypeName(index)
+                local e = byType[name]
+                if e == nil then
+                    e = { fillType = name, amount = 0, freeCapacity = 0 }
+                    byType[name] = e
+                    list[#list + 1] = e
+                end
+                e.amount = e.amount + (level or 0)
+                e.freeCapacity = e.freeCapacity + (storage:getFreeCapacity(index) or 0)
+            end
+            return true
+        end)
+    end
+    return list
+end
+
+--- R3-H3 / R3-H4 / R3-M3: STORAGE_TRANSFER. IN spreads the amount over the own silo storages with free capacity like
+-- PlaceableSilo:refillAmount (getFreeCapacity -> setFillLevel(getFillLevel + moved)) but without the game's booking
+-- BOUGHT_MATERIALS (the MONEY_TRANSACTION of the batch books the money); OUT takes it out
+-- (setFillLevel(getFillLevel - moved)). The whole amount or nothing: NO_CAPACITY / INSUFFICIENT_STOCK.
+function RPSimGameAdapter:transferStorage(fillType, amount, direction)
+    local index = safe(function() return g_fillTypeManager:getFillTypeIndexByName(fillType) end, nil)
+    if index == nil then
+        return false, "UNKNOWN_FILLTYPE"
+    end
+    local storages = self:ownSiloStorages()
+    local available = 0
+    for _, storage in ipairs(storages) do
+        available = available + safe(function()
+            if direction == "IN" then
+                return storage:getFreeCapacity(index)
+            end
+            return storage:getFillLevel(index)
+        end, 0)
+    end
+    if available + 0.001 < amount then
+        return false, direction == "IN" and "NO_CAPACITY" or "INSUFFICIENT_STOCK"
+    end
+    local ok, err = pcall(function()
+        local rest = amount
+        for _, storage in ipairs(storages) do
+            local level = storage:getFillLevel(index) or 0
+            local moved
+            if direction == "IN" then
+                moved = math.min(rest, storage:getFreeCapacity(index) or 0)
+                if moved > 0 then
+                    storage:setFillLevel(level + moved, index)
+                end
+            else
+                moved = math.min(rest, level)
+                if moved > 0 then
+                    storage:setFillLevel(level - moved, index)
+                end
+            end
+            rest = rest - moved
+            if rest <= 0.001 then
+                break
+            end
+        end
+    end)
+    if not ok then
+        return false, tostring(err)
+    end
+    return true
+end
+
+--- R3-H5: mission types the tool offers, by the FS25 class (PlowMission / StonePickMission: tryGenerateMission and
+-- isAvailableForField are evidenced in the LUADOC). Other names go through g_missionManager:getMissionType(name).
+RPSimGameAdapter.MISSION_CLASSES = {
+    PLOW = function() return PlowMission end,
+    STONE_PICK = function() return StonePickMission end,
+}
+
+--- R3-H5: MISSION_CREATE - a real contract on the field of the farmland, created like the game's tryGenerateMission:
+-- field without owner, no running contract, type available for the field, then new(true, g_client ~= nil) ->
+-- init(field) -> setDefaultEndDate() -> g_missionManager:registerMission(mission, missionType). Returns ok, err,
+-- { missionId = uniqueId }. NOT_AVAILABLE when a check fails.
+function RPSimGameAdapter:createMission(missionType, farmlandId)
+    local ok, created, why = pcall(function()
+        local classObject, typeEntry
+        local byClass = RPSimGameAdapter.MISSION_CLASSES[missionType]
+        if byClass ~= nil then
+            classObject = byClass()
+            typeEntry = classObject ~= nil and g_missionManager:getMissionType(classObject.NAME) or nil
+        else
+            typeEntry = g_missionManager:getMissionType(missionType)
+            classObject = typeEntry ~= nil and typeEntry.classObject or nil
+        end
+        if classObject == nil or typeEntry == nil then
+            return nil, "UNKNOWN_MISSION_TYPE"
+        end
+        local field
+        for _, f in pairs(g_fieldManager.fields or {}) do
+            if f.farmland ~= nil and f.farmland.id == farmlandId then
+                field = f
+                break
+            end
+        end
+        if field == nil or field:getHasOwner() or field.currentMission ~= nil then
+            return nil, "NOT_AVAILABLE"
+        end
+        if classObject.canRun ~= nil and not classObject.canRun() then
+            return nil, "NOT_AVAILABLE"
+        end
+        if not classObject.isAvailableForField(field, nil) then
+            return nil, "NOT_AVAILABLE"
+        end
+        local mission = classObject.new(true, g_client ~= nil)
+        if not mission:init(field) then
+            mission:delete()
+            return nil, "NOT_AVAILABLE"
+        end
+        mission:setDefaultEndDate()
+        g_missionManager:registerMission(mission, typeEntry)
+        return mission
+    end)
+    if not ok then
+        return false, tostring(created)
+    end
+    if created == nil then
+        return false, why or "NOT_AVAILABLE"
+    end
+    return true, nil, { missionId = safe(function() return created:getUniqueId() end, nil) }
+end
+
+--- R3-H5: the game's contract limit of the player farm (MissionManager:hasFarmReachedMissionLimit); nil = unknown.
+function RPSimGameAdapter:missionLimitReached()
+    return safe(function()
+        return g_missionManager:hasFarmReachedMissionLimit(self:getFarmId()) == true
+    end, nil)
 end
 
 --- Name of a field ground type in the global FieldGroundType table (reverse lookup, numbers only), nil if unknown.

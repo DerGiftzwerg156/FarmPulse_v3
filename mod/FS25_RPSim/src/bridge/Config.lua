@@ -40,6 +40,8 @@ RPSimConfig.DEFAULTS = {
     -- Roadmap V2 R2-F2: show the yes/no questions also while the player sits in a vehicle. false = only on foot (the
     -- fallback of the roadmap); the key of R2-F3 opens a waiting question anywhere.
     promptsInVehicle = true,
+    -- Roadmap V3 R3-H1: export the fields the game's NPCs farm (farm_facts.npcFields), sampled like the own fields.
+    npcFieldExport = true,
 }
 
 function RPSimConfig.new(overrides)

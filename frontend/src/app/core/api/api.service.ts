@@ -249,6 +249,17 @@ export class ApiService {
     return this.get('/village-reputation');
   }
 
+  // Roadmap V3 R3-H: trade with the neighbours
+  trade(): Observable<M.TradeView> {
+    return this.get('/trade');
+  }
+  requestGoods(neighborId: number, fillType: string, amount: number): Observable<M.CaseView> {
+    return this.post(`/trade/neighbors/${neighborId}/request`, { fillType, amount });
+  }
+  askForWork(neighborId: number): Observable<M.CaseView> {
+    return this.post(`/trade/neighbors/${neighborId}/work`);
+  }
+
   // Roadmap V3 R3-N: tablet in the home network
   lanStatus(): Observable<M.LanStatusView> {
     return this.get('/lan/status');

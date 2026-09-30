@@ -41,6 +41,7 @@ Homescreen.
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen |
 | **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl |
 | **Werkstatt** | Wartung, Wartungsvertrag und Mechaniker |
+| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn |
 | **Tagebuch** | Die Chronik deines Hofs |
 | **Einstellungen** | KI, Fragen im Spiel, Hinweise und Reaktionen |
 
@@ -374,6 +375,33 @@ Mod-Version.
   Vertrag meldet sie sich ab und zu mit einem Hinweis, wenn eine Maschine stark abgenutzt ist. Das Angebot forderst
   du in der Werkstatt an; kündigen kannst du jederzeit.
 
+## Handel
+
+Die Nachbarn im Dorf sind Handelspartner. Gehandelt wird nur Ware, für die du ein **eigenes Silo** hast (Silo oder
+Silo-Erweiterung, die dir gehört); die Menge wird im Spiel wirklich in dein Silo gebucht oder aus ihm entnommen, das
+Geld im selben Moment. Die App zeigt:
+
+- **Deine Silos:** jede Sorte, die ein eigenes Silo annimmt, mit Füllstand und freiem Platz.
+- **Nachbarn:** Betrieb (Milchviehbetrieb, Ackerbau oder Gemischtbetrieb), Vertrauen, **Vorrat** mit Preis je
+  1.000 Liter, was er **braucht** und welche Felder er bewirtschaftet. Der Vorrat entsteht aus der Ernte seiner
+  Felder (bei Weizen, Gerste und Hafer auch Stroh) und wird jeden Monat kleiner. Seine Preise richten sich nach der
+  besten Verkaufsstelle – er verkauft etwas teurer und kauft etwas billiger, gutes Vertrauen macht es für dich
+  günstiger. Für Ware ohne Verkaufsstelle gilt ein Richtpreis.
+- **Ware anfragen:** Sorte aus seinem Vorrat und Menge wählen – höchstens so viel, wie er hat und in deine Silos
+  passt. Der Nachbar antwortet sofort mit seinem Angebot; es steht unten bei den Angeboten.
+- **Nach Arbeit fragen:** Hat der Nachbar ein abgeerntetes, noch nicht gepflügtes oder ein steiniges Feld, bittet er
+  dich ums **Pflügen** oder **Steine sammeln**.
+- **Angebote, Anfragen und Aufträge:** Von sich aus bietet ein Nachbar ab und zu Ware an oder fragt nach Ware aus
+  deinen Silos (höchstens zwei Nachrichten im Monat, fünf Tage Zeit zum Antworten). **Kaufen** bzw. **Verkaufen**
+  bucht Ware und Geld; ein Handel stärkt das Vertrauen, und wer Nachbarn mit seiner Ware aushilft, steigt im Ansehen
+  des Dorfs. Ablehnen kostet etwas Vertrauen, Ignorieren mehr. Liegt beim Buchen zu wenig im Silo, ist der Nachbar
+  enttäuscht.
+- **Aufträge der Nachbarn:** Nach deiner Zusage steht der Auftrag im **Auftragsmenü des Spiels**, mit dem Nachbarn als
+  Auftraggeber; die Vergütung zahlt das Spiel. Erledigst du ihn, bedankt sich der Nachbar mit einem kleinen Bonus
+  (250 €), sonst ist er enttäuscht. Hast du im Spiel schon die Höchstzahl an Aufträgen angenommen, fragt niemand.
+
+Die Nachbarfelder, deine Silos und die Aufträge brauchen die aktuelle Mod-Version; fehlen sie, sagt die App es oben.
+
 ## Kontakte
 
 ![Kontakte](../screenshots/16-kontakte.png)
@@ -382,7 +410,8 @@ Alle Menschen im Dorf mit Rolle und Vertrauen (fünf Balken und ein Wort statt e
 stehen Charakterzüge, Sprachstil und Hintergrund. Mit **Nachricht verfassen** meldest du dich selbst – per Mail oder
 Anruf. Schreibst du jemandem mehrmals kurz hintereinander, antwortet er trotzdem; aufs Vertrauen wirkt nur der
 erste Kontakt des Tages. Dein **Ansehen im Dorf** (gut angesehen, neutral, umstritten) steht auch auf dem
-Startbildschirm. Gelegentlich ziehen Leute weg oder neu zu.
+Startbildschirm. Gelegentlich ziehen Leute weg oder neu zu. Bei einem Nachbarn führt **Handel & Arbeit mit diesem
+Nachbarn** in die App **Handel**.
 
 **Vereine:** Schützenverein, Freiwillige Feuerwehr und Sportverein haben je eine:n Vorsitzende:n. Zu den Dorffesten
 im FS25-Kalender (Maibaumaufstellen im Mai, Schützenfest im Juni, Feuerwehrfest im August, Erntedankfest im Oktober,
@@ -428,7 +457,9 @@ Bedingungen, die auch im Browser stehen. Einzeln einschaltbar (Standard: nur Anr
 - Einladungen zu Festen zu- oder absagen,
 - eine Ausgleichsforderung für einen Feldkauf zahlen oder ablehnen,
 - einen Steuerbescheid bezahlen (*Nein* = später im Browser),
-- das Angebot der Steuerberatung annehmen oder ablehnen.
+- das Angebot der Steuerberatung annehmen oder ablehnen,
+- ein Angebot oder eine Anfrage eines Nachbarn im **Handel** annehmen oder ablehnen,
+- einem Nachbarn einen Auftrag zusagen oder absagen.
 
 Die Knöpfe des Fensters heißen *Ja* und *Nein*; was sie bewirken, steht im Text („Ja = Annehmen · Nein = Ablehnen“).
 Ist gerade ein Menü offen, wartet die Frage, bis es geschlossen ist. Die Taste **FarmPulse: offene Frage** (Standard

@@ -7,6 +7,8 @@ import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
+import de.farmpulse.rpsim.neighbor.NeighborMissionService;
+import de.farmpulse.rpsim.neighbor.NeighborTradeService;
 import de.farmpulse.rpsim.repository.ContractRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
 import de.farmpulse.rpsim.tax.TaxService;
@@ -31,10 +33,15 @@ public class ContractActions {
     private final VanillaBypassService bypass;
     private final TaxService tax;
     private final ClubService clubs;
+    private final NeighborTradeService trade;
+    private final NeighborMissionService neighborMissions;
 
     public ContractActions(ContractRepository contracts, ServiceCaseRepository cases, InsuranceService insurance,
                            HuntingService hunting, LivestockService livestock, LeaseService lease,
-                           MaintenanceService maintenance, VanillaBypassService bypass, TaxService tax, ClubService clubs) {
+                           MaintenanceService maintenance, VanillaBypassService bypass, TaxService tax, ClubService clubs,
+                           NeighborTradeService trade, NeighborMissionService neighborMissions) {
+        this.trade = trade;
+        this.neighborMissions = neighborMissions;
         this.contracts = contracts;
         this.cases = cases;
         this.insurance = insurance;
@@ -106,6 +113,8 @@ public class ContractActions {
             case COMPENSATION_CLAIM -> bypass.pay(sg, id); // R2-D2: pay the compensation
             case TAX_BILL -> tax.pay(sg, id); // R2-E1: pay by button
             case INVITATION -> clubs.acceptInvitation(sg, id); // R2-E4: RSVP
+            case GOODS_OFFER, GOODS_REQUEST -> trade.accept(sg, id); // R3-H3 / R3-H4
+            case NEIGHBOR_MISSION -> neighborMissions.accept(sg, id); // R3-H5
             default -> throw unsupported();
         };
     }
@@ -134,6 +143,8 @@ public class ContractActions {
             case COMPENSATION_CLAIM -> bypass.decline(sg, id);
             case INVITATION -> clubs.declineInvitation(sg, id);
             case SPONSORING_REQUEST -> clubs.declineSponsoring(sg, id);
+            case GOODS_OFFER, GOODS_REQUEST -> trade.decline(sg, id); // R3-H3 / R3-H4
+            case NEIGHBOR_MISSION -> neighborMissions.decline(sg, id); // R3-H5
             default -> throw unsupported();
         };
     }

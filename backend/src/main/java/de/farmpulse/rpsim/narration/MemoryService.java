@@ -82,6 +82,10 @@ public class MemoryService {
             case SPONSORING_DECLINED -> "Sponsoring abgelehnt";
             case INVITATION_ACCEPTED -> "Einladung angenommen";
             case INVITATION_IGNORED -> "Einladung unbeantwortet gelassen";
+            case NEIGHBOR_TRADE -> "Ware gehandelt";
+            case NEIGHBOR_TRADE_DECLINED -> "Handel abgelehnt";
+            case NEIGHBOR_TRADE_IGNORED -> "Handelsangebot unbeantwortet gelassen";
+            case NEIGHBOR_DISAPPOINTED -> "zugesagte Ware lag nicht im Silo";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

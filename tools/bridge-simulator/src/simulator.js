@@ -208,6 +208,8 @@ export class BridgeSimulator {
     this.tradeStorage = preset.tradeStorage ? structuredClone(preset.tradeStorage) : null; // R3-H2: own silos
     this.storeVehicles = preset.storeVehicles ? structuredClone(preset.storeVehicles) : null; // R3-V1
     this.toolMissions = []; // R3-H5: contracts created by MISSION_CREATE (the vanilla ones stay in this.missions)
+    // R3-H5: the game's contract limit of the player farm (hasFarmReachedMissionLimit), only in scenarios that have it
+    this.missionLimitReached = preset.missionLimitReached ?? null;
     this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
     this.prompts = []; // R2-F2: yes/no questions shown to the "player" (waiting for an answer)
     this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
@@ -232,7 +234,8 @@ export class BridgeSimulator {
 
   /** Roadmap V3 state that changes through instructions (silo goods R3-H3/H4, contracts R3-H5). */
   roadmapV3State() {
-    return { npcFields: this.npcFields, tradeStorage: this.tradeStorage, toolMissions: this.toolMissions };
+    return { npcFields: this.npcFields, tradeStorage: this.tradeStorage, toolMissions: this.toolMissions,
+      missionLimitReached: this.missionLimitReached };
   }
 
   /** Roadmap V2 state the mod keeps in its savegame XML (journal R2-B1, worked time R2-A4, roster R2-A0). */
@@ -293,7 +296,7 @@ export class BridgeSimulator {
         contractReports: s.contractReports ?? [] });
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
         'storage', 'farmlands', 'calendar', 'finances', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
-        'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions']) {
+        'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions', 'missionLimitReached']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -469,7 +472,24 @@ export class BridgeSimulator {
         .filter((e) => e.amount + e.freeCapacity > 0)
         .sort((a, b) => a.fillType.localeCompare(b.fillType));
     }
+    if (typeof this.missionLimitReached === 'boolean') blocks.missionLimitReached = this.missionLimitReached;
     return blocks;
+  }
+
+  /** Control API (R3-H1): the game changes a neighbour field (e.g. harvest: {"farmlandId":3,"cut":true}). */
+  setNpcField(patch) {
+    const f = this.npcFields?.find((x) => x.farmlandId === patch.farmlandId);
+    if (!f) throw new Error(`unknown neighbour field on farmland ${patch.farmlandId}`);
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === null) delete f[k]; else f[k] = v;
+    }
+    return f;
+  }
+
+  /** Control API (R3-H5): the contract limit of the player farm is reached or not. */
+  setMissionLimit(reached) {
+    this.missionLimitReached = Boolean(reached);
+    return { missionLimitReached: this.missionLimitReached };
   }
 
   /** R3-H3/H4 like the planned mod action: moves goods into / out of the own silos (also in assets.storage). */
