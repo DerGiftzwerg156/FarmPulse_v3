@@ -92,7 +92,9 @@ Mehr in [`docs/dev/setup.md`](docs/dev/setup.md).
 Ausbauplan: [Roadmap V2](docs/architecture/ROADMAP_V2.md) – Mitarbeiter als FS25-Helfer, echte Hof-Finanzen, Felder & Wetter, neue
 Rollenspiel-Bereiche und Entscheidungen im Spiel.
 Nächster Ausbauplan: [Roadmap V3](docs/architecture/ROADMAP_V3.md) – Tablet im Heimnetz, Handel und echte Aufträge der
-Nachbarn, Verpachtung, Kreditsicherheiten, Vorkontrakte, Dürre, Gebrauchtmaschinen und mehr.
+Nachbarn, Verpachtung, Kreditsicherheiten, Vorkontrakte, Dürre, Gebrauchtmaschinen und mehr. Ergänzt durch
+[Roadmap V3.1](docs/architecture/ROADMAP_V3.1.md) – Lohnunternehmer, Viehhandel, Winterdienst, Behörden und Förderung,
+Dorfzeitung, Dorfchat, Stammtisch und Hofkarte.
 
 Weitere Werkzeuge: [Bridge-Simulator](tools/bridge-simulator/README.md) ·
 [Screenshot-Generator](tools/screenshot-generator/README.md) · [Beitragen](CONTRIBUTING.md) ·
