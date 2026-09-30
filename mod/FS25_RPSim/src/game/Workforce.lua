@@ -214,18 +214,33 @@ function RPSimWorkforce.wageFree(state, jobId)
         and state.assignments[jobId] ~= nil
 end
 
+--- Number of ACTIVE machine operators (on leave, at a training or on strike do not count).
+function RPSimWorkforce.activeOperators(state)
+    local n = 0
+    for _, e in ipairs(state.roster ~= nil and state.roster.employees or {}) do
+        if e.role == RPSimWorkforce.DRIVER_ROLE and e.status == "ACTIVE" then
+            n = n + 1
+        end
+    end
+    return n
+end
+
 --- R2-A3: helper limit in the strict mode = min(original, active machine operators); otherwise the original value.
 function RPSimWorkforce.helperLimit(state, original)
     if state.roster == nil or not state.roster.strictHelperLimit then
         return original
     end
-    local n = 0
-    for _, e in ipairs(state.roster.employees) do
-        if e.role == RPSimWorkforce.DRIVER_ROLE and e.status == "ACTIVE" then
-            n = n + 1
-        end
+    return math.min(original, RPSimWorkforce.activeOperators(state))
+end
+
+--- R2-A3: in the strict mode the farm already runs as many helpers as it has active machine operators. The mod's own
+-- check: maxNumHirables only counts where a start asks AISystem:getAILimitedReached (map menu, key in the vehicle), mods
+-- like Courseplay or AutoDrive start helpers their own way. running = helpers of the farm without the one to start.
+function RPSimWorkforce.limitReached(state, running)
+    if state.roster == nil or not state.roster.strictHelperLimit then
+        return false
     end
-    return math.min(original, n)
+    return running >= RPSimWorkforce.activeOperators(state)
 end
 
 --- R2-A4: credits the game time since the last sample to every employee driving one of the running jobs.

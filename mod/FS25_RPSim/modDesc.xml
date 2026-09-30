@@ -138,6 +138,16 @@
             <en>No trained machine operator available</en>
             <de>Kein geschulter Maschinenführer frei</de>
         </text>
+        <!-- Roadmap V2 R2-A3: start of a helper refused in the strict mode (as many helpers as active machine operators) -->
+        <text name="rpsim_ai_helperLimitStart">
+            <en>No machine operator available (strict mode)</en>
+            <de>Kein freier Maschinenführer (strenger Modus)</de>
+        </text>
+        <!-- Roadmap V2 R2-A3: AI message when a mod started a helper over the strict limit (%s = helper name) -->
+        <text name="rpsim_ai_helperLimit">
+            <en>%s stopped: no machine operator available (strict mode)</en>
+            <de>%s hält an: kein freier Maschinenführer (strenger Modus)</de>
+        </text>
         <!-- Roadmap V2 R2-A5: AI message when an employee goes on strike (%s = helper / employee name) -->
         <text name="rpsim_ai_strike">
             <en>%s has gone on strike</en>

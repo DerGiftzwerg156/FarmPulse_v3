@@ -55,6 +55,20 @@ function T.TestWorkforce:testStrictHelperLimit()
     lu.assertEquals(RPSimWorkforce.helperLimit(wf, 10), 0, "no operator in the strict mode = no helpers")
 end
 
+function T.TestWorkforce:testTheLimitIsReachedAtTheNumberOfActiveOperators()
+    local wf = RPSimWorkforce.new()
+    lu.assertFalse(RPSimWorkforce.limitReached(wf, 5), "no list yet")
+    RPSimWorkforce.setRoster(wf, roster({ KLAUS, ANNA, MIA }))
+    lu.assertFalse(RPSimWorkforce.limitReached(wf, 5), "normal mode: no own limit")
+    RPSimWorkforce.setRoster(wf, roster({ KLAUS, ANNA, MIA, { employeeId = 9, name = "Jan Ober",
+        role = "MACHINE_OPERATOR", status = "ON_LEAVE" } }, { strictHelperLimit = true }))
+    lu.assertEquals(RPSimWorkforce.activeOperators(wf), 2)
+    lu.assertFalse(RPSimWorkforce.limitReached(wf, 1))
+    lu.assertTrue(RPSimWorkforce.limitReached(wf, 2))
+    RPSimWorkforce.setRoster(wf, roster({ MIA }, { strictHelperLimit = true }))
+    lu.assertTrue(RPSimWorkforce.limitReached(wf, 0), "no operator in the strict mode = no helpers")
+end
+
 function T.TestWorkforce:testWorkedTimeIsCreditedSinceTheLastSample()
     local wf = RPSimWorkforce.new()
     RPSimWorkforce.setRoster(wf, roster({ KLAUS, ANNA }))
@@ -175,7 +189,7 @@ local function fakeAIGame()
 end
 
 local function cleanup()
-    RPSim.bridge = nil
+    RPSim.bridge, RPSim.limitStops = nil, {}
     AIJob, AIJobFieldWork, AIJobConveyor, Utils, g_storeManager = nil, nil, nil, nil, nil
 end
 
@@ -253,6 +267,69 @@ function T.TestWorkforce:testOwnStrikeMessageIsRegisteredAndUsed()
     lu.assertEquals(string.format(job.stoppedWith:getI18NText(), "Klaus Berger"), "Klaus Berger legt die Arbeit nieder")
     AIMessage, Class, g_i18n = nil, nil, nil
     RPSimGameAdapter.StrikeMessage = nil
+    cleanup()
+end
+
+--- Courseplay / AutoDrive: a helper started without asking the limit (no getIsStartable, maxNumHirables ignored).
+function T.TestWorkforce:testAHelperStartedOverTheLimitIsStoppedInTheNextUpdate()
+    local game, bridge, adapter, newJob = fakeAIGame()
+    AIMessageErrorUnknown = { new = function() return { generic = true } end }
+    FSBaseMission = { INGAME_NOTIFICATION_CRITICAL = 3, INGAME_NOTIFICATION_INFO = 1 }
+    bridge:applyRoster(roster({ KLAUS, MIA }, { strictHelperLimit = true }))
+    local first = newJob(AIJobFieldWork, 1)
+    first:start(1)
+    local second = newJob(AIJobFieldWork, 2)
+    second:start(1)
+    lu.assertEquals(first:getHelperName(), "Klaus Berger")
+    lu.assertNil(second.stoppedWith, "not stopped inside AISystem:startJob")
+    lu.assertNil(bridge.state.workforce.assignments[2])
+    RPSim:update(0)
+    lu.assertTrue(second.stoppedWith.generic)
+    lu.assertNil(first.stoppedWith)
+    lu.assertStrContains(game.notifications[1].text, "höchstens 1 Helfer")
+    lu.assertEquals(RPSim.limitStops, {})
+    -- only the server stops helpers; the normal mode has no own limit
+    g_currentMission.getIsServer = function() return false end
+    local third = newJob(AIJobFieldWork, 3)
+    third:start(1)
+    RPSim:update(0)
+    lu.assertNil(third.stoppedWith, "client")
+    g_currentMission.getIsServer = function() return true end
+    bridge:applyRoster(roster({ KLAUS, MIA }))
+    local fourth = newJob(AIJobFieldWork, 4)
+    fourth:start(1)
+    RPSim:update(0)
+    lu.assertNil(fourth.stoppedWith, "normal mode")
+    lu.assertEquals(adapter:collectAIJobs()[1].jobId, 1)
+    AIMessageErrorUnknown, FSBaseMission = nil, nil
+    cleanup()
+end
+
+function T.TestWorkforce:testOwnHelperLimitMessageIsRegisteredAndUsed()
+    local _, bridge, adapter, newJob = fakeAIGame()
+    local registered = {}
+    AIMessage = { new = function(mt) return setmetatable({}, mt) end }
+    Class = function(members) return { __index = members } end
+    g_i18n = { getText = function(_, key)
+        return key == "rpsim_ai_helperLimit" and "%s hält an: kein freier Maschinenführer (strenger Modus)" or key
+    end }
+    FSBaseMission = { INGAME_NOTIFICATION_CRITICAL = 3, INGAME_NOTIFICATION_INFO = 1 }
+    g_currentMission.aiMessageManager = { registerMessage = function(_, name, cls)
+        registered[#registered + 1] = name
+        return { name = name, classObject = cls }
+    end }
+    bridge.workforceEnabled = true
+    bridge:onSavegameLoaded()
+    lu.assertEquals(registered, { "RPSIM_STRIKE", "RPSIM_HELPER_LIMIT" })
+    lu.assertTrue(adapter.helperLimitMessageRegistered)
+    bridge:applyRoster(roster({ MIA }, { strictHelperLimit = true }))
+    local job = newJob(AIJobFieldWork, 1)
+    job:start(1)
+    RPSim:update(0)
+    lu.assertEquals(string.format(job.stoppedWith:getI18NText(), "Helfer Paul"),
+        "Helfer Paul hält an: kein freier Maschinenführer (strenger Modus)")
+    AIMessage, Class, g_i18n, FSBaseMission = nil, nil, nil, nil
+    RPSimGameAdapter.StrikeMessage, RPSimGameAdapter.HelperLimitMessage = nil, nil
     cleanup()
 end
 
@@ -402,6 +479,25 @@ function T.TestWorkforce:testTheStrictModeRefusesTheStartWithAMessage()
     lu.assertEquals({ tractor:getIsStartable(nil) }, { true, 0 })
     local foreign = withVehicle(newJob(AIJobFieldWork, 3), "harvesters", 2)
     lu.assertEquals({ foreign:getIsStartable(nil) }, { true, 0 }, "other farms are not checked")
+    cleanup()
+end
+
+function T.TestWorkforce:testTheStrictModeRefusesAStartOverTheLimit()
+    local game, bridge, _, newJob = fakeAIGame()
+    storeManager()
+    bridge:applyRoster(roster({ KLAUS }, { strictHelperLimit = true }))
+    newJob(AIJob, 7):start(2) -- other farms do not count
+    local first = withVehicle(newJob(AIJobFieldWork, 1), "tractorsM")
+    lu.assertEquals({ first:getIsStartable(nil) }, { true, 0 })
+    first:start(1)
+    local second = withVehicle(newJob(AIJobFieldWork, nil), "tractorsM")
+    local ok, state = second:getIsStartable(nil)
+    lu.assertFalse(ok)
+    lu.assertEquals(state, RPSim.START_ERROR_HELPER_LIMIT)
+    lu.assertStrContains(game.notifications[1].text, "höchstens 1 Helfer")
+    lu.assertEquals(AIJobFieldWork.getIsStartErrorText(state), "Kein freier Maschinenführer (strenger Modus)")
+    bridge:applyRoster(roster({ KLAUS }))
+    lu.assertEquals({ second:getIsStartable(nil) }, { true, 0 }, "normal mode: no own limit")
     cleanup()
 end
 

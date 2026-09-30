@@ -95,6 +95,7 @@ function RPSim.onStartMission(_)
 end
 
 function RPSim:update(dt)
+    RPSim.stopHelpersOverTheLimit()
     if self.bridge ~= nil then
         self.bridge:update(dt)
     end
@@ -185,8 +186,42 @@ function RPSim.pricePerMsHook(job, superFunc, ...)
     return superFunc(job, ...)
 end
 
+--- R2-A3: running helpers of the player farm without the given job (not yet or just started).
+local function otherRunningJobs(adapter, job)
+    local n = 0
+    for _, j in ipairs(adapter:collectAIJobs()) do
+        if job.jobId == nil or j.jobId ~= job.jobId then
+            n = n + 1
+        end
+    end
+    return n
+end
+
+--- R2-A3: helpers started over the strict limit, stopped in the next update (AISystem:startJob still runs while
+-- AIJob:start is called, a stop in between would leave its bookkeeping half done).
+RPSim.limitStops = {}
+
+function RPSim.stopHelpersOverTheLimit()
+    if #RPSim.limitStops == 0 then
+        return
+    end
+    local jobs = RPSim.limitStops
+    RPSim.limitStops = {}
+    local wf = workforce()
+    local adapter = RPSim.bridge ~= nil and RPSim.bridge.adapter or nil
+    if wf == nil or adapter == nil then
+        return
+    end
+    for _, job in ipairs(jobs) do
+        adapter:stopHelperLimitJob(job, RPSimWorkforce.activeOperators(wf))
+    end
+end
+
 --- R2-A2: AIJob:start(farmId) picks a random FS25 helper; for the player farm a free active machine operator is
 -- assigned to the job as well - "Schulungen": one with the trainings the vehicle needs.
+-- R2-A3: a helper of the player farm started over the strict limit is stopped again. The map menu and the key in the
+-- vehicle already refuse it (maxNumHirables, startableHook); this catches mods that start helpers their own way
+-- (Courseplay, AutoDrive), as long as their jobs run through AIJob:start.
 function RPSim.jobStartHook(job, farmId)
     local wf = workforce()
     if wf == nil or RPSim.bridge.adapter == nil then
@@ -195,18 +230,26 @@ function RPSim.jobStartHook(job, farmId)
     pcall(function()
         local adapter = RPSim.bridge.adapter
         if farmId == adapter:getFarmId() then
+            if adapter:isServer() and RPSimWorkforce.limitReached(wf, otherRunningJobs(adapter, job)) then
+                RPSim.limitStops[#RPSim.limitStops + 1] = job
+                return
+            end
             local info = adapter:jobVehicleInfo(job)
             RPSimWorkforce.assign(wf, job.jobId, RPSimWorkforce.requiredTrainings(wf, info ~= nil and info.categories))
         end
     end)
 end
 
---- "Schulungen": own start state of AIJob*:getIsStartable, sent to the client as UInt8 (AIJobStartRequestEvent).
+--- "Schulungen" / R2-A3: own start states of AIJob*:getIsStartable, sent to the client as UInt8
+-- (AIJobStartRequestEvent).
 RPSim.START_ERROR_NO_TRAINING = 201
+RPSim.START_ERROR_HELPER_LIMIT = 202
 
 --- "Schulungen": in the strict mode (R2-A3) the start of a helper is refused when the vehicle needs a training and no
 -- free machine operator has it. The map menu and the key in the vehicle (AIJobVehicle:toggleAIVehicle) both send an
 -- AIJobStartRequestEvent, whose server side asks job:getIsStartable(connection) first.
+-- R2-A3: also refused when the farm already runs as many helpers as it has active machine operators - the own check
+-- does not depend on maxNumHirables, so it holds for every start that asks getIsStartable.
 function RPSim.startableHook(job, superFunc, connection)
     local ok, state = superFunc(job, connection)
     local wf = workforce()
@@ -214,14 +257,20 @@ function RPSim.startableHook(job, superFunc, connection)
         return ok, state
     end
     local adapter = RPSim.bridge.adapter
-    local blocked, required, info = false, nil, nil
+    local blocked, required, info, full = false, nil, nil, false
     pcall(function()
         info = adapter:jobVehicleInfo(job)
         if info ~= nil and info.farmId == adapter:getFarmId() then
+            full = RPSimWorkforce.limitReached(wf, otherRunningJobs(adapter, job))
             required = RPSimWorkforce.requiredTrainings(wf, info.categories)
             blocked = RPSimWorkforce.startBlocked(wf, required)
         end
     end)
+    if full then
+        adapter:notify(string.format("FarmPulse: Kein freier Maschinenführer – im strengen Modus fahren höchstens %d "
+            .. "Helfer.", RPSimWorkforce.activeOperators(wf)), "CRITICAL")
+        return false, RPSim.START_ERROR_HELPER_LIMIT
+    end
     if not blocked then
         return ok, state
     end
@@ -234,13 +283,18 @@ function RPSim.startableHook(job, superFunc, connection)
     return false, RPSim.START_ERROR_NO_TRAINING
 end
 
---- "Schulungen": text of the own start state in the game dialog. AIJob*.getIsStartErrorText(state) is defined static;
--- the calling menu is not part of the code dump, so a call on a job instance (job:getIsStartErrorText(state)) works too.
+--- "Schulungen" / R2-A3: text of the own start states in the game dialog. AIJob*.getIsStartErrorText(state) is defined
+-- static; the calling menu is not part of the code dump, so a call on a job instance (job:getIsStartErrorText(state))
+-- works too.
 function RPSim.startErrorTextHook(first, superFunc, second)
     local state = type(first) == "table" and second or first
     if state == RPSim.START_ERROR_NO_TRAINING then
         local ok, text = pcall(function() return g_i18n:getText("rpsim_ai_noTraining") end)
         return ok and text or "Kein geschulter Maschinenführer frei"
+    end
+    if state == RPSim.START_ERROR_HELPER_LIMIT then
+        local ok, text = pcall(function() return g_i18n:getText("rpsim_ai_helperLimitStart") end)
+        return ok and text or "Kein freier Maschinenführer (strenger Modus)"
     end
     return superFunc(first, second)
 end

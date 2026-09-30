@@ -208,6 +208,9 @@ function RPSimBridge:onSavegameLoaded()
     if self.workforceEnabled and self.adapter.registerStrikeMessage ~= nil then
         self.adapter:registerStrikeMessage() -- R2-A5: the AI message manager exists once the mission runs
     end
+    if self.workforceEnabled and self.adapter.registerHelperLimitMessage ~= nil then
+        self.adapter:registerHelperLimitMessage() -- R2-A3
+    end
     self:exportMarketContext(true)
     self:exportFarmFacts()
     self:writeAck()

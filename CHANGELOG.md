@@ -25,6 +25,13 @@ is cancelled again) and lets every machine operator drive every vehicle.
   diary entry. Machine operator applicants bring a training along with 30 % and expect 8 % more salary. Employees hired
   before have no training.
 
+### Fixed
+
+- **Strict helper limit also holds for Courseplay and AutoDrive:** the limit (as many helpers as active machine
+  operators) only lowered `maxNumHirables`, which the game checks in its own start menu and key only; mods that start
+  helpers their own way could exceed it. The mod now refuses such a start itself (*Kein freier Maschinenführer (strenger
+  Modus)*) and stops a helper started over the limit right away with its own message.
+
 ## [1.7.0] - 2026-09-30
 
 The web app becomes the **Hof-Tablet**: every function is an app on a tablet home screen. Update the mod

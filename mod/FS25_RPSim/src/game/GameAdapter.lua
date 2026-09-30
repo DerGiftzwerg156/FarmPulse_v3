@@ -802,29 +802,71 @@ function RPSimGameAdapter:restoreHelperLimit()
     end
 end
 
---- R2-A5: own AI message "%s legt die Arbeit nieder" (class pattern of AIMessageErrorUnknown: Class(x, AIMessage) with
--- getI18NText), registered with g_currentMission.aiMessageManager:registerMessage (the manager AIJobStopEvent uses).
-function RPSimGameAdapter:registerStrikeMessage()
-    local ok = pcall(function()
-        if RPSimGameAdapter.StrikeMessage == nil then
+--- Own AI message (class pattern of AIMessageErrorUnknown: Class(x, AIMessage) with getI18NText), kept in
+-- RPSimGameAdapter[field] and registered with g_currentMission.aiMessageManager:registerMessage (the manager
+-- AIJobStopEvent uses). Returns true when registered.
+local function registerOwnMessage(field, name, textKey)
+    return pcall(function()
+        if RPSimGameAdapter[field] == nil then
             local cls = {}
             local mt = Class(cls, AIMessage)
             function cls.new(customMt)
                 return AIMessage.new(customMt or mt)
             end
             function cls:getI18NText()
-                return g_i18n:getText("rpsim_ai_strike")
+                return g_i18n:getText(textKey)
             end
-            RPSimGameAdapter.StrikeMessage = cls
+            RPSimGameAdapter[field] = cls
         end
-        local registered = g_currentMission.aiMessageManager:registerMessage("RPSIM_STRIKE", RPSimGameAdapter.StrikeMessage)
+        local registered = g_currentMission.aiMessageManager:registerMessage(name, RPSimGameAdapter[field])
         if registered == nil then
-            error("registerMessage refused RPSIM_STRIKE")
+            error("registerMessage refused " .. name)
         end
     end)
+end
+
+--- R2-A5: own AI message "%s legt die Arbeit nieder".
+function RPSimGameAdapter:registerStrikeMessage()
+    local ok = registerOwnMessage("StrikeMessage", "RPSIM_STRIKE", "rpsim_ai_strike")
     self.strikeMessageRegistered = ok
     if not ok then
         RPSimLog.warning("Strike message not registered - strikes stop helpers with the generic message")
+    end
+    return ok
+end
+
+--- R2-A3: own AI message "Kein freier Maschinenführer (strenger Modus)" for a helper stopped over the limit.
+function RPSimGameAdapter:registerHelperLimitMessage()
+    local ok = registerOwnMessage("HelperLimitMessage", "RPSIM_HELPER_LIMIT", "rpsim_ai_helperLimit")
+    self.helperLimitMessageRegistered = ok
+    if not ok then
+        RPSimLog.warning("Helper limit message not registered - the limit stops helpers with the generic message")
+    end
+    return ok
+end
+
+--- Helpers are started and stopped by the server (AISystem:startJob / stopJob); a client only mirrors them.
+function RPSimGameAdapter:isServer()
+    return safe(function() return g_currentMission:getIsServer() == true end, false)
+end
+
+--- R2-A3: stops a helper started over the strict limit by a mod that bypasses maxNumHirables (Courseplay, AutoDrive).
+-- AISystem:stopJob(job, aiMessage) as for the strike; without the own message the generic one plus a notification.
+function RPSimGameAdapter:stopHelperLimitJob(job, limit)
+    local ok, err = pcall(function()
+        if job.jobId ~= nil and g_currentMission.aiSystem:getJobById(job.jobId) == nil then
+            return -- already stopped
+        end
+        if self.helperLimitMessageRegistered and RPSimGameAdapter.HelperLimitMessage ~= nil then
+            g_currentMission.aiSystem:stopJob(job, RPSimGameAdapter.HelperLimitMessage.new())
+        else
+            g_currentMission.aiSystem:stopJob(job, AIMessageErrorUnknown.new())
+        end
+        self:notify(string.format("FarmPulse: Kein freier Maschinenführer – im strengen Modus fahren höchstens %d "
+            .. "Helfer. Der zuletzt gestartete Helfer wurde angehalten.", limit or 0), "CRITICAL")
+    end)
+    if not ok then
+        RPSimLog.warning("Could not stop the helper over the limit: %s", tostring(err))
     end
     return ok
 end
