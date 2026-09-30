@@ -234,6 +234,43 @@ end
 --- Name of the current season (T-21): environment.currentSeason compared with the values of the global Season
 -- table (FS25 BeehiveSystem / StonePickMission: environment.currentSeason == Season.WINTER). The name is looked up
 -- instead of assumed, so only names that really exist in the game are exported.
+--- FS25 loads the l10n texts of modDesc.xml only into the i18n object of the mod environment. Engine code that runs in
+-- the global environment (money popup of the HUD, finances page, AI messages) looks titles up in the global g_i18n
+-- and shows "Missing 'rpsim_money_TRAINING' in l10n_de.xml". The mod texts are therefore copied into the global
+-- text table (the common FS mod pattern: getmetatable(_G).__index.g_i18n.texts[key] = text). Keys the game already
+-- knows are never overwritten. Returns the number of copied texts.
+function RPSimGameAdapter.shareModTexts(modI18n, globalI18n)
+    if type(modI18n) ~= "table" or type(globalI18n) ~= "table" or modI18n == globalI18n
+            or type(modI18n.texts) ~= "table" or type(globalI18n.texts) ~= "table" or modI18n.texts == globalI18n.texts then
+        return 0
+    end
+    local copied = 0
+    for key, text in pairs(modI18n.texts) do
+        if type(key) == "string" and type(text) == "string" and rawget(globalI18n.texts, key) == nil then
+            globalI18n.texts[key] = text
+            copied = copied + 1
+        end
+    end
+    return copied
+end
+
+--- The global g_i18n as seen from the mod environment (whose metatable __index is the global environment).
+function RPSimGameAdapter.globalI18n()
+    return safe(function()
+        local mt = getmetatable(_G)
+        local env = mt ~= nil and mt.__index or nil
+        return type(env) == "table" and rawget(env, "g_i18n") or nil
+    end, nil)
+end
+
+function RPSimGameAdapter.shareModTextsGlobally()
+    local copied = safe(function() return RPSimGameAdapter.shareModTexts(g_i18n, RPSimGameAdapter.globalI18n()) end, 0)
+    if copied > 0 then
+        RPSimLog.info("Shared %d mod texts with the global l10n", copied)
+    end
+    return copied
+end
+
 --- Roadmap V2 R2-B1: name of a money type by reverse lookup in the global MoneyType table (the documented fallback of
 -- the roadmap; the name field of a money type object is not verified). nil when the object is not in the table, e.g.
 -- money types registered at runtime with MoneyType.register (FillTrigger: "finance_purchaseFuel").

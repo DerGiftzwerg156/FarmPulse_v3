@@ -38,6 +38,8 @@ local function modSettingsDir()
 end
 
 local function loadMapImpl(self)
+    -- again here in case the mod texts were not loaded yet when the sources ran (no-op for keys already shared)
+    RPSimGameAdapter.shareModTextsGlobally()
     self.adapter = RPSimGameAdapter.new()
     local paths = RPSimBridgePaths.new(modSettingsDir())
     RPSimFileIO.ensureDir(paths.base)
@@ -378,6 +380,8 @@ if PlayerInputComponent ~= nil and PlayerInputComponent.registerGlobalPlayerActi
     RPSim.promptKeyHook = true
 end
 
+-- booking titles (rpsim_money_*) and AI texts are looked up by engine code in the global g_i18n
+RPSimGameAdapter.shareModTextsGlobally()
 if Farm ~= nil and Farm.changeBalance ~= nil and Utils ~= nil then
     Farm.changeBalance = Utils.appendedFunction(Farm.changeBalance, RPSim.changeBalanceHook)
     RPSim.financeHook = true
