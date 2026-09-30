@@ -566,6 +566,25 @@ export interface ReputationView {
   label: string;
 }
 
+/** Roadmap V3 R3-N1..N3: home-network access (card "Tablet & Netzwerk", PIN login). */
+export interface LanStatusView {
+  enabled: boolean;
+  pinSet: boolean;
+  /** The request comes from the gaming PC (loopback): only it may change switch and PIN. */
+  gamePc: boolean;
+  /** This device may use the API (gaming PC, no PIN set, or a valid session). */
+  authenticated: boolean;
+  /** http://<private IPv4>:<port> of the gaming PC. */
+  urls: string[];
+  pinMinLength: number;
+  pinMaxLength: number;
+}
+
+export interface LanLoginView {
+  result: 'OK' | 'NO_PIN' | 'WRONG_PIN' | 'LOCKED';
+  lockedSeconds: number;
+}
+
 export interface AiSettingsView {
   provider: string;
   model: string | null;

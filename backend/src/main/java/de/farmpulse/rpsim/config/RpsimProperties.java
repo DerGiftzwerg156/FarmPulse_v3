@@ -34,6 +34,30 @@ public class RpsimProperties {
          * SPA fallback to index.html, so players only start one process. Empty = API only (dev: ng serve).
          */
         private String staticDir = "";
+        /** Roadmap V3 R3-N1/N2: access from devices in the home network (tablet). */
+        private Lan lan = new Lan();
+    }
+
+    /**
+     * Roadmap V3 R3-N2: PIN login of devices in the home network (owner decisions, QUESTIONS.md). The switch "Im
+     * Heimnetz erreichbar" and the PIN hash live in the database of the installation, not in the savegame.
+     */
+    @Getter @Setter
+    public static class Lan {
+        /** Shortest PIN (digits only). */
+        private int pinMinLength = 4;
+        /** Longest PIN (digits only). */
+        private int pinMaxLength = 8;
+        /** Wrong PINs from one sender address before it is locked. */
+        private int maxFailedAttempts = 5;
+        /** Lock of a sender address after too many wrong PINs (real minutes). */
+        private int lockoutMinutes = 5;
+        /** Validity of a session cookie (real days); only the hash of the cookie value is stored. */
+        private int sessionDays = 30;
+        /** PBKDF2WithHmacSHA256 iterations of the PIN hash (OWASP Password Storage Cheat Sheet: 600,000). */
+        private int pbkdf2Iterations = 600_000;
+        /** Name of the session cookie (HttpOnly, SameSite=Strict). */
+        private String cookieName = "FP_LAN_SESSION";
     }
 
     @Getter @Setter

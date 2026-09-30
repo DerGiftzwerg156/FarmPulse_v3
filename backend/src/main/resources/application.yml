@@ -40,6 +40,14 @@ rpsim:
     prompt-max-age-hours: 48           # R2-F2: questions without their own deadline expire after this many game hours
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
+    lan:                          # Roadmap V3 R3-N2: PIN login of devices in the home network (owner decisions)
+      pin-min-length: 4           # PIN = 4..8 digits
+      pin-max-length: 8
+      max-failed-attempts: 5      # wrong PINs of one sender address before it is locked
+      lockout-minutes: 5          # lock after too many wrong PINs (real minutes)
+      session-days: 30            # validity of the session cookie (real days; survives a backend restart)
+      pbkdf2-iterations: 600000   # PBKDF2WithHmacSHA256 (OWASP Password Storage Cheat Sheet)
+      cookie-name: FP_LAN_SESSION
   ai:
     provider: NONE                # FAKE | OPENAI | ANTHROPIC | GEMINI | OLLAMA | NONE
     timeout-seconds: 30

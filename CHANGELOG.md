@@ -14,6 +14,9 @@ Update the mod `FS25_RPSim` together with the backend: an older mod rejects the 
 is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
 types and booking reasons; the notice then says "Mod aktualisieren".
 
+The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
+filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
+
 ### Added
 
 - **Roadmap V3 (`docs/architecture/ROADMAP_V3.md`):** plan for the next features, each checked against the FS25 code -
@@ -28,6 +31,20 @@ types and booking reasons; the notice then says "Mod aktualisieren".
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Tablet in the home network (Roadmap V3, R3-N):** FarmPulse can be opened on a tablet or phone in the same WLAN.
+  - *Einstellungen → Tablet & Netzwerk*: switch **Im Heimnetz erreichbar** (default off), an optional PIN (4–8
+    digits) and the tablet address with a QR code (generated in the browser, new frontend dependency
+    `qrcode-generator`, MIT). Switch and PIN belong to the installation, not the savegame, and can only be changed on
+    the gaming PC; a tablet sees the card read-only.
+  - Backend: a filter decides every request (API, live updates, web app) by the sender address - the gaming PC
+    (loopback) always, private addresses only with the switch on, every other address always `403`. With a PIN, a
+    device logs in once (`POST /api/lan/login`) and gets a session cookie (`HttpOnly`, `SameSite=Strict`, 30 days,
+    only its SHA-256 is stored); the PIN is stored as `PBKDF2WithHmacSHA256` hash; five wrong PINs lock the sender
+    for five minutes (`rpsim.web.lan.*`). A new PIN, removing it or switching off ends every session. The backend logs
+    "Auf dem Tablet öffnen: http://<IP>:8080" at start.
+  - Web app manifest (`manifest.webmanifest`, icons 192 / 512 px from `tools/release/make-icons.py`) for a symbol on
+    the tablet's home screen; no service worker and no push (both need HTTPS). `start.bat` names the way to the
+    tablet address.
 - **Roadmap V3 groundwork (R3-Q):** the bridge contract for the next features, without game-visible changes yet.
   - `farm_facts.json` knows two more optional blocks - `npcFields` (fields without an owner, same entries as `fields`,
     R3-H1) and `tradeStorage` (fill level and free capacity of the own silos per fill type, R3-H2);

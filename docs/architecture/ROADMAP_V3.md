@@ -145,56 +145,68 @@ Internet werden immer abgewiesen, Geräte im Heimnetz melden sich mit einer PIN 
 
 **Beleg:** – (kein Mod-Eingriff). Alles läuft im Backend (Spring Boot) und in der Angular-Oberfläche.
 
+**Stand 30.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Der Schalter ist standardmäßig aus. Die PIN
+ist **freiwillig**: Ohne PIN kommt jedes Gerät im Heimnetz bei eingeschaltetem Schalter direkt hinein. Die PIN hat 4–8
+Ziffern. Nach 5 Fehlversuchen ist eine Absenderadresse 5 Minuten gesperrt. Eine Sitzung gilt 30 Tage und übersteht
+einen Neustart, weil nur der Hash des Cookie-Werts gespeichert ist. Eine neue PIN, das Entfernen der PIN oder das
+Ausschalten beendet alle Sitzungen. Schalter und PIN lassen sich nur am Spiele-PC ändern. Den QR-Code erzeugt der
+Browser (`qrcode-generator`). Das Profil `prod` setzt `server.address` nicht mehr.
+
 ### R3-N1 Zugriff nur aus dem eigenen Netz
 
-- [ ] Neuer Filter im Backend (vor allen `/api/**`- und Oberflächen-Anfragen), entschieden nach der Absenderadresse:
+- [x] Neuer Filter im Backend (vor allen `/api/**`- und Oberflächen-Anfragen), entschieden nach der Absenderadresse:
   - Loopback (`127.0.0.1`, `::1`) ist immer erlaubt.
   - Private Adressen (`InetAddress.isSiteLocalAddress()` / `isLinkLocalAddress()`, dazu IPv6 ULA `fc00::/7`) sind nur
-    erlaubt, wenn der Schalter **„Im Heimnetz erreichbar“** an ist.
+    erlaubt, wenn der Schalter **„Im Heimnetz erreichbar“** an ist. Umgesetzt: `lan/LanAccessFilter`,
+    `lan/NetworkAddresses`.
   - Jede andere Adresse bekommt immer `403`. Eine Portfreigabe am Router öffnet das Tool also nicht fürs Internet.
-- [ ] Den Schalter speichert die Installation, nicht der Spielstand (neue Einstellungskarte „Tablet & Netzwerk“).
-  Er wirkt sofort, ohne Neustart. `server.address` bleibt ungesetzt.
-- [ ] Die CORS-Regel in `WebConfig` bleibt unverändert. Das Tablet lädt die Oberfläche vom Backend selbst, es gibt
+- [x] Den Schalter speichert die Installation, nicht der Spielstand (neue Einstellungskarte „Tablet & Netzwerk“).
+  Er wirkt sofort, ohne Neustart. `server.address` bleibt ungesetzt. Umgesetzt: Tabelle `lan_settings` (eine Zeile je
+  Installation). `application-prod.yml` setzt `server.address: 0.0.0.0` nicht mehr.
+- [x] Die CORS-Regel in `WebConfig` bleibt unverändert. Das Tablet lädt die Oberfläche vom Backend selbst, es gibt
   also keine fremde Herkunft.
-- [ ] Live-Updates (Server-Sent Events) laufen über dieselbe Adresse und denselben Filter.
+- [x] Live-Updates (Server-Sent Events) laufen über dieselbe Adresse und denselben Filter.
 
 ### R3-N2 PIN für Geräte im Heimnetz
 
-- [ ] Ist der Heimnetz-Zugriff an, müssen sich Geräte, die nicht der Spiele-PC selbst sind, einmal mit einer PIN
+- [x] Ist der Heimnetz-Zugriff an, müssen sich Geräte, die nicht der Spiele-PC selbst sind, einmal mit einer PIN
   anmelden. Danach gilt ein Sitzungs-Cookie (`HttpOnly`, `SameSite=Strict`), das auch `EventSource` automatisch
   mitschickt. Der Spiele-PC (Loopback) braucht nie eine PIN.
-- [ ] Die PIN liegt nur als Hash in der Datenbank (PBKDF2 aus dem JDK, `SecretKeyFactory`
+- [x] Die PIN liegt nur als Hash in der Datenbank (PBKDF2 aus dem JDK, `SecretKeyFactory`
   `PBKDF2WithHmacSHA256`, keine neue Bibliothek). Nach mehreren Fehlversuchen gibt es eine kurze Sperre
   (`rpsim.web.lan.*`).
-- [ ] Der API-Schlüssel der KI bleibt geschützt: `SettingsController` gibt ihn schon heute nie zurück (nur
+- [x] Der API-Schlüssel der KI bleibt geschützt: `SettingsController` gibt ihn schon heute nie zurück (nur
   `apiKeySet`).
-- [ ] Offene Entscheidung (`QUESTIONS.md`): Ist die PIN Pflicht, sobald der Heimnetz-Zugriff an ist? Vorschlag: ja.
+- [x] Offene Entscheidung (`QUESTIONS.md`): Ist die PIN Pflicht, sobald der Heimnetz-Zugriff an ist? Vorschlag: ja.
+  **Entschieden:** nein, die PIN ist freiwillig. Der Schalter ist standardmäßig aus.
 
 ### R3-N3 Adresse und QR-Code in den Einstellungen
 
-- [ ] Das Backend listet seine Adressen im Heimnetz (`java.net.NetworkInterface`, nur aktive, private IPv4-Adressen)
+- [x] Das Backend listet seine Adressen im Heimnetz (`java.net.NetworkInterface`, nur aktive, private IPv4-Adressen)
   und loggt sie beim Start: „Auf dem Tablet öffnen: http://192.168.x.y:8080“.
-- [ ] Die Einstellungskarte zeigt die Adresse(n) und dazu einen QR-Code zum Abscannen mit dem Tablet.
-- [ ] Offene Entscheidung (`QUESTIONS.md`): Wer erzeugt den QR-Code (kleine Frontend-Bibliothek oder das Backend)?
-  Die Wahl bringt eine neue Abhängigkeit.
+- [x] Die Einstellungskarte zeigt die Adresse(n) und dazu einen QR-Code zum Abscannen mit dem Tablet.
+- [x] Offene Entscheidung (`QUESTIONS.md`): Wer erzeugt den QR-Code (kleine Frontend-Bibliothek oder das Backend)?
+  Die Wahl bringt eine neue Abhängigkeit. **Entschieden:** das Frontend mit `qrcode-generator` (MIT).
 
 ### R3-N4 Symbol auf dem Startbildschirm des Tablets
 
-- [ ] Web-App-Manifest (`manifest.webmanifest`: Name „FarmPulse“, Symbole, `display: standalone`, Farben des
+- [x] Web-App-Manifest (`manifest.webmanifest`: Name „FarmPulse“, Symbole, `display: standalone`, Farben des
   Hof-Tablets) im Frontend verlinken. `apple-touch-icon.png` ist schon in `frontend/src/index.html` eingebunden.
-- [ ] **Kein** Service Worker und **keine** Push-Benachrichtigungen. Beides verlangt eine sichere Verbindung (HTTPS
+  Umgesetzt: Symbole `icon-192.png` / `icon-512.png` aus `tools/release/make-icons.py`, Farbe `#0B0F0D`.
+- [x] **Kein** Service Worker und **keine** Push-Benachrichtigungen. Beides verlangt eine sichere Verbindung (HTTPS
   oder `localhost`), das Tablet ruft das Tool im Heimnetz aber über `http://` auf. Siehe
   [Bewusst nicht aufgenommen](#bewusst-nicht-aufgenommen).
 
 ### R3-N5 Doku und Test
 
-- [ ] `docs/user-guide/installation.md`: neuer Abschnitt „Auf dem Tablet oder Handy öffnen“.
+- [x] `docs/user-guide/installation.md`: neuer Abschnitt „Auf dem Tablet oder Handy öffnen“.
   `docs/user-guide/fehlerbehebung.md`: Windows-Firewall (Java für private Netzwerke freigeben), Tablet im Gast-WLAN.
-- [ ] `tools/release/build-release.sh`: Der Text von `start.bat` nennt den Weg zur Tablet-Adresse (Einstellungen).
-- [ ] Manueller Testplan: Aufruf vom Tablet, Anmeldung mit PIN, Live-Updates, Anruf-Overlay und Bedienung per Touch.
+- [x] `tools/release/build-release.sh`: Der Text von `start.bat` nennt den Weg zur Tablet-Adresse (Einstellungen).
+- [x] Manueller Testplan: Aufruf vom Tablet, Anmeldung mit PIN, Live-Updates, Anruf-Overlay und Bedienung per Touch.
 
 **Akzeptanz N:** Mit eingeschaltetem Heimnetz-Zugriff öffnet ein Tablet im selben WLAN die angezeigte Adresse, meldet
-sich mit der PIN an und sieht Live-Updates. Mit ausgeschaltetem Schalter und aus jedem nicht privaten Netz kommt
+sich mit der PIN an (sofern eine gesetzt ist) und sieht Live-Updates. Prüfliste: `docs/dev/manual-test-plan.md`,
+Abschnitt 12. Mit ausgeschaltetem Schalter und aus jedem nicht privaten Netz kommt
 `403`.
 
 ---

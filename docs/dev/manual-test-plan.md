@@ -292,3 +292,23 @@ implementation to it.
 | 11.7 | Age and hours of a delivered used vehicle (R3-V2) | Buy a used machine (`VEHICLE_SPAWN`), open the game's vehicle manager / shop sell dialog | age (months) and operating hours match the instruction, the damage is shown | fail with `NO_SPACE` and a hint in the game; the workshop tries again on the next game day |
 | 11.8 | Shop place taken by the player (R3-V2) | Stand on the shop spawn place (on foot and with a vehicle) while a `VEHICLE_SPAWN` is executed | note whether `setLoadingPlace` treats the place as taken (`NO_SPACE`) or loads the vehicle elsewhere | fail with `NO_SPACE` and a hint in the game; the workshop tries again on the next game day |
 | 11.9 | Attached implements and loaded goods when a vehicle is removed (R3-V3) | Sell a tractor with an attached implement and a trailer with goods (`VEHICLE_REMOVE`) | note what happens to the implement, the trailer and the goods on `vehicle:delete()` | allow the sale only for a root vehicle (`getRootVehicle() == vehicle`) with nothing attached; otherwise `FAILED` with the hint "Bitte erst abkoppeln" |
+
+## 12. Tablet in the home network (Roadmap V3 R3-N)
+
+Needs the release (or backend + built frontend via `rpsim.web.static-dir`), a tablet or phone in the same WLAN and a
+device outside it (phone on mobile data). See [installation](../user-guide/installation.md#auf-dem-tablet-oder-handy-öffnen).
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 12.1 | Start the backend, look at its window | one line "Auf dem Tablet öffnen: http://<IP>:8080" per private IPv4 address, with the hint that the access is off |
+| 12.2 | Switch off (default): open the address on the tablet | 403 with "Zugriff nur vom Spiele-PC …"; the gaming PC works as before via `localhost` |
+| 12.3 | *Einstellungen → Tablet & Netzwerk* on the gaming PC: switch on, no PIN; scan the QR code with the tablet | the Hof-Tablet opens without login; the card on the tablet is read-only ("Nur am Spiele-PC änderbar") |
+| 12.4 | Set a PIN (4-8 digits) on the gaming PC, reload the tablet | the tablet shows the PIN login; a wrong PIN says "PIN falsch", the right one opens the Hof-Tablet; the gaming PC is never asked |
+| 12.5 | Enter a wrong PIN five times on the tablet | "Zu viele Fehlversuche – bitte in 5 Minuten erneut versuchen"; after five minutes the right PIN works; another device is not locked |
+| 12.6 | Live updates on the tablet: let a character write a mail and call (simulator `POST /advance`, or play) | the mail badge updates without reload, the call overlay rings on the tablet, answering and hanging up work by touch |
+| 12.7 | Operate every app by touch (start screen, dock, forms, dialogs, charts) | all buttons reachable, no hover-only actions, inputs open the right keyboard (numbers for the PIN) |
+| 12.8 | Restart the backend | the tablet stays logged in (session 30 days) |
+| 12.9 | Change the PIN, then switch the access off and on again | the tablet must log in again after each step |
+| 12.10 | Open the address from a device outside the home network (phone on mobile data via a port forwarding, if available) | always 403 |
+| 12.11 | Tablet browser menu *Zum Startbildschirm hinzufügen* | FarmPulse symbol on the home screen; it opens the app without the address bar (`display: standalone`) in the dark Hof-Tablet colours |
+| 12.12 | Tablet in the guest WLAN of the router | the address does not load (the router separates the networks) - as described in the troubleshooting |

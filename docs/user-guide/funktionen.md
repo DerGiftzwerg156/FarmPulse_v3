@@ -409,6 +409,10 @@ Notizen sind reine Erinnerung und haben keinerlei Auswirkung aufs Spiel.
 KI-Anbieter, Modell und API-Schlüssel (siehe [Installation](installation.md#5-ki-anbieter-einrichten-optional)) und
 der Ton deines Spielstands (nur Anzeige). Die Einstellungen für die Helfer im Spiel stehen im **Personal**.
 
+**Tablet & Netzwerk:** FarmPulse im Heimnetz erreichbar machen (Standard aus), optionale PIN für Tablets und Handys,
+Adresse und QR-Code (siehe [Auf dem Handy oder Tablet](#auf-dem-handy-oder-tablet)). Gilt für die ganze Installation,
+nicht nur für einen Spielstand, und lässt sich nur am Spiele-PC ändern.
+
 **Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
 
 **Kredit und Felder im Spielmenü:** Die Reaktionen der Charaktere auf den Kredit oder Feldkauf im Spielmenü ein- oder
@@ -438,6 +442,10 @@ noch offene Fragen erneut.
 ![Mobil](../screenshots/21-mobil-start.png)
 
 Das Hof-Tablet füllt immer das ganze Browserfenster und passt sich an kleine Bildschirme an – z. B. ein echtes Tablet
-neben dem Spiel. Standardmäßig ist FarmPulse nur auf dem eigenen PC erreichbar (`localhost`), weil es keine Anmeldung
-gibt. Für ein Tablet im Heimnetz `server.address: 0.0.0.0` in `application-local.yml` eintragen und am Tablet
-`http://<IP-des-PCs>:8080` öffnen – dann kann allerdings jeder in deinem Netz mitspielen.
+neben dem Spiel. Standardmäßig ist FarmPulse nur auf dem eigenen PC erreichbar. Unter **Einstellungen → Tablet &
+Netzwerk** schaltest du am Spiele-PC den Zugriff aus dem Heimnetz frei, setzt auf Wunsch eine PIN und findest Adresse
+und QR-Code für das Tablet (Anleitung: [Auf dem Tablet oder Handy öffnen](installation.md#auf-dem-tablet-oder-handy-öffnen)).
+Live-Updates, Anrufe und alle Apps funktionieren auf dem Tablet wie am PC. Über **Zum Startbildschirm hinzufügen**
+bekommt das Tablet ein FarmPulse-Symbol. Aus dem Internet ist das Tool nie erreichbar. Benachrichtigungen im
+Hintergrund und ein Offline-Modus gibt es auf dem Tablet nicht: Beides verlangt eine verschlüsselte Verbindung
+(HTTPS), im Heimnetz läuft FarmPulse über `http://`.

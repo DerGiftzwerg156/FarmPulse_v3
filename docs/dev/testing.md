@@ -121,6 +121,12 @@ as ack `result`; `BridgeSyncIntegrationTest.ackResultIsStoredWithTheInstruction`
 blocks) and `FailedInstructionTest` (notice "Mod aktualisieren") cover the backend side. The mod covers normalisation,
 validation, `NOT_SUPPORTED` and `result` in `test_farm_facts.lua`, `test_market_context.lua`, `test_instructions.lua`
 and `test_persistence.lua`, the simulator the execution in `test/roadmap-v3.test.js`.
+Roadmap V3 R3-N (tablet in the home network): `NetworkAddressesTest` (loopback / private / public sender addresses),
+`LanAccessTest` (MockMvc with `setRemoteAddr`: switch off → 403, internet always 403, without PIN direct access, with
+PIN session cookie for API and live updates, game-PC-only settings, PIN format and hash, lock after five wrong PINs,
+session end after 30 days / new PIN / switch off); the test profile hashes with 1,000 PBKDF2 iterations to stay fast.
+Frontend: `app.spec.ts` (PIN login gate) and `features/lan/lan.spec.ts` (login, card, QR code, interceptor). Access from
+a real tablet: manual test plan section 12.
 Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
 (journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
 month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,

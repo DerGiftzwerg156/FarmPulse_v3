@@ -11,6 +11,7 @@ import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
+import { LanSettingsCard } from '../lan/lan-settings-card';
 
 /** Providers that need an API key / that talk to a configurable local endpoint. */
 export const KEY_PROVIDERS = ['OPENAI', 'ANTHROPIC', 'GEMINI'];
@@ -23,7 +24,7 @@ export const URL_PROVIDERS = ['OLLAMA'];
  */
 @Component({
   selector: 'app-settings',
-  imports: [TranslatePipe, LabelPipe, Card, Badge, Button],
+  imports: [TranslatePipe, LabelPipe, Card, Badge, Button, LanSettingsCard],
   templateUrl: './settings.html',
 })
 export class Settings {

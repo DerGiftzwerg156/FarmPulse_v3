@@ -1332,5 +1332,29 @@
       "moist": "Boden feucht",
       "wet": "Boden nass"
     }
+  },
+  "lan": {
+    "title": "Tablet & Netzwerk",
+    "intro": "Öffne FarmPulse auch auf einem Tablet oder Handy im selben WLAN. Aus dem Internet ist das Tool nie erreichbar.",
+    "enabled": "Im Heimnetz erreichbar",
+    "readOnly": "Nur am Spiele-PC änderbar.",
+    "pin": "PIN für Geräte im Heimnetz",
+    "pinSet": "PIN gesetzt – Tablets und Handys melden sich einmal mit der PIN an.",
+    "pinNone": "Keine PIN – jedes Gerät im Heimnetz kommt direkt hinein.",
+    "pinPlaceholder": "{min}–{max} Ziffern",
+    "pinSave": "PIN setzen",
+    "pinChange": "PIN ändern",
+    "pinRemove": "PIN entfernen",
+    "address": "Auf dem Tablet öffnen",
+    "off": "Der Heimnetz-Zugriff ist aus – erst einschalten, dann die Adresse auf dem Tablet öffnen.",
+    "noAddress": "Keine Adresse im Heimnetz gefunden. Ist der PC mit dem WLAN oder Netzwerk verbunden?",
+    "login": {
+      "title": "FarmPulse – Anmeldung",
+      "intro": "Dieses Gerät ist im Heimnetz. Bitte die PIN eingeben, die am Spiele-PC unter Einstellungen → Tablet & Netzwerk gesetzt wurde.",
+      "pin": "PIN",
+      "submit": "Anmelden",
+      "wrong": "PIN falsch.",
+      "locked": "Zu viele Fehlversuche – bitte in {minutes} Minuten erneut versuchen."
+    }
   }
 }

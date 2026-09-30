@@ -29,6 +29,13 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | Key | Default | Meaning | Concept |
 | --- | --- | --- | --- |
 | `rpsim.web.static-dir` | `""` | Folder of the built Angular app. When set (release: `web/`) the backend serves it on `/` with an SPA fallback. Empty = API only. | – |
+| `rpsim.web.lan.pin-min-length` | `4` | Shortest PIN for devices in the home network (digits only). | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.pin-max-length` | `8` | Longest PIN (digits only). | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.max-failed-attempts` | `5` | Wrong PINs of one sender address before it is locked. | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.lockout-minutes` | `5` | Lock of a sender address after too many wrong PINs (real minutes). | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.session-days` | `30` | Validity of the session cookie of a device (real days). Only the SHA-256 of the cookie value is stored, so a session survives a restart of the backend; a new PIN, removing the PIN or switching the home-network access off ends every session. | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.pbkdf2-iterations` | `600000` | Iterations of the PIN hash (`PBKDF2WithHmacSHA256` from the JDK, OWASP Password Storage Cheat Sheet). A PIN keeps the count it was hashed with. | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.cookie-name` | `FP_LAN_SESSION` | Name of the session cookie (`HttpOnly`, `SameSite=Strict`, sent by `EventSource` too). | Roadmap V3 R3-N2 |
 
 ## Game month = FS25 period
 
@@ -802,6 +809,6 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | Profile | Purpose | Overrides |
 | --- | --- | --- |
 | `dev` (default) | local development against the bridge simulator | H2 file DB `backend/data/rpsim-dev`, bridge path = simulator runtime folder |
-| `prod` | playing with FS25 (release `start` scripts) | H2 file DB `~/.rpsim/rpsim`, bridge path = FS25 `modSettings/FS25_RPSim`, `server.address=127.0.0.1` |
+| `prod` | playing with FS25 (release `start` scripts) | H2 file DB `~/.rpsim/rpsim`, bridge path = FS25 `modSettings/FS25_RPSim`; `server.address` unset (Roadmap V3 R3-N1: the home-network filter decides by the sender address) |
 | `e2e` | Playwright tests and screenshot generator | in-memory H2, AI provider `FAKE`, fast polling, bridge folder under `frontend/e2e/.runtime` |
 | `test` (tests only) | unit/integration tests | bridge scheduler off, provider `NONE`, narration worker off |

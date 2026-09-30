@@ -249,6 +249,26 @@ export class ApiService {
     return this.get('/village-reputation');
   }
 
+  // Roadmap V3 R3-N: tablet in the home network
+  lanStatus(): Observable<M.LanStatusView> {
+    return this.get('/lan/status');
+  }
+  saveLanSettings(enabled: boolean): Observable<M.LanStatusView> {
+    return this.http.put<M.LanStatusView>(`${this.base}/lan/settings`, { enabled });
+  }
+  setLanPin(pin: string): Observable<M.LanStatusView> {
+    return this.http.put<M.LanStatusView>(`${this.base}/lan/pin`, { pin });
+  }
+  removeLanPin(): Observable<M.LanStatusView> {
+    return this.http.delete<M.LanStatusView>(`${this.base}/lan/pin`);
+  }
+  lanLogin(pin: string): Observable<M.LanLoginView> {
+    return this.post('/lan/login', { pin });
+  }
+  lanLogout(): Observable<void> {
+    return this.post('/lan/logout');
+  }
+
   // settings
   aiSettings(): Observable<M.AiSettingsView> {
     return this.get('/settings/ai');
