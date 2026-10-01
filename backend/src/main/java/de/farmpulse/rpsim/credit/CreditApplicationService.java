@@ -1,6 +1,7 @@
 package de.farmpulse.rpsim.credit;
 
 import java.text.NumberFormat;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -23,6 +24,7 @@ import de.farmpulse.rpsim.domain.CreditReasonCategory;
 import de.farmpulse.rpsim.domain.EmployeeStatus;
 import de.farmpulse.rpsim.domain.JobRole;
 import de.farmpulse.rpsim.domain.Loan;
+import de.farmpulse.rpsim.domain.LoanCollateral;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.finance.FinanceJournalService;
 import de.farmpulse.rpsim.narration.NarrationEventType;
@@ -61,13 +63,14 @@ public class CreditApplicationService {
     private final FieldService fields;
     private final FallbackTemplates labels;
     private final VanillaBypassService bypass;
+    private final CollateralService collateral;
 
     public CreditApplicationService(CreditApplicationRepository applications, CreditScoringService scoring,
                                     LoanService loanService, LoanRepository loans, EmployeeRepository employees,
                                     CreditConfigResolver configs, NarrationRequestService narration,
                                     CharacterLookup lookup, DiaryService diary, RandomSource random,
                                     FactsService facts, FinanceJournalService journal, FieldService fields,
-                                    FallbackTemplates labels, VanillaBypassService bypass) {
+                                    FallbackTemplates labels, VanillaBypassService bypass, CollateralService collateral) {
         this.applications = applications;
         this.scoring = scoring;
         this.loanService = loanService;
@@ -83,10 +86,22 @@ public class CreditApplicationService {
         this.fields = fields;
         this.labels = labels;
         this.bypass = bypass;
+        this.collateral = collateral;
     }
 
     @Transactional
     public CreditApplication submit(Savegame sg, long amount, String purpose, int termMonths) {
+        return submit(sg, amount, purpose, termMonths, List.of());
+    }
+
+    /**
+     * Roadmap V3 R3-K1: with own fields as collateral. Coverage = collateral value / amount lowers the rate and eases
+     * "loan too large for the farm". A loan above required-above-share of the assets needs collateral for the part
+     * above it; when the chosen fields are not enough the bank names more unpledged own fields (largest first) and
+     * answers with a counter offer "mit Grundschuld". If all fields together are not enough: normal decision.
+     */
+    @Transactional
+    public CreditApplication submit(Savegame sg, long amount, String purpose, int termMonths, Collection<Integer> farmlandIds) {
         RpsimProperties.Credit cfg = configs.forSavegame(sg);
         if (amount <= 0) {
             throw new BusinessRuleException("INVALID_AMOUNT", "Der Betrag muss positiv sein.");
@@ -104,30 +119,54 @@ public class CreditApplicationService {
         a.setSubmittedAtGameTime(now);
         a.setDecisionVisibleAtGameTime(now + processingTime(sg, cfg));
         a.setStatus(CreditApplicationStatus.PROCESSING);
-        if (loans.existsBySavegameAndBlocksNewCreditTrue(sg)) {
+        // R3-K1: no new credit while a claim after the menu sale of a pledged field is overdue
+        if (loans.existsBySavegameAndBlocksNewCreditTrue(sg) || collateral.hasOverdueClaim(sg)) {
             a.setFinalScore(0);
             a.setDecision(CreditDecision.REJECTED);
             a.setReasonCategory(CreditReasonCategory.CREDIT_BLOCKED);
-        } else {
-            // score is computed immediately on receipt - only its visibility is delayed
-            // R2-D1: after repeated vanilla loans new credits cost a surcharge until the vanilla loan is repaid
-            double surcharge = bypass.interestSurcharge(sg);
-            CreditFormula.Result r = scoring.score(sg, amount, termMonths, cfg.getBaseInterestRate() + surcharge);
-            a.setFinalScore(r.finalScore());
-            a.setDecision(r.decision());
-            a.setReasonCategory(r.reasonCategory());
-            if (r.decision() == CreditDecision.APPROVED) {
-                a.setOfferedAmount(amount);
-                a.setOfferedTermMonths(termMonths);
-                a.setOfferedInterestRate(cfg.getBaseInterestRate() + surcharge);
-            } else if (r.decision() == CreditDecision.COUNTER_OFFER) {
-                CreditFormula.Terms t = CreditFormula.counterTerms(r.finalScore(), amount, termMonths, cfg);
-                a.setOfferedAmount(t.amount());
-                a.setOfferedTermMonths(t.termMonths());
-                a.setOfferedInterestRate(t.interestRate() + surcharge);
-            }
+            return applications.save(a);
         }
-        return applications.save(a);
+        // provisional until scored below (the collateral rows need the saved application)
+        a.setDecision(CreditDecision.REJECTED);
+        a.setReasonCategory(CreditReasonCategory.SOLID_FINANCES);
+        applications.save(a);
+        long chosen = collateral.request(sg, a, farmlandIds).stream().mapToLong(LoanCollateral::getCollateralValue).sum();
+        long needed = Math.round(CreditFormula.requiredCollateral(amount, scoring.totalAssets(sg), cfg));
+        long proposed = 0;
+        if (needed > 0 && chosen < needed) {
+            proposed = collateral.propose(sg, a, needed - chosen).stream().mapToLong(LoanCollateral::getCollateralValue).sum();
+            a.setCollateralRequired(proposed > 0);
+        }
+        long value = chosen + proposed;
+        double coverage = CreditFormula.coverage(value, amount);
+        double discount = CreditFormula.interestDiscount(coverage, cfg);
+        a.setCollateralValue(value);
+        a.setCollateralCoverage(coverage);
+        a.setInterestDiscount(discount);
+        // score is computed immediately on receipt - only its visibility is delayed
+        // R2-D1: after repeated vanilla loans new credits cost a surcharge until the vanilla loan is repaid
+        double surcharge = bypass.interestSurcharge(sg) - discount;
+        CreditFormula.Result r = scoring.score(sg, amount, termMonths, cfg.getBaseInterestRate() + surcharge, value);
+        a.setFinalScore(r.finalScore());
+        a.setDecision(r.decision());
+        a.setReasonCategory(r.reasonCategory());
+        if (r.decision() == CreditDecision.APPROVED) {
+            a.setOfferedAmount(amount);
+            a.setOfferedTermMonths(termMonths);
+            a.setOfferedInterestRate(cfg.getBaseInterestRate() + surcharge);
+            if (a.isCollateralRequired()) {
+                // the requested terms, but only "mit Grundschuld" on the fields the bank names: the sum is too large for
+                // the farm without them
+                a.setDecision(CreditDecision.COUNTER_OFFER);
+                a.setReasonCategory(CreditReasonCategory.LOAN_TOO_LARGE_FOR_FARM);
+            }
+        } else if (r.decision() == CreditDecision.COUNTER_OFFER) {
+            CreditFormula.Terms t = CreditFormula.counterTerms(r.finalScore(), amount, termMonths, cfg);
+            a.setOfferedAmount(t.amount());
+            a.setOfferedTermMonths(t.termMonths());
+            a.setOfferedInterestRate(t.interestRate() + surcharge);
+        }
+        return a;
     }
 
     /** Processing time 1-2 game days, slightly shortened by office clerks (bounded share). */
@@ -170,9 +209,11 @@ public class CreditApplicationService {
                     Loan loan = loanService.create(sg, a.getAmount(), a.getOfferedInterestRate(), a.getTermMonths(),
                             a.getPurpose(), false, a.getId());
                     a.setLoanId(loan.getId());
+                    collateral.pledge(sg, a, loan); // R3-K1
                     a.setStatus(CreditApplicationStatus.ACCEPTED);
                     f.put("interestRatePercent", pct(a.getOfferedInterestRate()))
                             .put("monthlyInstallment", loan.getMonthlyInstallment());
+                    putCollateralFacts(a, f);
                     type = NarrationEventType.CREDIT_APPROVED;
                     diary.addAuto(sg, "CREDIT", "Kredit genehmigt", "Die Bank hat " + a.getAmount() + " € für \""
                             + a.getPurpose() + "\" bewilligt.", RELATED, a.getId());
@@ -180,11 +221,13 @@ public class CreditApplicationService {
                 case COUNTER_OFFER -> {
                     f.put("offeredAmount", a.getOfferedAmount()).put("offeredTermMonths", a.getOfferedTermMonths())
                             .put("interestRatePercent", pct(a.getOfferedInterestRate()));
+                    putCollateralFacts(a, f);
                     type = NarrationEventType.CREDIT_COUNTER_OFFER;
                     diary.addAuto(sg, "CREDIT", "Gegenangebot der Bank", "Statt " + a.getAmount() + " € bietet die Bank "
                             + a.getOfferedAmount() + " € an.", RELATED, a.getId());
                 }
                 default -> {
+                    collateral.drop(sg, a); // R3-K1
                     type = NarrationEventType.CREDIT_REJECTED;
                     diary.addAuto(sg, "CREDIT", "Kreditantrag abgelehnt", "Der Antrag über " + a.getAmount()
                             + " € für \"" + a.getPurpose() + "\" wurde abgelehnt.", RELATED, a.getId());
@@ -195,6 +238,28 @@ public class CreditApplicationService {
                     .formLink(type == NarrationEventType.CREDIT_COUNTER_OFFER ? "/bank?application=" + a.getId() : null)
                     .submit();
         }
+    }
+
+    /** Roadmap V3 R3-K1: the Grundschuld the decision relies on (chosen fields, fields the bank names). */
+    void putCollateralFacts(CreditApplication a, NarrationFacts.Builder f) {
+        List<LoanCollateral> list = collateral.ofApplication(a);
+        if (list.isEmpty()) {
+            return;
+        }
+        String chosen = CollateralService.fields(list.stream()
+                .filter(c -> c.getStatus() != de.farmpulse.rpsim.domain.CollateralStatus.PROPOSED).toList());
+        String named = CollateralService.fields(list.stream()
+                .filter(c -> c.getStatus() == de.farmpulse.rpsim.domain.CollateralStatus.PROPOSED).toList());
+        f.put("collateralValue", a.getCollateralValue()).put("collateralFields", CollateralService.fields(list))
+                .put("collateralRequired", a.isCollateralRequired())
+                .put("interestDiscountPercent", pct(a.getInterestDiscount()))
+                .put("collateralNote", (a.isCollateralRequired()
+                        ? "Für diese Summe brauchen wir eine Grundschuld" + (named.isEmpty() ? "" : " auf Feld " + named)
+                        + (chosen.isEmpty() ? "" : " zusätzlich zu Feld " + chosen) + ". "
+                        : "Die Grundschuld auf Feld " + chosen + " haben wir berücksichtigt. ")
+                        + "Der Beleihungswert beträgt " + NumberFormat.getIntegerInstance(Locale.GERMANY)
+                        .format(a.getCollateralValue()) + " €, das senkt den Zins um "
+                        + pct(a.getInterestDiscount()) + " Prozentpunkte.");
     }
 
     /** Roadmap V2 R2-C5: value of the standing crops the bank counted and the most valuable crop. */
@@ -224,6 +289,7 @@ public class CreditApplicationService {
                 a.getPurpose(), false, a.getId());
         a.setLoanId(loan.getId());
         a.setStatus(CreditApplicationStatus.ACCEPTED);
+        collateral.pledge(sg, a, loan); // R3-K1: accepting the counter offer pledges the named fields too
         diary.addAuto(sg, "CREDIT", "Gegenangebot angenommen", "Kredit über " + a.getOfferedAmount() + " € aufgenommen.",
                 RELATED, a.getId());
         return a;
@@ -236,6 +302,7 @@ public class CreditApplicationService {
             throw new BusinessRuleException("NO_OPEN_COUNTER_OFFER", "Es liegt kein offenes Gegenangebot vor.");
         }
         a.setStatus(CreditApplicationStatus.DECLINED);
+        collateral.drop(sg, a);
         return a;
     }
 

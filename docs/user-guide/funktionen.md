@@ -159,6 +159,27 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   ist, kosten neue Kredite der Bank einen Zinsaufschlag, bis der Kredit aus dem Spielmenü ganz getilgt ist – gilt
   gerade ein Aufschlag, steht er direkt über dem Antragsformular. Jede Rückzahlung nimmt sie wohlwollend zur
   Kenntnis.
+- **Grundschuld:** Im Antragsformular kannst du eigene Felder als Sicherheit anbieten. Der Beleihungswert ist 60 % des
+  Feldpreises. Je mehr er vom Kreditbetrag deckt, desto günstiger wird der Zins (bei voller Deckung um 1
+  Prozentpunkt), und die Bank sieht den Kredit nicht mehr als zu groß für deinen Betrieb an. Für einen sehr großen
+  Kredit (über die Hälfte deines Vermögens) verlangt die Bank eine Grundschuld für den Teil darüber. Reichen deine
+  Felder dafür, macht sie ein Gegenangebot „mit Grundschuld“ und nennt die Felder. Gepachtete Felder zählen nicht.
+  Ein belastetes Feld ist in der **Flurkarte** markiert. Verkaufen kannst du es dort erst, wenn die Bank zustimmt
+  (Knopf *Verkauf erlauben lassen* am Kredit). Der Erlös tilgt dann den Beleihungswert, ohne Gebühr. Verkaufst du es
+  stattdessen im Spielmenü, ist die Bankberaterin verärgert und fordert die gleiche Sondertilgung binnen 10 Tagen.
+  Zahlst du nicht, zählt das wie eine verpasste Rate, und es gibt keine neuen Kredite, bis die Forderung bezahlt ist.
+  Ist der Kredit getilgt, ist die Grundschuld gelöscht. Im Ton *Hart* nimmt die Bank bei einer Fälligstellung die
+  belasteten Felder und rechnet sie gegen die Restschuld; einen Überschuss bekommst du.
+- **Liquiditätsplanung:** Die nächsten 12 Monate mit allem, was schon feststeht: Gehälter, Kreditraten, Verträge,
+  Pacht, Altenteil und Steuervorauszahlungen. Dazu kommen die Einnahmen als **Schätzung** aus dem gleichen Monat des
+  Vorjahres. Fällt dein Kontostand in einem Monat unter null oder unter einen Monat Fixkosten, steht das oben. Ein Klick
+  auf einen Monat zeigt die einzelnen Posten. Droht in den nächsten drei Monaten ein Minus, meldet sich die
+  Bankberaterin vorab (einmal je Engpass).
+- **Hofbericht und Jahresgespräch:** Zum Jahreswechsel (Februar → März) schreibt die Bank den Hofbericht des Jahres:
+  Einnahmen und Ausgaben je Kategorie, Steuer, Kultur und Ertrag je Feld, Regen, Tiere, Personal, Vertrauen und
+  Ansehen im Dorf im Vergleich zum Vorjahr. Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
+  bietet sie eine Zinssenkung auf deine laufenden Kredite an (0,25 Prozentpunkte, die Rate sinkt). Lief es schlecht,
+  wird es ein ernstes Gespräch, an deinen Verträgen ändert sich aber nichts. Absagen hat keine Folgen.
 
 ## Ämter
 

@@ -331,3 +331,21 @@ neighbour field with `POST /npc-field` and advance a month with `POST /advance`.
 | 13.8 | Finish the contract in the game | a thank-you with 250 € bonus, trust goes up; a failed or expired contract disappoints him |
 | 13.9 | Reach the game's contract limit, then *Nach Arbeit fragen* | the app says the limit is reached, no request comes |
 | 13.10 | *Einstellungen → Fragen im Spiel*: switch on the neighbour occasions, wait for an offer | the yes / no question appears in the game; *Ja* buys / sells or promises like the button |
+
+## 14. Credit and financial planning (Roadmap V3 R3-K)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section K. Needs own fields, an active bank advisor and
+the current mod (booking journal and calendar).
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 14.1 | *Bank*: apply for the same amount twice, once without and once with an own field as collateral | the application with Grundschuld gets a lower rate (coverage × 1 percentage point) |
+| 14.2 | Apply for more than half of the farm assets without collateral | counter offer "mit Grundschuld" naming the largest free own field(s); accepting pledges them, the field shows *Grundschuld* in the Flurkarte |
+| 14.3 | Flurkarte: offer the pledged field for sale | refused with "Bitte zuerst … Zustimmung"; after *Verkauf erlauben lassen* the offer works, and the sale books the repayment of the collateral value together with the sale |
+| 14.4 | Sell a pledged field in the game's field menu | mail of the bank advisor, claim in the Bank app (10 days), trust lower; unpaid after 10 days: overdue, new applications rejected (credit block) until paid |
+| 14.5 | Repay a loan with Grundschuld completely | diary "Grundschuld gelöscht", the field is free again |
+| 14.6 | Tone *Hart*: let a loan with Grundschuld be called in | the field goes to the bank (game field menu), its collateral value is credited against the debt |
+| 14.7 | *Bank* → *Liquiditätsplanung* | the next 12 months; the month of the next tax prepayment shows its amount; income marked as estimate; with a low balance the month below zero is named and the advisor writes once |
+| 14.8 | Play into March (year change) | *Hofbericht* of the finished year in the Bank app, diary entry, invitation to the annual review (also in *Aufgaben*) |
+| 14.9 | Attend the annual review after a good year with a running loan | offer of a rate cut; accepting lowers rate and installment, the term stays |
+

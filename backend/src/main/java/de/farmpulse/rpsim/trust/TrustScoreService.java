@@ -108,4 +108,13 @@ public class TrustScoreService {
         }
         return score;
     }
+
+    /** Display level of a trust value (abstract words, never the number): VERY_GOOD / GOOD / NEUTRAL / STRAINED / BAD. */
+    public static String displayLevel(double t, de.farmpulse.rpsim.config.RpsimProperties.Trust cfg) {
+        if (t >= cfg.getDisplayVeryGood()) return "VERY_GOOD";
+        if (t >= cfg.getDisplayGood()) return "GOOD";
+        if (t > cfg.getDisplayStrained()) return "NEUTRAL";
+        if (t > cfg.getDisplayBad()) return "STRAINED";
+        return "BAD";
+    }
 }

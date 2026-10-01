@@ -1,0 +1,7 @@
+Einladung zum Jahresgespräch {{year}}
+Guten Tag,
+
+das Jahr {{year}} ist abgeschlossen, Ihr Hofbericht liegt in der App „Bank“. Einnahmen von {{operatingIncome}} € standen Ausgaben von {{operatingExpense}} € gegenüber, das Betriebsergebnis lag bei {{operatingResult}} €. Gern bespreche ich das Jahr mit Ihnen – bitte bestätigen Sie den Termin innerhalb von {{invitationDays}} Tagen in der App „Bank“.
+
+Mit freundlichen Grüßen
+{{characterName}}

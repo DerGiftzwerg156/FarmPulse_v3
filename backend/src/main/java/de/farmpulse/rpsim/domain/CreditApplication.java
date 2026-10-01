@@ -62,4 +62,20 @@ public class CreditApplication extends SavegameScoped {
 
     @Column(name = "narrated", nullable = false)
     private boolean narrated;
+
+    /** Roadmap V3 R3-K1: collateral value of the requested and proposed fields when scored. */
+    @Column(name = "collateral_value", nullable = false)
+    private long collateralValue;
+
+    /** Roadmap V3 R3-K1: collateral value / requested amount (0..1). */
+    @Column(name = "collateral_coverage", nullable = false)
+    private double collateralCoverage;
+
+    /** Roadmap V3 R3-K1: interest discount granted for the coverage (part of the offered rate). */
+    @Column(name = "interest_discount", nullable = false)
+    private double interestDiscount;
+
+    /** Roadmap V3 R3-K1: counter offer "mit Grundschuld" - the bank names fields of its own (status PROPOSED). */
+    @Column(name = "collateral_required", nullable = false)
+    private boolean collateralRequired;
 }

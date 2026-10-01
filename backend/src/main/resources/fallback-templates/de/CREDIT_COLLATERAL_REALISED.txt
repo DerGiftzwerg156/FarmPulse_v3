@@ -1,0 +1,7 @@
+Verwertung der Grundschuld
+Guten Tag,
+
+da die Restschuld Ihres Kredits „{{purpose}}“ fällig gestellt wurde, haben wir die Grundschuld verwertet: Feld {{fields}} geht für {{collateralValue}} € an uns. Dieser Betrag wird gegen die Restschuld von {{remainingDebt}} € gerechnet.
+
+Mit freundlichen Grüßen
+{{characterName}}

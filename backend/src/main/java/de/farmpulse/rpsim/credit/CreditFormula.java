@@ -29,10 +29,21 @@ public final class CreditFormula {
     private CreditFormula() {
     }
 
-    /** Raw inputs (all taken from live snapshot data + loan history). */
+    /**
+     * Raw inputs (all taken from live snapshot data + loan history). {@code collateralValue}: Roadmap V3 R3-K1, the
+     * collateral value of the fields pledged for this loan (0 = none).
+     */
     public record Inputs(double monthlyOperatingCashflow, boolean hasCashflowHistory, double existingMonthlyInstallments,
                          double newMonthlyInstallment, double totalAssets, double totalDebt, double balance,
-                         double requestedAmount, double paymentHistoryScore, double trustScore) {
+                         double requestedAmount, double paymentHistoryScore, double trustScore, double collateralValue) {
+
+        /** Without collateral (V1/V2 callers). */
+        public Inputs(double monthlyOperatingCashflow, boolean hasCashflowHistory, double existingMonthlyInstallments,
+                      double newMonthlyInstallment, double totalAssets, double totalDebt, double balance,
+                      double requestedAmount, double paymentHistoryScore, double trustScore) {
+            this(monthlyOperatingCashflow, hasCashflowHistory, existingMonthlyInstallments, newMonthlyInstallment,
+                    totalAssets, totalDebt, balance, requestedAmount, paymentHistoryScore, trustScore, 0);
+        }
     }
 
     /** The five normalised metrics (0..100 each). */
@@ -62,6 +73,9 @@ public final class CreditFormula {
         // Farm size relative to total debt incl. the requested amount; existing debt reduces it too.
         double exposure = in.totalDebt() + in.requestedAmount();
         double loanToFarmSize = exposure <= 0 ? 100 : saturate(in.totalAssets() / exposure, cfg.getLoanToFarmSizeFullRatio());
+        // R3-K1: a Grundschuld eases "loan too large for the farm" - bonus x coverage, the metric stays capped at 100
+        loanToFarmSize = Math.min(100, loanToFarmSize
+                + cfg.getCollateral().getFarmSizeBonus() * coverage(in.collateralValue(), in.requestedAmount()));
         double history = clamp(in.paymentHistoryScore(), 0, 100);
         return new Components(dsc, equityRatio, liquidity, loanToFarmSize, history);
     }
@@ -118,6 +132,27 @@ public final class CreditFormula {
         int term = Math.max(cfg.getMinTermMonths(), termMonths - (int) Math.round(cfg.getCounterMaxTermReductionMonths() * gap));
         double rate = cfg.getBaseInterestRate() + cfg.getCounterMaxInterestSurcharge() * gap;
         return new Terms(offered, term, rate);
+    }
+
+    /** Roadmap V3 R3-K1: collateral value / loan amount, 0..1. */
+    public static double coverage(double collateralValue, double amount) {
+        if (collateralValue <= 0 || amount <= 0) {
+            return 0;
+        }
+        return clamp(collateralValue / amount, 0, 1);
+    }
+
+    /** Roadmap V3 R3-K1: interest discount proportional to the coverage (full discount at coverage 1). */
+    public static double interestDiscount(double coverage, Credit cfg) {
+        return cfg.getCollateral().getMaxInterestDiscount() * clamp(coverage, 0, 1);
+    }
+
+    /**
+     * Roadmap V3 R3-K1: the part of the loan that needs collateral - the amount above required-above-share of the farm
+     * assets (0 = no collateral required).
+     */
+    public static double requiredCollateral(double amount, double totalAssets, Credit cfg) {
+        return Math.max(0, amount - cfg.getCollateral().getRequiredAboveShare() * Math.max(0, totalAssets));
     }
 
     /** Annuity installment per game month (annual rate / 12). */

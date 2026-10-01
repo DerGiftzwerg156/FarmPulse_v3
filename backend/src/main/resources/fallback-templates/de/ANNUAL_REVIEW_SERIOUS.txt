@@ -1,0 +1,7 @@
+Unser Jahresgespräch
+Guten Tag,
+
+ich will offen sein: Das Jahr {{year}} macht uns Sorgen. Ihre Finanzen sind angespannt, und wir sollten gemeinsam darauf achten, dass die Raten sicher bedient werden. An Ihren laufenden Verträgen ändern wir nichts, aber bitte melden Sie sich frühzeitig, wenn es eng wird.
+
+Mit freundlichen Grüßen
+{{characterName}}

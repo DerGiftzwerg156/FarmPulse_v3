@@ -127,6 +127,37 @@ import { Button } from '../../shared/ui/button';
         }
         <p class="mt-1 text-[11px] text-muted">{{ 'trade.missionHint' | t }}</p>
       }
+      @if (c().kind === 'COLLATERAL_CLAIM') {
+        <div class="mt-1 text-[12px] text-text" data-testid="collateral-claim">{{ 'credit.claimText' | t: { amount: (c().offerAmount | money), field: c().farmlandId, purpose: c().title ?? '–' } }}</div>
+        @if (c().resolution === 'OVERDUE') {
+          <app-badge variant="negative" data-testid="claim-overdue">{{ 'credit.claimOverdue' | t }}</app-badge>
+        }
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'credit.payClaim' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'credit.claimHint' | t }}</p>
+      }
+      @if (c().kind === 'ANNUAL_REVIEW') {
+        <div class="mt-1 text-[12px] text-text" data-testid="annual-review">{{ 'credit.reviewText' | t: { year: c().quantity } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'credit.attend' | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        }
+      }
+      @if (c().kind === 'ANNUAL_REVIEW_OFFER') {
+        <div class="mt-1 text-[12px] text-text" data-testid="rate-cut-offer">{{ 'credit.rateCutText' | t: { cut: rateCut() } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'credit.acceptCut' | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'credit.rateCutHint' | t }}</p>
+      }
       @if (isInsuranceCase()) {
         <div class="mt-2 flex flex-wrap gap-2">
           <app-button [disabled]="busy()" (pressed)="act('report', { channel: 'MAIL' })" data-testid="report-mail">{{ 'contracts.reportMail' | t }}</app-button>
@@ -160,6 +191,12 @@ export class CaseCard {
 
   setDemand(value: number): void {
     this.demand.set(Number.isFinite(value) ? value : null);
+  }
+
+  /** R3-K3: the offered rate cut in percentage points (reference holds the rate, e.g. 0.0025). */
+  rateCut(): string {
+    const r = Number(this.c().reference);
+    return Number.isFinite(r) ? (Math.round(r * 10000) / 100).toLocaleString('de-DE') : '–';
   }
 
   isInsuranceCase(): boolean {

@@ -31,6 +31,28 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Credit and financial planning (Roadmap V3, R3-K):**
+  - Collateral (Grundschuld): own fields (not leased) can secure a credit application; collateral value = field price
+    × 0.6. The coverage lowers the rate (up to 1.0 percentage point) and eases the metric "loan too large for the
+    farm" (up to +20 points). Above 50 % of the farm assets the part above needs collateral: the bank names unpledged
+    own fields, largest first, in a counter offer "mit Grundschuld". A pledged field is sold in the Flurkarte only with
+    the bank's consent; the proceeds repay the collateral value in the sale batch without prepayment fee. Sold in the
+    game menu: trust −10 and a claim in the Bank app (10 days); unpaid it counts as a missed installment and blocks new
+    credits until paid. The pledge is released when the loan is repaid. In the harsh world mode the bank realises
+    pledged fields on a call-back (field by field, a surplus stays with the player). New table `loan_collateral`,
+    `rpsim.formulas.credit.collateral.*`, endpoints `GET /api/credit/collateral` and
+    `POST /api/credit/collateral/{farmlandId}/sale-consent`.
+  - Liquidity plan: the next 12 FS25 months with salaries, installments, contracts, retirement payment and tax
+    prepayments, the income as a marked estimate from the journal, and the month the balance falls below zero or below
+    one month of fixed costs; the bank advisor writes once ahead of a shortfall within 3 months
+    (`GET /api/liquidity-plan`, `rpsim.formulas.liquidity-plan.*`).
+  - Farm report and annual review: at the year change a report of the finished year (categories, tax, crop and yield
+    per field, rain, stables, staff, trust and reputation compared with the previous report; `GET /api/farm-reports`),
+    a diary entry and an invitation of the bank advisor. With a good credit score she offers −0.25 percentage points on
+    every running loan (capped at −1.0 per loan, never below 1 %; the installment sinks, the term stays); a weak year
+    only means a serious talk. The yield of a harvest is now recorded per field. `rpsim.formulas.credit.annual-review.*`.
+  - Migration V26; Bank app: collateral in the form, Grundschuld per loan, cards "Liquiditätsplanung" and "Hofbericht",
+    claims and annual review as cases (also in *Aufgaben*).
 - **Trade and contracts with the neighbours (Roadmap V3, R3-H):** the neighbours become trading partners.
   - Mod: exports the fields the game's NPCs farm (`farm_facts.npcFields`, same entries and interval as `fields`,
     switch `npcFieldExport`, default on), the own silo goods (`farm_facts.tradeStorage`: fill level and free capacity

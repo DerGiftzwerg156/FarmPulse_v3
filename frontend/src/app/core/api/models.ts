@@ -197,6 +197,104 @@ export interface CreditApplicationView {
   offeredTermMonths: number | null;
   offeredInterestRatePercent: number | null;
   loanId: number | null;
+  /** Roadmap V3 R3-K1: own fields offered as collateral by the player. */
+  collateralFarmlandIds?: number[];
+  /** Roadmap V3 R3-K1: fields the bank names for a counter offer "mit Grundschuld". */
+  proposedFarmlandIds?: number[];
+  collateralValue?: number | null;
+  coveragePercent?: number | null;
+  interestDiscountPercent?: number | null;
+  collateralRequired?: boolean | null;
+}
+
+/** Roadmap V3 R3-K1: a field with a Grundschuld (status REQUESTED / PROPOSED / PLEDGED / RELEASED / REALISED). */
+export interface CollateralView {
+  farmlandId: number;
+  collateralValue: number;
+  status: string;
+  /** The bank agreed to a sale in the tool (the proceeds repay the collateral value). */
+  saleConsent: boolean;
+  loanId: number | null;
+  purpose: string | null;
+}
+
+export interface CollateralOptionView {
+  farmlandId: number;
+  hectares: number;
+  price: number;
+  collateralValue: number;
+}
+
+export interface CollateralOverviewView {
+  loanToValuePercent: number;
+  requiredAboveSharePercent: number;
+  maxInterestDiscountPercent: number;
+  /** Loans above this amount need collateral for the part above it. */
+  requiredAboveAmount: number;
+  eligible: CollateralOptionView[];
+  pledged: CollateralView[];
+}
+
+/** Roadmap V3 R3-K2: liquidity plan. */
+export interface PlanPosting {
+  /** SALARIES / LOAN / CONTRACT / RETIREMENT / TAX_PREPAYMENT */
+  kind: string;
+  /** LOAN: purpose; CONTRACT: kind[:farmland]; TAX_PREPAYMENT: Q1..Q4 */
+  label: string | null;
+  amount: number;
+  /** Not fixed yet (tax prepayment after the next year change). */
+  estimate: boolean;
+}
+
+export interface PlanMonth {
+  monthIndex: number;
+  startGameTime: number;
+  period: number | null;
+  year: number | null;
+  postings: PlanPosting[];
+  knownTotal: number;
+  incomeEstimate: number | null;
+  /** PREVIOUS_YEAR / AVERAGE / NONE */
+  incomeSource: string;
+  reserve: number;
+  balanceEnd: number;
+  belowZero: boolean;
+  belowReserve: boolean;
+}
+
+export interface LiquidityPlanView {
+  available: boolean;
+  journalAvailable: boolean;
+  balance: number;
+  reserveFactor: number;
+  months: PlanMonth[];
+  firstBelowZero: PlanMonth | null;
+  firstBelowReserve: PlanMonth | null;
+}
+
+/** Roadmap V3 R3-K3: farm report of a finished FS25 year. */
+export interface FarmReportSnapshot {
+  staff: number;
+  monthlyWages: number;
+  animals: number;
+  averageHealth: number | null;
+  reputationTier: string;
+  trust: { characterId: number; name: string; role: string | null; level: string }[];
+}
+
+export interface FarmReportView {
+  year: number;
+  months: number;
+  income: { category: string; amount: number }[];
+  expenses: { category: string; amount: number }[];
+  totals: { operatingIncome: number; operatingExpense: number; operatingResult: number; investment: number; divestment: number; financing: number };
+  tax: { status: string; profit: number | null; tax: number | null } | null;
+  fields: { farmlandId: number; fruitType: string; hectares: number | null; harvested: boolean; withered: boolean; yieldLiters: number | null }[];
+  rain: { period: number; rainHours: number; observedHours: number }[];
+  stables: { type: string; count: number; health: number | null; productivity: number | null }[];
+  welfareInspections: number;
+  snapshot: FarmReportSnapshot;
+  previous: FarmReportSnapshot | null;
 }
 
 export interface LoanPaymentView {
@@ -226,6 +324,10 @@ export interface LoanView {
   /** Installments left with the current installment (a Sondertilgung shortens the term). */
   remainingInstallments: number;
   specialRepayment: SpecialRepaymentTermsView;
+  /** Roadmap V3 R3-K1: fields with a Grundschuld for this loan. */
+  collateral?: CollateralView[];
+  /** Roadmap V3 R3-K3: rate cuts of the annual review so far (percentage points). */
+  rateCutTotalPercent?: number;
 }
 
 export interface DeferralView {
@@ -354,6 +456,10 @@ export interface FarmlandView {
   phase?: FieldPhase | null;
   /** Roadmap V2 R2-E3: marked by the player as the family field. */
   familyField?: boolean;
+  /** Roadmap V3 R3-K1: REQUESTED / PROPOSED / PLEDGED when the field is collateral; null otherwise. */
+  collateral?: string | null;
+  /** Roadmap V3 R3-K1: the bank agreed to a sale of the pledged field. */
+  saleConsent?: boolean;
 }
 
 export type FieldPhase = 'EMPTY' | 'GROWING' | 'HARVESTABLE' | 'HARVESTED' | 'WITHERED';

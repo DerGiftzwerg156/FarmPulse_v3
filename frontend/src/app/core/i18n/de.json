@@ -454,7 +454,10 @@
       "INVITATION": "Einladung",
       "GOODS_OFFER": "Ware vom Nachbarn",
       "GOODS_REQUEST": "Anfrage eines Nachbarn",
-      "NEIGHBOR_MISSION": "Arbeit beim Nachbarn"
+      "NEIGHBOR_MISSION": "Arbeit beim Nachbarn",
+      "COLLATERAL_CLAIM": "Forderung nach Feldverkauf",
+      "ANNUAL_REVIEW": "Jahresgespräch",
+      "ANNUAL_REVIEW_OFFER": "Zinssenkung"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -499,7 +502,12 @@
       "DONE": "erledigt",
       "NO_STOCK": "zu wenig im Silo",
       "NOT_AVAILABLE": "im Spiel nicht möglich",
-      "LOST": "durch Neuladen verloren"
+      "LOST": "durch Neuladen verloren",
+      "OVERDUE": "überfällig",
+      "OFFER": "Zinssenkung angeboten",
+      "NEUTRAL": "Gespräch geführt",
+      "SERIOUS": "Ernstes Gespräch",
+      "LOAN_CLOSED": "Kredit beendet"
     },
     "animalType": {
       "COW": "Rinder",
@@ -648,6 +656,13 @@
     "missionType": {
       "PLOW": "Pflügen",
       "STONE_PICK": "Steine sammeln"
+    },
+    "planPosting": {
+      "SALARIES": "Gehälter",
+      "LOAN": "Kreditrate",
+      "CONTRACT": "Vertrag",
+      "RETIREMENT": "Altenteil",
+      "TAX_PREPAYMENT": "Steuervorauszahlung"
     }
   },
   "onboarding": {
@@ -1421,5 +1436,70 @@
     "contactLink": "Handel & Arbeit mit diesem Nachbarn →",
     "requested": "{name} hat geantwortet – sein Angebot steht unten bei den Angeboten.",
     "workOffered": "{name} hat Arbeit für dich – seine Anfrage steht unten bei den Aufträgen."
+  },
+  "credit": {
+    "collateral": "Sicherheit (Grundschuld)",
+    "collateralField": "Feld {id} · {ha} ha",
+    "noCollateral": "Kein eigenes Feld frei für eine Grundschuld.",
+    "coverage": "Beleihungswert {value} – deckt {percent} % des Betrags, Zins etwa {discount} Prozentpunkte günstiger.",
+    "collateralHint": "Beleihungswert = {ltv} % des Feldpreises, bis zu {discount} Prozentpunkte Zinsnachlass. Für den Teil über {amount} ({share} % deines Vermögens) verlangt die Bank eine Grundschuld.",
+    "withGrundschuld": "Nur mit Grundschuld auf Feld {fields} (Beleihungswert {value}). Mit der Annahme wird das Feld belastet.",
+    "applicationCollateral": "Grundschuld auf Feld {fields} · Zinsnachlass {discount} Prozentpunkte",
+    "pledged": "Grundschuld auf Feld {id} · Beleihungswert {value}",
+    "requestSaleConsent": "Verkauf erlauben lassen",
+    "saleConsentGiven": "Verkauf erlaubt – der Erlös tilgt",
+    "rateCutTotal": "Zins durch Jahresgespräche um {cut} Prozentpunkte gesenkt",
+    "badgePledged": "Grundschuld",
+    "badgeConsent": "Grundschuld · Verkauf erlaubt",
+    "badgeRequested": "als Sicherheit vorgesehen",
+    "cases": "Forderungen und Termine der Bank",
+    "claimText": "Sondertilgung von {amount} für den Kredit „{purpose}“ nach dem Verkauf von Feld {field} im Spielmenü.",
+    "claimOverdue": "überfällig – keine neuen Kredite, bis sie bezahlt ist",
+    "payClaim": "Bezahlen",
+    "claimHint": "Ohne Vorfälligkeitsentschädigung. Ist sie nach der Frist nicht bezahlt, zählt sie wie eine verpasste Rate.",
+    "reviewText": "Einladung zum Jahresgespräch über das Jahr {year}.",
+    "attend": "Termin wahrnehmen",
+    "rateCutText": "Zinssenkung um {cut} Prozentpunkte auf alle laufenden Kredite.",
+    "acceptCut": "Annehmen",
+    "rateCutHint": "Die Restlaufzeit bleibt, die Rate sinkt. Ablehnen hat keine Folgen.",
+    "plan": {
+      "title": "Liquiditätsplanung",
+      "unavailable": "Noch keine Daten aus dem Spiel.",
+      "belowZero": "Im {month} fällt dein Kontostand voraussichtlich unter null.",
+      "belowReserve": "Im {month} fällt dein Kontostand voraussichtlich unter die Reserve von einem Monat Fixkosten.",
+      "month": "Monat",
+      "known": "Bekannte Posten",
+      "income": "Einnahmen (Schätzung)",
+      "balance": "Kontostand Ende",
+      "estimate": "geschätzt",
+      "noPostings": "Keine bekannten Posten.",
+      "reserve": "Reserve: {amount}",
+      "hint": "Bekannte Posten werden zum Monatsanfang gebucht. Die Einnahmen sind geschätzt: Betriebsergebnis desselben Monats im Vorjahr (sonst der Schnitt der Monate), ohne die schon bekannten Posten.",
+      "hintNoJournal": "Bekannte Posten werden zum Monatsanfang gebucht. Ohne Buchungsjournal des Mods gibt es keine Schätzung der Einnahmen."
+    },
+    "report": {
+      "title": "Hofbericht",
+      "none": "Der erste Hofbericht kommt zum Jahreswechsel (Februar → März).",
+      "year": "Jahr {year}",
+      "income": "Einnahmen",
+      "expense": "Ausgaben",
+      "result": "Betriebsergebnis",
+      "tax": "Steuer",
+      "months": "{n} Monate im Journal · Investitionen {investment}",
+      "categories": "Einnahmen und Ausgaben",
+      "noJournal": "Kein Buchungsjournal für dieses Jahr.",
+      "fields": "Kultur und Ertrag",
+      "harvested": "geerntet",
+      "notHarvested": "nicht geerntet",
+      "noFields": "Keine Felddaten.",
+      "rain": "Regen im Jahr: {hours} Stunden",
+      "compare": "Im Vergleich",
+      "previous": "Vorjahr",
+      "staff": "Personal",
+      "wages": "Löhne je Monat",
+      "animals": "Tiere",
+      "reputation": "Ansehen im Dorf",
+      "inspections": "{n} Tierwohl-Kontrolle(n) im Jahr"
+    }
   }
 }

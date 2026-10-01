@@ -4,6 +4,7 @@ import java.util.List;
 
 import de.farmpulse.rpsim.api.Views.*;
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.credit.CollateralService;
 import de.farmpulse.rpsim.credit.LoanService;
 import de.farmpulse.rpsim.domain.*;
 import de.farmpulse.rpsim.domain.Character;
@@ -24,8 +25,11 @@ public class ApiMapper {
     private final NegotiationEngine negotiations;
     private final RpsimProperties props;
 
+    private final CollateralService collateral;
+
     public ApiMapper(TrustScoreService trust, SatisfactionService satisfaction, LoanService loans,
-                     NegotiationEngine negotiations, RpsimProperties props) {
+                     NegotiationEngine negotiations, RpsimProperties props, CollateralService collateral) {
+        this.collateral = collateral;
         this.trust = trust;
         this.satisfaction = satisfaction;
         this.loans = loans;
@@ -43,13 +47,7 @@ public class ApiMapper {
 
     /** VERY_GOOD / GOOD / NEUTRAL / STRAINED / BAD - display abstraction of the trust score. */
     public String trustLevel(Character c) {
-        double t = trust.getCurrentTrust(c);
-        RpsimProperties.Trust cfg = props.getFormulas().getTrust();
-        if (t >= cfg.getDisplayVeryGood()) return "VERY_GOOD";
-        if (t >= cfg.getDisplayGood()) return "GOOD";
-        if (t > cfg.getDisplayStrained()) return "NEUTRAL";
-        if (t > cfg.getDisplayBad()) return "STRAINED";
-        return "BAD";
+        return TrustScoreService.displayLevel(trust.getCurrentTrust(c), props.getFormulas().getTrust());
     }
 
     public MessageView message(Communication c) {
@@ -66,7 +64,21 @@ public class ApiMapper {
                 visible ? a.getDecision().name() : null, visible ? a.getReasonCategory().name() : null,
                 visible ? a.getOfferedAmount() : null, visible ? a.getOfferedTermMonths() : null,
                 visible && a.getOfferedInterestRate() != null ? Math.round(a.getOfferedInterestRate() * 10000) / 100.0 : null,
-                a.getLoanId());
+                a.getLoanId(), collateralIds(a, false), collateralIds(a, true),
+                visible ? a.getCollateralValue() : null, visible ? Math.round(a.getCollateralCoverage() * 1000) / 10.0 : null,
+                visible ? Math.round(a.getInterestDiscount() * 10000) / 100.0 : null, visible ? a.isCollateralRequired() : null);
+    }
+
+    /** R3-K1: fields of an application - chosen by the player, or named by the bank (PROPOSED). */
+    private List<Integer> collateralIds(CreditApplication a, boolean proposed) {
+        return collateral.ofApplication(a).stream()
+                .filter(c -> (c.getStatus() == CollateralStatus.PROPOSED) == proposed)
+                .map(LoanCollateral::getFarmlandId).toList();
+    }
+
+    public CollateralView collateral(LoanCollateral c) {
+        return new CollateralView(c.getFarmlandId(), c.getCollateralValue(), c.getStatus().name(), c.isSaleConsent(),
+                c.getLoan() == null ? null : c.getLoan().getId(), c.getLoan() == null ? null : c.getLoan().getPurpose());
     }
 
     public LoanView loan(Loan l) {
@@ -78,7 +90,8 @@ public class ApiMapper {
                 l.isBlocksNewCredit(), l.getNextDueGameTime(), l.getOverdueSinceGameTime() != null, l.getEscalationLevel(),
                 l.getMissedInstallments(), l.getPaidInstallments(), l.getDeferredUntilGameTime(), history,
                 loans.remainingInstallments(l), new SpecialRepaymentTermsView(t.refusal() == null, t.refusal(),
-                        t.freeAmountLeft(), Math.round(t.feeRate() * 10000) / 100.0, t.payoffInterest()));
+                        t.freeAmountLeft(), Math.round(t.feeRate() * 10000) / 100.0, t.payoffInterest()),
+                collateral.ofLoan(l).stream().map(this::collateral).toList(), Math.round(l.getRateCutTotal() * 10000) / 100.0);
     }
 
     public JobPostingView posting(JobPosting p) {
@@ -122,7 +135,9 @@ public class ApiMapper {
                 ref(o.getOwnerCharacter()), negotiations.isBlocked(sg, AssetType.FARMLAND, String.valueOf(o.getFarmlandId())),
                 o.isTradeable(), o.isLeasedToPlayer(), field == null ? null : field.getFruitType(),
                 field == null ? null : field.getPhase().name(),
-                Integer.valueOf(o.getFarmlandId()).equals(sg.getFamilyFieldId()));
+                Integer.valueOf(o.getFarmlandId()).equals(sg.getFamilyFieldId()),
+                collateral.tied(sg, o.getFarmlandId()).map(c -> c.getStatus().name()).orElse(null),
+                collateral.tied(sg, o.getFarmlandId()).map(LoanCollateral::isSaleConsent).orElse(false));
     }
 
     public NegotiationView negotiation(Negotiation n) {
@@ -163,7 +178,9 @@ public class ApiMapper {
     public CaseView serviceCase(ServiceCase s) {
         return new CaseView(s.getId(), s.getKind().name(), s.getStatus().name(), ref(s.getCharacter()), s.getFarmlandId(),
                 s.getHectares(), s.getDamageAmount(), s.getPayoutAmount(), s.getCostAmount(), s.getOfferAmount(),
-                s.getRoundsUsed(), s.isMeasureAgreed(), s.getReference(), s.getGameTime(), s.getDeadlineGameTime(),
+                // R3-K3: the reference of an invitation holds the credit score - it never leaves the fact layer
+                s.getRoundsUsed(), s.isMeasureAgreed(), s.getKind() == CaseKind.ANNUAL_REVIEW ? null : s.getReference(),
+                s.getGameTime(), s.getDeadlineGameTime(),
                 s.getResolution(), s.getKind() == CaseKind.WILDLIFE_DAMAGE
                         ? props.getFormulas().getHunting().getMeasureCost() : null,
                 s.getQuantity(), s.getDirection(), s.getBaselineCount(), s.getTitle(),

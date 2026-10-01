@@ -4,6 +4,8 @@ import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.club.ClubService;
 import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
+import de.farmpulse.rpsim.credit.AnnualReviewService;
+import de.farmpulse.rpsim.credit.CollateralService;
 import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
@@ -35,12 +37,17 @@ public class ContractActions {
     private final ClubService clubs;
     private final NeighborTradeService trade;
     private final NeighborMissionService neighborMissions;
+    private final CollateralService collateral;
+    private final AnnualReviewService annualReview;
 
     public ContractActions(ContractRepository contracts, ServiceCaseRepository cases, InsuranceService insurance,
                            HuntingService hunting, LivestockService livestock, LeaseService lease,
                            MaintenanceService maintenance, VanillaBypassService bypass, TaxService tax, ClubService clubs,
-                           NeighborTradeService trade, NeighborMissionService neighborMissions) {
+                           NeighborTradeService trade, NeighborMissionService neighborMissions,
+                           CollateralService collateral, AnnualReviewService annualReview) {
         this.trade = trade;
+        this.collateral = collateral;
+        this.annualReview = annualReview;
         this.neighborMissions = neighborMissions;
         this.contracts = contracts;
         this.cases = cases;
@@ -115,6 +122,9 @@ public class ContractActions {
             case INVITATION -> clubs.acceptInvitation(sg, id); // R2-E4: RSVP
             case GOODS_OFFER, GOODS_REQUEST -> trade.accept(sg, id); // R3-H3 / R3-H4
             case NEIGHBOR_MISSION -> neighborMissions.accept(sg, id); // R3-H5
+            case COLLATERAL_CLAIM -> collateral.payClaim(sg, id); // R3-K1: pay the claimed Sondertilgung
+            case ANNUAL_REVIEW -> annualReview.attend(sg, id); // R3-K3: "Termin wahrnehmen"
+            case ANNUAL_REVIEW_OFFER -> annualReview.acceptOffer(sg, id); // R3-K3: accept the rate cut
             default -> throw unsupported();
         };
     }
@@ -145,6 +155,8 @@ public class ContractActions {
             case SPONSORING_REQUEST -> clubs.declineSponsoring(sg, id);
             case GOODS_OFFER, GOODS_REQUEST -> trade.decline(sg, id); // R3-H3 / R3-H4
             case NEIGHBOR_MISSION -> neighborMissions.decline(sg, id); // R3-H5
+            case ANNUAL_REVIEW -> annualReview.decline(sg, id); // R3-K3: without consequence
+            case ANNUAL_REVIEW_OFFER -> annualReview.declineOffer(sg, id);
             default -> throw unsupported();
         };
     }

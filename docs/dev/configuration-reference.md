@@ -140,6 +140,22 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit.special-repayment-fee-rate` | `0.01` | Sondertilgung: fee (Vorfälligkeitsentschädigung) on the part above the free share, booked on top as `CREDIT_PREPAYMENT_FEE`. | Sondertilgung |
 | `rpsim.formulas.credit.special-repayment-trust-delta` | `3` | Sondertilgung: trust bonus at the bank advisor ... | Sondertilgung |
 | `rpsim.formulas.credit.special-repayment-trust-min-share` | `0.05` | ... when the Sondertilgung is at least this share of the remaining debt. | Sondertilgung |
+| `rpsim.formulas.credit.collateral.loan-to-value` | `0.6` | Collateral value of a pledged own field = its price (`assets.farmland[].price`) × this ratio. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.max-interest-discount` | `0.01` | Interest discount at full coverage (collateral value / loan amount ≥ 1), proportional below (owner decision: 1.0 percentage point). | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.farm-size-bonus` | `20` | Bonus points on the metric "loan too large for the farm" × coverage (the metric stays capped at 100). | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.required-above-share` | `0.5` | A loan above this share of the farm assets needs collateral covering the part above it; the bank names more unpledged own fields (largest first) in a counter offer "mit Grundschuld". | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.menu-sale-trust-delta` | `-10` | Trust of the bank advisor when a pledged field is sold in the game menu (R2-D2 detection); the bank always reacts. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.claim-days` | `10` | Game days to pay the claimed Sondertilgung (min(collateral value, remaining debt), no prepayment fee) after such a sale. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.claim-overdue-trust-delta` | `-5` | Claim unpaid after the deadline: trust, one missed installment in the payment history and no new credits until it is paid. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.realise-on-callback` | `false` | On a call-back the bank realises the pledged fields (field by field, highest collateral value first, while debt is open; `FARMLAND_TRANSFER FROM_PLAYER` + collateral value as `FARMLAND_SALE`). Owner decision: only in the harsh world mode, i.e. `true` in `credit-hard`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.annual-review.enabled` | `true` | Annual review with the bank advisor after the farm report at the year change. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.invitation-days` | `10` | Game days to accept ("Termin wahrnehmen") or decline the invitation; then it lapses without consequence. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.offer-days` | `10` | Game days the offered rate cut can be accepted or declined. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.good-score` | `75` | Credit score at the cut-off date (the farm as it stands, no new loan) from which a rate cut is offered. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.bad-score` | `45` | Below this score the advisor only talks seriously; running loans are never tightened. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.rate-cut` | `0.0025` | Rate cut per review on every running loan (incl. the legacy loan); remaining term kept, installment recalculated. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.max-cut-per-loan` | `0.01` | Cap of all cuts of one loan over its term. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.min-rate` | `0.01` | A cut never takes a loan below this rate. | Roadmap V3 R3-K3 |
 
 ## `rpsim.formulas.credit-hard`
 
@@ -192,6 +208,22 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit-hard.special-repayment-fee-rate` | `0.01` | HART profile: same as `formulas.credit.special-repayment-fee-rate`. | Sondertilgung |
 | `rpsim.formulas.credit-hard.special-repayment-trust-delta` | `3` | HART profile: same as `formulas.credit.special-repayment-trust-delta`. | Sondertilgung |
 | `rpsim.formulas.credit-hard.special-repayment-trust-min-share` | `0.05` | HART profile: same as `formulas.credit.special-repayment-trust-min-share`. | Sondertilgung |
+| `rpsim.formulas.credit-hard.collateral.loan-to-value` | `0.6` | HART profile: same as `formulas.credit.collateral.loan-to-value`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.max-interest-discount` | `0.01` | HART profile: same as `formulas.credit.collateral.max-interest-discount`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.farm-size-bonus` | `20` | HART profile: same as `formulas.credit.collateral.farm-size-bonus`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.required-above-share` | `0.5` | HART profile: same as `formulas.credit.collateral.required-above-share`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.menu-sale-trust-delta` | `-10` | HART profile: same as `formulas.credit.collateral.menu-sale-trust-delta`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.claim-days` | `10` | HART profile: same as `formulas.credit.collateral.claim-days`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.claim-overdue-trust-delta` | `-5` | HART profile: same as `formulas.credit.collateral.claim-overdue-trust-delta`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.realise-on-callback` | `true` | HART profile: `true` - the bank realises pledged fields on a call-back (owner decision: harsh world mode only). | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.annual-review.enabled` | `true` | HART profile: same as `formulas.credit.annual-review.enabled`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.invitation-days` | `10` | HART profile: same as `formulas.credit.annual-review.invitation-days`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.offer-days` | `10` | HART profile: same as `formulas.credit.annual-review.offer-days`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.good-score` | `75` | HART profile: same as `formulas.credit.annual-review.good-score`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.bad-score` | `45` | HART profile: same as `formulas.credit.annual-review.bad-score`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.rate-cut` | `0.0025` | HART profile: same as `formulas.credit.annual-review.rate-cut`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.max-cut-per-loan` | `0.01` | HART profile: same as `formulas.credit.annual-review.max-cut-per-loan`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.min-rate` | `0.01` | HART profile: same as `formulas.credit.annual-review.min-rate`. | Roadmap V3 R3-K3 |
 
 ## `rpsim.formulas.market`
 
@@ -782,6 +814,21 @@ placeholders.
 | `rpsim.formulas.fields.max-messages-per-month` | `2` | Cap of the field messages (neighbor, gossip, congratulation) per game month. | Roadmap V2 R2-C4 |
 | `rpsim.formulas.fields.hints-enabled` | `true` | Field work hints of the cooperative (harvest ready, lime, plowing); the player can also switch them off per savegame in the settings. | Roadmap V2 R2-C6 |
 | `rpsim.formulas.fields.hint-cooldown-days` | `7` | At most one hint per this many game days. | Roadmap V2 R2-C6 |
+
+## `rpsim.formulas.liquidity-plan` (Roadmap V3 R3-K2)
+
+Liquidity plan in the Bank app: the next FS25 months with the known postings at each month start (salaries, loan
+installments, contract payments, retirement payment, tax prepayments in periods 1, 4, 7, 10 - after the next year change
+estimated from the tax estimate of the running year) and the income as a marked estimate. Owner decisions in
+`QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.liquidity-plan.horizon-months` | `12` | FS25 months the plan shows. | Roadmap V3 R3-K2 |
+| `rpsim.formulas.liquidity-plan.reserve-factor` | `1.0` | Liquidity reserve of a month = its known fixed postings (salaries, installments, contracts, retirement) × factor; the plan warns when the balance falls below it. | Roadmap V3 R3-K2 |
+| `rpsim.formulas.liquidity-plan.known-posting-categories` | `RPSIM_SALARY_PAYMENT`, `RPSIM_TAX_PAYMENT`, `RPSIM_INSURANCE_PREMIUM`, `RPSIM_MAINTENANCE_FEE`, `RPSIM_LEASE_PAYMENT`, `RPSIM_FAMILY` | Journal categories the plan lists as known postings; the income estimate (operating result of the same month of the previous year, else the average of the complete months) adds them back so they do not count twice. The tax advisor fee is booked as `OTHER` and cannot be separated. | Roadmap V3 R3-K2 |
+| `rpsim.formulas.liquidity-plan.advisor-warning-enabled` | `true` | The bank advisor writes ahead of a shortfall. | Roadmap V3 R3-K2 |
+| `rpsim.formulas.liquidity-plan.advisor-warning-months` | `3` | Checked at every month start: the advisor writes once when the balance falls below zero within this many months (again only after that month has passed or the plan has recovered). | Roadmap V3 R3-K2 |
 
 ## `rpsim.formulas.finance` (Roadmap V2 R2-B)
 

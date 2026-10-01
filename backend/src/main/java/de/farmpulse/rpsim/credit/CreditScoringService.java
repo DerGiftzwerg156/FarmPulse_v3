@@ -59,10 +59,25 @@ public class CreditScoringService {
     }
 
     public CreditFormula.Result score(Savegame sg, long amount, int termMonths, double interestRate) {
-        return CreditFormula.evaluate(inputs(sg, amount, termMonths, interestRate), configs.forSavegame(sg));
+        return score(sg, amount, termMonths, interestRate, 0);
+    }
+
+    /** Roadmap V3 R3-K1: score with the collateral value of the fields pledged for the loan. */
+    public CreditFormula.Result score(Savegame sg, long amount, int termMonths, double interestRate, double collateralValue) {
+        return CreditFormula.evaluate(inputs(sg, amount, termMonths, interestRate, collateralValue), configs.forSavegame(sg));
     }
 
     public CreditFormula.Inputs inputs(Savegame sg, long amount, int termMonths, double interestRate) {
+        return inputs(sg, amount, termMonths, interestRate, 0);
+    }
+
+    /** The asset value the credit check counts (incl. standing crops), 0 without facts. */
+    public double totalAssets(Savegame sg) {
+        FarmFacts f = facts.latest(sg).orElse(null);
+        return f == null ? 0 : facts.totalAssetValue(f) + standingCropValue(f, configs.forSavegame(sg));
+    }
+
+    public CreditFormula.Inputs inputs(Savegame sg, long amount, int termMonths, double interestRate, double collateralValue) {
         RpsimProperties.Credit cfg = configs.forSavegame(sg);
         FarmFacts f = facts.latest(sg).orElse(null);
         // R2-C5: standing crops count as asset (harvest value x growth progress x standing-crop-discount)
@@ -111,7 +126,7 @@ public class CreditScoringService {
                 payments.countBySavegameAndType(sg, LoanPaymentType.MISSED), cfg);
         double trustScore = lookup.bank(sg).map(trust::getCurrentTrust).orElse(0.0);
         return new CreditFormula.Inputs(monthlyCashflow, hasHistory, existingInstallments, newInstallment, assets,
-                loanDebt + vanilla, balance, amount, history, trustScore);
+                loanDebt + vanilla, balance, amount, history, trustScore, collateralValue);
     }
 
     /** Roadmap V2 R2-C5: value of the standing crops in the credit check (0 without field export). */

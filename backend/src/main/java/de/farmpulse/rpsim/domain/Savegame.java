@@ -277,4 +277,8 @@ public class Savegame {
     /** Roadmap V2 R2-F2: occasions asked in the game (comma separated PromptKind names); null = configured default. */
     @Column(name = "ingame_prompt_kinds", length = 255)
     private String ingamePromptKinds;
+
+    /** Roadmap V3 R3-K2: month index of the shortfall the bank advisor last warned about (once per shortfall). */
+    @Column(name = "liquidity_warning_month")
+    private Long liquidityWarningMonth;
 }

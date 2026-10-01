@@ -50,6 +50,10 @@ public enum TrustReason {
     NEIGHBOR_TRADE_DECLINED,
     NEIGHBOR_TRADE_IGNORED,
     NEIGHBOR_DISAPPOINTED,
+    /** Roadmap V3 R3-K1: a pledged field was sold in the game menu. */
+    COLLATERAL_SOLD,
+    /** Roadmap V3 R3-K1: the claimed Sondertilgung after such a sale stayed unpaid. */
+    COLLATERAL_CLAIM_OVERDUE,
     INITIAL,
     OTHER
 }

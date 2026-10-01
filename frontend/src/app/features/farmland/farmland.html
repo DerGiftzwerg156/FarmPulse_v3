@@ -54,6 +54,11 @@
               @if (f.familyField) {
                 <div class="mt-1"><app-badge variant="positive" data-testid="family-field">{{ 'farmland.familyField' | t }}</app-badge></div>
               }
+              @if (f.collateral) {
+                <a routerLink="/bank" class="mt-1 inline-block" data-testid="field-collateral">
+                  <app-badge variant="warning">{{ (f.collateral === 'PLEDGED' ? (f.saleConsent ? 'credit.badgeConsent' : 'credit.badgePledged') : 'credit.badgeRequested') | t }}</app-badge>
+                </a>
+              }
             </div>
             <app-badge [variant]="f.ownerType === 'PLAYER' ? 'positive' : 'neutral'">
               {{ f.tradeable === false ? ('farmland.notTradeableBadge' | t) : (f.ownerType === 'CHARACTER' && f.owner ? f.owner.name : (f.ownerType | label: 'ownerType')) }}

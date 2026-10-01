@@ -427,26 +427,42 @@ nach Ablauf gehört das Feld wieder dir. Das Tool meldet dabei weder Verkauf noc
 
 ## K – Kredit und Finanzplanung
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Beleihungswert = Feldpreis × 0,6. Volle Deckung
+senkt den Zins um 1,0 Prozentpunkt (anteilig darunter), dazu bis zu +20 Punkte auf „Kredit zu groß für den Betrieb“.
+Über 50 % des Vermögens muss die Grundschuld den Teil darüber decken; sonst nennt die Bank im Gegenangebot weitere
+eigene Felder (größte zuerst). Verkauf in der Flurkarte nur mit Zustimmung: Der Erlös tilgt den Beleihungswert im selben
+Batch, ohne Vorfälligkeitsentschädigung. Verkauf im Spielmenü: Vertrauen −10, Forderung in der Bank-App (10 Tage),
+unbezahlt eine verpasste Rate, Vertrauen −5 und keine neuen Kredite bis zur Zahlung. Verwertung bei Fälligstellung nur
+im harten Weltmodus. Die Liquiditätsplanung zeigt 12 Monate, die Reserve ist ein Monat Fixkosten, die Bankberaterin
+warnt einmal je Engpass in den nächsten 3 Monaten. Jahresgespräch: Einladung 10 Tage, ab Score 75 −0,25
+Prozentpunkte auf jeden laufenden Kredit (höchstens −1,0 je Kredit, nie unter 1 %), die Rate sinkt, die Laufzeit bleibt.
+
 ### R3-K1 Kreditsicherheiten (Grundschuld)
 
 **Problem heute:** Das Fachkonzept hat Sicherheiten „als spätere Erweiterung vorgemerkt“. `CreditFormula` kennt nur
 Kapitaldienst, Eigenkapital, Liquidität, Größe und Zahlungshistorie.
 
-- [ ] Im Kreditantrag eigene Felder als Sicherheit wählen. Beleihungswert = Feldpreis (`assets.farmland[].price`) ×
-  Beleihungsquote (Konfig, Vorschlag 0,6).
-- [ ] Wirkung nach Formel, gedeckelt:
+- [x] Im Kreditantrag eigene Felder als Sicherheit wählen. Beleihungswert = Feldpreis (`assets.farmland[].price`) ×
+  Beleihungsquote (Konfig, Vorschlag 0,6). Umgesetzt: Auswahl im Kreditformular der Bank-App, Tabelle
+  `loan_collateral` (Migration V26), `credit/CollateralService`. Eigenes Feld = in der Flurkarte dem Spieler gehörend,
+  nicht gepachtet.
+- [x] Wirkung nach Formel, gedeckelt:
   - Zinsnachlass proportional zur Deckung (`credit.collateral.max-interest-discount`),
   - Bonus auf die Kennzahl „Kredit zu groß für den Betrieb“,
   - große Kredite über `credit.collateral.required-above-share` des Vermögens nur mit Sicherheit. Ohne Sicherheit
     wird der Antrag nicht abgelehnt, sondern die Bank macht ein Gegenangebot („mit Grundschuld“), wie im Fachkonzept
-    vorgesehen.
-- [ ] Belastete Felder: Verkauf oder Verpachtung (L) im Tool nur nach Zustimmung der Bank (Mail, Knopf). Ein Verkauf
+    vorgesehen. Umgesetzt: `CreditFormula.coverage` / `interestDiscount` / `requiredCollateral`,
+    `rpsim.formulas.credit.collateral.*`.
+- [x] Belastete Felder: Verkauf oder Verpachtung (L) im Tool nur nach Zustimmung der Bank (Mail, Knopf). Ein Verkauf
   über das Spielmenü (Erkennung aus R2-D2) löst eine Reaktion der Bank aus (Vertrauensverlust, Forderung einer
-  Sondertilgung in Höhe des Beleihungswerts).
-- [ ] Die Sicherheit wird frei, wenn der Kredit getilgt ist (auch durch Sondertilgung).
-- [ ] Offene Entscheidung (`QUESTIONS.md`): Soll die Bank bei Fälligstellung (bestehende Eskalation
+  Sondertilgung in Höhe des Beleihungswerts). Umgesetzt: Knopf „Verkauf erlauben lassen“ am Kredit; der Erlös tilgt
+  im Verkaufs-Batch. Der Verkauf im Spielmenü wird als Fall `COLLATERAL_CLAIM` gefordert. Die Verpachtung (L) folgt mit
+  Abschnitt L.
+- [x] Die Sicherheit wird frei, wenn der Kredit getilgt ist (auch durch Sondertilgung).
+- [x] Entschieden (`QUESTIONS.md`): Soll die Bank bei Fälligstellung (bestehende Eskalation
   `CREDIT_CALLBACK`) das Feld verwerten (`FARMLAND_TRANSFER FROM_PLAYER` + Gutschrift gegen die Restschuld)? Oder
-  bleibt es wie heute bei Text und Vertrauen? Vorschlag: Verwertung nur im harten Weltmodus.
+  bleibt es wie heute bei Text und Vertrauen? Entscheidung: Verwertung nur im harten Weltmodus
+  (`credit-hard.collateral.realise-on-callback: true`), Feld für Feld, bis die Restschuld gedeckt ist.
 
 **Beleg:** – (kein Mod-Eingriff; `FARMLAND_TRANSFER` gibt es seit V1).
 
@@ -455,30 +471,37 @@ Kapitaldienst, Eigenkapital, Liquidität, Größe und Zahlungshistorie.
 **Problem heute:** Der Kalender (`tablet/CalendarPlanService.java`) zeigt nur die Abbuchungen des nächsten
 Monatsanfangs und den voraussichtlichen Kontostand.
 
-- [ ] Neue Ansicht in der Bank-App: die nächsten 12 FS25-Monate mit allen **bekannten** Posten:
+- [x] Neue Ansicht in der Bank-App: die nächsten 12 FS25-Monate mit allen **bekannten** Posten:
   - Gehälter, Kreditraten (Restlaufzeit aus `LoanService`), Verträge, Pacht (L) und Altenteil,
   - Steuervorauszahlungen in den Perioden 1, 4, 7 und 10 (`CalendarPlanService.PREPAYMENT_PERIODS`),
-  - fällige Vorkontrakte (M2).
-- [ ] Einnahmen als klar gekennzeichnete **Schätzung**: Durchschnitt des operativen Ergebnisses je Kalendermonat aus
-  dem Journal (R2-B) des Vorjahres, sonst der Schnitt der vorhandenen Monate.
-- [ ] Warnung, in welchem Monat der Kontostand unter null oder unter die Liquiditätsreserve fällt. Optional meldet
-  sich die Bankberaterin vorab (wie die Frühwarnung aus R2-B5).
+  - fällige Vorkontrakte (M2). Kommen mit Abschnitt M dazu, ebenso Pachteinnahmen (L).
+- [x] Einnahmen als klar gekennzeichnete **Schätzung**: Durchschnitt des operativen Ergebnisses je Kalendermonat aus
+  dem Journal (R2-B) des Vorjahres, sonst der Schnitt der vorhandenen Monate. Die schon bekannten Posten werden
+  herausgerechnet, damit nichts doppelt zählt.
+- [x] Warnung, in welchem Monat der Kontostand unter null oder unter die Liquiditätsreserve fällt. Optional meldet
+  sich die Bankberaterin vorab (wie die Frühwarnung aus R2-B5). Umgesetzt: `finance/LiquidityPlanService`,
+  `GET /api/liquidity-plan`, Karte „Liquiditätsplanung“, `rpsim.formulas.liquidity-plan.*`.
 
 **Beleg:** – (nur Backend und Oberfläche).
 
 ### R3-K3 Jahresabschluss und Jahresgespräch
 
-- [ ] Beim Jahreswechsel (Periode 12 → 1) erzeugt das Backend einen **Hofbericht** mit Einnahmen und Ausgaben je
+- [x] Beim Jahreswechsel (Periode 12 → 1) erzeugt das Backend einen **Hofbericht** mit Einnahmen und Ausgaben je
   Kategorie aus dem Journal. Der Mod hält `financeJournalPeriods` = 13 Monate, ein volles Jahr ist also da. Dazu:
   - Gewinn und Steuer (`TaxYear`),
   - Kultur und Ertrag je Feld (`FieldCropHistory`),
   - Regenstunden (`RainPeriod`),
   - Stallwerte (`HusbandryRecord`),
   - Personal, Vertrauen und Dorf-Ansehen im Vergleich zum Vorjahr.
-- [ ] Ansicht in der Bank-App, dazu ein kurzer Tagebucheintrag. Die KI kommentiert, die Zahlen kommen aus dem Backend.
-- [ ] **Jahresgespräch:** Die Bankberaterin lädt ein. Nach Formel (Bonitätsscore zum Stichtag) bietet sie bei gutem
+
+  Umgesetzt: `finance/FarmReportService` (Tabelle `farm_report`), `GET /api/farm-reports`. Der Ertrag je Feld wird ab
+  jetzt bei der Ernte gespeichert (Fläche × `litersPerSqm` der letzten Sichtung reif). Der Vergleich nutzt die
+  Kennzahlen des vorigen Berichts; der erste Bericht hat keine Vorjahresspalte.
+- [x] Ansicht in der Bank-App, dazu ein kurzer Tagebucheintrag. Die KI kommentiert, die Zahlen kommen aus dem Backend.
+- [x] **Jahresgespräch:** Die Bankberaterin lädt ein. Nach Formel (Bonitätsscore zum Stichtag) bietet sie bei gutem
   Ergebnis eine Zinssenkung für laufende Kredite an (`credit.annual-review.*`, gedeckelt). Bei schlechtem Ergebnis
-  gibt es nur einen ernsten Ton, keine automatische Verschärfung laufender Verträge.
+  gibt es nur einen ernsten Ton, keine automatische Verschärfung laufender Verträge. Umgesetzt:
+  `credit/AnnualReviewService`, Fälle `ANNUAL_REVIEW` / `ANNUAL_REVIEW_OFFER` in der Bank-App.
 
 **Beleg:** – (nur Backend und Oberfläche).
 

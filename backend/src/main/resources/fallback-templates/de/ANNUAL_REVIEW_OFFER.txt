@@ -1,0 +1,7 @@
+Ergebnis unseres Jahresgesprächs
+Guten Tag,
+
+vielen Dank für das gute Gespräch. Ihr Betrieb steht solide da, deshalb bieten wir Ihnen für Ihre laufenden Kredite eine Zinssenkung um {{rateCutPercent}} Prozentpunkte an. Die Restlaufzeit bleibt, die Rate sinkt. Das Angebot gilt {{offerDays}} Tage, Sie können es in der App „Bank“ annehmen.
+
+Mit freundlichen Grüßen
+{{characterName}}

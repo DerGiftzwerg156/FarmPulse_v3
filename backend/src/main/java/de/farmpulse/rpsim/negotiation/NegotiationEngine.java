@@ -67,11 +67,13 @@ public class NegotiationEngine {
     private final DiaryService diary;
     private final RandomSource random;
     private final RpsimProperties props;
+    private final de.farmpulse.rpsim.credit.CollateralService collateral;
 
     public NegotiationEngine(NegotiationRepository negotiations, NegotiationOfferRepository offers,
                              FarmlandOwnershipService ownership, SavegameRepository savegames, OutboxService outbox,
                              LiquidityService liquidity, NarrationRequestService narration, CharacterLookup lookup,
-                             TrustScoreService trust, DiaryService diary, RandomSource random, RpsimProperties props) {
+                             TrustScoreService trust, DiaryService diary, RandomSource random, RpsimProperties props,
+                             de.farmpulse.rpsim.credit.CollateralService collateral) {
         this.negotiations = negotiations;
         this.offers = offers;
         this.ownership = ownership;
@@ -84,6 +86,7 @@ public class NegotiationEngine {
         this.diary = diary;
         this.random = random;
         this.props = props;
+        this.collateral = collateral;
     }
 
     private RpsimProperties.Negotiation cfg() {
@@ -230,6 +233,7 @@ public class NegotiationEngine {
             throw new BusinessRuleException("NOT_PLAYER_FIELD", "Nur eigene Felder können verkauft werden.");
         }
         requireTradeable(field);
+        collateral.requireSellable(sg, farmlandId); // R3-K1: a Grundschuld needs the bank's consent first
         if (askingPrice <= 0) {
             throw new BusinessRuleException("INVALID_PRICE", "Der Wunschpreis muss positiv sein.");
         }
@@ -379,8 +383,12 @@ public class NegotiationEngine {
         n.setClosedAtGameTime(sg.getCurrentGameTime());
         int farmlandId = Integer.parseInt(n.getAssetId());
         boolean toPlayer = n.getDirection() == NegotiationDirection.PLAYER_BUYS;
-        outbox.farmlandDeal(sg, farmlandId, toPlayer, price, (toPlayer ? "Kauf" : "Verkauf") + " Feld " + farmlandId,
+        var deal = outbox.farmlandDeal(sg, farmlandId, toPlayer, price, (toPlayer ? "Kauf" : "Verkauf") + " Feld " + farmlandId,
                 new Related(RELATED, n.getId()));
+        if (!toPlayer) {
+            // R3-K1: the proceeds repay the collateral value in the same batch (bank's consent)
+            collateral.onSold(sg, farmlandId, deal.get(0).getBatchId());
+        }
         if (toPlayer) {
             ownership.setOwner(sg, farmlandId, OwnerType.PLAYER, null);
         } else {

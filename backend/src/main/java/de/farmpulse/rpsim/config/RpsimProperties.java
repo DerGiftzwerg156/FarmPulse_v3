@@ -155,6 +155,7 @@ public class RpsimProperties {
         private NeighborTrade neighborTrade = new NeighborTrade();
         private NeighborMissions neighborMissions = new NeighborMissions();
         private Finance finance = new Finance();
+        private LiquidityPlan liquidityPlan = new LiquidityPlan();
         private Mechanic mechanic = new Mechanic();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
@@ -267,6 +268,10 @@ public class RpsimProperties {
         /** Trust bonus at the bank advisor for a Sondertilgung of at least this share of the remaining debt. */
         private double specialRepaymentTrustDelta = 3;
         private double specialRepaymentTrustMinShare = 0.05;
+        /** Roadmap V3 R3-K1: own fields as loan collateral (Grundschuld). */
+        private Collateral collateral = new Collateral();
+        /** Roadmap V3 R3-K3: annual review with the bank advisor at the year change. */
+        private AnnualReview annualReview = new AnnualReview();
 
         static Credit hardDefaults() {
             Credit c = new Credit();
@@ -274,8 +279,47 @@ public class RpsimProperties {
             c.setApproveThreshold(85);
             c.setCounterThreshold(55);
             c.setTrustCap(5);
+            // R3-K1 (owner decision): the bank realises pledged fields on a call-back only in the harsh world mode
+            c.getCollateral().setRealiseOnCallback(true);
             return c;
         }
+    }
+
+    /** Roadmap V3 R3-K1: collateral of a loan - own fields with a Grundschuld (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class Collateral {
+        /** Collateral value = field price (assets.farmland[].price) x loan-to-value. */
+        private double loanToValue = 0.6;
+        /** Interest discount at full coverage (collateral value / loan amount, max 1), proportional below. */
+        private double maxInterestDiscount = 0.01;
+        /** Bonus on the metric "loan too large for the farm": points x coverage (the metric stays capped at 100). */
+        private double farmSizeBonus = 20;
+        /** Loans above this share of the farm assets need collateral covering the part above it. */
+        private double requiredAboveShare = 0.5;
+        /** Pledged field sold in the game menu: trust delta at the bank advisor ... */
+        private double menuSaleTrustDelta = -10;
+        /** ... and game days to pay the claimed Sondertilgung. */
+        private double claimDays = 10;
+        /** Claim unpaid after the deadline: trust delta (plus a missed installment and no new credit until paid). */
+        private double claimOverdueTrustDelta = -5;
+        /** Call-back: the bank takes the pledged fields and credits their collateral value (profile credit-hard only). */
+        private boolean realiseOnCallback = false;
+    }
+
+    /** Roadmap V3 R3-K3: annual review (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class AnnualReview {
+        private boolean enabled = true;
+        /** Game days to accept the invitation and, afterwards, the offered rate cut. */
+        private double invitationDays = 10;
+        private double offerDays = 10;
+        /** Credit score at the cut-off date: from good-score a rate cut is offered, below bad-score a serious talk. */
+        private double goodScore = 75;
+        private double badScore = 45;
+        /** Rate cut per review on every running loan, at most max-cut-per-loan over its term, never below min-rate. */
+        private double rateCut = 0.0025;
+        private double maxCutPerLoan = 0.01;
+        private double minRate = 0.01;
     }
 
     /** Technical concept "Preis-Events & Sonderkontrakte". */
@@ -924,6 +968,25 @@ public class RpsimProperties {
     /** Roadmap V2 R2-B2: class of a booking in the journal (farm_facts.finances). */
     public enum FinanceClass {
         OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING, IGNORE
+    }
+
+    /** Roadmap V3 R3-K2: 12-month liquidity plan in the Bank app (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class LiquidityPlan {
+        /** Months ahead the plan shows (FS25 months). */
+        private int horizonMonths = 12;
+        /** Liquidity reserve = the known fixed postings of the month (salaries, installments, contracts, retirement) x factor. */
+        private double reserveFactor = 1.0;
+        /**
+         * Journal categories the plan already lists as known postings: added back to the operating result so the
+         * income estimate does not count them twice (the tax advisor fee is booked as OTHER and cannot be separated).
+         */
+        private List<String> knownPostingCategories = new ArrayList<>(List.of("RPSIM_SALARY_PAYMENT",
+                "RPSIM_TAX_PAYMENT", "RPSIM_INSURANCE_PREMIUM", "RPSIM_MAINTENANCE_FEE", "RPSIM_LEASE_PAYMENT",
+                "RPSIM_FAMILY"));
+        /** The bank advisor writes once when the balance falls below zero within this many months. */
+        private boolean advisorWarningEnabled = true;
+        private int advisorWarningMonths = 3;
     }
 
     /**

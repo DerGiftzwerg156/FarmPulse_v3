@@ -58,8 +58,10 @@ public final class Requests {
     public record ProactiveRequest(@NotBlank @Size(max = 4000) String text, Channel channel) {
     }
 
+    /** Roadmap V3 R3-K1: {@code farmlandIds} = own fields offered as collateral (optional). */
     public record CreditApplicationRequest(@NotNull @Positive Long amount, @NotBlank @Size(max = 200) String purpose,
-                                           @NotNull @Min(1) @Max(600) Integer termMonths) {
+                                           @NotNull @Min(1) @Max(600) Integer termMonths,
+                                           @Size(max = 50) List<Integer> farmlandIds) {
     }
 
     public record DeferralRequest(@Size(max = 4000) String message) {

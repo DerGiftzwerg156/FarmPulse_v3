@@ -249,12 +249,18 @@ public class FieldService {
                 FieldCropHistory h = crop(sg, field.farmlandId(), year, field.fruitType(), now);
                 h.setHarvestableSeen(h.isHarvestableSeen() || p == FieldPhase.HARVESTABLE);
                 h.setWithered(h.isWithered() || p == FieldPhase.WITHERED);
-                h.setHarvested(h.isHarvested() || p == FieldPhase.HARVESTED);
+                if (p == FieldPhase.HARVESTABLE && field.hectares() != null && field.litersPerSqm() != null) {
+                    // R3-K3: expected yield of the last ripe sighting (area x litres per m²)
+                    h.setRipeLiters(field.hectares() * 10_000 * field.litersPerSqm());
+                }
+                if (p == FieldPhase.HARVESTED) {
+                    harvested(h);
+                }
             }
             if (p != r.getPhase()) {
                 if (r.getPhase() == FieldPhase.HARVESTABLE && p.bare() && year != null && r.getFruitType() != null) {
                     // harvested without a stubble state (crop gone): the previous crop counts as harvested
-                    crop(sg, r.getFarmlandId(), year, r.getFruitType(), now).setHarvested(true);
+                    harvested(crop(sg, r.getFarmlandId(), year, r.getFruitType(), now));
                 }
                 if (r.getPhase() == FieldPhase.HARVESTABLE) {
                     r.setHarvestHintSent(false);
@@ -293,6 +299,14 @@ public class FieldService {
             records.save(r);
         }
         records.deleteAll(byFarmland.values());
+    }
+
+    /** The crop was harvested; R3-K3: its yield is the last ripe sighting (owner decision, recorded from now on). */
+    private static void harvested(FieldCropHistory h) {
+        h.setHarvested(true);
+        if (h.getYieldLiters() == null && h.getRipeLiters() != null) {
+            h.setYieldLiters(h.getRipeLiters());
+        }
     }
 
     private static void rewind(FieldRecord r, long now) {

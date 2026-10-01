@@ -24,6 +24,7 @@
             <span class="fp-label">{{ 'bank.term' | t }}</span>
             <input class="fp-input font-mono" type="number" min="1" max="600" step="1" formControlName="termMonths" data-testid="credit-term" />
           </label>
+          <app-collateral-picker [amount]="+formAmount()" (changed)="collateralIds.set($event)" />
           @if (form.invalid && form.touched) {
             <p class="text-[12px] text-danger" data-testid="credit-invalid">{{ 'bank.invalid' | t }}</p>
           }
@@ -67,6 +68,9 @@
                     @if (a.reasonCategory) {
                       <p class="mt-1 text-[11px] text-muted">{{ 'bank.reason' | t }}: {{ a.reasonCategory | label: 'creditReason' }}</p>
                     }
+                    @if (a.collateralRequired && a.proposedFarmlandIds?.length) {
+                      <p class="mt-1 text-[12px] text-warn" data-testid="counter-collateral">{{ 'credit.withGrundschuld' | t: { fields: a.proposedFarmlandIds!.join(', '), value: (a.collateralValue | money) } }}</p>
+                    }
                     <div class="mt-2 flex gap-2">
                       <app-button variant="secondary" (pressed)="declineCounter(a)" data-testid="counter-decline">{{ 'bank.declineCounter' | t }}</app-button>
                       <app-button (pressed)="acceptCounter(a)" data-testid="counter-accept">{{ 'bank.acceptCounter' | t }}</app-button>
@@ -82,6 +86,9 @@
                 @case ('accepted') {
                   <p class="mt-2 text-[12px] text-accent">{{ 'bank.acceptedText' | t }}</p>
                 }
+              }
+              @if (a.collateralFarmlandIds?.length && state(a) !== 'processing') {
+                <p class="mt-1 text-[11px] text-muted" data-testid="application-collateral">{{ 'credit.applicationCollateral' | t: { fields: a.collateralFarmlandIds!.join(', '), discount: (a.interestDiscountPercent | num: 2) } }}</p>
               }
               @if (actionError()[a.id]) {
                 <p class="mt-1 text-[12px] text-danger">{{ actionError()[a.id] }}</p>
@@ -118,6 +125,23 @@
               <div><div class="fp-label">{{ 'bank.nextDue' | t }}</div><div class="font-mono text-[13px] text-text">{{ l.status === 'ACTIVE' ? (l.nextDueGameTime | gameTime) : '–' }}</div></div>
               <div><div class="fp-label">{{ 'bank.plan' | t }}</div><div class="font-mono text-[13px] text-text" data-testid="loan-plan">{{ 'bank.planValue' | t: { paid: l.paidInstallments, left: remainingInstallments(l) } }}</div></div>
             </div>
+            @if (l.rateCutTotalPercent) {
+              <p class="mt-1 text-[11px] text-accent" data-testid="loan-rate-cut">{{ 'credit.rateCutTotal' | t: { cut: (l.rateCutTotalPercent | num: 2) } }}</p>
+            }
+            @if (pledged(l).length) {
+              <div class="mt-2 space-y-1" data-testid="loan-collateral">
+                @for (c of pledged(l); track c.farmlandId) {
+                  <div class="flex flex-wrap items-center justify-between gap-2 text-[12px]">
+                    <span class="text-text">{{ 'credit.pledged' | t: { id: c.farmlandId, value: (c.collateralValue | money) } }}</span>
+                    @if (c.saleConsent) {
+                      <app-badge variant="positive" data-testid="sale-consent">{{ 'credit.saleConsentGiven' | t }}</app-badge>
+                    } @else if (l.status === 'ACTIVE') {
+                      <app-button variant="secondary" [disabled]="consentBusy() === c.farmlandId" (pressed)="requestSaleConsent(l, c)" data-testid="sale-consent-request">{{ 'credit.requestSaleConsent' | t }}</app-button>
+                    }
+                  </div>
+                }
+              </div>
+            }
             <div class="mt-2 h-1 rounded-full bg-surface" [attr.aria-label]="'bank.repaid' | t">
               <div class="h-1 rounded-full bg-accent" [style.width.%]="progress(l)"></div>
             </div>
@@ -201,6 +225,14 @@
       </ul>
     </app-card>
   }
+
+  <app-service-cases [caseKinds]="['COLLATERAL_CLAIM', 'ANNUAL_REVIEW', 'ANNUAL_REVIEW_OFFER']" openTitle="credit.cases"
+    [highlightCase]="highlightedCase()" [showEmpty]="false" testId="bank-cases" />
+
+  <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <app-liquidity-plan-card />
+    <app-farm-report-card />
+  </div>
 
   <app-finance-card />
 </section>

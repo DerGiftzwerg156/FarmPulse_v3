@@ -73,4 +73,8 @@ public class Loan extends SavegameScoped {
 
     @Column(name = "last_missed_due_game_time")
     private Long lastMissedDueGameTime;
+
+    /** Roadmap V3 R3-K3: rate cuts of the annual review accumulated over the term (capped). */
+    @Column(name = "rate_cut_total", nullable = false)
+    private double rateCutTotal;
 }

@@ -86,6 +86,8 @@ public class MemoryService {
             case NEIGHBOR_TRADE_DECLINED -> "Handel abgelehnt";
             case NEIGHBOR_TRADE_IGNORED -> "Handelsangebot unbeantwortet gelassen";
             case NEIGHBOR_DISAPPOINTED -> "zugesagte Ware lag nicht im Silo";
+            case COLLATERAL_SOLD -> "Feld mit Grundschuld ohne Absprache verkauft";
+            case COLLATERAL_CLAIM_OVERDUE -> "geforderte Sondertilgung nicht gezahlt";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

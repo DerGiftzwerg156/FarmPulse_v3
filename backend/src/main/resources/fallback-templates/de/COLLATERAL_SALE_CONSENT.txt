@@ -1,0 +1,7 @@
+Zustimmung zum Verkauf von Feld {{farmlandId}}
+Guten Tag,
+
+dem Verkauf von Feld {{farmlandId}} stimmen wir zu. Bedingung: Der Erlös tilgt {{repayment}} € Ihres Kredits „{{purpose}}“ – das buchen wir beim Verkauf automatisch, ohne Vorfälligkeitsentschädigung. Damit ist die Grundschuld auf dem Feld gelöscht.
+
+Mit freundlichen Grüßen
+{{characterName}}

@@ -121,6 +121,13 @@ as ack `result`; `BridgeSyncIntegrationTest.ackResultIsStoredWithTheInstruction`
 blocks) and `FailedInstructionTest` (notice "Mod aktualisieren") cover the backend side. The mod covers normalisation,
 validation, `NOT_SUPPORTED` and `result` in `test_farm_facts.lua`, `test_market_context.lua`, `test_instructions.lua`
 and `test_persistence.lua`, the simulator the execution in `test/roadmap-v3.test.js`.
+Roadmap V3 R3-K (credit and financial planning): `CreditPlanningTest` (backend) covers coverage, discount and bonus,
+the required Grundschuld with the fields the bank names, sale consent with the repayment in the sale batch and its
+reversal, the claim after a menu sale (overdue, credit block, payment), the realisation in the harsh mode, the release
+on repayment, the liquidity plan (known postings, tax prepayment month, estimate without double counting, reserve) and
+the advisor's warning, the yield recording, the farm report with comparison and the annual review (offer, caps,
+serious talk, decline, expiry). Frontend: `features/bank/credit-planning.spec.ts`. In the game: manual test plan
+section 14.
 Roadmap V3 R3-H (neighbour trade and contracts): `NeighborTradeTest` (backend) covers the neighbour fields and the stock
 from a harvest, prices and roles, the purchase on request (H3) with its checks, a refused transfer, the spawner, decline
 and expiry, the sale (H4) with the reputation cap, the disappointed neighbour, the contracts (H5: matching field,

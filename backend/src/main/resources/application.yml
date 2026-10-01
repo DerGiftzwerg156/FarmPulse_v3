@@ -135,6 +135,24 @@ rpsim:
       special-repayment-fee-rate: 0.01         # fee on the part above it (booked on top)
       special-repayment-trust-delta: 3         # trust bonus at the bank advisor ...
       special-repayment-trust-min-share: 0.05  # ... from this share of the remaining debt
+      collateral:                 # Roadmap V3 R3-K1: own fields as loan collateral (owner decisions, placeholders)
+        loan-to-value: 0.6        # collateral value = field price x 0.6
+        max-interest-discount: 0.01   # interest discount at full coverage, proportional below
+        farm-size-bonus: 20       # bonus points on "loan too large for the farm" x coverage
+        required-above-share: 0.5 # loans above 50 % of the farm assets need collateral for the part above
+        menu-sale-trust-delta: -10    # pledged field sold in the game menu ...
+        claim-days: 10            # ... claimed Sondertilgung, game days to pay
+        claim-overdue-trust-delta: -5 # unpaid claim: trust, a missed installment, no new credit until paid
+        realise-on-callback: false  # call-back realises the pledged fields (only in credit-hard)
+      annual-review:              # Roadmap V3 R3-K3: annual review at the year change (owner decisions, placeholders)
+        enabled: true
+        invitation-days: 10
+        offer-days: 10
+        good-score: 75            # credit score at the cut-off date: rate cut offered from here ...
+        bad-score: 45             # ... serious talk below here
+        rate-cut: 0.0025          # -0.25 percentage points per review on every running loan
+        max-cut-per-loan: 0.01    # at most -1.0 percentage points per loan over its term
+        min-rate: 0.01            # never below 1 %
     credit-hard:                  # "Ton-/Genre-Konfigurationsprofile": CreditConfig.HART
       weight-debt-service-coverage: 0.30
       weight-equity-ratio: 0.25
@@ -183,6 +201,24 @@ rpsim:
       special-repayment-fee-rate: 0.01         # fee on the part above it (booked on top)
       special-repayment-trust-delta: 3         # trust bonus at the bank advisor ...
       special-repayment-trust-min-share: 0.05  # ... from this share of the remaining debt
+      collateral:                 # Roadmap V3 R3-K1: own fields as loan collateral (owner decisions, placeholders)
+        loan-to-value: 0.6        # collateral value = field price x 0.6
+        max-interest-discount: 0.01   # interest discount at full coverage, proportional below
+        farm-size-bonus: 20       # bonus points on "loan too large for the farm" x coverage
+        required-above-share: 0.5 # loans above 50 % of the farm assets need collateral for the part above
+        menu-sale-trust-delta: -10    # pledged field sold in the game menu ...
+        claim-days: 10            # ... claimed Sondertilgung, game days to pay
+        claim-overdue-trust-delta: -5 # unpaid claim: trust, a missed installment, no new credit until paid
+        realise-on-callback: true  # call-back realises the pledged fields (harsh world mode only)
+      annual-review:              # Roadmap V3 R3-K3: annual review at the year change (owner decisions, placeholders)
+        enabled: true
+        invitation-days: 10
+        offer-days: 10
+        good-score: 75            # credit score at the cut-off date: rate cut offered from here ...
+        bad-score: 45             # ... serious talk below here
+        rate-cut: 0.0025          # -0.25 percentage points per review on every running loan
+        max-cut-per-loan: 0.01    # at most -1.0 percentage points per loan over its term
+        min-rate: 0.01            # never below 1 %
     market:                       # "Preis-Events & Sonderkontrakte"
       daily-spawn-probability: 0.15
       max-active-events: 3
@@ -497,6 +533,18 @@ rpsim:
       repair-points-per-month: 60
       repair-below-condition: 90
       overload-workload-per-vehicle: 2
+    liquidity-plan:               # Roadmap V3 R3-K2: 12-month liquidity plan in the Bank app (owner decisions, placeholders)
+      horizon-months: 12
+      reserve-factor: 1.0         # reserve = known fixed postings of the month x factor
+      known-posting-categories:   # journal categories added back to the income estimate (listed as known postings)
+        - RPSIM_SALARY_PAYMENT
+        - RPSIM_TAX_PAYMENT
+        - RPSIM_INSURANCE_PREMIUM
+        - RPSIM_MAINTENANCE_FEE
+        - RPSIM_LEASE_PAYMENT
+        - RPSIM_FAMILY
+      advisor-warning-enabled: true
+      advisor-warning-months: 3   # the advisor writes once when the balance falls below zero within 3 months
     finance:                      # Roadmap V2 R2-B: real farm finances from the booking journal (placeholders)
       categories:                 # FS25 money type or RPSIM_<REASON> -> class; unknown names: operating by sign
         HARVEST_INCOME: OPERATING_INCOME

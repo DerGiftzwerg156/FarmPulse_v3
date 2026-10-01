@@ -148,6 +148,17 @@ public class FailedInstructionService {
         } else if (NegotiationEngine.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.FARMLAND_TRANSFER) {
             handled = negotiations.onDealFailed(sg, relatedId);
+            // R3-K1: the repayment of a collateral value travels in the sale batch - its loan is corrected too
+            if (ins.getBatchId() != null) {
+                for (var o : outbox.findByBatchId(ins.getBatchId())) {
+                    if (LoanService.RELATED.equals(o.getRelatedEntityType()) && o.getRelatedEntityId() != null) {
+                        loans.onBookingFailed(sg, o.getRelatedEntityId(), o.getInstructionId(), reason);
+                    }
+                }
+            }
+        } else if (LoanService.COLLATERAL_RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.FARMLAND_TRANSFER) {
+            handled = loans.onRealisationFailed(sg, relatedId); // R3-K1: realisation refused, the field stays
         }
         Map<String, Object> d = new LinkedHashMap<>();
         d.put("instructionId", ins.getInstructionId());

@@ -1,0 +1,7 @@
+Ihr Kontostand in den nächsten Monaten
+Guten Tag,
+
+nach unserer Planung reicht Ihr Kontostand im {{shortfallMonth}} (in {{monthsAhead}} Monaten) nicht mehr aus: Mit den bekannten Abbuchungen von {{knownPostings}} € und den geschätzten Einnahmen läge er bei {{projectedBalance}} €. Die Liquiditätsplanung finden Sie in der App „Bank“. Lassen Sie uns rechtzeitig darüber sprechen.
+
+Mit freundlichen Grüßen
+{{characterName}}

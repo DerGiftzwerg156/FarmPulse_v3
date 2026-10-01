@@ -108,8 +108,22 @@ export class ApiService {
   }
 
   // credit
-  applyForCredit(amount: number, purpose: string, termMonths: number): Observable<M.CreditApplicationView> {
-    return this.post('/credit-applications', { amount, purpose, termMonths });
+  /** Roadmap V3 R3-K1: {@code farmlandIds} = own fields offered as collateral (omitted when none). */
+  applyForCredit(amount: number, purpose: string, termMonths: number, farmlandIds: number[] = []): Observable<M.CreditApplicationView> {
+    return this.post('/credit-applications', farmlandIds.length ? { amount, purpose, termMonths, farmlandIds } : { amount, purpose, termMonths });
+  }
+  // Roadmap V3 R3-K: collateral, liquidity plan, farm report
+  collateral(): Observable<M.CollateralOverviewView> {
+    return this.get('/credit/collateral');
+  }
+  requestSaleConsent(farmlandId: number): Observable<M.CollateralView> {
+    return this.post(`/credit/collateral/${farmlandId}/sale-consent`);
+  }
+  liquidityPlan(): Observable<M.LiquidityPlanView> {
+    return this.get('/liquidity-plan');
+  }
+  farmReports(): Observable<M.FarmReportView[]> {
+    return this.get('/farm-reports');
   }
   creditApplications(): Observable<M.CreditApplicationView[]> {
     return this.get('/credit-applications');

@@ -20,6 +20,10 @@ const CASE_APP: Record<string, string> = {
   GOODS_OFFER: 'trade',
   GOODS_REQUEST: 'trade',
   NEIGHBOR_MISSION: 'trade',
+  // Roadmap V3 R3-K
+  COLLATERAL_CLAIM: 'bank',
+  ANNUAL_REVIEW: 'bank',
+  ANNUAL_REVIEW_OFFER: 'bank',
 };
 
 const CONTRACT_APP: Record<string, string> = {
