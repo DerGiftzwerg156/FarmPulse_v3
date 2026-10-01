@@ -1,0 +1,7 @@
+Dürrehilfe für Ihren Betrieb
+Guten Tag,
+
+wegen der ausgerufenen Dürre unterstützt das Amt Betriebe, deren Felder in den trockenen Monaten bestellt waren. Für {{hectares}} ha mit wachsender Kultur stehen Ihnen {{amount}} € zu ({{aidPerHectare}} € je Hektar). {{deductionNote}}Den Antrag stellen Sie in der App „Ämter“ – bitte innerhalb von {{applicationDays}} Tagen, danach verfällt der Anspruch.
+
+Mit freundlichen Grüßen
+{{characterName}}

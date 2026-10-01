@@ -36,6 +36,10 @@ export class ApiService {
   requestInsuranceOffer(level: string): Observable<M.ContractView> {
     return this.post('/insurance/offer', { level });
   }
+  /** Roadmap V3 R3-W: drought status (rain of the last months, series, drought insurance quote, droughts). */
+  drought(): Observable<M.DroughtStatusView> {
+    return this.get('/drought');
+  }
   contractAction(id: number, action: 'accept' | 'decline' | 'cancel' | string, body: unknown = {}): Observable<M.ContractView> {
     return this.post(`/contracts/${id}/${action}`, body);
   }

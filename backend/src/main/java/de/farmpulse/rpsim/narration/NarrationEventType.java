@@ -158,6 +158,12 @@ public enum NarrationEventType {
     FORWARD_CONTRACT_FULFILLED,
     FORWARD_CONTRACT_SHORTFALL,
     FARM_SHOP_ORDER,
+    // Roadmap V3 R3-W: drought, drought aid, weather-index insurance
+    DROUGHT_WARNING,
+    DROUGHT_DECLARED,
+    DROUGHT_AID_OFFER,
+    DROUGHT_INSURANCE_OFFER,
+    DROUGHT_INSURANCE_PAYOUT,
     // conversation
     REPLY,
     CALL_CONVERSATION

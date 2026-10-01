@@ -469,6 +469,8 @@ reference prices of the own fields + value of the own buildings.
 | `rpsim.formulas.insurance.offer-valid-days` | `7` | Validity of an insurance offer (game days). | TODO T-20 |
 | `rpsim.formulas.insurance.reoffer-cooldown-days` | `30` | After an uninsured damage the agent offers again at most once per this many game days. | TODO T-20 |
 | `rpsim.formulas.insurance.cancel-after-missed-payments` | `2` | The insurance ends after this many unpaid premiums; while a premium is open the cover is suspended. | TODO T-20 |
+| `rpsim.formulas.insurance.drought-premium-per-hectare` | `4` | Weather-index drought insurance (level `DROUGHT_INDEX`): monthly premium per hectare of the own fields without leased ones; the premium follows the current area at every month start. | Roadmap V3 R3-W3 |
+| `rpsim.formulas.insurance.drought-payout-per-hectare` | `200` | Payout per hectare of that area on a declared drought, without a claim (`INSURANCE_PAYOUT`); only paid up and when concluded before the first dry month of the series. | Roadmap V3 R3-W3 |
 | `rpsim.formulas.insurance.levels.BASIC.coverage-rate` | `0.6` | Tariff *Basis*: reimbursed share of a damage. | TODO T-20 |
 | `rpsim.formulas.insurance.levels.BASIC.deductible` | `2000` | Tariff *Basis*: deductible per damage (€). | TODO T-20 |
 | `rpsim.formulas.insurance.levels.BASIC.premium-rate` | `0.00025` | Tariff *Basis*: monthly premium per € of insured value. | TODO T-20 |
@@ -848,6 +850,23 @@ Price alarms and forward contracts of the Agrarbörse, the farm shop in the app 
 | `rpsim.formulas.farm-shop.min-factor` | `0.1` | Lower bound of the factor. | Roadmap V3 R3-M3 |
 | `rpsim.formulas.farm-shop.reputation-delta` | `1` | Village reputation per delivered order (`PublicActionType.FARM_SHOP`) ... | Roadmap V3 R3-M3 |
 | `rpsim.formulas.farm-shop.reputation-max-per-year` | `4` | ... at most this many times per FS25 year. | Roadmap V3 R3-M3 |
+
+## `rpsim.formulas.drought` (Roadmap V3 R3-W)
+
+Drought from the rain time per game month (R2-C2) and the drought aid of the authority. The yield in the game does not
+change. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.drought.enabled` | `true` | Rate the months and declare droughts. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.periods` | `[3, 4, 5, 6, 7, 8]` | Growth months (FS25 periods, 1 = March): May to October. A month outside ends the series. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.min-periods` | `2` | Dry growth months in a row for a drought; one drought per series. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.max-rain-share` | `0.03` | A growth month is dry when it rained less than this share of its observed time. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.min-observed-share` | `0.5` | Below this observed share of the month it is unknown and ends the series (no drought from data gaps). | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.max-crops` | `3` | HARVEST_FAILURE for at most this many crops standing in the village (largest area first) at every sell point accepting them. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.aid-per-hectare` | `150` | Drought aid (€) per hectare of own fields that were growing in a drought month, paid as `SUBSIDY`. | Roadmap V3 R3-W2 |
+| `rpsim.formulas.drought.aid-application-days` | `15` | Game days to apply for the aid in the Ämter app. | Roadmap V3 R3-W2 |
+| `rpsim.formulas.drought.aid-insurance-deduction` | `0.5` | Share deducted from the aid while a drought insurance runs. | Roadmap V3 R3-W2 |
 
 ## `rpsim.formulas.liquidity-plan` (Roadmap V3 R3-K2)
 

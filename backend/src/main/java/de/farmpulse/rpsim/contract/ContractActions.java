@@ -40,14 +40,17 @@ public class ContractActions {
     private final CollateralService collateral;
     private final AnnualReviewService annualReview;
     private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
+    private final de.farmpulse.rpsim.drought.DroughtService drought;
 
     public ContractActions(ContractRepository contracts, ServiceCaseRepository cases, InsuranceService insurance,
                            HuntingService hunting, LivestockService livestock, LeaseService lease,
                            MaintenanceService maintenance, VanillaBypassService bypass, TaxService tax, ClubService clubs,
                            NeighborTradeService trade, NeighborMissionService neighborMissions,
                            CollateralService collateral, AnnualReviewService annualReview,
-                           de.farmpulse.rpsim.neighbor.FarmShopService farmShop) {
+                           de.farmpulse.rpsim.neighbor.FarmShopService farmShop,
+                           de.farmpulse.rpsim.drought.DroughtService drought) {
         this.farmShop = farmShop;
+        this.drought = drought;
         this.trade = trade;
         this.collateral = collateral;
         this.annualReview = annualReview;
@@ -129,6 +132,7 @@ public class ContractActions {
             case ANNUAL_REVIEW -> annualReview.attend(sg, id); // R3-K3: "Termin wahrnehmen"
             case ANNUAL_REVIEW_OFFER -> annualReview.acceptOffer(sg, id); // R3-K3: accept the rate cut
             case FARM_SHOP_ORDER -> farmShop.accept(sg, id); // R3-M3: deliver
+            case DROUGHT_AID -> drought.apply(sg, id); // R3-W2: "Antrag stellen"
             default -> throw unsupported();
         };
     }

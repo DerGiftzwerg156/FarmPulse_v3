@@ -31,6 +31,23 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Drought and weather risk (Roadmap V3, R3-W):**
+  - Drought detection from the rain time per game month: a growth month (May to October) is dry when it rained less
+    than 3 % of its observed time and at least half of it was observed; unknown months end the series. After 2 dry
+    months in a row a drought is declared (once per series). The cooperative warns at the first dry month. The
+    declaration raises prices regionally (`HARVEST_FAILURE` for the 3 crops with the largest area in the village at
+    every sell point accepting them, skipping pairs with an open event or fixed price) and the village gossips. The
+    yield in the game does not change.
+  - Drought aid of the authority: 150 € per hectare of own fields growing in a drought month (recorded per month from
+    now on), applied for by button in the app "Ämter" within 15 days, paid at once as `SUBSIDY`; 50 % less with a
+    running drought insurance.
+  - Weather-index drought insurance (level `DROUGHT_INDEX` of the insurance contract, beside storm/hail): 4 € per
+    hectare of own fields (not leased) and month, the premium follows the area at every month start; on a declared
+    drought it pays 200 € per hectare without a claim (`INSURANCE_PAYOUT`), when paid up and concluded before the
+    first dry month. Offered on request and with the cooperative's warning. The insurance app shows the rain of the
+    last months, the current series and the declared droughts.
+  - Endpoint `GET /api/drought`; config `rpsim.formulas.drought.*`, `rpsim.formulas.insurance.drought-*`; migration
+    V28. No mod change.
 - **Market and marketing (Roadmap V3, R3-M):**
   - Price alarm in the Agrarbörse: fill type, sell point (or any = best price), direction and price per 1,000 l. It is
     checked on every price import; when it fires, the game shows a hint and the land agent writes with the stock and

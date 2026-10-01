@@ -51,6 +51,8 @@ class SimulatorScenariosEndToEndTest {
     @Autowired FactsService facts;
     @Autowired SavegameController header;
     @Autowired TransactionTemplate tx;
+    @Autowired de.farmpulse.rpsim.repository.GrowingFieldMonthRepository growing;
+    @Autowired de.farmpulse.rpsim.time.GameTime gameTime;
 
     @BeforeEach
     void requireSimulator() {
@@ -156,6 +158,19 @@ class SimulatorScenariosEndToEndTest {
             assertThat(f.npcFields()).isNull();
             assertThat(f.tradeStorage()).isNull();
             assertThat(facts.marketContext(sg).orElseThrow().storeVehicles()).isNull();
+        });
+    }
+
+    /** Roadmap V3 (R3-W2): the growing own fields of duerre-sommer are recorded for the drought aid. */
+    @Test
+    void duerreSommerRecordsTheGrowingOwnFields() {
+        Savegame dry = link("duerre-sommer", "sim_duerre_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(dry.getId()).orElseThrow();
+            assertThat(facts.latest(sg).orElseThrow().weather().raining()).isFalse();
+            long month = gameTime.monthIndex(sg, sg.getCurrentGameTime());
+            assertThat(growing.findBySavegameAndMonthIndexBetweenOrderByFarmlandIdAsc(sg, month, month))
+                    .extracting(g -> g.getFarmlandId()).containsExactly(2, 4, 7);
         });
     }
 

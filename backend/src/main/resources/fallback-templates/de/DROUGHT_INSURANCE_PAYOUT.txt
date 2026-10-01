@@ -1,0 +1,7 @@
+Ihre Dürreversicherung zahlt
+Guten Tag,
+
+die Dürre ist ausgerufen, damit greift Ihre Dürreversicherung: Für {{hectares}} ha zahlen wir {{payoutPerHectare}} € je Hektar, zusammen {{payout}} €. Eine Schadensmeldung ist nicht nötig, der Betrag wird sofort überwiesen.
+
+Mit freundlichen Grüßen
+{{characterName}}

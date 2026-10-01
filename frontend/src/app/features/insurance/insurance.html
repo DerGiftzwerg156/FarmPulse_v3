@@ -50,6 +50,83 @@
         </ul>
       }
     </app-card>
+    <app-card [title]="'insurance.drought' | t" data-testid="drought-insurance">
+      <p class="mb-3 text-[12px] text-muted">{{ 'insurance.droughtIntro' | t }}</p>
+      @if (drought(); as d) {
+        <p class="mb-2 text-[12px] text-text" data-testid="drought-terms">{{ 'insurance.droughtTerms' | t: { premium: (d.quote.premiumPerHectare | money), payout: (d.quote.payoutPerHectare | money) } }}</p>
+      }
+      @if (activeDrought(); as c) {
+        <div class="rounded-md border border-accent/40 bg-bg p-3" data-testid="drought-active" [class.ring-1]="highlightedContract() === c.id">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-display text-[13px] font-bold text-text">{{ c.level | label: 'insuranceLevel' }}</span>
+            <app-badge [variant]="c.paymentOverdue ? 'negative' : 'positive'">{{ (c.paymentOverdue ? 'contracts.overdue' : 'enums.contractStatus.ACTIVE') | t }}</app-badge>
+          </div>
+          <div class="mt-1 text-[12px] text-muted">{{ 'contracts.perMonth' | t: { amount: (c.monthlyAmount | money) } }}</div>
+          @if (c.nextDueGameTime !== null) {
+            <div class="mt-1 fp-label">{{ 'contracts.nextDue' | t: { time: (c.nextDueGameTime | gameTime) } }}</div>
+          }
+          <div class="mt-2"><app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'cancel')" data-testid="drought-cancel">{{ 'contracts.cancel' | t }}</app-button></div>
+        </div>
+      } @else {
+        @for (o of droughtOffers(); track o.id) {
+          <div class="mb-2 rounded-md border border-warn/50 bg-bg p-3" data-testid="drought-offer" [class.ring-1]="highlightedContract() === o.id">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-display text-[13px] font-bold text-text">{{ o.level | label: 'insuranceLevel' }} · {{ 'contracts.perMonth' | t: { amount: (o.monthlyAmount | money) } }}</span>
+              <app-badge variant="warning">{{ o.status | label: 'contractStatus' }}</app-badge>
+            </div>
+            @if (o.offerExpiresAtGameTime !== null) {
+              <div class="mt-1 text-[12px] text-muted">{{ 'contracts.validUntil' | t: { time: (o.offerExpiresAtGameTime | gameTime) } }}</div>
+            }
+            <div class="mt-2 flex gap-2">
+              <app-button [disabled]="busy()" (pressed)="contractAction(o, 'accept')" data-testid="drought-accept">{{ 'contracts.accept' | t }}</app-button>
+              <app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(o, 'decline')" data-testid="drought-decline">{{ 'contracts.decline' | t }}</app-button>
+            </div>
+          </div>
+        }
+        @if (drought(); as d) {
+          @if (d.quote.hectares > 0) {
+            <div class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-bg p-2" data-testid="drought-quote">
+              <span class="text-[12px] text-text">{{ 'insurance.droughtQuote' | t: { hectares: d.quote.hectares, premium: (d.quote.monthlyPremium | money), payout: (d.quote.payout | money) } }}</span>
+              <app-button variant="secondary" [disabled]="busy()" (pressed)="requestOffer('DROUGHT_INDEX')" data-testid="drought-request">{{ 'contracts.requestOffer' | t }}</app-button>
+            </div>
+          } @else {
+            <p class="text-sm text-muted">{{ 'insurance.noOwnFields' | t }}</p>
+          }
+        }
+      }
+      @if (drought(); as d) {
+        <h3 class="mb-2 mt-4 fp-label">{{ 'insurance.rainTitle' | t }}</h3>
+        @if (!d.enabled) {
+          <p class="text-sm text-muted">{{ 'insurance.disabled' | t }}</p>
+        }
+        <p class="mb-2 text-[11px] text-muted">{{ 'insurance.rainRule' | t: { months: d.growthMonths.join(', '), rain: d.maxRainPercent, observed: d.minObservedPercent, count: d.minPeriods } }}</p>
+        <ul class="space-y-1">
+          @for (m of d.months; track m.monthIndex) {
+            <li class="flex flex-wrap items-center justify-between gap-2 border-t border-border py-1 text-[12px]" data-testid="drought-month">
+              <span class="text-text">{{ m.month }}@if (m.rainPercent !== null) { · {{ 'insurance.rainPercent' | t: { percent: m.rainPercent } }} } · {{ 'insurance.observed' | t: { percent: m.observedPercent } }}</span>
+              <app-badge [variant]="m.rating === 'DRY' ? 'negative' : m.rating === 'WET' ? 'positive' : 'neutral'">{{ rating(m.rating) }}</app-badge>
+            </li>
+          }
+        </ul>
+        @if (d.dryMonths > 0) {
+          <p class="mt-2 text-[12px] text-warn" data-testid="drought-series">{{ 'insurance.series' | t: { count: d.dryMonths, month: d.seriesStartMonth ?? '–' } }}@if (d.seriesDeclared) { · {{ 'insurance.seriesDeclared' | t }} }</p>
+        }
+        @if (d.droughts.length) {
+          <h3 class="mb-2 mt-4 fp-label">{{ 'insurance.droughts' | t }}</h3>
+          <ul class="space-y-2">
+            @for (x of d.droughts; track x.id) {
+              <li class="rounded-md border border-border bg-bg p-2 text-[12px]" data-testid="drought-entry">
+                <div class="text-text">{{ 'insurance.droughtEntry' | t: { first: x.firstMonth, last: x.lastMonth, months: x.dryMonths, events: x.priceEvents } }} · {{ x.declaredGameTime | gameTime }}</div>
+                @if (x.crops.length) {
+                  <div class="text-muted">{{ 'insurance.droughtCrops' | t: { crops: cropLabels(x.crops) } }}</div>
+                }
+                <div class="text-muted">{{ insuranceResult(x.insuranceResult, ((x.insurancePayout ?? 0) | money)) }}</div>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </app-card>
     <app-service-cases [caseKinds]="damageKinds" openTitle="insurance.damages" [highlightCase]="highlightedCase()" testId="damages">
       <p open-intro class="mb-3 text-[12px] text-muted">{{ 'insurance.damagesIntro' | t }}</p>
     </app-service-cases>

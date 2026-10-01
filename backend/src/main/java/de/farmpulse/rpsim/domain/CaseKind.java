@@ -33,5 +33,7 @@ public enum CaseKind {
     /** Roadmap V3 R3-K3: rate cut offered in the annual review (accept / decline). */
     ANNUAL_REVIEW_OFFER,
     /** Roadmap V3 R3-M3: a villager orders goods of the own silos at the farm-shop price (deliver / decline). */
-    FARM_SHOP_ORDER
+    FARM_SHOP_ORDER,
+    /** Roadmap V3 R3-W2: drought aid of the authority after a declared drought (apply by button within the deadline). */
+    DROUGHT_AID
 }

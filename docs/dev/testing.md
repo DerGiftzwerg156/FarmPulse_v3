@@ -126,6 +126,13 @@ re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_
 delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and
 the farm shop (order from the own silos at the farm-shop price, delivery batch, reputation, refusal factor, failed
 transfer). Frontend: `features/market/marketing.spec.ts`. In the game: manual test plan section 15.
+Roadmap V3 R3-W (drought and weather risk): `DroughtTest` covers the month rating (dry, wet, unknown, outside the
+growth months), the series with the warning and the drought offer, the declaration with the regional
+`HARVEST_FAILURE` (3 largest crops, busy pairs skipped), gossip and aid case, the recording of growing own fields, the
+aid application and expiry, the index insurance (payout, too late, cover suspended, premium following the area,
+beside storm/hail) and the deduction on the aid. `SimulatorScenariosEndToEndTest` checks that `duerre-sommer` records
+the growing own fields. Frontend: `features/insurance/insurance.spec.ts` and the drought aid in
+`features/contracts/service-cases.spec.ts`. In the game: manual test plan section 16.
 Roadmap V3 R3-K (credit and financial planning): `CreditPlanningTest` (backend) covers coverage, discount and bonus,
 the required Grundschuld with the fields the bank names, sale consent with the repayment in the sale batch and its
 reversal, the claim after a menu sale (overdue, credit block, payment), the realisation in the harsh mode, the release

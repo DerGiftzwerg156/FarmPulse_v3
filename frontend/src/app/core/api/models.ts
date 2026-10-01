@@ -101,6 +101,54 @@ export interface InsuranceQuoteView {
   deductible: number;
 }
 
+/** Roadmap V3 R3-W: one game month - rain and observed time in percent. */
+export interface DroughtMonthView {
+  monthIndex: number;
+  month: string;
+  rainPercent: number | null;
+  observedPercent: number;
+  rating: 'DRY' | 'WET' | 'UNKNOWN' | 'OUTSIDE' | 'RUNNING' | string;
+}
+
+export interface DroughtQuoteView {
+  hectares: number;
+  premiumPerHectare: number;
+  monthlyPremium: number;
+  payoutPerHectare: number;
+  payout: number;
+}
+
+export interface DroughtView {
+  id: number;
+  firstMonth: string;
+  lastMonth: string;
+  dryMonths: number;
+  declaredGameTime: number;
+  crops: string[];
+  priceEvents: number;
+  insuranceResult: 'PAID' | 'NONE' | 'TOO_LATE' | 'COVER_SUSPENDED' | string;
+  insuredHectares: number | null;
+  insurancePayout: number | null;
+  aidHectares: number | null;
+  aidCaseId: number | null;
+}
+
+export interface DroughtStatusView {
+  enabled: boolean;
+  growthMonths: string[];
+  minPeriods: number;
+  maxRainPercent: number;
+  minObservedPercent: number;
+  dryMonths: number;
+  seriesStartMonth: string | null;
+  seriesDeclared: boolean;
+  months: DroughtMonthView[];
+  quote: DroughtQuoteView;
+  aidPerHectare: number;
+  aidDeductionPercent: number;
+  droughts: DroughtView[];
+}
+
 /** Dashboard notice of the fact layer (TODO T-02 rewind, T-03 bookings the game did not execute). */
 export interface NoticeView {
   id: number;

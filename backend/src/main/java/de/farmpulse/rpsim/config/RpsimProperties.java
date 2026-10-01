@@ -159,6 +159,7 @@ public class RpsimProperties {
         private FarmShop farmShop = new FarmShop();
         private Finance finance = new Finance();
         private LiquidityPlan liquidityPlan = new LiquidityPlan();
+        private Drought drought = new Drought();
         private Mechanic mechanic = new Mechanic();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
@@ -665,6 +666,9 @@ public class RpsimProperties {
         private double reofferCooldownDays = 30;
         /** Insurance ends after this many missed premiums. */
         private int cancelAfterMissedPayments = 2;
+        /** Roadmap V3 R3-W3: weather-index drought insurance - premium per hectare and month, payout per hectare. */
+        private double droughtPremiumPerHectare = 4;
+        private double droughtPayoutPerHectare = 200;
         /** Insured value = farmland reference prices + building values; monthly premium = value × premiumRate. */
         private Map<String, InsuranceLevel> levels = new LinkedHashMap<>(Map.of(
                 "BASIC", new InsuranceLevel(0.6, 2000, 0.00025, 50),
@@ -1023,6 +1027,27 @@ public class RpsimProperties {
     /** Roadmap V2 R2-B2: class of a booking in the journal (farm_facts.finances). */
     public enum FinanceClass {
         OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING, IGNORE
+    }
+
+    /** Roadmap V3 R3-W1 / R3-W2: drought from the rain share of growth months, drought aid (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class Drought {
+        private boolean enabled = true;
+        /** Growth months (FS25 periods, 1 = March). */
+        private List<Integer> periods = new ArrayList<>(List.of(3, 4, 5, 6, 7, 8));
+        /** Dry growth months in a row that declare a drought. */
+        private int minPeriods = 2;
+        /** A month is dry when rain was below this share of the observed time ... */
+        private double maxRainShare = 0.03;
+        /** ... and counts only when at least this share of the month was observed (else unknown, breaks the series). */
+        private double minObservedShare = 0.5;
+        /** HARVEST_FAILURE for at most this many crops (largest area first) at every sell point accepting them. */
+        private int maxCrops = 3;
+        /** Drought aid of the authority per hectare of own fields growing in a drought month. */
+        private double aidPerHectare = 150;
+        private double aidApplicationDays = 15;
+        /** Deduction on the aid with a drought insurance. */
+        private double aidInsuranceDeduction = 0.5;
     }
 
     /** Roadmap V3 R3-K2: 12-month liquidity plan in the Bank app (owner decisions, placeholders). */

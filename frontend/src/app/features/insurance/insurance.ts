@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { Observable } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { ContractView, InsuranceQuoteView } from '../../core/api/models';
+import { ContractView, DroughtStatusView, InsuranceQuoteView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -17,7 +17,8 @@ import { ServiceCases } from '../contracts/service-cases';
 
 /**
  * Hof-Tablet app "Versicherung" (TODO T-20): storm and hail insurance (tariffs, offer, cancel) and the damages -
- * storm, hail and wildlife - with report, counter demand and joint measure.
+ * storm, hail and wildlife - with report, counter demand and joint measure. Roadmap V3 R3-W3: the weather-index drought
+ * insurance (level DROUGHT_INDEX) runs beside it, with the rain of the last months and the declared droughts.
  */
 @Component({
   selector: 'app-insurance',
@@ -34,14 +35,21 @@ export class Insurance {
   readonly contract = input<string>();
   readonly case = input<string>();
 
+  static readonly DROUGHT = 'DROUGHT_INDEX';
   readonly damageKinds = ['STORM_DAMAGE', 'HAIL_DAMAGE', 'WILDLIFE_DAMAGE'];
   readonly contracts = signal<ContractView[] | null>(null);
   readonly quotes = signal<InsuranceQuoteView[]>([]);
   readonly error = signal<PageError | null>(null);
   readonly actionError = signal<string | null>(null);
   readonly busy = signal(false);
+  readonly drought = signal<DroughtStatusView | null>(null);
 
-  readonly insurance = computed(() => (this.contracts() ?? []).filter((c) => c.kind === 'INSURANCE'));
+  private readonly allInsurance = computed(() => (this.contracts() ?? []).filter((c) => c.kind === 'INSURANCE'));
+  /** Storm and hail insurance (every level but the drought cover). */
+  readonly insurance = computed(() => this.allInsurance().filter((c) => c.level !== Insurance.DROUGHT));
+  readonly droughtContracts = computed(() => this.allInsurance().filter((c) => c.level === Insurance.DROUGHT));
+  readonly activeDrought = computed(() => this.droughtContracts().find((c) => c.status === 'ACTIVE') ?? null);
+  readonly droughtOffers = computed(() => this.droughtContracts().filter((c) => c.status === 'OFFERED'));
   readonly activeInsurance = computed(() => this.insurance().find((c) => c.status === 'ACTIVE') ?? null);
   readonly insuranceOffers = computed(() => this.insurance().filter((c) => c.status === 'OFFERED'));
   readonly highlightedContract = computed(() => Number(this.contract()) || null);
@@ -60,10 +68,23 @@ export class Insurance {
       next: (c) => {
         this.contracts.set(c);
         this.error.set(null);
-        if (!c.some((x) => x.kind === 'INSURANCE' && x.status === 'ACTIVE')) this.loadQuotes();
+        if (!c.some((x) => x.kind === 'INSURANCE' && x.level !== Insurance.DROUGHT && x.status === 'ACTIVE')) this.loadQuotes();
       },
       error: (e) => this.error.set(toPageError(e, this.i18n.t('common.error'))),
     });
+    this.api.drought().subscribe({ next: (d) => this.drought.set(d), error: () => this.drought.set(null) });
+  }
+
+  rating(r: string): string {
+    return this.i18n.t('insurance.rating.' + r);
+  }
+
+  cropLabels(crops: string[]): string {
+    return crops.map((c) => (this.i18n.has(`enums.fillType.${c}`) ? this.i18n.t(`enums.fillType.${c}`) : c)).join(', ');
+  }
+
+  insuranceResult(r: string, amount: string): string {
+    return this.i18n.t('insurance.insuranceResult.' + r, { amount });
   }
 
   private loadQuotes(): void {

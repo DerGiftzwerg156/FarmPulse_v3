@@ -31,7 +31,7 @@ class RepositorySmokeTest {
                 RainPeriod.class, TaxYear.class, HusbandryRecord.class, GamePrompt.class, PlayerResponse.class,
                 // Roadmap V3 R3-H / R3-K / R3-M
                 NpcFieldRecord.class, NpcFieldCrop.class, NeighborStock.class, LoanCollateral.class, FarmReport.class,
-                PriceAlarm.class, ForwardContract.class);
+                PriceAlarm.class, ForwardContract.class, GrowingFieldMonth.class, Drought.class);
     }
 
     private int counter;

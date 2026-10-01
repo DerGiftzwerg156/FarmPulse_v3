@@ -221,6 +221,11 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
 Jede Kontrolle wird vorher angekündigt (unter **Kontrollen** mit Frist), du hast also immer Zeit zu reagieren. Das
 Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als zwei Kontrollen im Monat gibt es nicht.
 
+- **Dürrehilfe:** Wird eine Dürre ausgerufen (siehe **Versicherung**), bietet das Amt eine Hilfe von 150 € je Hektar
+  deiner eigenen Felder an, auf denen in den trockenen Monaten eine Kultur wuchs. Den Antrag stellst du unter
+  **Dürrehilfe** mit *Antrag stellen* innerhalb von 15 Tagen; das Geld kommt sofort als Förderung. Mit einer
+  Dürreversicherung ist die Hilfe um die Hälfte gekürzt. Ohne wachsende Felder gibt es keine Hilfe.
+
 ## Personal
 
 ![Personal](../screenshots/13-personal.png)
@@ -377,6 +382,15 @@ stehen in der App, zu der sie gehören.
   Schaden kostet Geld). Der Jagdpächter bietet Ersatz an. Du kannst annehmen, mehr fordern (bis zu zwei Runden),
   eine **gemeinsame Maßnahme** vereinbaren (eigener Beitrag, danach für einige Monate seltener Schäden, besseres
   Ansehen im Dorf) oder ablehnen – ein Streit spricht sich herum. Antwortest du nicht, zahlt er sein letztes Angebot.
+- **Dürre und Dürreversicherung.** FarmPulse zählt, wie lange es in jedem Monat regnet. Ein Wachstumsmonat (Mai bis
+  Oktober) ist trocken, wenn es in weniger als 3 % der Zeit geregnet hat – dafür muss FarmPulse mindestens die Hälfte
+  des Monats mitgelaufen sein. Beim ersten trockenen Monat warnt die Genossenschaft, nach zwei trockenen Monaten in
+  Folge ist es eine **Dürre**: Die Preise der Kulturen, die im Dorf stehen, steigen in der Region, im Dorf wird geredet,
+  und das Amt bietet die **Dürrehilfe** an (App **Ämter**). Dein Ertrag im Spiel ändert sich nicht. Die
+  **Dürreversicherung** (Wetterindex) läuft neben der Sturm- und Hagelversicherung: 4 € je Hektar deiner eigenen
+  Felder (ohne Pachtflächen) und Monat, bei einer Dürre zahlt sie 200 € je Hektar ohne Schadensmeldung – aber nur, wenn
+  du sie vor dem ersten trockenen Monat abgeschlossen hast und die Prämie bezahlt ist. Die Karte zeigt den Regen der
+  letzten Monate, die laufende Trockenreihe und die bisherigen Dürren.
 
 ## Stall
 

@@ -26,6 +26,8 @@ const CASE_APP: Record<string, string> = {
   ANNUAL_REVIEW_OFFER: 'bank',
   // Roadmap V3 R3-M3
   FARM_SHOP_ORDER: 'trade',
+  // Roadmap V3 R3-W2
+  DROUGHT_AID: 'authorities',
 };
 
 const CONTRACT_APP: Record<string, string> = {

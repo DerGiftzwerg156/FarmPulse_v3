@@ -576,34 +576,50 @@ Ware aus dem Silo ab.
 Hagelwahrscheinlichkeit (`insurance.hail-rain-factor`). Eine Wettervorhersage gibt es nicht (keine FS25-Funktion,
 siehe V2).
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Statt fester Regenstunden zählt der
+Regenanteil, weil die Regenstunden von „Tage je Periode“ abhängen und das Backend nur die beobachtete Zeit kennt:
+Ein Wachstumsmonat (Perioden 3–8, Mai bis Oktober) ist trocken bei Regen unter 3 % der beobachteten Zeit
+(`drought.max-rain-share`), wenn mindestens die Hälfte des Monats beobachtet wurde; sonst gilt er als unbekannt und
+beendet die Reihe. Dürre ab 2 trockenen Monaten in Folge, je Reihe höchstens eine. Die Genossenschaft warnt beim
+ersten trockenen Monat; läuft keine Dürreversicherung, schickt die Versicherung dazu ein Angebot. Bei der Dürre
+`HARVEST_FAILURE` für die 3 flächengrößten Kulturen im Dorf (eigene Felder im Wachstum oder erntereif, Nachbarfelder
+aus H1) an jeder Verkaufsstelle, die sie annimmt; Paare mit offenem Ereignis oder Festpreis werden übersprungen. Eine
+Klatschnachricht (`FIELD_GOSSIP`, Thema `DROUGHT`) über das größte eigene Feld mit Kultur. Dürrehilfe 150 € je Hektar
+eigener Felder, die in einem Dürremonat wuchsen (das Backend zeichnet die wachsenden eigenen Felder ab jetzt je Monat
+auf), Antrag per Knopf in der App „Ämter“, Frist 15 Tage, sofort als `SUBSIDY`, 50 % Abzug bei laufender
+Dürreversicherung, ohne wachsende Felder kein Antrag. Dürreversicherung (Tarif `DROUGHT_INDEX`): 4 € je Hektar und
+Monat (eigene Felder ohne Pachtflächen, die Prämie folgt zu jedem Monatsbeginn der aktuellen Fläche), 200 € je Hektar
+der Fläche bei Ausrufung, nur wenn bezahlt und vor dem ersten trockenen Monat der Reihe abgeschlossen; Angebot auf
+Anfrage (7 Tage gültig), jederzeit kündbar, endet nach 2 offenen Prämien.
+
 **Beleg:** – (kein Mod-Eingriff; `weather` und `RainPeriod` gibt es seit R2-C2).
 
 ### R3-W1 Dürre erkennen
 
-- [ ] Eine Dürre liegt vor, wenn in `drought.min-periods` aufeinanderfolgenden Wachstumsmonaten (Konfigliste
+- [x] Eine Dürre liegt vor, wenn in `drought.min-periods` aufeinanderfolgenden Wachstumsmonaten (Konfigliste
   `drought.periods`, FS25-Perioden, 1 = März) die Regenstunden unter `drought.max-rain-hours` liegen.
-- [ ] Folgen:
+- [x] Folgen:
   - Die Genossenschaft warnt beim ersten trockenen Monat.
   - Bei ausgerufener Dürre erzeugt `MarketEventEngine` ein regionales `HARVEST_FAILURE` für Kulturen, die im Dorf
     stehen (eigene Felder und Nachbarfelder aus H1).
   - Klatsch im Dorf.
-- [ ] Der Spielertrag ändert sich **nicht** (kein belegter Schreibzugriff auf die Fruchtdichte, siehe V2
+- [x] Der Spielertrag ändert sich **nicht** (kein belegter Schreibzugriff auf die Fruchtdichte, siehe V2
   „Bewusst nicht aufgenommen“). Die Dürre wirkt über Preise, Geld und Geschichten.
 
 ### R3-W2 Dürrehilfe
 
-- [ ] Das Amt (`AUTHORITY`) zahlt nach einer ausgerufenen Dürre eine Hilfe je Hektar eigener Felder, die in der Zeit
+- [x] Das Amt (`AUTHORITY`) zahlt nach einer ausgerufenen Dürre eine Hilfe je Hektar eigener Felder, die in der Zeit
   eine Kultur in Phase `GROWING` hatten (Daten aus R2-C1). Die Zahlung läuft als `SUBSIDY`, auf Antrag per Knopf und
   mit Frist.
-- [ ] Wer eine Dürreversicherung (W3) hat, bekommt einen Abzug auf die Hilfe (Konfig), wie bei echten Hilfsprogrammen.
+- [x] Wer eine Dürreversicherung (W3) hat, bekommt einen Abzug auf die Hilfe (Konfig), wie bei echten Hilfsprogrammen.
 
 ### R3-W3 Wetterindex-Versicherung
 
-- [ ] Neues Angebot der Versicherung (`INSURANCE_AGENT`): Beitrag je Hektar und Monat. Die Auszahlung je Hektar kommt,
+- [x] Neues Angebot der Versicherung (`INSURANCE_AGENT`): Beitrag je Hektar und Monat. Die Auszahlung je Hektar kommt,
   sobald W1 eine Dürre feststellt, ohne Schadensmeldung (Index statt Gutachten).
-- [ ] Umsetzung als weiterer Deckungstyp von `ContractKind.INSURANCE` neben Sturm und Hagel. Auszahlung als
+- [x] Umsetzung als weiterer Deckungstyp von `ContractKind.INSURANCE` neben Sturm und Hagel. Auszahlung als
   `INSURANCE_PAYOUT`.
-- [ ] Werte unter `rpsim.formulas.drought.*` und `rpsim.formulas.insurance.drought-*`.
+- [x] Werte unter `rpsim.formulas.drought.*` und `rpsim.formulas.insurance.drought-*`.
 
 **Akzeptanz W:** Nach mehreren trockenen Sommermonaten melden sich Genossenschaft und Amt. Die Preise der betroffenen
 Kulturen steigen regional, und die Versicherung zahlt ohne Schadensmeldung.

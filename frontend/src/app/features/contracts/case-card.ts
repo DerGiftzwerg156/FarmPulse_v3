@@ -139,6 +139,18 @@ import { Button } from '../../shared/ui/button';
         }
         <p class="mt-1 text-[11px] text-muted">{{ 'trade.shopHint' | t }}</p>
       }
+      @if (c().kind === 'DROUGHT_AID') {
+        <div class="mt-1 text-[12px] text-text" data-testid="drought-aid">{{ 'authorities.aidText' | t: { hectares: c().hectares, amount: (c().offerAmount | money) } }}</div>
+        @if ((c().costAmount ?? 0) > 0) {
+          <div class="mt-1 text-[11px] text-muted" data-testid="aid-deduction">{{ 'authorities.aidDeduction' | t: { amount: (c().costAmount | money) } }}</div>
+        }
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'authorities.apply' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'authorities.aidHint' | t }}</p>
+      }
       @if (c().kind === 'COLLATERAL_CLAIM') {
         <div class="mt-1 text-[12px] text-text" data-testid="collateral-claim">{{ 'credit.claimText' | t: { amount: (c().offerAmount | money), field: c().farmlandId, purpose: c().title ?? '–' } }}</div>
         @if (c().resolution === 'OVERDUE') {

@@ -43,9 +43,9 @@
     "tasks": "Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert",
     "calendar": "Fristen, Abbuchungen, Dorffeste und Familientermine im FS25-Kalender",
     "bank": "Kredite, Anträge und Hofbuchhaltung",
-    "authorities": "Finanzamt und Landwirtschaftsamt – Steuern, Bescheide und Kontrollen",
+    "authorities": "Finanzamt und Landwirtschaftsamt – Steuern, Bescheide, Kontrollen und Dürrehilfe",
     "market": "Silo, Preise, Marktgeschehen und Kontrakte",
-    "insurance": "Sturm- und Hagelversicherung, Schäden melden, Wildschaden",
+    "insurance": "Sturm- und Hagelversicherung, Dürreversicherung, Schäden melden, Wildschaden",
     "staff": "Team, Helferstunden und Stellenausschreibungen",
     "fields": "Felder, Kulturen, Verhandlungen, Pacht und Forderungen",
     "stable": "Tiere, Tierarzt, Viehhandel und Tierwohl",
@@ -436,7 +436,8 @@
     },
     "insuranceLevel": {
       "BASIC": "Basis",
-      "COMFORT": "Komfort"
+      "COMFORT": "Komfort",
+      "DROUGHT_INDEX": "Dürre-Index"
     },
     "caseKind": {
       "STORM_DAMAGE": "Sturmschaden",
@@ -458,7 +459,8 @@
       "COLLATERAL_CLAIM": "Forderung nach Feldverkauf",
       "ANNUAL_REVIEW": "Jahresgespräch",
       "ANNUAL_REVIEW_OFFER": "Zinssenkung",
-      "FARM_SHOP_ORDER": "Hofladen-Bestellung"
+      "FARM_SHOP_ORDER": "Hofladen-Bestellung",
+      "DROUGHT_AID": "Dürrehilfe"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -1367,6 +1369,34 @@
     "invitations": "Einladungen"
   },
   "insurance": {
+    "drought": "Dürreversicherung (Wetterindex)",
+    "droughtIntro": "Zahlt bei einer ausgerufenen Dürre ohne Schadensmeldung je Hektar deiner eigenen Felder (ohne Pachtflächen). Es zählt nur eine Dürre, deren erster trockener Monat nach dem Abschluss beginnt. Läuft neben der Sturm- und Hagelversicherung.",
+    "droughtTerms": "{premium} je ha und Monat · Auszahlung {payout} je ha",
+    "droughtQuote": "Für {hectares} ha: {premium} pro Monat, Auszahlung bei Dürre {payout}",
+    "noOwnFields": "Ohne eigene Felder gibt es keine Dürreversicherung.",
+    "rainTitle": "Regen der letzten Monate",
+    "rainRule": "Trocken ist ein Wachstumsmonat ({months}) mit Regen unter {rain} % der beobachteten Zeit; mindestens {observed} % des Monats müssen beobachtet sein. Nach {count} trockenen Monaten in Folge wird eine Dürre ausgerufen.",
+    "rainPercent": "{percent} % Regen",
+    "observed": "{percent} % beobachtet",
+    "rating": {
+      "DRY": "Trocken",
+      "WET": "Genug Regen",
+      "UNKNOWN": "Zu wenig Daten",
+      "OUTSIDE": "Kein Wachstumsmonat",
+      "RUNNING": "Läuft"
+    },
+    "series": "{count} trockene(r) Monat(e) in Folge seit {month}",
+    "seriesDeclared": "Dürre ausgerufen",
+    "droughts": "Ausgerufene Dürren",
+    "droughtEntry": "{first}–{last}: {months} trockene Monate · {events} Preisereignisse",
+    "droughtCrops": "Höhere Preise für {crops}",
+    "insuranceResult": {
+      "PAID": "Versicherung zahlte {amount}",
+      "NONE": "Keine Dürreversicherung",
+      "TOO_LATE": "Versicherung zu spät abgeschlossen – keine Auszahlung",
+      "COVER_SUSPENDED": "Prämie offen – keine Auszahlung"
+    },
+    "disabled": "Die Dürre-Erkennung ist ausgeschaltet.",
     "damages": "Schäden",
     "damagesIntro": "Hagel, Sturm und Wildschweine: Melde einen versicherten Schaden rechtzeitig, beim Wildschaden verhandelst du mit dem Jagdpächter."
   },
@@ -1384,7 +1414,14 @@
     "taxBills": "Bescheide",
     "advisor": "Steuerberatung",
     "inspections": "Kontrollen",
-    "inspectionsIntro": "Jede Kontrolle wird mit Frist angekündigt. Behebe den Mangel im Spiel – dann bleibt es ohne Beanstandung."
+    "inspectionsIntro": "Jede Kontrolle wird mit Frist angekündigt. Behebe den Mangel im Spiel – dann bleibt es ohne Beanstandung.",
+    "droughtAid": "Dürrehilfe",
+    "droughtAidIntro": "Nach einer ausgerufenen Dürre zahlt das Amt eine Hilfe je Hektar eigener Felder, auf denen in den trockenen Monaten eine Kultur wuchs. Den Antrag stellst du hier per Knopf innerhalb der Frist.",
+    "aidText": "{hectares} ha mit wachsender Kultur – Hilfe {amount}",
+    "aidDeduction": "Abzug wegen Dürreversicherung: {amount}",
+    "apply": "Antrag stellen",
+    "aidHint": "Das Geld kommt sofort als Förderung aufs Konto.",
+    "aidHistory": "{hectares} ha · {amount}"
   },
   "stable": {
     "trade": "Viehhandel und Tierarzt",

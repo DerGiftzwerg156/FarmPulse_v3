@@ -402,6 +402,8 @@ rpsim:
       offer-valid-days: 7
       reoffer-cooldown-days: 30
       cancel-after-missed-payments: 2
+      drought-premium-per-hectare: 4    # Roadmap V3 R3-W3: weather-index drought insurance, per hectare and month
+      drought-payout-per-hectare: 200   # paid per hectare on a declared drought (no claim)
       levels:
         BASIC:
           coverage-rate: 0.6
@@ -562,6 +564,16 @@ rpsim:
       repair-points-per-month: 60
       repair-below-condition: 90
       overload-workload-per-vehicle: 2
+    drought:                      # Roadmap V3 R3-W1 / R3-W2: drought and drought aid (owner decisions, placeholders)
+      enabled: true
+      periods: [3, 4, 5, 6, 7, 8] # growth months (FS25 periods, 1 = March)
+      min-periods: 2              # dry growth months in a row
+      max-rain-share: 0.03        # dry = rain below 3 % of the observed time ...
+      min-observed-share: 0.5     # ... of a month observed at least half (else unknown)
+      max-crops: 3                # HARVEST_FAILURE for the 3 largest crops at every accepting sell point
+      aid-per-hectare: 150        # drought aid of the authority per hectare of growing own fields
+      aid-application-days: 15
+      aid-insurance-deduction: 0.5
     liquidity-plan:               # Roadmap V3 R3-K2: 12-month liquidity plan in the Bank app (owner decisions, placeholders)
       horizon-months: 12
       reserve-factor: 1.0         # reserve = known fixed postings of the month x factor

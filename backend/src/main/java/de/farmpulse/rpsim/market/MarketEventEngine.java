@@ -221,10 +221,27 @@ public class MarketEventEngine {
         if (t.isEmpty()) {
             return Optional.empty();
         }
+        return Optional.of(createPriceEvent(sg, type, t.get(), start, announceNow, character));
+    }
+
+    /**
+     * Roadmap V3 R3-W1: price event on a given sell point / fill type (strength and duration from the band of the type),
+     * outside the spawn probability and the concurrency cap. {@code announceNow} false: the caller tells the story
+     * (e.g. the drought declaration) and the event counts as announced.
+     */
+    public MarketEvent spawnPriceEventAt(Savegame sg, MarketEventType type, Target target, boolean announceNow,
+                                         Character character) {
+        MarketEvent ev = createPriceEvent(sg, type, target, sg.getCurrentGameTime(), announceNow, character);
+        ev.setAnnounced(true);
+        return ev;
+    }
+
+    private MarketEvent createPriceEvent(Savegame sg, MarketEventType type, Target t, long start, boolean announceNow,
+                                         Character character) {
         RpsimProperties.Band band = cfg().getBands().get(type.name());
         MarketEvent ev = base(sg, type, start);
-        ev.setSellPoint(t.get().sellPoint());
-        ev.setFillType(t.get().fillType());
+        ev.setSellPoint(t.sellPoint());
+        ev.setFillType(t.fillType());
         ev.setPeakMultiplier(round(random.uniform(band.getMultiplierMin(), band.getMultiplierMax()), 3));
         ev.setRampUpHours((double) Math.round(random.uniform(band.getRampHoursMin(), band.getRampHoursMax())));
         ev.setHoldHours((double) Math.round(random.uniform(band.getHoldHoursMin(), band.getHoldHoursMax())));
@@ -239,7 +256,7 @@ public class MarketEventEngine {
         if (announceNow) {
             announce(sg, ev);
         }
-        return Optional.of(ev);
+        return ev;
     }
 
     public Optional<MarketEvent> spawnSpecialOffer(Savegame sg, MarketContext ctx, FarmFacts f) {

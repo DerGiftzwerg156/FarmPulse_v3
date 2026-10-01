@@ -285,4 +285,16 @@ public class Savegame {
     /** Roadmap V3 R3-M3: factor on the farm-shop order probability (refusals lower it, deliveries raise it). */
     @Column(name = "farm_shop_factor", nullable = false)
     private double farmShopFactor = 1.0;
+
+    /** Roadmap V3 R3-W1: dry growth months in a row of the current series (0 = no series). */
+    @Column(name = "drought_dry_months", nullable = false)
+    private int droughtDryMonths;
+
+    /** Roadmap V3 R3-W1: month index of the first dry month of the current series. */
+    @Column(name = "drought_series_start_month")
+    private Long droughtSeriesStartMonth;
+
+    /** Roadmap V3 R3-W1: the current series already declared its drought (one per series). */
+    @Column(name = "drought_series_declared", nullable = false)
+    private boolean droughtSeriesDeclared;
 }

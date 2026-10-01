@@ -362,3 +362,17 @@ and an active land agent and villager.
 | 15.4 | Deliver less than agreed until the month ends | contract "Fehlmenge", the penalty is booked (*Vertragsstrafe*), mail of the land agent |
 | 15.5 | Wait for a farm-shop order (*Handel* → *Hofladen*), then *Liefern* | the amount is taken from the own silo and the money booked as *Warenverkauf*; diary entry |
 
+## 16. Drought and weather risk (Roadmap V3 R3-W)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section W. Needs own fields with a growing crop, an
+active cooperative, authority and insurance agent. In the game set the weather so that it does not rain (or use the
+simulator scenario `duerre-sommer`) and keep FarmPulse running for at least half of every month.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 16.1 | *Versicherung* → *Dürreversicherung*: *Angebot anfordern*, then accept | the quote names the own area without leased fields, 4 € per ha; the contract runs beside storm/hail |
+| 16.2 | Let a growth month (May–October) pass without rain | the month shows "Trocken" in the card, the cooperative warns |
+| 16.3 | Let the next month pass without rain | drought declared: mail of the cooperative, regional price rises for the largest crops (*Agrarbörse*), village gossip; the insurance pays 200 € per ha (*Versicherungsleistung*) |
+| 16.4 | *Ämter* → *Dürrehilfe* → *Antrag stellen* | 150 € per ha of the growing own fields, halved with the drought insurance, booked as *Förderung* |
+| 16.5 | Play a month with rain, or keep FarmPulse off for most of a month | the series ends (no drought from data gaps) |
+
