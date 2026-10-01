@@ -62,6 +62,8 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>Unpaid after the deadline: a late fee per started overdue month (booked as FINE with the bill), a reminder,
  *   after enforcement-after-months an enforcement threat (text and trust only, nothing is locked).</li>
  *   <li>Tax advisor (contract): monthly fee, lower tax, a reminder before a deadline, fewer audits.</li>
+ *   <li>Roadmap V3 R3-P1: an office clerk lowers the audit chance too (the smaller factor counts) and pays an open bill
+ *   herself on the deadline day unless she is overloaded or the balance does not cover it.</li>
  * </ul>
  */
 @Service
@@ -91,13 +93,15 @@ public class TaxService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final de.farmpulse.rpsim.employee.OfficeClerkService clerks;
 
     public TaxService(SavegameRepository savegames, TaxYearRepository years, ServiceCaseRepository cases,
                       ContractRepository contracts, LoanPaymentRepository payments, FactsService facts,
                       FinanceJournalService journal, LiquidityService liquidity, OutboxService outbox,
                       ContractBillingService billing, ServiceRoleService roles, NarrationRequestService narration,
                       TrustScoreService trust, DiaryService diary, RandomSource random, RpsimProperties props,
-                      GameTime gameTime) {
+                      GameTime gameTime, de.farmpulse.rpsim.employee.OfficeClerkService clerks) {
+        this.clerks = clerks;
         this.savegames = savegames;
         this.years = years;
         this.cases = cases;
@@ -309,9 +313,12 @@ public class TaxService {
 
     // ------------------------------------------------------------------------------------------ audit
 
-    /** Chance of an audit (lower with a tax advisor); the claim is computed now, the result follows after audit-days. */
+    /**
+     * Chance of an audit (lower with a tax advisor or an office clerk - R3-P1: the smaller factor counts); the claim is
+     * computed now, the result follows after audit-days.
+     */
     void maybeAudit(Savegame sg, TaxYear y, YearSums s) {
-        double p = cfg().getAuditProbability() * (advisor(sg).isPresent() ? cfg().getAdvisorAuditFactor() : 1);
+        double p = cfg().getAuditProbability() * auditFactor(sg);
         if (!random.chance(p)) {
             return;
         }
@@ -322,6 +329,11 @@ public class TaxService {
                 .facts(NarrationFacts.builder().put("taxYear", y.getTaxYear())
                         .put("auditDays", Math.round(cfg().getAuditDays())).build())
                 .category(CommunicationCategory.CONTRACT).submit();
+    }
+
+    /** Audit factor: the smaller of the advisor factor (with an advisor) and the office clerk factor (R3-P1). */
+    public double auditFactor(Savegame sg) {
+        return Math.min(advisor(sg).isPresent() ? cfg().getAdvisorAuditFactor() : 1, clerks.auditFactor(sg));
     }
 
     /**
@@ -449,11 +461,32 @@ public class TaxService {
                         .category(CommunicationCategory.CONTRACT).related(RELATED, b.getId())
                         .formLink("/aemter?case=" + b.getId()).submit();
             }
-            if (now > b.getDeadlineGameTime()) {
+            if (now <= b.getDeadlineGameTime() && b.getDeadlineGameTime() - now < GameTime.days(1)) {
+                payByClerk(sg, b); // R3-P1: the deadline falls before the next day check
+            }
+            if (b.getStatus() == CaseStatus.AWAITING_PLAYER && now > b.getDeadlineGameTime()) {
                 overdue(sg, b, now);
             }
         }
         auditResults(sg);
+    }
+
+    /**
+     * Roadmap V3 R3-P1: on the deadline day the office clerk pays the bill like the button - not when she is overloaded
+     * or the balance does not cover it (then late fees follow as before).
+     */
+    boolean payByClerk(Savegame sg, ServiceCase b) {
+        var clerk = clerks.payingClerk(sg);
+        long fees = b.getCostAmount() == null ? 0 : b.getCostAmount();
+        if (clerk.isEmpty() || liquidity.available(sg) < b.getOfferAmount() + fees) {
+            return false;
+        }
+        pay(sg, b.getId());
+        narration.request(sg, NarrationEventType.OFFICE_CLERK_PAID).from(clerk.get().getCharacter())
+                .facts(NarrationFacts.builder().put("billTitle", b.getTitle()).put("amount", b.getOfferAmount() + fees)
+                        .build())
+                .category(CommunicationCategory.EMPLOYEE).related(RELATED, b.getId()).submit();
+        return true;
     }
 
     /** One late fee per started overdue game month; reminder on the first, enforcement threat after some months. */

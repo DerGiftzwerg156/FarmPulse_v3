@@ -41,6 +41,7 @@ public class ContractActions {
     private final AnnualReviewService annualReview;
     private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
     private final de.farmpulse.rpsim.drought.DroughtService drought;
+    private final de.farmpulse.rpsim.employee.ApprenticeService apprentices;
 
     public ContractActions(ContractRepository contracts, ServiceCaseRepository cases, InsuranceService insurance,
                            HuntingService hunting, LivestockService livestock, LeaseService lease,
@@ -48,7 +49,9 @@ public class ContractActions {
                            NeighborTradeService trade, NeighborMissionService neighborMissions,
                            CollateralService collateral, AnnualReviewService annualReview,
                            de.farmpulse.rpsim.neighbor.FarmShopService farmShop,
-                           de.farmpulse.rpsim.drought.DroughtService drought) {
+                           de.farmpulse.rpsim.drought.DroughtService drought,
+                           de.farmpulse.rpsim.employee.ApprenticeService apprentices) {
+        this.apprentices = apprentices;
         this.farmShop = farmShop;
         this.drought = drought;
         this.trade = trade;
@@ -133,6 +136,7 @@ public class ContractActions {
             case ANNUAL_REVIEW_OFFER -> annualReview.acceptOffer(sg, id); // R3-K3: accept the rate cut
             case FARM_SHOP_ORDER -> farmShop.accept(sg, id); // R3-M3: deliver
             case DROUGHT_AID -> drought.apply(sg, id); // R3-W2: "Antrag stellen"
+            case APPRENTICE_TAKEOVER -> apprentices.accept(sg, id); // R3-P2: take over at the demanded salary
             default -> throw unsupported();
         };
     }
@@ -141,6 +145,7 @@ public class ContractActions {
     public ServiceCase counterCase(Savegame sg, Long id, long amount) {
         return switch (serviceCase(sg, id).getKind()) {
             case WILDLIFE_DAMAGE -> hunting.counter(sg, id, amount);
+            case APPRENTICE_TAKEOVER -> apprentices.counter(sg, id, amount); // R3-P2: one counter offer
             default -> throw unsupported();
         };
     }
@@ -166,6 +171,7 @@ public class ContractActions {
             case ANNUAL_REVIEW -> annualReview.decline(sg, id); // R3-K3: without consequence
             case ANNUAL_REVIEW_OFFER -> annualReview.declineOffer(sg, id);
             case FARM_SHOP_ORDER -> farmShop.decline(sg, id); // R3-M3
+            case APPRENTICE_TAKEOVER -> apprentices.decline(sg, id); // R3-P2
             default -> throw unsupported();
         };
     }

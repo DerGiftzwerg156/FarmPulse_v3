@@ -752,28 +752,38 @@ ist gebucht. Ohne Platz wird nichts gebucht.
 
 ## P – Personal
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Die beste aktive Bürokraft (Skill ×
+Zufriedenheits-Multiplikator) erinnert 3 Spieltage vor der Frist per Mail an offene Steuerbescheide (nicht, wenn ein
+Steuerberater läuft), angekündigte Kontrollen, die Antragsfrist der Dürrehilfe, das Ende des Liefermonats offener
+Vorkontrakte und das Pachtende – je Frist einmal. Prüfungsfaktor 1 − 0,5 × wirksamer Skill / 100; mit Steuerberater
+zählt der kleinere Faktor. Am Fristtag bezahlt sie einen offenen Steuerbescheid selbst, wenn das Konto reicht und sie
+nicht überlastet ist (Arbeitsbelastung unter 30). Azubi: Stellenausschreibung im Personal, Skill 10–30, 900 € fest,
+höchstens 2, Skill +2 je Monat (bis 70), Ausbildung 2 FS25-Jahre, keine Schulungen, sonst wie ein Maschinenführer.
+Einen Monat vor dem Ende bittet er um Übernahme zum Gehalt der Maschinenführer-Formel: annehmen, Gegenangebot (ab 90 %
+angenommen, sonst geht er) oder ablehnen; ohne Einigung geht er am Ende. Im Mod fährt er nach den Maschinenführern.
+
 ### R3-P1 Bürokraft mit mehr Wirkung
 
 **Problem heute:** Die Bürokraft (`JobRole.OFFICE_CLERK`) verkürzt nur die Bearbeitungszeit eines Kreditantrags
 (`credit/CreditApplicationService.java`).
 
-- [ ] Sie erinnert vor Fristen: Steuer, Rechnungen der Ämter, Vorkontrakte (M2), Pachtende. Das kann heute nur der
+- [x] Sie erinnert vor Fristen: Steuer, Rechnungen der Ämter, Vorkontrakte (M2), Pachtende. Das kann heute nur der
   Steuerberater.
-- [ ] Sie senkt die Wahrscheinlichkeit einer Betriebsprüfung (`TaxService`, Abschnitt „audit“) um einen Anteil, der
+- [x] Sie senkt die Wahrscheinlichkeit einer Betriebsprüfung (`TaxService`, Abschnitt „audit“) um einen Anteil, der
   mit Skill und Zufriedenheit wächst. Mit Steuerberater zählt nur der größere Effekt.
-- [ ] Sie senkt Säumniszuschläge: verpasste Fristen nur, wenn sie überlastet ist (Arbeitsbelastung aus der
+- [x] Sie senkt Säumniszuschläge: verpasste Fristen nur, wenn sie überlastet ist (Arbeitsbelastung aus der
   Zufriedenheit).
-- [ ] Werte unter `rpsim.formulas.office-clerk.*`.
+- [x] Werte unter `rpsim.formulas.office-clerk.*`.
 
 **Beleg:** – (nur Backend).
 
 ### R3-P2 Azubi
 
-- [ ] Neue Rolle `JobRole.APPRENTICE`: niedriges Gehalt (Konfig), Skill steigt monatlich, fährt Helfer wie ein
+- [x] Neue Rolle `JobRole.APPRENTICE`: niedriges Gehalt (Konfig), Skill steigt monatlich, fährt Helfer wie ein
   Maschinenführer **ohne** Schulung, also nur kleine und mittlere Traktoren (Schulungen, siehe CHANGELOG).
-- [ ] Nach der Ausbildungszeit (Konfig, FS25-Jahre): Übernahme als Maschinenführer mit Gehaltsverhandlung, oder er
+- [x] Nach der Ausbildungszeit (Konfig, FS25-Jahre): Übernahme als Maschinenführer mit Gehaltsverhandlung, oder er
   geht. Tagebucheintrag.
-- [ ] Mod: `EMPLOYEE_ROSTER` akzeptiert `APPRENTICE` wie `MACHINE_OPERATOR` ohne `trainings`. Ein älterer Mod ignoriert
+- [x] Mod: `EMPLOYEE_ROSTER` akzeptiert `APPRENTICE` wie `MACHINE_OPERATOR` ohne `trainings`. Ein älterer Mod ignoriert
   unbekannte Rollen, dann fährt der normale Helfer.
 
 **Beleg:** ✅ wie R2-A2 und „Schulungen“ (Zuordnung im Hook auf `AIJob.start`, Prüfung der Shop-Kategorie des Fahrzeugs).

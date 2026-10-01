@@ -44,7 +44,8 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   - `NOTIFICATION` – Hinweis im Spiel einblenden (neue Mail, Anruf); zu spät verarbeitete Hinweise werden nicht
     gezeigt
   - `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) – ersetzt die Mitarbeiterliste; Helfer streikender Mitarbeiter werden mit
-    der Meldung „%s legt die Arbeit nieder“ angehalten (R2-A5)
+    der Meldung „%s legt die Arbeit nieder“ angehalten (R2-A5). Azubis (`APPRENTICE`, Roadmap V3 R3-P2) fahren wie
+    Maschinenführer ohne Schulung und werden erst eingeteilt, wenn kein Maschinenführer frei ist
   - `PROMPT` (Roadmap V2, R2-F2) – Ja/Nein-Frage: wird eingereiht und einzeln mit dem Dialog des Spiels
     (`YesNoDialog`) gezeigt, sobald kein Menü offen ist; die Knöpfe heißen „Ja“/„Nein“, ihre Bedeutung steht im Text.
     Die Antwort schreibt der Mod sofort nach `export/player_responses.json` (R2-F1); vom Backend quittierte Antworten

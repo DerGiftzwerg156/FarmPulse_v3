@@ -28,6 +28,8 @@ const CASE_APP: Record<string, string> = {
   FARM_SHOP_ORDER: 'trade',
   // Roadmap V3 R3-W2
   DROUGHT_AID: 'authorities',
+  // Roadmap V3 R3-P2
+  APPRENTICE_TAKEOVER: 'staff',
 };
 
 const CONTRACT_APP: Record<string, string> = {

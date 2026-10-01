@@ -139,6 +139,22 @@ import { Button } from '../../shared/ui/button';
         }
         <p class="mt-1 text-[11px] text-muted">{{ 'trade.shopHint' | t }}</p>
       }
+      @if (c().kind === 'APPRENTICE_TAKEOVER') {
+        <div class="mt-1 text-[12px] text-text" data-testid="apprentice-takeover">{{ 'employees.takeoverText' | t: { name: c().character?.name ?? '–', amount: (c().offerAmount | money), skill: c().quantity } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap items-end gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'employees.takeOver' | t }}</app-button>
+            <label class="space-y-1">
+              <span class="fp-label">{{ 'employees.counterSalary' | t }}</span>
+              <input class="fp-input w-32 font-mono" type="number" min="1" step="10" [value]="demand() ?? ''"
+                (input)="setDemand($any($event.target).valueAsNumber)" data-testid="demand-input" />
+            </label>
+            <app-button variant="secondary" [disabled]="busy() || !demand()" (pressed)="act('counter', { amount: demand() })" data-testid="case-counter">{{ 'employees.counterOffer' | t }}</app-button>
+            <app-button variant="danger" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'employees.noTakeover' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'employees.takeoverHint' | t }}</p>
+      }
       @if (c().kind === 'DROUGHT_AID') {
         <div class="mt-1 text-[12px] text-text" data-testid="drought-aid">{{ 'authorities.aidText' | t: { hectares: c().hectares, amount: (c().offerAmount | money) } }}</div>
         @if ((c().costAmount ?? 0) > 0) {

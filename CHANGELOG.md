@@ -31,6 +31,18 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Staff (Roadmap V3, R3-P):**
+  - Office clerk with more effect: the best active clerk reminds by mail 3 game days before a deadline (open tax bills
+    unless a tax advisor runs, announced inspections, the drought-aid application, the end of the delivery month of an
+    open forward contract, the lease end; once per deadline). Audits get rarer: factor 1 − 0.5 × effective skill / 100
+    (with a tax advisor the smaller factor counts). On the deadline day she pays an open tax bill herself when the
+    balance covers it and she is not overloaded (workload below 30) - no late fee then.
+  - Apprentice (`JobRole.APPRENTICE`): job posting "Azubi" (skill 10–30, fixed 900 €, at most 2), skill +2 every month
+    up to 70, training 2 FS25 years, no trainings. He drives helpers like a machine operator without trainings, after
+    the operators (mod and simulator). One month before the end he asks to be taken over at the operator salary for his
+    skill: accept, counter offer (accepted from 90 %) or decline; without an agreement he leaves at the end. Diary.
+  - Config `rpsim.formulas.office-clerk.*`, `rpsim.formulas.apprentice.*`; migration V30. Update the mod for the
+    apprentice (an older mod ignores the role, then the vanilla helper drives).
 - **Used machines (Roadmap V3, R3-V):**
   - The mod exports the vehicle catalog of the shop once at the mission start (`market_context.storeVehicles`, switch
     `storeCatalogExport`, at most `storeCatalogMaxEntries` = 2000) and the name and shop XML of every own vehicle

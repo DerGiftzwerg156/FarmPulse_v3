@@ -99,7 +99,7 @@ public class SatisfactionService {
      */
     double workloadDecayPerDay(Employee e) {
         Savegame sg = e.getSavegame();
-        if ((e.getJobRole() == JobRole.MACHINE_OPERATOR && sg.isWorkforceTracked())
+        if ((e.getJobRole().drives() && sg.isWorkforceTracked())
                 || (e.getJobRole() == JobRole.ANIMAL_KEEPER && sg.isHusbandriesTracked())) {
             return 0;
         }
@@ -327,7 +327,7 @@ public class SatisfactionService {
             return 0;
         }
         var w = cfg().getWorkload();
-        if (e.getJobRole() == JobRole.MACHINE_OPERATOR && sg.isWorkforceTracked() && w.isEffectScalesWithHours()) {
+        if (e.getJobRole().drives() && sg.isWorkforceTracked() && w.isEffectScalesWithHours()) {
             double target = w.getTargetHoursPerDay() * gameTime.msPerMonth(sg) / (double) GameTime.days(1);
             double hours = e.getWorkedMsMonth() / (double) GameTime.hours(1);
             return target <= 0 ? 1 : Math.min(1, hours / target);

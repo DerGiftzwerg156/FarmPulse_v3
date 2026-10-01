@@ -271,6 +271,18 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
 - **Tierpfleger:in.** Kümmert sich um deine Ställe. Zu viele Tiere je Pfleger (ab etwa 80) belasten, kranke Tiere
   drücken auf die Arbeitsbedingungen. Fehlt es in einem Stall an Futter oder Wasser, meldet sich der Pfleger (siehe
   **Stall**).
+- **Bürokraft.** Bearbeitet Kreditanträge schneller und erinnert dich drei Tage vor Fristen per Mail: offene
+  Steuerbescheide (außer du hast einen Steuerberater, der erinnert schon), angekündigte Kontrollen des Amts, die
+  Antragsfrist der Dürrehilfe, das Ende des Liefermonats eines Vorkontrakts und das Pachtende. Betriebsprüfungen werden
+  seltener – je besser und zufriedener sie ist, desto mehr (mit Steuerberater zählt der stärkere Effekt). Am Fristtag
+  bezahlt sie einen offenen Steuerbescheid selbst, wenn das Geld reicht – so fallen keine Säumniszuschläge an. Ist sie
+  überlastet (Arbeitsbelastung sehr niedrig), bleibt das liegen.
+- **Azubi.** Schreibst du eine Stelle *Azubi* aus, bewerben sich junge Leute mit wenig Können für ein festes, niedriges
+  Gehalt (höchstens zwei Azubis gleichzeitig). Ein Azubi lernt jeden Monat dazu und fährt deine Helfer wie ein
+  Maschinenführer ohne Schulung – also nur kleine und mittlere Traktoren, und erst, wenn kein Maschinenführer frei ist.
+  Nach zwei Spieljahren ist die Ausbildung zu Ende: Einen Monat vorher fragt er, ob er als Maschinenführer bleiben
+  darf, und nennt sein Gehalt. Du kannst ihn übernehmen, ein Gegenangebot machen (ab 90 % seiner Forderung sagt er zu)
+  oder ablehnen – dann macht er die Ausbildung fertig und geht.
 - Die Stundenzählung braucht die aktuelle Mod-Version; mit einer älteren gilt die bisherige Arbeitsbelastung.
 
 ## Flurkarte

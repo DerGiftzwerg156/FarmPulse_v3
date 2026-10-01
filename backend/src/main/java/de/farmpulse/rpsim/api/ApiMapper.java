@@ -114,7 +114,7 @@ public class ApiMapper {
                 hours(WorkforceService.hoursLastMonth(e)),
                 e.trainingSet().stream().map(Enum::name).toList(),
                 e.getTrainingInProgress() == null ? null : e.getTrainingInProgress().name(),
-                e.getTrainingUntilGameTime());
+                e.getTrainingUntilGameTime(), e.getApprenticeshipEndsAtGameTime());
     }
 
     private static Double hours(Double h) {

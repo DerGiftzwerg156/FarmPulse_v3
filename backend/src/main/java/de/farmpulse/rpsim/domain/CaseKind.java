@@ -35,5 +35,7 @@ public enum CaseKind {
     /** Roadmap V3 R3-M3: a villager orders goods of the own silos at the farm-shop price (deliver / decline). */
     FARM_SHOP_ORDER,
     /** Roadmap V3 R3-W2: drought aid of the authority after a declared drought (apply by button within the deadline). */
-    DROUGHT_AID
+    DROUGHT_AID,
+    /** Roadmap V3 R3-P2: the apprentice asks to be taken over as machine operator (accept / counter offer / decline). */
+    APPRENTICE_TAKEOVER
 }

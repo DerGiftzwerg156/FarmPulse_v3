@@ -198,7 +198,7 @@ describe('Employees', () => {
   it('explains the helpers, shows the driven hours and a strike', () => {
     const { el } = setup([emp({ jobRole: 'MACHINE_OPERATOR', onStrike: true, hoursThisMonth: 12.5, hoursLastMonth: 30 }),
       emp({ id: 2 })]);
-    expect(el.querySelector('[data-testid="helper-hint"]')?.textContent).toContain('Helfer ohne freien Maschinenführer');
+    expect(el.querySelector('[data-testid="helper-hint"]')?.textContent).toContain('Helfer ohne freien Fahrer');
     expect(el.querySelector('[data-testid="strike"]')?.textContent).toContain('Streikt');
     const hours = el.querySelectorAll('[data-testid="hours"]');
     expect(hours.length).toBe(1);

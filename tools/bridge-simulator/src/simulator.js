@@ -677,7 +677,8 @@ export class BridgeSimulator {
 
   /**
    * Free ACTIVE machine operator with the required trainings; the one with the fewest trainings first (specialists
-   * stay free), ties in list order - as RPSimWorkforce.assign.
+   * stay free), ties in list order - as RPSimWorkforce.assign. R3-P2: apprentices drive too, without trainings and only
+   * after the machine operators.
    */
   assignFreeOperators() {
     if (!this.roster || !this.workforce) return;
@@ -685,12 +686,15 @@ export class BridgeSimulator {
     for (const j of this.workforce.activeJobs) {
       if (j.employeeId !== undefined) continue;
       const required = this.requiredTrainings(j.categories);
+      const rank = { MACHINE_OPERATOR: 1, APPRENTICE: 2 };
+      const trainingsOf = (e) => (e.role === 'APPRENTICE' ? [] : e.trainings ?? []);
       let free;
       for (const e of this.roster.employees) {
-        const trainings = e.trainings ?? [];
-        if (e.role !== 'MACHINE_OPERATOR' || e.status !== 'ACTIVE' || busy.has(e.employeeId)
+        const trainings = trainingsOf(e);
+        if (!rank[e.role] || e.status !== 'ACTIVE' || busy.has(e.employeeId)
           || !required.every((t) => trainings.includes(t))) continue;
-        if (!free || trainings.length < (free.trainings ?? []).length) free = e;
+        if (!free || rank[e.role] < rank[free.role]
+          || (rank[e.role] === rank[free.role] && trainings.length < trainingsOf(free).length)) free = e;
       }
       if (!free) continue;
       j.employeeId = free.employeeId;

@@ -851,6 +851,25 @@ Price alarms and forward contracts of the Agrarbörse, the farm shop in the app 
 | `rpsim.formulas.farm-shop.reputation-delta` | `1` | Village reputation per delivered order (`PublicActionType.FARM_SHOP`) ... | Roadmap V3 R3-M3 |
 | `rpsim.formulas.farm-shop.reputation-max-per-year` | `4` | ... at most this many times per FS25 year. | Roadmap V3 R3-M3 |
 
+## `rpsim.formulas.office-clerk` / `apprentice` (Roadmap V3 R3-P)
+
+Office clerk with more effect and apprentices. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.office-clerk.reminder-days` | `3` | The best active office clerk reminds this many game days before a deadline: open tax bills (not with a tax advisor), announced inspections, the drought-aid application, the end of the delivery month of an open forward contract, the lease end; once per deadline. | Roadmap V3 R3-P1 |
+| `rpsim.formulas.office-clerk.audit-reduction-max` | `0.5` | Audit factor = 1 − value × effective skill / 100 (skill × satisfaction multiplier, at most 100); with a tax advisor the smaller factor counts. | Roadmap V3 R3-P1 |
+| `rpsim.formulas.office-clerk.overload-workload` | `30` | Below this workload the clerk is overloaded: she does not pay a tax bill on the deadline day (otherwise she pays it when the balance covers it). | Roadmap V3 R3-P1 |
+| `rpsim.formulas.apprentice.salary` | `900` | Fixed monthly salary of an apprentice (no skill premium). | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.skill-min` | `10` | Skill of apprentice applicants, from … | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.skill-max` | `30` | … to. | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.skill-per-month` | `2` | Skill points at every month start … | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.skill-cap` | `70` | … up to this skill. | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.training-years` | `2` | Training time in FS25 years. | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.max-apprentices` | `2` | Apprentices at the same time (postings and hiring are refused above). | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.takeover-notice-months` | `1` | The apprentice asks to be taken over this many months before the end (salary = machine operator formula at his skill). | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.counter-accept-share` | `0.9` | A counter offer from this share of his demand is accepted; below he leaves at the end of the training. | Roadmap V3 R3-P2 |
+
 ## `rpsim.formulas.used-vehicle` (Roadmap V3 R3-V)
 
 Used machines from the workshop or a neighbour (catalog of R3-V1, the game's used price formula) and own machines sold

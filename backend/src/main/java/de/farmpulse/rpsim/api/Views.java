@@ -127,7 +127,7 @@ public final class Views {
     public record EmployeeView(Long id, CharacterRef character, String jobRole, int skill, long monthlySalary, String status,
                                NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
                                boolean onStrike, Double hoursThisMonth, Double hoursLastMonth, List<String> trainings,
-                               String trainingInProgress, Long trainingUntilGameTime) {
+                               String trainingInProgress, Long trainingUntilGameTime, Long apprenticeshipEndsAtGameTime) {
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */

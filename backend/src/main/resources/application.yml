@@ -564,6 +564,20 @@ rpsim:
       repair-points-per-month: 60
       repair-below-condition: 90
       overload-workload-per-vehicle: 2
+    office-clerk:                 # Roadmap V3 R3-P1: office clerk (owner decisions, placeholders)
+      reminder-days: 3            # reminder this many game days before a deadline
+      audit-reduction-max: 0.5    # audit factor 1 - 0.5 x effective skill / 100
+      overload-workload: 30       # below: overloaded, no payment on the deadline day
+    apprentice:                   # Roadmap V3 R3-P2: apprentices (owner decisions, placeholders)
+      salary: 900                 # fixed, no skill premium
+      skill-min: 10
+      skill-max: 30
+      skill-per-month: 2
+      skill-cap: 70
+      training-years: 2           # FS25 years
+      max-apprentices: 2
+      takeover-notice-months: 1   # the takeover request comes one month before the end
+      counter-accept-share: 0.9   # a counter offer from 90 % of the demand is accepted
     used-vehicle:                 # Roadmap V3 R3-V2 / R3-V3: used machines (owner decisions, placeholders)
       enabled: true
       offer-probability: 0.5      # one offer at a month start (at most one open)

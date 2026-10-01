@@ -125,7 +125,8 @@
       "MACHINE_OPERATOR": "Maschinenführer:in",
       "MECHANIC": "Mechaniker:in",
       "ANIMAL_KEEPER": "Tierpfleger:in",
-      "OFFICE_CLERK": "Bürokraft"
+      "OFFICE_CLERK": "Bürokraft",
+      "APPRENTICE": "Azubi"
     },
     "characterRole": {
       "BANK_ADVISOR": "Bankberater:in",
@@ -460,7 +461,8 @@
       "ANNUAL_REVIEW": "Jahresgespräch",
       "ANNUAL_REVIEW_OFFER": "Zinssenkung",
       "FARM_SHOP_ORDER": "Hofladen-Bestellung",
-      "DROUGHT_AID": "Dürrehilfe"
+      "DROUGHT_AID": "Dürrehilfe",
+      "APPRENTICE_TAKEOVER": "Übernahme Azubi"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -485,6 +487,8 @@
       "PARTIAL": "Teilweise erfüllt",
       "LAPSED": "Nicht erfüllt",
       "NO_ANSWER": "Ohne Antwort verfallen",
+      "COUNTER_REJECTED": "Gegenangebot zu niedrig",
+      "EMPLOYEE_GONE": "Nicht mehr auf dem Hof",
       "PLAYER": "Von dir abgelehnt",
       "INCLUDED": "Im Wartungsvertrag repariert",
       "HINT": "Reparaturhinweis",
@@ -945,7 +949,15 @@
     "dismissed": "{name} wurde gekündigt.",
     "dismissTitle": "Mitarbeiter kündigen",
     "dismissText": "Willst du {name} wirklich kündigen? Das lässt sich nicht rückgängig machen.",
-    "helperHint": "Deine Maschinenführer fahren die Helfer im Spiel. Helfer ohne freien Maschinenführer kosten den normalen Spiellohn.",
+    "helperHint": "Deine Maschinenführer fahren die Helfer im Spiel, Azubis erst, wenn kein Maschinenführer frei ist (nur ohne Schulung). Helfer ohne freien Fahrer kosten den normalen Spiellohn.",
+    "apprenticeUntil": "Ausbildung bis {at}",
+    "takeovers": "Übernahme nach der Ausbildung",
+    "takeoverText": "{name} möchte nach der Ausbildung als Maschinenführer/in bleiben – für {amount} im Monat (Können {skill}).",
+    "takeOver": "Übernehmen",
+    "counterSalary": "Gegenangebot (€/Monat)",
+    "counterOffer": "Gegenangebot",
+    "noTakeover": "Nicht übernehmen",
+    "takeoverHint": "Ein Gegenangebot ab 90 % der Forderung nimmt der Azubi an, sonst geht er am Ende der Ausbildung. Ohne Antwort geht er auch.",
     "strike": "Streikt",
     "hours": "Als Helfer gefahren: {hours} h in diesem Monat (Vormonat {last} h)",
     "trainings": "Schulungen",

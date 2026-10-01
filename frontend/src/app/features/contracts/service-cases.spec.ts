@@ -29,7 +29,8 @@ const damage = (over: Partial<CaseView> = {}): CaseView => ({
 });
 
 const ALL_CASES = ['STORM_DAMAGE', 'HAIL_DAMAGE', 'WILDLIFE_DAMAGE', 'LIVESTOCK_OFFER', 'VET_VISIT', 'BREEDING_ADVICE', 'REPAIR',
-  'MISSION_REFERRAL', 'COMPENSATION_CLAIM', 'TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION', 'DROUGHT_AID'];
+  'MISSION_REFERRAL', 'COMPENSATION_CLAIM', 'TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION', 'DROUGHT_AID',
+  'APPRENTICE_TAKEOVER'];
 const ALL_CONTRACTS = ['LEASE', 'MAINTENANCE', 'TAX_ADVISOR'];
 
 /** The service cases and contracts section used by Versicherung, Werkstatt, Ämter, Stall, Flurkarte, Kontakte, Kalender. */
@@ -156,6 +157,23 @@ describe('ServiceCases', () => {
   });
 
   // Roadmap V2 R2-E
+  it('answers the takeover request of an apprentice with a counter offer', () => {
+    const req = damage({ id: 23, kind: 'APPRENTICE_TAKEOVER', farmlandId: null, damageAmount: null, hectares: null,
+      offerAmount: 2400, quantity: 52, reference: '5',
+      character: { id: 11, name: 'Tim Lehrling', role: 'EMPLOYEE', status: 'ACTIVE' } });
+    const { fixture, http, el } = setup([], [req]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Übernahme Azubi');
+    expect(el.querySelector('[data-testid="apprentice-takeover"]')?.textContent).toContain('Tim Lehrling');
+    expect(el.querySelector('[data-testid="apprentice-takeover"]')?.textContent).toContain('2.400');
+    const input = el.querySelector('[data-testid="demand-input"]') as HTMLInputElement;
+    input.value = '2200';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="case-counter"] button') as HTMLButtonElement).click();
+    expect(http.expectOne('/api/cases/23/counter').request.body).toEqual({ amount: 2200 });
+  });
+
   it('pays a tax bill with its late fees by button', () => {
     const bill = damage({ id: 20, kind: 'TAX_BILL', farmlandId: null, damageAmount: null, offerAmount: 4000, costAmount: 40,
       reference: 'ASSESSMENT', title: 'Steuerbescheid Jahr 1', quantity: 1, roundsUsed: 1,

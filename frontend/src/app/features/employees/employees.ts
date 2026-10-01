@@ -14,9 +14,10 @@ import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { Modal } from '../../shared/ui/modal';
 import { PageErrorView } from '../../shared/ui/page-error';
+import { ServiceCases } from '../contracts/service-cases';
 import { HelperSettingsCard } from './helper-settings-card';
 
-export const JOB_ROLES = ['MACHINE_OPERATOR', 'MECHANIC', 'ANIMAL_KEEPER', 'OFFICE_CLERK'] as const;
+export const JOB_ROLES = ['MACHINE_OPERATOR', 'MECHANIC', 'ANIMAL_KEEPER', 'OFFICE_CLERK', 'APPRENTICE'] as const;
 export const NEED_KEYS = ['payFairness', 'workload', 'appreciation', 'workingConditions'] as const;
 export type NeedKey = (typeof NEED_KEYS)[number];
 
@@ -36,7 +37,8 @@ type Panel = { employeeId: number; kind: PanelKind } | null;
  */
 @Component({
   selector: 'app-employees',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, Modal, PageErrorView, HelperSettingsCard],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, Modal, PageErrorView, HelperSettingsCard,
+    ServiceCases],
   templateUrl: './employees.html',
 })
 export class Employees {
@@ -46,12 +48,16 @@ export class Employees {
 
   /** `?posting=` opens the applicants of a posting (link from an application mail). */
   readonly posting = input<string>();
+  /** R3-P2: `?case=` highlights the takeover request of an apprentice. */
+  readonly case = input<string>();
+  readonly highlightedCase = computed(() => Number(this.case()) || null);
 
   readonly roles = JOB_ROLES;
   readonly needKeys = NEED_KEYS;
   readonly employees = signal<EmployeeView[] | null>(null);
   /** Roadmap V2 R2-A1: machine operators drive the FS25 helpers. */
-  readonly hasOperators = computed(() => (this.employees() ?? []).some((e) => e.status === 'ACTIVE' && e.jobRole === 'MACHINE_OPERATOR'));
+  readonly hasOperators = computed(() => (this.employees() ?? []).some((e) => e.status === 'ACTIVE'
+    && (e.jobRole === 'MACHINE_OPERATOR' || e.jobRole === 'APPRENTICE')));
   readonly postings = signal<JobPostingView[] | null>(null);
   readonly error = signal<PageError | null>(null);
   readonly openPosting = signal<number | null>(null);

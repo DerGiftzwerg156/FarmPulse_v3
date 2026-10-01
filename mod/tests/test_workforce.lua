@@ -501,4 +501,21 @@ function T.TestWorkforce:testTheStrictModeRefusesAStartOverTheLimit()
     cleanup()
 end
 
+-- Roadmap V3 R3-P2: apprentices drive like a machine operator without trainings, operators first
+local TIM = { employeeId = 30, name = "Tim Lehrling", role = "APPRENTICE", status = "ACTIVE", trainings = { "COMBINE" } }
+
+function T.TestWorkforce:testApprenticesDriveOnlyWhatNeedsNoTrainingAndAfterTheOperators()
+    local wf = RPSimWorkforce.new()
+    RPSimWorkforce.setRoster(wf, roster({ TIM, KLAUS }, { trainingCategories = CATEGORIES }))
+    lu.assertEquals(wf.roster.employees[1].trainings, {}, "trainings of an apprentice are ignored")
+    lu.assertEquals(RPSimWorkforce.assign(wf, 1, {}), 12, "the machine operator first")
+    lu.assertEquals(RPSimWorkforce.assign(wf, 2, {}), 30, "then the apprentice: medium tractor")
+    RPSimWorkforce.release(wf, 2)
+    lu.assertNil(RPSimWorkforce.assign(wf, 3, { "COMBINE" }), "no combine for the apprentice: vanilla helper")
+    lu.assertEquals(RPSimWorkforce.helperName(wf, 1), "Klaus Berger")
+    -- the strict helper limit counts apprentices as drivers
+    RPSimWorkforce.setRoster(wf, roster({ TIM, KLAUS, MIA }, { strictHelperLimit = true }))
+    lu.assertEquals(RPSimWorkforce.helperLimit(wf, 10), 2)
+end
+
 return T

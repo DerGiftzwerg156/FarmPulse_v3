@@ -171,6 +171,12 @@ public enum NarrationEventType {
     VEHICLE_NO_SPACE,
     VEHICLE_DEAL_FAILED,
     VEHICLE_SOLD_GOSSIP,
+    // Roadmap V3 R3-P: office clerk and apprentice
+    OFFICE_CLERK_REMINDER,
+    OFFICE_CLERK_PAID,
+    APPRENTICE_TAKEOVER_REQUEST,
+    APPRENTICE_TAKEN_OVER,
+    APPRENTICE_LEAVES,
     // conversation
     REPLY,
     CALL_CONVERSATION

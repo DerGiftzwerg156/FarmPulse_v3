@@ -126,6 +126,13 @@ re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_
 delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and
 the farm shop (order from the own silos at the farm-shop price, delivery batch, reputation, refusal factor, failed
 transfer). Frontend: `features/market/marketing.spec.ts`. In the game: manual test plan section 15.
+Roadmap V3 R3-P (staff): `StaffTest` covers the clerk's audit factor (with and without a tax advisor), the reminders
+once per deadline for tax bills, inspections, forward contracts and lease ends (none for a bill when an advisor runs),
+the payment on the deadline day (not overloaded, not without money), apprentice applicants (skill, fixed salary, at
+most two, roster role without trainings), the monthly skill gain and the takeover (accept, counter offer from 90 %,
+below, no answer). Mod `test_workforce.lua` and simulator `test/instructions.test.js`: apprentices drive after the
+operators and never with a training. Frontend: the takeover case in `features/contracts/service-cases.spec.ts`. In the
+game: manual test plan section 18.
 Roadmap V3 R3-V (used machines): `VehicleTradeTest` covers the game's used-price formula (exponents, age cap, 3 %
 floor, hours for a target factor), the monthly offer within the ranges, workshop markup and neighbour discount, the
 agreement with `VEHICLE_SPAWN` (no batch, the mod books), `NO_SPACE` retries up to five and the failed deal, an

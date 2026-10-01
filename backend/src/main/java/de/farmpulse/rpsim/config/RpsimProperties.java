@@ -162,6 +162,8 @@ public class RpsimProperties {
         private Drought drought = new Drought();
         private UsedVehicle usedVehicle = new UsedVehicle();
         private Mechanic mechanic = new Mechanic();
+        private OfficeClerk officeClerk = new OfficeClerk();
+        private Apprentice apprentice = new Apprentice();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
@@ -1028,6 +1030,36 @@ public class RpsimProperties {
     /** Roadmap V2 R2-B2: class of a booking in the journal (farm_facts.finances). */
     public enum FinanceClass {
         OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING, IGNORE
+    }
+
+    /** Roadmap V3 R3-P1: the office clerk reminds of deadlines, lowers audits and pays tax bills in time (placeholders). */
+    @Getter @Setter
+    public static class OfficeClerk {
+        /** Game days before a deadline the clerk writes a reminder. */
+        private double reminderDays = 3;
+        /** Audit factor = 1 - audit-reduction-max x effective skill / 100 (best clerk; with a tax advisor the smaller factor). */
+        private double auditReductionMax = 0.5;
+        /** Below this workload the clerk is overloaded and does not pay tax bills on the deadline day. */
+        private double overloadWorkload = 30;
+    }
+
+    /** Roadmap V3 R3-P2: apprentices (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class Apprentice {
+        /** Fixed monthly salary (no skill premium). */
+        private long salary = 900;
+        private int skillMin = 10;
+        private int skillMax = 30;
+        /** Skill points at every month start, up to skill-cap. */
+        private int skillPerMonth = 2;
+        private int skillCap = 70;
+        /** Training time in FS25 years. */
+        private int trainingYears = 2;
+        private int maxApprentices = 2;
+        /** The takeover request comes this many months before the end. */
+        private int takeoverNoticeMonths = 1;
+        /** A counter offer is accepted from this share of the demand. */
+        private double counterAcceptShare = 0.9;
     }
 
     /**

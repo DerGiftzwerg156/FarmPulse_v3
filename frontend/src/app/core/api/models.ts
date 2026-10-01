@@ -456,6 +456,8 @@ export interface EmployeeView {
   trainings: string[];
   trainingInProgress: string | null;
   trainingUntilGameTime: number | null;
+  /** Roadmap V3 R3-P2: end of the training of an apprentice. */
+  apprenticeshipEndsAtGameTime?: number | null;
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */

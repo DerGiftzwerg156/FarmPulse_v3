@@ -389,3 +389,15 @@ neighbour. Rows 11.6–11.9 check the game behaviour behind it.
 | 17.4 | *Eigene Maschinen* → offer a tractor with an implement attached, agree with a neighbour | the sale fails with "Bitte erst abkoppeln", nothing booked; detach and offer again: the tractor disappears, the proceeds are booked as *Maschinenverkauf*, diary entry and gossip |
 | 17.5 | Agree on a sale, then load the last save without saving | the removal and the proceeds are sent again (rewind notice) |
 
+## 18. Staff (Roadmap V3 R3-P)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section P. Needs the current mod.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 18.1 | Hire an office clerk, wait until a tax prepayment is 3 days before its deadline | the clerk's reminder mail; with a tax advisor only the advisor writes |
+| 18.2 | Leave the bill open until the deadline day (enough money) | the clerk pays it (*Steuerzahlung*), mail and diary, no late fee |
+| 18.3 | Post a job *Azubi*, hire one, start a helper on a medium tractor while every machine operator is busy | the apprentice drives it (his name in the helper messages, no game wage in the employees mode) |
+| 18.4 | Start a helper on a combine with only the apprentice free | the vanilla helper drives (strict mode: the start is refused with the missing training) |
+| 18.5 | Wait until one month before the end of the training, make a counter offer below 90 % | he declines and leaves at the end of the training; a counter offer from 90 % makes him a machine operator |
+
