@@ -15,7 +15,8 @@
       "properties": {
         "vehicles": { "type": "array", "items": { "type": "object", "required": ["uniqueId", "value", "condition"],
           "properties": { "uniqueId": { "type": "string" }, "value": { "type": "number", "minimum": 0 },
-            "condition": { "type": "number", "minimum": 0, "maximum": 100 } } } },
+            "condition": { "type": "number", "minimum": 0, "maximum": 100 },
+            "name": { "type": "string" }, "xmlFilename": { "type": "string" } } } },
         "placeables": { "type": "array", "items": { "type": "object", "required": ["uniqueId", "value"],
           "properties": { "uniqueId": { "type": "string" }, "value": { "type": "number", "minimum": 0 } } } },
         "farmland": { "type": "array", "items": { "type": "object", "required": ["farmlandId", "hectares", "price"],

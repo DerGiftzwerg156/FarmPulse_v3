@@ -537,8 +537,8 @@ export class BridgeSimulator {
     if (this.balance < ins.price) return 'INSUFFICIENT_FUNDS';
     const next = Math.max(0, ...this.vehicles.map((v) => Number(v.uniqueId.replace(/\D/g, '')) || 0)) + 1;
     const uniqueId = `veh_${String(next).padStart(5, '0')}`;
-    this.vehicles.push({ uniqueId, value: ins.price, damage: ins.damage, storeXmlFilename: ins.storeXmlFilename,
-      ageMonths: ins.ageMonths, operatingHours: ins.operatingHours, wear: ins.wear });
+    this.vehicles.push({ uniqueId, value: ins.price, damage: ins.damage, name: item.name,
+      xmlFilename: ins.storeXmlFilename, ageMonths: ins.ageMonths, operatingHours: ins.operatingHours, wear: ins.wear });
     this.balance -= ins.price;
     this.moneyLog.push({ id: ins.instructionId, amount: -ins.price, reason: ins.moneyReason, note: item.name });
     this.book(`RPSIM_${ins.moneyReason}`, -ins.price);
@@ -552,6 +552,8 @@ export class BridgeSimulator {
     if (this.leasedVehicles.some((v) => v.uniqueId === ins.vehicleId)) return 'NOT_OWN_VEHICLE';
     const i = this.vehicles.findIndex((v) => v.uniqueId === ins.vehicleId);
     if (i < 0) return 'VEHICLE_NOT_FOUND';
+    // R3-V3 fallback of the mod: only a root vehicle with nothing attached is removed
+    if (this.vehicles[i].attached) return 'VEHICLE_ATTACHED';
     this.vehicles.splice(i, 1);
     this.log(`vehicle ${ins.vehicleId} removed`);
     return null;
@@ -715,7 +717,9 @@ export class BridgeSimulator {
       liquidity: { balance: Math.round(this.balance) },
       assets: {
         vehicles: this.vehicles.map((v) => ({ uniqueId: v.uniqueId, value: v.value,
-          condition: Math.round((1 - Math.min(1, Math.max(0, v.damage))) * 100) })),
+          condition: Math.round((1 - Math.min(1, Math.max(0, v.damage))) * 100),
+          // R3-V3: optional name and shop XML (getFullName / configFileName)
+          ...(v.name ? { name: v.name } : {}), ...(v.xmlFilename ? { xmlFilename: v.xmlFilename } : {}) })),
         placeables: this.placeables.map((p) => ({ ...p })),
         farmland: this.farmlands.filter((f) => f.ownerFarmId === 1)
           .map((f) => ({ farmlandId: f.farmlandId, hectares: f.hectares, price: f.price })),

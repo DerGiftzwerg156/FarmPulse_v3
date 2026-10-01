@@ -1,0 +1,6 @@
+Hast du schon gesehen?
+Moin,
+
+{{buyerName}} fährt jetzt deinen alten {{vehicleName}} – das ganze Dorf hat ihn schon damit gesehen.
+
+{{characterName}}

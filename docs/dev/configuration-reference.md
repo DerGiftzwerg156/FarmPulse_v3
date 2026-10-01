@@ -851,6 +851,40 @@ Price alarms and forward contracts of the Agrarbörse, the farm shop in the app 
 | `rpsim.formulas.farm-shop.reputation-delta` | `1` | Village reputation per delivered order (`PublicActionType.FARM_SHOP`) ... | Roadmap V3 R3-M3 |
 | `rpsim.formulas.farm-shop.reputation-max-per-year` | `4` | ... at most this many times per FS25 year. | Roadmap V3 R3-M3 |
 
+## `rpsim.formulas.used-vehicle` (Roadmap V3 R3-V)
+
+Used machines from the workshop or a neighbour (catalog of R3-V1, the game's used price formula) and own machines sold
+to neighbours. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.used-vehicle.enabled` | `true` | Monthly offers of used machines. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.offer-probability` | `0.5` | Chance of one offer at every month start; at most one open offer. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.workshop-share` | `0.5` | Share of offers made by the workshop; the rest by a random active neighbour (always the workshop without neighbours). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.workshop-markup` | `0.1` | Price of the workshop = used price of the game formula × (1 + markup). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.neighbor-discount` | `0.05` | Price of a neighbour = used price × (1 − discount). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.min-list-price` | `5000` | Catalog entries offered: list price from … | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.max-list-price` | `400000` | … to (entries without `lifetime` are left out). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.age-months-min` | `12` | Age of an offered machine in months (lower bound). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.age-months-max` | `120` | Upper bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.hour-factor-min` | `0.3` | Operating hours are chosen so that the hour factor of the formula lies between min … | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.hour-factor-max` | `0.9` | … and max. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.damage-min` | `0` | Damage (0..1) of an offered machine, lower bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.damage-max` | `0.3` | Upper bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.wear-min` | `0` | Wear (0..1), lower bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.wear-max` | `0.5` | Upper bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.motorized-exponent` | `1.0` | Game formula (`Vehicle.calculateSellPrice`): hour factor = 1 − hours ^ exponent / lifetime with an engine (also when `motorized` is missing) … | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.unmotorized-exponent` | `1.3` | … and without. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.min-price-share` | `0.03` | The used price is at least this share of the list price. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.negotiation-days` | `7` | Game days an offer (purchase or sale) stays open; up to `negotiation.max-rounds` rounds. | Roadmap V3 R3-V2 / R3-V3 |
+| `rpsim.formulas.used-vehicle.spawn-max-attempts` | `5` | `NO_SPACE`: a new delivery every game day up to this many attempts, then the deal fails (nothing booked). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.notification-days` | `1` | Game days the in-game hint (no space, "Bitte erst abkoppeln") stays valid. | Roadmap V3 R3-V2 / R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-buyers-min` | `1` | Sale of an own machine: interested active neighbours, from … | Roadmap V3 R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-buyers-max` | `3` | … to. | Roadmap V3 R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-offer-min` | `1.0` | First offer of a neighbour = game value × a factor from min … | Roadmap V3 R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-offer-max` | `1.1` | … to max. | Roadmap V3 R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-cap` | `1.1` | A neighbour pays at most game value × cap (and never more than the negotiation formula allows). | Roadmap V3 R3-V3 |
+
 ## `rpsim.formulas.drought` (Roadmap V3 R3-W)
 
 Drought from the rain time per game month (R2-C2) and the drought aid of the authority. The yield in the game does not

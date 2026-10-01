@@ -99,12 +99,14 @@ export class Farmland {
   load(): void {
     forkJoin({ fields: this.api.farmlands(), negotiations: this.api.negotiations(), mails: this.api.mails() }).subscribe({
       next: ({ fields, negotiations, mails }) => {
+        // Roadmap V3 R3-V: machine negotiations live in the workshop app
+        const own = negotiations.filter((n) => n.assetType !== 'VEHICLE');
         this.fields.set(fields);
-        this.negotiations.set(negotiations);
+        this.negotiations.set(own);
         this.mails.set(mails);
         this.error.set(null);
-        if (this.selectedNegotiation() === null && negotiations.some((n) => n.status === 'OPEN')) {
-          this.selectNegotiation(negotiations.find((n) => n.status === 'OPEN')!.id);
+        if (this.selectedNegotiation() === null && own.some((n) => n.status === 'OPEN')) {
+          this.selectNegotiation(own.find((n) => n.status === 'OPEN')!.id);
         }
       },
       error: (e) => this.error.set(toPageError(e, this.i18n.t('common.error'))),

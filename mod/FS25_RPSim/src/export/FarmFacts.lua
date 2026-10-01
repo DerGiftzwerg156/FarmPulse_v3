@@ -188,7 +188,7 @@ end
 
 --- raw: {
 --   savegameId, gameTime, balance,
---   vehicles = { {uniqueId, value, damage} }, placeables = { {uniqueId, value} },
+--   vehicles = { {uniqueId, value, damage, name?, xmlFilename?} }, placeables = { {uniqueId, value} },
 --   leasedVehicles = { {uniqueId, costPerPeriod?} },
 --   farmland = { {farmlandId, hectares, price} }, animals = { {husbandryUniqueId, type, count, estimatedValue} },
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
@@ -201,8 +201,16 @@ function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
     local vehicles = RPSimJson.array({})
     for _, v in ipairs(raw.vehicles or {}) do
-        vehicles[#vehicles + 1] = { uniqueId = tostring(v.uniqueId), value = round(v.value),
+        local e = { uniqueId = tostring(v.uniqueId), value = round(v.value),
             condition = RPSimFarmFacts.conditionFromDamage(v.damage) }
+        -- Roadmap V3 R3-V3: optional name and shop XML of the vehicle
+        if type(v.name) == "string" and v.name ~= "" then
+            e.name = v.name
+        end
+        if type(v.xmlFilename) == "string" and v.xmlFilename ~= "" then
+            e.xmlFilename = v.xmlFilename
+        end
+        vehicles[#vehicles + 1] = e
     end
     local placeables = RPSimJson.array({})
     for _, p in ipairs(raw.placeables or {}) do

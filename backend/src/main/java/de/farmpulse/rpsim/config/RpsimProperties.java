@@ -160,6 +160,7 @@ public class RpsimProperties {
         private Finance finance = new Finance();
         private LiquidityPlan liquidityPlan = new LiquidityPlan();
         private Drought drought = new Drought();
+        private UsedVehicle usedVehicle = new UsedVehicle();
         private Mechanic mechanic = new Mechanic();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
@@ -1027,6 +1028,51 @@ public class RpsimProperties {
     /** Roadmap V2 R2-B2: class of a booking in the journal (farm_facts.finances). */
     public enum FinanceClass {
         OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING, IGNORE
+    }
+
+    /**
+     * Roadmap V3 R3-V2 / R3-V3: used machines bought from the workshop or a neighbour and own machines sold to neighbours
+     * (owner decisions, placeholders). The used price follows the game's formula (Vehicle.calculateSellPrice).
+     */
+    @Getter @Setter
+    public static class UsedVehicle {
+        private boolean enabled = true;
+        /** Chance of one offer at every month start (at most one open offer). */
+        private double offerProbability = 0.5;
+        /** Share of offers made by the workshop; the rest by an active neighbour. */
+        private double workshopShare = 0.5;
+        /** Price of the workshop = game used price x (1 + markup). */
+        private double workshopMarkup = 0.10;
+        /** Price of a neighbour = game used price x (1 - discount). */
+        private double neighborDiscount = 0.05;
+        /** Catalog entries offered: list price range. */
+        private double minListPrice = 5000;
+        private double maxListPrice = 400000;
+        private int ageMonthsMin = 12;
+        private int ageMonthsMax = 120;
+        /** Operating hours so that the hour factor of the formula lies in this range. */
+        private double hourFactorMin = 0.3;
+        private double hourFactorMax = 0.9;
+        private double damageMin = 0;
+        private double damageMax = 0.3;
+        private double wearMin = 0;
+        private double wearMax = 0.5;
+        /** Game formula: hour factor exponent with / without an engine, floor share of the list price. */
+        private double motorizedExponent = 1.0;
+        private double unmotorizedExponent = 1.3;
+        private double minPriceShare = 0.03;
+        /** Game days an offer (negotiation) stays open. */
+        private double negotiationDays = 7;
+        /** Delivery attempts after NO_SPACE (one per game day). */
+        private int spawnMaxAttempts = 5;
+        /** Validity of the in-game hint after a failed delivery or removal (game days). */
+        private double notificationDays = 1;
+        /** Sale to neighbours: interested buyers, first offer and cap as share of the game value. */
+        private int saleBuyersMin = 1;
+        private int saleBuyersMax = 3;
+        private double saleOfferMin = 1.0;
+        private double saleOfferMax = 1.1;
+        private double saleCap = 1.1;
     }
 
     /** Roadmap V3 R3-W1 / R3-W2: drought from the rain share of growth months, drought aid (owner decisions, placeholders). */

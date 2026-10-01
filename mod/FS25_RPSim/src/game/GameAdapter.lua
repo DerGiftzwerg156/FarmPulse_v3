@@ -7,6 +7,7 @@
 -- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
 -- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
 -- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
+-- luacheck: globals StoreSpecies StoreItemUtil VehicleLoadingData VehicleLoadingState
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -412,8 +413,11 @@ function RPSimGameAdapter:collectFarmFacts()
                 local state = RPSimGameAdapter.propertyState(v)
                 if state == "OWNED" then
                     local damage = v.getDamageAmount ~= nil and v:getDamageAmount() or 0
+                    -- Roadmap V3 R3-V3: name and shop XML for the list in the workshop app (Vehicle:getFullName,
+                    -- vehicle.configFileName as in jobVehicleInfo)
                     raw.vehicles[#raw.vehicles + 1] = { uniqueId = v:getUniqueId(), value = v:getSellPrice(),
-                        damage = damage }
+                        damage = damage, name = safe(function() return v:getFullName() end, nil),
+                        xmlFilename = v.configFileName }
                 elseif state == "LEASED" then
                     -- Leasing costs per vehicle have no documented API yet (manual test plan) - list only.
                     raw.leasedVehicles[#raw.leasedVehicles + 1] = { uniqueId = v:getUniqueId() }
@@ -631,6 +635,139 @@ function RPSimGameAdapter:repairVehicle(uniqueId, targetDamage)
         return false, msg:match("NOT_OWN_VEHICLE") and "NOT_OWN_VEHICLE" or msg:match("NOT_WEARABLE") and "NOT_WEARABLE" or msg
     end
     RPSimLog.info("Vehicle %s repaired (target damage %.2f)", tostring(uniqueId), targetDamage or 0)
+    return true
+end
+
+-- ---------------------------------------------------------------------------------------------- Roadmap V3 R3-V
+
+--- R3-V1: the vehicle catalog of the shop - g_storeManager:getItems() with species == StoreSpecies.VEHICLE and
+-- showInStore (LUADOC Shop/StoreManager.md, fields of loadItem). motorized = an engine after
+-- StoreItemUtil.loadSpecsFromXML(storeItem) (storeItem.specs.power, as in Vehicle.calculateSellPrice); left out when
+-- the specs cannot be read (the backend then uses the factor of motorised vehicles).
+function RPSimGameAdapter:collectStoreVehicles()
+    local list = {}
+    local items = safe(function() return g_storeManager:getItems() end, {})
+    for _, item in ipairs(items) do
+        safe(function()
+            if item.species == StoreSpecies.VEHICLE and item.showInStore then
+                local e = { xmlFilename = item.xmlFilename, name = item.name, price = item.price,
+                    lifetime = item.lifetime, categoryName = item.categoryName, isMod = item.isMod == true }
+                local ok = pcall(StoreItemUtil.loadSpecsFromXML, item)
+                if ok and type(item.specs) == "table" then
+                    e.motorized = item.specs.power ~= nil
+                end
+                list[#list + 1] = e
+            end
+            return true
+        end)
+    end
+    return list
+end
+
+--- R3-V2: a used vehicle from the workshop or a neighbour, loaded like AbstractMission:spawnVehicle (LUADOC
+-- Missions/AbstractMission.md): VehicleLoadingData with setFilename, setLoadingPlace on the shop places (false = no
+-- free place, dump VehicleLoadingData.lua), OWNED for the player farm, load(callback). Loading is asynchronous, so the
+-- price is booked in the callback after the used values are set. done(ok, err, result) is called exactly once - from
+-- the callback, or directly when the loading cannot start. Returns true (loading started) or false, err.
+function RPSimGameAdapter:spawnVehicle(ins, done)
+    local balance = self:getBalance()
+    if balance == nil or balance < ins.price then
+        return false, "INSUFFICIENT_FUNDS"
+    end
+    local storeItem = safe(function() return g_storeManager:getItemByXMLFilename(ins.storeXmlFilename) end, nil)
+    if storeItem == nil then
+        return false, "UNKNOWN_STORE_ITEM"
+    end
+    local farmId = self:getFarmId()
+    local ok, err = pcall(function()
+        local data = VehicleLoadingData.new()
+        data:setFilename(storeItem.xmlFilename)
+        if not data:setLoadingPlace(g_currentMission.storeSpawnPlaces, g_currentMission.usedStorePlaces) then
+            error("NO_SPACE")
+        end
+        data:setPropertyState(VehiclePropertyState.OWNED)
+        data:setOwnerFarmId(farmId)
+        data:load(function(_, vehicles, loadState)
+            self:onVehicleSpawned(ins, vehicles, loadState, done)
+        end, self, nil)
+    end)
+    if not ok then
+        local msg = tostring(err)
+        return false, msg:match("NO_SPACE") and "NO_SPACE" or msg
+    end
+    return true
+end
+
+--- Loading callback of spawnVehicle: used values (Vehicle:setOperatingTime(ms, true), the field age in months, dump
+-- Vehicle.lua; Wearable setDamageAmount / addWearAmount, LUADOC Specializations/Wearable.md), then the booking and
+-- result.vehicleId. A failed load (vehicleLoadState NO_SPACE or another error) books nothing.
+function RPSimGameAdapter:onVehicleSpawned(ins, vehicles, loadState, done)
+    local loaded = type(vehicles) == "table" and vehicles[1] ~= nil
+    if not loaded or (VehicleLoadingState ~= nil and loadState ~= VehicleLoadingState.OK) then
+        for _, v in ipairs(type(vehicles) == "table" and vehicles or {}) do
+            pcall(function() v:delete() end)
+        end
+        local noSpace = VehicleLoadingState ~= nil and loadState == VehicleLoadingState.NO_SPACE
+        done(false, noSpace and "NO_SPACE" or "LOAD_FAILED")
+        return
+    end
+    for _, v in ipairs(vehicles) do
+        pcall(function()
+            if v.setOperatingTime ~= nil then
+                v:setOperatingTime(ins.operatingHours * RPSimConfig.MS_PER_GAME_HOUR, true)
+            end
+            v.age = ins.ageMonths
+            if v.setDamageAmount ~= nil then
+                v:setDamageAmount(ins.damage, true)
+            end
+            if v.addWearAmount ~= nil then
+                v:addWearAmount(ins.wear, true)
+            end
+        end)
+    end
+    local booked, err = self:addMoney(-ins.price, ins.moneyReason, "Gebrauchtmaschine")
+    if not booked then
+        for _, v in ipairs(vehicles) do
+            pcall(function() v:delete() end)
+        end
+        done(false, err)
+        return
+    end
+    local id = safe(function() return vehicles[1]:getUniqueId() end, nil)
+    RPSimLog.info("Used vehicle %s delivered as %s", tostring(ins.storeXmlFilename), tostring(id))
+    done(true, nil, { vehicleId = id })
+end
+
+--- R3-V3: an own vehicle sold to a neighbour (VehicleSystem:getVehicleByUniqueId, dump VehicleSystem.lua). Only an
+-- owned vehicle of the player farm, nobody inside (Enterable getIsControlled), no helper (getIsAIActive), and - until
+-- the playtest of the manual test plan - only a root vehicle with nothing attached (getRootVehicle,
+-- getAttachedImplements). Then vehicle:delete() like AbstractMission removes its vehicles.
+function RPSimGameAdapter:removeVehicle(vehicleId)
+    local v = safe(function() return g_currentMission.vehicleSystem:getVehicleByUniqueId(vehicleId) end, nil)
+    if v == nil then
+        return false, "VEHICLE_NOT_FOUND"
+    end
+    local owner = safe(function() return v:getOwnerFarmId() end, nil)
+    if owner ~= self:getFarmId() or RPSimGameAdapter.propertyState(v) ~= "OWNED" then
+        return false, "NOT_OWN_VEHICLE"
+    end
+    local controlled = safe(function() return v.getIsControlled ~= nil and v:getIsControlled() end, false)
+    local ai = safe(function() return v.getIsAIActive ~= nil and v:getIsAIActive() end, false)
+    if controlled or ai then
+        return false, "VEHICLE_IN_USE"
+    end
+    local root = safe(function() return v.getRootVehicle ~= nil and v:getRootVehicle() or v end, v)
+    local attached = safe(function()
+        return v.getAttachedImplements ~= nil and next(v:getAttachedImplements() or {}) ~= nil
+    end, false)
+    if root ~= v or attached then
+        return false, "VEHICLE_ATTACHED"
+    end
+    local ok, err = pcall(function() v:delete() end)
+    if not ok then
+        return false, tostring(err)
+    end
+    RPSimLog.info("Vehicle %s removed (sold to a neighbour)", tostring(vehicleId))
     return true
 end
 

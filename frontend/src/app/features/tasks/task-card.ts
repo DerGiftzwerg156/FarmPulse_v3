@@ -88,7 +88,7 @@ import { dueLabel, isUrgent } from './task-groups';
         }
         @case ('NEGOTIATION') {
           @let n = t.negotiation!;
-          <div class="text-[15px] font-semibold text-text">{{ n.kind | label: 'negotiationKind' }} · {{ 'farmland.fieldLabel' | t: { id: n.assetId } }}</div>
+          <div class="text-[15px] font-semibold text-text">{{ n.kind | label: 'negotiationKind' }} · @if (n.assetType === 'VEHICLE') { {{ 'workshop.machine' | t }} } @else { {{ 'farmland.fieldLabel' | t: { id: n.assetId } }} }</div>
           <div class="text-[12px] text-[#8FA39A]">
             {{ n.counterpart?.name ?? n.announcer?.name }} · {{ 'tasks.round' | t: { used: n.roundsUsed, max: n.maxRounds } }}
             @if (n.lastCounterOffer) { · {{ 'tasks.lastCounter' | t: { amount: (n.lastCounterOffer | money) } }} }

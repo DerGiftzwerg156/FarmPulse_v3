@@ -42,6 +42,10 @@ RPSimConfig.DEFAULTS = {
     promptsInVehicle = true,
     -- Roadmap V3 R3-H1: export the fields the game's NPCs farm (farm_facts.npcFields), sampled like the own fields.
     npcFieldExport = true,
+    -- Roadmap V3 R3-V1: export the vehicle catalog of the shop once at the mission start (market_context.storeVehicles)
+    storeCatalogExport = true,
+    -- Roadmap V3 R3-V1: at most this many catalog entries; above that they are cut after sorting by xmlFilename
+    storeCatalogMaxEntries = 2000,
 }
 
 function RPSimConfig.new(overrides)

@@ -193,7 +193,9 @@ Object.assign(SCENARIOS, {
     description: 'Handel mit den Nachbarn: Nachbarfelder in verschiedenen Phasen, eigene Silos mit freier Kapazität, '
       + 'Fahrzeug-Katalog des Shops (R3-H, R3-V).',
     balance: 150000, vanillaLoan: 0, ownedFarmlands: [1, 2],
-    vehicles: [vehicle(1, 180000, 0.15), vehicle(2, 60000, 0.3)],
+    // R3-V3: the own vehicles carry name and shop XML like the current mod
+    vehicles: [{ ...vehicle(1, 180000, 0.15), name: 'Fendt 700 Vario', xmlFilename: 'data/vehicles/fendt/vario700/vario700.xml' },
+      { ...vehicle(2, 60000, 0.3), name: 'Krone Emsland', xmlFilename: 'data/vehicles/krone/emsland/emsland.xml' }],
     placeables: [{ uniqueId: 'plc_00001', value: 110000 }],
     animals: [],
     // assets.storage = everything the farm stores; tradeStorage = only the own silos and silo extensions

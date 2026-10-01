@@ -767,4 +767,220 @@ function T.TestGameAdapter:testMissionCreateAcksTheMissionIdAndTheLimitIsExporte
     lu.assertNil(RPSimGameAdapter.new():missionLimitReached())
 end
 
+-- Roadmap V3 R3-V: shop catalog, used vehicles bought and own vehicles sold
+local function storeGame(opts)
+    opts = opts or {}
+    local game = helpers.fakeGame(opts)
+    StoreSpecies = { VEHICLE = 1, PLACEABLE = 2 }
+    local items = opts.items or {
+        { xmlFilename = "data/vehicles/fendt/vario700.xml", name = "Fendt 700 Vario", species = 1, showInStore = true,
+            price = 245000, lifetime = 600, categoryName = "TRACTORSL", isMod = false, power = 200 },
+        { xmlFilename = "data/vehicles/krone/trailer.xml", name = "Krone Trailer", species = 1, showInStore = true,
+            price = 40000, lifetime = 600, categoryName = "TRAILERS", isMod = false },
+        { xmlFilename = "data/vehicles/hidden.xml", name = "Hidden", species = 1, showInStore = false, price = 1 },
+        { xmlFilename = "data/placeables/silo.xml", name = "Silo", species = 2, showInStore = true, price = 9 },
+        { xmlFilename = "mods/FS25_Brand/tool.xml", name = "Mod Tool", species = 1, showInStore = true, price = 8000,
+            lifetime = 300, categoryName = "TOOLS", isMod = true, specsFail = true },
+    }
+    StoreItemUtil = { loadSpecsFromXML = function(item)
+        if item.specsFail then error("no specs") end
+        item.specs = { power = item.power }
+    end }
+    g_storeManager = {
+        getItems = function() return items end,
+        getItemByXMLFilename = function(_, xml)
+            for _, it in ipairs(items) do
+                if it.xmlFilename == xml then return it end
+            end
+            return nil
+        end,
+    }
+    VehicleLoadingState = { OK = 1, ERROR = 2, NO_SPACE = 3 }
+    game.loads = {}
+    VehicleLoadingData = { new = function()
+        local d = {}
+        function d:setFilename(f) self.filename = f end
+        function d:setLoadingPlace() return opts.space ~= false end
+        function d:setPropertyState(p) self.propertyState = p end
+        function d:setOwnerFarmId(id) self.ownerFarmId = id end
+        function d:load(callback, target)
+            self.callback, self.target = callback, target
+            game.loads[#game.loads + 1] = self
+        end
+        return d
+    end }
+    game.spawned = {}
+    --- finishes a pending load like the engine does a few frames later
+    function game.finishLoad(state)
+        local d = table.remove(game.loads, 1)
+        local v = { uniqueId = "veh_new", wear = 0, deleted = false }
+        function v:getUniqueId() return self.uniqueId end
+        function v:setOperatingTime(ms) self.operatingTime = ms end
+        function v:setDamageAmount(a) self.damage = a end
+        function v:addWearAmount(a) self.wear = self.wear + a end
+        function v:delete() self.deleted = true end
+        game.spawned[#game.spawned + 1] = v
+        d.callback(d.target, { v }, state or VehicleLoadingState.OK)
+        return v, d
+    end
+    g_currentMission.storeSpawnPlaces, g_currentMission.usedStorePlaces = {}, {}
+    return game
+end
+
+local function clearStoreGame()
+    StoreSpecies, StoreItemUtil, g_storeManager, VehicleLoadingState, VehicleLoadingData = nil, nil, nil, nil, nil
+end
+
+local SPAWN = { instructionId = "sp", type = "VEHICLE_SPAWN", storeXmlFilename = "data/vehicles/fendt/vario700.xml",
+    ageMonths = 36, operatingHours = 2400, damage = 0.2, wear = 0.3, price = 52000, moneyReason = "VEHICLE_PURCHASE" }
+
+function T.TestGameAdapter:testStoreCatalogListsShopVehiclesWithMotorFlag()
+    storeGame()
+    local list = RPSimGameAdapter.new():collectStoreVehicles()
+    lu.assertEquals(#list, 3) -- hidden item and placeable left out
+    lu.assertEquals(list[1].name, "Fendt 700 Vario")
+    lu.assertTrue(list[1].motorized)
+    lu.assertFalse(list[2].motorized)
+    lu.assertNil(list[3].motorized) -- specs could not be read: the backend uses the motorised factor
+    lu.assertTrue(list[3].isMod)
+    clearStoreGame()
+end
+
+function T.TestGameAdapter:testStoreCatalogIsExportedOnceAtTheStartAndCanBeSwitchedOff()
+    storeGame()
+    local bridge, fs, paths = realBridge()
+    bridge.cfg.storeCatalogMaxEntries = 2
+    bridge:onSavegameLoaded()
+    local ctx = RPSimJson.decode(fs.files[paths.marketContext])
+    lu.assertEquals(#ctx.storeVehicles, 2)
+    lu.assertEquals(ctx.storeVehicles[1].xmlFilename, "data/vehicles/fendt/vario700.xml") -- sorted, cut after 2
+    lu.assertEquals(ctx.storeVehicles[2].xmlFilename, "data/vehicles/krone/trailer.xml")
+    local bridge2, fs2, paths2 = realBridge()
+    bridge2.cfg.storeCatalogExport = false
+    bridge2:onSavegameLoaded()
+    lu.assertNil(RPSimJson.decode(fs2.files[paths2.marketContext]).storeVehicles)
+    clearStoreGame()
+end
+
+function T.TestGameAdapter:testOwnVehiclesCarryNameAndShopXml()
+    helpers.fakeGame({ vehicles = { { uniqueId = "veh_1", propertyState = 1, sellPrice = 40000, damage = 0,
+        configFileName = "data/vehicles/fendt/vario700.xml", getFullName = function() return "Fendt 700 Vario" end } } })
+    local doc = RPSimFarmFacts.build(RPSimGameAdapter.new():collectFarmFacts())
+    lu.assertEquals(doc.assets.vehicles[1].name, "Fendt 700 Vario")
+    lu.assertEquals(doc.assets.vehicles[1].xmlFilename, "data/vehicles/fendt/vario700.xml")
+end
+
+function T.TestGameAdapter:testUsedVehicleIsBookedAndAcknowledgedOnlyAfterLoading()
+    local game = storeGame({ money = 60000 })
+    local bridge, fs, paths = realBridge()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = { SPAWN } })
+    local result = bridge:pollInstructions()
+    lu.assertEquals(result.pending, 1)
+    lu.assertEquals(game.farm.money, 60000) -- nothing booked while loading
+    lu.assertEquals(#RPSimJson.decode(fs.files[paths.instructionsAck]).acks, 0)
+    lu.assertEquals(game.loads[1].filename, "data/vehicles/fendt/vario700.xml")
+    lu.assertEquals(game.loads[1].propertyState, VehiclePropertyState.OWNED)
+    lu.assertEquals(game.loads[1].ownerFarmId, 1)
+    -- the file is read again while loading: no second load
+    bridge:pollInstructions()
+    lu.assertEquals(#game.loads, 1)
+    local v = game.finishLoad()
+    lu.assertEquals(v.operatingTime, 2400 * 3600000)
+    lu.assertEquals(v.age, 36)
+    lu.assertEquals(v.damage, 0.2)
+    lu.assertEquals(v.wear, 0.3)
+    lu.assertEquals(game.farm.money, 8000)
+    local ack = RPSimJson.decode(fs.files[paths.instructionsAck]).acks[1]
+    lu.assertEquals(ack.status, "APPLIED")
+    lu.assertEquals(ack.result, { vehicleId = "veh_new" })
+    clearStoreGame()
+end
+
+function T.TestGameAdapter:testUsedVehicleFailuresBookNothing()
+    storeGame({ money = 60000, space = false })
+    local adapter = RPSimGameAdapter.new()
+    local function done() error("no callback expected") end
+    lu.assertEquals(select(2, adapter:spawnVehicle(SPAWN, done)), "NO_SPACE")
+    local unknown = {}
+    for k, val in pairs(SPAWN) do unknown[k] = val end
+    unknown.storeXmlFilename = "data/vehicles/none.xml"
+    lu.assertEquals(select(2, adapter:spawnVehicle(unknown, done)), "UNKNOWN_STORE_ITEM")
+    clearStoreGame()
+    storeGame({ money = 50000 })
+    lu.assertEquals(select(2, RPSimGameAdapter.new():spawnVehicle(SPAWN, done)), "INSUFFICIENT_FUNDS")
+    clearStoreGame()
+    -- the engine reports no space only in the callback: the loaded parts are deleted, nothing booked
+    local game = storeGame({ money = 60000 })
+    local outcome
+    lu.assertTrue(RPSimGameAdapter.new():spawnVehicle(SPAWN, function(ok, err) outcome = { ok, err } end))
+    local v = game.finishLoad(VehicleLoadingState.NO_SPACE)
+    lu.assertEquals(outcome, { false, "NO_SPACE" })
+    lu.assertTrue(v.deleted)
+    lu.assertEquals(game.farm.money, 60000)
+    clearStoreGame()
+end
+
+local function ownVehicle(fields)
+    local v = { uniqueId = "veh_7", propertyState = 1, sellPrice = 30000, deleted = false }
+    for k, val in pairs(fields or {}) do v[k] = val end
+    function v:getOwnerFarmId() return self.ownerFarmId or 1 end
+    function v:getIsControlled() return self.controlled == true end
+    function v:getIsAIActive() return self.ai == true end
+    function v:getRootVehicle() return self.root or self end
+    function v:getAttachedImplements() return self.implements or {} end
+    function v:delete() self.deleted = true end
+    return v
+end
+
+local function removeGame(v)
+    helpers.fakeGame()
+    g_currentMission.vehicleSystem.getVehicleByUniqueId = function(_, id)
+        if v ~= nil and id == v.uniqueId then return v end
+        return nil
+    end
+end
+
+function T.TestGameAdapter:testOwnVehicleIsRemovedOnlyWhenFreeAndUncoupled()
+    local cases = {
+        { fields = { ownerFarmId = 2 }, why = "NOT_OWN_VEHICLE" },
+        { fields = { propertyState = 2 }, why = "NOT_OWN_VEHICLE" }, -- leased
+        { fields = { controlled = true }, why = "VEHICLE_IN_USE" },
+        { fields = { ai = true }, why = "VEHICLE_IN_USE" },
+        { fields = { implements = { { object = {} } } }, why = "VEHICLE_ATTACHED" },
+        { fields = { root = {} }, why = "VEHICLE_ATTACHED" }, -- itself attached to a tractor
+    }
+    for i, c in ipairs(cases) do
+        local v = ownVehicle(c.fields)
+        removeGame(v)
+        local ok, why = RPSimGameAdapter.new():removeVehicle("veh_7")
+        lu.assertFalse(ok, "case " .. i)
+        lu.assertEquals(why, c.why, "case " .. i)
+        lu.assertFalse(v.deleted, "case " .. i)
+    end
+    removeGame(nil)
+    lu.assertEquals(select(2, RPSimGameAdapter.new():removeVehicle("veh_7")), "VEHICLE_NOT_FOUND")
+    local v = ownVehicle()
+    removeGame(v)
+    lu.assertTrue(RPSimGameAdapter.new():removeVehicle("veh_7"))
+    lu.assertTrue(v.deleted)
+end
+
+function T.TestGameAdapter:testVehicleSaleRemovesTheVehicleAndBooksTheProceedsInOneBatch()
+    local v = ownVehicle()
+    removeGame(v)
+    local bridge, fs, paths = realBridge()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        { instructionId = "rm", batchId = "s", type = "VEHICLE_REMOVE", vehicleId = "veh_7" },
+        { instructionId = "pay", batchId = "s", type = "MONEY_TRANSACTION", amount = 32000, reason = "VEHICLE_SALE" },
+        { instructionId = "rm2", batchId = "t", type = "VEHICLE_REMOVE", vehicleId = "veh_8" },
+        { instructionId = "pay2", batchId = "t", type = "MONEY_TRANSACTION", amount = 1, reason = "VEHICLE_SALE" } } })
+    local before = bridge.adapter:getBalance()
+    bridge:pollInstructions()
+    lu.assertTrue(v.deleted)
+    lu.assertEquals(bridge.state.processed.pay.status, "APPLIED")
+    lu.assertEquals(bridge.state.processed.rm2.message, "VEHICLE_NOT_FOUND")
+    lu.assertStrContains(bridge.state.processed.pay2.message, "BATCH_ABORTED")
+    lu.assertEquals(bridge.adapter:getBalance(), before + 32000)
+end
+
 return T

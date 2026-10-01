@@ -126,6 +126,15 @@ re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_
 delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and
 the farm shop (order from the own silos at the farm-shop price, delivery batch, reputation, refusal factor, failed
 transfer). Frontend: `features/market/marketing.spec.ts`. In the game: manual test plan section 15.
+Roadmap V3 R3-V (used machines): `VehicleTradeTest` covers the game's used-price formula (exponents, age cap, 3 %
+floor, hours for a target factor), the monthly offer within the ranges, workshop markup and neighbour discount, the
+agreement with `VEHICLE_SPAWN` (no batch, the mod books), `NO_SPACE` retries up to five and the failed deal, an
+unknown shop item, an offer that runs out, the sale to 1–3 neighbours within the 110 % cap with the
+`VEHICLE_REMOVE` + `VEHICLE_SALE` batch, gossip, and `VEHICLE_ATTACHED`; `RewindIntegrationTest` the re-sending of both
+instructions. The mod tests (`test_game_adapter.lua`, `test_persistence.lua`) cover the catalog export with switch
+and cap, vehicle names, the asynchronous spawn (no ack until the callback, used values, booking, failures, not
+saved while pending) and the removal checks; the simulator `test/roadmap-v3.test.js` the exported names and
+`VEHICLE_ATTACHED`. Frontend: `features/workshop/used-vehicles-card.spec.ts`. In the game: manual test plan section 17.
 Roadmap V3 R3-W (drought and weather risk): `DroughtTest` covers the month rating (dry, wet, unknown, outside the
 growth months), the series with the warning and the drought offer, the declaration with the regional
 `HARVEST_FAILURE` (3 largest crops, busy pairs skipped), gossip and aid case, the recording of growing own fields, the

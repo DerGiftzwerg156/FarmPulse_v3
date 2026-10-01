@@ -68,12 +68,19 @@ public class NegotiationEngine {
     private final RandomSource random;
     private final RpsimProperties props;
     private final de.farmpulse.rpsim.credit.CollateralService collateral;
+    private final org.springframework.context.ApplicationEventPublisher events;
+
+    /** Roadmap V3 R3-V: a negotiation about a machine ended with an agreement - the vehicle trade takes over. */
+    public record VehicleAgreed(Long savegameId, Long negotiationId) {
+    }
 
     public NegotiationEngine(NegotiationRepository negotiations, NegotiationOfferRepository offers,
                              FarmlandOwnershipService ownership, SavegameRepository savegames, OutboxService outbox,
                              LiquidityService liquidity, NarrationRequestService narration, CharacterLookup lookup,
                              TrustScoreService trust, DiaryService diary, RandomSource random, RpsimProperties props,
-                             de.farmpulse.rpsim.credit.CollateralService collateral) {
+                             de.farmpulse.rpsim.credit.CollateralService collateral,
+                             org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
         this.negotiations = negotiations;
         this.offers = offers;
         this.ownership = ownership;
@@ -274,6 +281,50 @@ public class NegotiationEngine {
         return result;
     }
 
+    // ------------------------------------------------------------------------------------------ R3-V machines
+
+    /**
+     * Roadmap V3 R3-V2 / R3-V3: a negotiation about a used machine (asset id = id of its VehicleDeal). DIRECT with
+     * PLAYER_BUYS: the player offers to the seller; SALE_OFFER with PLAYER_SELLS: the player demands from one interested
+     * neighbour. Same rounds and formula as for fields.
+     */
+    @Transactional
+    public Negotiation openVehicle(Savegame sg, NegotiationKind kind, NegotiationDirection dir, Initiator by,
+                                   long dealId, long basePrice, Character counterpart, long closesAtGameTime,
+                                   Long askingPrice, String saleGroupId) {
+        Negotiation n = new Negotiation();
+        n.setSavegame(sg);
+        n.setAssetType(AssetType.VEHICLE);
+        n.setAssetId(String.valueOf(dealId));
+        n.setKind(kind);
+        n.setDirection(dir);
+        n.setInitiatedBy(by);
+        n.setStatus(NegotiationStatus.OPEN);
+        n.setBasePrice(basePrice);
+        n.setMaxRounds(cfg().getMaxRounds());
+        n.setOpenedAtGameTime(sg.getCurrentGameTime());
+        n.setCounterpartCharacter(counterpart);
+        n.setClosesAtGameTime(closesAtGameTime);
+        n.setAskingPrice(askingPrice);
+        n.setSaleGroupId(saleGroupId);
+        return negotiations.save(n);
+    }
+
+    /** Records an offer of the counterpart (e.g. the first offer of an interested neighbour). */
+    @Transactional
+    public void counterpartOffer(Negotiation n, long amount) {
+        n.setLastCounterOffer(amount);
+        offer(n, 0, OfferParty.CHARACTER, n.getCounterpartCharacter(), amount, OfferResult.BID, null, null);
+    }
+
+    /** R3-V3: the most an interested neighbour pays for a machine - the formula limit, capped at value x sale-cap. */
+    public long vehicleMaxAccept(Negotiation n) {
+        Character buyer = n.getCounterpartCharacter();
+        long formula = NegotiationFormula.effectiveMaxAccept(n.getBasePrice(), buyer.getNegotiationTrait(),
+                trust.getCurrentTrust(buyer), cfg());
+        return Math.min(formula, Math.round(n.getBasePrice() * props.getFormulas().getUsedVehicle().getSaleCap()));
+    }
+
     // ------------------------------------------------------------------------------------------ offers
 
     public record OfferOutcome(Negotiation negotiation, OfferResult result, Long counterAmount, int roundsLeft) {
@@ -340,8 +391,9 @@ public class NegotiationEngine {
 
     private OfferOutcome saleDemand(Savegame sg, Negotiation n, long demand) {
         Character buyer = n.getCounterpartCharacter();
-        long effMax = NegotiationFormula.effectiveMaxAccept(n.getBasePrice(), buyer.getNegotiationTrait(),
-                trust.getCurrentTrust(buyer), cfg());
+        long effMax = n.getAssetType() == AssetType.VEHICLE ? vehicleMaxAccept(n)
+                : NegotiationFormula.effectiveMaxAccept(n.getBasePrice(), buyer.getNegotiationTrait(),
+                        trust.getCurrentTrust(buyer), cfg());
         OfferResult r = NegotiationFormula.evaluateSale(demand, effMax, cfg());
         return respond(sg, n, demand, r, r == OfferResult.COUNTER ? effMax : null, buyer);
     }
@@ -351,7 +403,7 @@ public class NegotiationEngine {
         offer(n, n.getRoundsUsed(), OfferParty.PLAYER, null, amount, r, counter, null);
         if (r == OfferResult.ACCEPTED) {
             trust.recordEvent(npc, props.getFormulas().getTrust().getNegotiationDeal(), TrustReason.NEGOTIATION_DEAL,
-                    "Einigung Feld " + n.getAssetId());
+                    n.getAssetType() == AssetType.VEHICLE ? "Einigung Maschine" : "Einigung Feld " + n.getAssetId());
             closeWon(sg, n, amount, NarrationEventType.NEGOTIATION_ACCEPTED, npc);
             return new OfferOutcome(n, r, null, left);
         }
@@ -381,6 +433,18 @@ public class NegotiationEngine {
         n.setStatus(NegotiationStatus.ACCEPTED);
         n.setFinalPrice(price);
         n.setClosedAtGameTime(sg.getCurrentGameTime());
+        if (n.getAssetType() == AssetType.VEHICLE) {
+            if (n.getSaleGroupId() != null) {
+                negotiations.findBySaleGroupId(n.getSaleGroupId()).stream()
+                        .filter(o -> !o.getId().equals(n.getId()) && o.getStatus() == NegotiationStatus.OPEN)
+                        .forEach(o -> {
+                            o.setStatus(NegotiationStatus.EXPIRED);
+                            o.setClosedAtGameTime(sg.getCurrentGameTime());
+                        });
+            }
+            events.publishEvent(new VehicleAgreed(sg.getId(), n.getId())); // R3-V: instructions, mail and diary there
+            return;
+        }
         int farmlandId = Integer.parseInt(n.getAssetId());
         boolean toPlayer = n.getDirection() == NegotiationDirection.PLAYER_BUYS;
         var deal = outbox.farmlandDeal(sg, farmlandId, toPlayer, price, (toPlayer ? "Kauf" : "Verkauf") + " Feld " + farmlandId,

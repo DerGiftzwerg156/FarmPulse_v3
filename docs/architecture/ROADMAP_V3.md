@@ -641,13 +641,25 @@ Fahrzeug ins Spiel bringt oder entfernt.
 - ✅ Gebrauchtwerte (Alter, Betriebsstunden, Schaden, Abnutzung) lassen sich setzen. Der Gebrauchtmarkt des
   Grundspiels macht dasselbe mit `saleItem.damage`, `saleItem.wear` und `saleItem.operatingTime`.
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Katalog-Export standardmäßig an, höchstens
+2000 Einträge (nach `xmlFilename` sortiert). `assets.vehicles[]` trägt zusätzlich `name` und `xmlFilename`. Zu jedem
+Monatsbeginn mit Wahrscheinlichkeit 0,5 ein Angebot, je zur Hälfte von der Werkstatt (+10 %) oder einem aktiven
+Nachbarn (−5 %), höchstens eins offen, 7 Tage, bis zu 3 Runden mit der bestehenden Verkäufer-Formel. Katalog-Einträge
+mit Listenpreis 5.000–400.000 € (auch Mods), Alter 12–120 Monate, Stunden so, dass der Stundenfaktor zwischen 0,3 und
+0,9 liegt, Schaden 0–0,3, Abnutzung 0–0,5. `NO_SPACE`: Hinweis im Spiel und Mail, täglich ein neuer Versuch, höchstens
+5, dann platzt das Geschäft; unbekanntes Shop-Item oder zu wenig Geld: sofort geplatzt. Verkauf mit Wunschpreis an
+1–3 aktive Nachbarn, Erstgebot 100–110 % des Spielwerts, höchstens 110 %, 3 Runden, 7 Tage. Angehängte Geräte: der
+Fallback gilt sofort (nur die Wurzel ohne Anhang, sonst `VEHICLE_ATTACHED` „Bitte erst abkoppeln“). `VEHICLE_SPAWN`
+und `VEHICLE_REMOVE` werden nach einem Neuladen wie `FARMLAND_TRANSFER` erneut gesendet. Tagebuch bei Kauf und
+Verkauf, Klatsch nach einem Verkauf. Alles in der App „Werkstatt“ (Karte „Gebrauchtmaschinen“), keine Frage im Spiel.
+
 ### R3-V1 Fahrzeug-Katalog exportieren
 
-- [ ] `market_context.storeVehicles[]` beim Missionsstart:
+- [x] `market_context.storeVehicles[]` beim Missionsstart:
   - Einträge aus `g_storeManager:getItems()` mit `species == StoreSpecies.VEHICLE` und `showInStore`,
   - Felder: `xmlFilename`, `name`, `price`, `lifetime`, `categoryName`, `isMod`,
   - die Gruppe `motorized`: Motor vorhanden (`storeItem.specs.power ~= nil`, nach `StoreItemUtil.loadSpecsFromXML`).
-- [ ] Abschaltbar über den Mod-Schalter `storeCatalogExport`, Obergrenze der Einträge in der Konfig.
+- [x] Abschaltbar über den Mod-Schalter `storeCatalogExport`, Obergrenze der Einträge in der Konfig.
 
 **Beleg:** ✅ `Shop/StoreManager.md` (LUADOC): `getItems()`, in `loadItem` die Felder `name`, `xmlFilename`, `species`,
 `showInStore`, `isMod`, `categoryName`, `price`, `lifetime`. ✅ `Vehicle.calculateSellPrice` (Dump `Vehicle.lua`) ruft
@@ -658,7 +670,7 @@ das Backend nutzt dann den Faktor für Motorfahrzeuge.
 
 ### R3-V2 Gebrauchte Maschine kaufen
 
-- [ ] Die Landmaschinenwerkstatt (`WORKSHOP`) oder ein Nachbar bietet in Abständen eine gebrauchte Maschine aus dem
+- [x] Die Landmaschinenwerkstatt (`WORKSHOP`) oder ein Nachbar bietet in Abständen eine gebrauchte Maschine aus dem
   Katalog an. Alter (Monate), Betriebsstunden und Schaden würfelt das Backend im Rahmen der Konfig. Den Preis
   berechnet das Backend mit der Formel des Spiels:
 
@@ -670,8 +682,8 @@ das Backend nutzt dann den Faktor für Motorfahrzeuge.
   ```
 
   Dazu kommt ein Händleraufschlag bzw. ein Nachbarrabatt (Konfig).
-- [ ] Verhandlung mit der Verhandlungs-Engine: neuer `AssetType.VEHICLE`, bis zu drei Runden wie bei Feldern.
-- [ ] Nach der Einigung: neue Anweisung `VEHICLE_SPAWN { storeXmlFilename, ageMonths, operatingHours, damage, wear,
+- [x] Verhandlung mit der Verhandlungs-Engine: neuer `AssetType.VEHICLE`, bis zu drei Runden wie bei Feldern.
+- [x] Nach der Einigung: neue Anweisung `VEHICLE_SPAWN { storeXmlFilename, ageMonths, operatingHours, damage, wear,
   price, moneyReason: VEHICLE_PURCHASE }`. Das Laden läuft **asynchron** (Callback), deshalb bucht der Mod den Preis
   selbst im Callback. Ein Batch mit getrennter `MONEY_TRANSACTION` wäre nicht mehr „im selben Zyklus“. Ablauf im Mod:
   1. Guthaben prüfen (wie `checkBatchFunds`).
@@ -681,9 +693,9 @@ das Backend nutzt dann den Faktor für Motorfahrzeuge.
   3. Im Callback Gebrauchtwerte setzen: `vehicle:setOperatingTime(ms, true)`, `vehicle.age = ageMonths`,
      `setDamageAmount(damage, true)` und `addWearAmount(wear, true)` (bei `Wearable`).
   4. Preis buchen (`VEHICLE_PURCHASE`) und mit `result.vehicleId` = `uniqueId` quittieren.
-- [ ] Fehlerfälle: kein Platz (Ladezustand `NO_SPACE`) oder unbekanntes Shop-Item → `FAILED`, keine Buchung, die
+- [x] Fehlerfälle: kein Platz (Ladezustand `NO_SPACE`) oder unbekanntes Shop-Item → `FAILED`, keine Buchung, die
   Werkstatt meldet sich („Stellen Sie erst Platz auf dem Hof frei“).
-- [ ] Nach einem Neuladen ohne Speichern schickt das Backend die Anweisung erneut, wie `FARMLAND_TRANSFER`. Die Liste
+- [x] Nach einem Neuladen ohne Speichern schickt das Backend die Anweisung erneut, wie `FARMLAND_TRANSFER`. Die Liste
   `processedInstructions` verhindert eine doppelte Ausführung.
 
 **Beleg:**
@@ -707,18 +719,18 @@ das Backend nutzt dann den Faktor für Motorfahrzeuge.
 
 ### R3-V3 Eigene Maschine an einen Nachbarn verkaufen
 
-- [ ] Auf der Werkstatt-App bzw. im Fahrzeug-Überblick: „Zum Verkauf anbieten“. Grundlage ist der Wert aus
+- [x] Auf der Werkstatt-App bzw. im Fahrzeug-Überblick: „Zum Verkauf anbieten“. Grundlage ist der Wert aus
   `assets.vehicles[].value` (`getSellPrice()`). Interessierte Nachbarn bieten mehr als der Händlerpreis des Spiels,
   gedeckelt (Konfig).
-- [ ] Nach der Einigung: Batch `VEHICLE_REMOVE { vehicleId }` + `MONEY_TRANSACTION` `VEHICLE_SALE`.
-- [ ] Mod: Fahrzeug über `g_currentMission.vehicleSystem:getVehicleByUniqueId(id)` holen und prüfen:
+- [x] Nach der Einigung: Batch `VEHICLE_REMOVE { vehicleId }` + `MONEY_TRANSACTION` `VEHICLE_SALE`.
+- [x] Mod: Fahrzeug über `g_currentMission.vehicleSystem:getVehicleByUniqueId(id)` holen und prüfen:
   - Besitzer ist die Spieler-Farm,
   - `propertyState == OWNED` (geleaste Fahrzeuge nie),
   - niemand sitzt drin (`getIsControlled()`, `Enterable`),
   - kein Helfer fährt (`getIsAIActive()`).
 
   Dann `vehicle:delete()`. Sonst `FAILED` mit `VEHICLE_IN_USE`, `NOT_OWN_VEHICLE` oder `VEHICLE_NOT_FOUND`.
-- [ ] Tagebuch, Klatsch („Der Nachbar fährt jetzt deinen alten Fendt“).
+- [x] Tagebuch, Klatsch („Der Nachbar fährt jetzt deinen alten Fendt“).
 
 **Beleg:**
 

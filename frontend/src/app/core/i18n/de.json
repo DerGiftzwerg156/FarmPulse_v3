@@ -49,7 +49,7 @@
     "staff": "Team, Helferstunden und Stellenausschreibungen",
     "fields": "Felder, Kulturen, Verhandlungen, Pacht und Forderungen",
     "stable": "Tiere, Tierarzt, Viehhandel und Tierwohl",
-    "workshop": "Wartungsvertrag, Reparaturen und Mechaniker",
+    "workshop": "Wartungsvertrag, Reparaturen, Mechaniker und Gebrauchtmaschinen",
     "diary": "Die Chronik deines Hofs",
     "settings": "KI, Spielstand und Fragen im Spiel",
     "trade": "Ware und Arbeit mit den Nachbarn"
@@ -518,6 +518,24 @@
       "SHEEP": "Schafe",
       "CHICKEN": "Hühner",
       "HORSE": "Pferde"
+    },
+    "vehicleDealStatus": {
+      "OPEN": "Offen",
+      "AGREED": "Vereinbart",
+      "DONE": "Erledigt",
+      "FAILED": "Geplatzt",
+      "ENDED": "Ohne Einigung"
+    },
+    "vehicleFailure": {
+      "NO_SPACE": "kein Platz auf dem Hof",
+      "UNKNOWN_STORE_ITEM": "nicht im Shop",
+      "INSUFFICIENT_FUNDS": "Konto reichte nicht",
+      "LOAD_FAILED": "im Spiel nicht geladen",
+      "VEHICLE_ATTACHED": "erst abkoppeln",
+      "VEHICLE_IN_USE": "wurde benutzt",
+      "NOT_OWN_VEHICLE": "nicht eigene Maschine",
+      "VEHICLE_NOT_FOUND": "nicht mehr da",
+      "MOD_OUTDATED": "Mod zu alt"
     },
     "tradeDirection": {
       "SELL": "Verkaufen",
@@ -1406,7 +1424,33 @@
     "mechanics": "Mechaniker:innen",
     "noMechanic": "Keine Mechaniker:in eingestellt.",
     "toStaff": "Zum Personal",
-    "reports": "Werkstattberichte kommen jeden Monat per"
+    "reports": "Werkstattberichte kommen jeden Monat per",
+    "machine": "Maschine",
+    "usedVehicles": "Gebrauchtmaschinen",
+    "usedIntro": "Die Werkstatt und die Nachbarn bieten ab und zu gebrauchte Maschinen an. Du verhandelst in bis zu {rounds} Runden; nach der Einigung steht die Maschine auf dem Shop-Platz, der Preis wird bei der Lieferung gebucht.",
+    "offers": "Angebote",
+    "noOffers": "Gerade bietet niemand eine Maschine an.",
+    "seller": { "WORKSHOP": "Werkstatt", "NEIGHBOR": "Nachbar" },
+    "usedValues": "{years} Jahre · {hours} Betriebsstunden · {damage} % Schaden",
+    "price": "Preis {price}",
+    "yourOffer": "Dein Angebot (€)",
+    "makeOffer": "Angebot abgeben",
+    "delivering": "Einig für {price} – wird geliefert",
+    "noSpace": "Kein freier Shop-Platz (Versuch {attempt} von {max}) – nächster Versuch {time}. Bitte Platz freiräumen.",
+    "ownVehicles": "Eigene Maschinen",
+    "noVehicles": "Keine eigenen Maschinen im Export.",
+    "value": "Wert im Spiel {value}",
+    "condition": "Zustand {condition} %",
+    "onSale": "Zum Verkauf angeboten",
+    "sell": "Zum Verkauf anbieten",
+    "sales": "Verkäufe",
+    "asking": "Wunschpreis {price}",
+    "bid": "bietet {price}",
+    "acceptBid": "Annehmen",
+    "demand": "Fordern",
+    "withdrawSale": "Verkauf zurückziehen",
+    "sold": "Verkauft für {price} an {name} – wird übergeben",
+    "saleHint": "Nachbarn zahlen höchstens {cap} % des Werts im Spiel. Ist etwas angehängt, gilt im Spiel: erst abkoppeln."
   },
   "authorities": {
     "taxOffice": "Finanzamt",

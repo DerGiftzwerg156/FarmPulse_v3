@@ -69,14 +69,17 @@ public class FailedInstructionService {
     private final JsonMapper json;
     private final NeighborTradeService trade;
     private final NeighborMissionService neighborMissions;
+    private final de.farmpulse.rpsim.vehicle.VehicleTradeService vehicles;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
                                     ContractBillingService billing, LeaseService lease, MaintenanceService maintenance,
                                     TrainingService training, NeighborTradeService trade,
                                     NeighborMissionService neighborMissions, JsonMapper json,
-                                    de.farmpulse.rpsim.neighbor.FarmShopService farmShop) {
+                                    de.farmpulse.rpsim.neighbor.FarmShopService farmShop,
+                                    de.farmpulse.rpsim.vehicle.VehicleTradeService vehicles) {
         this.farmShop = farmShop;
+        this.vehicles = vehicles;
         this.trade = trade;
         this.neighborMissions = neighborMissions;
         this.training = training;
@@ -148,6 +151,9 @@ public class FailedInstructionService {
         } else if (de.farmpulse.rpsim.neighbor.FarmShopService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = farmShop.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-M3
+        } else if (de.farmpulse.rpsim.vehicle.VehicleTradeService.RELATED.equals(related) && relatedId != null
+                && (ins.getType() == InstructionType.VEHICLE_SPAWN || ins.getType() == InstructionType.VEHICLE_REMOVE)) {
+            handled = vehicles.onInstructionFailed(relatedId, ins.getType(), ins.getAckMessage()); // R3-V2 / R3-V3
         } else if (NeighborMissionService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.MISSION_CREATE) {
             handled = neighborMissions.onInstructionFailed(relatedId); // R3-H5

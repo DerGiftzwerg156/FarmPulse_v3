@@ -174,8 +174,13 @@ public final class BridgeDtos {
                          List<Animal> animals, List<StorageEntry> storage) {
     }
 
+    /** Roadmap V3 R3-V3: {@code name} and {@code xmlFilename} are optional (null with an older mod). */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Vehicle(String uniqueId, Double value, Double condition) {
+    public record Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename) {
+
+        public Vehicle(String uniqueId, Double value, Double condition) {
+            this(uniqueId, value, condition, null, null);
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

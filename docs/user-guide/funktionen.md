@@ -421,6 +421,16 @@ Mod-Version.
   jedem Monatsbeginn die am stärksten abgenutzten Fahrzeuge instand – direkt im Spiel, ohne weitere Kosten. Ohne
   Vertrag meldet sie sich ab und zu mit einem Hinweis, wenn eine Maschine stark abgenutzt ist. Das Angebot forderst
   du in der Werkstatt an; kündigen kannst du jederzeit.
+- **Gebrauchtmaschinen kaufen.** Ab und zu bietet die Werkstatt (etwas teurer) oder ein Nachbar (etwas günstiger)
+  eine gebrauchte Maschine aus dem Shop des Spiels an – mit Alter, Betriebsstunden und Schaden. Der Preis folgt der
+  Gebrauchtpreis-Formel des Spiels. Du machst in bis zu drei Runden ein Angebot; nach der Einigung steht die Maschine
+  auf einem Shop-Platz und gehört dir, der Preis wird erst bei der Lieferung gebucht. Ist kein Platz frei, kommt ein
+  Hinweis im Spiel und eine Mail – räume den Platz frei, am nächsten Tag wird es noch einmal versucht (höchstens fünfmal).
+- **Eigene Maschinen verkaufen.** Unter **Eigene Maschinen** bietest du eine Maschine mit Wunschpreis an. Ein bis drei
+  Nachbarn melden sich mit einem Angebot über dem Händlerpreis des Spiels (höchstens 110 % davon); du nimmst an oder
+  forderst mehr. Nach der Einigung verschwindet die Maschine im Spiel und der Erlös wird gebucht. Sitzt jemand darin,
+  fährt ein Helfer oder hängt etwas an der Maschine, klappt es nicht – im Spiel erscheint dann „Bitte erst abkoppeln“.
+  Geleaste Maschinen kannst du nicht verkaufen.
 
 ## Handel
 

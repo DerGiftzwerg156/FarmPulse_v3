@@ -38,6 +38,9 @@ test('nachbarhandel exports npcFields, tradeStorage and storeVehicles; other sce
     { fillType: 'WHEAT', amount: 40000, freeCapacity: 60000 }]);
   const ctx = read(sim.paths.marketContext);
   assert.equal(validate('marketContext', ctx), null);
+  // R3-V3: own vehicles with name and shop XML
+  assert.equal(facts.assets.vehicles[0].name, 'Fendt 700 Vario');
+  assert.equal(facts.assets.vehicles[0].xmlFilename, 'data/vehicles/fendt/vario700/vario700.xml');
   assert.equal(ctx.storeVehicles.length, 5);
   assert.equal(ctx.storeVehicles.find((v) => v.categoryName === 'TRAILERS').motorized, undefined);
 
@@ -152,7 +155,7 @@ test('VEHICLE_SPAWN delivers a used vehicle, books the price and returns the veh
     note: 'Deutz-Fahr Serie 5' });
   sim.exportFarmFacts();
   assert.deepEqual(read(sim.paths.farmFacts).assets.vehicles.at(-1), { uniqueId: 'veh_00003', value: 52000,
-    condition: 80 });
+    condition: 80, name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml' });
 });
 
 test('VEHICLE_SPAWN fails for an unknown shop item or without money and books nothing', () => {
@@ -178,6 +181,17 @@ test('VEHICLE_REMOVE + VEHICLE_SALE removes an own vehicle; unknown or leased on
   assert.equal(acks().ins_vr.result, undefined);
   assert.equal(acks().ins_none.message, 'VEHICLE_NOT_FOUND');
   assert.deepEqual(sim.vehicles.map((v) => v.uniqueId), ['veh_00001']);
+
+  // R3-V3 fallback: a vehicle with something attached stays, nothing is booked
+  const coupled = setup();
+  coupled.sim.vehicles[0].attached = true;
+  const before = coupled.sim.balance;
+  coupled.write([{ instructionId: 'ins_c', batchId: 'c', type: 'VEHICLE_REMOVE', vehicleId: 'veh_00001' },
+    { instructionId: 'ins_cm', batchId: 'c', type: 'MONEY_TRANSACTION', amount: 1000, reason: 'VEHICLE_SALE' }]);
+  coupled.sim.processInstructions();
+  assert.equal(coupled.acks().ins_c.message, 'VEHICLE_ATTACHED');
+  assert.equal(coupled.sim.balance, before);
+  assert.equal(coupled.sim.vehicles.length, 2);
 
   const leased = setup('leasing-hof');
   leased.write([{ instructionId: 'ins_l', type: 'VEHICLE_REMOVE', vehicleId: 'veh_00101' }]);

@@ -28,6 +28,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Exportiert für den **Handel mit den Nachbarn** (Roadmap V3, R3-H): die Felder ohne Besitzer, die die NPCs des
   Spiels bewirtschaften (`npcFields`, Schalter `npcFieldExport`), Füllstand und freien Platz der eigenen Silos je
   Sorte (`tradeStorage`) und ob die Höchstzahl an Aufträgen erreicht ist (`missionLimitReached`).
+- Exportiert für **Gebrauchtmaschinen** (Roadmap V3, R3-V): einmal beim Spielstart den Fahrzeug-Katalog des Shops
+  (`storeVehicles`, Schalter `storeCatalogExport`, höchstens `storeCatalogMaxEntries` Einträge) und zu jeder eigenen
+  Maschine Name und Shop-XML (`assets.vehicles[].name`, `xmlFilename`).
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -52,9 +55,16 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     `INSUFFICIENT_STOCK` oder `UNKNOWN_FILLTYPE`, dann bucht der Batch nichts
   - `MISSION_CREATE` (Roadmap V3, R3-H5) – legt einen Auftrag (Pflügen, Steine sammeln) auf dem Feld eines Nachbarn an
     wie das Spiel selbst; die Quittung trägt die `missionId`, `FAILED` mit `NOT_AVAILABLE`, wenn das Feld nicht passt
-  - `VEHICLE_SPAWN`, `VEHICLE_REMOVE` (Roadmap V3, R3-Q1) – werden geprüft und bis zur Umsetzung von R3-V2 und R3-V3
-    mit `FAILED` / `NOT_SUPPORTED` quittiert. Eine Quittung kann
-    ein Ergebnis `result` tragen (z. B. `vehicleId`, `missionId`); es wird mit im Spielstand gespeichert
+  - `VEHICLE_SPAWN` (Roadmap V3, R3-V2) – lädt eine gebrauchte Maschine auf einen freien Shop-Platz wie ein Auftrag
+    des Spiels (`VehicleLoadingData`), setzt Alter, Betriebsstunden, Schaden und Abnutzung und bucht den Preis erst im
+    Lade-Callback selbst (`VEHICLE_PURCHASE`). Bis dahin bleibt die Anweisung offen (keine Quittung, nicht im
+    Spielstand). `FAILED` mit `NO_SPACE`, `UNKNOWN_STORE_ITEM`, `INSUFFICIENT_FUNDS` oder `LOAD_FAILED`, dann ist
+    nichts gebucht; die Quittung trägt die `vehicleId`
+  - `VEHICLE_REMOVE` (Roadmap V3, R3-V3) – entfernt eine eigene Maschine (`vehicle:delete()`), vor dem Erlös
+    `VEHICLE_SALE` desselben Batches. `FAILED` mit `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` (auch geleaste),
+    `VEHICLE_IN_USE` (jemand sitzt drin oder ein Helfer fährt) oder `VEHICLE_ATTACHED` (angehängt oder mit Anbaugerät,
+    bis zum Spieltest gilt: erst abkoppeln). Eine Quittung kann ein Ergebnis `result` tragen (z. B. `vehicleId`,
+    `missionId`); es wird mit im Spielstand gespeichert
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.
@@ -116,6 +126,8 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | `financeJournalPeriods` | `13` | Roadmap V2 R2-B1: so viele FS25-Monate behält das Buchungsjournal (`farm_facts.finances`) |
 | `fieldExportIntervalMs` | `10000` | Roadmap V2 R2-C1: so oft (Echtzeit, ms) werden die Felder neu gelesen; jeder Export dazwischen übernimmt den letzten Stand |
 | `npcFieldExport` | `true` | Roadmap V3 R3-H1: die Felder der Nachbarn (ohne Besitzer) mit exportieren (`npcFields`, gleiche Taktung wie die eigenen Felder); aus = keine Ernte-Vorräte und keine Aufträge der Nachbarn |
+| `storeCatalogExport` | `true` | Roadmap V3 R3-V1: den Fahrzeug-Katalog des Shops einmal beim Spielstart exportieren (`storeVehicles`); aus = keine Gebrauchtmaschinen-Angebote |
+| `storeCatalogMaxEntries` | `2000` | Roadmap V3 R3-V1: höchstens so viele Katalog-Einträge (nach `xmlFilename` sortiert, der Rest wird mit Log-Eintrag weggelassen) |
 | `promptsInVehicle` | `true` | Roadmap V2 R2-F2: Ja/Nein-Fragen erscheinen auch, während du im Fahrzeug sitzt; `false` = nur zu Fuß (die Taste öffnet sie trotzdem) |
 | `moneyTypeStatistics` | `{}` | Finanzstatistik je Buchungsgrund, z. B. `{ "SALARY_PAYMENT": "wagePayment" }`. Belegt ist nur `other` (FS25 `FillTrigger.lua`); andere Namen erst im Spiel prüfen (Testplan 8.18) |
 

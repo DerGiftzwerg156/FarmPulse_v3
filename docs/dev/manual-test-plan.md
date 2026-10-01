@@ -376,3 +376,16 @@ simulator scenario `duerre-sommer`) and keep FarmPulse running for at least half
 | 16.4 | *Ämter* → *Dürrehilfe* → *Antrag stellen* | 150 € per ha of the growing own fields, halved with the drought insurance, booked as *Förderung* |
 | 16.5 | Play a month with rain, or keep FarmPulse off for most of a month | the series ends (no drought from data gaps) |
 
+## 17. Used machines (Roadmap V3 R3-V)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section V. Needs the current mod and an active
+neighbour. Rows 11.6–11.9 check the game behaviour behind it.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 17.1 | Start the savegame and look at `market_context.json` | `storeVehicles` lists the shop's vehicles (with `motorized`), the log names the count; `farm_facts.json` → `assets.vehicles[]` carry `name` and `xmlFilename` |
+| 17.2 | Wait for a month start with an offer (*Werkstatt* → *Gebrauchtmaschinen*), offer the asked price | agreement mail; the machine stands on the shop place, belongs to you, the vehicle manager shows the agreed age and hours, the damage is set; the price is booked as *Maschinenkauf (gebraucht)* |
+| 17.3 | Block the shop places (park vehicles there) and agree on another offer | hint in the game and a mail "Stellen Sie erst Platz auf dem Hof frei", nothing booked; after clearing the place the machine comes the next day |
+| 17.4 | *Eigene Maschinen* → offer a tractor with an implement attached, agree with a neighbour | the sale fails with "Bitte erst abkoppeln", nothing booked; detach and offer again: the tractor disappears, the proceeds are booked as *Maschinenverkauf*, diary entry and gossip |
+| 17.5 | Agree on a sale, then load the last save without saving | the removal and the proceeds are sent again (rewind notice) |
+

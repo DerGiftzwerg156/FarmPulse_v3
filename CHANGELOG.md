@@ -31,6 +31,22 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Used machines (Roadmap V3, R3-V):**
+  - The mod exports the vehicle catalog of the shop once at the mission start (`market_context.storeVehicles`, switch
+    `storeCatalogExport`, at most `storeCatalogMaxEntries` = 2000) and the name and shop XML of every own vehicle
+    (`assets.vehicles[].name`, `xmlFilename`).
+  - Purchase: at a month start (probability 0.5, at most one open offer) the workshop (+10 %) or an active neighbour
+    (−5 %) offers a catalog machine (list price 5,000–400,000 €) with rolled age, operating hours, damage and wear;
+    the price follows the game's used-price formula. The player negotiates up to 3 rounds in the new card
+    "Gebrauchtmaschinen" of the workshop app. After the agreement `VEHICLE_SPAWN` loads the machine onto a free shop
+    place; the mod sets the used values and books the price itself in the loading callback (`VEHICLE_PURCHASE`).
+    No free place: hint in the game and a mail, a new attempt every game day (at most 5), nothing booked.
+  - Sale: "Zum Verkauf anbieten" with an asking price; 1–3 active neighbours offer 100–110 % of the game value, at most
+    110 %. After the agreement `VEHICLE_REMOVE` + `VEHICLE_SALE` as one batch; the mod removes only own, unused
+    machines with nothing attached (`VEHICLE_ATTACHED` = "Bitte erst abkoppeln"). Diary entries, gossip after a sale.
+  - Both instructions are sent again after a reload without saving. New negotiation asset type `VEHICLE`, endpoints
+    `GET /api/vehicles` and `POST /api/vehicles/{vehicleId}/sale`, config `rpsim.formulas.used-vehicle.*`, migration
+    V29. Update the mod together with the backend (an older mod refuses the two instructions; the deal is cancelled).
 - **Drought and weather risk (Roadmap V3, R3-W):**
   - Drought detection from the rain time per game month: a growth month (May to October) is dry when it rained less
     than 3 % of its observed time and at least half of it was observed; unknown months end the series. After 2 dry

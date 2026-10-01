@@ -10,14 +10,15 @@ import { TasksStore } from '../../core/state/tasks.store';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { ServiceCases } from '../contracts/service-cases';
+import { UsedVehiclesCard } from './used-vehicles-card';
 
 /**
  * Hof-Tablet app "Werkstatt" (TODO T-22, Roadmap V2 R2-A6): the maintenance contract with the workshop, the repairs
- * it did in the game and the farm's own mechanics.
+ * it did in the game and the farm's own mechanics; Roadmap V3 R3-V: used machines bought and sold.
  */
 @Component({
   selector: 'app-workshop',
-  imports: [RouterLink, TranslatePipe, Button, Card, ServiceCases],
+  imports: [RouterLink, TranslatePipe, Button, Card, ServiceCases, UsedVehiclesCard],
   template: `
     <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <div class="flex flex-col gap-4">
@@ -45,19 +46,24 @@ import { ServiceCases } from '../contracts/service-cases';
           <p class="mt-3 text-[12px] text-muted">{{ 'workshop.reports' | t }} <a routerLink="/mailbox" class="text-accent hover:underline">{{ 'nav.mailbox' | t }}</a></p>
         </app-card>
       </div>
-      <app-service-cases [caseKinds]="['REPAIR']" [contractKinds]="['MAINTENANCE']" contractsTitle="workshop.contracts" [showEmpty]="false"
-        [highlightCase]="highlightedCase()" [highlightContract]="highlightedContract()" testId="workshop-cases" />
+      <div class="flex flex-col gap-4">
+        <app-used-vehicles-card [highlightNegotiation]="highlightedNegotiation()" (changed)="tasks.reload()" />
+        <app-service-cases [caseKinds]="['REPAIR']" [contractKinds]="['MAINTENANCE']" contractsTitle="workshop.contracts" [showEmpty]="false"
+          [highlightCase]="highlightedCase()" [highlightContract]="highlightedContract()" testId="workshop-cases" />
+      </div>
     </section>
   `,
 })
 export class Workshop {
   private readonly api = inject(ApiService);
   private readonly store = inject(GameStateStore);
-  private readonly tasks = inject(TasksStore);
+  readonly tasks = inject(TasksStore);
   private readonly i18n = inject(TranslationService);
 
   readonly contract = input<string>();
   readonly case = input<string>();
+  /** R3-V: `?negotiation=` highlights a used-machine deal. */
+  readonly negotiation = input<string>();
   readonly contracts = signal<ContractView[]>([]);
   readonly employees = signal<EmployeeView[]>([]);
   readonly busy = signal(false);
@@ -69,6 +75,7 @@ export class Workshop {
   readonly mechanics = computed(() => this.employees().filter((e) => e.jobRole === 'MECHANIC' && e.status === 'ACTIVE'));
   readonly highlightedContract = computed(() => Number(this.contract()) || null);
   readonly highlightedCase = computed(() => Number(this.case()) || null);
+  readonly highlightedNegotiation = computed(() => Number(this.negotiation()) || null);
 
   constructor() {
     effect(() => {

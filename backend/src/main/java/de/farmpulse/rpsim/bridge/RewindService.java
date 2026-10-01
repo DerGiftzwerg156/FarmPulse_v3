@@ -58,8 +58,10 @@ public class RewindService {
 
     private static final Logger log = LoggerFactory.getLogger(RewindService.class);
     private static final Set<RewindStatus> OPEN = EnumSet.of(RewindStatus.AWAITING_ACK, RewindStatus.AWAITING_PLAYER);
+    /** Roadmap V3 R3-V2 / R3-V3: used machines are re-sent like farmland transfers (owner decision). */
     private static final Set<InstructionType> RESENDABLE = EnumSet.of(InstructionType.MONEY_TRANSACTION,
-            InstructionType.PRICE_EVENT, InstructionType.FARMLAND_TRANSFER);
+            InstructionType.PRICE_EVENT, InstructionType.FARMLAND_TRANSFER, InstructionType.VEHICLE_SPAWN,
+            InstructionType.VEHICLE_REMOVE);
 
     private final BridgeRewindRepository rewinds;
     private final OutboxInstructionRepository outbox;
@@ -188,6 +190,14 @@ public class RewindService {
             } else if (o.getType() == InstructionType.FARMLAND_TRANSFER) {
                 i.put("farmlandId", p.path("farmlandId").asInt());
                 i.put("direction", p.path("direction").asString(""));
+            } else if (o.getType() == InstructionType.VEHICLE_SPAWN) {
+                // R3-V2: the mod books the price itself in the loading callback
+                long price = -p.path("price").asLong(0);
+                money += price;
+                i.put("amount", price);
+                i.put("storeXmlFilename", p.path("storeXmlFilename").asString(""));
+            } else if (o.getType() == InstructionType.VEHICLE_REMOVE) {
+                i.put("vehicleId", p.path("vehicleId").asString(""));
             } else {
                 i.put("fillType", p.path("fillType").asString(""));
                 i.put("sellPoint", p.path("sellPoint").asString(""));

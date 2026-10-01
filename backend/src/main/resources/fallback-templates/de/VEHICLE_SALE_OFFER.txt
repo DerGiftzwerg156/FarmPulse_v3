@@ -1,0 +1,6 @@
+Interesse an Ihrem {{vehicleName}}
+Hallo,
+
+ich habe gehört, Sie wollen Ihren {{vehicleName}} verkaufen. Ich biete {{offer}} €. Das Angebot gilt {{validDays}} Tage – antworten können Sie in der App „Werkstatt“.
+
+{{characterName}}

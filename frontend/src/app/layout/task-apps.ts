@@ -66,6 +66,7 @@ export function contractAppId(kind: string): string {
 export function taskAppId(t: TaskView): string {
   if (t.type === 'CASE') return caseAppId(t.kind ?? '');
   if (t.type === 'CONTRACT_OFFER') return contractAppId(t.kind ?? '');
+  if (t.type === 'NEGOTIATION' && t.negotiation?.assetType === 'VEHICLE') return known('workshop'); // R3-V
   return known(TYPE_APP[t.type] ?? FALLBACK_APP);
 }
 

@@ -35,6 +35,26 @@ function RPSimMarketContext.buildStoreVehicles(raw)
     return list
 end
 
+--- Roadmap V3 R3-V1: the catalog sorted by xmlFilename and cut to maxEntries. Returns the list and the number of
+-- entries left out.
+function RPSimMarketContext.capStoreVehicles(raw, maxEntries)
+    local list = {}
+    for _, v in ipairs(raw or {}) do
+        if type(v) == "table" and type(v.xmlFilename) == "string" then
+            list[#list + 1] = v
+        end
+    end
+    table.sort(list, function(a, b) return a.xmlFilename < b.xmlFilename end)
+    local dropped = 0
+    if maxEntries ~= nil and #list > maxEntries then
+        dropped = #list - maxEntries
+        for i = #list, maxEntries + 1, -1 do
+            list[i] = nil
+        end
+    end
+    return list, dropped
+end
+
 --- raw: { savegameId, mapName, sellPoints = { {id, name, acceptedFillTypes = {..}} }, fillTypes = {..},
 --         farmlands = { {farmlandId, hectares, price, ownerFarmId, showOnFarmlandsScreen, defaultFarmProperty,
 --                      npc = {index, name, title}} },

@@ -164,6 +164,13 @@ public enum NarrationEventType {
     DROUGHT_AID_OFFER,
     DROUGHT_INSURANCE_OFFER,
     DROUGHT_INSURANCE_PAYOUT,
+    // Roadmap V3 R3-V: used machines
+    VEHICLE_OFFER,
+    VEHICLE_SALE_OFFER,
+    VEHICLE_DEAL_AGREED,
+    VEHICLE_NO_SPACE,
+    VEHICLE_DEAL_FAILED,
+    VEHICLE_SOLD_GOSSIP,
     // conversation
     REPLY,
     CALL_CONVERSATION

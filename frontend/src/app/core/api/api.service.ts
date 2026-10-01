@@ -212,6 +212,13 @@ export class ApiService {
   sellOffer(farmlandId: number, askingPrice: number): Observable<M.NegotiationView[]> {
     return this.post(`/farmlands/${farmlandId}/sell-offer`, { askingPrice });
   }
+  /** Roadmap V3 R3-V: own machines and used-machine deals; offers go through offer / withdraw. */
+  vehicles(): Observable<M.VehiclesView> {
+    return this.get('/vehicles');
+  }
+  offerVehicleForSale(vehicleId: string, askingPrice: number): Observable<M.VehicleDealView> {
+    return this.post(`/vehicles/${encodeURIComponent(vehicleId)}/sale`, { askingPrice });
+  }
   negotiations(): Observable<M.NegotiationView[]> {
     return this.get('/negotiations');
   }

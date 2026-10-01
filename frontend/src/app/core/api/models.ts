@@ -543,6 +543,50 @@ export interface NegotiationView {
   offers: OfferView[];
 }
 
+/** Roadmap V3 R3-V: an own machine of the latest export; saleDealId = a running sale. */
+export interface OwnVehicleView {
+  uniqueId: string;
+  name: string | null;
+  value: number;
+  condition: number | null;
+  saleDealId: number | null;
+}
+
+export interface VehicleDealView {
+  id: number;
+  direction: 'BUY' | 'SELL';
+  status: 'OPEN' | 'AGREED' | 'DONE' | 'FAILED' | 'ENDED' | string;
+  sellerKind: 'WORKSHOP' | 'NEIGHBOR' | null;
+  character: CharacterRef | null;
+  vehicleName: string;
+  categoryName: string | null;
+  listPrice: number | null;
+  ageMonths: number | null;
+  operatingHours: number | null;
+  damage: number | null;
+  wear: number | null;
+  gamePrice: number | null;
+  basePrice: number;
+  askingPrice: number | null;
+  finalPrice: number | null;
+  vehicleId: string | null;
+  attempts: number;
+  nextAttemptGameTime: number | null;
+  failureReason: string | null;
+  createdGameTime: number;
+  closedGameTime: number | null;
+  negotiations: NegotiationView[];
+}
+
+export interface VehiclesView {
+  enabled: boolean;
+  maxRounds: number;
+  saleCapPercent: number;
+  spawnMaxAttempts: number;
+  vehicles: OwnVehicleView[];
+  deals: VehicleDealView[];
+}
+
 export interface OfferResultView {
   result: string;
   counterAmount: number | null;

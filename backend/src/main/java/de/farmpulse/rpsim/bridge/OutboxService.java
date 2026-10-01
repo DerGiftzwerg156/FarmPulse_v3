@@ -182,6 +182,38 @@ public class OutboxService {
         return List.of(transfer, money);
     }
 
+    /**
+     * Roadmap V3 R3-V2: a used machine delivered on a shop place. Not in a batch - loading is asynchronous, the mod
+     * books {@code -price} itself in the loading callback and acknowledges with result.vehicleId.
+     */
+    @Transactional
+    public OutboxInstruction vehicleSpawn(Savegame sg, String storeXmlFilename, int ageMonths, int operatingHours,
+                                          double damage, double wear, long price, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("storeXmlFilename", storeXmlFilename);
+        p.put("ageMonths", ageMonths);
+        p.put("operatingHours", operatingHours);
+        p.put("damage", damage);
+        p.put("wear", wear);
+        p.put("price", price);
+        p.put("moneyReason", MoneyReason.VEHICLE_PURCHASE.name());
+        return enqueue(sg, InstructionType.VEHICLE_SPAWN, p, null, null, related);
+    }
+
+    /**
+     * Roadmap V3 R3-V3: an own machine sold to a neighbour - VEHICLE_REMOVE first, then the proceeds (VEHICLE_SALE) in
+     * the same batch, so a refused removal books nothing.
+     */
+    @Transactional
+    public List<OutboxInstruction> vehicleSale(Savegame sg, String vehicleId, long price, String note, Related related) {
+        String batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("vehicleId", vehicleId);
+        OutboxInstruction remove = enqueue(sg, InstructionType.VEHICLE_REMOVE, p, batchId, null, related);
+        OutboxInstruction money = money(sg, price, MoneyReason.VEHICLE_SALE, note, related, batchId, null);
+        return List.of(remove, money);
+    }
+
     /** Roadmap V3 R3-H5: a real contract of the game on the field of an NPC farmland (result.missionId in the ack). */
     @Transactional
     public OutboxInstruction missionCreate(Savegame sg, String missionType, int farmlandId, Related related) {
