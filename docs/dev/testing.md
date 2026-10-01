@@ -121,6 +121,11 @@ as ack `result`; `BridgeSyncIntegrationTest.ackResultIsStoredWithTheInstruction`
 blocks) and `FailedInstructionTest` (notice "Mod aktualisieren") cover the backend side. The mod covers normalisation,
 validation, `NOT_SUPPORTED` and `result` in `test_farm_facts.lua`, `test_market_context.lua`, `test_instructions.lua`
 and `test_persistence.lua`, the simulator the execution in `test/roadmap-v3.test.js`.
+Roadmap V3 R3-M (market and marketing): `MarketingTest` covers the price alarm (best price, hint, mail, once,
+re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_EVENT / FIXED` held back until the
+delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and
+the farm shop (order from the own silos at the farm-shop price, delivery batch, reputation, refusal factor, failed
+transfer). Frontend: `features/market/marketing.spec.ts`. In the game: manual test plan section 15.
 Roadmap V3 R3-K (credit and financial planning): `CreditPlanningTest` (backend) covers coverage, discount and bonus,
 the required Grundschuld with the fields the bank names, sale consent with the repayment in the sale batch and its
 reversal, the claim after a menu sale (overdue, credit block, payment), the realisation in the harsh mode, the release

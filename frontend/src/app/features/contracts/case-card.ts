@@ -127,6 +127,18 @@ import { Button } from '../../shared/ui/button';
         }
         <p class="mt-1 text-[11px] text-muted">{{ 'trade.missionHint' | t }}</p>
       }
+      @if (c().kind === 'FARM_SHOP_ORDER') {
+        <div class="mt-1 text-[12px] text-text" data-testid="farm-shop-order">{{ 'trade.shopText' | t: { name: c().character?.name ?? '–', quantity: c().quantity, fillType: (c().reference | label: 'fillType'), amount: (c().offerAmount | money), unit: (c().costAmount | money) } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'trade.deliver' | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        } @else if (c().status === 'IN_PROGRESS') {
+          <app-badge variant="positive">{{ 'trade.inTransfer' | t }}</app-badge>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'trade.shopHint' | t }}</p>
+      }
       @if (c().kind === 'COLLATERAL_CLAIM') {
         <div class="mt-1 text-[12px] text-text" data-testid="collateral-claim">{{ 'credit.claimText' | t: { amount: (c().offerAmount | money), field: c().farmlandId, purpose: c().title ?? '–' } }}</div>
         @if (c().resolution === 'OVERDUE') {

@@ -149,5 +149,9 @@
         <p class="mt-3 fp-label">{{ 'market.past' | t: { n: pastEvents().length } }}</p>
       }
     </app-card>
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <app-price-alarm-card [prices]="prices() ?? []" />
+      <app-forward-contract-card [prices]="prices() ?? []" />
+    </div>
   }
 </section>

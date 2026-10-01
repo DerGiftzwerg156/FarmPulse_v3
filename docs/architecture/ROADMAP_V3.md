@@ -474,7 +474,8 @@ Monatsanfangs und den voraussichtlichen Kontostand.
 - [x] Neue Ansicht in der Bank-App: die nächsten 12 FS25-Monate mit allen **bekannten** Posten:
   - Gehälter, Kreditraten (Restlaufzeit aus `LoanService`), Verträge, Pacht (L) und Altenteil,
   - Steuervorauszahlungen in den Perioden 1, 4, 7 und 10 (`CalendarPlanService.PREPAYMENT_PERIODS`),
-  - fällige Vorkontrakte (M2). Kommen mit Abschnitt M dazu, ebenso Pachteinnahmen (L).
+  - fällige Vorkontrakte (M2). Seit Abschnitt M als erwartete Einnahme im Liefermonat; Pachteinnahmen (L) folgen mit
+    Abschnitt L.
 - [x] Einnahmen als klar gekennzeichnete **Schätzung**: Durchschnitt des operativen Ergebnisses je Kalendermonat aus
   dem Journal (R2-B) des Vorjahres, sonst der Schnitt der vorhandenen Monate. Die schon bekannten Posten werden
   herausgerechnet, damit nichts doppelt zählt.
@@ -513,40 +514,53 @@ Einladung zum Jahresgespräch.
 
 ## M – Markt und Vermarktung
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): höchstens 10 aktive Preisalarme, „beliebig“
+= bester Preis aller Verkaufsstellen, Hinweis 1 Spieltag gültig. Vorkontrakt: Festpreis = aktueller Preis × (1 − 2 %
+je Monat Vorlauf), Liefermonat 1–12 Monate voraus, Lieferfenster der ganze Liefermonat, 1.000–200.000 l, höchstens 5
+offene, kein Rücktritt, Abschluss nur über das Formular (Preis anfragen, dann abschließen). Strafe 25 % der Fehlmenge
+zum Festpreis, Vertrauen der Landhändlerin −5 / +3. Hofladen: Kartoffeln, Weizen, Hafer, Zuckerrüben, Raps zum besten
+Marktpreis × 1,3, 200–2.000 l (höchstens 20 % des Bestands), höchstens 2 Bestellungen je Monat (Wahrscheinlichkeit
+0,4), 3 Tage Antwortfrist, Bestellungen in der App „Handel“. Ein neuer Anlass für Ja/Nein-Fragen im Spiel ist
+standardmäßig aus. Der Mod bleibt unverändert: `NOTIFICATION`, `PRICE_EVENT` / `FIXED` und `STORAGE_TRANSFER` gibt
+es schon.
+
 ### R3-M1 Preisalarm
 
-- [ ] In der Agrarbörse einen Alarm anlegen: Fruchtsorte, Verkaufsstelle (oder „beliebig“), Schwelle, Richtung
-  (über/unter).
-- [ ] Geprüft wird bei jedem Eingang von `farm_facts.prices`. Wird die Schwelle erreicht, blendet das Spiel einen
+- [x] In der Agrarbörse einen Alarm anlegen: Fruchtsorte, Verkaufsstelle (oder „beliebig“), Schwelle, Richtung
+  (über/unter). Umgesetzt: Karte „Preisalarm“, `market/PriceAlarmService`, Tabelle `price_alarm` (Migration V27).
+- [x] Geprüft wird bei jedem Eingang von `farm_facts.prices`. Wird die Schwelle erreicht, blendet das Spiel einen
   Hinweis ein (`NOTIFICATION`, Taste aus F3 nicht nötig). Dazu kommt eine kurze Mail der Landhändlerin
   (`LAND_AGENT`) mit Menge im Silo und aktuellem Wert.
-- [ ] Ein Alarm feuert einmal und schaltet sich dann ab (erneut aktivierbar). Höchstzahl je Spielstand in der Konfig.
+- [x] Ein Alarm feuert einmal und schaltet sich dann ab (erneut aktivierbar). Höchstzahl je Spielstand in der Konfig.
 
 **Beleg:** – (`NOTIFICATION` und `prices` gibt es seit V1).
 
 ### R3-M2 Vorkontrakt (Ernte vorab verkaufen)
 
-- [ ] Formular in der Agrarbörse: Fruchtsorte, Verkaufsstelle, Menge, Liefermonat. Das Backend nennt den Festpreis:
-  aktueller Preis × Terminfaktor (Konfig, je Monat Vorlauf ein Ab- oder Aufschlag).
-- [ ] Umsetzung mit der vorhandenen Anweisung `PRICE_EVENT` / `FIXED` (`fixedPrice`, `maxQuantity`,
+- [x] Formular in der Agrarbörse: Fruchtsorte, Verkaufsstelle, Menge, Liefermonat. Das Backend nennt den Festpreis:
+  aktueller Preis × Terminfaktor (Konfig, je Monat Vorlauf ein Ab- oder Aufschlag). Umgesetzt: Karte „Vorkontrakt“,
+  `market/ForwardContractService`, Tabelle `forward_contract`.
+- [x] Umsetzung mit der vorhandenen Anweisung `PRICE_EVENT` / `FIXED` (`fixedPrice`, `maxQuantity`,
   `deadlineGameTime`, Start über `gameTimeEarliest` = Beginn des Liefermonats). Die gelieferte Menge meldet der Mod
   schon heute in `contractReports` (`deliveredQuantity`).
-- [ ] Nach der Frist: Fehlmenge × Festpreis × Strafanteil (Konfig) als `MONEY_TRANSACTION` `CONTRACT_PENALTY`, Mail des
+- [x] Nach der Frist: Fehlmenge × Festpreis × Strafanteil (Konfig) als `MONEY_TRANSACTION` `CONTRACT_PENALTY`, Mail des
   Abnehmers, Vertrauensverlust. Volle Lieferung → Vertrauensbonus.
-- [ ] Je Verkaufsstelle und Fruchtsorte nur ein aktiver Festpreis, denn `FIXED` hat Vorrang vor `MULTIPLIER`.
+- [x] Je Verkaufsstelle und Fruchtsorte nur ein aktiver Festpreis, denn `FIXED` hat Vorrang vor `MULTIPLIER`.
   `MarketEventEngine` erzeugt dort in der Zeit kein `SPECIAL_OFFER`.
-- [ ] Die Liquiditätsplanung (K2) zeigt die erwartete Einnahme.
+- [x] Die Liquiditätsplanung (K2) zeigt die erwartete Einnahme als eigenen, als „erwartet“ markierten Posten im
+  Liefermonat.
 
 **Beleg:** – (`PRICE_EVENT` / `FIXED` und `contractReports` gibt es seit V1, `docs/dev/bridge-protocol.md`).
 
 ### R3-M3 Hofladen (Direktvermarktung ans Dorf)
 
-- [ ] Dorfbewohner (`VILLAGER`) bestellen in Abständen kleine Mengen aus deinem Silo-Bestand, zum Hofladenpreis:
+- [x] Dorfbewohner (`VILLAGER`) bestellen in Abständen kleine Mengen aus deinem Silo-Bestand, zum Hofladenpreis:
   bester Marktpreis × Aufschlag (Konfig). Welche Fruchtsorten gefragt sind, steht in einer Konfigliste. Angeboten
   wird nur, was laut `tradeStorage` in eigenen Silos liegt.
-- [ ] Annahme per Knopf, Ausführung wie H4: `STORAGE_TRANSFER OUT` + `MONEY_TRANSACTION` `GOODS_SALE`.
-- [ ] Wirkung auf das Dorf-Ansehen (`PublicActionType`, gedeckelt). Wer oft ablehnt, bekommt seltener Bestellungen.
-- [ ] Werte unter `rpsim.formulas.farm-shop.*`.
+- [x] Annahme per Knopf, Ausführung wie H4: `STORAGE_TRANSFER OUT` + `MONEY_TRANSACTION` `GOODS_SALE`.
+- [x] Wirkung auf das Dorf-Ansehen (`PublicActionType`, gedeckelt). Wer oft ablehnt, bekommt seltener Bestellungen.
+- [x] Werte unter `rpsim.formulas.farm-shop.*`. Umgesetzt: `neighbor/FarmShopService`, Fall `FARM_SHOP_ORDER`,
+  Bereich „Hofladen“ in der App „Handel“.
 
 **Beleg:** ✅ wie R3-H4 (Silo-Lager über `storage:getFillLevel` / `setFillLevel`).
 

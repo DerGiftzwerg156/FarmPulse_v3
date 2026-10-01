@@ -154,6 +154,9 @@ public class RpsimProperties {
         private Contractor contractor = new Contractor();
         private NeighborTrade neighborTrade = new NeighborTrade();
         private NeighborMissions neighborMissions = new NeighborMissions();
+        private PriceAlarm priceAlarm = new PriceAlarm();
+        private ForwardContract forwardContract = new ForwardContract();
+        private FarmShop farmShop = new FarmShop();
         private Finance finance = new Finance();
         private LiquidityPlan liquidityPlan = new LiquidityPlan();
         private Mechanic mechanic = new Mechanic();
@@ -952,6 +955,58 @@ public class RpsimProperties {
      * Roadmap V3 R3-H5: neighbours ask for help with real contracts of the game on their own fields (owner decisions,
      * placeholders). The game pays the reward; the tool adds a bonus on success and moves trust.
      */
+    /** Roadmap V3 R3-M1: price alarms in the Agrarbörse (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class PriceAlarm {
+        /** Active alarms per savegame. */
+        private int maxActive = 10;
+        /** Game days the in-game hint stays valid (the mod drops it when processed later). */
+        private double notificationDays = 1;
+    }
+
+    /** Roadmap V3 R3-M2: forward contracts - harvest sold in advance at a fixed price (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class ForwardContract {
+        /** Fixed price = current price x (1 + factor-per-month x months of lead); negative = discount. */
+        private double factorPerMonth = -0.02;
+        private int minLeadMonths = 1;
+        private int maxLeadMonths = 12;
+        private long minQuantity = 1000;
+        private long maxQuantity = 200000;
+        private long quantityStep = 1000;
+        private int maxOpen = 5;
+        /** Penalty = shortfall x fixed price x share, booked as CONTRACT_PENALTY. */
+        private double penaltyShare = 0.25;
+        /** Trust of the land agent: shortfall / full delivery. */
+        private double shortfallTrustDelta = -5;
+        private double fulfilledTrustDelta = 3;
+    }
+
+    /** Roadmap V3 R3-M3: farm shop - villagers order small amounts from the own silos (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class FarmShop {
+        private boolean enabled = true;
+        /** Fill types the villagers ask for (only what lies in own silos is ordered). */
+        private List<String> fillTypes = new ArrayList<>(List.of("POTATO", "WHEAT", "OAT", "SUGARBEET", "CANOLA"));
+        /** Farm-shop price = best market price x markup. */
+        private double markup = 1.3;
+        private long amountMin = 200;
+        private long amountMax = 2000;
+        private long amountStep = 100;
+        /** At most this share of the stock of a fill type. */
+        private double maxShare = 0.2;
+        private int maxOrdersPerMonth = 2;
+        /** Chance per possible order and month, multiplied by the refusal factor of the savegame. */
+        private double probability = 0.4;
+        private double answerDays = 3;
+        /** Each refused or ignored order multiplies the factor with this; a delivered order divides by it (max 1). */
+        private double refusalFactor = 0.75;
+        private double minFactor = 0.1;
+        /** Village reputation per delivered order, at most reputation-max-per-year times per FS25 year. */
+        private double reputationDelta = 1;
+        private int reputationMaxPerYear = 4;
+    }
+
     @Getter @Setter
     public static class NeighborMissions {
         /** Tool names of the evidenced contract types (the mod maps them to PlowMission / StonePickMission). */

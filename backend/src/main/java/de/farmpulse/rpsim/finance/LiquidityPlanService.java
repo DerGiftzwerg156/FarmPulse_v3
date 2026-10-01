@@ -51,7 +51,8 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>Monthly: the bank advisor writes once when the balance falls below zero within advisor-warning-months (again
  *   only after that month has passed or the plan has recovered).</li>
  * </ul>
- * Nothing here books anything; lease income (R3-L) and forward contracts (R3-M2) join once those sections exist.
+ * R3-M2: the expected income of an open forward contract is its own posting in the delivery month, marked as
+ * estimate. Nothing here books anything; lease income (R3-L) joins once that section exists.
  */
 @Service
 public class LiquidityPlanService {
@@ -70,11 +71,14 @@ public class LiquidityPlanService {
     private final CharacterLookup lookup;
     private final NarrationRequestService narration;
     private final RpsimProperties props;
+    private final de.farmpulse.rpsim.market.ForwardContractService forwardContracts;
 
     public LiquidityPlanService(SavegameRepository savegames, FactsService facts, FinanceJournalService journal,
                                 EmployeeRepository employees, LoanRepository loans, ContractRepository contracts,
                                 FamilyService family, TaxService tax, GameTime gameTime, CharacterLookup lookup,
-                                NarrationRequestService narration, RpsimProperties props) {
+                                NarrationRequestService narration, RpsimProperties props,
+                                de.farmpulse.rpsim.market.ForwardContractService forwardContracts) {
+        this.forwardContracts = forwardContracts;
         this.savegames = savegames;
         this.facts = facts;
         this.journal = journal;
@@ -170,6 +174,13 @@ public class LiquidityPlanService {
                 postings.add(new Posting("RETIREMENT", null, -retirement, false));
             }
             long fixed = -postings.stream().mapToLong(Posting::amount).sum();
+            // R3-M2: expected income of a forward contract delivered in this month (owner decision: own posting, marked)
+            for (var fc : forwardContracts.open(sg)) {
+                if (anchor.monthIndex(fc.getDeliveryStartGameTime()) == idx) {
+                    postings.add(new Posting("FORWARD_CONTRACT", fc.getFillType(),
+                            Math.round(fc.getQuantity() / 1000.0 * fc.getFixedPrice()), true));
+                }
+            }
             if (hasCalendar && PREPAYMENT_PERIODS.contains(period)) {
                 boolean afterYearChange = y > year;
                 Optional<Long> amount = prepayment(sg, year, afterYearChange);

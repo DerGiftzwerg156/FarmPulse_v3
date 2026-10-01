@@ -31,6 +31,22 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Market and marketing (Roadmap V3, R3-M):**
+  - Price alarm in the Agrarbörse: fill type, sell point (or any = best price), direction and price per 1,000 l. It is
+    checked on every price import; when it fires, the game shows a hint and the land agent writes with the stock and
+    its value. Each alarm fires once and can be activated again; at most 10 are active.
+  - Forward contract: fixed price = current price × (1 − 2 % per month of lead) for a delivery month 1–12 months
+    ahead, 1,000–200,000 l, at most 5 open. It runs as the existing `PRICE_EVENT / FIXED` instruction during the
+    delivery month; after the reported delivery a shortfall costs 25 % of its value at the fixed price
+    (`CONTRACT_PENALTY`). Trust of the land agent goes −5 after a shortfall and +3 after a full delivery. The expected
+    income appears in the liquidity plan. The event engine creates no special offer on a pair with an open forward
+    contract.
+  - Farm shop in the app "Handel": villagers order 200–2,000 l of potatoes, wheat, oat, sugar beet or canola from the
+    own silos at the best market price × 1.3 (at most 2 orders per month). Delivering books `STORAGE_TRANSFER OUT` +
+    `GOODS_SALE` and raises village reputation (`FARM_SHOP`, at most 4 per year). Refusals make orders rarer. A new
+    in-game question occasion is off by default.
+  - Endpoints `/api/price-alarms`, `/api/forward-contracts` (with `/quote`); config `rpsim.formulas.price-alarm.*`,
+    `forward-contract.*`, `farm-shop.*`; migration V27. No mod change.
 - **Credit and financial planning (Roadmap V3, R3-K):**
   - Collateral (Grundschuld): own fields (not leased) can secure a credit application; collateral value = field price
     × 0.6. The coverage lowers the rate (up to 1.0 percentage point) and eases the metric "loan too large for the

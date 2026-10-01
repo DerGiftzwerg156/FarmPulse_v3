@@ -1,0 +1,7 @@
+Vorkontrakt erfüllt: {{fillType}}
+Guten Tag,
+
+Ihr Vorkontrakt mit {{sellPoint}} ist vollständig erfüllt: {{delivered}} Liter {{fillType}} zum Festpreis von {{fixedPrice}} € je 1.000 Liter. Auf Sie ist Verlass – gern wieder.
+
+Viele Grüße
+{{characterName}}

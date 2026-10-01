@@ -294,6 +294,10 @@ public class PromptService {
                         s.getId(), "Arbeit beim Nachbarn", from + " bittet dich: " + labels.label(s.getReference())
                         + " auf Feld " + s.getFarmlandId() + " (Bonus " + money(s.getOfferAmount()) + ").",
                         "Zusagen", "Absagen", deadline));
+                // Roadmap V3 R3-M3 (owner decision: own occasion, default off)
+                case FARM_SHOP_ORDER -> list.add(new Candidate(PromptKind.FARM_SHOP, "CASE:" + s.getId(), s.getId(),
+                        "Hofladen", from + " bestellt " + s.getQuantity() + " l " + labels.label(s.getReference())
+                        + " für " + money(s.getOfferAmount()) + ".", "Liefern", "Ablehnen", deadline));
                 default -> {
                     // other cases are decided in the browser only
                 }
@@ -397,7 +401,7 @@ public class PromptService {
                 }
                 actions.acceptCase(sg, id);
             }
-            case COMPENSATION_CLAIM, INVITATION, NEIGHBOR_TRADE, NEIGHBOR_MISSION -> {
+            case COMPENSATION_CLAIM, INVITATION, NEIGHBOR_TRADE, NEIGHBOR_MISSION, FARM_SHOP -> {
                 if (yes) {
                     actions.acceptCase(sg, id);
                 } else {

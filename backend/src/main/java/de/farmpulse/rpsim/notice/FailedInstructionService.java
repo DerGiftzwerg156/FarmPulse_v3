@@ -56,6 +56,7 @@ public class FailedInstructionService {
     private static final Logger log = LoggerFactory.getLogger(FailedInstructionService.class);
 
     private final OutboxInstructionRepository outbox;
+    private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
     private final SavegameRepository savegames;
     private final LoanService loans;
     private final PayrollScheduler payroll;
@@ -73,7 +74,9 @@ public class FailedInstructionService {
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
                                     ContractBillingService billing, LeaseService lease, MaintenanceService maintenance,
                                     TrainingService training, NeighborTradeService trade,
-                                    NeighborMissionService neighborMissions, JsonMapper json) {
+                                    NeighborMissionService neighborMissions, JsonMapper json,
+                                    de.farmpulse.rpsim.neighbor.FarmShopService farmShop) {
+        this.farmShop = farmShop;
         this.trade = trade;
         this.neighborMissions = neighborMissions;
         this.training = training;
@@ -142,6 +145,9 @@ public class FailedInstructionService {
         } else if (NeighborTradeService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = trade.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-H3 / R3-H4
+        } else if (de.farmpulse.rpsim.neighbor.FarmShopService.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.STORAGE_TRANSFER) {
+            handled = farmShop.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-M3
         } else if (NeighborMissionService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.MISSION_CREATE) {
             handled = neighborMissions.onInstructionFailed(relatedId); // R3-H5

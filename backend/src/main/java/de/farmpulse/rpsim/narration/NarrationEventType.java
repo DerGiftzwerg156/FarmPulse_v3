@@ -153,6 +153,11 @@ public enum NarrationEventType {
     ANNUAL_REVIEW_OFFER,
     ANNUAL_REVIEW_NEUTRAL,
     ANNUAL_REVIEW_SERIOUS,
+    // Roadmap V3 R3-M: price alarm, forward contracts, farm shop
+    PRICE_ALARM,
+    FORWARD_CONTRACT_FULFILLED,
+    FORWARD_CONTRACT_SHORTFALL,
+    FARM_SHOP_ORDER,
     // conversation
     REPLY,
     CALL_CONVERSATION

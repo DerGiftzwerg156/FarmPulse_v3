@@ -54,6 +54,9 @@ public enum TrustReason {
     COLLATERAL_SOLD,
     /** Roadmap V3 R3-K1: the claimed Sondertilgung after such a sale stayed unpaid. */
     COLLATERAL_CLAIM_OVERDUE,
+    /** Roadmap V3 R3-M2: forward contract delivered in full / with a shortfall. */
+    FORWARD_CONTRACT_FULFILLED,
+    FORWARD_CONTRACT_SHORTFALL,
     INITIAL,
     OTHER
 }

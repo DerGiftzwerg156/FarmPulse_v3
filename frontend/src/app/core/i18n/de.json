@@ -457,7 +457,8 @@
       "NEIGHBOR_MISSION": "Arbeit beim Nachbarn",
       "COLLATERAL_CLAIM": "Forderung nach Feldverkauf",
       "ANNUAL_REVIEW": "Jahresgespräch",
-      "ANNUAL_REVIEW_OFFER": "Zinssenkung"
+      "ANNUAL_REVIEW_OFFER": "Zinssenkung",
+      "FARM_SHOP_ORDER": "Hofladen-Bestellung"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -646,7 +647,8 @@
       "TAX_BILL": "Steuerbescheide bezahlen",
       "TAX_ADVISOR": "Angebot der Steuerberatung annehmen oder ablehnen",
       "NEIGHBOR_TRADE": "Handel mit Nachbarn",
-      "NEIGHBOR_MISSION": "Aufträge der Nachbarn"
+      "NEIGHBOR_MISSION": "Aufträge der Nachbarn",
+      "FARM_SHOP": "Bestellungen für den Hofladen"
     },
     "neighborRole": {
       "DAIRY": "Milchviehbetrieb",
@@ -662,7 +664,8 @@
       "LOAN": "Kreditrate",
       "CONTRACT": "Vertrag",
       "RETIREMENT": "Altenteil",
-      "TAX_PREPAYMENT": "Steuervorauszahlung"
+      "TAX_PREPAYMENT": "Steuervorauszahlung",
+      "FORWARD_CONTRACT": "Vorkontrakt (erwartet)"
     }
   },
   "onboarding": {
@@ -1056,7 +1059,43 @@
     "participate": "Kontrakt annehmen",
     "subsidy": "Förderbetrag: {amount}",
     "until": "Gilt bis {at}",
-    "past": "{n} vergangene Ereignisse"
+    "past": "{n} vergangene Ereignisse",
+    "alarm": {
+      "title": "Preisalarm",
+      "fillType": "Sorte",
+      "sellPoint": "Verkaufsstelle",
+      "any": "beliebig (bester Preis)",
+      "direction": "Richtung",
+      "ABOVE": "über",
+      "BELOW": "unter",
+      "threshold": "Preis je 1.000 l",
+      "create": "Alarm anlegen",
+      "fired": "ausgelöst: {price} am {at}",
+      "reactivate": "Wieder aktivieren",
+      "active": "aktiv",
+      "delete": "Löschen",
+      "none": "Noch kein Preisalarm.",
+      "hint": "Erreicht der Preis die Schwelle, erscheint ein Hinweis im Spiel und die Landhändlerin schreibt dir. Ein Alarm meldet sich einmal, danach kannst du ihn wieder aktivieren. Höchstens {max} aktive Alarme."
+    },
+    "forward": {
+      "title": "Vorkontrakt",
+      "quantity": "Menge (Liter)",
+      "lead": "Liefermonat",
+      "months": "in {n} Monat(en)",
+      "preview": "Festpreis anfragen",
+      "quote": "Festpreis {price} je 1.000 l (heute {base}) für {quantity} l, Lieferung im {month}. Erwartete Einnahme: {income}.",
+      "conclude": "Abschließen",
+      "window": "Lieferung von {from} bis {to}",
+      "result": "{delivered} von {quantity} l geliefert",
+      "penalty": "Vertragsstrafe {amount}",
+      "none": "Noch kein Vorkontrakt.",
+      "status": {
+        "OPEN": "offen",
+        "FULFILLED": "erfüllt",
+        "SHORTFALL": "Fehlmenge"
+      },
+      "hint": "Der Festpreis gilt den ganzen Liefermonat an dieser Verkaufsstelle ({factor} % je Monat Vorlauf). Fehlt am Ende Ware, kostet das {penalty} % der Fehlmenge zum Festpreis. Kein Rücktritt, höchstens {max} offene Vorkontrakte."
+    }
   },
   "village": {
     "reputation": "Ansehen im Dorf",
@@ -1435,7 +1474,12 @@
     "missionHint": "Nach der Zusage steht der Auftrag im Auftragsmenü des Spiels, mit dem Nachbarn als Auftraggeber. Die Vergütung zahlt das Spiel.",
     "contactLink": "Handel & Arbeit mit diesem Nachbarn →",
     "requested": "{name} hat geantwortet – sein Angebot steht unten bei den Angeboten.",
-    "workOffered": "{name} hat Arbeit für dich – seine Anfrage steht unten bei den Aufträgen."
+    "workOffered": "{name} hat Arbeit für dich – seine Anfrage steht unten bei den Aufträgen.",
+    "farmShop": "Hofladen",
+    "farmShopIntro": "Leute aus dem Dorf bestellen kleine Mengen aus deinen Silos zum Hofladenpreis. Lieferst du, steigt dein Ansehen im Dorf; wer oft ablehnt, bekommt seltener Bestellungen.",
+    "shopText": "{name} bestellt {quantity} l {fillType} für {amount} ({unit} je 1.000 l).",
+    "deliver": "Liefern",
+    "shopHint": "Die Ware wird aus deinen Silos abgebucht, das Geld gutgeschrieben."
   },
   "credit": {
     "collateral": "Sicherheit (Grundschuld)",

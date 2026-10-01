@@ -1,0 +1,6 @@
+Bestellung für den Hofladen
+Hallo,
+
+ich hätte gern {{amount}} Liter {{fillType}} aus deinem Hofladen – {{price}} € ({{unitPrice}} € je 1.000 Liter) wären in Ordnung. Kannst du mir in den nächsten {{answerDays}} Tagen Bescheid geben? Das geht in der App „Handel“.
+
+{{characterName}}

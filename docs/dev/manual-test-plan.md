@@ -349,3 +349,16 @@ the current mod (booking journal and calendar).
 | 14.8 | Play into March (year change) | *Hofbericht* of the finished year in the Bank app, diary entry, invitation to the annual review (also in *Aufgaben*) |
 | 14.9 | Attend the annual review after a good year with a running loan | offer of a rate cut; accepting lowers rate and installment, the term stays |
 
+## 15. Market and marketing (Roadmap V3 R3-M)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section M. Needs the current mod, grain in an own silo
+and an active land agent and villager.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 15.1 | *Agrarbörse* → *Preisalarm*: wheat, any sell point, "über", a price just below the current best price | at the next export a hint appears in the game, the land agent's mail names the stock and its value; the alarm shows "ausgelöst" and can be activated again |
+| 15.2 | *Vorkontrakt*: wheat at one sell point, 10,000 l, next month; *Festpreis anfragen*, then *Abschließen* | the fixed price is shown before; *Bank → Liquiditätsplanung* shows the expected income in that month |
+| 15.3 | In the delivery month sell wheat at that sell point (game price menu) | the sell point pays the fixed price up to 10,000 l |
+| 15.4 | Deliver less than agreed until the month ends | contract "Fehlmenge", the penalty is booked (*Vertragsstrafe*), mail of the land agent |
+| 15.5 | Wait for a farm-shop order (*Handel* → *Hofladen*), then *Liefern* | the amount is taken from the own silo and the money booked as *Warenverkauf*; diary entry |
+

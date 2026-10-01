@@ -815,6 +815,40 @@ placeholders.
 | `rpsim.formulas.fields.hints-enabled` | `true` | Field work hints of the cooperative (harvest ready, lime, plowing); the player can also switch them off per savegame in the settings. | Roadmap V2 R2-C6 |
 | `rpsim.formulas.fields.hint-cooldown-days` | `7` | At most one hint per this many game days. | Roadmap V2 R2-C6 |
 
+## `rpsim.formulas.price-alarm` / `forward-contract` / `farm-shop` (Roadmap V3 R3-M)
+
+Price alarms and forward contracts of the Agrarbörse, the farm shop in the app "Handel". Owner decisions in
+`QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.price-alarm.max-active` | `10` | Active price alarms per savegame. | Roadmap V3 R3-M1 |
+| `rpsim.formulas.price-alarm.notification-days` | `1` | Game days the in-game hint of a fired alarm stays valid (`NOTIFICATION.expiresAtGameTime`). | Roadmap V3 R3-M1 |
+| `rpsim.formulas.forward-contract.factor-per-month` | `-0.02` | Fixed price = current price of the sell point × (1 + factor × months of lead); negative = discount. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.min-lead-months` | `1` | Earliest delivery month (months ahead). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.max-lead-months` | `12` | Latest delivery month (months ahead). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.min-quantity` | `1000` | Smallest quantity (litres). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.max-quantity` | `200000` | Largest quantity (litres). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.quantity-step` | `1000` | Quantity steps (litres). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.max-open` | `5` | Open forward contracts per savegame. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.penalty-share` | `0.25` | Penalty = shortfall × fixed price × share, booked as `CONTRACT_PENALTY`. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.shortfall-trust-delta` | `-5` | Trust of the land agent (else the cooperative) after a shortfall. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.fulfilled-trust-delta` | `3` | Trust of the land agent after a full delivery. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.farm-shop.enabled` | `true` | Villagers order from the own silos. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.fill-types` | `POTATO`, `WHEAT`, `OAT`, `SUGARBEET`, `CANOLA` | Fill types the villagers ask for; only what lies in own silos (`tradeStorage`) is ordered. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.markup` | `1.3` | Farm-shop price = best market price × markup. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.amount-min` | `200` | Smallest order (litres). | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.amount-max` | `2000` | Largest order (litres). | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.amount-step` | `100` | Order steps (litres). | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.max-share` | `0.2` | An order takes at most this share of the stock of the fill type. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.max-orders-per-month` | `2` | Possible orders per game month. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.probability` | `0.4` | Chance per possible order, × the refusal factor of the savegame. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.answer-days` | `3` | Game days to deliver or decline; unanswered counts as a refusal. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.refusal-factor` | `0.75` | Each refused or ignored order multiplies the factor by this; a delivered order divides by it (max 1). | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.min-factor` | `0.1` | Lower bound of the factor. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.reputation-delta` | `1` | Village reputation per delivered order (`PublicActionType.FARM_SHOP`) ... | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.reputation-max-per-year` | `4` | ... at most this many times per FS25 year. | Roadmap V3 R3-M3 |
+
 ## `rpsim.formulas.liquidity-plan` (Roadmap V3 R3-K2)
 
 Liquidity plan in the Bank app: the next FS25 months with the known postings at each month start (salaries, loan

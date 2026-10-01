@@ -35,13 +35,13 @@ Homescreen.
 | **Kalender** | Die nächsten Tage, Abbuchungen zum Monatsbeginn, Dorffeste, Steuertermine, Familie, Einladungen |
 | **Bank** | Kredite, Anträge und Hofbuchhaltung |
 | **Ämter** | Finanzamt (Steuern, Bescheide, Steuerberatung) und Landwirtschaftsamt (Kontrollen) |
-| **Agrarbörse** | Silo, Preise, Marktgeschehen und Kontrakte |
+| **Agrarbörse** | Silo, Preise, Marktgeschehen, Kontrakte, Preisalarm und Vorkontrakte |
 | **Versicherung** | Sturm- und Hagelversicherung, Schäden melden, Wildschaden |
 | **Personal** | Team, Helferstunden, Helfer im Spiel und Stellenausschreibungen |
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen |
 | **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl |
 | **Werkstatt** | Wartung, Wartungsvertrag und Mechaniker |
-| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn |
+| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Hofladen |
 | **Tagebuch** | Die Chronik deines Hofs |
 | **Einstellungen** | KI, Fragen im Spiel, Hinweise und Reaktionen |
 
@@ -171,7 +171,8 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   Ist der Kredit getilgt, ist die Grundschuld gelöscht. Im Ton *Hart* nimmt die Bank bei einer Fälligstellung die
   belasteten Felder und rechnet sie gegen die Restschuld; einen Überschuss bekommst du.
 - **Liquiditätsplanung:** Die nächsten 12 Monate mit allem, was schon feststeht: Gehälter, Kreditraten, Verträge,
-  Pacht, Altenteil und Steuervorauszahlungen. Dazu kommen die Einnahmen als **Schätzung** aus dem gleichen Monat des
+  Pacht, Altenteil und Steuervorauszahlungen, dazu die erwartete Einnahme deiner Vorkontrakte im Liefermonat. Dazu
+  kommen die Einnahmen als **Schätzung** aus dem gleichen Monat des
   Vorjahres. Fällt dein Kontostand in einem Monat unter null oder unter einen Monat Fixkosten, steht das oben. Ein Klick
   auf einen Monat zeigt die einzelnen Posten. Droht in den nächsten drei Monaten ein Minus, meldet sich die
   Bankberaterin vorab (einmal je Engpass).
@@ -348,6 +349,17 @@ bevorzugt die Früchte, die du wirklich lagerst.
 - **Lieferverträge mit Produktionen.** Gibt es auf der Karte Produktionen, die Waren ankaufen (z. B. Bäckerei oder
   Molkerei), bietet die Genossenschaft gelegentlich einen Liefervertrag zum Festpreis an. Er erscheint wie ein
   Sonderkontrakt; du entscheidest, ob du mitmachst.
+- **Preisalarm:** Wähle Sorte, Verkaufsstelle (oder *beliebig*, dann zählt der beste Preis), Richtung und Preis je
+  1.000 Liter. Erreicht der Preis die Schwelle, blendet das Spiel einen Hinweis ein, und die Landhändlerin schreibt
+  dir, wie viel davon im Silo liegt und was es gerade wert ist. Ein Alarm meldet sich einmal; danach kannst du ihn
+  wieder aktivieren. Höchstens 10 Alarme sind gleichzeitig aktiv.
+- **Vorkontrakt:** Verkaufe deine Ernte im Voraus. Du wählst Sorte, Verkaufsstelle, Menge (1.000 bis 200.000 Liter)
+  und den Liefermonat (1 bis 12 Monate voraus). Die Landhändlerin nennt den Festpreis: der heutige Preis mit 2 %
+  Abschlag je Monat Vorlauf. Mit *Abschließen* gilt er, ein Rücktritt ist nicht möglich. Im Liefermonat zahlt die
+  Verkaufsstelle im Spiel den Festpreis bis zur vereinbarten Menge. Fehlt am Monatsende Ware, kostet die Fehlmenge
+  25 % ihres Werts als Vertragsstrafe, und die Landhändlerin ist enttäuscht. Volle Lieferung freut sie. Die
+  erwartete Einnahme steht in der Liquiditätsplanung der Bank. Je Verkaufsstelle und Sorte gibt es nur einen
+  Festpreis zur selben Zeit.
 
 ## Versicherung
 
@@ -421,6 +433,12 @@ Geld im selben Moment. Die App zeigt:
   Auftraggeber; die Vergütung zahlt das Spiel. Erledigst du ihn, bedankt sich der Nachbar mit einem kleinen Bonus
   (250 €), sonst ist er enttäuscht. Hast du im Spiel schon die Höchstzahl an Aufträgen angenommen, fragt niemand.
 
+**Hofladen:** Leute aus dem Dorf bestellen ab und zu kleine Mengen aus deinen Silos (Kartoffeln, Weizen, Hafer,
+Zuckerrüben oder Raps, je nachdem, was bei dir liegt), zum Hofladenpreis von 130 % des besten Marktpreises. Mit
+*Liefern* wird die Ware aus dem Silo gebucht und das Geld gutgeschrieben. Das hebt dein Ansehen im Dorf (höchstens
+viermal im Jahr). Lehnst du ab oder antwortest nicht binnen 3 Tagen, kommen seltener Bestellungen; jede Lieferung
+macht das wieder besser.
+
 Die Nachbarfelder, deine Silos und die Aufträge brauchen die aktuelle Mod-Version; fehlen sie, sagt die App es oben.
 
 ## Kontakte
@@ -480,6 +498,7 @@ Bedingungen, die auch im Browser stehen. Einzeln einschaltbar (Standard: nur Anr
 - einen Steuerbescheid bezahlen (*Nein* = später im Browser),
 - das Angebot der Steuerberatung annehmen oder ablehnen,
 - ein Angebot oder eine Anfrage eines Nachbarn im **Handel** annehmen oder ablehnen,
+- eine Bestellung für den **Hofladen** liefern oder ablehnen,
 - einem Nachbarn einen Auftrag zusagen oder absagen.
 
 Die Knöpfe des Fensters heißen *Ja* und *Nein*; was sie bewirken, steht im Text („Ja = Annehmen · Nein = Ablehnen“).

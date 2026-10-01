@@ -25,5 +25,7 @@ public enum PromptKind {
     /** Roadmap V3 R3-H3 / R3-H4: goods offer or request of a neighbour (accept / decline; default off). */
     NEIGHBOR_TRADE,
     /** Roadmap V3 R3-H5: a neighbour asks for help with a contract on his field (accept / decline; default off). */
-    NEIGHBOR_MISSION
+    NEIGHBOR_MISSION,
+    /** Roadmap V3 R3-M3: farm-shop order of a villager (deliver / decline; default off). */
+    FARM_SHOP
 }

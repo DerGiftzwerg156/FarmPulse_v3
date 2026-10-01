@@ -39,12 +39,15 @@ public class ContractActions {
     private final NeighborMissionService neighborMissions;
     private final CollateralService collateral;
     private final AnnualReviewService annualReview;
+    private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
 
     public ContractActions(ContractRepository contracts, ServiceCaseRepository cases, InsuranceService insurance,
                            HuntingService hunting, LivestockService livestock, LeaseService lease,
                            MaintenanceService maintenance, VanillaBypassService bypass, TaxService tax, ClubService clubs,
                            NeighborTradeService trade, NeighborMissionService neighborMissions,
-                           CollateralService collateral, AnnualReviewService annualReview) {
+                           CollateralService collateral, AnnualReviewService annualReview,
+                           de.farmpulse.rpsim.neighbor.FarmShopService farmShop) {
+        this.farmShop = farmShop;
         this.trade = trade;
         this.collateral = collateral;
         this.annualReview = annualReview;
@@ -125,6 +128,7 @@ public class ContractActions {
             case COLLATERAL_CLAIM -> collateral.payClaim(sg, id); // R3-K1: pay the claimed Sondertilgung
             case ANNUAL_REVIEW -> annualReview.attend(sg, id); // R3-K3: "Termin wahrnehmen"
             case ANNUAL_REVIEW_OFFER -> annualReview.acceptOffer(sg, id); // R3-K3: accept the rate cut
+            case FARM_SHOP_ORDER -> farmShop.accept(sg, id); // R3-M3: deliver
             default -> throw unsupported();
         };
     }
@@ -157,6 +161,7 @@ public class ContractActions {
             case NEIGHBOR_MISSION -> neighborMissions.decline(sg, id); // R3-H5
             case ANNUAL_REVIEW -> annualReview.decline(sg, id); // R3-K3: without consequence
             case ANNUAL_REVIEW_OFFER -> annualReview.declineOffer(sg, id);
+            case FARM_SHOP_ORDER -> farmShop.decline(sg, id); // R3-M3
             default -> throw unsupported();
         };
     }

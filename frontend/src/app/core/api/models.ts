@@ -611,6 +611,67 @@ export interface PriceView {
   trend?: 'CLIMBING' | 'FALLING' | 'STABLE' | null;
 }
 
+/** Roadmap V3 R3-M1: price alarm; sellPoint null = best price of all sell points. */
+export interface PriceAlarmView {
+  id: number;
+  fillType: string;
+  sellPoint: string | null;
+  threshold: number;
+  direction: 'ABOVE' | 'BELOW';
+  status: 'ACTIVE' | 'FIRED';
+  createdGameTime: number;
+  firedGameTime: number | null;
+  firedPrice: number | null;
+  firedSellPoint: string | null;
+}
+
+export interface PriceAlarmsView {
+  maxActive: number;
+  alarms: PriceAlarmView[];
+}
+
+/** Roadmap V3 R3-M2: forward contract (status OPEN / FULFILLED / SHORTFALL). */
+export interface ForwardContractView {
+  id: number;
+  fillType: string;
+  sellPoint: string;
+  quantity: number;
+  fixedPrice: number;
+  basePrice: number;
+  leadMonths: number;
+  deliveryStartGameTime: number;
+  deadlineGameTime: number;
+  status: string;
+  deliveredQuantity: number | null;
+  penalty: number | null;
+  createdGameTime: number;
+}
+
+export interface ForwardContractsView {
+  minLeadMonths: number;
+  maxLeadMonths: number;
+  minQuantity: number;
+  maxQuantity: number;
+  quantityStep: number;
+  maxOpen: number;
+  factorPerMonthPercent: number;
+  penaltySharePercent: number;
+  contracts: ForwardContractView[];
+}
+
+export interface ForwardQuoteView {
+  fillType: string;
+  sellPoint: string;
+  quantity: number;
+  leadMonths: number;
+  basePrice: number;
+  fixedPrice: number;
+  deliveryStartGameTime: number;
+  deadlineGameTime: number;
+  deliveryPeriod: number | null;
+  expectedIncome: number;
+}
+
 export interface PricePoint {
   gameTime: number;
   price: number;

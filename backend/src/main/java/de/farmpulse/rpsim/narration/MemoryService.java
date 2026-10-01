@@ -88,6 +88,8 @@ public class MemoryService {
             case NEIGHBOR_DISAPPOINTED -> "zugesagte Ware lag nicht im Silo";
             case COLLATERAL_SOLD -> "Feld mit Grundschuld ohne Absprache verkauft";
             case COLLATERAL_CLAIM_OVERDUE -> "geforderte Sondertilgung nicht gezahlt";
+            case FORWARD_CONTRACT_FULFILLED -> "Vorkontrakt voll geliefert";
+            case FORWARD_CONTRACT_SHORTFALL -> "Vorkontrakt nicht voll geliefert";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

@@ -281,4 +281,8 @@ public class Savegame {
     /** Roadmap V3 R3-K2: month index of the shortfall the bank advisor last warned about (once per shortfall). */
     @Column(name = "liquidity_warning_month")
     private Long liquidityWarningMonth;
+
+    /** Roadmap V3 R3-M3: factor on the farm-shop order probability (refusals lower it, deliveries raise it). */
+    @Column(name = "farm_shop_factor", nullable = false)
+    private double farmShopFactor = 1.0;
 }

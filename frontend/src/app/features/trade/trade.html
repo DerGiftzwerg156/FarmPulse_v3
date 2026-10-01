@@ -114,4 +114,9 @@
     [highlightCase]="highlightedCase()" testId="trade-cases">
     <p open-intro class="mb-3 text-[12px] text-muted">{{ 'trade.offerHint' | t }}</p>
   </app-service-cases>
+
+  <app-service-cases [caseKinds]="['FARM_SHOP_ORDER']" openTitle="trade.farmShop" [highlightCase]="highlightedCase()"
+    testId="farm-shop-cases">
+    <p open-intro class="mb-3 text-[12px] text-muted">{{ 'trade.farmShopIntro' | t }}</p>
+  </app-service-cases>
 </section>

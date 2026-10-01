@@ -64,10 +64,13 @@ public class MarketEventEngine {
     private final DiaryService diary;
     private final RandomSource random;
     private final RpsimProperties props;
+    private final ForwardContractService forwardContracts;
 
     public MarketEventEngine(MarketEventRepository events, SavegameRepository savegames, FactsService facts,
                              OutboxService outbox, NarrationRequestService narration, CharacterLookup lookup,
-                             DiaryService diary, RandomSource random, RpsimProperties props) {
+                             DiaryService diary, RandomSource random, RpsimProperties props,
+                             ForwardContractService forwardContracts) {
+        this.forwardContracts = forwardContracts;
         this.events = events;
         this.savegames = savegames;
         this.facts = facts;
@@ -252,6 +255,7 @@ public class MarketEventEngine {
         // only pairs with a known current price can get a fixed-price contract
         Set<String> excluded = busyPairs(sg);
         excluded.addAll(excludedPairs);
+        excluded.addAll(forwardContracts.openPairs(sg)); // R3-M2: one fixed price per sell point and fill type
         Set<String> priced = new java.util.HashSet<>();
         f.prices().forEach(p -> priced.add(p.sellPoint() + "|" + p.fillType()));
         ctx.sellPoints().forEach(sp -> sp.acceptedFillTypes().forEach(ft -> {

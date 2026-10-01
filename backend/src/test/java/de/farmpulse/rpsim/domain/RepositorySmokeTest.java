@@ -28,7 +28,10 @@ class RepositorySmokeTest {
                 NegotiationOffer.class, Employee.class, SatisfactionEvent.class, JobPosting.class, JobApplication.class,
                 Communication.class, OutboxInstruction.class, FactsSnapshot.class, StoryHook.class,
                 PublicActionEvent.class, DiaryEntry.class, NarrationJob.class, FieldRecord.class, FieldCropHistory.class,
-                RainPeriod.class, TaxYear.class, HusbandryRecord.class, GamePrompt.class, PlayerResponse.class);
+                RainPeriod.class, TaxYear.class, HusbandryRecord.class, GamePrompt.class, PlayerResponse.class,
+                // Roadmap V3 R3-H / R3-K / R3-M
+                NpcFieldRecord.class, NpcFieldCrop.class, NeighborStock.class, LoanCollateral.class, FarmReport.class,
+                PriceAlarm.class, ForwardContract.class);
     }
 
     private int counter;

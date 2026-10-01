@@ -31,5 +31,7 @@ public enum CaseKind {
     /** Roadmap V3 R3-K3: invitation of the bank advisor to the annual review (attend / decline). */
     ANNUAL_REVIEW,
     /** Roadmap V3 R3-K3: rate cut offered in the annual review (accept / decline). */
-    ANNUAL_REVIEW_OFFER
+    ANNUAL_REVIEW_OFFER,
+    /** Roadmap V3 R3-M3: a villager orders goods of the own silos at the farm-shop price (deliver / decline). */
+    FARM_SHOP_ORDER
 }

@@ -112,6 +112,28 @@ export class ApiService {
   applyForCredit(amount: number, purpose: string, termMonths: number, farmlandIds: number[] = []): Observable<M.CreditApplicationView> {
     return this.post('/credit-applications', farmlandIds.length ? { amount, purpose, termMonths, farmlandIds } : { amount, purpose, termMonths });
   }
+  // Roadmap V3 R3-M: price alarms and forward contracts
+  priceAlarms(): Observable<M.PriceAlarmsView> {
+    return this.get('/price-alarms');
+  }
+  createPriceAlarm(fillType: string, sellPoint: string | null, threshold: number, direction: 'ABOVE' | 'BELOW'): Observable<M.PriceAlarmView> {
+    return this.post('/price-alarms', { fillType, sellPoint, threshold, direction });
+  }
+  reactivatePriceAlarm(id: number): Observable<M.PriceAlarmView> {
+    return this.post(`/price-alarms/${id}/reactivate`);
+  }
+  deletePriceAlarm(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/price-alarms/${id}`);
+  }
+  forwardContracts(): Observable<M.ForwardContractsView> {
+    return this.get('/forward-contracts');
+  }
+  forwardQuote(fillType: string, sellPoint: string, quantity: number, leadMonths: number): Observable<M.ForwardQuoteView> {
+    return this.post('/forward-contracts/quote', { fillType, sellPoint, quantity, leadMonths });
+  }
+  concludeForward(fillType: string, sellPoint: string, quantity: number, leadMonths: number): Observable<M.ForwardContractView> {
+    return this.post('/forward-contracts', { fillType, sellPoint, quantity, leadMonths });
+  }
   // Roadmap V3 R3-K: collateral, liquidity plan, farm report
   collateral(): Observable<M.CollateralOverviewView> {
     return this.get('/credit/collateral');

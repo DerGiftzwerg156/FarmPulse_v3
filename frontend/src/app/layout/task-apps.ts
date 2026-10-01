@@ -24,6 +24,8 @@ const CASE_APP: Record<string, string> = {
   COLLATERAL_CLAIM: 'bank',
   ANNUAL_REVIEW: 'bank',
   ANNUAL_REVIEW_OFFER: 'bank',
+  // Roadmap V3 R3-M3
+  FARM_SHOP_ORDER: 'trade',
 };
 
 const CONTRACT_APP: Record<string, string> = {

@@ -145,10 +145,12 @@ public class NeighborTradeService {
         return (long) Math.floor(free) - reserved(sg, CaseKind.GOODS_OFFER, fillType);
     }
 
-    long playerStock(Savegame sg, Map<String, BridgeDtos.TradeStorageEntry> ts, String fillType) {
+    /** Litres in the own silos minus what is already on the way out (neighbour requests, R3-M3 farm-shop orders). */
+    public long playerStock(Savegame sg, Map<String, BridgeDtos.TradeStorageEntry> ts, String fillType) {
         BridgeDtos.TradeStorageEntry e = ts.get(fillType);
         double amount = e == null || e.amount() == null ? 0 : e.amount();
-        return (long) Math.floor(amount) - reserved(sg, CaseKind.GOODS_REQUEST, fillType);
+        return (long) Math.floor(amount) - reserved(sg, CaseKind.GOODS_REQUEST, fillType)
+                - reserved(sg, CaseKind.FARM_SHOP_ORDER, fillType);
     }
 
     // ------------------------------------------------------------------------------------------ monthly messages
