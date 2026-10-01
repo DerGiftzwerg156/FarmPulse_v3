@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -291,6 +291,24 @@ export class ApiService {
   }
   addDiaryNote(title: string, text: string): Observable<M.DiaryView> {
     return this.post('/diary/entries', { title, text });
+  }
+
+  // Roadmap V3 R3-T: milestones and the farm chronicle
+  milestones(): Observable<M.MilestoneView[]> {
+    return this.get('/milestones');
+  }
+  /** The chronicle as Markdown file; the file name comes from Content-Disposition. */
+  chronicleFile(): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.base}/diary/chronicle`, { responseType: 'blob', observe: 'response' });
+  }
+  chronicle(): Observable<M.ChronicleView> {
+    return this.get('/diary/chronicle/view');
+  }
+  farmSettings(): Observable<M.FarmSettingsView> {
+    return this.get('/settings/farm');
+  }
+  saveFarmSettings(r: { farmName: string | null }): Observable<M.FarmSettingsView> {
+    return this.http.put<M.FarmSettingsView>(`${this.base}/settings/farm`, r);
   }
   reputation(): Observable<M.ReputationView> {
     return this.get('/village-reputation');

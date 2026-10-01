@@ -796,23 +796,35 @@ Azubi fährt im Spiel einen mittleren Traktor als Helfer, aber keinen Mähdresch
 
 ## T – Chronik
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): genau die sechs Meilensteine unten, jeder in
+der Konfig abschaltbar (`rpsim.formulas.milestones.*`, Schwellen 100 ha und 5 Jahre). Zahlungsverzug = verpasste
+Kreditrate, überfälliger Steuerbescheid, verpasste Vertragszahlung, überfälliges Gehalt oder unbezahlte Forderung nach
+dem Verkauf eines verpfändeten Felds; es zählt nur ein volles FS25-Jahr ab Spielbeginn bzw. Update, ein noch offener
+Verzug zählt auch für das neue Jahr. Kredit = erster Bankkredit getilgt; Fläche = alle Felder des Betriebs im Spiel;
+Rekordernte = erster Glückwunsch der Genossenschaft; Fruchtfolge = 5 geprüfte Erntejahre in Folge ohne Beanstandung;
+Handel = erster abgeschlossener Warenhandel mit einem Nachbarn. Bei laufenden Spielständen werden Kredit, Fläche,
+Rekordernte und Handel nachgetragen. Auf dem Startbildschirm erscheinen nur erreichte Meilensteine. Die Chronik baut
+das Backend (`GET /api/diary/chronicle`, Datei `chronik-<Hofname>.md`); neues optionales Feld **Hofname** in den
+Einstellungen und im Onboarding (ohne: Kartenname). Die Druckansicht zeigt denselben Inhalt und öffnet den
+Druckdialog.
+
 ### R3-T1 Meilensteine
 
-- [ ] Feste Liste von Meilensteinen in der Konfig, jeder mit einer Bedingung aus vorhandenen Daten, z. B.:
+- [x] Feste Liste von Meilensteinen in der Konfig, jeder mit einer Bedingung aus vorhandenen Daten, z. B.:
   - erster Kredit getilgt,
   - erstes Jahr ohne Zahlungsverzug,
   - 100 ha bewirtschaftet,
   - Rekordernte (R2-B5),
   - fünf Jahre Fruchtfolge ohne Beanstandung (R2-E2),
   - erster Handel mit einem Nachbarn (H).
-- [ ] Erreichte Meilensteine landen im Tagebuch mit neuem Typ (`DiaryEntryType.MILESTONE`, heute nur `AUTO` /
+- [x] Erreichte Meilensteine landen im Tagebuch mit neuem Typ (`DiaryEntryType.MILESTONE`, heute nur `AUTO` /
   `PLAYER_NOTE`) und als Abzeichen auf dem Startbildschirm. Keine mechanische Wirkung.
 
 ### R3-T2 Hofchronik als Datei
 
-- [ ] Tagebuch-App → **„Chronik herunterladen“**: Markdown-Datei mit Vorgeschichte, allen Einträgen, Meilensteinen
+- [x] Tagebuch-App → **„Chronik herunterladen“**: Markdown-Datei mit Vorgeschichte, allen Einträgen, Meilensteinen
   und den Jahresberichten (K3).
-- [ ] Als PDF über die Druckfunktion des Browsers, mit eigenem Druck-Stylesheet. Keine neue Bibliothek.
+- [x] Als PDF über die Druckfunktion des Browsers, mit eigenem Druck-Stylesheet. Keine neue Bibliothek.
 
 **Beleg:** – (nur Backend und Oberfläche).
 

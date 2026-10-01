@@ -31,7 +31,8 @@ public final class Requests {
                                     @NotNull @PositiveOrZero Long startingCapitalTarget,
                                     @PositiveOrZero Long legacyLoanAmount, TonePreset tonePreset,
                                     @Size(max = 10) List<@NotNull JobRole> initialEmployees,
-                                    Boolean familyParents, Boolean familyPartner, Boolean familyChildren) {
+                                    Boolean familyParents, Boolean familyPartner, Boolean familyChildren,
+                                    @Size(max = 60) String farmName) {
     }
 
     public record RerollRequest(Long characterId) {
@@ -116,6 +117,10 @@ public final class Requests {
 
     /** Roadmap V2 R2-C6: switch of the field work hints. */
     public record FieldSettingsRequest(boolean fieldHintsEnabled) {
+    }
+
+    /** Roadmap V3 R3-T2: empty = no farm name (the chronicle uses the map name). */
+    public record FarmSettingsRequest(@Size(max = 60) String farmName) {
     }
 
     /** Roadmap V2 R2-F2: occasions asked in the game (PromptKind names; empty = none). */

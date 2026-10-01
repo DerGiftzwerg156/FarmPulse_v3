@@ -174,6 +174,14 @@ public final class Views {
     public record FieldSettingsView(boolean fieldHintsEnabled, boolean fieldsTracked) {
     }
 
+    /** Roadmap V3 R3-T2: optional farm name; {@code mapName} is the fallback shown when it is empty. */
+    public record FarmSettingsView(String farmName, String mapName) {
+    }
+
+    /** Roadmap V3 R3-T1: a reached milestone (title of its diary entry). */
+    public record MilestoneView(String key, String title, long gameTime, long gameDay) {
+    }
+
     public record OfferView(int round, String offeredBy, String characterName, long amount, String result, Long counterAmount,
                             long gameTime) {
     }

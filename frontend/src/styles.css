@@ -87,3 +87,34 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #38b000;
 }
+
+/* Roadmap V3 R3-T2: print view of the farm chronicle ("Als PDF speichern" in the browser's print dialog) */
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .fp-no-print {
+    display: none !important;
+  }
+  .bg-bg {
+    background: #fff !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  .fp-print-page,
+  .fp-print-page * {
+    color: #000 !important;
+    background: transparent !important;
+    border-color: #999 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  .fp-print-avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

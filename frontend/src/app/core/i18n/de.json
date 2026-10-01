@@ -353,7 +353,16 @@
       "ROTATION": "Dorf",
       "PLAYER_NOTE": "Eigene Notizen",
       "OTHER": "Sonstiges",
-      "TRADE": "Handel"
+      "TRADE": "Handel",
+      "MILESTONE": "Meilensteine"
+    },
+    "milestone": {
+      "LOAN_REPAID": "Erster Kredit getilgt",
+      "YEAR_WITHOUT_DELAY": "Ein Jahr ohne Zahlungsverzug",
+      "AREA": "100 ha bewirtschaftet",
+      "RECORD_HARVEST": "Rekordernte",
+      "CROP_ROTATION": "5 Jahre Fruchtfolge ohne Beanstandung",
+      "NEIGHBOR_TRADE": "Erster Handel mit einem Nachbarn"
     },
     "moneyReason": {
       "CREDIT_DISBURSEMENT": "Kreditauszahlung",
@@ -738,7 +747,10 @@
     "familyIntro": "Wer gehört zur Familie? Jede Angabe ist einzeln wählbar – ohne Häkchen führst du den Hof alleine.",
     "familyParents": "Eltern (bei geerbtem Hof oder Rückkehr auf dem Altenteil)",
     "familyPartner": "Partner:in",
-    "familyChildren": "Kinder"
+    "familyChildren": "Kinder",
+    "farmName": "Hofname",
+    "farmNamePlaceholder": "z. B. Hof Lindenhain",
+    "farmNameHint": "Steht über der Hofchronik. Ohne Hofnamen gilt der Kartenname."
   },
   "mailbox": {
     "filter": "Filter",
@@ -1166,7 +1178,47 @@
     "narrativeOnly": "Rein erzählerisch: Notizen haben keinerlei Auswirkung auf das Spiel, auf Charaktere oder Zahlen.",
     "noteTitle": "Titel",
     "noteText": "Text",
-    "titleRequired": "Bitte einen Titel eingeben."
+    "titleRequired": "Bitte einen Titel eingeben.",
+    "milestoneBadge": "Meilenstein",
+    "download": "Chronik herunterladen",
+    "print": "Chronik drucken",
+    "downloadError": "Die Chronik konnte nicht heruntergeladen werden.",
+    "printView": {
+      "title": "Hofchronik – {name}",
+      "asOf": "Stand: {time}",
+      "back": "Zurück zum Tagebuch",
+      "printAgain": "Drucken",
+      "backstory": "Vorgeschichte",
+      "noBackstory": "Keine Vorgeschichte erfasst.",
+      "milestones": "Meilensteine",
+      "noMilestones": "Noch keine Meilensteine erreicht.",
+      "entries": "Tagebuch",
+      "noEntries": "Noch keine Einträge.",
+      "note": "eigene Notiz",
+      "milestone": "Meilenstein",
+      "reports": "Jahresberichte",
+      "noReports": "Noch kein Jahresbericht.",
+      "year": "Jahr {year}",
+      "months": "Erfasste Monate: {months}",
+      "figure": "Kennzahl",
+      "amount": "Betrag",
+      "income": "Einnahmen",
+      "expense": "Ausgaben",
+      "result": "Betriebsergebnis",
+      "profit": "Gewinn (Steuer)",
+      "tax": "Steuer",
+      "open": "offen",
+      "categories": "Einnahmen und Ausgaben je Kategorie",
+      "category": "Kategorie",
+      "fields": "Felder",
+      "field": "Feld {id}",
+      "crop": "Kultur",
+      "area": "Fläche",
+      "yield": "Ertrag",
+      "notHarvested": "nicht geerntet",
+      "withered": "verdorrt",
+      "harvested": "geerntet"
+    }
   },
   "home": {
     "welcomeTitle": "Willkommen bei FarmPulse",
@@ -1183,7 +1235,9 @@
     "debitsOf": "Abbuchung 1. {month}",
     "stableHealth": "Gesundheit {animal}",
     "stableFood": "Futter {food} %",
-    "animals": "Tiere"
+    "animals": "Tiere",
+    "milestones": "Meilensteine",
+    "milestoneReached": "Erreicht: {time}"
   },
   "settings": {
     "ai": "KI-Anbieter",
@@ -1227,6 +1281,11 @@
       "hint": "Einfache Ja/Nein-Entscheidungen erscheinen als Dialog direkt im Spiel – immer zu den Bedingungen, die hier im Browser stehen. Gespräche, Gegenforderungen und Formulare mit Beträgen bleiben im Browser.",
       "off": "Fragen im Spiel sind in der Konfiguration abgeschaltet (rpsim.bridge.ingame-prompts).",
       "key": "Ist gerade ein Menü offen, wartet die Frage. Mit der Taste „FarmPulse: offene Frage“ (Steuerung im Spiel, Standard Alt+J) öffnest du sie jederzeit, auch im Fahrzeug."
+    },
+    "farm": {
+      "title": "Hof",
+      "name": "Hofname",
+      "hint": "Steht über der Hofchronik und im Dateinamen. Leer = Kartenname."
     }
   },
   "notices": {

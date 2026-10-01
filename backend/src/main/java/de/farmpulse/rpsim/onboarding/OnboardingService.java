@@ -73,12 +73,19 @@ public class OnboardingService {
 
     public record Request(FarmOrigin farmOrigin, VillageRelation villageRelation, String freeText, long startingCapitalTarget,
                           Long legacyLoanAmount, TonePreset tonePreset, List<JobRole> initialEmployees,
-                          FamilyService.Choice family) {
+                          FamilyService.Choice family, String farmName) {
+
+        public Request(FarmOrigin farmOrigin, VillageRelation villageRelation, String freeText, long startingCapitalTarget,
+                       Long legacyLoanAmount, TonePreset tonePreset, List<JobRole> initialEmployees,
+                       FamilyService.Choice family) {
+            this(farmOrigin, villageRelation, freeText, startingCapitalTarget, legacyLoanAmount, tonePreset,
+                    initialEmployees, family, null);
+        }
 
         public Request(FarmOrigin farmOrigin, VillageRelation villageRelation, String freeText, long startingCapitalTarget,
                        Long legacyLoanAmount, TonePreset tonePreset, List<JobRole> initialEmployees) {
             this(farmOrigin, villageRelation, freeText, startingCapitalTarget, legacyLoanAmount, tonePreset,
-                    initialEmployees, FamilyService.Choice.NONE);
+                    initialEmployees, FamilyService.Choice.NONE, null);
         }
     }
 
@@ -156,6 +163,7 @@ public class OnboardingService {
         sg.setLegacyLoanAmount(r.legacyLoanAmount() == null || r.legacyLoanAmount() == 0 ? null : r.legacyLoanAmount());
         sg.setCreatedAt(Instant.now());
         sg.setGenerationSeed(random.nextLong());
+        sg.setFarmName(r.farmName() == null || r.farmName().isBlank() ? null : r.farmName().strip());
         applyFreeText(sg, r.freeText());
         savegames.save(sg);
         List<EmployeeSlot> slots = new ArrayList<>();

@@ -84,6 +84,21 @@
           </div>
         </a>
 
+        @if (milestones().length) {
+          <a routerLink="/diary" class="block rounded-[20px] border border-border bg-surface p-5 hover:border-accent/50" data-testid="milestones-widget">
+            <div class="mb-3 flex items-center gap-2">
+              <app-icon name="book" size="h-4 w-4" class="text-app-farm" />
+              <span class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-text">{{ 'home.milestones' | t }}</span>
+            </div>
+            <ul class="flex flex-wrap gap-2">
+              @for (m of milestones(); track m.key) {
+                <li class="rounded-full border border-accent/50 px-2.5 py-1 font-display text-[11px] font-semibold text-accent" data-testid="milestone-badge"
+                  [attr.title]="'home.milestoneReached' | t: { time: (m.gameTime | gameTime) }">{{ m.title ?? (m.key | label: 'milestone') }}</li>
+              }
+            </ul>
+          </a>
+        }
+
         <div class="grid grid-cols-2 gap-4">
           @if (ownFields().length) {
             <a routerLink="/farmland" class="block rounded-[20px] border border-border bg-surface p-5 hover:border-accent/50" data-testid="fields-widget">

@@ -6,10 +6,12 @@ import java.util.List;
 import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.bridge.OutboxService;
 import de.farmpulse.rpsim.bridge.OutboxService.Related;
+import de.farmpulse.rpsim.diary.PaymentDelayService;
 import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.ContractKind;
 import de.farmpulse.rpsim.domain.ContractStatus;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.PaymentDelay;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.repository.ContractRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
@@ -39,15 +41,18 @@ public class ContractBillingService {
     private final OutboxService outbox;
     private final GameTime gameTime;
     private final ApplicationEventPublisher events;
+    private final PaymentDelayService delays;
 
     public ContractBillingService(ContractRepository contracts, SavegameRepository savegames, LiquidityService liquidity,
-                                  OutboxService outbox, GameTime gameTime, ApplicationEventPublisher events) {
+                                  OutboxService outbox, GameTime gameTime, ApplicationEventPublisher events,
+                                  PaymentDelayService delays) {
         this.contracts = contracts;
         this.savegames = savegames;
         this.liquidity = liquidity;
         this.outbox = outbox;
         this.gameTime = gameTime;
         this.events = events;
+        this.delays = delays;
     }
 
     public static MoneyReason reason(ContractKind kind) {
@@ -107,6 +112,7 @@ public class ContractBillingService {
         }
         c.setPaymentOverdue(true);
         c.setMissedPayments(c.getMissedPayments() + 1);
+        delays.record(sg, PaymentDelay.CONTRACT, sg.getCurrentGameTime());
         events.publishEvent(new ContractEvents.PaymentMissed(sg.getId(), c.getId(), c.getMissedPayments()));
     }
 

@@ -31,6 +31,19 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Chronicle (Roadmap V3, R3-T):**
+  - Milestones (`DiaryEntryType.MILESTONE`, no mechanical effect): first bank loan repaid, a full FS25 year without a
+    payment delay (missed installment, overdue tax bill, missed contract payment, overdue salary, unpaid claim after
+    the sale of a pledged field), 100 ha farmed, record harvest (the cooperative's congratulation), 5 harvest years in
+    a row without a crop-rotation complaint, first goods trade with a neighbour. Each reached once, written to the
+    diary and shown as a badge on the start screen (only reached ones). Running savegames get the loan, area, record
+    and trade milestones added; payment delays and crop rotation count from the update.
+  - Diary app: **Chronik herunterladen** (Markdown `chronik-<name>.md`: backstory, milestones, all entries by game day,
+    the key figures of every farm report) and **Chronik drucken** (print view with the same content, print
+    stylesheet, PDF via the browser).
+  - New optional **Hofname** in the settings and the onboarding (heads the chronicle; without it the map name).
+  - Config `rpsim.formulas.milestones.*`; migration V31; `GET /api/milestones`, `GET /api/diary/chronicle`,
+    `GET /api/diary/chronicle/view`, `GET/PUT /api/settings/farm`. No mod change.
 - **Staff (Roadmap V3, R3-P):**
   - Office clerk with more effect: the best active clerk reminds by mail 3 game days before a deadline (open tax bills
     unless a tax advisor runs, announced inspections, the drought-aid application, the end of the delivery month of an

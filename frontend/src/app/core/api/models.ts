@@ -196,6 +196,8 @@ export interface OnboardingRequest {
   familyParents?: boolean;
   familyPartner?: boolean;
   familyChildren?: boolean;
+  /** Roadmap V3 R3-T2: optional farm name (heads the chronicle). */
+  farmName?: string | null;
 }
 
 export interface CharacterRef {
@@ -477,6 +479,45 @@ export interface BypassSettingsView {
 }
 
 /** Roadmap V2 R2-C6: field work hints of the cooperative. */
+/** Roadmap V3 R3-T2: optional farm name; the map name is the fallback. */
+export interface FarmSettingsView {
+  farmName: string | null;
+  mapName: string | null;
+}
+
+/** Roadmap V3 R3-T1: a reached milestone. */
+export interface MilestoneView {
+  key: 'LOAN_REPAID' | 'YEAR_WITHOUT_DELAY' | 'AREA' | 'RECORD_HARVEST' | 'CROP_ROTATION' | 'NEIGHBOR_TRADE';
+  title: string | null;
+  gameTime: number;
+  gameDay: number;
+}
+
+/** Roadmap V3 R3-T2: the farm chronicle (same content as the Markdown file). */
+export interface ChronicleView {
+  farmName: string;
+  gameTime: number;
+  gameDay: number;
+  backstory: string | null;
+  milestones: { key: string; title: string; text: string | null; gameTime: number; gameDay: number }[];
+  days: { gameDay: number; entries: { gameTime: number; entryType: string; title: string; text: string | null; note: boolean }[] }[];
+  reports: ChronicleReport[];
+}
+
+export interface ChronicleReport {
+  year: number;
+  months: number;
+  operatingIncome: number;
+  operatingExpense: number;
+  operatingResult: number;
+  taxStatus: string | null;
+  profit: number | null;
+  tax: number | null;
+  income: { label: string; amount: number }[];
+  expenses: { label: string; amount: number }[];
+  fields: { farmlandId: number; fruit: string; hectares: number | null; harvested: boolean; withered: boolean; yieldLiters: number | null }[];
+}
+
 export interface FieldSettingsView {
   fieldHintsEnabled: boolean;
   /** The mod reports the fields (farm_facts.fields). */
@@ -816,7 +857,7 @@ export interface DiaryView {
   id: number;
   gameTime: number;
   gameDay: number;
-  entryType: 'AUTO' | 'PLAYER_NOTE';
+  entryType: 'AUTO' | 'PLAYER_NOTE' | 'MILESTONE';
   category: string | null;
   title: string;
   text: string | null;

@@ -44,7 +44,7 @@ public class OnboardingController {
                 r.startingCapitalTarget(), r.legacyLoanAmount(), r.tonePreset(),
                 r.initialEmployees() == null ? List.of() : r.initialEmployees(),
                 new FamilyService.Choice(Boolean.TRUE.equals(r.familyParents()), Boolean.TRUE.equals(r.familyPartner()),
-                        Boolean.TRUE.equals(r.familyChildren()))));
+                        Boolean.TRUE.equals(r.familyChildren())), r.farmName()));
         return view(sg);
     }
 

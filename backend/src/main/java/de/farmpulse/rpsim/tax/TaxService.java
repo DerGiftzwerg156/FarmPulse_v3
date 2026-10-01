@@ -18,6 +18,7 @@ import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.contract.ContractBillingService;
 import de.farmpulse.rpsim.diary.DiaryService;
+import de.farmpulse.rpsim.diary.PaymentDelayService;
 import de.farmpulse.rpsim.domain.CaseKind;
 import de.farmpulse.rpsim.domain.CaseStatus;
 import de.farmpulse.rpsim.domain.Character;
@@ -29,6 +30,7 @@ import de.farmpulse.rpsim.domain.ContractStatus;
 import de.farmpulse.rpsim.config.RpsimProperties.FinanceClass;
 import de.farmpulse.rpsim.domain.LoanPaymentType;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.PaymentDelay;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
 import de.farmpulse.rpsim.domain.TaxYear;
@@ -94,13 +96,15 @@ public class TaxService {
     private final RpsimProperties props;
     private final GameTime gameTime;
     private final de.farmpulse.rpsim.employee.OfficeClerkService clerks;
+    private final PaymentDelayService delays;
 
     public TaxService(SavegameRepository savegames, TaxYearRepository years, ServiceCaseRepository cases,
                       ContractRepository contracts, LoanPaymentRepository payments, FactsService facts,
                       FinanceJournalService journal, LiquidityService liquidity, OutboxService outbox,
                       ContractBillingService billing, ServiceRoleService roles, NarrationRequestService narration,
                       TrustScoreService trust, DiaryService diary, RandomSource random, RpsimProperties props,
-                      GameTime gameTime, de.farmpulse.rpsim.employee.OfficeClerkService clerks) {
+                      GameTime gameTime, de.farmpulse.rpsim.employee.OfficeClerkService clerks,
+                      PaymentDelayService delays) {
         this.clerks = clerks;
         this.savegames = savegames;
         this.years = years;
@@ -119,6 +123,7 @@ public class TaxService {
         this.random = random;
         this.props = props;
         this.gameTime = gameTime;
+        this.delays = delays;
     }
 
     private RpsimProperties.Tax cfg() {
@@ -498,6 +503,7 @@ public class TaxService {
         long fee = Math.round(b.getOfferAmount() * cfg().getLateFeeRate()) * (months - b.getRoundsUsed());
         b.setCostAmount((b.getCostAmount() == null ? 0 : b.getCostAmount()) + fee);
         b.setRoundsUsed(months);
+        delays.record(sg, PaymentDelay.TAX, now);
         Character office = b.getCharacter();
         boolean threat = months >= cfg().getEnforcementAfterMonths() && !THREATENED.equals(b.getDirection());
         if (threat) {

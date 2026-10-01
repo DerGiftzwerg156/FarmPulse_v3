@@ -55,6 +55,8 @@ export class OnboardingWizard {
   readonly employees = signal<string[]>([]);
 
   readonly form = inject(FormBuilder).nonNullable.group({
+    // Roadmap V3 R3-T2: optional farm name (heads the chronicle)
+    farmName: ['', [Validators.maxLength(60)]],
     farmOrigin: ['INHERITED', Validators.required],
     villageRelation: ['UNKNOWN', Validators.required],
     startingCapitalTarget: [100000, [Validators.required, Validators.min(0)]],
@@ -119,6 +121,7 @@ export class OnboardingWizard {
       familyParents: v.familyParents,
       familyPartner: v.familyPartner,
       familyChildren: v.familyChildren,
+      farmName: v.farmName.trim() || null,
     };
   }
 

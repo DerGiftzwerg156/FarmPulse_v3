@@ -18,8 +18,9 @@ Homescreen.
   zurück zum Start. Die Temperatur braucht die aktuelle Mod-Version.
 - **Startbildschirm:** Uhrzeit und Datum im Spiel, darunter drei Kennzahlen – das **Monatsergebnis** (führt zur Bank),
   die **nächste Abbuchung** zum Monatsbeginn (führt zum Kalender) und dein **Ansehen im Dorf** (führt zu den
-  Kontakten). Daneben die Widgets **Zu erledigen** (die dringendsten Aufgaben), **Felder** (wie viele erntereif sind)
-  und **Stall** (Gesundheit und Futter des Stalls, der am schlechtesten dasteht).
+  Kontakten). Daneben die Widgets **Zu erledigen** (die dringendsten Aufgaben), **Meilensteine** (nur wenn du schon
+  einen erreicht hast, führt zum Tagebuch), **Felder** (wie viele erntereif sind) und **Stall** (Gesundheit und Futter
+  des Stalls, der am schlechtesten dasteht).
 - **Apps:** Eine Zahl am App-Symbol zählt, was dort auf dich wartet – ungelesene Mails, klingelnde Anrufe, offene
   Entscheidungen.
 - **Dock:** Post, Telefon, Aufgaben und Kalender liegen immer griffbereit – auf dem Start unten schwebend, in jeder
@@ -506,6 +507,23 @@ Jahresbeginn schreibt das Tagebuch die Geschichte der Hofnachfolge fort.
 Die Chronik deines Hofs – beginnend mit der Vorgeschichte. Wichtige Ereignisse trägt FarmPulse selbst ein. Eigene
 Notizen sind reine Erinnerung und haben keinerlei Auswirkung aufs Spiel.
 
+**Meilensteine:** Erreichst du einen Meilenstein, steht er mit dem Zeichen *Meilenstein* im Tagebuch und als
+Abzeichen auf dem Startbildschirm. Sie haben keine Wirkung aufs Spiel. Es gibt sechs, jeder zählt einmal:
+
+- **Erster Kredit getilgt** – der erste Bankkredit ist ganz zurückgezahlt (ein Kredit aus dem Spielmenü zählt nicht),
+- **Ein Jahr ohne Zahlungsverzug** – ein ganzes FS25-Jahr ohne verpasste Kreditrate, überfälligen Steuerbescheid,
+  verpasste Vertragszahlung, überfälliges Gehalt und ohne unbezahlte Forderung der Bank; das erste angebrochene Jahr
+  zählt nicht,
+- **100 ha bewirtschaftet** – alle Felder deines Betriebs im Spiel zusammen, gepachtete eingeschlossen,
+- **Rekordernte** – die Genossenschaft gratuliert dir zum ersten Mal zum Rekord-Ernteerlös,
+- **5 Jahre Fruchtfolge ohne Beanstandung** – fünf Erntejahre in Folge ohne Hinweis des Amts zur Fruchtfolge,
+- **Erster Handel mit einem Nachbarn** – Ware gekauft oder verkauft in der App **Handel**.
+
+**Chronik herunterladen** speichert die Chronik als Textdatei (`chronik-<Hofname>.md`): Vorgeschichte, Meilensteine,
+alle Einträge nach Spieltagen und die Kennzahlen jedes Hofberichts. **Chronik drucken** öffnet dieselbe Chronik als
+Druckansicht; im Druckdialog des Browsers kannst du sie auch *als PDF speichern*. Den **Hofnamen** legst du unter
+**Einstellungen** fest, ohne ihn steht dort der Name der Karte.
+
 ## Einstellungen
 
 ![Einstellungen](../screenshots/18-einstellungen.png)
@@ -516,6 +534,8 @@ der Ton deines Spielstands (nur Anzeige). Die Einstellungen für die Helfer im S
 **Tablet & Netzwerk:** FarmPulse im Heimnetz erreichbar machen (Standard aus), optionale PIN für Tablets und Handys,
 Adresse und QR-Code (siehe [Auf dem Handy oder Tablet](#auf-dem-handy-oder-tablet)). Gilt für die ganze Installation,
 nicht nur für einen Spielstand, und lässt sich nur am Spiele-PC ändern.
+
+**Hof:** Der Hofname steht über der Chronik und im Dateinamen (optional, ohne ihn der Kartenname).
 
 **Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
 

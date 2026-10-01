@@ -401,3 +401,16 @@ Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section P. Needs 
 | 18.4 | Start a helper on a combine with only the apprentice free | the vanilla helper drives (strict mode: the start is refused with the missing training) |
 | 18.5 | Wait until one month before the end of the training, make a counter offer below 90 % | he declines and leaves at the end of the training; a counter offer from 90 % makes him a machine operator |
 
+## 19. Chronicle (Roadmap V3 R3-T)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section T. No mod change.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 19.1 | Repay a bank loan completely (installments or Sondertilgung), wait one game day | diary entry *Erster Kredit getilgt* with the badge *Meilenstein*; the start screen shows the widget *Meilensteine* with the badge (game date on hover) |
+| 19.2 | Start screen of a savegame without a reached milestone | no widget *Meilensteine* |
+| 19.3 | Update a running savegame that already traded with a neighbour and repaid a loan | after the next game day both milestones are in the diary (current game date) |
+| 19.4 | Play a full FS25 year after the start without any payment delay | at the year change the milestone *Ein Jahr ohne Zahlungsverzug*; with a missed installment or an overdue salary in that year none |
+| 19.5 | Settings → *Hof*: enter a farm name and save; diary → *Chronik herunterladen* | the file `chronik-<farm name>.md` with farm name, backstory, milestones, all entries by day (notes marked) and the farm reports |
+| 19.6 | Diary → *Chronik drucken* | the print view opens the print dialog; the preview shows black text on white without status bar, app header and dock; *Als PDF speichern* works |
+

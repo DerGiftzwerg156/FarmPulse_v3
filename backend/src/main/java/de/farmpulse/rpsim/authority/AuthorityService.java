@@ -143,6 +143,7 @@ public class AuthorityService {
         }
         double hectares = 0;
         boolean cut = false;
+        int checked = 0;
         List<Integer> repeated = new java.util.ArrayList<>();
         for (FieldRecord r : fields.records(sg)) {
             Optional<String> now = crop(sg, r.getFarmlandId(), year);
@@ -150,6 +151,7 @@ public class AuthorityService {
             if (now.isEmpty() || before.isEmpty()) {
                 continue;
             }
+            checked++;
             if (!now.get().equals(before.get())) {
                 hectares += r.getHectares() == null ? 0 : r.getHectares();
                 continue;
@@ -161,6 +163,10 @@ public class AuthorityService {
                     .facts(NarrationFacts.builder().put("fieldName", r.getFieldName()).put("fruitType", now.get())
                             .put("repeated", r.getRotationViolations() >= 2).build())
                     .category(CommunicationCategory.CONTRACT).submit();
+        }
+        // R3-T1: harvest years in a row without a complaint; a year without a checked field neither counts nor breaks
+        if (checked > 0) {
+            sg.setRotationCleanYears(repeated.isEmpty() ? sg.getRotationCleanYears() + 1 : 0);
         }
         long premium = Math.round(hectares * cfg().getRotationPremiumPerHa() * (cut ? 1 - cfg().getRotationCutShare() : 1));
         if (premium > 0) {

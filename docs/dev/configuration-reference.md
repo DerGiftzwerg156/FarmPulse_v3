@@ -870,6 +870,21 @@ Office clerk with more effect and apprentices. Owner decisions in `QUESTIONS.md`
 | `rpsim.formulas.apprentice.takeover-notice-months` | `1` | The apprentice asks to be taken over this many months before the end (salary = machine operator formula at his skill). | Roadmap V3 R3-P2 |
 | `rpsim.formulas.apprentice.counter-accept-share` | `0.9` | A counter offer from this share of his demand is accepted; below he leaves at the end of the training. | Roadmap V3 R3-P2 |
 
+## `rpsim.formulas.milestones` (Roadmap V3 R3-T)
+
+Milestones of the chronicle, each reached once and without mechanical effect. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.milestones.loan-repaid-enabled` | `true` | Milestone: the first bank loan fully repaid (loans from the game menu do not count). | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.year-without-delay-enabled` | `true` | Milestone: a full FS25 year (observed from its start) without a missed installment, an overdue tax bill, a missed contract payment, an overdue salary or an unpaid claim after the sale of a pledged field. | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.area-enabled` | `true` | Milestone: the area of all fields of the farm in the game reaches `area-hectares`. | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.area-hectares` | `100` | Hectares of that milestone. | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.record-harvest-enabled` | `true` | Milestone: the first congratulation of the cooperative on a record harvest revenue (R2-B5). | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.crop-rotation-enabled` | `true` | Milestone: `crop-rotation-years` closed harvest years in a row with checked fields and no crop-rotation complaint (R2-E2). | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.crop-rotation-years` | `5` | Years of that milestone. | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.neighbor-trade-enabled` | `true` | Milestone: the first completed goods trade with a neighbour (R3-H3 / R3-H4). | Roadmap V3 R3-T1 |
+
 ## `rpsim.formulas.used-vehicle` (Roadmap V3 R3-V)
 
 Used machines from the workshop or a neighbour (catalog of R3-V1, the game's used price formula) and own machines sold

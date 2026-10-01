@@ -133,6 +133,14 @@ most two, roster role without trainings), the monthly skill gain and the takeove
 below, no answer). Mod `test_workforce.lua` and simulator `test/instructions.test.js`: apprentices drive after the
 operators and never with a training. Frontend: the takeover case in `features/contracts/service-cases.spec.ts`. In the
 game: manual test plan section 18.
+Roadmap V3 R3-T (chronicle): `ChronicleTest` covers the milestones from stored data (repaid loan also for an older
+savegame, area, record harvest, neighbour trade, a switched-off milestone), the payment-delay year (only a fully
+observed year, a delay breaks it, a delay still open at the year change counts for the new year, the salary hook),
+the crop-rotation streak of the authority, the file name (farm name, map name, default), the chronicle content and its
+Markdown, and that the finance-category labels match the frontend. `ApiIntegrationTest` covers `/api/milestones`,
+`/api/settings/farm` and the chronicle download and view. Frontend: `features/diary/diary.spec.ts` (milestone badge,
+download, error), `features/diary/chronicle-print.spec.ts`, the milestone widget in `features/home/home.spec.ts`, the
+farm name in `features/settings/settings.spec.ts` and the onboarding request. In the game: manual test plan section 19.
 Roadmap V3 R3-V (used machines): `VehicleTradeTest` covers the game's used-price formula (exponents, age cap, 3 %
 floor, hours for a target factor), the monthly offer within the ranges, workshop markup and neighbour discount, the
 agreement with `VEHICLE_SPAWN` (no batch, the mod books), `NO_SPACE` retries up to five and the failed deal, an

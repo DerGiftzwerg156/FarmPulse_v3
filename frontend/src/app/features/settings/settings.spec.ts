@@ -23,6 +23,7 @@ describe('Settings', () => {
     if (game) g.flush(game);
     else g.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
     http.expectOne('/api/settings/fields').flush(fields);
+    http.expectOne('/api/settings/farm').flush({ farmName: null, mapName: 'Erlengrund' });
     http.expectOne('/api/settings/vanilla-bypass').flush(bypass);
     http.expectOne('/api/settings/prompts').flush(prompts);
     fixture.detectChanges();
@@ -141,4 +142,16 @@ describe('Settings', () => {
     expect(el.querySelector('[data-testid="prompts-off"]')).not.toBeNull();
     expect((el.querySelector('[data-testid="prompt-kind"]') as HTMLInputElement).disabled).toBe(true);
   });
+
+  // Roadmap V3 R3-T2
+  it('saves the farm name, the map name is the placeholder', () => {
+    const { el, http, input } = setup();
+    expect((el.querySelector('[data-testid="farm-name"]') as HTMLInputElement).placeholder).toBe('Erlengrund');
+    input('farm-name', '  Hof Lindenhain ');
+    (el.querySelector('[data-testid="farm-save"] button') as HTMLButtonElement).click();
+    const req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/farm');
+    expect(req.request.body).toEqual({ farmName: 'Hof Lindenhain' });
+    req.flush({ farmName: 'Hof Lindenhain', mapName: 'Erlengrund' });
+  });
 });
+

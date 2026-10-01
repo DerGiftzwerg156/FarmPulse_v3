@@ -1,7 +1,7 @@
 <div class="flex min-h-screen flex-col bg-bg">
   <!-- Statusleiste -->
   <header
-    class="sticky top-0 z-30 flex h-10 shrink-0 items-center justify-between gap-3 border-b border-border/60 bg-chrome px-3 font-display text-[11px] tracking-[0.08em] md:px-6 md:text-[12px]"
+    class="fp-no-print sticky top-0 z-30 flex h-10 shrink-0 items-center justify-between gap-3 border-b border-border/60 bg-chrome px-3 font-display text-[11px] tracking-[0.08em] md:px-6 md:text-[12px]"
     data-testid="status-bar"
   >
     <a routerLink="/" class="flex min-w-0 items-center gap-2.5" [attr.aria-label]="'nav.start' | t">
@@ -47,7 +47,7 @@
 
   <!-- App-Kopf -->
   @if (app(); as a) {
-    <div class="flex shrink-0 items-center gap-3 border-b border-border/60 px-3 py-3 md:gap-4 md:px-8" data-testid="app-header">
+    <div class="fp-no-print flex shrink-0 items-center gap-3 border-b border-border/60 px-3 py-3 md:gap-4 md:px-8" data-testid="app-header">
       <a routerLink="/" class="flex h-9 shrink-0 items-center gap-1 rounded-[10px] border border-border pl-2 pr-3 font-display text-[11px] tracking-[0.14em] text-[#B9C8C2] hover:border-accent/60 hover:text-text"
         [attr.aria-label]="'nav.back' | t" data-testid="back-to-start">
         <app-icon name="arrowLeft" size="h-4 w-4" /> <span class="hidden uppercase sm:inline">{{ 'nav.start' | t }}</span>
@@ -67,10 +67,10 @@
   </main>
 
   @if (isStart()) {
-    <app-dock variant="floating" />
+    <app-dock class="fp-no-print" variant="floating" />
   } @else {
-    <app-dock variant="bar" />
+    <app-dock class="fp-no-print" variant="bar" />
   }
-  <app-toasts />
-  <app-call-overlay />
+  <app-toasts class="fp-no-print" />
+  <app-call-overlay class="fp-no-print" />
 </div>

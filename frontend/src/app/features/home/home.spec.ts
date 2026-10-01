@@ -99,4 +99,28 @@ describe('Home (start screen)', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="harvestable"]')?.textContent?.trim()).toBe('0');
   });
+
+  // Roadmap V3 R3-T1: only reached milestones, hidden without one
+  it('shows reached milestones as badges and reloads them on new diary entries', () => {
+    const { el, http, fixture, store } = setup();
+    flushAll(http);
+    flushTasks(http);
+    http.expectOne('/api/milestones').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="milestones-widget"]')).toBeNull();
+    store.diaryVersion.update((v) => v + 1);
+    fixture.detectChanges();
+    http.expectOne('/api/milestones').flush([
+      { key: 'LOAN_REPAID', title: 'Erster Kredit getilgt', gameTime: 4 * DAY, gameDay: 4 },
+      { key: 'AREA', title: null, gameTime: 5 * DAY, gameDay: 5 },
+    ]);
+    fixture.detectChanges();
+    const badges = el.querySelectorAll('[data-testid="milestone-badge"]');
+    expect(badges.length).toBe(2);
+    expect(badges[0].textContent).toContain('Erster Kredit getilgt');
+    expect(badges[0].getAttribute('title')).toContain('Tag 4');
+    expect(badges[1].textContent).toContain('100 ha bewirtschaftet');
+    expect(el.querySelector('[data-testid="milestones-widget"]')?.getAttribute('href')).toBe('/diary');
+  });
 });
+

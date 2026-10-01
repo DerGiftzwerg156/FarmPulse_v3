@@ -164,6 +164,7 @@ public class RpsimProperties {
         private Mechanic mechanic = new Mechanic();
         private OfficeClerk officeClerk = new OfficeClerk();
         private Apprentice apprentice = new Apprentice();
+        private Milestones milestones = new Milestones();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
@@ -1041,6 +1042,25 @@ public class RpsimProperties {
         private double auditReductionMax = 0.5;
         /** Below this workload the clerk is overloaded and does not pay tax bills on the deadline day. */
         private double overloadWorkload = 30;
+    }
+
+    /** Roadmap V3 R3-T1: the fixed list of milestones - each can be switched off (owner decisions). */
+    @Getter @Setter
+    public static class Milestones {
+        /** The first bank loan fully repaid. */
+        private boolean loanRepaidEnabled = true;
+        /** A full FS25 year without a payment delay. */
+        private boolean yearWithoutDelayEnabled = true;
+        /** The area of all fields of the farm reaches area-hectares. */
+        private boolean areaEnabled = true;
+        private double areaHectares = 100;
+        /** The first congratulation of the cooperative on a record harvest revenue. */
+        private boolean recordHarvestEnabled = true;
+        /** crop-rotation-years closed harvest years in a row without a crop-rotation complaint. */
+        private boolean cropRotationEnabled = true;
+        private int cropRotationYears = 5;
+        /** The first completed goods trade with a neighbour. */
+        private boolean neighborTradeEnabled = true;
     }
 
     /** Roadmap V3 R3-P2: apprentices (owner decisions, placeholders). */

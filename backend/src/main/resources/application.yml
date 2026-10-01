@@ -568,6 +568,15 @@ rpsim:
       reminder-days: 3            # reminder this many game days before a deadline
       audit-reduction-max: 0.5    # audit factor 1 - 0.5 x effective skill / 100
       overload-workload: 30       # below: overloaded, no payment on the deadline day
+    milestones:                   # Roadmap V3 R3-T1: milestones (owner decisions), no mechanical effect
+      loan-repaid-enabled: true   # first bank loan fully repaid
+      year-without-delay-enabled: true  # a full FS25 year without a payment delay
+      area-enabled: true          # area of all fields of the farm reaches area-hectares
+      area-hectares: 100
+      record-harvest-enabled: true      # first congratulation of the cooperative on a record harvest revenue
+      crop-rotation-enabled: true # crop-rotation-years harvest years in a row without a rotation complaint
+      crop-rotation-years: 5
+      neighbor-trade-enabled: true      # first completed goods trade with a neighbour
     apprentice:                   # Roadmap V3 R3-P2: apprentices (owner decisions, placeholders)
       salary: 900                 # fixed, no skill premium
       skill-min: 10

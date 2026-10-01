@@ -297,4 +297,16 @@ public class Savegame {
     /** Roadmap V3 R3-W1: the current series already declared its drought (one per series). */
     @Column(name = "drought_series_declared", nullable = false)
     private boolean droughtSeriesDeclared;
+
+    /** Roadmap V3 R3-T1: payment delays count from this game time on (set at the first check after the update). */
+    @Column(name = "milestone_watch_from")
+    private Long milestoneWatchFrom;
+
+    /** Roadmap V3 R3-T1: closed harvest years in a row with checked fields and no crop-rotation complaint. */
+    @Column(name = "rotation_clean_years", nullable = false)
+    private int rotationCleanYears;
+
+    /** Roadmap V3 R3-T2: optional farm name (settings, onboarding); heads the chronicle. */
+    @Column(name = "farm_name", length = 60)
+    private String farmName;
 }

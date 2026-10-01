@@ -13,6 +13,7 @@ import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.diary.DiaryService;
+import de.farmpulse.rpsim.diary.PaymentDelayService;
 import de.farmpulse.rpsim.domain.Character;
 import de.farmpulse.rpsim.domain.CollateralStatus;
 import de.farmpulse.rpsim.domain.CommunicationCategory;
@@ -23,6 +24,7 @@ import de.farmpulse.rpsim.domain.LoanPaymentType;
 import de.farmpulse.rpsim.domain.LoanStatus;
 import de.farmpulse.rpsim.domain.MoneyReason;
 import de.farmpulse.rpsim.domain.OwnerType;
+import de.farmpulse.rpsim.domain.PaymentDelay;
 import de.farmpulse.rpsim.domain.PublicActionType;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.TrustReason;
@@ -74,12 +76,14 @@ public class LoanService {
     private final GameTime gameTime;
     private final LoanCollateralRepository collaterals;
     private final FarmlandOwnershipService ownership;
+    private final PaymentDelayService delays;
 
     public LoanService(LoanRepository loans, LoanPaymentRepository payments, OutboxService outbox,
                        LiquidityService liquidity, NarrationRequestService narration, CharacterLookup lookup,
                        TrustScoreService trust, PublicActionService publicActions, DiaryService diary,
                        CreditConfigResolver configs, RpsimProperties props, GameTime gameTime,
-                       LoanCollateralRepository collaterals, FarmlandOwnershipService ownership) {
+                       LoanCollateralRepository collaterals, FarmlandOwnershipService ownership,
+                       PaymentDelayService delays) {
         this.loans = loans;
         this.payments = payments;
         this.outbox = outbox;
@@ -94,6 +98,7 @@ public class LoanService {
         this.gameTime = gameTime;
         this.collaterals = collaterals;
         this.ownership = ownership;
+        this.delays = delays;
     }
 
     /** Creates a loan. Non-legacy loans are disbursed via CREDIT_DISBURSEMENT. */
@@ -245,6 +250,7 @@ public class LoanService {
         for (; due <= now; due = gameTime.addMonths(sg, due, 1)) {
             l.setMissedInstallments(l.getMissedInstallments() + 1);
             l.setLastMissedDueGameTime(due);
+            delays.record(sg, PaymentDelay.LOAN, due);
             payment(l, l.getMonthlyInstallment(), LoanPaymentType.MISSED, null);
         }
     }
@@ -505,6 +511,8 @@ public class LoanService {
 
     /** R3-K1: a claim after a menu sale stayed unpaid - counts as a missed installment in the payment history. */
     void registerClaimMiss(Loan l) {
+        delays.record(l.getSavegame(), PaymentDelay.COLLATERAL_CLAIM,
+                l.getSavegame().getCurrentGameTime());
         l.setMissedInstallments(l.getMissedInstallments() + 1);
         payment(l, 0, LoanPaymentType.MISSED, null);
     }
