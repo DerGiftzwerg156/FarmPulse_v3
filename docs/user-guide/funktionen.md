@@ -228,6 +228,13 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
   **Dürrehilfe** mit *Antrag stellen* innerhalb von 15 Tagen; das Geld kommt sofort als Förderung. Mit einer
   Dürreversicherung ist die Hilfe um die Hälfte gekürzt. Ohne wachsende Felder gibt es keine Hilfe.
 
+**Gemeinde – Winterdienst.** Hast du einen eigenen mittleren oder großen Traktor (geliehene zählen nicht), bietet die
+Gemeinde im Oktober den Winterdienst für November bis Februar an. Du bekommst 400 € je Wintermonat und 150 € für jeden
+Tag mit Schnee; an einem Schneetag erscheint im Spiel „Schnee! Winterdienst ab 5 Uhr“. Bezahlt wird zu jedem
+Monatsbeginn für den vergangenen Wintermonat. Ob du wirklich räumst, prüft niemand – das ist Rollenspiel. Nach einem
+Winter fragt die Gemeinde meist wieder, nach einem Winter ohne Schnee seltener. Ist im Spielstand kein Schnee
+eingestellt, kommt kein Angebot.
+
 ## Personal
 
 ![Personal](../screenshots/13-personal.png)
@@ -285,6 +292,12 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
   Nach zwei Spieljahren ist die Ausbildung zu Ende: Einen Monat vorher fragt er, ob er als Maschinenführer bleiben
   darf, und nennt sein Gehalt. Du kannst ihn übernehmen, ein Gegenangebot machen (ab 90 % seiner Forderung sagt er zu)
   oder ablehnen – dann macht er die Ausbildung fertig und geht.
+- **Erntehelfer:in auf Zeit.** Von Juni bis Oktober kannst du Saisonkräfte ausschreiben (höchstens drei
+  gleichzeitig). Sie bringen mittleres Können mit und verlangen mehr Gehalt als Festangestellte (das 1,25-Fache eines
+  Maschinenführers); über das Gehalt wird nicht verhandelt, Schulungen gibt es keine. Sie fahren deine Helfer wie ein
+  Maschinenführer ohne Schulung – nach den Maschinenführern, vor den Azubis. Der Vertrag endet automatisch Ende Oktober
+  (das letzte Gehalt kommt noch), mit einer Abschiedsmail. Wer zufrieden ging, bewirbt sich im nächsten Jahr wieder –
+  mit demselben Vertrauen.
 - Die Stundenzählung braucht die aktuelle Mod-Version; mit einer älteren gilt die bisherige Arbeitsbelastung.
 
 ## Flurkarte
@@ -336,6 +349,16 @@ Vertrauen, dein Ansehen im Dorf sinkt etwas) und verlangt einen Ausgleich (10 % 
 steht in der Flurkarte: *Ausgleich zahlen* oder *Ablehnen* – ablehnen oder die Frist verstreichen lassen kostet
 weiteres Vertrauen. Ein freies Feld im Spielmenü zu kaufen, landet nur im Tagebuch; verkaufst du ein eigenes Feld
 dort, redet das Dorf darüber.
+
+**Lohnunternehmer beauftragen.** In der Detailansicht eines eigenen (oder gepachteten) Feldes bietet der
+Lohnunternehmer die Arbeiten an, die gerade zum Feld passen: **Pflügen** und **Grubbern** (leeres, abgeerntetes oder
+verdorrtes Feld), **Kalken** (wenn Kalk fehlt), **Säen** (leeres Feld, Fruchtsorte aus einer Liste) und **Ernten**
+(erntereifes Feld). Der Preis richtet sich nach der Fläche. Er kommt in 1–3 Spieltagen (in der Erntezeit später, mit
+gutem Vertrauen früher); am Arbeitstag ist das Feld im Spiel fertig, die Rechnung wird gebucht und er meldet sich per
+Mail. Die Ernte landet in deinen Silos – wie viel, hängt von Düngung, Kalk, Pflug und Unkraut ab. Passt sie nicht
+ganz in deine Silos, nimmt er den Auftrag gar nicht erst an. Reicht am Arbeitstag das Geld nicht oder passt das Feld
+nicht mehr zur Arbeit, fällt der Termin aus, ohne dass etwas berechnet wird. Die Aufträge stehen unter den Vorgängen
+der Flurkarte.
 
 **Lohnunternehmer – Aufträge aus dem Spiel.** Der Lohnunternehmer macht dich ab und zu per Mail auf einen Auftrag
 aufmerksam, der gerade im Auftragsmenü des Spiels verfügbar ist (Titel, Feld, Auftraggeber, Lohn). Annehmen und
@@ -457,6 +480,12 @@ Mod-Version.
   forderst mehr. Nach der Einigung verschwindet die Maschine im Spiel und der Erlös wird gebucht. Sitzt jemand darin,
   fährt ein Helfer oder hängt etwas an der Maschine, klappt es nicht – im Spiel erscheint dann „Bitte erst abkoppeln“.
   Geleaste Maschinen kannst du nicht verkaufen.
+- **Leih- und Vorführmaschinen.** Mit **Vorführung anfragen** stellt dir die Werkstatt eine neue Maschine aus dem Shop
+  für 1–2 Spieltage kostenlos hin; manchmal bietet sie das auch von sich aus an (*Vorführung annehmen*). Danach kommt
+  ein Kaufangebot zum Listenpreis minus 10 %, über das du verhandeln kannst: Bei Einigung bleibt die Maschine, sonst
+  wird sie abgeholt. Die Liste zeigt auch die Maschinen, die du dir bei Nachbarn geliehen hast (siehe **Kontakte**),
+  mit Miete, Ende, Verspätung und Schadenersatz. Leih- und Vorführmaschinen gehören dir nicht: Sie zählen nicht zum
+  Vermögen bei der Bank und nicht zur Abschreibung, werden nicht gewartet und lassen sich nicht verkaufen.
 
 ## Handel
 
@@ -489,6 +518,14 @@ Zuckerrüben oder Raps, je nachdem, was bei dir liegt), zum Hofladenpreis von 13
 viermal im Jahr). Lehnst du ab oder antwortest nicht binnen 3 Tagen, kommen seltener Bestellungen; jede Lieferung
 macht das wieder besser.
 
+**Viehhandel mit Nachbarn:** Milchviehbetriebe halten Kühe, Gemischtbetriebe Kühe, Schweine und Schafe. Du siehst
+ihren Bestand und ihre Preise je Tier (aus dem Tierwert des Spiels, etwas teurer beim Kauf, etwas günstiger beim
+Verkauf, Vertrauen hilft). Wähle Geschäft (*Tiere kaufen* oder *Tiere verkaufen*), deinen Stall, die Rasse und 1–10
+Tiere – beim Kauf höchstens so viele, wie Platz ist, beim Verkauf so viele, wie du von der Rasse hast. Der Nachbar
+antwortet sofort mit seinem Angebot; nach *Kaufen* bzw. *Verkaufen* wechseln die Tiere im Spiel den Stall und das
+Geld wird gebucht. Auch von sich aus bietet ein Nachbar ab und zu Tiere an oder fragt nach welchen. Das Dorf redet
+über deine Geschäfte. Der Viehhändler bleibt für alles außerhalb des Dorfs zuständig.
+
 Die Nachbarfelder, deine Silos und die Aufträge brauchen die aktuelle Mod-Version; fehlen sie, sagt die App es oben.
 
 ## Kontakte
@@ -501,6 +538,12 @@ Anruf. Schreibst du jemandem mehrmals kurz hintereinander, antwortet er trotzdem
 erste Kontakt des Tages. Dein **Ansehen im Dorf** (gut angesehen, neutral, umstritten) steht auch auf dem
 Startbildschirm. Gelegentlich ziehen Leute weg oder neu zu. Bei einem Nachbarn führt **Handel & Arbeit mit diesem
 Nachbarn** in die App **Handel**.
+
+**Maschine leihen:** Ein Nachbar leiht dir eine Maschine, die zu seinem Betrieb passt (z. B. einen Mähdrescher), für
+1–5 Spieltage. Die Miete je Tag hängt vom Listenpreis und vom Vertrauen ab und wird jeden Tag abgebucht – die ganze
+Miete muss vorab auf dem Konto sein; fehlt sie, holt er die Maschine sofort zurück. Am Ende wird die Maschine
+abgeholt. Sitzt du gerade darin, kommt eine Erinnerung und jeder weitere Tag kostet die Miete plus 50 %. Ist sie
+beschädigter als vorher, zahlst du Schadenersatz; verschwindet sie ganz, ihren Wert.
 
 **Vereine:** Schützenverein, Freiwillige Feuerwehr und Sportverein haben je eine:n Vorsitzende:n. Zu den Dorffesten
 im FS25-Kalender (Maibaumaufstellen im Mai, Schützenfest im Juni, Feuerwehrfest im August, Erntedankfest im Oktober,

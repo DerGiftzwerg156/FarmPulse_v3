@@ -1,0 +1,6 @@
+Schon gehört?
+Moin,
+
+im Dorf erzählt man sich, dass du {{count}} Tiere ({{subType}}) {{dealText}} hast – das ist schon Gesprächsthema beim Bäcker.
+
+{{characterName}}

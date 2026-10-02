@@ -155,6 +155,10 @@ public class SatisfactionService {
     /** Raise: payFairness + points per percent (capped). */
     @Transactional
     public void raise(Employee e, long newSalary) {
+        if (e.getJobRole() == de.farmpulse.rpsim.domain.JobRole.SEASONAL_WORKER) { // R31-A5
+            throw new de.farmpulse.rpsim.common.BusinessRuleException("NO_RAISE_SEASONAL",
+                    "Saisonkräfte haben ein festes Gehalt – es gibt keine Gehaltsverhandlung.");
+        }
         if (newSalary <= e.getMonthlySalary()) {
             throw new de.farmpulse.rpsim.common.BusinessRuleException("NO_RAISE", "Das neue Gehalt muss höher sein.");
         }

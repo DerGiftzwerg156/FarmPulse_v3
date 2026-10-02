@@ -139,7 +139,8 @@ export function validateInstruction(ins) {
       if (typeof ins.storeXmlFilename !== 'string' || !ins.storeXmlFilename) return 'storeXmlFilename is required';
       for (const f of ['ageMonths', 'operatingHours']) if (!num(ins[f]) || ins[f] < 0) return `${f} must be >= 0`;
       for (const f of ['damage', 'wear']) if (!num(ins[f]) || ins[f] < 0 || ins[f] > 1) return `${f} must be between 0 and 1`;
-      if (!num(ins.price) || ins.price <= 0) return 'price must be > 0';
+      // R31-A2: price 0 = borrowed or demo machine (no booking)
+      if (!num(ins.price) || ins.price < 0) return 'price must be >= 0';
       if (!MONEY_REASONS.has(ins.moneyReason)) return `unknown moneyReason ${ins.moneyReason}`;
       return null;
     case 'VEHICLE_REMOVE':
@@ -477,7 +478,7 @@ export class BridgeSimulator {
         workedGameMs: Object.fromEntries(Object.entries(this.workforce.workedGameMs).map(([k, v]) => [k, Math.round(v)])) };
     }
     if (this.husbandries) {
-      blocks.husbandries = this.husbandries.map((h) => structuredClone(h))
+      blocks.husbandries = this.husbandries.map((h) => ({ ...structuredClone(h), ...this.stableExport(h.husbandryUniqueId) }))
         .sort((a, b) => a.husbandryUniqueId.localeCompare(b.husbandryUniqueId));
     }
     if (this.fields) {
@@ -576,13 +577,18 @@ export class BridgeSimulator {
     if (this.balance < ins.price) return 'INSUFFICIENT_FUNDS';
     const next = Math.max(0, ...this.vehicles.map((v) => Number(v.uniqueId.replace(/\D/g, '')) || 0)) + 1;
     const uniqueId = `veh_${String(next).padStart(5, '0')}`;
-    this.vehicles.push({ uniqueId, value: ins.price, damage: ins.damage, name: item.name,
-      xmlFilename: ins.storeXmlFilename, ageMonths: ins.ageMonths, operatingHours: ins.operatingHours, wear: ins.wear });
-    this.balance -= ins.price;
-    this.moneyLog.push({ id: ins.instructionId, amount: -ins.price, reason: ins.moneyReason, note: item.name });
-    this.book(`RPSIM_${ins.moneyReason}`, -ins.price);
+    // the game value of a borrowed machine (price 0) is its list price; a mod with the R31-Q1 contract exports the
+    // shop category
+    this.vehicles.push({ uniqueId, value: ins.price > 0 ? ins.price : item.price, damage: ins.damage, name: item.name,
+      xmlFilename: ins.storeXmlFilename, ageMonths: ins.ageMonths, operatingHours: ins.operatingHours, wear: ins.wear,
+      ...(this.roadmapV31 && item.categoryName ? { category: item.categoryName } : {}) });
+    if (ins.price > 0) {
+      this.balance -= ins.price;
+      this.moneyLog.push({ id: ins.instructionId, amount: -ins.price, reason: ins.moneyReason, note: item.name });
+      this.book(`RPSIM_${ins.moneyReason}`, -ins.price);
+    }
     this.applyResult = { vehicleId: uniqueId };
-    this.log(`used vehicle ${item.name} delivered as ${uniqueId}`);
+    this.log(`${ins.price > 0 ? 'used vehicle' : 'borrowed vehicle'} ${item.name} delivered as ${uniqueId}`);
     return null;
   }
 
@@ -604,6 +610,22 @@ export class BridgeSimulator {
     if (!this.vehiclePositions) return {};
     return { vehiclePositions: this.vehiclePositions.map((p) => ({ ...p }))
       .sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)) };
+  }
+
+  /**
+   * R31-A3: subtypes in a stable (count > 0, sorted), the subtypes it can hold and its free places, like the mod's
+   * buildHusbandries; nothing for a husbandry without a stable in the model or a scenario without the R31-Q1 contract.
+   */
+  stableExport(husbandryUniqueId) {
+    const stable = this.roadmapV31 ? this.stables?.[husbandryUniqueId] : null;
+    const animal = this.animals.find((a) => a.husbandryUniqueId === husbandryUniqueId);
+    if (!stable || !animal) return {};
+    const subTypes = Object.entries(stable.subTypes).filter(([, n]) => n > 0).map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const total = subTypes.reduce((s, x) => s + x.count, 0);
+    const supportedSubTypes = Object.entries(SUB_TYPES).filter(([, type]) => type === animal.type).map(([name]) => name)
+      .sort();
+    return { subTypes, supportedSubTypes, freeSlots: Math.max(0, stable.capacity - total) };
   }
 
   /** Control API (R31-A4): the snow height of the world changes (metres, snowSystem.height). */

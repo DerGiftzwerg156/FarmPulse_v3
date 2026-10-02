@@ -1,0 +1,6 @@
+Ich hole den {{vehicleName}} zurück
+Moin,
+
+die Miete für den {{vehicleName}} ging nicht durch. Ich hole die Maschine deshalb sofort zurück.
+
+{{characterName}}

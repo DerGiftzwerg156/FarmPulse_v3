@@ -1,0 +1,6 @@
+{{vehicleName}} steht bei dir
+Moin,
+
+der {{vehicleName}} steht auf deinem Hof. Du kannst ihn {{days}} Spieltag(e) nutzen; die Miete von {{dailyRent}} € je Tag wird täglich abgebucht (bei einer Vorführung: 0 €). Danach hole ich ihn wieder ab – bitte dann abstellen und abkoppeln.
+
+{{characterName}}

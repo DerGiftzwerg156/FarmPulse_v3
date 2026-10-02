@@ -6,7 +6,7 @@ import { ServiceCases } from '../contracts/service-cases';
 /**
  * Hof-Tablet app "Ämter" (Roadmap V2 R2-E1 / R2-E2): the tax office (estimate, assessment, bills to pay by button,
  * tax advisor) and the agricultural authority (announced inspections, their result and fines; Roadmap V3 R3-W2 the
- * drought aid, applied for by button).
+ * drought aid, applied for by button); Roadmap V3.1 R31-A4 the winter service for the municipality.
  */
 @Component({
   selector: 'app-authorities',
@@ -31,6 +31,14 @@ import { ServiceCases } from '../contracts/service-cases';
             <p open-intro class="mb-3 text-[12px] text-muted">{{ 'authorities.droughtAidIntro' | t }}</p>
           </app-service-cases>
         </div>
+      </div>
+      <div data-testid="municipality">
+        <!-- Roadmap V3.1 R31-A4: winter service for the municipality -->
+        <h2 class="mb-3 font-display text-[12px] font-bold uppercase tracking-[0.18em] text-app-sys">{{ 'authorities.municipality' | t }}</h2>
+        <app-service-cases [contractKinds]="['WINTER_SERVICE']" contractsTitle="authorities.winter.title" [showEmpty]="false" [history]="false"
+          [highlightContract]="highlightedContract()" testId="winter-service">
+          <p contracts-intro class="mb-3 text-[12px] text-muted">{{ 'authorities.winter.intro' | t }}</p>
+        </app-service-cases>
       </div>
     </section>
   `,

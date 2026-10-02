@@ -1,0 +1,6 @@
+Mit den Tieren hat es nicht geklappt
+Moin,
+
+aus dem Handel mit {{count}} Tieren ({{subType}}) ist nichts geworden ({{reason}}). Bezahlt wurde nichts.
+
+{{characterName}}

@@ -1,0 +1,6 @@
+Winterdienst im kommenden Winter
+Guten Tag,
+
+die Gemeinde sucht für die {{months}} Wintermonate wieder jemanden für den Winterdienst. Wir zahlen {{baseFee}} € je Wintermonat Bereitschaft und zusätzlich {{feePerSnowDay}} € für jeden Tag mit Schnee. Bitte geben Sie bis Monatsende in der App „Ämter“ Bescheid.
+
+{{characterName}}

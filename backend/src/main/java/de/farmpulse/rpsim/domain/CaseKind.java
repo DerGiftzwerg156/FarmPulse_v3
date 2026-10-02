@@ -37,5 +37,24 @@ public enum CaseKind {
     /** Roadmap V3 R3-W2: drought aid of the authority after a declared drought (apply by button within the deadline). */
     DROUGHT_AID,
     /** Roadmap V3 R3-P2: the apprentice asks to be taken over as machine operator (accept / counter offer / decline). */
-    APPRENTICE_TAKEOVER
+    APPRENTICE_TAKEOVER,
+    /**
+     * Roadmap V3.1 R31-A1: the contractor works an own field on an agreed game day (IN_PROGRESS until the mod
+     * acknowledged FIELD_WORK). reference = work, title = fruit type (sow) or fill type (harvest), quantity = litres of
+     * the harvest, offerAmount = price, deadlineGameTime = the work day, externalId = batch once sent.
+     */
+    CONTRACTOR_WORK,
+    /**
+     * Roadmap V3.1 R31-A2: the workshop offers a demo machine on its own (accept / decline). reference = store XML,
+     * title = machine name, offerAmount = list price.
+     */
+    MACHINE_DEMO_OFFER,
+    /**
+     * Roadmap V3.1 R31-A3: a neighbour offers animals (on his own or asked by the player) - the player buys. reference =
+     * subtype, title = animal type, externalId = husbandryUniqueId, quantity = count, costAmount = price per animal,
+     * offerAmount = total.
+     */
+    ANIMAL_OFFER,
+    /** Roadmap V3.1 R31-A3: a neighbour asks for animals of the player's stable (or the player offers) - the player sells. */
+    ANIMAL_REQUEST
 }

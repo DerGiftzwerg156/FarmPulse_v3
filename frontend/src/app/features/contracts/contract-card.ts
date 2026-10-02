@@ -41,6 +41,18 @@ export const CONTRACT_BADGE: Record<string, BadgeVariant> = {
           <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="contract-decline">{{ 'contracts.decline' | t }}</app-button>
         </div>
       }
+      @if (c.kind === 'WINTER_SERVICE') {
+        <!-- Roadmap V3.1 R31-A4: base fee per winter month plus a fee per snow day -->
+        <p class="mt-1 text-[12px] text-muted" data-testid="winter-service">
+          @if (c.status === 'ACTIVE') {
+            {{ 'authorities.winter.days' | t: { month: c.snowDays ?? 0, total: c.snowDaysTotal ?? 0 } }}
+          } @else if (c.status === 'ENDED') {
+            {{ 'authorities.winter.total' | t: { total: c.snowDaysTotal ?? 0 } }}
+          } @else {
+            {{ 'authorities.winter.hint' | t }}
+          }
+        </p>
+      }
       @if ((c.kind === 'MAINTENANCE' || c.kind === 'TAX_ADVISOR') && c.status === 'ACTIVE') {
         <div class="mt-2"><app-button variant="secondary" [disabled]="busy()" (pressed)="act('cancel')" data-testid="contract-cancel">{{ 'contracts.cancel' | t }}</app-button></div>
       }

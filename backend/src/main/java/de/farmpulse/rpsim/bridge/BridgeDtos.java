@@ -111,11 +111,25 @@ public final class BridgeDtos {
     /**
      * Roadmap V2 R2-A7: state of one husbandry ({@code husbandryUniqueId} as in {@code assets.animals}). health = mean
      * cluster health (0..100 like the game's info box), productivity = production factor (missing for horses and
-     * pigs), food = total food / capacity.
+     * pigs), food = total food / capacity. Roadmap V3.1 R31-A3 (owner decision 2026-10-02), each optional: animals per
+     * subtype ({@code subTypes}), the subtypes the husbandry accepts ({@code supportedSubTypes}) and its free places
+     * ({@code freeSlots}); null with an older mod.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
-                            List<HusbandryCondition> conditions) {
+                            List<HusbandryCondition> conditions, List<SubTypeCount> subTypes,
+                            List<String> supportedSubTypes, Integer freeSlots) {
+
+        /** R2-A7 contract without the subtypes of Roadmap V3.1 (older mod). */
+        public Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
+                         List<HusbandryCondition> conditions) {
+            this(husbandryUniqueId, health, productivity, food, conditions, null, null, null);
+        }
+    }
+
+    /** Roadmap V3.1 R31-A3: animals of one FS25 subtype in a husbandry (subType.name, cluster:getNumAnimals()). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record SubTypeCount(String name, Integer count) {
     }
 
     /** One entry of the game's getConditionInfos (water, straw, slurry, milk ...), title as shown in the game. */

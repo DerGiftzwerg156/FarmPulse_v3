@@ -13,6 +13,7 @@ import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
+import { BorrowMachine } from './borrow-machine';
 import { TrustMeter } from './trust-meter';
 import { ServiceCases } from '../contracts/service-cases';
 
@@ -24,7 +25,7 @@ export const CATEGORY_ORDER = ['MANDATORY', 'SUBSTITUTE', 'DYNAMIC', 'EMPLOYEE']
  */
 @Component({
   selector: 'app-village',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, TrustMeter, PageErrorView, ServiceCases],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, TrustMeter, PageErrorView, ServiceCases, BorrowMachine],
   templateUrl: './village.html',
 })
 export class Village {

@@ -62,9 +62,14 @@ public class MechanicService {
     private final RpsimProperties props;
     private final GameTime gameTime;
 
+    /** Roadmap V3.1 R31-A2: the mechanic does not repair borrowed and demo machines (owner decision). */
+    private final de.farmpulse.rpsim.farmwork.LoanedVehicles loaned;
+
     public MechanicService(SavegameRepository savegames, EmployeeRepository employees, ServiceCaseRepository cases,
                            FactsService facts, OutboxService outbox, SatisfactionService satisfaction,
-                           NarrationRequestService narration, DiaryService diary, RpsimProperties props, GameTime gameTime) {
+                           NarrationRequestService narration, DiaryService diary, RpsimProperties props, GameTime gameTime,
+                           de.farmpulse.rpsim.farmwork.LoanedVehicles loaned) {
+        this.loaned = loaned;
         this.savegames = savegames;
         this.employees = employees;
         this.cases = cases;
@@ -123,7 +128,7 @@ public class MechanicService {
         if (f == null || f.assets() == null || f.assets().vehicles() == null) {
             return;
         }
-        List<BridgeDtos.Vehicle> vehicles = f.assets().vehicles().stream()
+        List<BridgeDtos.Vehicle> vehicles = loaned.own(sg, f.assets().vehicles()).stream()
                 .filter(v -> v != null && v.uniqueId() != null && v.condition() != null).toList();
         Set<String> done = repairedThisMonth(sg);
         for (Employee m : mechanics) {

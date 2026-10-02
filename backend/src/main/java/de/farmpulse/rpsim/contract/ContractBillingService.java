@@ -62,6 +62,7 @@ public class ContractBillingService {
             case MAINTENANCE -> MoneyReason.MAINTENANCE_FEE;
             case TAX_ADVISOR -> MoneyReason.OTHER; // R2-E1: no own booking reason (the mod knows OTHER)
             case LEASE_OUT -> MoneyReason.LEASE_INCOME; // R3-L1: income
+            case WINTER_SERVICE -> MoneyReason.WINTER_SERVICE; // R31-A4: income, paid by WinterServiceService
         };
     }
 
@@ -142,6 +143,7 @@ public class ContractBillingService {
             case MAINTENANCE -> "Wartungsvertrag";
             case TAX_ADVISOR -> "Honorar Steuerberatung";
             case LEASE_OUT -> "Pachteinnahme Feld " + c.getFarmlandId();
+            case WINTER_SERVICE -> "Winterdienst"; // R31-A4
         };
     }
 

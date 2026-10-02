@@ -1,0 +1,6 @@
+Auftrag ausgefallen: {{work}} auf Feld {{farmlandId}}
+Moin,
+
+aus {{work}} auf Feld {{farmlandId}} wird leider nichts. {{reasonText}} Berechnet wird nichts – melde dich gern wieder.
+
+{{characterName}}

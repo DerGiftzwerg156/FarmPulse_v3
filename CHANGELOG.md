@@ -51,6 +51,34 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
     `/vehicle-positions` and `/fuel`; the simulator executes the new instructions like the planned mod.
   - Docs: every new field and instruction with its source in the FS25 code (`docs/dev/bridge-protocol.md`) and
     section 21 of the manual test plan with one check per "Im Spiel prüfen" point of Roadmap V3.1.
+- **Work on the farm (Roadmap V3.1, R31-A):**
+  - **Contractor (A1):** Flurkarte → own field → *Lohnunternehmer beauftragen*: plow, cultivate, lime, sow (fruit type
+    from a list) or harvest - only what fits the field state, priced per hectare (`rpsim.formulas.contractor-work`). The
+    contractor comes in 1–3 game days (longer in the harvest months, shorter with trust). On the work day the mod sets
+    the field's end state like a completed contract (`FIELD_WORK` in a batch with `CONTRACTOR_FEE`); a harvest stores
+    the yield (area × litres per m² × yield factor from fertilising, lime, plowing and weeds) in the own silos and is
+    only accepted when the silos hold it all.
+  - **Borrowed and demo machines (A2):** *Kontakte* → neighbour → *Maschine leihen* (3 machines of the shop catalogue
+    that fit his farm, 1–5 game days, rent per day with trust, booked as `MACHINE_RENT`); *Werkstatt* → *Vorführung
+    anfragen* (free for 1–2 days, then a purchase offer at list price −10 %; the workshop also offers demos by itself).
+    The machine comes with `VEHICLE_SPAWN` at price 0 and leaves with `VEHICLE_REMOVE`; in use: reminder, new attempt,
+    rent + 50 % per late day; damage costs a compensation, a vanished machine its value. Borrowed machines count
+    nowhere as farm assets (bank, depreciation, maintenance, mechanic, sale).
+  - **Livestock trade with neighbours (A3):** *Handel* → *Viehhandel mit Nachbarn*: buy animals of a breed into an own
+    stable or sell some; neighbours also offer and ask by themselves. Prices from the game's value per animal ± margin
+    and trust; the mod moves the animals with `ANIMAL_TRANSFER` (with `LIVESTOCK_PURCHASE` / `LIVESTOCK_SALE`) and now
+    exports the breeds, the possible breeds and the free places of each stable (`husbandries[].subTypes`,
+    `supportedSubTypes`, `freeSlots`). The village gossips about the deals.
+  - **Winter service (A4):** in October the municipality offers the winter service (*Ämter* → *Gemeinde*) to farms with
+    an own medium or large tractor; 400 € per winter month plus 150 € per snow day (`weather.snowHeight` from 0.05 m),
+    hint in the game "Schnee! Winterdienst ab 5 Uhr". The mod now exports `weather.snowHeight` and
+    `assets.vehicles[].category`.
+  - **Seasonal workers (A5):** job role *Erntehelfer:in* - postings June to October, contract until the end of October,
+    salary 1.25 × a machine operator's, no raise and no trainings, at most 3. They drive helpers after the machine
+    operators and before the apprentices; a satisfied worker applies again the next year.
+  - After loading an older save, `FIELD_WORK` and `ANIMAL_TRANSFER` are sent again together with their batch. Bridge
+    simulator: stables export breeds and free places, `VEHICLE_SPAWN` at price 0, `lohnunternehmer` with the shop
+    catalogue. Manual test plan section 22.
 - **Leasing out own fields (Roadmap V3, R3-L):**
   - Flurkarte → own field → **Verpachten**: term 1–3 FS25 years and a desired rent per ha and month (guide value =
     field price × 5 % / 12 per ha). Up to three active neighbours with enough capital answer with a first bid

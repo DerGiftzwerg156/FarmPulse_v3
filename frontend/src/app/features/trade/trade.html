@@ -110,7 +110,10 @@
     <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
   }
 
-  <app-service-cases [caseKinds]="['GOODS_OFFER', 'GOODS_REQUEST', 'NEIGHBOR_MISSION']" openTitle="trade.cases"
+  <!-- Roadmap V3.1 R31-A3: livestock trade with the neighbours -->
+  <app-animal-trade (changed)="casesView()?.load()" />
+
+  <app-service-cases [caseKinds]="['GOODS_OFFER', 'GOODS_REQUEST', 'NEIGHBOR_MISSION', 'ANIMAL_OFFER', 'ANIMAL_REQUEST']" openTitle="trade.cases"
     [highlightCase]="highlightedCase()" testId="trade-cases">
     <p open-intro class="mb-3 text-[12px] text-muted">{{ 'trade.offerHint' | t }}</p>
   </app-service-cases>

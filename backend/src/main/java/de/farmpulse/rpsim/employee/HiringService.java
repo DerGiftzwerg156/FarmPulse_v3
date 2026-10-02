@@ -102,6 +102,12 @@ public class HiringService {
             RpsimProperties.Apprentice a = props.getFormulas().getApprentice();
             return new TrainedOffer(r.intBetween(a.getSkillMin(), a.getSkillMax()), a.getSalary(), null);
         }
+        if (role == JobRole.SEASONAL_WORKER) {
+            // R31-A5: skill in [skill-min, skill-max], machine operator salary x salary-factor, no training
+            RpsimProperties.SeasonalWorker s = seasonal();
+            int skill = r.intBetween(s.getSkillMin(), s.getSkillMax());
+            return new TrainedOffer(skill, seasonalSalary(skill), null);
+        }
         Offer o = rollOffer(role, r);
         RpsimProperties.Trainings t = props.getFormulas().getTraining();
         if (role != JobRole.MACHINE_OPERATOR || !r.chance(t.getApplicantChance())) {
@@ -112,9 +118,60 @@ public class HiringService {
         return new TrainedOffer(o.skill(), salary, training);
     }
 
+    private RpsimProperties.SeasonalWorker seasonal() {
+        return props.getFormulas().getSeasonalWorker();
+    }
+
+    /** R31-A5: machine operator salary (hiring formula at the skill) x salary-factor, rounded to 10 €. */
+    public long seasonalSalary(int skill) {
+        double base = cfg().getBaseSalary().getOrDefault(JobRole.MACHINE_OPERATOR.name(), 2400.0);
+        double operator = base * (1 + cfg().getSalarySkillFactor() * (skill - 50) / 50.0);
+        return Math.round(operator * seasonal().getSalaryFactor() / 10.0) * 10;
+    }
+
+    /** R31-A5: seasonal jobs only in the posting periods and with fewer than max-workers seasonal workers. */
+    void requireSeasonalPlace(Savegame sg, JobRole role) {
+        if (role != JobRole.SEASONAL_WORKER) {
+            return;
+        }
+        if (!seasonal().getPostingPeriods().contains(gameTime.periodOfYear(sg, sg.getCurrentGameTime()))) {
+            throw new BusinessRuleException("SEASONAL_OUT_OF_SEASON", "Saisonkräfte gibt es nur vor und in der Erntezeit.");
+        }
+        if (employees.findBySavegameAndStatusAndJobRole(sg, EmployeeStatus.ACTIVE, JobRole.SEASONAL_WORKER).size()
+                >= seasonal().getMaxWorkers()) {
+            throw new BusinessRuleException("SEASONAL_LIMIT", "Es sind höchstens " + seasonal().getMaxWorkers()
+                    + " Saisonkräfte gleichzeitig möglich.");
+        }
+    }
+
+    /** R31-A5: end of the seasonal contract = start of the month after contract-end-period. */
+    long seasonalContractEnd(Savegame sg) {
+        long now = sg.getCurrentGameTime();
+        int period = gameTime.periodOfYear(sg, now);
+        int months = Math.floorMod(seasonal().getContractEndPeriod() - period, GameTime.PERIODS_PER_YEAR) + 1;
+        return gameTime.addMonths(sg, now, months);
+    }
+
+    /**
+     * R31-A5: former seasonal workers who left at the end of last season with return-satisfaction or more and have not
+     * applied again since.
+     */
+    List<Employee> returningSeasonalWorkers(Savegame sg) {
+        long month = gameTime.monthIndex(sg, sg.getCurrentGameTime());
+        return employees.findBySavegameAndStatusAndJobRole(sg, EmployeeStatus.TERMINATED, JobRole.SEASONAL_WORKER).stream()
+                .filter(e -> e.getSeasonEndSatisfaction() != null
+                        && e.getSeasonEndSatisfaction() >= seasonal().getReturnSatisfaction()
+                        && e.getTerminatedAtGameTime() != null
+                        && month - gameTime.monthIndex(sg, e.getTerminatedAtGameTime()) < GameTime.PERIODS_PER_YEAR
+                        && !applications.existsByReturningEmployeeIdAndCreatedAtGameTimeGreaterThanEqual(e.getId(),
+                                e.getTerminatedAtGameTime()))
+                .toList();
+    }
+
     @Transactional
     public JobPosting createPosting(Savegame sg, JobRole role) {
         requireApprenticePlace(sg, role);
+        requireSeasonalPlace(sg, role);
         JobPosting p = new JobPosting();
         p.setSavegame(sg);
         p.setJobRole(role);
@@ -142,6 +199,26 @@ public class HiringService {
                             .put("trainingNote", trainingNote(o.training())).build())
                     .category(CommunicationCategory.EMPLOYEE).related(RELATED, p.getId())
                     .formLink("/employees?posting=" + p.getId()).submit();
+        }
+        if (role == JobRole.SEASONAL_WORKER) {
+            for (Employee old : returningSeasonalWorkers(sg)) {
+                // R31-A5: a well treated seasonal worker of last year applies again (same character, trust stays)
+                long salary = seasonalSalary(old.getSkill());
+                JobApplication a = new JobApplication();
+                a.setSavegame(sg);
+                a.setPosting(p);
+                a.setCharacter(old.getCharacter());
+                a.setSkill(old.getSkill());
+                a.setExpectedSalary(salary);
+                a.setReturningEmployeeId(old.getId());
+                a.setStatus(JobApplicationStatus.PENDING);
+                a.setCreatedAtGameTime(sg.getCurrentGameTime());
+                applications.save(a);
+                narration.request(sg, NarrationEventType.SEASONAL_WORKER_RETURN).from(old.getCharacter())
+                        .facts(NarrationFacts.builder().put("skill", old.getSkill()).put("expectedSalary", salary).build())
+                        .category(CommunicationCategory.EMPLOYEE).related(RELATED, p.getId())
+                        .formLink("/employees?posting=" + p.getId()).submit();
+            }
         }
         return p;
     }
@@ -173,7 +250,10 @@ public class HiringService {
         }
         JobApplication chosen = application(sg, postingId, applicationId);
         requireApprenticePlace(sg, p.getJobRole());
-        Employee e = createEmployee(sg, chosen.getCharacter(), p.getJobRole(), chosen.getSkill(), chosen.getExpectedSalary());
+        requireSeasonalPlace(sg, p.getJobRole());
+        Employee e = chosen.getReturningEmployeeId() != null
+                ? rehire(sg, chosen.getReturningEmployeeId(), chosen.getSkill(), chosen.getExpectedSalary())
+                : createEmployee(sg, chosen.getCharacter(), p.getJobRole(), chosen.getSkill(), chosen.getExpectedSalary());
         if (chosen.getTraining() != null) {
             e.addTraining(chosen.getTraining());
             publisher.publishEvent(new RosterChangedEvent(sg.getId())); // the list for the mod with the training
@@ -227,9 +307,51 @@ public class HiringService {
             e.setApprenticeshipEndsAtGameTime(gameTime.addMonths(sg, sg.getCurrentGameTime(),
                     (long) GameTime.PERIODS_PER_YEAR * props.getFormulas().getApprentice().getTrainingYears()));
         }
+        if (role == JobRole.SEASONAL_WORKER) {
+            e.setContractEndsAtGameTime(seasonalContractEnd(sg)); // R31-A5: fixed term
+        }
         Employee saved = employees.save(e);
         publisher.publishEvent(new RosterChangedEvent(sg.getId())); // R2-A0
         return saved;
+    }
+
+    /**
+     * R31-A5: a former seasonal worker comes back - his employee record (and character with trust and memory) is
+     * reactivated with fresh needs, the new salary and a new contract end.
+     */
+    private Employee rehire(Savegame sg, Long employeeId, int skill, long salary) {
+        Employee e = employees.findById(employeeId).filter(x -> x.getSavegame().getId().equals(sg.getId()))
+                .orElseThrow(() -> new NotFoundException("employee " + employeeId));
+        long now = sg.getCurrentGameTime();
+        double start = props.getFormulas().getSatisfaction().getStartValue();
+        Character c = e.getCharacter();
+        c.setRole(CharacterRole.EMPLOYEE);
+        c.setCategory(CharacterCategory.EMPLOYEE);
+        c.setStatus(CharacterStatus.ACTIVE);
+        c.setTerminationReason(null);
+        c.setLeftAtGameTime(null);
+        e.setStatus(EmployeeStatus.ACTIVE);
+        e.setSkill(skill);
+        e.setMonthlySalary(salary);
+        e.setHiredAtGameTime(now);
+        e.setTerminatedAtGameTime(null);
+        e.setSeasonEndSatisfaction(null);
+        e.setPayFairness(start);
+        e.setWorkload(start);
+        e.setAppreciation(start);
+        e.setNeedsUpdatedAtGameTime(now);
+        e.setLowSatisfactionSinceGameTime(null);
+        e.setWarningSent(false);
+        e.setSalaryOverdue(false);
+        e.setStrikeSinceGameTime(null);
+        e.setTimeOffUntilGameTime(null);
+        e.setLastEffectMultiplier(1.0);
+        e.setWorkedMsToday(0);
+        e.setWorkedMsMonth(0);
+        e.setNextSalaryDueGameTime(gameTime.addMonths(sg, now, 1));
+        e.setContractEndsAtGameTime(seasonalContractEnd(sg));
+        publisher.publishEvent(new RosterChangedEvent(sg.getId()));
+        return e;
     }
 
     /** R3-P2: at most max-apprentices apprentices at a time. */

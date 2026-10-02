@@ -346,8 +346,10 @@ end
 function T.TestInstructions:testVehicleSpawnValidation()
     lu.assertTrue(RPSimInstructions.validate(spawn()))
     lu.assertTrue(RPSimInstructions.validate(spawn({ ageMonths = 0, operatingHours = 0, damage = 0, wear = 1 })))
+    -- Roadmap V3.1 R31-A2: price 0 = borrowed or demo machine
+    lu.assertTrue(RPSimInstructions.validate(spawn({ price = 0, moneyReason = "MACHINE_RENT" })))
     local cases = { { storeXmlFilename = "" }, { ageMonths = -1 }, { operatingHours = -1 }, { damage = 1.2 },
-        { wear = -0.1 }, { price = 0 }, { price = -98000 }, { moneyReason = "FREE_MONEY" } }
+        { wear = -0.1 }, { price = -98000 }, { moneyReason = "FREE_MONEY" } }
     for _, c in ipairs(cases) do
         local ok, why = RPSimInstructions.validate(spawn(c))
         lu.assertFalse(ok, why)

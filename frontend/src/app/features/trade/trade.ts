@@ -12,6 +12,7 @@ import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { ServiceCases } from '../contracts/service-cases';
 import { TrustMeter } from '../village/trust-meter';
+import { AnimalTrade } from './animal-trade';
 
 /** One fill type the player can ask a neighbour for: his stock with a price and room in an own silo. */
 export interface Requestable {
@@ -34,14 +35,14 @@ export function requestables(n: TradeNeighborView, t: TradeView): Requestable[] 
  */
 @Component({
   selector: 'app-trade',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, Card, Button, TrustMeter, PageErrorView, ServiceCases],
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, Card, Button, TrustMeter, PageErrorView, ServiceCases, AnimalTrade],
   templateUrl: './trade.html',
 })
 export class Trade {
   private readonly api = inject(ApiService);
   private readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
-  private readonly casesView = viewChild(ServiceCases);
+  readonly casesView = viewChild(ServiceCases);
 
   /** `?neighbor=` highlights a neighbour (link from "Kontakte"). */
   readonly neighbor = input<string>();

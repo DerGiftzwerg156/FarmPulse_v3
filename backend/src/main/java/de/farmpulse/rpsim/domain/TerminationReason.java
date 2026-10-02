@@ -8,5 +8,7 @@ public enum TerminationReason {
     DISMISSED,
     SUBSTITUTE_ENDED,
     REJECTED_APPLICANT,
-    DRAFT_DISCARDED
+    DRAFT_DISCARDED,
+    /** Roadmap V3.1 R31-A5: the fixed-term contract of a seasonal worker ended. */
+    CONTRACT_ENDED
 }

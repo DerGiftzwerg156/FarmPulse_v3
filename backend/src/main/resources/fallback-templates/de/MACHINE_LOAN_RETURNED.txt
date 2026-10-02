@@ -1,0 +1,6 @@
+{{vehicleName}} ist zurück
+Moin,
+
+danke, der {{vehicleName}} ist wieder bei mir. Verspätung: {{lateDays}} Tag(e). Schadenersatz: {{compensation}} €.
+
+{{characterName}}

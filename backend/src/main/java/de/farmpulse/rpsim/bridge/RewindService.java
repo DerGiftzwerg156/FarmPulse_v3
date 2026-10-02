@@ -58,10 +58,16 @@ public class RewindService {
 
     private static final Logger log = LoggerFactory.getLogger(RewindService.class);
     private static final Set<RewindStatus> OPEN = EnumSet.of(RewindStatus.AWAITING_ACK, RewindStatus.AWAITING_PLAYER);
-    /** Roadmap V3 R3-V2 / R3-V3: used machines are re-sent like farmland transfers (owner decision). */
+    /**
+     * Roadmap V3 R3-V2 / R3-V3: used machines are re-sent like farmland transfers (owner decision). Roadmap V3.1
+     * (owner decision 2026-10-02): FIELD_WORK and ANIMAL_TRANSFER too, together with the rest of their batch.
+     */
     private static final Set<InstructionType> RESENDABLE = EnumSet.of(InstructionType.MONEY_TRANSACTION,
             InstructionType.PRICE_EVENT, InstructionType.FARMLAND_TRANSFER, InstructionType.VEHICLE_SPAWN,
-            InstructionType.VEHICLE_REMOVE);
+            InstructionType.VEHICLE_REMOVE, InstructionType.FIELD_WORK, InstructionType.ANIMAL_TRANSFER);
+    /** Roadmap V3.1: types whose whole batch is re-sent (e.g. the STORAGE_TRANSFER of a contractor harvest). */
+    private static final Set<InstructionType> WHOLE_BATCH = EnumSet.of(InstructionType.FIELD_WORK,
+            InstructionType.ANIMAL_TRANSFER);
 
     private final BridgeRewindRepository rewinds;
     private final OutboxInstructionRepository outbox;
@@ -153,9 +159,18 @@ public class RewindService {
     /** APPLIED instructions acknowledged after (reloaded point - lookback): candidates for "lost". */
     List<OutboxInstruction> candidates(Savegame sg, BridgeRewind r) {
         long from = r.getRewoundToGameTime() - GameTime.hours(props.getBridge().getRewindLookbackHours());
-        return outbox.findBySavegameAndStatusOrderByIdAsc(sg, InstructionStatus.APPLIED).stream()
-                .filter(o -> RESENDABLE.contains(o.getType()))
+        List<OutboxInstruction> applied = outbox.findBySavegameAndStatusOrderByIdAsc(sg, InstructionStatus.APPLIED).stream()
                 .filter(o -> o.getAckedAtGameTime() != null && o.getAckedAtGameTime() > from)
+                .toList();
+        // Roadmap V3.1: every member of a batch with a FIELD_WORK / ANIMAL_TRANSFER goes again
+        Set<String> wholeBatches = new HashSet<>();
+        for (OutboxInstruction o : applied) {
+            if (WHOLE_BATCH.contains(o.getType()) && o.getBatchId() != null) {
+                wholeBatches.add(o.getBatchId());
+            }
+        }
+        return applied.stream()
+                .filter(o -> RESENDABLE.contains(o.getType()) || (o.getBatchId() != null && wholeBatches.contains(o.getBatchId())))
                 .toList();
     }
 
@@ -198,6 +213,17 @@ public class RewindService {
                 i.put("storeXmlFilename", p.path("storeXmlFilename").asString(""));
             } else if (o.getType() == InstructionType.VEHICLE_REMOVE) {
                 i.put("vehicleId", p.path("vehicleId").asString(""));
+            } else if (o.getType() == InstructionType.FIELD_WORK) { // Roadmap V3.1 R31-A1
+                i.put("farmlandId", p.path("farmlandId").asInt());
+                i.put("work", p.path("work").asString(""));
+            } else if (o.getType() == InstructionType.ANIMAL_TRANSFER) { // Roadmap V3.1 R31-A3
+                i.put("subType", p.path("subType").asString(""));
+                i.put("count", p.path("count").asInt());
+                i.put("direction", p.path("direction").asString(""));
+            } else if (o.getType() == InstructionType.STORAGE_TRANSFER) {
+                i.put("fillType", p.path("fillType").asString(""));
+                i.put("amount", p.path("amount").asLong(0));
+                i.put("direction", p.path("direction").asString(""));
             } else {
                 i.put("fillType", p.path("fillType").asString(""));
                 i.put("sellPoint", p.path("sellPoint").asString(""));

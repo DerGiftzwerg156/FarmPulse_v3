@@ -1,0 +1,6 @@
+Die Saison ist vorbei
+Hallo,
+
+mein Vertrag als Erntehelfer endet heute, die Saison ist geschafft. Danke für die Zeit auf dem Hof! {{hoursNote}} {{returnNote}}
+
+{{characterName}}

@@ -17,7 +17,10 @@ import { PageErrorView } from '../../shared/ui/page-error';
 import { ServiceCases } from '../contracts/service-cases';
 import { HelperSettingsCard } from './helper-settings-card';
 
-export const JOB_ROLES = ['MACHINE_OPERATOR', 'MECHANIC', 'ANIMAL_KEEPER', 'OFFICE_CLERK', 'APPRENTICE'] as const;
+export const JOB_ROLES = ['MACHINE_OPERATOR', 'MECHANIC', 'ANIMAL_KEEPER', 'OFFICE_CLERK', 'APPRENTICE', 'SEASONAL_WORKER'] as const;
+
+/** Roles that drive the FS25 helpers (R3-P2 apprentice, Roadmap V3.1 R31-A5 seasonal worker). */
+export const DRIVER_ROLES = ['MACHINE_OPERATOR', 'APPRENTICE', 'SEASONAL_WORKER'];
 export const NEED_KEYS = ['payFairness', 'workload', 'appreciation', 'workingConditions'] as const;
 export type NeedKey = (typeof NEED_KEYS)[number];
 
@@ -57,7 +60,7 @@ export class Employees {
   readonly employees = signal<EmployeeView[] | null>(null);
   /** Roadmap V2 R2-A1: machine operators drive the FS25 helpers. */
   readonly hasOperators = computed(() => (this.employees() ?? []).some((e) => e.status === 'ACTIVE'
-    && (e.jobRole === 'MACHINE_OPERATOR' || e.jobRole === 'APPRENTICE')));
+    && DRIVER_ROLES.includes(e.jobRole)));
   readonly postings = signal<JobPostingView[] | null>(null);
   readonly error = signal<PageError | null>(null);
   readonly openPosting = signal<number | null>(null);

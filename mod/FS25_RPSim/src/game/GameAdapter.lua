@@ -7,7 +7,7 @@
 -- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
 -- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
 -- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
--- luacheck: globals StoreSpecies StoreItemUtil VehicleLoadingData VehicleLoadingState
+-- luacheck: globals StoreSpecies StoreItemUtil VehicleLoadingData VehicleLoadingState FieldSprayType
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -415,9 +415,14 @@ function RPSimGameAdapter:collectFarmFacts()
                     local damage = v.getDamageAmount ~= nil and v:getDamageAmount() or 0
                     -- Roadmap V3 R3-V3: name and shop XML for the list in the workshop app (Vehicle:getFullName,
                     -- vehicle.configFileName as in jobVehicleInfo)
+                    -- Roadmap V3.1 R31-A4: shop category of the vehicle (store item of configFileName, as for the
+                    -- trainings in jobVehicleInfo; LUADOC Shop/StoreManager.md)
                     raw.vehicles[#raw.vehicles + 1] = { uniqueId = v:getUniqueId(), value = v:getSellPrice(),
                         damage = damage, name = safe(function() return v:getFullName() end, nil),
-                        xmlFilename = v.configFileName }
+                        xmlFilename = v.configFileName, category = safe(function()
+                            local item = g_storeManager:getItemByXMLFilename(v.configFileName)
+                            return item ~= nil and item.categoryName or nil
+                        end, nil) }
                 elseif state == "LEASED" then
                     -- Leasing costs per vehicle have no documented API yet (manual test plan) - list only.
                     raw.leasedVehicles[#raw.leasedVehicles + 1] = { uniqueId = v:getUniqueId() }
@@ -725,13 +730,16 @@ function RPSimGameAdapter:onVehicleSpawned(ins, vehicles, loadState, done)
             end
         end)
     end
-    local booked, err = self:addMoney(-ins.price, ins.moneyReason, "Gebrauchtmaschine")
-    if not booked then
-        for _, v in ipairs(vehicles) do
-            pcall(function() v:delete() end)
+    -- Roadmap V3.1 R31-A2: price 0 = borrowed or demo machine, nothing to book
+    if ins.price > 0 then
+        local booked, err = self:addMoney(-ins.price, ins.moneyReason, "Gebrauchtmaschine")
+        if not booked then
+            for _, v in ipairs(vehicles) do
+                pcall(function() v:delete() end)
+            end
+            done(false, err)
+            return
         end
-        done(false, err)
-        return
     end
     local id = safe(function() return vehicles[1]:getUniqueId() end, nil)
     RPSimLog.info("Used vehicle %s delivered as %s", tostring(ins.storeXmlFilename), tostring(id))
@@ -771,6 +779,168 @@ function RPSimGameAdapter:removeVehicle(vehicleId)
     return true
 end
 
+-- ---------------------------------------------------------------------------------------------- Roadmap V3.1 R31-A
+
+--- The field of a farmland (g_fieldManager.fields, field.farmland set by FieldManager:loadMapData), nil if none.
+function RPSimGameAdapter.fieldOfFarmland(farmlandId)
+    for _, field in pairs(g_fieldManager.fields or {}) do
+        if field.farmland ~= nil and field.farmland.id == farmlandId then
+            return field
+        end
+    end
+    return nil
+end
+
+--- R31-A1: FIELD_WORK - the contractor finished a work on an own field. The end state is set like
+-- AbstractFieldMission:finishField / PlowMission:getFieldFinishTask (LUADOC Field/AbstractFieldMission.md,
+-- Field/PlowMission.md): the values of field:getFieldState() are changed, state:createFieldUpdateTask(),
+-- task:setField(field), g_fieldManager:addFieldUpdateTask(task). The changed values are also set with the setters of
+-- the task (dump field/FieldManager.lua: setFruit, setGroundType, setSprayType, setLimeLevel, setPlowLevel) - the
+-- fallback of manual test plan 21.1, harmless when the task already carries them.
+--   PLOW      no crop, groundType PLOWED, plow level full (g_fieldManager.plowLevelMaxValue)
+--   CULTIVATE no crop, groundType CULTIVATED
+--   LIME      lime level full (limeLevelMaxValue), sprayType LIME
+--   SOW       setFruit(fruitIndex, 1), groundType SOWN (g_fruitTypeManager:getFruitTypeByName)
+--   HARVEST   the crop on its cutState (Fruits/FruitTypeDesc.md); the yield goes into the silo with the batch's
+--             STORAGE_TRANSFER
+-- FAILED with FIELD_NOT_FOUND, NOT_OWN_FIELD, MISSION_RUNNING (field.currentMission) or UNKNOWN_FRUIT_TYPE.
+function RPSimGameAdapter:fieldWork(ins)
+    local field = safe(function() return RPSimGameAdapter.fieldOfFarmland(ins.farmlandId) end, nil)
+    if field == nil then
+        return false, "FIELD_NOT_FOUND"
+    end
+    if safe(function() return g_farmlandManager:getFarmlandOwner(ins.farmlandId) end, nil) ~= self:getFarmId() then
+        return false, "NOT_OWN_FIELD"
+    end
+    if field.currentMission ~= nil then
+        return false, "MISSION_RUNNING"
+    end
+    local sowIndex
+    if ins.work == "SOW" then
+        local desc = safe(function() return g_fruitTypeManager:getFruitTypeByName(ins.fruitType) end, nil)
+        if desc == nil or desc.index == nil then
+            return false, "UNKNOWN_FRUIT_TYPE"
+        end
+        sowIndex = desc.index
+    end
+    local ok, err = pcall(function()
+        local state = field:getFieldState()
+        if state == nil or not state.isValid then
+            error("field state not valid")
+        end
+        local setters = {}
+        if ins.work == "PLOW" or ins.work == "CULTIVATE" then
+            state.fruitTypeIndex = FruitType.UNKNOWN
+            state.growthState = 0
+            state.groundType = ins.work == "PLOW" and FieldGroundType.PLOWED or FieldGroundType.CULTIVATED
+            setters[#setters + 1] = function(task) task:setFruit(FruitType.UNKNOWN, 0) end
+            setters[#setters + 1] = function(task) task:setGroundType(state.groundType) end
+            if ins.work == "PLOW" then
+                state.plowLevel = g_fieldManager.plowLevelMaxValue
+                setters[#setters + 1] = function(task) task:setPlowLevel(state.plowLevel) end
+            end
+        elseif ins.work == "LIME" then
+            state.limeLevel = g_fieldManager.limeLevelMaxValue
+            state.sprayType = FieldSprayType.LIME
+            setters[#setters + 1] = function(task) task:setLimeLevel(state.limeLevel) end
+            setters[#setters + 1] = function(task) task:setSprayType(FieldSprayType.LIME) end
+        elseif ins.work == "SOW" then
+            state.fruitTypeIndex = sowIndex
+            state.growthState = 1
+            state.groundType = FieldGroundType.SOWN
+            setters[#setters + 1] = function(task) task:setFruit(sowIndex, 1) end
+            setters[#setters + 1] = function(task) task:setGroundType(FieldGroundType.SOWN) end
+        else -- HARVEST
+            local desc = g_fruitTypeManager:getFruitTypeByIndex(state.fruitTypeIndex)
+            if desc == nil or desc.cutState == nil then
+                error("no crop to harvest")
+            end
+            state.growthState = desc.cutState
+            setters[#setters + 1] = function(task) task:setFruit(state.fruitTypeIndex, desc.cutState) end
+        end
+        local task = state:createFieldUpdateTask()
+        for _, set in ipairs(setters) do
+            pcall(set, task)
+        end
+        task:setField(field)
+        g_fieldManager:addFieldUpdateTask(task)
+    end)
+    if not ok then
+        return false, tostring(err)
+    end
+    RPSimLog.info("Contractor work %s finished on farmland %s", tostring(ins.work), tostring(ins.farmlandId))
+    return true
+end
+
+--- An own husbandry by its uniqueId (placeables with spec_husbandryAnimals), nil if none.
+function RPSimGameAdapter:husbandryByUniqueId(uniqueId)
+    local farmId = self:getFarmId()
+    for _, p in pairs(placeableList()) do
+        local match = safe(function()
+            return p.spec_husbandryAnimals ~= nil and p:getUniqueId() == uniqueId and p:getOwnerFarmId() == farmId
+        end, false)
+        if match then
+            return p
+        end
+    end
+    return nil
+end
+
+--- R31-A3: ANIMAL_TRANSFER - animals of one subtype into (IN) or out of (OUT) an own husbandry (LUADOC
+-- Specializations/PlaceableHusbandryAnimals.md, dump PlaceableHusbandryAnimals.lua): the subtype from
+-- animalSystem:getSubTypeByName (Specializations/Rideable.md), the type check getSupportsAnimalSubType, IN checks
+-- getNumOfFreeAnimalSlots() and calls addAnimals(subTypeIndex, count, age); OUT takes the animals from the clusters of
+-- the subtype with cluster:changeNumAnimals(-n) like the console command. age is in months (0 when missing).
+-- FAILED with HUSBANDRY_NOT_FOUND, UNKNOWN_SUB_TYPE, WRONG_ANIMAL_TYPE, NO_ANIMAL_SPACE or NOT_ENOUGH_ANIMALS.
+function RPSimGameAdapter:animalTransfer(ins)
+    local p = self:husbandryByUniqueId(ins.husbandryUniqueId)
+    if p == nil then
+        return false, "HUSBANDRY_NOT_FOUND"
+    end
+    local animalSystem = safe(function() return g_currentMission.animalSystem end, nil)
+    local subType = safe(function() return animalSystem:getSubTypeByName(ins.subType) end, nil)
+    if subType == nil or subType.subTypeIndex == nil then
+        return false, "UNKNOWN_SUB_TYPE"
+    end
+    local index = subType.subTypeIndex
+    if not safe(function() return p:getSupportsAnimalSubType(index) end, false) then
+        return false, "WRONG_ANIMAL_TYPE"
+    end
+    local ok, err = pcall(function()
+        if ins.direction == "IN" then
+            if p:getNumOfFreeAnimalSlots() < ins.count then
+                error("NO_ANIMAL_SPACE")
+            end
+            p:addAnimals(index, ins.count, ins.age or 0)
+        else
+            local matching, available = {}, 0
+            for _, cluster in pairs(p:getClusters() or {}) do
+                if cluster:getSubTypeIndex() == index then
+                    matching[#matching + 1] = cluster
+                    available = available + cluster:getNumAnimals()
+                end
+            end
+            if available < ins.count then
+                error("NOT_ENOUGH_ANIMALS")
+            end
+            local remaining = -ins.count
+            for _, cluster in ipairs(matching) do
+                remaining = cluster:changeNumAnimals(remaining)
+                if remaining >= 0 then
+                    break
+                end
+            end
+        end
+    end)
+    if not ok then
+        local msg = tostring(err)
+        return false, msg:match("NO_ANIMAL_SPACE") or msg:match("NOT_ENOUGH_ANIMALS") or msg
+    end
+    RPSimLog.info("Animals %s %d x %s (husbandry %s)", ins.direction, ins.count, ins.subType,
+        tostring(ins.husbandryUniqueId))
+    return true
+end
+
 --- In-game notification (TODO T-21): g_currentMission:addIngameNotification(FSBaseMission.INGAME_NOTIFICATION_*, text),
 -- the pattern of FS25_MarketDynamics (MarketDynamics.lua, FuturesMarket.lua).
 --- Roadmap V2 R2-A7: state of one husbandry, the way the game computes it itself (all functions are placeable functions
@@ -780,6 +950,12 @@ end
 --                (PlaceableHusbandryAnimals:getConditionInfos)
 --   food         getTotalFood() / getFoodCapacity() (PlaceableHusbandryFood)
 --   conditions   title + ratio of every getConditionInfos() entry (water, straw, slurry, milk, productivity ...)
+-- Roadmap V3.1 R31-A3 (dump animals/husbandry/placeables/PlaceableHusbandryAnimals.lua):
+--   subTypes          animals per subtype: cluster:getSubTypeIndex() → animalSystem:getSubTypeByIndex(i).name
+--                     (subType.name as in Rideable:saveToXMLFile, LUADOC), cluster:getNumAnimals()
+--   supportedSubTypes the subtypes the husbandry accepts: spec.animalType.subTypes (global subtype indices, as in
+--                     consoleCommandAddAnimals) → getSubTypeByIndex(i).name
+--   freeSlots         getNumOfFreeAnimalSlots()
 -- nil when the husbandry has no animals specialization; a missing part is left out.
 function RPSimGameAdapter.husbandryState(p)
     return safe(function()
@@ -811,6 +987,28 @@ function RPSimGameAdapter.husbandryState(p)
                 end
             end
         end
+        local animalSystem = safe(function() return g_currentMission.animalSystem end, nil)
+        state.subTypes = safe(function()
+            local list = {}
+            for _, cluster in pairs(clusters) do
+                local sub = animalSystem:getSubTypeByIndex(cluster:getSubTypeIndex())
+                if sub ~= nil then
+                    list[#list + 1] = { name = sub.name, count = cluster:getNumAnimals() }
+                end
+            end
+            return list
+        end, nil)
+        state.supportedSubTypes = safe(function()
+            local list = {}
+            for _, index in ipairs(p.spec_husbandryAnimals.animalType.subTypes or {}) do
+                local sub = animalSystem:getSubTypeByIndex(index)
+                if sub ~= nil then
+                    list[#list + 1] = sub.name
+                end
+            end
+            return list
+        end, nil)
+        state.freeSlots = safe(function() return p:getNumOfFreeAnimalSlots() end, nil)
         return state
     end, nil)
 end
@@ -1136,7 +1334,10 @@ function RPSimGameAdapter:collectWeather()
         local weather = g_currentMission.environment.weather
         return { raining = weather:getIsRaining() == true, rainFallScale = weather:getRainFallScale(),
             groundWetness = weather:getGroundWetness(),
-            temperature = safe(function() return weather:getCurrentTemperature() end, nil) }
+            temperature = safe(function() return weather:getCurrentTemperature() end, nil),
+            -- Roadmap V3.1 R31-A4: snow height of the world in metres (g_currentMission.snowSystem.height, LUADOC
+            -- Wheels/WheelDestruction.md); left out when it cannot be read (manual test plan 21.4)
+            snowHeight = safe(function() return g_currentMission.snowSystem.height end, nil) }
     end, nil)
 end
 

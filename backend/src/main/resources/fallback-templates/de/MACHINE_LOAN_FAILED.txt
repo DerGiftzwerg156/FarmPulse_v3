@@ -1,0 +1,6 @@
+{{vehicleName}} konnte nicht geliefert werden
+Hallo,
+
+wir konnten den {{vehicleName}} leider nicht auf deinen Hof bringen ({{reason}}). Berechnet wird nichts.
+
+{{characterName}}

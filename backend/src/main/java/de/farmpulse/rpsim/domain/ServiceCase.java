@@ -76,7 +76,8 @@ public class ServiceCase extends SavegameScoped {
     @Column(name = "quantity")
     private Integer quantity;
 
-    @Column(name = "direction", length = 8)
+    /** BUY / SELL; Roadmap V3.1 R31-A3: origin + direction of a livestock deal (e.g. NEIGHBOR:BUY). */
+    @Column(name = "direction", length = 32)
     private String direction;
 
     @Column(name = "baseline_count")

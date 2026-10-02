@@ -131,6 +131,7 @@ local function validatePrompt(ins)
 end
 
 --- Roadmap V3 R3-V2: used vehicle from the shop catalog. price > 0 is booked by the mod as -price with moneyReason.
+-- Roadmap V3.1 R31-A2: price 0 = borrowed or demo machine, nothing is booked (the rent runs as MACHINE_RENT).
 local function validateVehicleSpawn(ins)
     if not isNonEmptyString(ins.storeXmlFilename) then
         return false, "storeXmlFilename is required"
@@ -145,8 +146,8 @@ local function validateVehicleSpawn(ins)
             return false, f .. " must be between 0 and 1"
         end
     end
-    if not isNumber(ins.price) or ins.price <= 0 then
-        return false, "price must be > 0"
+    if not isNumber(ins.price) or ins.price < 0 then
+        return false, "price must be >= 0"
     end
     if not RPSimInstructions.MONEY_REASONS[ins.moneyReason] then
         return false, "unknown moneyReason " .. tostring(ins.moneyReason)

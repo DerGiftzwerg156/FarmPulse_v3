@@ -44,12 +44,16 @@ public class CreditScoringService {
     private final FieldService fields;
     private final FarmlandOwnershipRepository farmlands;
 
+    /** Roadmap V3.1 R31-A2: borrowed and demo machines are no asset of the farm. */
+    private final de.farmpulse.rpsim.farmwork.LoanedVehicles loaned;
+
     public CreditScoringService(FactsService facts, FactsSnapshotRepository snapshots, LoanRepository loans,
                                 LoanPaymentRepository payments, LiquidityService liquidity, CharacterLookup lookup,
                                 TrustScoreService trust, CreditConfigResolver configs, GameTime gameTime,
                                 FinanceJournalService journal, FieldService fields,
-                                FarmlandOwnershipRepository farmlands) {
+                                FarmlandOwnershipRepository farmlands, de.farmpulse.rpsim.farmwork.LoanedVehicles loaned) {
         this.farmlands = farmlands;
+        this.loaned = loaned;
         this.facts = facts;
         this.snapshots = snapshots;
         this.loans = loans;
@@ -79,7 +83,8 @@ public class CreditScoringService {
     /** The asset value the credit check counts (incl. standing crops), 0 without facts. */
     public double totalAssets(Savegame sg) {
         FarmFacts f = facts.latest(sg).orElse(null);
-        return f == null ? 0 : facts.totalAssetValue(f) + standingCropValue(f, configs.forSavegame(sg)) + leasedOutValue(sg);
+        return f == null ? 0 : facts.totalAssetValue(f) - loaned.value(sg, f) + standingCropValue(f, configs.forSavegame(sg))
+                + leasedOutValue(sg);
     }
 
     /**
@@ -95,7 +100,9 @@ public class CreditScoringService {
         RpsimProperties.Credit cfg = configs.forSavegame(sg);
         FarmFacts f = facts.latest(sg).orElse(null);
         // R2-C5: standing crops count as asset (harvest value x growth progress x standing-crop-discount)
-        double assets = f == null ? 0 : facts.totalAssetValue(f) + standingCropValue(f, cfg) + leasedOutValue(sg);
+        // R31-A2: borrowed and demo machines are no asset of the farm
+        double assets = f == null ? 0 : facts.totalAssetValue(f) - loaned.value(sg, f) + standingCropValue(f, cfg)
+                + leasedOutValue(sg);
         List<Loan> active = new java.util.ArrayList<>(loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE));
         // T-03: an uncollected call-back is still debt
         active.addAll(loans.findBySavegameAndStatus(sg, LoanStatus.DEFAULTED));

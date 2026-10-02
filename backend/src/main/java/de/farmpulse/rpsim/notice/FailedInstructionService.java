@@ -76,6 +76,9 @@ public class FailedInstructionService {
     private final NeighborMissionService neighborMissions;
     private final de.farmpulse.rpsim.vehicle.VehicleTradeService vehicles;
     private final de.farmpulse.rpsim.contract.LeaseOutService leaseOut;
+    private final de.farmpulse.rpsim.farmwork.ContractorWorkService contractorWork;
+    private final de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans;
+    private final de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
@@ -84,8 +87,14 @@ public class FailedInstructionService {
                                     NeighborMissionService neighborMissions, JsonMapper json,
                                     de.farmpulse.rpsim.neighbor.FarmShopService farmShop,
                                     de.farmpulse.rpsim.vehicle.VehicleTradeService vehicles,
-                                    de.farmpulse.rpsim.contract.LeaseOutService leaseOut) {
+                                    de.farmpulse.rpsim.contract.LeaseOutService leaseOut,
+                                    de.farmpulse.rpsim.farmwork.ContractorWorkService contractorWork,
+                                    de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans,
+                                    de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade) {
+        this.machineLoans = machineLoans;
+        this.livestockTrade = livestockTrade;
         this.leaseOut = leaseOut;
+        this.contractorWork = contractorWork;
         this.farmShop = farmShop;
         this.vehicles = vehicles;
         this.trade = trade;
@@ -157,6 +166,14 @@ public class FailedInstructionService {
         } else if (de.farmpulse.rpsim.contract.LeaseOutService.RELATED.equals(related) && relatedId != null) {
             handled = leaseOut.onInstructionFailed(relatedId, ins.getType(), // R3-L1
                     "TO_PLAYER".equals(p.path("direction").asString("")));
+        } else if (de.farmpulse.rpsim.farmwork.ContractorWorkService.RELATED.equals(related) && relatedId != null
+                && (ins.getType() == InstructionType.FIELD_WORK || ins.getType() == InstructionType.STORAGE_TRANSFER)) {
+            handled = contractorWork.onInstructionFailed(relatedId, ins.getAckMessage()); // R31-A1
+        } else if (de.farmpulse.rpsim.farmwork.MachineLoanService.RELATED.equals(related) && relatedId != null) {
+            handled = machineLoans.onInstructionFailed(relatedId, ins.getType(), ins.getAckMessage()); // R31-A2
+        } else if (de.farmpulse.rpsim.neighbor.LivestockTradeService.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.ANIMAL_TRANSFER) {
+            handled = livestockTrade.onInstructionFailed(relatedId, ins.getAckMessage()); // R31-A3
         } else if (NeighborTradeService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = trade.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-H3 / R3-H4

@@ -119,6 +119,14 @@ public class Employee extends SavegameScoped {
     @Column(name = "apprenticeship_ends_at_game_time")
     private Long apprenticeshipEndsAtGameTime;
 
+    /** Roadmap V3.1 R31-A5: end of the fixed-term contract of a seasonal worker (null = permanent). */
+    @Column(name = "contract_ends_at_game_time")
+    private Long contractEndsAtGameTime;
+
+    /** Roadmap V3.1 R31-A5: satisfaction when the season ended (decides the application of the next year). */
+    @Column(name = "season_end_satisfaction")
+    private Double seasonEndSatisfaction;
+
     public Set<Training> trainingSet() {
         Set<Training> set = EnumSet.noneOf(Training.class);
         if (trainings != null && !trainings.isBlank()) {

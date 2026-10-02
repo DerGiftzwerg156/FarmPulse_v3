@@ -1,0 +1,6 @@
+Wieder dabei in dieser Saison?
+Hallo,
+
+die Ernte steht wieder an, und ich würde gern wieder bei Ihnen anfangen – zu den bekannten Bedingungen für {{expectedSalary}} € im Monat. Sie finden meine Bewerbung in der App „Mitarbeiter“.
+
+{{characterName}}

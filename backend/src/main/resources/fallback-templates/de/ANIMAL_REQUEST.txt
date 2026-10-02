@@ -1,0 +1,6 @@
+Ich suche Tiere: {{count}} {{subType}}
+Moin,
+
+ich würde dir {{count}} Tiere ({{subType}}) abnehmen und zahle {{price}} € ({{unitPrice}} € je Tier). Das Angebot gilt {{answerDays}} Tage – sag in der App „Handel“ Bescheid.
+
+{{characterName}}

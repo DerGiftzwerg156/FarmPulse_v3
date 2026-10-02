@@ -43,6 +43,9 @@ public class ContractActions {
     private final de.farmpulse.rpsim.drought.DroughtService drought;
     private final de.farmpulse.rpsim.employee.ApprenticeService apprentices;
     private final LeaseOutService leaseOut;
+    private final de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans;
+    private final de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade;
+    private final de.farmpulse.rpsim.farmwork.WinterServiceService winterService;
 
     public ContractActions(ContractRepository contracts, ServiceCaseRepository cases, InsuranceService insurance,
                            HuntingService hunting, LivestockService livestock, LeaseService lease,
@@ -51,7 +54,13 @@ public class ContractActions {
                            CollateralService collateral, AnnualReviewService annualReview,
                            de.farmpulse.rpsim.neighbor.FarmShopService farmShop,
                            de.farmpulse.rpsim.drought.DroughtService drought,
-                           de.farmpulse.rpsim.employee.ApprenticeService apprentices, LeaseOutService leaseOut) {
+                           de.farmpulse.rpsim.employee.ApprenticeService apprentices, LeaseOutService leaseOut,
+                           de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans,
+                           de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade,
+                           de.farmpulse.rpsim.farmwork.WinterServiceService winterService) {
+        this.winterService = winterService;
+        this.machineLoans = machineLoans;
+        this.livestockTrade = livestockTrade;
         this.apprentices = apprentices;
         this.leaseOut = leaseOut;
         this.farmShop = farmShop;
@@ -79,6 +88,7 @@ public class ContractActions {
             case LEASE -> lease.accept(sg, id);
             case MAINTENANCE -> maintenance.accept(sg, id);
             case TAX_ADVISOR -> tax.acceptAdvisor(sg, id);
+            case WINTER_SERVICE -> winterService.accept(sg, id); // R31-A4
             default -> throw unsupported();
         };
     }
@@ -90,6 +100,7 @@ public class ContractActions {
             case LEASE -> lease.decline(sg, id);
             case MAINTENANCE -> maintenance.decline(sg, id);
             case TAX_ADVISOR -> tax.declineAdvisor(sg, id);
+            case WINTER_SERVICE -> winterService.decline(sg, id); // R31-A4
             default -> throw unsupported();
         };
     }
@@ -140,6 +151,8 @@ public class ContractActions {
             case FARM_SHOP_ORDER -> farmShop.accept(sg, id); // R3-M3: deliver
             case DROUGHT_AID -> drought.apply(sg, id); // R3-W2: "Antrag stellen"
             case APPRENTICE_TAKEOVER -> apprentices.accept(sg, id); // R3-P2: take over at the demanded salary
+            case MACHINE_DEMO_OFFER -> machineLoans.acceptDemoOffer(sg, id); // R31-A2: "Vorführung annehmen"
+            case ANIMAL_OFFER, ANIMAL_REQUEST -> livestockTrade.accept(sg, id); // R31-A3
             default -> throw unsupported();
         };
     }
@@ -175,6 +188,8 @@ public class ContractActions {
             case ANNUAL_REVIEW_OFFER -> annualReview.declineOffer(sg, id);
             case FARM_SHOP_ORDER -> farmShop.decline(sg, id); // R3-M3
             case APPRENTICE_TAKEOVER -> apprentices.decline(sg, id); // R3-P2
+            case MACHINE_DEMO_OFFER -> machineLoans.declineDemoOffer(sg, id); // R31-A2
+            case ANIMAL_OFFER, ANIMAL_REQUEST -> livestockTrade.decline(sg, id); // R31-A3
             default -> throw unsupported();
         };
     }

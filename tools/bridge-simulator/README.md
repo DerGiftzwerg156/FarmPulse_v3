@@ -57,8 +57,8 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | `nachbarhandel` | Roadmap V3 (R3-H, R3-V): `npcFields` on the farmlands without an owner (harvested barley, growing wheat, a stony empty field, ripe canola), `tradeStorage` of the own silos (wheat, barley, straw with free capacity only) and the shop catalog `storeVehicles` in `market_context.json` (one entry without `motorized`) |
 | `duerre-sommer` | Roadmap V3 (R3-W): starts in June; no rain for the whole run (`weather`), own crops still growing (`fields`, `fieldRules`) |
 | `winter-schnee` | Roadmap V3.1 (R31-A4, D5, D8): starts in December with 0.15 m snow (`weather.snowHeight`); a large and a medium tractor with shop category and diesel (`category`, `fuel`), a trailer without a diesel tank; time of day, empty `vehiclePositions` |
-| `lohnunternehmer` | Roadmap V3.1 (R31-A1, B3, K1): starts in August; own fields with ripe wheat, harvested barley, an empty field after slurry and growing canola, each with `sprayType`; own silos with free capacity (`tradeStorage`); the field outlines `fieldShapes` in `market_context.json` |
-| `viehhandel` | Roadmap V3.1 (R31-A3): a cow stable with free places (Holstein and Angus) and a full sheep stable (`husbandries`); the simulator's own model of places and subtypes for `ANIMAL_TRANSFER` |
+| `lohnunternehmer` | Roadmap V3.1 (R31-A1, A2, B3, K1): starts in August; own fields with ripe wheat, harvested barley, an empty field after slurry and growing canola, each with `sprayType`; own silos with free capacity (`tradeStorage`); the field outlines `fieldShapes` and the shop catalog `storeVehicles` (machines to borrow) in `market_context.json` |
+| `viehhandel` | Roadmap V3.1 (R31-A3): a cow stable with free places (Holstein and Angus) and a full sheep stable; `husbandries[]` export the breeds, the possible breeds and the free places (`subTypes`, `supportedSubTypes`, `freeSlots`) from the simulator's model that `ANIMAL_TRANSFER` changes |
 | `ernte-herbst` | Roadmap V2 (R2-C): starts in September; `fields` with ready maize, growing potatoes, withered wheat and a weedy empty field (with the crop details `withered`, `cut`, `fillType`, `litersPerSqm`), `fieldRules` with every soil mechanic on, rain in `weather`, `finances` |
 
 All scenarios share the map "Erlengrund" with 16 farmlands; farmland 16 is the village area
@@ -109,6 +109,8 @@ created by `MISSION_CREATE` are part of the simulated savegame and go back on `/
   `moneyReason` itself, ack `result.vehicleId`; `FAILED` with `UNKNOWN_STORE_ITEM` (not in `storeVehicles`) or
   `INSUFFICIENT_FUNDS`. Free shop places are not simulated.
 - `VEHICLE_REMOVE` removes an own vehicle; `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` for a leased one.
+- Roadmap V3.1 R31-A2: `VEHICLE_SPAWN` with `price` 0 brings a borrowed or demo machine without a funds check and
+  without a booking (game value = list price; in the V3.1 scenarios with its shop `category`).
 
 **Roadmap V3.1 fields and blocks** (R31-Q2): only `winter-schnee`, `lohnunternehmer` and `viehhandel` stand for a mod
 with the R31-Q1 contract. They export `calendar.dayTimeMs` (time of day of the game time), `vehiclePositions` (empty

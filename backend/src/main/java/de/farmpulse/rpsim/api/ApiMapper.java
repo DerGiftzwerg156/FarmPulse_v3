@@ -116,7 +116,8 @@ public class ApiMapper {
                 hours(WorkforceService.hoursLastMonth(e)),
                 e.trainingSet().stream().map(Enum::name).toList(),
                 e.getTrainingInProgress() == null ? null : e.getTrainingInProgress().name(),
-                e.getTrainingUntilGameTime(), e.getApprenticeshipEndsAtGameTime());
+                e.getTrainingUntilGameTime(), e.getApprenticeshipEndsAtGameTime(),
+                e.getContractEndsAtGameTime());
     }
 
     private static Double hours(Double h) {
@@ -179,7 +180,10 @@ public class ApiMapper {
                 c.getCoverageRate() == null ? null : (int) Math.round(c.getCoverageRate() * 100), c.getDeductible(),
                 c.getTermMonths(), c.getStartedAtGameTime(), c.getEndsAtGameTime(), c.getNextDueGameTime(),
                 c.getOfferExpiresAtGameTime(), c.getMissedPayments(), c.isPaymentOverdue(), c.getEndReason(),
-                c.getRenewalAmount(), c.getPurchasePrice());
+                c.getRenewalAmount(), c.getPurchasePrice(),
+                // R31-A4: snow days of the running winter month and of the whole winter
+                c.getKind() == de.farmpulse.rpsim.domain.ContractKind.WINTER_SERVICE ? c.getSnowDays() : null,
+                c.getKind() == de.farmpulse.rpsim.domain.ContractKind.WINTER_SERVICE ? c.getSnowDaysTotal() : null);
     }
 
     public CaseView serviceCase(ServiceCase s) {

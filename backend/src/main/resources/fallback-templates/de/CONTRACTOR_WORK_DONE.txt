@@ -1,0 +1,6 @@
+Erledigt: {{work}} auf Feld {{farmlandId}}
+Moin,
+
+wir waren auf Feld {{farmlandId}} ({{hectares}} ha) – {{work}} ist erledigt. Die Rechnung über {{price}} € ist gebucht.
+
+{{characterName}}

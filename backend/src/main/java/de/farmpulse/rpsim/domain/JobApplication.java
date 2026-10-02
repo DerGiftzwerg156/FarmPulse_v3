@@ -37,6 +37,10 @@ public class JobApplication extends SavegameScoped {
     @Column(name = "created_at_game_time", nullable = false)
     private long createdAtGameTime;
 
+    /** Roadmap V3.1 R31-A5: a former seasonal worker who applies again (his employee record is reactivated). */
+    @Column(name = "returning_employee_id")
+    private Long returningEmployeeId;
+
     /** Training a machine operator applicant brings along (null = none); the salary expectation is higher then. */
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)

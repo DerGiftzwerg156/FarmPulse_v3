@@ -141,6 +141,19 @@ most two, roster role without trainings), the monthly skill gain and the takeove
 below, no answer). Mod `test_workforce.lua` and simulator `test/instructions.test.js`: apprentices drive after the
 operators and never with a training. Frontend: the takeover case in `features/contracts/service-cases.spec.ts`. In the
 game: manual test plan section 18.
+Roadmap V3.1 R31-A (work on the farm): `ContractorWorkTest` covers the offered works per field phase, prices,
+yield factor, silo check, lead time (harvest months, trust), the batch on the work day, the cancel reasons and the
+acks; `MachineLoanTest` the rent with trust, the funds check, delivery, daily rent, late days, recall on missed rent,
+damage compensation, a vanished machine, the demo with purchase offer and the exclusion from the bank's assets,
+the maintenance fee and the sale (depreciation and mechanic use the same `LoanedVehicles` filter); `LivestockTradeTest` the animals per role, stock, prices, offers and requests,
+free places, the batch with `ANIMAL_TRANSFER`, acks, failures and gossip; `WinterServiceTest` the offer (category,
+snow height, October, renewal), snow days once per day with the hint, the payment and the end; `SeasonalWorkerTest`
+the posting window, salary, limit, roster role, no raise / training, the contract end after the last salary and the
+return next year. The mod covers `FIELD_WORK`, `ANIMAL_TRANSFER`, the stable subtypes, snow height, category and the
+spawn at price 0 in `test_roadmap_v31.lua`, the seasonal worker in `test_workforce.lua`; the simulator the stable
+export and the borrowed machine in `test/roadmap-v31.test.js`. Frontend: `contractor-work-card.spec.ts`,
+`machine-loans-card.spec.ts`, `borrow-machine.spec.ts`, `animal-trade.spec.ts`. In the game: manual test plan
+sections 21 and 22.
 Roadmap V3 R3-L (leasing out own fields): `LeaseOutTest` covers the guide value, the neighbours' bids (capital,
 85–100 % of the desired rent, the land agent without interest), the fallback on the field phase (offer and demand),
 the bank's consent for a pledged field, the agreement (contract, `FARMLAND_TRANSFER FROM_PLAYER`, `LEASE_INCOME` also

@@ -159,7 +159,8 @@ public final class BridgeValidator {
             f.husbandries().forEach(h -> {
                 if (h == null || blank(h.husbandryUniqueId()) || negativeOrNull(h.health()) || negativeOrNull(h.food())
                         || (h.productivity() != null && h.productivity() < 0) || h.conditions() == null
-                        || h.conditions().stream().anyMatch(c -> c == null || c.title() == null || negativeOrNull(c.ratio()))) {
+                        || h.conditions().stream().anyMatch(c -> c == null || c.title() == null || negativeOrNull(c.ratio()))
+                        || invalidSubTypes(h)) { // subtypes / free places: Roadmap V3.1 R31-A3
                     e.add("invalid husbandry " + h);
                 }
             });
@@ -182,6 +183,14 @@ public final class BridgeValidator {
                 e.add("invalid weather " + w);
             }
         }
+    }
+
+    /** Roadmap V3.1 R31-A3: the optional subtypes and free places of a husbandry. */
+    private static boolean invalidSubTypes(BridgeDtos.Husbandry h) {
+        return (h.subTypes() != null && h.subTypes().stream().anyMatch(s -> s == null || blank(s.name())
+                || s.count() == null || s.count() < 0))
+                || (h.supportedSubTypes() != null && h.supportedSubTypes().stream().anyMatch(BridgeValidator::blank))
+                || (h.freeSlots() != null && h.freeSlots() < 0);
     }
 
     private static boolean negativeOrNull(Double v) {

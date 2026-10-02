@@ -1,0 +1,6 @@
+Vorführung: {{vehicleName}}
+Guten Tag,
+
+wir würden Ihnen gern den {{vehicleName}} (Listenpreis {{listPrice}} €) für {{daysMin}} bis {{daysMax}} Spieltage kostenlos zur Probe hinstellen. Sagen Sie innerhalb von {{answerDays}} Tagen in der App „Werkstatt“ Bescheid.
+
+{{characterName}}

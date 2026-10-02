@@ -1,0 +1,6 @@
+Angebot für den {{vehicleName}}
+Guten Tag,
+
+wie hat Ihnen der {{vehicleName}} gefallen? Sie können ihn behalten: für {{price}} € statt {{listPrice}} € Listenpreis. Das Angebot gilt {{validDays}} Tage – ohne Einigung holen wir die Maschine wieder ab.
+
+{{characterName}}

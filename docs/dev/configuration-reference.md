@@ -971,6 +971,85 @@ estimated from the tax estimate of the running year) and the income as a marked 
 | `rpsim.formulas.liquidity-plan.advisor-warning-enabled` | `true` | The bank advisor writes ahead of a shortfall. | Roadmap V3 R3-K2 |
 | `rpsim.formulas.liquidity-plan.advisor-warning-months` | `3` | Checked at every month start: the advisor writes once when the balance falls below zero within this many months (again only after that month has passed or the plan has recovered). | Roadmap V3 R3-K2 |
 
+
+## `rpsim.formulas.contractor-work` / `machine-loan` / `livestock-trade` / `winter-service` / `seasonal-worker` (Roadmap V3.1 R31-A)
+
+Owner decisions of 2026-10-02 (`docs/architecture/QUESTIONS.md`); all values are placeholders.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.contractor-work.enabled` | `true` | The contractor can be hired for work on own fields. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.price-per-ha.PLOW` | `110` | Price per hectare for plowing (EUR). | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.price-per-ha.CULTIVATE` | `80` | Price per hectare for cultivating. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.price-per-ha.LIME` | `60` | Price per hectare for liming, lime included. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.price-per-ha.SOW` | `100` | Price per hectare for sowing, seed included. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.price-per-ha.HARVEST` | `180` | Price per hectare for harvesting. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.lead-days-min` | `1` | The work is done this many game days after the order at the earliest … | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.lead-days-max` | `3` | … and at the latest (random). | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.harvest-periods` | `[5, 6, 7, 8]` | FS25 periods of the busy season (July–October). | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.harvest-extra-days` | `2` | Extra game days in the busy season. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.trust-threshold` | `50` | Trust to the contractor from which the wait is shorter … | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.trust-days-less` | `1` | … by this many days (at least 1 day remains). | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.done-trust-delta` | `2` | Trust of the contractor after a finished job. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.sow-fruit-types` | `[WHEAT, BARLEY, OAT, CANOLA, MAIZE, SUNFLOWER, SOYBEAN, SORGHUM]` | FS25 fruit types offered for sowing. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.yield.spray-factors` | `[0.85, 0.95, 1.0]` | Yield factor by `sprayLevel` 0, 1, 2 and more. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.yield.lime-missing-factor` | `0.9` | Yield factor for `limeLevel` 0 when the savegame needs lime (or `fieldRules` is missing). | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.yield.plow-missing-factor` | `0.9` | Yield factor for `plowLevel` 0 when the savegame needs plowing (or `fieldRules` is missing). | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.yield.weed-step` | `0.05` | Yield loss per `weedState` step when weeds are on (or `fieldRules` is missing) … | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.yield.weed-max` | `0.2` | … at most this much. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.machine-loan.enabled` | `true` | Neighbours lend machines, the workshop gives demos. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.days-min` | `1` | Shortest loan in game days. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.days-max` | `5` | Longest loan in game days. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.rent-share-per-day` | `0.003` | Rent per game day = list price × share; trust as in `neighbor-trade` (`trust-divisor`, `trust-cap`). | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.late-surcharge-share` | `0.5` | Surcharge per day of a late return = share of the daily rent. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.choices` | `3` | Machines offered to choose from. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.role-categories.DAIRY` | `[TRACTORSM, TRACTORSL, FORAGEHARVESTERS, MOWERVEHICLES]` | Shop categories a dairy neighbour lends. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.role-categories.ARABLE` | `[TRACTORSL, HARVESTERS, BEETVEHICLES, POTATOVEHICLES]` | Shop categories an arable neighbour lends. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.role-categories.MIXED` | `[TRACTORSM, TRACTORSL, HARVESTERS]` | Shop categories a mixed neighbour lends. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.compensation-share` | `0.5` | Damage compensation = condition points lost / 100 × list price × share (`COMPENSATION`). | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.damage-trust-points` | `10` | From this loss of condition points … | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.damage-trust-delta` | `-3` | … the lender's trust changes by this value. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.lost-trust-delta` | `-20` | Trust when the machine disappeared without being returned (claim = game value). | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.rent-missed-trust-delta` | `-3` | A daily rent could not be booked: the neighbour takes the machine back at once, trust changes by this value. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.demo-days-min` | `1` | Shortest workshop demo in game days. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.demo-days-max` | `2` | Longest workshop demo in game days. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.demo-offer-probability` | `0.2` | Chance of a demo offered by the workshop at a month start. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.demo-discount` | `0.1` | Purchase offer after a demo: list price × (1 − discount). | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.machine-loan.demo-answer-days` | `5` | Days to answer a demo the workshop offers on its own. | Roadmap V3.1 R31-A2 |
+| `rpsim.formulas.livestock-trade.enabled` | `true` | Livestock trade with the neighbours. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.role-animals.DAIRY` | `[COW]` | Animal types of a dairy neighbour. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.role-animals.MIXED` | `[COW, PIG, SHEEP]` | Animal types of a mixed neighbour. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.role-animals.ARABLE` | `[]` | An arable neighbour keeps no animals. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.stock-min` | `20` | Stock per animal type, rolled when first needed … | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.stock-max` | `60` | … up to this many. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.count-min` | `1` | Animals per deal at least … | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.count-max` | `10` | … and at most. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.neighbor-sell-share` | `1.05` | Price per animal when the neighbour sells = game value per animal of the own stable × share (trust as in `neighbor-trade`). | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.neighbor-buy-share` | `0.95` | The same when the neighbour buys. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.offer-probability-per-month` | `0.3` | Chance of an offer of a neighbour at a month start. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.request-probability-per-month` | `0.3` | Chance of a request of a neighbour at a month start. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.max-messages-per-month` | `1` | Livestock messages the neighbours send on their own per month. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.age-months.COW` | `12` | Age in months of cows bought from a neighbour. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.age-months.PIG` | `6` | Age in months of pigs bought from a neighbour. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.livestock-trade.age-months.SHEEP` | `12` | Age in months of sheep bought from a neighbour. | Roadmap V3.1 R31-A3 |
+| `rpsim.formulas.winter-service.enabled` | `true` | The authority offers the winter service contract. | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.winter-service.vehicle-categories` | `[TRACTORSM, TRACTORSL]` | An own vehicle of one of these shop categories is needed. | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.winter-service.winter-periods` | `[9, 10, 11, 12]` | FS25 periods of the winter (November–February). | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.winter-service.offer-period` | `8` | FS25 period of the offer (October). | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.winter-service.base-fee-per-month` | `400` | Base fee per winter month (`WINTER_SERVICE`). | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.winter-service.fee-per-snow-day` | `150` | Fee per snow day. | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.winter-service.snow-threshold` | `0.05` | A game day with a snow height from this value (metres) is a snow day. | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.winter-service.renewal-probability` | `0.9` | Chance of a new offer after a winter with a snow day … | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.winter-service.renewal-probability-without-snow` | `0.5` | … and after a winter without one. | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.winter-service.notification-text` | `Schnee! Winterdienst ab 5 Uhr` | In-game hint on a snow day (once per day). | Roadmap V3.1 R31-A4 |
+| `rpsim.formulas.seasonal-worker.posting-periods` | `[4, 5, 6, 7, 8]` | FS25 periods (June–October) in which a seasonal job can be posted. | Roadmap V3.1 R31-A5 |
+| `rpsim.formulas.seasonal-worker.contract-end-period` | `8` | The contract ends with this FS25 period (October). | Roadmap V3.1 R31-A5 |
+| `rpsim.formulas.seasonal-worker.salary-factor` | `1.25` | Salary = machine operator salary at the skill × factor. | Roadmap V3.1 R31-A5 |
+| `rpsim.formulas.seasonal-worker.skill-min` | `30` | Skill of an applicant at least … | Roadmap V3.1 R31-A5 |
+| `rpsim.formulas.seasonal-worker.skill-max` | `70` | … and at most. | Roadmap V3.1 R31-A5 |
+| `rpsim.formulas.seasonal-worker.max-workers` | `3` | Seasonal workers at a time. | Roadmap V3.1 R31-A5 |
+| `rpsim.formulas.seasonal-worker.return-satisfaction` | `60` | A worker who left with this satisfaction or more applies again next year. | Roadmap V3.1 R31-A5 |
+
 ## `rpsim.formulas.finance` (Roadmap V2 R2-B)
 
 Real farm finances from the mod's booking journal (`farm_facts.finances`, sums per FS25 period and money type). Each

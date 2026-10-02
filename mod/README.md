@@ -35,7 +35,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   (`fields[].sprayType`), Shop-Kategorie und Dieselstand je Maschine (`assets.vehicles[].category`, `fuel`), Tageszeit
   (`calendar.dayTimeMs`), Fahrzeugpositionen (`vehiclePositions`) und die Feldumrisse (`market_context.fieldShapes`,
   höchstens `fieldShapeMaxPoints` Punkte je Feld). Ausgelesen werden die Werte erst mit den Funktionen (A4, B3, D4,
-  D5, D8, K1); bis dahin fehlen sie im Export.
+  D5, D8, K1); bis dahin fehlen sie im Export. Seit **Arbeit auf dem Hof** (R31-A) liest der Mod die Schneehöhe und
+  die Shop-Kategorie der eigenen Maschinen und exportiert je Stall die Rassen, die möglichen Rassen und die freien
+  Plätze (`husbandries[].subTypes`, `supportedSubTypes`, `freeSlots`).
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -50,7 +52,8 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     gezeigt
   - `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) – ersetzt die Mitarbeiterliste; Helfer streikender Mitarbeiter werden mit
     der Meldung „%s legt die Arbeit nieder“ angehalten (R2-A5). Azubis (`APPRENTICE`, Roadmap V3 R3-P2) fahren wie
-    Maschinenführer ohne Schulung und werden erst eingeteilt, wenn kein Maschinenführer frei ist
+    Maschinenführer ohne Schulung und werden erst eingeteilt, wenn kein Maschinenführer frei ist; Erntehelfer
+    (`SEASONAL_WORKER`, Roadmap V3.1 R31-A5) ebenso ohne Schulung, nach den Maschinenführern und vor den Azubis
   - `PROMPT` (Roadmap V2, R2-F2) – Ja/Nein-Frage: wird eingereiht und einzeln mit dem Dialog des Spiels
     (`YesNoDialog`) gezeigt, sobald kein Menü offen ist; die Knöpfe heißen „Ja“/„Nein“, ihre Bedeutung steht im Text.
     Die Antwort schreibt der Mod sofort nach `export/player_responses.json` (R2-F1); vom Backend quittierte Antworten
@@ -65,15 +68,22 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     des Spiels (`VehicleLoadingData`), setzt Alter, Betriebsstunden, Schaden und Abnutzung und bucht den Preis erst im
     Lade-Callback selbst (`VEHICLE_PURCHASE`). Bis dahin bleibt die Anweisung offen (keine Quittung, nicht im
     Spielstand). `FAILED` mit `NO_SPACE`, `UNKNOWN_STORE_ITEM`, `INSUFFICIENT_FUNDS` oder `LOAD_FAILED`, dann ist
-    nichts gebucht; die Quittung trägt die `vehicleId`
+    nichts gebucht; die Quittung trägt die `vehicleId`. Mit Preis `0` (Roadmap V3.1 R31-A2: Leih- oder
+    Vorführmaschine) wird nichts gebucht und kein Kontostand geprüft
   - `VEHICLE_REMOVE` (Roadmap V3, R3-V3) – entfernt eine eigene Maschine (`vehicle:delete()`), vor dem Erlös
     `VEHICLE_SALE` desselben Batches. `FAILED` mit `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` (auch geleaste),
     `VEHICLE_IN_USE` (jemand sitzt drin oder ein Helfer fährt) oder `VEHICLE_ATTACHED` (angehängt oder mit Anbaugerät,
     bis zum Spieltest gilt: erst abkoppeln). Eine Quittung kann ein Ergebnis `result` tragen (z. B. `vehicleId`,
     `missionId`); es wird mit im Spielstand gespeichert
-  - `FIELD_WORK`, `ANIMAL_TRANSFER`, `VEHICLE_FUEL` (Roadmap V3.1, R31-Q1) – werden geprüft (Arbeit und Fruchtsorte,
-    Stall, Untertyp, Anzahl und Richtung, Fahrzeug und negative Menge) und bis zu den Funktionen R31-A1, R31-A3 und
-    R31-D8 mit `FAILED` / `NOT_SUPPORTED` quittiert; der Batch bucht dann nichts
+  - `FIELD_WORK` (Roadmap V3.1, R31-A1) – der Lohnunternehmer bearbeitet ein eigenes Feld: Endzustand wie beim
+    Abschluss eines Auftrags (`createFieldUpdateTask()`, zusätzlich die Setter der Task); Pflügen, Grubbern, Kalken,
+    Säen (Fruchtsorte) oder Ernten (Frucht auf Stoppel, die Ernte bucht der `STORAGE_TRANSFER` des Batches ins Silo).
+    `FAILED` mit `FIELD_NOT_FOUND`, `NOT_OWN_FIELD`, `MISSION_RUNNING` oder `UNKNOWN_FRUIT_TYPE`
+  - `ANIMAL_TRANSFER` (Roadmap V3.1, R31-A3) – Tiere einer Rasse in einen eigenen Stall (`addAnimals`, freie Plätze
+    und Tierart geprüft) oder heraus (`cluster:changeNumAnimals(-n)`); `FAILED` mit `NO_ANIMAL_SPACE`,
+    `NOT_ENOUGH_ANIMALS`, `HUSBANDRY_NOT_FOUND`, `WRONG_ANIMAL_TYPE` oder `UNKNOWN_SUB_TYPE`
+  - `VEHICLE_FUEL` (Roadmap V3.1, R31-Q1) – wird geprüft (Fahrzeug und negative Menge) und bis R31-D8 mit `FAILED` /
+    `NOT_SUPPORTED` quittiert
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.

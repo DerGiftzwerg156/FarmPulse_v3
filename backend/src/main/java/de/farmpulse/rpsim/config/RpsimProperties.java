@@ -166,6 +166,11 @@ public class RpsimProperties {
         private Apprentice apprentice = new Apprentice();
         private Milestones milestones = new Milestones();
         private LeaseOut leaseOut = new LeaseOut();
+        private ContractorWork contractorWork = new ContractorWork();
+        private MachineLoan machineLoan = new MachineLoan();
+        private LivestockTrade livestockTrade = new LivestockTrade();
+        private WinterService winterService = new WinterService();
+        private SeasonalWorker seasonalWorker = new SeasonalWorker();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
@@ -1109,6 +1114,171 @@ public class RpsimProperties {
         private int takeoverNoticeMonths = 1;
         /** A counter offer is accepted from this share of the demand. */
         private double counterAcceptShare = 0.9;
+    }
+
+    /** Roadmap V3.1 R31-A1: the contractor works an own field (owner decisions 2026-10-02, placeholders). */
+    @Getter @Setter
+    public static class ContractorWork {
+        private boolean enabled = true;
+        /** Price in EUR per hectare and work, material (lime, seed) included. */
+        private Map<String, Double> pricePerHa = defaultWorkPrices();
+        /** The work is done after lead-days-min..lead-days-max game days. */
+        private int leadDaysMin = 1;
+        private int leadDaysMax = 3;
+        /** FS25 periods of the busy season (July-October): the work takes harvest-extra-days longer. */
+        private List<Integer> harvestPeriods = new ArrayList<>(List.of(5, 6, 7, 8));
+        private int harvestExtraDays = 2;
+        /** Trust to the contractor from trust-threshold shortens the wait by trust-days-less (at least 1 day). */
+        private double trustThreshold = 50;
+        private int trustDaysLess = 1;
+        private double doneTrustDelta = 2;
+        /** Fruit types offered for sowing (FS25 fruit type names). */
+        private List<String> sowFruitTypes = new ArrayList<>(List.of("WHEAT", "BARLEY", "OAT", "CANOLA", "MAIZE",
+                "SUNFLOWER", "SOYBEAN", "SORGHUM"));
+        private Yield yield = new Yield();
+
+        /**
+         * Yield factor of a contractor harvest (product): fertilisation by sprayLevel (index = level, the last entry for
+         * higher levels), lime and plow level 0 when the savegame needs them, weeds per weedState step (capped).
+         */
+        @Getter @Setter
+        public static class Yield {
+            private List<Double> sprayFactors = new ArrayList<>(List.of(0.85, 0.95, 1.0));
+            private double limeMissingFactor = 0.9;
+            private double plowMissingFactor = 0.9;
+            private double weedStep = 0.05;
+            private double weedMax = 0.2;
+        }
+
+        private static Map<String, Double> defaultWorkPrices() {
+            Map<String, Double> m = new LinkedHashMap<>();
+            m.put("PLOW", 110.0);
+            m.put("CULTIVATE", 80.0);
+            m.put("LIME", 60.0);
+            m.put("SOW", 100.0);
+            m.put("HARVEST", 180.0);
+            return m;
+        }
+    }
+
+    /**
+     * Roadmap V3.1 R31-A2: borrowed machine of a neighbour and demo machine of the workshop (owner decisions
+     * 2026-10-02, placeholders). Age and hours of a borrowed machine use the ranges of used-vehicle.
+     */
+    @Getter @Setter
+    public static class MachineLoan {
+        private boolean enabled = true;
+        /** The player picks 1..5 game days. */
+        private int daysMin = 1;
+        private int daysMax = 5;
+        /** Rent per game day = list price x share, trust as in neighbor-trade (trust-divisor / trust-cap). */
+        private double rentSharePerDay = 0.003;
+        /** Surcharge per day of a late return = share of the daily rent. */
+        private double lateSurchargeShare = 0.5;
+        /** Machines a neighbour or the workshop offers to choose from. */
+        private int choices = 3;
+        /** Neighbour role -> shop categories he lends. */
+        private Map<String, List<String>> roleCategories = defaultRoleCategories();
+        /** Compensation = condition points lost / 100 x list price x share (COMPENSATION). */
+        private double compensationShare = 0.5;
+        /** From this loss of condition points the lender's trust changes by damage-trust-delta. */
+        private double damageTrustPoints = 10;
+        private double damageTrustDelta = -3;
+        /** The machine disappeared without being returned: claim = game value, trust. */
+        private double lostTrustDelta = -20;
+        /** A daily rent could not be booked: the neighbour takes the machine back at once, trust. */
+        private double rentMissedTrustDelta = -3;
+        private int demoDaysMin = 1;
+        private int demoDaysMax = 2;
+        /** Chance of a demo offered by the workshop at a month start. */
+        private double demoOfferProbability = 0.2;
+        /** Purchase offer after the demo: list price x (1 - discount). */
+        private double demoDiscount = 0.1;
+        /** Days to answer a demo the workshop offers on its own. */
+        private double demoAnswerDays = 5;
+
+        private static Map<String, List<String>> defaultRoleCategories() {
+            Map<String, List<String>> m = new LinkedHashMap<>();
+            m.put("DAIRY", new ArrayList<>(List.of("TRACTORSM", "TRACTORSL", "FORAGEHARVESTERS", "MOWERVEHICLES")));
+            m.put("ARABLE", new ArrayList<>(List.of("TRACTORSL", "HARVESTERS", "BEETVEHICLES", "POTATOVEHICLES")));
+            m.put("MIXED", new ArrayList<>(List.of("TRACTORSM", "TRACTORSL", "HARVESTERS")));
+            return m;
+        }
+    }
+
+    /**
+     * Roadmap V3.1 R31-A3: livestock trade with the neighbours (owner decisions 2026-10-02, placeholders). Answer time
+     * and trust changes as in neighbor-trade.
+     */
+    @Getter @Setter
+    public static class LivestockTrade {
+        private boolean enabled = true;
+        /** Neighbour role -> animal types he keeps and trades. */
+        private Map<String, List<String>> roleAnimals = defaultRoleAnimals();
+        /** Stock per animal type, rolled when first needed. */
+        private int stockMin = 20;
+        private int stockMax = 60;
+        private int countMin = 1;
+        private int countMax = 10;
+        /** Price per animal = game value per animal of the player's stable x share, trust as in neighbor-trade. */
+        private double neighborSellShare = 1.05;
+        private double neighborBuyShare = 0.95;
+        private double offerProbabilityPerMonth = 0.3;
+        private double requestProbabilityPerMonth = 0.3;
+        private int maxMessagesPerMonth = 1;
+        /** Age in months of animals bought from a neighbour, per animal type. */
+        private Map<String, Integer> ageMonths = defaultAges();
+
+        private static Map<String, List<String>> defaultRoleAnimals() {
+            Map<String, List<String>> m = new LinkedHashMap<>();
+            m.put("DAIRY", new ArrayList<>(List.of("COW")));
+            m.put("MIXED", new ArrayList<>(List.of("COW", "PIG", "SHEEP")));
+            m.put("ARABLE", new ArrayList<>());
+            return m;
+        }
+
+        private static Map<String, Integer> defaultAges() {
+            Map<String, Integer> m = new LinkedHashMap<>();
+            m.put("COW", 12);
+            m.put("PIG", 6);
+            m.put("SHEEP", 12);
+            return m;
+        }
+    }
+
+    /** Roadmap V3.1 R31-A4: winter service contract of the authority (owner decisions 2026-10-02, placeholders). */
+    @Getter @Setter
+    public static class WinterService {
+        private boolean enabled = true;
+        /** Own vehicles of these shop categories qualify (assets.vehicles[].category). */
+        private List<String> vehicleCategories = new ArrayList<>(List.of("TRACTORSM", "TRACTORSL"));
+        /** FS25 periods of the winter (November-February) and the period of the offer (October). */
+        private List<Integer> winterPeriods = new ArrayList<>(List.of(9, 10, 11, 12));
+        private int offerPeriod = 8;
+        private long baseFeePerMonth = 400;
+        private long feePerSnowDay = 150;
+        /** A game day with a snow height from this value (metres) is a snow day. */
+        private double snowThreshold = 0.05;
+        /** Offer again next October after a winter with / without a snow day. */
+        private double renewalProbability = 0.9;
+        private double renewalProbabilityWithoutSnow = 0.5;
+        /** In-game hint on a snow day (once per day). */
+        private String notificationText = "Schnee! Winterdienst ab 5 Uhr";
+    }
+
+    /** Roadmap V3.1 R31-A5: seasonal workers for the harvest (owner decisions 2026-10-02, placeholders). */
+    @Getter @Setter
+    public static class SeasonalWorker {
+        /** FS25 periods (June-October) in which a seasonal job can be posted; the contract ends with contract-end-period. */
+        private List<Integer> postingPeriods = new ArrayList<>(List.of(4, 5, 6, 7, 8));
+        private int contractEndPeriod = 8;
+        /** Salary = machine operator formula at the skill x factor. */
+        private double salaryFactor = 1.25;
+        private int skillMin = 30;
+        private int skillMax = 70;
+        private int maxWorkers = 3;
+        /** A worker who left with this satisfaction or more applies again the next year. */
+        private double returnSatisfaction = 60;
     }
 
     /**

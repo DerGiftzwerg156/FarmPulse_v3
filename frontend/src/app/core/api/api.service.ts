@@ -335,6 +335,39 @@ export class ApiService {
   askForWork(neighborId: number): Observable<M.CaseView> {
     return this.post(`/trade/neighbors/${neighborId}/work`);
   }
+  /** Roadmap V3.1 R31-A3: own stables, the neighbours' animals and prices. */
+  animalTrade(): Observable<M.AnimalTradeView> {
+    return this.get('/trade/animals');
+  }
+  requestAnimals(neighborId: number, husbandryUniqueId: string, subType: string, count: number): Observable<M.CaseView> {
+    return this.post(`/trade/neighbors/${neighborId}/animals/request`, { husbandryUniqueId, subType, count });
+  }
+  offerAnimals(neighborId: number, husbandryUniqueId: string, subType: string, count: number): Observable<M.CaseView> {
+    return this.post(`/trade/neighbors/${neighborId}/animals/offer`, { husbandryUniqueId, subType, count });
+  }
+
+  // Roadmap V3.1 R31-A1 / R31-A2: contractor work, borrowed and demo machines
+  contractorQuote(farmlandId: number): Observable<M.ContractorQuoteView> {
+    return this.get(`/contractor-work/fields/${farmlandId}`);
+  }
+  orderContractorWork(farmlandId: number, work: string, fruitType: string | null): Observable<M.CaseView> {
+    return this.post('/contractor-work', { farmlandId, work, fruitType });
+  }
+  machineLoans(): Observable<M.MachineLoanView[]> {
+    return this.get('/machine-loans');
+  }
+  loanChoices(neighborId: number): Observable<M.LoanChoicesView> {
+    return this.get(`/machine-loans/neighbors/${neighborId}`);
+  }
+  borrowMachine(neighborId: number, storeXmlFilename: string, days: number): Observable<M.MachineLoanView> {
+    return this.post(`/machine-loans/neighbors/${neighborId}`, { storeXmlFilename, days });
+  }
+  demoChoices(): Observable<M.LoanChoicesView> {
+    return this.get('/machine-loans/demo');
+  }
+  requestDemo(storeXmlFilename: string): Observable<M.MachineLoanView> {
+    return this.post('/machine-loans/demo', { storeXmlFilename });
+  }
 
   // Roadmap V3 R3-N: tablet in the home network
   lanStatus(): Observable<M.LanStatusView> {

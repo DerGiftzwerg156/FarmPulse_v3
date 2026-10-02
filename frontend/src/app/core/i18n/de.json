@@ -126,7 +126,8 @@
       "MECHANIC": "Mechaniker:in",
       "ANIMAL_KEEPER": "Tierpfleger:in",
       "OFFICE_CLERK": "Bürokraft",
-      "APPRENTICE": "Azubi"
+      "APPRENTICE": "Azubi",
+      "SEASONAL_WORKER": "Erntehelfer:in"
     },
     "characterRole": {
       "BANK_ADVISOR": "Bankberater:in",
@@ -355,7 +356,8 @@
       "PLAYER_NOTE": "Eigene Notizen",
       "OTHER": "Sonstiges",
       "TRADE": "Handel",
-      "MILESTONE": "Meilensteine"
+      "MILESTONE": "Meilensteine",
+      "FARM_WORK": "Arbeit auf dem Hof"
     },
     "milestone": {
       "LOAN_REPAID": "Erster Kredit getilgt",
@@ -448,7 +450,8 @@
       "LEASE": "Pacht",
       "MAINTENANCE": "Wartungsvertrag",
       "TAX_ADVISOR": "Steuerberatung",
-      "LEASE_OUT": "Verpachtung"
+      "LEASE_OUT": "Verpachtung",
+      "WINTER_SERVICE": "Winterdienst"
     },
     "contractStatus": {
       "OFFERED": "Angebot",
@@ -484,7 +487,11 @@
       "ANNUAL_REVIEW_OFFER": "Zinssenkung",
       "FARM_SHOP_ORDER": "Hofladen-Bestellung",
       "DROUGHT_AID": "Dürrehilfe",
-      "APPRENTICE_TAKEOVER": "Übernahme Azubi"
+      "APPRENTICE_TAKEOVER": "Übernahme Azubi",
+      "CONTRACTOR_WORK": "Lohnunternehmer",
+      "MACHINE_DEMO_OFFER": "Vorführmaschine",
+      "ANIMAL_OFFER": "Tierangebot",
+      "ANIMAL_REQUEST": "Tieranfrage"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -536,7 +543,14 @@
       "OFFER": "Zinssenkung angeboten",
       "NEUTRAL": "Gespräch geführt",
       "SERIOUS": "Ernstes Gespräch",
-      "LOAN_CLOSED": "Kredit beendet"
+      "LOAN_CLOSED": "Kredit beendet",
+      "NO_FUNDS": "Kontostand reichte nicht",
+      "NO_CAPACITY": "Kein Platz im Silo",
+      "NOT_NEEDED": "Feld passte nicht mehr",
+      "NOT_OWN_FIELD": "Nicht mehr dein Feld",
+      "MOD_OUTDATED": "Mod zu alt",
+      "NO_ANIMAL_SPACE": "Kein Platz im Stall",
+      "NOT_ENOUGH_ANIMALS": "Zu wenige Tiere im Stall"
     },
     "animalType": {
       "COW": "Rinder",
@@ -580,7 +594,8 @@
       "TRANSFER_FAILED": "Übergabe im Spiel fehlgeschlagen",
       "TERMINATED_BY_PLAYER": "von dir gekündigt",
       "FEE_MISSED": "wegen unbezahlter Gebühren",
-      "RECLAIMED_IN_MENU": "im Spielmenü zurückgeholt"
+      "RECLAIMED_IN_MENU": "im Spielmenü zurückgeholt",
+      "WINTER_OVER": "Winter vorbei"
     },
     "financeCategory": {
       "HARVEST_INCOME": "Ernteverkauf",
@@ -724,6 +739,47 @@
       "RETIREMENT": "Altenteil",
       "TAX_PREPAYMENT": "Steuervorauszahlung",
       "FORWARD_CONTRACT": "Vorkontrakt (erwartet)"
+    },
+    "fieldWork": {
+      "PLOW": "Pflügen",
+      "CULTIVATE": "Grubbern",
+      "LIME": "Kalken",
+      "SOW": "Säen",
+      "HARVEST": "Ernten"
+    },
+    "contractorReason": {
+      "PHASE": "passt nicht zum Feldzustand",
+      "LIMED": "Feld ist schon gekalkt",
+      "NO_YIELD": "Ertrag unbekannt",
+      "NO_SILOS": "Mod meldet keine Silos",
+      "NO_CAPACITY": "zu wenig Platz im Silo",
+      "OPEN_ORDER": "Auftrag läuft bereits"
+    },
+    "machineLoanKind": {
+      "LOAN": "Leihmaschine",
+      "DEMO": "Vorführmaschine"
+    },
+    "machineLoanStatus": {
+      "DELIVERING": "wird gebracht",
+      "ACTIVE": "auf dem Hof",
+      "RETURNING": "wird abgeholt",
+      "PURCHASE_OFFER": "Kaufangebot offen",
+      "RETURNED": "zurückgegeben",
+      "PURCHASED": "gekauft",
+      "LOST": "verschwunden",
+      "FAILED": "nicht geliefert"
+    },
+    "machineLoanEnd": {
+      "END": "Leihzeit vorbei",
+      "LATE": "verspätet zurückgegeben",
+      "NOT_BOUGHT": "nach der Vorführung nicht gekauft",
+      "RENT_MISSED": "wegen fehlender Miete zurückgeholt",
+      "DISAPPEARED": "vom Hof verschwunden",
+      "BOUGHT": "gekauft",
+      "NO_SPACE": "kein Platz auf dem Hof",
+      "UNKNOWN_STORE_ITEM": "nicht im Shop",
+      "LOAD_FAILED": "im Spiel nicht geladen",
+      "MOD_OUTDATED": "Mod zu alt"
     }
   },
   "onboarding": {
@@ -1008,7 +1064,9 @@
     "trainingAllDone": "{name} hat bereits alle Schulungen.",
     "trainingBooked": "{name} ist jetzt auf der Schulung „{training}“.",
     "applicantTraining": "Bringt Schulung mit: {training}",
-    "trainingInfo": "Ohne Schulung fahren Maschinenführer nur kleine und mittlere Traktoren. Große Traktoren, Mähdrescher, Feldhäcksler, Spezialernter, LKW sowie Selbstfahrer und Lader brauchen die passende Schulung. Im strengen Helferlimit startet so ein Helfer nur mit geschultem Fahrer."
+    "trainingInfo": "Ohne Schulung fahren Maschinenführer nur kleine und mittlere Traktoren. Große Traktoren, Mähdrescher, Feldhäcksler, Spezialernter, LKW sowie Selbstfahrer und Lader brauchen die passende Schulung. Im strengen Helferlimit startet so ein Helfer nur mit geschultem Fahrer.",
+    "seasonalUntil": "befristet bis {at}",
+    "seasonalHint": "Saisonkräfte gibt es von Juni bis Oktober, befristet bis Ende Oktober: höheres Gehalt, keine Gehaltsverhandlung, keine Schulungen, höchstens 3 gleichzeitig."
   },
   "farmland": {
     "map": "Feldübersicht",
@@ -1111,6 +1169,16 @@
       "terms": "Laufzeit {years} Jahr(e) · deine Wunschpacht {rate} je ha und Monat",
       "title": "Verpachtete Felder",
       "intro": "Die Pacht kommt jeden Monat als Einnahme. Einen Monat vor dem Ende bietet der Pächter eine Verlängerung an; ohne Antwort bekommst du das Feld zurück."
+    },
+    "contractor": {
+      "title": "Lohnunternehmer beauftragen",
+      "intro": "Der Lohnunternehmer kommt in {min} bis {max} Spieltagen. Die Rechnung wird am Arbeitstag gebucht.",
+      "order": "Beauftragen",
+      "ordered": "Auftrag erteilt – der Termin steht unter „Offene Vorgänge“.",
+      "open": "Beauftragt: {work} am {time} für {price}.",
+      "liters": "{liters} l {fillType} ins Silo",
+      "caseText": "{work} für {price}",
+      "caseHint": "Am Arbeitstag ist die Arbeit im Spiel erledigt und die Rechnung gebucht."
     }
   },
   "market": {
@@ -1206,7 +1274,19 @@
       "EMPLOYEE": "Personal",
       "OTHER": "Weitere"
     },
-    "sponsoring": "Anfragen der Vereine"
+    "sponsoring": "Anfragen der Vereine",
+    "loan": {
+      "title": "Maschine leihen",
+      "open": "Maschinen ansehen",
+      "machine": "Maschine",
+      "days": "Spieltage",
+      "perDay": "{rent} je Tag",
+      "borrow": "Leihen",
+      "total": "Miete gesamt {total} – sie muss vorab auf dem Konto sein und wird je Spieltag abgebucht.",
+      "none": "Dieser Nachbar hat gerade keine Maschine zu verleihen.",
+      "borrowed": "{vehicle} für {days} Spieltage geliehen – die Maschine wird auf den Hof gebracht.",
+      "toWorkshop": "Zur Werkstatt"
+    }
   },
   "diary": {
     "chronicle": "Chronik",
@@ -1543,7 +1623,10 @@
     "usedIntro": "Die Werkstatt und die Nachbarn bieten ab und zu gebrauchte Maschinen an. Du verhandelst in bis zu {rounds} Runden; nach der Einigung steht die Maschine auf dem Shop-Platz, der Preis wird bei der Lieferung gebucht.",
     "offers": "Angebote",
     "noOffers": "Gerade bietet niemand eine Maschine an.",
-    "seller": { "WORKSHOP": "Werkstatt", "NEIGHBOR": "Nachbar" },
+    "seller": {
+      "WORKSHOP": "Werkstatt",
+      "NEIGHBOR": "Nachbar"
+    },
     "usedValues": "{years} Jahre · {hours} Betriebsstunden · {damage} % Schaden",
     "price": "Preis {price}",
     "yourOffer": "Dein Angebot (€)",
@@ -1563,7 +1646,25 @@
     "demand": "Fordern",
     "withdrawSale": "Verkauf zurückziehen",
     "sold": "Verkauft für {price} an {name} – wird übergeben",
-    "saleHint": "Nachbarn zahlen höchstens {cap} % des Werts im Spiel. Ist etwas angehängt, gilt im Spiel: erst abkoppeln."
+    "saleHint": "Nachbarn zahlen höchstens {cap} % des Werts im Spiel. Ist etwas angehängt, gilt im Spiel: erst abkoppeln.",
+    "loans": {
+      "title": "Leih- und Vorführmaschinen",
+      "intro": "Nachbarn leihen dir Maschinen (unter „Kontakte“). Die Werkstatt stellt dir eine neue Maschine kostenlos zur Probe hin; danach bekommst du ein Kaufangebot. Leihmaschinen zählen nicht zu deinem Vermögen.",
+      "demoMachine": "Maschine",
+      "demoRequest": "Vorführung anfragen",
+      "demoHint": "Kostenlos für {min} bis {max} Spieltage, danach ein Kaufangebot mit Rabatt.",
+      "demoRequested": "Die Werkstatt bringt den {vehicle} vorbei.",
+      "noDemo": "Die Werkstatt hat gerade keine Vorführmaschine.",
+      "rent": "{rent} je Spieltag, {days} Tage",
+      "until": "bis {time}",
+      "late": "{days} Tage verspätet",
+      "compensation": "Schadenersatz {amount}",
+      "purchaseHint": "Das Kaufangebot steht in der Werkstatt unter den Maschinen-Verhandlungen; ohne Einigung wird die Maschine abgeholt.",
+      "none": "Noch keine Leih- oder Vorführmaschine.",
+      "demoOffers": "Vorführangebote",
+      "demoOfferText": "{name} bietet den {vehicle} (Listenpreis {price}) kostenlos zur Probe an.",
+      "demoAccept": "Vorführung annehmen"
+    }
   },
   "authorities": {
     "taxOffice": "Finanzamt",
@@ -1578,7 +1679,15 @@
     "aidDeduction": "Abzug wegen Dürreversicherung: {amount}",
     "apply": "Antrag stellen",
     "aidHint": "Das Geld kommt sofort als Förderung aufs Konto.",
-    "aidHistory": "{hectares} ha · {amount}"
+    "aidHistory": "{hectares} ha · {amount}",
+    "municipality": "Gemeinde",
+    "winter": {
+      "title": "Winterdienst",
+      "intro": "Im Oktober bietet die Gemeinde den Winterdienst für November bis Februar an: eine Pauschale je Wintermonat plus Geld je Schneetag. Voraussetzung ist ein eigener mittlerer oder großer Traktor.",
+      "hint": "Bezahlt wird zu jedem Monatsbeginn für den vergangenen Wintermonat.",
+      "days": "Schneetage diesen Monat: {month} · diesen Winter: {total}",
+      "total": "{total} Schneetage in diesem Winter"
+    }
   },
   "stable": {
     "trade": "Viehhandel und Tierarzt",
@@ -1673,7 +1782,30 @@
     "farmShopIntro": "Leute aus dem Dorf bestellen kleine Mengen aus deinen Silos zum Hofladenpreis. Lieferst du, steigt dein Ansehen im Dorf; wer oft ablehnt, bekommt seltener Bestellungen.",
     "shopText": "{name} bestellt {quantity} l {fillType} für {amount} ({unit} je 1.000 l).",
     "deliver": "Liefern",
-    "shopHint": "Die Ware wird aus deinen Silos abgebucht, das Geld gutgeschrieben."
+    "shopHint": "Die Ware wird aus deinen Silos abgebucht, das Geld gutgeschrieben.",
+    "animals": {
+      "title": "Viehhandel mit Nachbarn",
+      "intro": "Kaufe Tiere direkt vom Nachbarn oder verkaufe ihm welche. Er antwortet sofort mit seinem Preis; nach deiner Zusage wechseln die Tiere im Spiel den Stall.",
+      "noStables": "Der Mod meldet keine Ställe mit Rassen – Viehhandel erst mit aktuellem Mod und eigenem Stall.",
+      "stock": "{count} {type} · kauft für {buy}, verkauft für {sell} je Tier",
+      "direction": "Geschäft",
+      "buy": "Tiere kaufen",
+      "sell": "Tiere verkaufen",
+      "stable": "Stall",
+      "stableInfo": "{count} Tiere, {free} frei",
+      "subType": "Rasse",
+      "count": "Anzahl",
+      "request": "Tiere anfragen",
+      "offer": "Tiere anbieten",
+      "countHint": "{min} bis {max} Tiere je Geschäft.",
+      "noMatchingStable": "Du hast keinen Stall für die Tiere dieses Nachbarn.",
+      "noNeighbors": "Kein Nachbar hält gerade Tiere.",
+      "sent": "{name} hat geantwortet – das Angebot steht unten.",
+      "offerText": "{name} verkauft dir {count} {subType} ({type}) für {amount} ({unit} je Tier).",
+      "requestText": "{name} kauft dir {count} {subType} ({type}) für {amount} ab ({unit} je Tier).",
+      "caseHint": "Die Tiere wechseln nach der Zusage im Spiel den Stall; bezahlt wird im selben Schritt.",
+      "history": "{count} {subType} für {amount}"
+    }
   },
   "credit": {
     "collateral": "Sicherheit (Grundschuld)",

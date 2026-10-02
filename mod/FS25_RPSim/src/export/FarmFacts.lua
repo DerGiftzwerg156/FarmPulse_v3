@@ -79,7 +79,46 @@ function RPSimFarmFacts.buildWorkforce(raw)
     return { activeJobs = jobs, workedGameMs = worked }
 end
 
+--- Roadmap V3.1 R31-A3: animals per subtype of a husbandry (raw = { {name, count} }), merged by name, without empty
+-- entries, sorted by name; nil when not a table.
+local function buildSubTypes(raw)
+    if type(raw) ~= "table" then
+        return nil
+    end
+    local byName = {}
+    for _, s in ipairs(raw) do
+        if type(s) == "table" and type(s.name) == "string" and s.name ~= "" and type(s.count) == "number" then
+            byName[s.name] = (byName[s.name] or 0) + round(s.count)
+        end
+    end
+    local list = RPSimJson.array({})
+    for name, count in pairs(byName) do
+        if count > 0 then
+            list[#list + 1] = { name = name, count = count }
+        end
+    end
+    table.sort(list, function(a, b) return a.name < b.name end)
+    return list
+end
+
+--- Roadmap V3.1 R31-A3: names of the subtypes a husbandry accepts, unique and sorted; nil when not a table.
+local function buildNames(raw)
+    if type(raw) ~= "table" then
+        return nil
+    end
+    local seen, list = {}, RPSimJson.array({})
+    for _, name in ipairs(raw) do
+        if type(name) == "string" and name ~= "" and not seen[name] then
+            seen[name] = true
+            list[#list + 1] = name
+        end
+    end
+    table.sort(list)
+    return list
+end
+
 --- R2-A7: raw = { {husbandryUniqueId, health, productivity?, food, conditions = { {title, ratio} }} }
+-- Roadmap V3.1 R31-A3, each optional: subTypes = { {name, count} }, supportedSubTypes = { name }, freeSlots.
 function RPSimFarmFacts.buildHusbandries(raw)
     local list = RPSimJson.array({})
     for _, h in ipairs(raw) do
@@ -90,8 +129,14 @@ function RPSimFarmFacts.buildHusbandries(raw)
                     conditions[#conditions + 1] = { title = c.title, ratio = round3(c.ratio) }
                 end
             end
-            list[#list + 1] = { husbandryUniqueId = tostring(h.husbandryUniqueId), health = round3(h.health),
+            local e = { husbandryUniqueId = tostring(h.husbandryUniqueId), health = round3(h.health),
                 productivity = optNumber(h, "productivity", round3), food = round3(h.food), conditions = conditions }
+            e.subTypes = buildSubTypes(h.subTypes)
+            e.supportedSubTypes = buildNames(h.supportedSubTypes)
+            if type(h.freeSlots) == "number" and h.freeSlots == h.freeSlots then
+                e.freeSlots = math.max(0, round(h.freeSlots))
+            end
+            list[#list + 1] = e
         end
     end
     table.sort(list, function(a, b) return a.husbandryUniqueId < b.husbandryUniqueId end)

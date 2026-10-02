@@ -197,3 +197,38 @@ test('vehicle positions and stables survive saving and reloading without saving'
   const again = new BridgeSimulator({ dir: sim.dir, scenario: 'viehhandel' });
   assert.equal(again.stables.hus_00001.subTypes.COW_ANGUS, 10);
 });
+
+test('viehhandel: the husbandries export subtypes, supported subtypes and free places (R31-A3)', () => {
+  const { sim, run } = setup('viehhandel');
+  const facts = () => sim.buildFarmFacts();
+  let cows = facts().husbandries.find((h) => h.husbandryUniqueId === 'hus_00001');
+  assert.deepEqual(cows.subTypes, [{ name: 'COW_ANGUS', count: 10 }, { name: 'COW_HOLSTEIN', count: 30 }]);
+  assert.deepEqual(cows.supportedSubTypes, ['COW_ANGUS', 'COW_HOLSTEIN', 'COW_SWISS_BROWN']);
+  assert.equal(cows.freeSlots, 20);
+  assert.equal(facts().husbandries.find((h) => h.husbandryUniqueId === 'hus_00002').freeSlots, 0);
+  run([{ instructionId: 'out', type: 'ANIMAL_TRANSFER', husbandryUniqueId: 'hus_00001', subType: 'COW_ANGUS', count: 10,
+    direction: 'OUT' }]);
+  cows = facts().husbandries.find((h) => h.husbandryUniqueId === 'hus_00001');
+  assert.deepEqual(cows.subTypes, [{ name: 'COW_HOLSTEIN', count: 30 }]); // a subtype without animals is left out
+  assert.equal(cows.freeSlots, 30);
+  assert.equal(validate('farmFacts', facts()), null);
+  // a mod without the R31-Q1 contract exports the husbandries without them
+  const old = setup('tierhof-krank').sim.buildFarmFacts();
+  for (const h of old.husbandries) for (const k of ['subTypes', 'supportedSubTypes', 'freeSlots']) assert.equal(k in h, false);
+});
+
+test('lohnunternehmer: VEHICLE_SPAWN with price 0 brings a borrowed machine without a booking (R31-A2)', () => {
+  const { sim, run } = setup('lohnunternehmer');
+  const balance = sim.balance;
+  const acks = run([{ instructionId: 'loan', type: 'VEHICLE_SPAWN', storeXmlFilename: 'data/vehicles/claas/lexion8000/lexion8000.xml',
+    ageMonths: 36, operatingHours: 900, damage: 0.1, wear: 0.2, price: 0, moneyReason: 'MACHINE_RENT' }]);
+  assert.equal(acks.loan.status, 'APPLIED');
+  const id = acks.loan.result.vehicleId;
+  assert.equal(sim.balance, balance);
+  const v = sim.buildFarmFacts().assets.vehicles.find((x) => x.uniqueId === id);
+  assert.equal(v.category, 'HARVESTERS');
+  assert.equal(v.value, 780000);
+  assert.equal(sim.buildMarketContext().storeVehicles.length > 0, true);
+  const back = run([{ instructionId: 'back', type: 'VEHICLE_REMOVE', vehicleId: id }]);
+  assert.equal(back.back.status, 'APPLIED');
+});

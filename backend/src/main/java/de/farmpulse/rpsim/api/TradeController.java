@@ -58,15 +58,41 @@ public class TradeController {
     public record GoodsRequest(@NotBlank String fillType, @NotNull @Positive Long amount) {
     }
 
+    /** Roadmap V3.1 R31-A3: one own stable with its subtypes, free places and the game value per animal. */
+    public record StableView(String husbandryUniqueId, String type, int count, Integer freeSlots,
+                             List<BridgeDtos.SubTypeCount> subTypes, List<String> supportedSubTypes, Long valuePerAnimal) {
+    }
+
+    /** One animal type of a neighbour: his stock and his prices per animal (null = no value known). */
+    public record AnimalStockView(String type, int count, Long sellUnitPrice, Long buyUnitPrice) {
+    }
+
+    public record AnimalNeighborView(Long id, String name, String role, String trustLevel, List<AnimalStockView> animals) {
+    }
+
+    /** {@code tracked} = the mod reports the stables with their subtypes (else no livestock trade). */
+    public record AnimalTradeView(boolean tracked, int countMin, int countMax, List<StableView> stables,
+                                  List<AnimalNeighborView> neighbors, List<CaseView> cases) {
+    }
+
+    public record AnimalRequest(@NotBlank String husbandryUniqueId, @NotBlank String subType, @NotNull @Positive Integer count) {
+    }
+
     private final SavegameContext context;
     private final NeighborService neighbors;
     private final NeighborTradeService trade;
     private final NeighborMissionService missions;
     private final NpcFieldService fields;
+    private final de.farmpulse.rpsim.neighbor.LivestockTradeService livestock;
+    private final de.farmpulse.rpsim.config.RpsimProperties props;
     private final ApiMapper mapper;
 
     public TradeController(SavegameContext context, NeighborService neighbors, NeighborTradeService trade,
-                           NeighborMissionService missions, NpcFieldService fields, ApiMapper mapper) {
+                           NeighborMissionService missions, NpcFieldService fields,
+                           de.farmpulse.rpsim.neighbor.LivestockTradeService livestock,
+                           de.farmpulse.rpsim.config.RpsimProperties props, ApiMapper mapper) {
+        this.livestock = livestock;
+        this.props = props;
         this.context = context;
         this.neighbors = neighbors;
         this.trade = trade;
@@ -117,5 +143,50 @@ public class TradeController {
     @Transactional
     public CaseView askForWork(@PathVariable Long id) {
         return mapper.serviceCase(missions.askForWork(context.requireActive(), id));
+    }
+
+    // ------------------------------------------------------------------------------------------ R31-A3 livestock trade
+
+    private static Long round(java.util.OptionalDouble v) {
+        return v.isPresent() ? Math.round(v.getAsDouble()) : null;
+    }
+
+    /** R31-A3: own stables, the neighbours' animals and prices, the livestock offers and requests. */
+    @GetMapping("/api/trade/animals")
+    @Transactional
+    public AnimalTradeView animals() {
+        Savegame sg = context.requireActive();
+        FarmFacts f = neighbors.latest(sg).orElse(null);
+        var stables = livestock.stables(f);
+        List<StableView> stableViews = stables.stream().map(s -> new StableView(s.husbandryUniqueId(), s.type(), s.count(),
+                s.freeSlots(), s.subTypes(), s.supportedSubTypes(), round(livestock.valuePerAnimal(f, s.type())))).toList();
+        List<AnimalNeighborView> list = new ArrayList<>();
+        for (Character n : neighbors.neighbors(sg)) {
+            List<AnimalStockView> animals = new ArrayList<>();
+            for (String type : livestock.animalTypes(n)) {
+                animals.add(new AnimalStockView(type, livestock.stockOf(sg, n, type),
+                        round(livestock.sellUnitPrice(f, n, type)), round(livestock.buyUnitPrice(f, n, type))));
+            }
+            list.add(new AnimalNeighborView(n.getId(), n.getName(), n.getNeighborRole(), mapper.trustLevel(n), animals));
+        }
+        var cfg = props.getFormulas().getLivestockTrade();
+        return new AnimalTradeView(!stables.isEmpty(), cfg.getCountMin(), cfg.getCountMax(), stableViews, list,
+                livestock.cases(sg).stream().map(mapper::serviceCase).toList());
+    }
+
+    /** R31-A3: "Tiere anfragen" - the neighbour answers at once with his price. */
+    @PostMapping("/api/trade/neighbors/{id}/animals/request")
+    @Transactional
+    public CaseView requestAnimals(@PathVariable Long id, @Valid @RequestBody AnimalRequest r) {
+        return mapper.serviceCase(livestock.requestAnimals(context.requireActive(), id, r.husbandryUniqueId(), r.subType(),
+                r.count()));
+    }
+
+    /** R31-A3: "Tiere anbieten" - the neighbour answers at once with his price. */
+    @PostMapping("/api/trade/neighbors/{id}/animals/offer")
+    @Transactional
+    public CaseView offerAnimals(@PathVariable Long id, @Valid @RequestBody AnimalRequest r) {
+        return mapper.serviceCase(livestock.offerAnimals(context.requireActive(), id, r.husbandryUniqueId(), r.subType(),
+                r.count()));
     }
 }

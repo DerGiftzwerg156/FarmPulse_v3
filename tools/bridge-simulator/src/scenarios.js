@@ -264,13 +264,15 @@ Object.assign(SCENARIOS, {
 // Roadmap V3.1 (R31-Q2): winter-schnee, lohnunternehmer and viehhandel stand for a mod with the R31-Q1 contract
 // (roadmapV31: true): the own vehicles carry their shop category and diesel, own fields their spray type, the calendar
 // the time of day, and farm_facts the block vehiclePositions (empty until /vehicle-positions). lohnunternehmer also
-// exports the field outlines (market_context.fieldShapes). `stables` is the simulator's own model of the husbandries
-// (free places and animals per subtype) that the planned mod reads at ANIMAL_TRANSFER; it is not exported.
+// exports the field outlines (market_context.fieldShapes) and the shop vehicle catalog (machines to borrow, R31-A2).
+// `stables` is the simulator's model of the husbandries (free places and animals per subtype) that the mod reads at
+// ANIMAL_TRANSFER; since R31-A3 the husbandries export it as subTypes, supportedSubTypes and freeSlots.
 // All other scenarios leave the Roadmap V3.1 fields out and stand for a mod without them.
 // All numbers and names (fruit types, animal subtypes, outlines) are simulated examples, not values read from FS25.
 
 /** Simulated FS25 fruit types a contractor can sow (FIELD_WORK SOW). */
-export const FRUIT_TYPES = ['WHEAT', 'BARLEY', 'OAT', 'CANOLA', 'MAIZE', 'SUNFLOWER', 'SOYBEAN', 'POTATO', 'SUGARBEET'];
+export const FRUIT_TYPES = ['WHEAT', 'BARLEY', 'OAT', 'CANOLA', 'MAIZE', 'SUNFLOWER', 'SOYBEAN', 'SORGHUM', 'POTATO',
+  'SUGARBEET'];
 
 /** Simulated FS25 animal subtypes and their animal type (ANIMAL_TRANSFER). */
 export const SUB_TYPES = { COW_HOLSTEIN: 'COW', COW_ANGUS: 'COW', COW_SWISS_BROWN: 'COW', PIG_LANDRACE: 'PIG',
@@ -345,6 +347,8 @@ Object.assign(SCENARIOS, {
     fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
     weather: { raining: false, rainFallScale: 0, groundWetness: 0.2, temperature: 24, snowHeight: 0 },
     fieldShapes: gridShapes(),
+    // R31-A2: machines a neighbour lends or the workshop shows come from the shop catalog
+    storeVehicles: SCENARIOS.nachbarhandel.storeVehicles,
   },
   viehhandel: {
     description: 'Tierhof: Kuhstall mit freien Plätzen und zwei Rassen, voller Schafstall (R31-A3).',
