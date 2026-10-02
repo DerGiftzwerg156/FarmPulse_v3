@@ -188,9 +188,10 @@ function RPSimProcessor.applyOne(state, ins, ctx)
             return false, "NOT_SUPPORTED"
         end
         return action(ins)
-    elseif RPSimProcessor.V3_ACTIONS[ins.type] ~= nil then
-        -- Roadmap V3 (R3-Q1): executed once the feature brings its adapter action; until then NOT_SUPPORTED
-        local action = ctx.actions[RPSimProcessor.V3_ACTIONS[ins.type]]
+    elseif RPSimProcessor.V3_ACTIONS[ins.type] ~= nil or RPSimProcessor.V31_ACTIONS[ins.type] ~= nil then
+        -- Roadmap V3 (R3-Q1) / V3.1 (R31-Q1): executed once the feature brings its adapter action; until then
+        -- NOT_SUPPORTED
+        local action = ctx.actions[RPSimProcessor.V3_ACTIONS[ins.type] or RPSimProcessor.V31_ACTIONS[ins.type]]
         if action == nil then
             return false, "NOT_SUPPORTED"
         end
@@ -204,6 +205,11 @@ end
 -- MISSION_CREATE).
 RPSimProcessor.V3_ACTIONS = { STORAGE_TRANSFER = "storageTransfer", MISSION_CREATE = "missionCreate",
     VEHICLE_SPAWN = "vehicleSpawn", VEHICLE_REMOVE = "vehicleRemove" }
+
+--- Roadmap V3.1 (R31-Q1): the same for FIELD_WORK (R31-A1), ANIMAL_TRANSFER (R31-A3) and VEHICLE_FUEL (R31-D8, result
+-- { liters } = diesel actually taken). No action yet: acknowledged FAILED / NOT_SUPPORTED.
+RPSimProcessor.V31_ACTIONS = { FIELD_WORK = "fieldWork", ANIMAL_TRANSFER = "animalTransfer",
+    VEHICLE_FUEL = "vehicleFuel" }
 
 --- Roadmap V3 R3-V2: records the outcome of an asynchronous action (see PENDING). Ignored when the instruction already
 -- has a final status. Returns true when recorded.

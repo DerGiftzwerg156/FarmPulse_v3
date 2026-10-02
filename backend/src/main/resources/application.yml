@@ -628,6 +628,87 @@ rpsim:
       sale-offer-min: 1.0         # first offer 100-110 % of the game value ...
       sale-offer-max: 1.1
       sale-cap: 1.1               # ... at most 110 %
+    contractor-work:              # Roadmap V3.1 R31-A1: the contractor works an own field (owner decisions, placeholders)
+      enabled: true
+      price-per-ha:               # EUR per hectare, material (lime, seed) included
+        PLOW: 110
+        CULTIVATE: 80
+        LIME: 60
+        SOW: 100
+        HARVEST: 180
+      lead-days-min: 1            # done after 1-3 game days ...
+      lead-days-max: 3
+      harvest-periods: [5, 6, 7, 8] # ... in the busy season (July-October) ...
+      harvest-extra-days: 2       # ... 2 days later
+      trust-threshold: 50         # trust to the contractor from 50 ...
+      trust-days-less: 1          # ... shortens the wait by 1 day (at least 1 day)
+      done-trust-delta: 2
+      sow-fruit-types: [WHEAT, BARLEY, OAT, CANOLA, MAIZE, SUNFLOWER, SOYBEAN, SORGHUM]
+      yield:                      # harvest = area x litersPerSqm x factor (product of the parts below)
+        spray-factors: [0.85, 0.95, 1.0] # by sprayLevel 0, 1, 2 and more
+        lime-missing-factor: 0.9  # limeLevel 0 when the savegame needs lime
+        plow-missing-factor: 0.9  # plowLevel 0 when the savegame needs plowing
+        weed-step: 0.05           # per weedState step when weeds are on ...
+        weed-max: 0.2             # ... at most -20 %
+    machine-loan:                 # Roadmap V3.1 R31-A2: borrowed and demo machines (owner decisions, placeholders)
+      enabled: true
+      days-min: 1                 # the player borrows a machine for 1-5 game days
+      days-max: 5
+      rent-share-per-day: 0.003   # rent per game day = list price x 0.3 %, trust as in neighbor-trade
+      late-surcharge-share: 0.5   # each day of a late return costs 50 % of the daily rent extra
+      choices: 3                  # machines to choose from
+      role-categories:            # neighbour role -> shop categories he lends
+        DAIRY: [TRACTORSM, TRACTORSL, FORAGEHARVESTERS, MOWERVEHICLES]
+        ARABLE: [TRACTORSL, HARVESTERS, BEETVEHICLES, POTATOVEHICLES]
+        MIXED: [TRACTORSM, TRACTORSL, HARVESTERS]
+      compensation-share: 0.5     # damage: condition points lost / 100 x list price x 0.5
+      damage-trust-points: 10     # from 10 points lost ...
+      damage-trust-delta: -3      # ... trust -3
+      lost-trust-delta: -20       # the machine disappeared without being returned (claim = game value)
+      rent-missed-trust-delta: -3 # a daily rent could not be booked: the neighbour takes the machine back at once
+      demo-days-min: 1            # workshop demo: 1-2 game days, new machine, free
+      demo-days-max: 2
+      demo-offer-probability: 0.2 # the workshop offers a demo on its own at a month start
+      demo-discount: 0.1          # purchase offer after the demo: list price - 10 %
+      demo-answer-days: 5         # days to answer a demo the workshop offers on its own
+    livestock-trade:              # Roadmap V3.1 R31-A3: animals bought from / sold to neighbours (owner decisions, placeholders)
+      enabled: true
+      role-animals:               # neighbour role -> animal types he keeps
+        DAIRY: [COW]
+        MIXED: [COW, PIG, SHEEP]
+        ARABLE: []
+      stock-min: 20               # stock per animal type, rolled when first needed
+      stock-max: 60
+      count-min: 1                # animals per deal
+      count-max: 10
+      neighbor-sell-share: 1.05   # price per animal = game value per animal of the own stable x 1.05 ...
+      neighbor-buy-share: 0.95    # ... x 0.95 when the neighbour buys; trust as in neighbor-trade
+      offer-probability-per-month: 0.3
+      request-probability-per-month: 0.3
+      max-messages-per-month: 1
+      age-months:                 # age of animals bought from a neighbour
+        COW: 12
+        PIG: 6
+        SHEEP: 12
+    winter-service:               # Roadmap V3.1 R31-A4: winter service for the municipality (owner decisions, placeholders)
+      enabled: true
+      vehicle-categories: [TRACTORSM, TRACTORSL] # an own vehicle of these shop categories is needed
+      winter-periods: [9, 10, 11, 12] # November-February
+      offer-period: 8             # the authority offers the contract in October
+      base-fee-per-month: 400
+      fee-per-snow-day: 150
+      snow-threshold: 0.05        # metres of snow from which a game day is a snow day
+      renewal-probability: 0.9    # offered again after a winter with a snow day ...
+      renewal-probability-without-snow: 0.5 # ... or without one
+      notification-text: "Schnee! Winterdienst ab 5 Uhr"
+    seasonal-worker:              # Roadmap V3.1 R31-A5: seasonal workers for the harvest (owner decisions, placeholders)
+      posting-periods: [4, 5, 6, 7, 8] # June-October
+      contract-end-period: 8      # the contract ends with October
+      salary-factor: 1.25         # machine operator salary x 1.25, no salary negotiation, no trainings
+      skill-min: 30
+      skill-max: 70
+      max-workers: 3
+      return-satisfaction: 60     # left with satisfaction >= 60: applies again next year
     drought:                      # Roadmap V3 R3-W1 / R3-W2: drought and drought aid (owner decisions, placeholders)
       enabled: true
       periods: [3, 4, 5, 6, 7, 8] # growth months (FS25 periods, 1 = March)
@@ -663,6 +744,12 @@ rpsim:
         RPSIM_TAX_REFUND: OPERATING_INCOME
         RPSIM_LEASE_INCOME: OPERATING_INCOME          # Roadmap V3 (R3-Q1): lease of own fields (R3-L1)
         RPSIM_GOODS_SALE: OPERATING_INCOME            # Roadmap V3 (R3-Q1): goods to neighbours / farm shop (R3-H4, R3-M3)
+        RPSIM_LIVESTOCK_SALE: OPERATING_INCOME        # Roadmap V3.1 (R31-Q1): animals to a neighbour (R31-A3)
+        RPSIM_WINTER_SERVICE: OPERATING_INCOME        # Roadmap V3.1 (R31-Q1): winter service for the municipality (R31-A4)
+        RPSIM_DIRECT_PAYMENT: OPERATING_INCOME        # Roadmap V3.1 (R31-Q1): area payment (R31-B1)
+        RPSIM_INVESTMENT_GRANT: OPERATING_INCOME      # Roadmap V3.1 (R31-Q1): investment grant (R31-B2)
+        RPSIM_GUEST_INCOME: OPERATING_INCOME          # Roadmap V3.1 (R31-Q1): farm holiday guests (R31-D6)
+        RPSIM_COOP_DIVIDEND: OPERATING_INCOME         # Roadmap V3.1 (R31-Q1): dividend of the cooperative (R31-D7)
         PURCHASE_FUEL: OPERATING_EXPENSE
         PURCHASE_SEEDS: OPERATING_EXPENSE
         PURCHASE_FERTILIZER: OPERATING_EXPENSE
@@ -689,6 +776,10 @@ rpsim:
         RPSIM_TRAINING: OPERATING_EXPENSE
         RPSIM_GOODS_PURCHASE: OPERATING_EXPENSE       # Roadmap V3 (R3-Q1): goods from neighbours (R3-H3)
         RPSIM_CONTRACT_PENALTY: OPERATING_EXPENSE     # Roadmap V3 (R3-Q1): shortfall of a forward contract (R3-M2)
+        RPSIM_CONTRACTOR_FEE: OPERATING_EXPENSE       # Roadmap V3.1 (R31-Q1): contractor works an own field (R31-A1)
+        RPSIM_MACHINE_RENT: OPERATING_EXPENSE         # Roadmap V3.1 (R31-Q1): rented machine of a neighbour (R31-A2)
+        RPSIM_LIVESTOCK_PURCHASE: OPERATING_EXPENSE   # Roadmap V3.1 (R31-Q1): animals from a neighbour (R31-A3)
+        RPSIM_SOCIAL_INSURANCE: OPERATING_EXPENSE     # Roadmap V3.1 (R31-Q1): agricultural social insurance (R31-B5)
         RPSIM_OTHER: OPERATING_EXPENSE
         SHOP_PROPERTY_BUY: INVESTMENT
         SHOP_VEHICLE_BUY: INVESTMENT
@@ -707,6 +798,7 @@ rpsim:
         RPSIM_CREDIT_SPECIAL_REPAYMENT: FINANCING
         RPSIM_CREDIT_PREPAYMENT_FEE: FINANCING
         RPSIM_STARTING_CAPITAL_ADJUSTMENT: FINANCING
+        RPSIM_COOP_SHARES: FINANCING                  # Roadmap V3.1 (R31-Q1): cooperative shares and their repayment (R31-D7)
         RPSIM_DAMAGE: IGNORE
         RPSIM_INSURANCE_PAYOUT: IGNORE
         RPSIM_WILDLIFE_COMPENSATION: IGNORE

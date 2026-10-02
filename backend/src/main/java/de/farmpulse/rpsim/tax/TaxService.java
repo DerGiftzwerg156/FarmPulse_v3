@@ -98,14 +98,18 @@ public class TaxService {
     private final de.farmpulse.rpsim.employee.OfficeClerkService clerks;
     private final PaymentDelayService delays;
 
+    /** Roadmap V3.1 R31-A2: borrowed and demo machines are not depreciated. */
+    private final de.farmpulse.rpsim.farmwork.LoanedVehicles loaned;
+
     public TaxService(SavegameRepository savegames, TaxYearRepository years, ServiceCaseRepository cases,
                       ContractRepository contracts, LoanPaymentRepository payments, FactsService facts,
                       FinanceJournalService journal, LiquidityService liquidity, OutboxService outbox,
                       ContractBillingService billing, ServiceRoleService roles, NarrationRequestService narration,
                       TrustScoreService trust, DiaryService diary, RandomSource random, RpsimProperties props,
                       GameTime gameTime, de.farmpulse.rpsim.employee.OfficeClerkService clerks,
-                      PaymentDelayService delays) {
+                      PaymentDelayService delays, de.farmpulse.rpsim.farmwork.LoanedVehicles loaned) {
         this.clerks = clerks;
+        this.loaned = loaned;
         this.savegames = savegames;
         this.years = years;
         this.cases = cases;
@@ -236,11 +240,12 @@ public class TaxService {
         return new YearSums(list.size(), Math.round(income), Math.round(expense), list);
     }
 
-    long depreciation(FarmFacts f) {
+    long depreciation(Savegame sg, FarmFacts f) {
         if (f.assets() == null) {
             return 0;
         }
-        double value = f.assets().vehicles().stream().mapToDouble(v -> v.value() == null ? 0 : v.value()).sum()
+        double value = loaned.own(sg, f.assets().vehicles()).stream()
+                .mapToDouble(v -> v.value() == null ? 0 : v.value()).sum()
                 + f.assets().placeables().stream().mapToDouble(p -> p.value() == null ? 0 : p.value()).sum();
         return Math.round(value * cfg().getDepreciationRate());
     }
@@ -262,7 +267,7 @@ public class TaxService {
             y.setStatus(TaxYear.NO_DATA); // no journal (older mod): nothing to assess
             return y;
         }
-        Calculation c = calculate(s.income(), s.expense(), depreciation(f), interest(sg, y.getStartGameTime(), now),
+        Calculation c = calculate(s.income(), s.expense(), depreciation(sg, f), interest(sg, y.getStartGameTime(), now),
                 allowance(sg), rate(sg), advisor(sg).isPresent() ? cfg().getAdvisorTaxReduction() : 0);
         // open prepayment bills of the year are replaced by the assessment
         long prepaid = 0;

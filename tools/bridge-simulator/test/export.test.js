@@ -117,7 +117,10 @@ const V2_SCENARIOS = { 'wohlhabender-hof': ['finances', 'husbandries', 'fields',
   'helfer-hof': ['finances', 'workforce', 'weather'],
   'tierhof-krank': ['finances', 'husbandries', 'weather'], 'ernte-herbst': ['finances', 'fields', 'fieldRules', 'weather'],
   // Roadmap V3 (R3-Q2): the dry summer uses the V2 blocks fields and weather
-  'duerre-sommer': ['fields', 'fieldRules', 'weather'] };
+  'duerre-sommer': ['fields', 'fieldRules', 'weather'],
+  // Roadmap V3.1 (R31-Q2): snow height, spray type and the stables use the V2 blocks weather, fields and husbandries
+  'winter-schnee': ['weather'], lohnunternehmer: ['fields', 'fieldRules', 'weather'],
+  viehhandel: ['husbandries', 'weather'] };
 
 test('Roadmap V2: the new scenarios export their blocks, all others leave them out (older mod)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {

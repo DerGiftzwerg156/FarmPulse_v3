@@ -198,6 +198,37 @@ import { Button } from '../../shared/ui/button';
         }
         <p class="mt-1 text-[11px] text-muted">{{ 'credit.rateCutHint' | t }}</p>
       }
+      @if (c().kind === 'CONTRACTOR_WORK') {
+        <!-- Roadmap V3.1 R31-A1: the contractor comes on the work day -->
+        <div class="mt-1 text-[12px] text-text" data-testid="contractor-case">{{ 'farmland.contractor.caseText' | t: { work: (c().reference | label: 'fieldWork'), price: (c().offerAmount | money) } }}
+          @if (c().reference === 'SOW' && c().title) { · {{ c().title | label: 'fillType' }} }
+          @if (c().reference === 'HARVEST' && c().quantity) { · {{ 'farmland.contractor.liters' | t: { liters: c().quantity, fillType: (c().title | label: 'fillType') } }} }
+        </div>
+        <p class="mt-1 text-[11px] text-muted">{{ 'farmland.contractor.caseHint' | t }}</p>
+      }
+      @if (c().kind === 'MACHINE_DEMO_OFFER') {
+        <!-- Roadmap V3.1 R31-A2: the workshop offers a demo machine -->
+        <div class="mt-1 text-[12px] text-text" data-testid="demo-offer">{{ 'workshop.loans.demoOfferText' | t: { name: c().character?.name ?? '–', vehicle: c().title ?? '–', price: (c().offerAmount | money) } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'workshop.loans.demoAccept' | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        }
+      }
+      @if (c().kind === 'ANIMAL_OFFER' || c().kind === 'ANIMAL_REQUEST') {
+        <!-- Roadmap V3.1 R31-A3: livestock trade with a neighbour -->
+        <div class="mt-1 text-[12px] text-text" data-testid="animal-case">{{ (c().kind === 'ANIMAL_OFFER' ? 'trade.animals.offerText' : 'trade.animals.requestText') | t: { name: c().character?.name ?? '–', count: c().quantity, subType: c().reference ?? '–', type: (c().title | label: 'animalType'), amount: (c().offerAmount | money), unit: (c().costAmount | money) } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ (c().kind === 'ANIMAL_OFFER' ? 'trade.buy' : 'trade.sell') | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        } @else {
+          <app-badge variant="positive">{{ 'trade.inTransfer' | t }}</app-badge>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'trade.animals.caseHint' | t }}</p>
+      }
       @if (isInsuranceCase()) {
         <div class="mt-2 flex flex-wrap gap-2">
           <app-button [disabled]="busy()" (pressed)="act('report', { channel: 'MAIL' })" data-testid="report-mail">{{ 'contracts.reportMail' | t }}</app-button>

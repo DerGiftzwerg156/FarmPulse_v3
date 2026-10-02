@@ -60,6 +60,9 @@ export interface ContractView {
   renewalAmount?: number | null;
   /** Lease (TODO T-22): price at which the owner sells the leased field. */
   purchasePrice?: number | null;
+  /** Roadmap V3.1 R31-A4: snow days of the running winter month and of the whole winter (winter service only). */
+  snowDays?: number | null;
+  snowDaysTotal?: number | null;
 }
 
 /** Simulated incident or one-off offer of a service character (TODO T-20 / T-22). */
@@ -469,6 +472,8 @@ export interface EmployeeView {
   trainingUntilGameTime: number | null;
   /** Roadmap V3 R3-P2: end of the training of an apprentice. */
   apprenticeshipEndsAtGameTime?: number | null;
+  /** Roadmap V3.1 R31-A5: end of a seasonal worker's fixed-term contract. */
+  contractEndsAtGameTime?: number | null;
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
@@ -1084,4 +1089,100 @@ export interface RotationPreviewView {
   cut: boolean;
   sameFields: number[];
   premiumPerHa: number;
+}
+
+// ---------------------------------------------------------------------------------------- Roadmap V3.1 section A
+
+/** R31-A1: one work of the contractor form; `reason` = why it is not possible (null = possible). */
+export interface WorkOptionView {
+  work: 'PLOW' | 'CULTIVATE' | 'LIME' | 'SOW' | 'HARVEST' | string;
+  price: number;
+  harvestLiters: number | null;
+  fillType: string | null;
+  reason: string | null;
+}
+
+/** R31-A1: "Lohnunternehmer beauftragen" for an own field. */
+export interface ContractorQuoteView {
+  farmlandId: number;
+  fieldName: string | null;
+  hectares: number;
+  phase: string;
+  options: WorkOptionView[];
+  fruitTypes: string[];
+  daysMin: number;
+  daysMax: number;
+  openOrder: CaseView | null;
+}
+
+/** R31-A2: a machine to choose from; `dailyRent` 0 for a demo. */
+export interface LoanChoiceView {
+  storeXmlFilename: string;
+  name: string;
+  categoryName: string | null;
+  listPrice: number;
+  dailyRent: number;
+}
+
+export interface LoanChoicesView {
+  daysMin: number;
+  daysMax: number;
+  choices: LoanChoiceView[];
+}
+
+/** R31-A2: a borrowed (LOAN) or demo (DEMO) machine. */
+export interface MachineLoanView {
+  id: number;
+  kind: 'LOAN' | 'DEMO' | string;
+  status: string;
+  lender: CharacterRef | null;
+  vehicleName: string;
+  categoryName: string | null;
+  listPrice: number;
+  days: number;
+  dailyRent: number;
+  vehicleId: string | null;
+  deliveredGameTime: number | null;
+  endsGameTime: number | null;
+  rentDaysBooked: number;
+  lateDays: number;
+  compensation: number | null;
+  endReason: string | null;
+  vehicleDealId: number | null;
+}
+
+/** R31-A3: one own stable with its subtypes and free places. */
+export interface StableView {
+  husbandryUniqueId: string;
+  type: string;
+  count: number;
+  freeSlots: number | null;
+  subTypes: { name: string; count: number }[];
+  supportedSubTypes: string[];
+  valuePerAnimal: number | null;
+}
+
+export interface AnimalStockView {
+  type: string;
+  count: number;
+  sellUnitPrice: number | null;
+  buyUnitPrice: number | null;
+}
+
+export interface AnimalNeighborView {
+  id: number;
+  name: string;
+  role: string | null;
+  trustLevel: TrustLevel;
+  animals: AnimalStockView[];
+}
+
+/** R31-A3: livestock trade with the neighbours; `tracked` = the mod reports the stables with subtypes. */
+export interface AnimalTradeView {
+  tracked: boolean;
+  countMin: number;
+  countMax: number;
+  stables: StableView[];
+  neighbors: AnimalNeighborView[];
+  cases: CaseView[];
 }

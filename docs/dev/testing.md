@@ -121,6 +121,14 @@ as ack `result`; `BridgeSyncIntegrationTest.ackResultIsStoredWithTheInstruction`
 blocks) and `FailedInstructionTest` (notice "Mod aktualisieren") cover the backend side. The mod covers normalisation,
 validation, `NOT_SUPPORTED` and `result` in `test_farm_facts.lua`, `test_market_context.lua`, `test_instructions.lua`
 and `test_persistence.lua`, the simulator the execution in `test/roadmap-v3.test.js`.
+Roadmap V3.1 (R31-Q2): `SimulatorScenariosEndToEndTest` checks that snow height, categories, diesel, time of day and
+vehicle positions of `winter-schnee` and spray types and field outlines of `lohnunternehmer` arrive (and stay `null`
+for `wohlhabender-hof`) and that the litres of a `VEHICLE_FUEL` come back as ack `result`; `BridgeValidatorTest` (the
+new fields and blocks) and `FailedInstructionTest` (notice "Mod aktualisieren" for the three new types) cover the
+backend side. The mod covers normalisation, validation and `NOT_SUPPORTED` in `test_farm_facts.lua`,
+`test_market_context.lua` and `test_instructions.lua` (every booking reason needs its title in `modDesc.xml`,
+`test_game_adapter.lua`), the simulator the scenarios, the execution and the control endpoints in
+`test/roadmap-v31.test.js`. Q brings no formula; the formula boundary tests come with the features.
 Roadmap V3 R3-M (market and marketing): `MarketingTest` covers the price alarm (best price, hint, mail, once,
 re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_EVENT / FIXED` held back until the
 delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and
@@ -133,6 +141,19 @@ most two, roster role without trainings), the monthly skill gain and the takeove
 below, no answer). Mod `test_workforce.lua` and simulator `test/instructions.test.js`: apprentices drive after the
 operators and never with a training. Frontend: the takeover case in `features/contracts/service-cases.spec.ts`. In the
 game: manual test plan section 18.
+Roadmap V3.1 R31-A (work on the farm): `ContractorWorkTest` covers the offered works per field phase, prices,
+yield factor, silo check, lead time (harvest months, trust), the batch on the work day, the cancel reasons and the
+acks; `MachineLoanTest` the rent with trust, the funds check, delivery, daily rent, late days, recall on missed rent,
+damage compensation, a vanished machine, the demo with purchase offer and the exclusion from the bank's assets,
+the maintenance fee and the sale (depreciation and mechanic use the same `LoanedVehicles` filter); `LivestockTradeTest` the animals per role, stock, prices, offers and requests,
+free places, the batch with `ANIMAL_TRANSFER`, acks, failures and gossip; `WinterServiceTest` the offer (category,
+snow height, October, renewal), snow days once per day with the hint, the payment and the end; `SeasonalWorkerTest`
+the posting window, salary, limit, roster role, no raise / training, the contract end after the last salary and the
+return next year. The mod covers `FIELD_WORK`, `ANIMAL_TRANSFER`, the stable subtypes, snow height, category and the
+spawn at price 0 in `test_roadmap_v31.lua`, the seasonal worker in `test_workforce.lua`; the simulator the stable
+export and the borrowed machine in `test/roadmap-v31.test.js`. Frontend: `contractor-work-card.spec.ts`,
+`machine-loans-card.spec.ts`, `borrow-machine.spec.ts`, `animal-trade.spec.ts`. In the game: manual test plan
+sections 21 and 22.
 Roadmap V3 R3-L (leasing out own fields): `LeaseOutTest` covers the guide value, the neighbours' bids (capital,
 85–100 % of the desired rent, the land agent without interest), the fallback on the field phase (offer and demand),
 the bank's consent for a pledged field, the agreement (contract, `FARMLAND_TRANSFER FROM_PLAYER`, `LEASE_INCOME` also

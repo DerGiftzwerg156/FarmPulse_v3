@@ -205,7 +205,7 @@ test('new instruction types and money reasons are validated like in the mod', ()
     [{ instructionId: 'a', type: 'STORAGE_TRANSFER', direction: 'UP', fillType: 'WHEAT', amount: 1 }, /unknown direction/],
     [{ instructionId: 'b', type: 'STORAGE_TRANSFER', direction: 'IN', fillType: 'WHEAT', amount: 0 }, /amount must be > 0/],
     [{ instructionId: 'c', type: 'MISSION_CREATE', farmlandId: 3 }, /missionType is required/],
-    [spawn({ instructionId: 'd', price: -1 }), /price must be > 0/],
+    [spawn({ instructionId: 'd', price: -1 }), /price must be >= 0/], // R31-A2: 0 = borrowed machine
     [spawn({ instructionId: 'e', damage: 2 }), /damage must be between 0 and 1/],
     [spawn({ instructionId: 'f', moneyReason: 'FREE' }), /unknown moneyReason/],
     [{ instructionId: 'g', type: 'VEHICLE_REMOVE' }, /vehicleId is required/],

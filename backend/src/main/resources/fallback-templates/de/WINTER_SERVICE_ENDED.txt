@@ -1,0 +1,6 @@
+Winterdienst beendet
+Guten Tag,
+
+der Winter ist vorbei und damit auch Ihr Winterdienst für die Gemeinde. Sie waren an {{snowDays}} Tagen im Einsatz. Vielen Dank!
+
+{{characterName}}

@@ -158,6 +158,51 @@
             <en>Contract penalty</en>
             <de>Vertragsstrafe</de>
         </text>
+        <!-- Roadmap V3.1 (R31-Q1): booking titles of the new money reasons -->
+        <text name="rpsim_money_CONTRACTOR_FEE">
+            <en>Contractor fee</en>
+            <de>Lohnunternehmer</de>
+        </text>
+        <text name="rpsim_money_MACHINE_RENT">
+            <en>Machine rent</en>
+            <de>Maschinenmiete</de>
+        </text>
+        <text name="rpsim_money_LIVESTOCK_PURCHASE">
+            <en>Livestock purchase</en>
+            <de>Tierkauf</de>
+        </text>
+        <text name="rpsim_money_LIVESTOCK_SALE">
+            <en>Livestock sale</en>
+            <de>Tierverkauf</de>
+        </text>
+        <text name="rpsim_money_WINTER_SERVICE">
+            <en>Winter service</en>
+            <de>Winterdienst</de>
+        </text>
+        <text name="rpsim_money_DIRECT_PAYMENT">
+            <en>Direct payment</en>
+            <de>Flächenprämie</de>
+        </text>
+        <text name="rpsim_money_INVESTMENT_GRANT">
+            <en>Investment grant</en>
+            <de>Investitionsförderung</de>
+        </text>
+        <text name="rpsim_money_SOCIAL_INSURANCE">
+            <en>Agricultural social insurance</en>
+            <de>Berufsgenossenschaft</de>
+        </text>
+        <text name="rpsim_money_GUEST_INCOME">
+            <en>Farm holiday guests</en>
+            <de>Ferien auf dem Hof</de>
+        </text>
+        <text name="rpsim_money_COOP_SHARES">
+            <en>Cooperative shares</en>
+            <de>Genossenschaftsanteile</de>
+        </text>
+        <text name="rpsim_money_COOP_DIVIDEND">
+            <en>Cooperative dividend</en>
+            <de>Genossenschaftsdividende</de>
+        </text>
         <!-- Schulungen: start of a helper refused in the strict mode (no free machine operator with the training) -->
         <text name="rpsim_ai_noTraining">
             <en>No trained machine operator available</en>

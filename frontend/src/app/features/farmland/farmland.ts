@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
@@ -14,6 +14,7 @@ import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { ServiceCases } from '../contracts/service-cases';
+import { ContractorWorkCard } from './contractor-work-card';
 import { FieldTable } from './field-table';
 
 /** Amount the counterpart currently offers/demands and that the player can accept with one click. */
@@ -38,13 +39,15 @@ export function highestBid(n: NegotiationView): number | null {
  */
 @Component({
   selector: 'app-farmland',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases, FieldTable],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases, FieldTable, ContractorWorkCard],
   templateUrl: './farmland.html',
 })
 export class Farmland {
   private readonly api = inject(ApiService);
   private readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
+  /** The first case list (claims, referrals, contractor jobs): reloaded after a contractor order. */
+  readonly casesView = viewChild(ServiceCases);
 
   /** `?negotiation=` selects a negotiation (link from mails / village). */
   readonly negotiation = input<string>();

@@ -35,5 +35,17 @@ public enum InstructionType {
      */
     VEHICLE_SPAWN,
     /** Roadmap V3 (R3-Q1): own vehicle removed after a sale, in a batch with its MONEY_TRANSACTION (R3-V3). */
-    VEHICLE_REMOVE
+    VEHICLE_REMOVE,
+    /**
+     * Roadmap V3.1 (R31-Q1): end state of a contractor's work (PLOW, CULTIVATE, LIME, SOW, HARVEST) on an own field, in
+     * a batch with its MONEY_TRANSACTION CONTRACTOR_FEE (R31-A1).
+     */
+    FIELD_WORK,
+    /**
+     * Roadmap V3.1 (R31-Q1): animals of one subtype into (IN) or out of (OUT) an own husbandry, in a batch with its
+     * MONEY_TRANSACTION LIVESTOCK_PURCHASE / LIVESTOCK_SALE (R31-A3).
+     */
+    ANIMAL_TRANSFER,
+    /** Roadmap V3.1 (R31-Q1): diesel taken out of an own vehicle (diesel theft, R31-D8); result.liters in the ack. */
+    VEHICLE_FUEL
 }

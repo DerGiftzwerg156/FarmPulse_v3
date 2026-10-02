@@ -8,7 +8,10 @@ RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLA
     EMPLOYEE_ROSTER = true, PROMPT = true,
     -- Roadmap V3 (R3-Q1): validated now, executed with R3-H3/H4/M3 (STORAGE_TRANSFER), R3-H5 (MISSION_CREATE),
     -- R3-V2 (VEHICLE_SPAWN) and R3-V3 (VEHICLE_REMOVE); until then acknowledged FAILED / NOT_SUPPORTED
-    STORAGE_TRANSFER = true, MISSION_CREATE = true, VEHICLE_SPAWN = true, VEHICLE_REMOVE = true }
+    STORAGE_TRANSFER = true, MISSION_CREATE = true, VEHICLE_SPAWN = true, VEHICLE_REMOVE = true,
+    -- Roadmap V3.1 (R31-Q1): validated now, executed with R31-A1 (FIELD_WORK), R31-A3 (ANIMAL_TRANSFER) and R31-D8
+    -- (VEHICLE_FUEL); until then acknowledged FAILED / NOT_SUPPORTED
+    FIELD_WORK = true, ANIMAL_TRANSFER = true, VEHICLE_FUEL = true }
 
 RPSimInstructions.MONEY_REASONS = {
     CREDIT_DISBURSEMENT = true, CREDIT_INSTALLMENT = true, CREDIT_PENALTY = true, CREDIT_CALLBACK = true,
@@ -27,6 +30,11 @@ RPSimInstructions.MONEY_REASONS = {
     -- contract penalty of a forward contract (M2)
     LEASE_INCOME = true, GOODS_PURCHASE = true, GOODS_SALE = true, VEHICLE_PURCHASE = true, VEHICLE_SALE = true,
     CONTRACT_PENALTY = true,
+    -- Roadmap V3.1 (R31-Q1): contractor (A1), machine rent (A2), livestock trade (A3), winter service (A4), area
+    -- payment (B1), investment grant (B2), social insurance (B5), farm holidays (D6), cooperative shares (D7)
+    CONTRACTOR_FEE = true, MACHINE_RENT = true, LIVESTOCK_PURCHASE = true, LIVESTOCK_SALE = true,
+    WINTER_SERVICE = true, DIRECT_PAYMENT = true, INVESTMENT_GRANT = true, SOCIAL_INSURANCE = true,
+    GUEST_INCOME = true, COOP_SHARES = true, COOP_DIVIDEND = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
@@ -38,6 +46,10 @@ RPSimInstructions.EMPLOYEE_STATUSES = { ACTIVE = true, ON_LEAVE = true, STRIKE =
 RPSimInstructions.HELPER_WAGE_MODES = { EMPLOYEES = true, VANILLA = true }
 -- Roadmap V3 R3-H3/H4: IN = into the own silos (purchase), OUT = out of the own silos (sale)
 RPSimInstructions.STORAGE_DIRECTIONS = { IN = true, OUT = true }
+-- Roadmap V3.1 R31-A1: the works of the contractor (plow, cultivate, lime, sow, harvest)
+RPSimInstructions.FIELD_WORKS = { PLOW = true, CULTIVATE = true, LIME = true, SOW = true, HARVEST = true }
+-- Roadmap V3.1 R31-A3: IN = into the own husbandry (purchase), OUT = out of it (sale)
+RPSimInstructions.ANIMAL_DIRECTIONS = { IN = true, OUT = true }
 
 local function isNumber(v) return type(v) == "number" and v == v end
 local function isNonEmptyString(v) return type(v) == "string" and v ~= "" end
@@ -119,6 +131,7 @@ local function validatePrompt(ins)
 end
 
 --- Roadmap V3 R3-V2: used vehicle from the shop catalog. price > 0 is booked by the mod as -price with moneyReason.
+-- Roadmap V3.1 R31-A2: price 0 = borrowed or demo machine, nothing is booked (the rent runs as MACHINE_RENT).
 local function validateVehicleSpawn(ins)
     if not isNonEmptyString(ins.storeXmlFilename) then
         return false, "storeXmlFilename is required"
@@ -133,11 +146,49 @@ local function validateVehicleSpawn(ins)
             return false, f .. " must be between 0 and 1"
         end
     end
-    if not isNumber(ins.price) or ins.price <= 0 then
-        return false, "price must be > 0"
+    if not isNumber(ins.price) or ins.price < 0 then
+        return false, "price must be >= 0"
     end
     if not RPSimInstructions.MONEY_REASONS[ins.moneyReason] then
         return false, "unknown moneyReason " .. tostring(ins.moneyReason)
+    end
+    return true
+end
+
+--- Roadmap V3.1 R31-A1: end state of a field work on an own field; fruitType (FS25 fruit type name) only for SOW.
+local function validateFieldWork(ins)
+    if not isNumber(ins.farmlandId) then
+        return false, "farmlandId must be a number"
+    end
+    if not RPSimInstructions.FIELD_WORKS[ins.work] then
+        return false, "unknown work " .. tostring(ins.work)
+    end
+    if ins.work == "SOW" then
+        if not isNonEmptyString(ins.fruitType) then
+            return false, "fruitType is required for SOW"
+        end
+    elseif ins.fruitType ~= nil then
+        return false, "fruitType is only allowed for SOW"
+    end
+    return true
+end
+
+--- Roadmap V3.1 R31-A3: animals of one subtype into / out of an own husbandry; age (months) optional.
+local function validateAnimalTransfer(ins)
+    if not isNonEmptyString(ins.husbandryUniqueId) then
+        return false, "husbandryUniqueId is required"
+    end
+    if not isNonEmptyString(ins.subType) then
+        return false, "subType is required"
+    end
+    if not isNumber(ins.count) or ins.count < 1 or ins.count ~= math.floor(ins.count) then
+        return false, "count must be a whole number > 0"
+    end
+    if ins.age ~= nil and (not isNumber(ins.age) or ins.age < 0) then
+        return false, "age must be >= 0"
+    end
+    if not RPSimInstructions.ANIMAL_DIRECTIONS[ins.direction] then
+        return false, "unknown direction " .. tostring(ins.direction)
     end
     return true
 end
@@ -247,6 +298,18 @@ function RPSimInstructions.validate(ins)
         -- Roadmap V3 R3-V3: own vehicle by its uniqueId (as in assets.vehicles)
         if not isNonEmptyString(ins.vehicleId) then
             return false, "vehicleId is required"
+        end
+    elseif ins.type == "FIELD_WORK" then
+        return validateFieldWork(ins)
+    elseif ins.type == "ANIMAL_TRANSFER" then
+        return validateAnimalTransfer(ins)
+    elseif ins.type == "VEHICLE_FUEL" then
+        -- Roadmap V3.1 R31-D8: diesel taken out of an own vehicle (uniqueId as in assets.vehicles), only negative
+        if not isNonEmptyString(ins.vehicleId) then
+            return false, "vehicleId is required"
+        end
+        if not isNumber(ins.delta) or ins.delta >= 0 then
+            return false, "delta must be < 0"
         end
     end
     return true

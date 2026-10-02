@@ -248,4 +248,77 @@ function T.TestFarmFacts:testWeatherOnlyWhenComplete()
     lu.assertNil(doc.weather)
 end
 
+-- Roadmap V3.1 (R31-Q1): optional fields snowHeight, sprayType, category, fuel, dayTimeMs and the block vehiclePositions
+function T.TestFarmFacts:testRoadmapV31FieldsAreAbsentWhenNotCollected()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        vehicles = { { uniqueId = "veh_1", value = 1, damage = 0 } },
+        calendar = { period = 1, dayInPeriod = 1, daysPerPeriod = 1, year = 1, monotonicDay = 0 },
+        weather = { raining = false, rainFallScale = 0, groundWetness = 0 },
+        fields = { { farmlandId = 1, name = "1", hectares = 1, growthState = 0, weedState = 0, stoneLevel = 0,
+            sprayLevel = 0, limeLevel = 0, plowLevel = 0 } } }, RPSimConfig.new())
+    lu.assertNil(doc.vehiclePositions)
+    lu.assertNil(doc.assets.vehicles[1].category)
+    lu.assertNil(doc.assets.vehicles[1].fuel)
+    lu.assertNil(doc.calendar.dayTimeMs)
+    lu.assertNil(doc.weather.snowHeight)
+    lu.assertNil(doc.fields[1].sprayType)
+    local json = RPSimJson.encode(RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        vehiclePositions = {} }, RPSimConfig.new()))
+    lu.assertStrContains(json, '"vehiclePositions":[]')
+end
+
+function T.TestFarmFacts:testVehicleCategoryAndFuel()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, vehicles = {
+        { uniqueId = "veh_1", value = 1, damage = 0, category = "tractorsL",
+            fuel = { liters = 212.6, capacity = 400 } },
+        { uniqueId = "veh_2", value = 1, damage = 0, category = "", fuel = { liters = 50, capacity = 0 } },
+        { uniqueId = "veh_3", value = 1, damage = 0, fuel = { liters = 900, capacity = 400 } },
+        { uniqueId = "veh_4", value = 1, damage = 0, fuel = { liters = -3, capacity = 400 } },
+        { uniqueId = "veh_5", value = 1, damage = 0, fuel = { liters = 10 } },
+        { uniqueId = "veh_6", value = 1, damage = 0, fuel = { liters = 0.2, capacity = 0.4 } } } }, RPSimConfig.new())
+    local v = doc.assets.vehicles
+    lu.assertEquals(v[1].category, "TRACTORSL")
+    lu.assertEquals(v[1].fuel, { liters = 213, capacity = 400 })
+    lu.assertNil(v[2].category)
+    lu.assertNil(v[2].fuel) -- no diesel tank
+    lu.assertEquals(v[3].fuel, { liters = 400, capacity = 400 })
+    lu.assertEquals(v[4].fuel, { liters = 0, capacity = 400 })
+    lu.assertNil(v[5].fuel)
+    lu.assertNil(v[6].fuel) -- a capacity that rounds to 0 litres counts as no tank
+end
+
+function T.TestFarmFacts:testSnowHeightSprayTypeAndDayTime()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        calendar = { period = 10, dayInPeriod = 1, daysPerPeriod = 1, year = 1, monotonicDay = 0, dayTimeMs = 18000000.7 },
+        weather = { raining = false, rainFallScale = 0, groundWetness = 0, snowHeight = 0.12345 },
+        fields = { { farmlandId = 1, name = "1", hectares = 1, growthState = 0, weedState = 0, stoneLevel = 0,
+            sprayLevel = 1, limeLevel = 0, plowLevel = 0, sprayType = "LIQUID_MANURE" },
+            { farmlandId = 2, name = "2", hectares = 1, growthState = 0, weedState = 0, stoneLevel = 0,
+                sprayLevel = 0, limeLevel = 0, plowLevel = 0, sprayType = "NONE" } } }, RPSimConfig.new())
+    lu.assertEquals(doc.weather.snowHeight, 0.12)
+    lu.assertEquals(doc.calendar.dayTimeMs, 18000000)
+    lu.assertEquals(doc.fields[1].sprayType, "LIQUID_MANURE")
+    lu.assertEquals(doc.fields[2].sprayType, "NONE")
+    -- out of range or not a number: left out
+    doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        calendar = { period = 10, dayTimeMs = RPSimConfig.MS_PER_GAME_DAY },
+        weather = { raining = false, rainFallScale = 0, groundWetness = 0, snowHeight = 0 / 0 } }, RPSimConfig.new())
+    lu.assertNil(doc.calendar.dayTimeMs)
+    lu.assertNil(doc.weather.snowHeight)
+    doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        weather = { raining = false, rainFallScale = 0, groundWetness = 0, snowHeight = -0.5 } }, RPSimConfig.new())
+    lu.assertEquals(doc.weather.snowHeight, 0)
+end
+
+function T.TestFarmFacts:testVehiclePositionsAreNormalized()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, vehiclePositions = {
+        { uniqueId = "veh_2", x = -312.456, z = 88.04, farmlandId = 7, onCrop = true },
+        { uniqueId = "veh_1", x = 10, z = 20, farmlandId = 0, onCrop = false },
+        { uniqueId = "veh_3", x = 1 },
+        { x = 1, z = 2 } } }, RPSimConfig.new())
+    lu.assertEquals(doc.vehiclePositions, {
+        { uniqueId = "veh_1", x = 10, z = 20, onCrop = false },
+        { uniqueId = "veh_2", x = -312.5, z = 88, farmlandId = 7, onCrop = true } })
+end
+
 return T

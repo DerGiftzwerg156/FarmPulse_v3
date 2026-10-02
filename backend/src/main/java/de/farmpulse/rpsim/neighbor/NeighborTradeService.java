@@ -139,10 +139,18 @@ public class NeighborTradeService {
                 .mapToLong(c -> c.getQuantity() == null ? 0 : c.getQuantity()).sum();
     }
 
-    long freeCapacity(Savegame sg, Map<String, BridgeDtos.TradeStorageEntry> ts, String fillType) {
+    /**
+     * Free litres in the own silos minus what is already on the way in: accepted purchases and - Roadmap V3.1 R31-A1 -
+     * harvests ordered from the contractor and not yet acknowledged.
+     */
+    public long freeCapacity(Savegame sg, Map<String, BridgeDtos.TradeStorageEntry> ts, String fillType) {
         BridgeDtos.TradeStorageEntry e = ts.get(fillType);
         double free = e == null || e.freeCapacity() == null ? 0 : e.freeCapacity();
-        return (long) Math.floor(free) - reserved(sg, CaseKind.GOODS_OFFER, fillType);
+        long harvests = cases.findBySavegameAndStatusOrderByIdAsc(sg, CaseStatus.IN_PROGRESS).stream()
+                .filter(c -> c.getKind() == CaseKind.CONTRACTOR_WORK && "HARVEST".equals(c.getReference())
+                        && fillType.equals(c.getTitle()))
+                .mapToLong(c -> c.getQuantity() == null ? 0 : c.getQuantity()).sum();
+        return (long) Math.floor(free) - reserved(sg, CaseKind.GOODS_OFFER, fillType) - harvests;
     }
 
     /** Litres in the own silos minus what is already on the way out (neighbour requests, R3-M3 farm-shop orders). */

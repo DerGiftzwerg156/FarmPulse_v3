@@ -18,6 +18,14 @@ local function round3(v)
     return math.floor(v * 1000 + 0.5) / 1000
 end
 
+local function round1(v)
+    return math.floor(v * 10 + 0.5) / 10
+end
+
+local function round2(v)
+    return math.floor(v * 100 + 0.5) / 100
+end
+
 local function optNumber(t, key, fn)
     if type(t[key]) == "number" then
         return (fn or round)(t[key])
@@ -71,7 +79,46 @@ function RPSimFarmFacts.buildWorkforce(raw)
     return { activeJobs = jobs, workedGameMs = worked }
 end
 
+--- Roadmap V3.1 R31-A3: animals per subtype of a husbandry (raw = { {name, count} }), merged by name, without empty
+-- entries, sorted by name; nil when not a table.
+local function buildSubTypes(raw)
+    if type(raw) ~= "table" then
+        return nil
+    end
+    local byName = {}
+    for _, s in ipairs(raw) do
+        if type(s) == "table" and type(s.name) == "string" and s.name ~= "" and type(s.count) == "number" then
+            byName[s.name] = (byName[s.name] or 0) + round(s.count)
+        end
+    end
+    local list = RPSimJson.array({})
+    for name, count in pairs(byName) do
+        if count > 0 then
+            list[#list + 1] = { name = name, count = count }
+        end
+    end
+    table.sort(list, function(a, b) return a.name < b.name end)
+    return list
+end
+
+--- Roadmap V3.1 R31-A3: names of the subtypes a husbandry accepts, unique and sorted; nil when not a table.
+local function buildNames(raw)
+    if type(raw) ~= "table" then
+        return nil
+    end
+    local seen, list = {}, RPSimJson.array({})
+    for _, name in ipairs(raw) do
+        if type(name) == "string" and name ~= "" and not seen[name] then
+            seen[name] = true
+            list[#list + 1] = name
+        end
+    end
+    table.sort(list)
+    return list
+end
+
 --- R2-A7: raw = { {husbandryUniqueId, health, productivity?, food, conditions = { {title, ratio} }} }
+-- Roadmap V3.1 R31-A3, each optional: subTypes = { {name, count} }, supportedSubTypes = { name }, freeSlots.
 function RPSimFarmFacts.buildHusbandries(raw)
     local list = RPSimJson.array({})
     for _, h in ipairs(raw) do
@@ -82,8 +129,14 @@ function RPSimFarmFacts.buildHusbandries(raw)
                     conditions[#conditions + 1] = { title = c.title, ratio = round3(c.ratio) }
                 end
             end
-            list[#list + 1] = { husbandryUniqueId = tostring(h.husbandryUniqueId), health = round3(h.health),
+            local e = { husbandryUniqueId = tostring(h.husbandryUniqueId), health = round3(h.health),
                 productivity = optNumber(h, "productivity", round3), food = round3(h.food), conditions = conditions }
+            e.subTypes = buildSubTypes(h.subTypes)
+            e.supportedSubTypes = buildNames(h.supportedSubTypes)
+            if type(h.freeSlots) == "number" and h.freeSlots == h.freeSlots then
+                e.freeSlots = math.max(0, round(h.freeSlots))
+            end
+            list[#list + 1] = e
         end
     end
     table.sort(list, function(a, b) return a.husbandryUniqueId < b.husbandryUniqueId end)
@@ -94,7 +147,8 @@ local FIELD_LEVELS = { "growthState", "weedState", "stoneLevel", "sprayLevel", "
 
 --- R2-C1: raw = { {farmlandId, name, hectares, fruitType?, minHarvestingGrowthState?, maxHarvestingGrowthState?,
 --   withered?, cut?, fillType?, litersPerSqm?, groundType?, growthState, weedState, stoneLevel, sprayLevel, limeLevel,
---   plowLevel} }. withered / cut / fillType / litersPerSqm only with a crop (Roadmap V2 R2-C, owner decision).
+--   plowLevel, sprayType?} }. withered / cut / fillType / litersPerSqm only with a crop (Roadmap V2 R2-C, owner
+--   decision). Roadmap V3.1 (R31-Q1, B3): sprayType = name from the game's FieldSprayType table incl. "NONE".
 function RPSimFarmFacts.buildFields(raw)
     local list = RPSimJson.array({})
     for _, f in ipairs(raw) do
@@ -127,6 +181,9 @@ function RPSimFarmFacts.buildFields(raw)
             end
             if type(f.groundType) == "string" and f.groundType ~= "" then
                 e.groundType = f.groundType
+            end
+            if type(f.sprayType) == "string" and f.sprayType ~= "" then
+                e.sprayType = f.sprayType
             end
             list[#list + 1] = e
         end
@@ -172,8 +229,9 @@ function RPSimFarmFacts.buildFieldRules(raw)
     return rules
 end
 
---- R2-C2: raw = { raining, rainFallScale, groundWetness, temperature? }. Incomplete weather is left out; the
--- temperature (°C, Hof-Tablet status bar) is optional and rounded to one decimal.
+--- R2-C2: raw = { raining, rainFallScale, groundWetness, temperature?, snowHeight? }. Incomplete weather is left out;
+-- the temperature (°C, Hof-Tablet status bar) is optional and rounded to one decimal. Roadmap V3.1 (R31-Q1, A4):
+-- snowHeight = snow height of the world in metres (snowSystem.height, ≥ 0), optional, rounded to 0.01.
 function RPSimFarmFacts.buildWeather(raw)
     if type(raw.raining) ~= "boolean" or type(raw.rainFallScale) ~= "number" or type(raw.groundWetness) ~= "number" then
         return nil
@@ -183,20 +241,60 @@ function RPSimFarmFacts.buildWeather(raw)
     if type(raw.temperature) == "number" and raw.temperature == raw.temperature then
         weather.temperature = math.floor(raw.temperature * 10 + 0.5) / 10
     end
+    if type(raw.snowHeight) == "number" and raw.snowHeight == raw.snowHeight then
+        weather.snowHeight = round2(math.max(0, raw.snowHeight))
+    end
     return weather
+end
+
+--- Roadmap V3.1 (R31-Q1, D5): sample of the own vehicles being driven right now. raw = { {uniqueId, x, z, farmlandId?,
+-- onCrop?} }; x / z = world position in metres (rounded to 0.1), farmlandId left out for 0 (no farmland), onCrop = a
+-- field with a crop stands at the position. Sorted by uniqueId.
+function RPSimFarmFacts.buildVehiclePositions(raw)
+    local list = RPSimJson.array({})
+    for _, p in ipairs(raw) do
+        if type(p) == "table" and p.uniqueId ~= nil and type(p.x) == "number" and type(p.z) == "number"
+            and p.x == p.x and p.z == p.z then
+            local e = { uniqueId = tostring(p.uniqueId), x = round1(p.x), z = round1(p.z) }
+            if type(p.farmlandId) == "number" and p.farmlandId > 0 then
+                e.farmlandId = p.farmlandId
+            end
+            if type(p.onCrop) == "boolean" then
+                e.onCrop = p.onCrop
+            end
+            list[#list + 1] = e
+        end
+    end
+    table.sort(list, function(a, b) return a.uniqueId < b.uniqueId end)
+    return list
+end
+
+--- Roadmap V3.1 (R31-Q1, D8): diesel of a vehicle with a diesel tank. raw = { liters, capacity } in litres; nil when
+-- incomplete or without a tank (capacity 0). liters is kept within 0..capacity.
+function RPSimFarmFacts.buildFuel(raw)
+    if type(raw) ~= "table" or type(raw.liters) ~= "number" or type(raw.capacity) ~= "number"
+        or raw.liters ~= raw.liters or raw.capacity ~= raw.capacity then
+        return nil
+    end
+    local capacity = round(raw.capacity)
+    if capacity <= 0 then
+        return nil
+    end
+    return { liters = math.min(capacity, math.max(0, round(raw.liters))), capacity = capacity }
 end
 
 --- raw: {
 --   savegameId, gameTime, balance,
---   vehicles = { {uniqueId, value, damage, name?, xmlFilename?} }, placeables = { {uniqueId, value} },
+--   vehicles = { {uniqueId, value, damage, name?, xmlFilename?, category?, fuel?} }, placeables = { {uniqueId, value} },
 --   leasedVehicles = { {uniqueId, costPerPeriod?} },
 --   farmland = { {farmlandId, hectares, price} }, animals = { {husbandryUniqueId, type, count, estimatedValue} },
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
 --   prices = { {sellPoint, fillType, pricePerLiter, trend?} },
---   calendar = { period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName?, season? } | nil,
+--   calendar = { period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName?, season?, dayTimeMs? } | nil,
 --   Roadmap V2, each optional (nil = not collected): finances, workforce, husbandries, fields, fieldRules, weather
 --   (see the build* functions above),
---   Roadmap V3 (R3-Q1), each optional: npcFields (R3-H1, same entries as fields), tradeStorage (R3-H2) }
+--   Roadmap V3 (R3-Q1), each optional: npcFields (R3-H1, same entries as fields), tradeStorage (R3-H2),
+--   Roadmap V3.1 (R31-Q1), optional: vehiclePositions (D5, see buildVehiclePositions) }
 function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
     local vehicles = RPSimJson.array({})
@@ -210,6 +308,11 @@ function RPSimFarmFacts.build(raw, cfg)
         if type(v.xmlFilename) == "string" and v.xmlFilename ~= "" then
             e.xmlFilename = v.xmlFilename
         end
+        -- Roadmap V3.1 (R31-Q1): shop category in upper case like the trainings (A4, D8) and the diesel (D8)
+        if type(v.category) == "string" and v.category ~= "" then
+            e.category = string.upper(v.category)
+        end
+        e.fuel = RPSimFarmFacts.buildFuel(v.fuel)
         vehicles[#vehicles + 1] = e
     end
     local placeables = RPSimJson.array({})
@@ -295,6 +398,10 @@ function RPSimFarmFacts.build(raw, cfg)
         if type(c.season) == "string" and c.season ~= "" then
             doc.calendar.season = c.season -- T-21: name from the game's Season table, e.g. "WINTER"
         end
+        -- Roadmap V3.1 (R31-Q1, D4): time of day in in-game ms since midnight
+        if type(c.dayTimeMs) == "number" and c.dayTimeMs >= 0 and c.dayTimeMs < RPSimConfig.MS_PER_GAME_DAY then
+            doc.calendar.dayTimeMs = math.floor(c.dayTimeMs)
+        end
     end
     if type(raw.finances) == "table" then
         doc.finances = RPSimFarmFacts.buildFinances(raw.finances)
@@ -324,6 +431,10 @@ function RPSimFarmFacts.build(raw, cfg)
     -- Roadmap V3 R3-H5: the game's contract limit of the player farm (hasFarmReachedMissionLimit)
     if type(raw.missionLimitReached) == "boolean" then
         doc.missionLimitReached = raw.missionLimitReached
+    end
+    -- Roadmap V3.1 (R31-Q1, D5): positions of the own vehicles being driven
+    if type(raw.vehiclePositions) == "table" then
+        doc.vehiclePositions = RPSimFarmFacts.buildVehiclePositions(raw.vehiclePositions)
     end
     return doc
 end

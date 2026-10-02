@@ -24,6 +24,7 @@ import de.farmpulse.rpsim.domain.CharacterStatus;
 import de.farmpulse.rpsim.domain.CommunicationCategory;
 import de.farmpulse.rpsim.domain.Initiator;
 import de.farmpulse.rpsim.domain.InstructionType;
+import de.farmpulse.rpsim.domain.MoneyReason;
 import de.farmpulse.rpsim.domain.Negotiation;
 import de.farmpulse.rpsim.domain.NegotiationDirection;
 import de.farmpulse.rpsim.domain.NegotiationKind;
@@ -80,11 +81,15 @@ public class VehicleTradeService {
     private final RandomSource random;
     private final RpsimProperties props;
 
+    /** Roadmap V3.1 R31-A2: borrowed and demo machines cannot be sold. */
+    private final de.farmpulse.rpsim.farmwork.LoanedVehicles loaned;
+
     public VehicleTradeService(VehicleDealRepository deals, NegotiationRepository negotiations, NegotiationEngine engine,
                                OutboxInstructionRepository instructions, SavegameRepository savegames,
                                CharacterRepository characters, FactsService facts, OutboxService outbox,
                                ServiceRoleService roles, CharacterLookup lookup, NarrationRequestService narration,
-                               DiaryService diary, RandomSource random, RpsimProperties props) {
+                               DiaryService diary, RandomSource random, RpsimProperties props, de.farmpulse.rpsim.farmwork.LoanedVehicles loaned) {
+        this.loaned = loaned;
         this.deals = deals;
         this.negotiations = negotiations;
         this.engine = engine;
@@ -268,10 +273,13 @@ public class VehicleTradeService {
         return d;
     }
 
-    /** Own (bought) vehicles of the latest export - leased ones are not in assets.vehicles. */
+    /**
+     * Own (bought) vehicles of the latest export - leased ones are not in assets.vehicles, borrowed and demo machines
+     * (Roadmap V3.1 R31-A2) are left out.
+     */
     public List<BridgeDtos.Vehicle> ownVehicles(Savegame sg) {
         return facts.latest(sg).map(f -> f.assets() == null || f.assets().vehicles() == null
-                ? List.<BridgeDtos.Vehicle>of() : f.assets().vehicles()).orElse(List.of());
+                ? List.<BridgeDtos.Vehicle>of() : loaned.own(sg, f.assets().vehicles())).orElse(List.of());
     }
 
     public Optional<VehicleDeal> onSale(Savegame sg, String vehicleId) {
@@ -295,7 +303,12 @@ public class VehicleTradeService {
         d.setFinalPrice(n.getFinalPrice());
         d.setCharacter(n.getCounterpartCharacter());
         boolean buy = VehicleDeal.BUY.equals(d.getDirection());
-        if (buy) {
+        if (buy && d.getDemoLoanId() != null) {
+            // Roadmap V3.1 R31-A2: the demo machine stays on the farm - only the price is booked (MachineLoanService)
+            outbox.money(sg, -d.getFinalPrice(), MoneyReason.VEHICLE_PURCHASE, "Kauf " + d.getVehicleName()
+                    + " (Vorführmaschine)", new Related(de.farmpulse.rpsim.farmwork.MachineLoanService.RELATED,
+                    d.getDemoLoanId()));
+        } else if (buy) {
             spawn(sg, d);
         } else {
             outbox.vehicleSale(sg, d.getVehicleId(), d.getFinalPrice(), "Verkauf " + d.getVehicleName(),
@@ -401,7 +414,7 @@ public class VehicleTradeService {
     }
 
     /** The mod's reason code (e.g. "NO_SPACE", "unknown type VEHICLE_SPAWN" of an older mod, "BATCH_ABORTED: …"). */
-    static String reasonOf(String message) {
+    public static String reasonOf(String message) {
         if (message == null || message.isBlank()) {
             return "UNKNOWN";
         }

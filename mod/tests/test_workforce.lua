@@ -518,4 +518,21 @@ function T.TestWorkforce:testApprenticesDriveOnlyWhatNeedsNoTrainingAndAfterTheO
     lu.assertEquals(RPSimWorkforce.helperLimit(wf, 10), 2)
 end
 
+-- Roadmap V3.1 R31-A5: seasonal workers drive without trainings, after the machine operators, before the apprentices
+local SVEN = { employeeId = 40, name = "Sven Saison", role = "SEASONAL_WORKER", status = "ACTIVE",
+    trainings = { "COMBINE" } }
+
+function T.TestWorkforce:testSeasonalWorkersDriveAfterOperatorsAndBeforeApprentices()
+    local wf = RPSimWorkforce.new()
+    RPSimWorkforce.setRoster(wf, roster({ TIM, SVEN, KLAUS }, { trainingCategories = CATEGORIES }))
+    lu.assertEquals(wf.roster.employees[2].trainings, {}, "trainings of a seasonal worker are ignored")
+    lu.assertEquals(RPSimWorkforce.assign(wf, 1, {}), 12, "the machine operator first")
+    lu.assertEquals(RPSimWorkforce.assign(wf, 2, {}), 40, "then the seasonal worker")
+    lu.assertEquals(RPSimWorkforce.assign(wf, 3, {}), 30, "then the apprentice")
+    RPSimWorkforce.release(wf, 2)
+    lu.assertNil(RPSimWorkforce.assign(wf, 4, { "COMBINE" }), "no combine for the seasonal worker")
+    RPSimWorkforce.setRoster(wf, roster({ TIM, SVEN, KLAUS }, { strictHelperLimit = true }))
+    lu.assertEquals(RPSimWorkforce.helperLimit(wf, 10), 3, "the strict limit counts seasonal workers as drivers")
+end
+
 return T

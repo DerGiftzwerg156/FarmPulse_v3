@@ -39,7 +39,8 @@
     "MECHANIC": "Mechaniker/in",
     "ANIMAL_KEEPER": "Tierpfleger/in",
     "OFFICE_CLERK": "Bürokraft",
-    "APPRENTICE": "Auszubildende/r"
+    "APPRENTICE": "Auszubildende/r",
+    "SEASONAL_WORKER": "Erntehelfer/in auf Zeit"
   },
   "affiliations": {
     "PARENT": "Elternteil auf dem Altenteil",

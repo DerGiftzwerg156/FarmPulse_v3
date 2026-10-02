@@ -104,4 +104,8 @@ public class VehicleDeal extends SavegameScoped {
 
     @Column(name = "closed_game_time")
     private Long closedGameTime;
+
+    /** Roadmap V3.1 R31-A2: the deal buys the demo machine of this loan (no delivery, only the price). */
+    @Column(name = "demo_loan_id")
+    private Long demoLoanId;
 }

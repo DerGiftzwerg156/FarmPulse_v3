@@ -55,12 +55,56 @@ function RPSimMarketContext.capStoreVehicles(raw, maxEntries)
     return list, dropped
 end
 
+--- Roadmap V3.1 (R31-Q1, K1): outline of every field and the map size. raw = { mapSize, fields = { {farmlandId, name,
+-- points = { {x, z} }} } }; x / z = world coordinates in metres (rounded to 0.1). A field keeps at most maxPoints
+-- points, picked evenly along the outline (the first point stays); an outline needs at least 3 points. nil without a
+-- usable mapSize (> 0). Fields sorted by farmlandId, then name.
+function RPSimMarketContext.buildFieldShapes(raw, maxPoints)
+    if type(raw) ~= "table" or type(raw.mapSize) ~= "number" or raw.mapSize ~= raw.mapSize or raw.mapSize <= 0 then
+        return nil
+    end
+    local function r1(v) return math.floor(v * 10 + 0.5) / 10 end
+    local fields = RPSimJson.array({})
+    for _, f in ipairs(raw.fields or {}) do
+        if type(f) == "table" and type(f.farmlandId) == "number" and f.name ~= nil and type(f.points) == "table" then
+            local valid = {}
+            for _, p in ipairs(f.points) do
+                if type(p) == "table" and type(p.x) == "number" and type(p.z) == "number" and p.x == p.x
+                    and p.z == p.z then
+                    valid[#valid + 1] = p
+                end
+            end
+            local n = #valid
+            local keep = n
+            if maxPoints ~= nil and maxPoints > 0 and n > maxPoints then
+                keep = maxPoints
+            end
+            if keep >= 3 then
+                local points = RPSimJson.array({})
+                for i = 0, keep - 1 do
+                    local p = valid[math.floor(i * n / keep) + 1]
+                    points[#points + 1] = { x = r1(p.x), z = r1(p.z) }
+                end
+                fields[#fields + 1] = { farmlandId = f.farmlandId, name = tostring(f.name), points = points }
+            end
+        end
+    end
+    table.sort(fields, function(a, b)
+        if a.farmlandId == b.farmlandId then return a.name < b.name end
+        return a.farmlandId < b.farmlandId
+    end)
+    return { mapSize = math.floor(raw.mapSize + 0.5), fields = fields }
+end
+
 --- raw: { savegameId, mapName, sellPoints = { {id, name, acceptedFillTypes = {..}} }, fillTypes = {..},
 --         farmlands = { {farmlandId, hectares, price, ownerFarmId, showOnFarmlandsScreen, defaultFarmProperty,
 --                      npc = {index, name, title}} },
 --         detectedMods = { "FS25_..." },
---         storeVehicles = <see buildStoreVehicles> | nil (Roadmap V3, nil = not collected) }
-function RPSimMarketContext.build(raw)
+--         storeVehicles = <see buildStoreVehicles> | nil (Roadmap V3, nil = not collected),
+--         fieldShapes = <see buildFieldShapes> | nil (Roadmap V3.1, nil = not collected) }
+-- cfg: RPSimConfig (fieldShapeMaxPoints), defaults when missing.
+function RPSimMarketContext.build(raw, cfg)
+    cfg = cfg or RPSimConfig.new()
     local sellPoints = RPSimJson.array({})
     for _, sp in ipairs(raw.sellPoints or {}) do
         local accepted = RPSimJson.array({})
@@ -107,6 +151,9 @@ function RPSimMarketContext.build(raw)
     }
     if type(raw.storeVehicles) == "table" then
         doc.storeVehicles = RPSimMarketContext.buildStoreVehicles(raw.storeVehicles)
+    end
+    if type(raw.fieldShapes) == "table" then
+        doc.fieldShapes = RPSimMarketContext.buildFieldShapes(raw.fieldShapes, cfg.fieldShapeMaxPoints)
     end
     return doc
 end

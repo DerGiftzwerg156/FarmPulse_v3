@@ -431,3 +431,43 @@ state at the change of hands, base-game contracts on the field during the lease)
 | 20.8 | A pledged field: *Verpachten* | refused until *Zustimmung zur Verpachtung* in the bank; then possible, the Grundschuld stays |
 | 20.9 | Lease out the family field | the family is a little disappointed (mail), it stays the family field |
 
+
+## 21. Roadmap V3.1 in the real FS25
+
+Every point of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) marked 🟡 ("Im Spiel prüfen") has one row here.
+Check a row once the roadmap item named in the first column is built; until then the mod does not collect the value
+(the field or block is missing, see
+[bridge protocol](bridge-protocol.md#roadmap-v31-fields-and-blocks-optional-r31-q1)) or acknowledges the instruction
+`FAILED` / `NOT_SUPPORTED`. Note the result in the row's issue and, if the fallback is needed, switch the
+implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 21.1 | Field state taken over by the update task (R31-A1) | Let the contractor plow an own field (`FIELD_WORK` `PLOW`): the mod changes the field state and calls `createFieldUpdateTask()` like `PlowMission:getFieldFinishTask`; look at the field in the game and at `farm_facts.json` → `fields[]` | the field is plowed (`groundType` `PLOWED`, no crop, plow level full) right after the instruction | call the setters of the task directly (`setGroundType`, `setFruit`, `setPlowLevel` …, dump `field/FieldManager.lua`) - built since R31-A1 in addition to the changed state (a failing setter is skipped); note which of the two takes effect |
+| 21.2 | Straw after a harvest by state jump (R31-A1) | Let the contractor harvest a grain field (`FIELD_WORK` `HARVEST`), look at the field | note whether straw (swath) lies on the field afterwards | straw is no part of the service: only the main crop is stored (`STORAGE_TRANSFER IN`) |
+| 21.3 | New animals shown at once (R31-A3) | Buy calves from a neighbour (`ANIMAL_TRANSFER` `IN`), open the husbandry menu of the stable and look at `farm_facts.json` → `assets.animals[]` | the animals are shown immediately (`addPendingAddCluster` + `raiseActive`) and counted by the next export | the display follows with the next update of the stable; the export counts the animals only afterwards |
+| 21.4 | Snow height with snow switched off (R31-A4) | Read `farm_facts.json` → `weather.snowHeight` in a winter with snow and in a savegame with snow switched off in the savegame settings | with snow the value rises above 0 on a snow day; note what `g_currentMission.snowSystem.height` gives with snow off | the mod leaves `snowHeight` out with snow off; the authority then does not offer the winter service contract |
+| 21.5 | Spray type after spreading (R31-B3) | Spread liquid manure on an own field, read `farm_facts.json` → `fields[].sprayType` and `sprayLevel` over the following days until the next work | `sprayType` stays `LIQUID_MANURE` until the next work changes it | value only a rising `sprayLevel` in the closed period and leave the kind open; the authority writes "Düngung festgestellt" instead of "Gülle" |
+| 21.6 | False alarms of the crop damage sample (R31-D5) | Drive on field paths that cross a neighbour's farmland and to an own contract field through neighbour land; read `farm_facts.json` → `vehiclePositions[]` (`farmlandId`, `onCrop`) | note how many samples in a row land on a neighbour's field with a crop without real damage | off by default, raise the threshold of samples in a row, a hint before the first complaint ("Pass auf, wo du langfährst") |
+| 21.7 | Orientation of the field outlines (R31-K1) | Compare the map view of the Flurkarte with the map of the game (`market_context.json` → `fieldShapes`) | north is up and the fields lie where the game's map shows them | mirror the axis in the frontend (switch in the code, set once in the playtest) |
+
+## 22. Work on the farm (Roadmap V3.1 R31-A)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section A. Needs the current mod, own fields, an
+own silo with free capacity, an own stable with free places, an active neighbour with a dairy or mixed farm and an
+own medium or large tractor. Rows 21.1–21.4 check the game behaviour behind it. Without FS25 the bridge simulator
+scenarios `lohnunternehmer` (A1, A2), `viehhandel` (A3) and `winter-schnee` (A4) show the same flow.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 22.1 | Flurkarte → own harvested field → *Lohnunternehmer beauftragen* → *Pflügen* | only the works that fit the field are offered (price per field, reason for the others); the order shows the work day (1–3 game days, in the harvest months longer) |
+| 22.2 | Wait until the work day | the field is plowed in the game, *Lohnunternehmer* is booked, mail of the contractor, diary entry, the order is closed |
+| 22.3 | Order *Ernten* on a harvestable field | refused when the own silos cannot hold the whole yield; otherwise on the work day the field is on stubble and the yield lies in the silo (`STORAGE_TRANSFER IN`) |
+| 22.4 | *Kontakte* → neighbour → *Maschine leihen*, choose a combine for 2 days | the machine stands on the farm, the rent is booked per game day (*Maschinenmiete*); *Werkstatt* → *Leih- und Vorführmaschinen* lists it; the bank and the depreciation do not count it |
+| 22.5 | Keep sitting in the combine when the loan ends | reminder in the game, a new attempt the next day and rent + 50 % per late day; afterwards the machine disappears; with damage a compensation |
+| 22.6 | *Werkstatt* → *Vorführung anfragen* | the machine comes for free for 1–2 days, then a purchase offer at list price −10 %; without agreement it is picked up, with agreement it stays and *Maschinenkauf* is booked |
+| 22.7 | *Handel* → *Viehhandel mit Nachbarn* → buy 3 calves from a dairy neighbour, accept the offer | the animals stand in the stable (subtype as chosen), *Tierkauf* is booked; the neighbour's mail, diary and village gossip |
+| 22.8 | Offer animals to a neighbour, accept his request | the animals leave the stable, *Tierverkauf* is booked |
+| 22.9 | October with a medium or large tractor: accept the winter service in *Ämter* → *Gemeinde* | contract active; on a snow day the in-game hint "Schnee! Winterdienst ab 5 Uhr"; at the next month start base fee + 150 € per snow day as *Winterdienst* |
+| 22.10 | *Mitarbeiter* → *Erntehelfer:in* posting in June, hire one | outside June–October the posting is refused; at most 3; no raise and no training; he drives helpers like a machine operator; at the start of November he leaves with a farewell mail (last salary paid) |
+| 22.11 | Next June: post a seasonal job again after a worker left satisfied | the worker of last year applies again (same name, trust kept) |

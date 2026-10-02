@@ -16,7 +16,10 @@
         "vehicles": { "type": "array", "items": { "type": "object", "required": ["uniqueId", "value", "condition"],
           "properties": { "uniqueId": { "type": "string" }, "value": { "type": "number", "minimum": 0 },
             "condition": { "type": "number", "minimum": 0, "maximum": 100 },
-            "name": { "type": "string" }, "xmlFilename": { "type": "string" } } } },
+            "name": { "type": "string" }, "xmlFilename": { "type": "string" },
+            "category": { "type": "string", "minLength": 1 },
+            "fuel": { "type": "object", "required": ["liters", "capacity"], "properties": {
+              "liters": { "type": "number", "minimum": 0 }, "capacity": { "type": "number", "exclusiveMinimum": 0 } } } } } },
         "placeables": { "type": "array", "items": { "type": "object", "required": ["uniqueId", "value"],
           "properties": { "uniqueId": { "type": "string" }, "value": { "type": "number", "minimum": 0 } } } },
         "farmland": { "type": "array", "items": { "type": "object", "required": ["farmlandId", "hectares", "price"],
@@ -49,7 +52,8 @@
       "properties": { "period": { "type": "integer", "minimum": 1, "maximum": 12 },
         "dayInPeriod": { "type": "integer", "minimum": 1 }, "daysPerPeriod": { "type": "integer", "minimum": 1 },
         "year": { "type": "integer" }, "monotonicDay": { "type": "integer", "minimum": 0 },
-        "periodName": { "type": "string" }, "season": { "type": "string" } } },
+        "periodName": { "type": "string" }, "season": { "type": "string" },
+        "dayTimeMs": { "type": "integer", "minimum": 0, "exclusiveMaximum": 86400000 } } },
     "finances": { "type": "object", "required": ["periods"], "properties": {
       "periods": { "type": "array", "items": { "type": "object", "required": ["year", "period", "byType"],
         "properties": { "year": { "type": "integer" }, "period": { "type": "integer", "minimum": 1, "maximum": 12 },
@@ -65,7 +69,11 @@
         "health": { "type": "number", "minimum": 0 }, "productivity": { "type": "number", "minimum": 0 },
         "food": { "type": "number", "minimum": 0 },
         "conditions": { "type": "array", "items": { "type": "object", "required": ["title", "ratio"],
-          "properties": { "title": { "type": "string" }, "ratio": { "type": "number", "minimum": 0 } } } } } } },
+          "properties": { "title": { "type": "string" }, "ratio": { "type": "number", "minimum": 0 } } } },
+        "subTypes": { "type": "array", "items": { "type": "object", "required": ["name", "count"],
+          "properties": { "name": { "type": "string", "minLength": 1 }, "count": { "type": "integer", "minimum": 1 } } } },
+        "supportedSubTypes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "freeSlots": { "type": "integer", "minimum": 0 } } } },
     "fields": { "type": "array", "items": { "type": "object",
       "required": ["farmlandId", "name", "hectares", "growthState", "weedState", "stoneLevel", "sprayLevel",
         "limeLevel", "plowLevel"],
@@ -78,13 +86,14 @@
         "sprayLevel": { "type": "integer", "minimum": 0 }, "limeLevel": { "type": "integer", "minimum": 0 },
         "plowLevel": { "type": "integer", "minimum": 0 }, "groundType": { "type": "string" },
         "withered": { "type": "boolean" }, "cut": { "type": "boolean" }, "fillType": { "type": "string", "minLength": 1 },
-        "litersPerSqm": { "type": "number", "minimum": 0 } } } },
+        "litersPerSqm": { "type": "number", "minimum": 0 }, "sprayType": { "type": "string", "minLength": 1 } } } },
     "fieldRules": { "type": "object", "required": ["plowingRequired", "limeRequired", "weedsEnabled", "stonesEnabled"],
       "properties": { "plowingRequired": { "type": "boolean" }, "limeRequired": { "type": "boolean" },
         "weedsEnabled": { "type": "boolean" }, "stonesEnabled": { "type": "boolean" } } },
     "weather": { "type": "object", "required": ["raining", "rainFallScale", "groundWetness"], "properties": {
       "raining": { "type": "boolean" }, "rainFallScale": { "type": "number", "minimum": 0 },
-      "groundWetness": { "type": "number", "minimum": 0 }, "temperature": { "type": "number" } } },
+      "groundWetness": { "type": "number", "minimum": 0 }, "temperature": { "type": "number" },
+      "snowHeight": { "type": "number", "minimum": 0 } } },
     "npcFields": { "type": "array", "items": { "type": "object",
       "required": ["farmlandId", "name", "hectares", "growthState", "weedState", "stoneLevel", "sprayLevel",
         "limeLevel", "plowLevel"],
@@ -101,6 +110,9 @@
     "missionLimitReached": { "type": "boolean" },
     "tradeStorage": { "type": "array", "items": { "type": "object", "required": ["fillType", "amount", "freeCapacity"],
       "properties": { "fillType": { "type": "string", "minLength": 1 }, "amount": { "type": "number", "minimum": 0 },
-        "freeCapacity": { "type": "number", "minimum": 0 } } } }
+        "freeCapacity": { "type": "number", "minimum": 0 } } } },
+    "vehiclePositions": { "type": "array", "items": { "type": "object", "required": ["uniqueId", "x", "z"],
+      "properties": { "uniqueId": { "type": "string", "minLength": 1 }, "x": { "type": "number" },
+        "z": { "type": "number" }, "farmlandId": { "type": "integer", "minimum": 1 }, "onCrop": { "type": "boolean" } } } }
   }
 }

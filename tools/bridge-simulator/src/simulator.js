@@ -3,7 +3,7 @@
 // (see mod/FS25_RPSim/src/import/Processor.lua and docs/dev/bridge-protocol.md).
 import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCENARIOS, MAP, MISSIONS } from './scenarios.js';
+import { SCENARIOS, MAP, MISSIONS, FRUIT_TYPES, SUB_TYPES } from './scenarios.js';
 import { validate } from './validate.js';
 
 export const MS_PER_GAME_HOUR = 60 * 60 * 1000;
@@ -20,7 +20,15 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   // "Schulungen"
   'TRAINING',
   // Roadmap V3 (R3-Q1)
-  'LEASE_INCOME', 'GOODS_PURCHASE', 'GOODS_SALE', 'VEHICLE_PURCHASE', 'VEHICLE_SALE', 'CONTRACT_PENALTY']);
+  'LEASE_INCOME', 'GOODS_PURCHASE', 'GOODS_SALE', 'VEHICLE_PURCHASE', 'VEHICLE_SALE', 'CONTRACT_PENALTY',
+  // Roadmap V3.1 (R31-Q1)
+  'CONTRACTOR_FEE', 'MACHINE_RENT', 'LIVESTOCK_PURCHASE', 'LIVESTOCK_SALE', 'WINTER_SERVICE', 'DIRECT_PAYMENT',
+  'INVESTMENT_GRANT', 'SOCIAL_INSURANCE', 'GUEST_INCOME', 'COOP_SHARES', 'COOP_DIVIDEND']);
+// Roadmap V3.1 R31-A1: works of the contractor
+const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'HARVEST'];
+// crop details a field loses when the contractor plows, cultivates or sows (R2-C1 fields of a standing crop)
+const CROP_KEYS = ['fruitType', 'minHarvestingGrowthState', 'maxHarvestingGrowthState', 'withered', 'cut', 'fillType',
+  'litersPerSqm'];
 // Roadmap V2 R2-B1: number of FS25 periods kept in the booking journal (proposed mod config financeJournalPeriods)
 export const FINANCE_JOURNAL_PERIODS = 13;
 
@@ -131,11 +139,31 @@ export function validateInstruction(ins) {
       if (typeof ins.storeXmlFilename !== 'string' || !ins.storeXmlFilename) return 'storeXmlFilename is required';
       for (const f of ['ageMonths', 'operatingHours']) if (!num(ins[f]) || ins[f] < 0) return `${f} must be >= 0`;
       for (const f of ['damage', 'wear']) if (!num(ins[f]) || ins[f] < 0 || ins[f] > 1) return `${f} must be between 0 and 1`;
-      if (!num(ins.price) || ins.price <= 0) return 'price must be > 0';
+      // R31-A2: price 0 = borrowed or demo machine (no booking)
+      if (!num(ins.price) || ins.price < 0) return 'price must be >= 0';
       if (!MONEY_REASONS.has(ins.moneyReason)) return `unknown moneyReason ${ins.moneyReason}`;
       return null;
     case 'VEHICLE_REMOVE':
       if (typeof ins.vehicleId !== 'string' || !ins.vehicleId) return 'vehicleId is required';
+      return null;
+    // Roadmap V3.1 (R31-Q1): same checks as RPSimInstructions.validate
+    case 'FIELD_WORK':
+      if (!num(ins.farmlandId)) return 'farmlandId must be a number';
+      if (!FIELD_WORKS.includes(ins.work)) return `unknown work ${ins.work}`;
+      if (ins.work === 'SOW') {
+        if (typeof ins.fruitType !== 'string' || !ins.fruitType) return 'fruitType is required for SOW';
+      } else if (ins.fruitType !== undefined) return 'fruitType is only allowed for SOW';
+      return null;
+    case 'ANIMAL_TRANSFER':
+      if (typeof ins.husbandryUniqueId !== 'string' || !ins.husbandryUniqueId) return 'husbandryUniqueId is required';
+      if (typeof ins.subType !== 'string' || !ins.subType) return 'subType is required';
+      if (!Number.isInteger(ins.count) || ins.count < 1) return 'count must be a whole number > 0';
+      if (ins.age !== undefined && (!num(ins.age) || ins.age < 0)) return 'age must be >= 0';
+      if (!['IN', 'OUT'].includes(ins.direction)) return `unknown direction ${ins.direction}`;
+      return null;
+    case 'VEHICLE_FUEL':
+      if (typeof ins.vehicleId !== 'string' || !ins.vehicleId) return 'vehicleId is required';
+      if (!num(ins.delta) || ins.delta >= 0) return 'delta must be < 0';
       return null;
     default:
       return `unknown type ${ins.type}`;
@@ -174,7 +202,7 @@ export class BridgeSimulator {
     this.balance = preset.balance;
     this.vanillaLoan = preset.vanillaLoan;
     this.drift = preset.drift;
-    this.vehicles = preset.vehicles.map((v) => ({ ...v }));
+    this.vehicles = structuredClone(preset.vehicles); // deep: R31-Q2 fuel is an object
     this.leasedVehicles = (preset.leasedVehicles ?? []).map((v) => ({ ...v }));
     this.placeables = preset.placeables.map((p) => ({ ...p }));
     this.animals = preset.animals.map((a) => ({ ...a }));
@@ -210,6 +238,12 @@ export class BridgeSimulator {
     this.toolMissions = []; // R3-H5: contracts created by MISSION_CREATE (the vanilla ones stay in this.missions)
     // R3-H5: the game's contract limit of the player farm (hasFarmReachedMissionLimit), only in scenarios that have it
     this.missionLimitReached = preset.missionLimitReached ?? null;
+    // Roadmap V3.1 (R31-Q2): a mod with the R31-Q1 contract (roadmapV31) exports dayTimeMs and vehiclePositions; the
+    // field outlines only where the scenario has them; stables = free places and animals per subtype (not exported)
+    this.roadmapV31 = preset.roadmapV31 === true;
+    this.vehiclePositions = this.roadmapV31 ? structuredClone(preset.vehiclePositions ?? []) : null; // R31-D5
+    this.fieldShapes = preset.fieldShapes ? structuredClone(preset.fieldShapes) : null; // R31-K1
+    this.stables = preset.stables ? structuredClone(preset.stables) : null; // R31-A3
     this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
     this.prompts = []; // R2-F2: yes/no questions shown to the "player" (waiting for an answer)
     this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
@@ -229,7 +263,12 @@ export class BridgeSimulator {
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, processed: this.processed, priceEvents: this.priceEvents,
       contractReports: this.contractReports, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State() });
+      ...this.roadmapV3State(), ...this.roadmapV31State() });
+  }
+
+  /** Roadmap V3.1 state that changes through instructions or the control API (positions R31-D5, stables R31-A3). */
+  roadmapV31State() {
+    return { vehiclePositions: this.vehiclePositions, stables: this.stables };
   }
 
   /** Roadmap V3 state that changes through instructions (silo goods R3-H3/H4, contracts R3-H5). */
@@ -296,7 +335,8 @@ export class BridgeSimulator {
         contractReports: s.contractReports ?? [] });
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
         'storage', 'farmlands', 'calendar', 'finances', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
-        'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions', 'missionLimitReached']) {
+        'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions', 'missionLimitReached',
+        'vehiclePositions', 'stables']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -309,7 +349,7 @@ export class BridgeSimulator {
       contractReports: this.contractReports, gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State() };
+      ...this.roadmapV3State(), ...this.roadmapV31State() };
     this.writeJson(this.paths.savegame, s);
   }
 
@@ -438,7 +478,7 @@ export class BridgeSimulator {
         workedGameMs: Object.fromEntries(Object.entries(this.workforce.workedGameMs).map(([k, v]) => [k, Math.round(v)])) };
     }
     if (this.husbandries) {
-      blocks.husbandries = this.husbandries.map((h) => structuredClone(h))
+      blocks.husbandries = this.husbandries.map((h) => ({ ...structuredClone(h), ...this.stableExport(h.husbandryUniqueId) }))
         .sort((a, b) => a.husbandryUniqueId.localeCompare(b.husbandryUniqueId));
     }
     if (this.fields) {
@@ -537,13 +577,18 @@ export class BridgeSimulator {
     if (this.balance < ins.price) return 'INSUFFICIENT_FUNDS';
     const next = Math.max(0, ...this.vehicles.map((v) => Number(v.uniqueId.replace(/\D/g, '')) || 0)) + 1;
     const uniqueId = `veh_${String(next).padStart(5, '0')}`;
-    this.vehicles.push({ uniqueId, value: ins.price, damage: ins.damage, name: item.name,
-      xmlFilename: ins.storeXmlFilename, ageMonths: ins.ageMonths, operatingHours: ins.operatingHours, wear: ins.wear });
-    this.balance -= ins.price;
-    this.moneyLog.push({ id: ins.instructionId, amount: -ins.price, reason: ins.moneyReason, note: item.name });
-    this.book(`RPSIM_${ins.moneyReason}`, -ins.price);
+    // the game value of a borrowed machine (price 0) is its list price; a mod with the R31-Q1 contract exports the
+    // shop category
+    this.vehicles.push({ uniqueId, value: ins.price > 0 ? ins.price : item.price, damage: ins.damage, name: item.name,
+      xmlFilename: ins.storeXmlFilename, ageMonths: ins.ageMonths, operatingHours: ins.operatingHours, wear: ins.wear,
+      ...(this.roadmapV31 && item.categoryName ? { category: item.categoryName } : {}) });
+    if (ins.price > 0) {
+      this.balance -= ins.price;
+      this.moneyLog.push({ id: ins.instructionId, amount: -ins.price, reason: ins.moneyReason, note: item.name });
+      this.book(`RPSIM_${ins.moneyReason}`, -ins.price);
+    }
     this.applyResult = { vehicleId: uniqueId };
-    this.log(`used vehicle ${item.name} delivered as ${uniqueId}`);
+    this.log(`${ins.price > 0 ? 'used vehicle' : 'borrowed vehicle'} ${item.name} delivered as ${uniqueId}`);
     return null;
   }
 
@@ -556,6 +601,142 @@ export class BridgeSimulator {
     if (this.vehicles[i].attached) return 'VEHICLE_ATTACHED';
     this.vehicles.splice(i, 1);
     this.log(`vehicle ${ins.vehicleId} removed`);
+    return null;
+  }
+
+  // --------------------------------------------------------------- Roadmap V3.1 (R31-Q2)
+  /** Adds the optional Roadmap V3.1 farm_facts block (R31-D5) when the scenario stands for a mod with it. */
+  roadmapV31Blocks() {
+    if (!this.vehiclePositions) return {};
+    return { vehiclePositions: this.vehiclePositions.map((p) => ({ ...p }))
+      .sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)) };
+  }
+
+  /**
+   * R31-A3: subtypes in a stable (count > 0, sorted), the subtypes it can hold and its free places, like the mod's
+   * buildHusbandries; nothing for a husbandry without a stable in the model or a scenario without the R31-Q1 contract.
+   */
+  stableExport(husbandryUniqueId) {
+    const stable = this.roadmapV31 ? this.stables?.[husbandryUniqueId] : null;
+    const animal = this.animals.find((a) => a.husbandryUniqueId === husbandryUniqueId);
+    if (!stable || !animal) return {};
+    const subTypes = Object.entries(stable.subTypes).filter(([, n]) => n > 0).map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const total = subTypes.reduce((s, x) => s + x.count, 0);
+    const supportedSubTypes = Object.entries(SUB_TYPES).filter(([, type]) => type === animal.type).map(([name]) => name)
+      .sort();
+    return { subTypes, supportedSubTypes, freeSlots: Math.max(0, stable.capacity - total) };
+  }
+
+  /** Control API (R31-A4): the snow height of the world changes (metres, snowSystem.height). */
+  setSnow(height) {
+    if (!this.weather) throw new Error(`scenario ${this.scenario} exports no weather`);
+    if (typeof height !== 'number' || !Number.isFinite(height) || height < 0) throw new Error('height must be >= 0');
+    this.weather.snowHeight = Math.round(height * 100) / 100;
+    return this.weather;
+  }
+
+  /**
+   * Control API (R31-D5): the own vehicles being driven right now, [{uniqueId, x, z, farmlandId?, onCrop?}]; replaces
+   * the last sample. A vehicle in the list counts as in use (VEHICLE_FUEL refuses it).
+   */
+  setVehiclePositions(positions) {
+    if (!this.vehiclePositions) throw new Error(`scenario ${this.scenario} exports no vehiclePositions`);
+    if (!Array.isArray(positions)) throw new Error('positions must be an array');
+    this.vehiclePositions = positions.map((p) => ({ ...p }));
+    return this.roadmapV31Blocks().vehiclePositions;
+  }
+
+  /** Control API (R31-D8): the diesel level of an own vehicle with a diesel tank changes (e.g. refuelled). */
+  setFuel(uniqueId, liters) {
+    const v = this.vehicles.find((x) => x.uniqueId === uniqueId);
+    if (!v?.fuel) throw new Error(`no vehicle with a diesel tank: ${uniqueId}`);
+    if (typeof liters !== 'number' || !Number.isFinite(liters)) throw new Error('liters (number) is required');
+    v.fuel.liters = Math.min(v.fuel.capacity, Math.max(0, Math.round(liters)));
+    return { uniqueId, fuel: { ...v.fuel } };
+  }
+
+  /**
+   * R31-A1 like the planned mod action: end state of the work on an own field (AbstractFieldMission:finishField). The
+   * values are simulated: plowing / cultivating remove the crop, liming sets the lime level and sprayType LIME, sowing
+   * starts the crop, harvesting cuts it (HARVESTED). The harvest goes into the silo by the STORAGE_TRANSFER of the batch.
+   */
+  fieldWork(ins) {
+    const field = this.fields?.find((f) => f.farmlandId === ins.farmlandId);
+    if (!field) return 'FIELD_NOT_FOUND';
+    if (this.farmlands.find((f) => f.farmlandId === ins.farmlandId)?.ownerFarmId !== 1) return 'NOT_OWN_FIELD';
+    const name = String(ins.farmlandId);
+    if ([...this.missions, ...this.toolMissions].some((m) => m.field === name && m.status === 'RUNNING')) {
+      return 'MISSION_RUNNING';
+    }
+    if (ins.work === 'SOW' && !FRUIT_TYPES.includes(ins.fruitType)) return 'UNKNOWN_FRUIT_TYPE';
+    const clearCrop = () => {
+      for (const k of CROP_KEYS) delete field[k];
+      field.growthState = 0;
+    };
+    switch (ins.work) {
+      case 'PLOW':
+        clearCrop();
+        Object.assign(field, { groundType: 'PLOWED', plowLevel: 1 });
+        break;
+      case 'CULTIVATE':
+        clearCrop();
+        field.groundType = 'CULTIVATED';
+        break;
+      case 'LIME':
+        Object.assign(field, { limeLevel: 1, sprayType: 'LIME' });
+        break;
+      case 'SOW':
+        clearCrop();
+        Object.assign(field, { fruitType: ins.fruitType, fillType: ins.fruitType, growthState: 1, withered: false,
+          cut: false, groundType: 'SOWN' });
+        break;
+      default: // HARVEST
+        if (field.fruitType) field.cut = true;
+    }
+    this.log(`contractor: ${ins.work} on field ${name}`);
+    return null;
+  }
+
+  /**
+   * R31-A3 like the planned mod action: animals of one subtype into (free places) or out of (enough animals) an own
+   * husbandry; assets.animals follows (count and value per animal of the stable).
+   */
+  animalTransfer(ins) {
+    const stable = this.stables?.[ins.husbandryUniqueId];
+    const animal = this.animals.find((a) => a.husbandryUniqueId === ins.husbandryUniqueId);
+    if (!stable || !animal) return 'HUSBANDRY_NOT_FOUND';
+    const type = SUB_TYPES[ins.subType];
+    if (!type) return 'UNKNOWN_SUB_TYPE';
+    if (type !== animal.type) return 'WRONG_ANIMAL_TYPE';
+    const total = Object.values(stable.subTypes).reduce((s, n) => s + n, 0);
+    if (ins.direction === 'IN') {
+      if (stable.capacity - total < ins.count) return 'NO_ANIMAL_SPACE';
+      stable.subTypes[ins.subType] = (stable.subTypes[ins.subType] ?? 0) + ins.count;
+    } else {
+      if ((stable.subTypes[ins.subType] ?? 0) < ins.count) return 'NOT_ENOUGH_ANIMALS';
+      stable.subTypes[ins.subType] -= ins.count;
+    }
+    animal.count = Object.values(stable.subTypes).reduce((s, n) => s + n, 0);
+    animal.estimatedValue = Math.round(animal.count * stable.valuePerAnimal);
+    this.log(`stable ${ins.husbandryUniqueId} ${ins.direction === 'IN' ? '+' : '-'}${ins.count} ${ins.subType}`);
+    return null;
+  }
+
+  /**
+   * R31-D8 like the planned mod action: diesel taken out of an own vehicle that nobody drives (not in vehiclePositions);
+   * at most the level in the tank. result.liters = diesel actually taken.
+   */
+  vehicleFuel(ins) {
+    if (this.leasedVehicles.some((v) => v.uniqueId === ins.vehicleId)) return 'NOT_OWN_VEHICLE';
+    const v = this.vehicles.find((x) => x.uniqueId === ins.vehicleId);
+    if (!v) return 'VEHICLE_NOT_FOUND';
+    if ((this.vehiclePositions ?? []).some((p) => p.uniqueId === ins.vehicleId)) return 'VEHICLE_IN_USE';
+    if (!v.fuel) return 'NO_DIESEL_TANK';
+    const taken = Math.min(v.fuel.liters, Math.round(-ins.delta));
+    v.fuel.liters -= taken;
+    this.applyResult = { liters: taken };
+    this.log(`diesel -${taken} l from ${ins.vehicleId}`);
     return null;
   }
 
@@ -723,7 +904,9 @@ export class BridgeSimulator {
         vehicles: this.vehicles.map((v) => ({ uniqueId: v.uniqueId, value: v.value,
           condition: Math.round((1 - Math.min(1, Math.max(0, v.damage))) * 100),
           // R3-V3: optional name and shop XML (getFullName / configFileName)
-          ...(v.name ? { name: v.name } : {}), ...(v.xmlFilename ? { xmlFilename: v.xmlFilename } : {}) })),
+          ...(v.name ? { name: v.name } : {}), ...(v.xmlFilename ? { xmlFilename: v.xmlFilename } : {}),
+          // R31-Q1: shop category (A4, D8) and diesel of a vehicle with a diesel tank (D8)
+          ...(v.category ? { category: v.category } : {}), ...(v.fuel ? { fuel: { ...v.fuel } } : {}) })),
         placeables: this.placeables.map((p) => ({ ...p })),
         farmland: this.farmlands.filter((f) => f.ownerFarmId === 1)
           .map((f) => ({ farmlandId: f.farmlandId, hectares: f.hectares, price: f.price })),
@@ -736,11 +919,14 @@ export class BridgeSimulator {
           ...(typeof v.costPerPeriod === 'number' ? { costPerPeriod: v.costPerPeriod } : {}) }))
           .sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)) },
       prices,
-      calendar: this.buildCalendar(),
+      // R31-Q1 (D4): the time of day only from a mod with the Roadmap V3.1 contract
+      calendar: { ...this.buildCalendar(),
+        ...(this.roadmapV31 ? { dayTimeMs: Math.floor(this.gameTime % MS_PER_GAME_DAY) } : {}) },
       missions: [...this.missions, ...this.toolMissions].map((m) => ({ ...m }))
         .sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)),
       ...this.roadmapV2Blocks(),
       ...this.roadmapV3Blocks(),
+      ...this.roadmapV31Blocks(),
     };
   }
 
@@ -775,6 +961,8 @@ export class BridgeSimulator {
       // Roadmap V3 R3-V1: shop vehicle catalog, only in scenarios that have it
       ...(this.storeVehicles ? { storeVehicles: this.storeVehicles.map((v) => ({ ...v }))
         .sort((a, b) => a.xmlFilename.localeCompare(b.xmlFilename)) } : {}),
+      // Roadmap V3.1 R31-K1: field outlines and map size, only in scenarios that have them
+      ...(this.fieldShapes ? { fieldShapes: structuredClone(this.fieldShapes) } : {}),
     };
   }
 
@@ -871,6 +1059,13 @@ export class BridgeSimulator {
         return this.vehicleSpawn(ins);
       case 'VEHICLE_REMOVE':
         return this.vehicleRemove(ins);
+      // Roadmap V3.1 (R31-Q2): executed like the planned mod actions (R31-A1, R31-A3, R31-D8)
+      case 'FIELD_WORK':
+        return this.fieldWork(ins);
+      case 'ANIMAL_TRANSFER':
+        return this.animalTransfer(ins);
+      case 'VEHICLE_FUEL':
+        return this.vehicleFuel(ins);
       default:
         return 'unsupported type';
     }

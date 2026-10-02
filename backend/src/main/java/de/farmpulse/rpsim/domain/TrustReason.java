@@ -60,6 +60,12 @@ public enum TrustReason {
     /** Roadmap V3 R3-L1: the leased-out field was taken back in the game menu / the family field was leased out. */
     LEASE_OUT_RECLAIMED,
     FAMILY_FIELD_LEASED,
+    /** Roadmap V3.1 R31-A1: the contractor finished a work on an own field. */
+    CONTRACTOR_WORK,
+    /** Roadmap V3.1 R31-A2: borrowed machine returned damaged / disappeared / a daily rent was not paid. */
+    MACHINE_LOAN_DAMAGE,
+    MACHINE_LOAN_LOST,
+    MACHINE_LOAN_RENT_MISSED,
     INITIAL,
     OTHER
 }

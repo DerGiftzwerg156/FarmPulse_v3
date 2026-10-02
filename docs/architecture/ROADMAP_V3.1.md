@@ -55,45 +55,76 @@ sichtbarer. A braucht die Bausteine aus V3. B ist überwiegend Backend-Arbeit.
 
 ## Q – Querschnitt
 
+**Stand 02.10.2026: umgesetzt.** Q legt wie R2-Q und R3-Q nur den Vertrag an (Schemas, DTOs, Validator,
+Normalisierung im Mod, Simulator, Doku). Das Auslesen im Mod folgt mit A4 (`snowHeight`, `category`), B3
+(`sprayType`), D4 (`dayTimeMs`), D5 (`vehiclePositions`), D8 (`fuel`) und K1 (`fieldShapes`), bis dahin fehlen die
+Werte. Die drei neuen Anweisungen quittiert der Mod bis A1/A3/D8 mit `FAILED` / `NOT_SUPPORTED`. Entscheidungen
+(siehe `QUESTIONS.md`): `calendar.dayTimeMs` (D4) gehört mit in Q. `vehiclePositions[]` = `{ uniqueId, x, z,
+farmlandId?, onCrop? }`, `fieldShapes` = `{ mapSize, fields: [{ farmlandId, name, points }] }` mit höchstens 64
+Punkten je Feld (Mod-Schalter `fieldShapeMaxPoints`), `fuel` = `{ liters, capacity }`, `sprayType` mit `NONE`,
+`category` in Großbuchstaben. `FIELD_WORK.work` ∈ `PLOW`, `CULTIVATE`, `LIME`, `SOW` (mit `fruitType`), `HARVEST`.
+Fehlercodes je Anweisung und `result.liters` nach `VEHICLE_FUEL` wie im Bridge-Protokoll. Die Buchungstitel und
+-klassen folgen dem Vorschlag. Der Simulator führt die neuen Anweisungen aus wie der spätere Mod. Spieler-Doku nur
+im `CHANGELOG`; der Testplan-Abschnitt ist **21** (12 war schon belegt).
+
 ### R31-Q1 Bridge-Schema erweitern
 
-- [ ] `farm_facts.json`, neue optionale Felder:
+- [x] `farm_facts.json`, neue optionale Felder:
   - `weather.snowHeight`: Schneehöhe der Welt (A4).
   - `fields[].sprayType`: Art der letzten Düngung (B3).
   - `assets.vehicles[].category`: Shop-Kategorie jedes eigenen Fahrzeugs (A4, D8).
   - `assets.vehicles[].fuel`: Dieselstand (D8).
   - `vehiclePositions[]`: Stichprobe der Fahrzeugpositionen (D5).
-- [ ] `market_context.json`, neuer optionaler Block `fieldShapes` (K1): Umriss jedes Feldes und Kartengröße.
-- [ ] Neue Anweisungstypen:
+  - `calendar.dayTimeMs`: Tageszeit (D4, Entscheidung 02.10.2026).
+- [x] `market_context.json`, neuer optionaler Block `fieldShapes` (K1): Umriss jedes Feldes und Kartengröße.
+- [x] Neue Anweisungstypen:
   - `FIELD_WORK` (A1): Endzustand einer Feldarbeit setzen,
   - `ANIMAL_TRANSFER` (A3): Tiere ein- oder ausstallen,
   - `VEHICLE_FUEL` (D8): Diesel abziehen.
 
-  Ein älterer Mod lehnt einen unbekannten Typ ab (`FAILED`). Das Backend storniert dann den Vorgang und rät zum Update.
-- [ ] Neue `MoneyReason`-Werte:
+  Ein älterer Mod lehnt einen unbekannten Typ ab (`REJECTED` bei der Prüfung, ein Mod mit R31-Q ohne das Feature
+  `FAILED` / `NOT_SUPPORTED`). Das Backend rät dann per Hinweis zum Update (`modOutdated`, „Mod aktualisieren“); das
+  Stornieren des Vorgangs kommt mit dem jeweiligen Feature.
+- [x] Neue `MoneyReason`-Werte:
   - `CONTRACTOR_FEE` (A1), `MACHINE_RENT` (A2), `LIVESTOCK_PURCHASE` / `LIVESTOCK_SALE` (A3),
   - `WINTER_SERVICE` (A4), `DIRECT_PAYMENT` (B1), `INVESTMENT_GRANT` (B2), `SOCIAL_INSURANCE` (B5),
   - `GUEST_INCOME` (D6), `COOP_SHARES` / `COOP_DIVIDEND` (D7).
 
   Dazu die Klassen in `rpsim.formulas.finance.categories`: Förderungen und Einnahmen operativ, Genossenschaftsanteile
   als Finanzierung.
-- [ ] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code.
+- [x] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code.
 
 ### R31-Q2 Simulator, Tests, Konfiguration, Doku, Testplan
 
-- [ ] Bridge-Simulator:
+- [x] Bridge-Simulator:
   - Szenarien `winter-schnee`, `lohnunternehmer` und `viehhandel`,
   - Steuer-Endpunkte für Schnee, Fahrzeugpositionen und Diesel.
-- [ ] Mod-Tests je Adapter-Funktion mit gemockten FS25-Globals.
-- [ ] Backend: Grenzwert-Tests je Formel, End-to-End-Test gegen den Simulator.
-- [ ] Neue Werte unter `rpsim.formulas.*` samt `docs/dev/configuration-reference.md`
-  (`ConfigurationReferenceDocTest`).
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`.
-- [ ] `docs/dev/manual-test-plan.md`: Abschnitt **„12. Roadmap V3.1 im echten FS25“**, eine Zeile je 🟡.
+- [x] Mod-Tests je Adapter-Funktion mit gemockten FS25-Globals. In Q: Normalisierung der neuen Felder und Blöcke,
+  Prüfung der neuen Anweisungen, `NOT_SUPPORTED`, `result` in der Quittung, Buchungstitel. Gilt weiter für jede
+  Adapter-Funktion der Features.
+- [x] Backend: Grenzwert-Tests je Formel, End-to-End-Test gegen den Simulator. Q bringt keine Formel;
+  `BridgeValidatorTest`, `FailedInstructionTest` und `SimulatorScenariosEndToEndTest` prüfen die neuen Felder, den
+  Hinweis und `result.liters`.
+- [x] Neue Werte unter `rpsim.formulas.*` samt `docs/dev/configuration-reference.md`
+  (`ConfigurationReferenceDocTest`). Q bringt nur die Klassen der neuen Buchungsgründe unter
+  `rpsim.formulas.finance.categories`.
+- [x] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`. Q ist für Spieler nicht sichtbar, daher nur der
+  `CHANGELOG`-Eintrag.
+- [x] `docs/dev/manual-test-plan.md`: Abschnitt **„21. Roadmap V3.1 im echten FS25“**, eine Zeile je 🟡.
 
 ---
 
 ## A – Arbeit auf dem Hof
+
+**Stand 02.10.2026: umgesetzt** (Backend, Mod, Hof-Tablet, Simulator, Doku). Die Werte stehen unter
+`rpsim.formulas.contractor-work`, `machine-loan`, `livestock-trade`, `winter-service` und `seasonal-worker`;
+Entscheidungen in `QUESTIONS.md` (02.10.2026). Der Mod führt `FIELD_WORK` und `ANIMAL_TRANSFER` aus, exportiert
+`weather.snowHeight`, `assets.vehicles[].category` und je Stall `subTypes`, `supportedSubTypes`, `freeSlots`,
+nimmt `VEHICLE_SPAWN` mit Preis 0 (Leih-/Vorführmaschine, ohne Buchung) an und kennt die Rolle `SEASONAL_WORKER`.
+Bei den 🟡-Punkten nutzt der Mod den Hauptweg und den Fallback (A1: `createFieldUpdateTask()` und zusätzlich die
+Setter der Task). Nach dem Laden eines älteren Spielstands (R2-G) werden `FIELD_WORK` und `ANIMAL_TRANSFER` mit
+ihrem ganzen Batch erneut gesendet. Offen bleibt nur die Sperre des Viehhandels während einer Tierseuche: sie kommt
+mit B4. Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitt 21.
 
 ### R31-A1 Lohnunternehmer bearbeitet dein Feld
 
@@ -101,15 +132,15 @@ sichtbarer. A braucht die Bausteine aus V3. B ist überwiegend Backend-Arbeit.
 ist sie erledigt: Das Feld springt in den Endzustand, genau wie beim Abschluss eines Auftrags im Spiel. Die Ernte
 landet in deinem Silo.
 
-- [ ] Formular in der Flurkarte → eigenes Feld → **„Lohnunternehmer beauftragen“**. Arbeiten:
+- [x] Formular in der Flurkarte → eigenes Feld → **„Lohnunternehmer beauftragen“**. Arbeiten:
   - Pflügen, Grubbern, Kalken,
   - Säen (Fruchtsorte aus einer Liste),
   - Ernten (nur in Phase `HARVESTABLE`).
 
   Das Backend bietet nur an, was zum Feldzustand passt (Daten aus R2-C1).
-- [ ] Preis je Hektar und Arbeit (Konfig), Termin in 1–3 Spieltagen, in der Erntezeit länger (Auslastung).
+- [x] Preis je Hektar und Arbeit (Konfig), Termin in 1–3 Spieltagen, in der Erntezeit länger (Auslastung).
   Vertrauen verkürzt die Wartezeit leicht.
-- [ ] Neue Anweisung `FIELD_WORK { farmlandId, work, fruitType? }` im Batch mit `MONEY_TRANSACTION` `CONTRACTOR_FEE`.
+- [x] Neue Anweisung `FIELD_WORK { farmlandId, work, fruitType? }` im Batch mit `MONEY_TRANSACTION` `CONTRACTOR_FEE`.
   Der Mod nimmt das eigene Feld und prüft, ob es der Spieler-Farm gehört und kein Auftrag darauf läuft. Dann setzt er
   den Endzustand wie `AbstractFieldMission:finishField`:
   `task = field:getFieldState():createFieldUpdateTask()` → Werte setzen → `task:setField(field)` →
@@ -122,12 +153,12 @@ landet in deinem Silo.
   | Kalken | `limeLevel` voll, `sprayType = LIME` |
   | Säen | `setFruit(fruitIndex, 1)`, `groundType = SOWN` |
   | Ernten | Frucht auf `fruitTypeDesc.cutState` (Stoppel) |
-- [ ] **Ernte:** Die Menge berechnet das Backend: Fläche × `litersPerSqm` (aus R2-C1) × Ertragsfaktor. Der Faktor kommt
+- [x] **Ernte:** Die Menge berechnet das Backend: Fläche × `litersPerSqm` (aus R2-C1) × Ertragsfaktor. Der Faktor kommt
   aus der Konfig und berücksichtigt Düngung, Kalk, Pflug und Unkraut aus den Feldwerten, die Formel des Spiels wird
   nicht nachgebaut. Einlagern im selben Batch mit `STORAGE_TRANSFER IN` (R3-H3). Reicht die Silokapazität nicht, lehnt
   das Backend den Auftrag vorher ab („Wohin mit dem Weizen?“).
-- [ ] Mail des Lohnunternehmers, Tagebucheintrag, Vertrauen. Die Kosten stehen im Journal als operative Ausgabe.
-- [ ] Werte unter `rpsim.formulas.contractor-work.*`. Offene Entscheidung (`QUESTIONS.md`): ob Ernten dazugehört oder nur
+- [x] Mail des Lohnunternehmers, Tagebucheintrag, Vertrauen. Die Kosten stehen im Journal als operative Ausgabe.
+- [x] Werte unter `rpsim.formulas.contractor-work.*`. Offene Entscheidung (`QUESTIONS.md`): ob Ernten dazugehört oder nur
   die Bodenbearbeitung.
 
 **Beleg:**
@@ -151,14 +182,14 @@ landet in deinem Silo.
 **Idee:** Ein Nachbar leiht dir seinen Mähdrescher für die Ernte, oder die Landmaschinenwerkstatt stellt dir eine neue
 Maschine zur Probe hin.
 
-- [ ] Nachbar (`NEIGHBOR_FARMER`): „Maschine leihen“ auf der Kontaktseite. Die Auswahl kommt aus dem Shop-Katalog
+- [x] Nachbar (`NEIGHBOR_FARMER`): „Maschine leihen“ auf der Kontaktseite. Die Auswahl kommt aus dem Shop-Katalog
   (R3-V1) nach Kategorien, die zum Nachbarbetrieb passen. Miete je Spieltag (Konfig), Vertrauen senkt sie.
-- [ ] Werkstatt (`WORKSHOP`): Vorführung für 1–2 Spieltage kostenlos. Danach folgt ein Kaufangebot (Neupreis mit
+- [x] Werkstatt (`WORKSHOP`): Vorführung für 1–2 Spieltage kostenlos. Danach folgt ein Kaufangebot (Neupreis mit
   Rabatt, Kauf über R3-V2).
-- [ ] Beginn: `VEHICLE_SPAWN` (R3-V2) mit `ageMonths`/`operatingHours` nach Konfig, Miete als `MACHINE_RENT` je
+- [x] Beginn: `VEHICLE_SPAWN` (R3-V2) mit `ageMonths`/`operatingHours` nach Konfig, Miete als `MACHINE_RENT` je
   Spieltag. Das Tool markiert das Fahrzeug als Leihgerät: Es zählt nicht zum Vermögen der Bank und nicht zur
   Abschreibung.
-- [ ] Ende: `VEHICLE_REMOVE` (R3-V3). Ist das Fahrzeug in Benutzung (`VEHICLE_IN_USE`), kommt eine Erinnerung, ein neuer
+- [x] Ende: `VEHICLE_REMOVE` (R3-V3). Ist das Fahrzeug in Benutzung (`VEHICLE_IN_USE`), kommt eine Erinnerung, ein neuer
   Versuch am nächsten Spieltag und je Tag ein Aufschlag. Schaden über dem Ausgangswert (`assets.vehicles[].condition`)
   kostet eine Entschädigung an den Nachbarn.
 
@@ -168,20 +199,20 @@ Maschine zur Probe hin.
 
 **Idee:** Tiere direkt vom Nachbarn kaufen oder an ihn verkaufen, zum Beispiel Kälber, Ferkel oder Schafe.
 
-- [ ] Angebote und Anfragen wie beim Warenhandel (R3-H2 bis H4). Jeder Nachbar hat einen Betriebstyp, und daraus
+- [x] Angebote und Anfragen wie beim Warenhandel (R3-H2 bis H4). Jeder Nachbar hat einen Betriebstyp, und daraus
   entstehen Tierbestand und Bedarf als Backend-Formel. Preis je Tier = Wert des Spiels
   (`assets.animals[].estimatedValue / count`, aus `cluster:getSellPrice()`) × Spanne (Konfig) ± Vertrauen.
-- [ ] Neue Anweisung `ANIMAL_TRANSFER { husbandryUniqueId, subType, count, age?, direction: "IN" | "OUT" }` im Batch
+- [x] Neue Anweisung `ANIMAL_TRANSFER { husbandryUniqueId, subType, count, age?, direction: "IN" | "OUT" }` im Batch
   mit `MONEY_TRANSACTION` (`LIVESTOCK_PURCHASE` / `LIVESTOCK_SALE`).
   - **IN:** Der Mod prüft freie Plätze (`getNumOfFreeAnimalSlots()`) und die Tierart des Stalls und fügt dann
     `addAnimals(subTypeIndex, count, age)` hinzu. Den Index liefert `g_currentMission.animalSystem:getSubTypeByName`.
   - **OUT:** Der Mod zieht die Tiere über `cluster:changeNumAnimals(-n)` aus den Gruppen dieses Untertyps ab, wie der
     Konsolenbefehl des Spiels.
   - Nicht genug Platz oder Tiere: `FAILED` mit `NO_ANIMAL_SPACE` / `NOT_ENOUGH_ANIMALS`.
-- [ ] Der Viehhändler (`LIVESTOCK_TRADER`) bleibt für Geschäfte außerhalb des Dorfs. Die Nachbarn sind persönlicher,
+- [x] Der Viehhändler (`LIVESTOCK_TRADER`) bleibt für Geschäfte außerhalb des Dorfs. Die Nachbarn sind persönlicher,
   und es gibt Klatsch.
-- [ ] Während einer Tierseuche (B4) ist der Handel mit der betroffenen Tierart gesperrt.
-- [ ] Offene Entscheidung (`QUESTIONS.md`): Bieten Nachbarn von sich aus an, oder nur auf Anfrage?
+- [ ] Während einer Tierseuche (B4) ist der Handel mit der betroffenen Tierart gesperrt. *(folgt mit B4)*
+- [x] Offene Entscheidung (`QUESTIONS.md`): Bieten Nachbarn von sich aus an, oder nur auf Anfrage?
 
 **Beleg:**
 - ✅ `Specializations/PlaceableHusbandryAnimals.md` (LUADOC):
@@ -200,17 +231,17 @@ Die Anzeige folgt beim nächsten Update des Stalls; der Export zählt erst danac
 **Idee:** Viele Landwirte räumen im Winter für die Gemeinde Schnee. Das Amt (`AUTHORITY`) bietet einen
 Winterdienst-Vertrag an: eine Grundpauschale je Wintermonat plus Geld je Schneetag.
 
-- [ ] Voraussetzung: ein eigenes Fahrzeug aus einer Konfigliste von Shop-Kategorien (z. B. Traktoren mittel/groß).
+- [x] Voraussetzung: ein eigenes Fahrzeug aus einer Konfigliste von Shop-Kategorien (z. B. Traktoren mittel/groß).
   Dafür wird die Kategorie der eigenen Fahrzeuge exportiert, `assets.vehicles[].category` aus
   `g_storeManager:getItemByXMLFilename(configFileName).categoryName`. Diesen Weg nutzen schon die Schulungen.
-- [ ] `weather.snowHeight` = `g_currentMission.snowSystem.height`. Ein Spieltag mit Schnee über der Schwelle (Konfig)
+- [x] `weather.snowHeight` = `g_currentMission.snowSystem.height`. Ein Spieltag mit Schnee über der Schwelle (Konfig)
   zählt als Einsatztag, das Backend zählt wie bei den Regenstunden (R2-C2).
-- [ ] Vertrag als `ContractKind` (neu `WINTER_SERVICE`), Zahlung monatlich als `WINTER_SERVICE`. Einsatztage kündigt das
+- [x] Vertrag als `ContractKind` (neu `WINTER_SERVICE`), Zahlung monatlich als `WINTER_SERVICE`. Einsatztage kündigt das
   Amt mit einem Hinweis im Spiel an („Schnee! Winterdienst ab 5 Uhr“).
-- [ ] Ob wirklich geräumt wurde, prüft das Tool **nicht** (siehe
+- [x] Ob wirklich geräumt wurde, prüft das Tool **nicht** (siehe
   [Bewusst nicht aufgenommen](#bewusst-nicht-aufgenommen)). Das ist Rollenspiel, und die Bezahlung ist an den Vertrag
   gebunden.
-- [ ] Ist der Spielstand ohne Schnee eingestellt oder fällt keiner, gibt es nur die Grundpauschale. Das Amt verlängert
+- [x] Ist der Spielstand ohne Schnee eingestellt oder fällt keiner, gibt es nur die Grundpauschale. Das Amt verlängert
   dann seltener.
 
 **Beleg:** ✅ `Wheels/WheelDestruction.md` (LUADOC): `local snowSystem = g_currentMission.snowSystem`,
@@ -224,12 +255,12 @@ Winterdienst-Vertrag an: eine Grundpauschale je Wintermonat plus Geld je Schneet
 
 **Idee:** Für die Erntemonate stellst du Saisonkräfte ein, befristet mit festem Ende.
 
-- [ ] Neue Rolle `JobRole.SEASONAL_WORKER`: Bewerbungen nur vor und in der Erntezeit (Konfig: FS25-Perioden),
+- [x] Neue Rolle `JobRole.SEASONAL_WORKER`: Bewerbungen nur vor und in der Erntezeit (Konfig: FS25-Perioden),
   befristet bis zum Vertragsende (FS25-Perioden). Danach endet der Vertrag automatisch mit Abschiedsmail. Wer gut
   behandelt wurde, kommt im nächsten Jahr gern wieder (Vertrauen bleibt erhalten).
-- [ ] Im Spiel fahren sie Helfer wie ein Maschinenführer **ohne** Schulung: kleine und mittlere Traktoren. Bei den
+- [x] Im Spiel fahren sie Helfer wie ein Maschinenführer **ohne** Schulung: kleine und mittlere Traktoren. Bei den
   Schulungen gleich wie der Azubi aus R3-P2, der Mod lässt die Rolle in `EMPLOYEE_ROSTER` zu.
-- [ ] Gehalt je Monat höher als bei Festangestellten (Konfig), keine Gehaltsverhandlung und keine Schulungen.
+- [x] Gehalt je Monat höher als bei Festangestellten (Konfig), keine Gehaltsverhandlung und keine Schulungen.
 
 **Beleg:** ✅ wie R3-P2 (Rolle in `EMPLOYEE_ROSTER`, Zuordnung im Hook auf `AIJob.start`).
 

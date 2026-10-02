@@ -18,13 +18,26 @@ public final class BridgeDtos {
      * not be read as "empty": an empty block ({@code fields: []}) is a real answer of the game. Roadmap V3 (R3-Q1):
      * {@code npcFields} (R3-H1) and {@code tradeStorage} (R3-H2) follow the same rule. {@code missionLimitReached}
      * (R3-H5): the game's contract limit of the player farm (MissionManager:hasFarmReachedMissionLimit), null = unknown.
+     * Roadmap V3.1 (R31-Q1): {@code vehiclePositions} (R31-D5) follows the same rule as the optional blocks.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
                             Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
                             Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
                             Weather weather, FieldRules fieldRules, List<Field> npcFields,
-                            List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached) {
+                            List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached,
+                            List<VehiclePosition> vehiclePositions) {
+
+        /** Roadmap V3 contract without the blocks of Roadmap V3.1 (older mod). */
+        public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
+                         Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
+                         Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
+                         Weather weather, FieldRules fieldRules, List<Field> npcFields,
+                         List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached) {
+            this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, missions, finances,
+                    workforce, husbandries, fields, weather, fieldRules, npcFields, tradeStorage, missionLimitReached,
+                    null);
+        }
 
         /** Roadmap V3 R3-Q1 contract without the contract limit of R3-H5 (older mod). */
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
@@ -98,11 +111,25 @@ public final class BridgeDtos {
     /**
      * Roadmap V2 R2-A7: state of one husbandry ({@code husbandryUniqueId} as in {@code assets.animals}). health = mean
      * cluster health (0..100 like the game's info box), productivity = production factor (missing for horses and
-     * pigs), food = total food / capacity.
+     * pigs), food = total food / capacity. Roadmap V3.1 R31-A3 (owner decision 2026-10-02), each optional: animals per
+     * subtype ({@code subTypes}), the subtypes the husbandry accepts ({@code supportedSubTypes}) and its free places
+     * ({@code freeSlots}); null with an older mod.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
-                            List<HusbandryCondition> conditions) {
+                            List<HusbandryCondition> conditions, List<SubTypeCount> subTypes,
+                            List<String> supportedSubTypes, Integer freeSlots) {
+
+        /** R2-A7 contract without the subtypes of Roadmap V3.1 (older mod). */
+        public Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
+                         List<HusbandryCondition> conditions) {
+            this(husbandryUniqueId, health, productivity, food, conditions, null, null, null);
+        }
+    }
+
+    /** Roadmap V3.1 R31-A3: animals of one FS25 subtype in a husbandry (subType.name, cluster:getNumAnimals()). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record SubTypeCount(String name, Integer count) {
     }
 
     /** One entry of the game's getConditionInfos (water, straw, slurry, milk ...), title as shown in the game. */
@@ -113,13 +140,24 @@ public final class BridgeDtos {
     /**
      * Roadmap V2 R2-C1: state of an own field (FS25 FieldState). {@code fruitType}, the harvesting growth states and the
      * crop details ({@code withered}, {@code cut}, {@code fillType}, {@code litersPerSqm}; older mods omit them) are
-     * missing on a field without a crop.
+     * missing on a field without a crop. Roadmap V3.1 (R31-Q1, B3): {@code sprayType} = name from the game's
+     * FieldSprayType table (e.g. {@code NONE}, {@code LIQUID_MANURE}, {@code MANURE}, {@code LIME}); null with an older mod.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Field(Integer farmlandId, String name, Double hectares, String fruitType, Integer growthState,
                         Integer minHarvestingGrowthState, Integer maxHarvestingGrowthState, Integer weedState,
                         Integer stoneLevel, Integer sprayLevel, Integer limeLevel, Integer plowLevel, String groundType,
-                        Boolean withered, Boolean cut, String fillType, Double litersPerSqm) {
+                        Boolean withered, Boolean cut, String fillType, Double litersPerSqm, String sprayType) {
+
+        /** R2-C contract without the spray type of Roadmap V3.1 (older mod). */
+        public Field(Integer farmlandId, String name, Double hectares, String fruitType, Integer growthState,
+                     Integer minHarvestingGrowthState, Integer maxHarvestingGrowthState, Integer weedState,
+                     Integer stoneLevel, Integer sprayLevel, Integer limeLevel, Integer plowLevel, String groundType,
+                     Boolean withered, Boolean cut, String fillType, Double litersPerSqm) {
+            this(farmlandId, name, hectares, fruitType, growthState, minHarvestingGrowthState, maxHarvestingGrowthState,
+                    weedState, stoneLevel, sprayLevel, limeLevel, plowLevel, groundType, withered, cut, fillType,
+                    litersPerSqm, null);
+        }
 
         /** Q contract without the crop details of R2-C (older mod). */
         public Field(Integer farmlandId, String name, Double hectares, String fruitType, Integer growthState,
@@ -140,10 +178,17 @@ public final class BridgeDtos {
 
     /**
      * Roadmap V2 R2-C2: current weather (environment.weather getIsRaining / getRainFallScale / getGroundWetness).
-     * Hof-Tablet: {@code temperature} in °C (weather:getCurrentTemperature); missing with an older mod.
+     * Hof-Tablet: {@code temperature} in °C (weather:getCurrentTemperature); missing with an older mod. Roadmap V3.1
+     * (R31-Q1, A4): {@code snowHeight} = snow height of the world in metres (snowSystem.height); null = not read.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Weather(Boolean raining, Double rainFallScale, Double groundWetness, Double temperature) {
+    public record Weather(Boolean raining, Double rainFallScale, Double groundWetness, Double temperature,
+                          Double snowHeight) {
+
+        /** Hof-Tablet contract without the snow height of Roadmap V3.1 (older mod). */
+        public Weather(Boolean raining, Double rainFallScale, Double groundWetness, Double temperature) {
+            this(raining, rainFallScale, groundWetness, temperature, null);
+        }
 
         /** R2-C2 contract without the temperature (older mod). */
         public Weather(Boolean raining, Double rainFallScale, Double groundWetness) {
@@ -159,10 +204,28 @@ public final class BridgeDtos {
     public record TradeStorageEntry(String fillType, Double amount, Double freeCapacity) {
     }
 
-    /** TODO T-08: FS25 calendar of the savegame (game month = FS25 period, period 1 = March). */
+    /**
+     * Roadmap V3.1 (R31-Q1, D5): an own vehicle being driven right now (Enterable:getIsControlled or
+     * Vehicle:getIsAIActive). x / z = world position in metres; {@code farmlandId} null = no farmland at the position;
+     * {@code onCrop} = a field with a crop stands there (null = not read).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record VehiclePosition(String uniqueId, Double x, Double z, Integer farmlandId, Boolean onCrop) {
+    }
+
+    /**
+     * TODO T-08: FS25 calendar of the savegame (game month = FS25 period, period 1 = March). Roadmap V3.1 (R31-Q1, D4):
+     * {@code dayTimeMs} = time of day in in-game ms since midnight; null with an older mod.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Calendar(Integer period, Integer dayInPeriod, Integer daysPerPeriod, Integer year, Long monotonicDay,
-                           String periodName, String season) {
+                           String periodName, String season, Long dayTimeMs) {
+
+        /** T-21 contract without the time of day of Roadmap V3.1 (older mod). */
+        public Calendar(Integer period, Integer dayInPeriod, Integer daysPerPeriod, Integer year, Long monotonicDay,
+                        String periodName, String season) {
+            this(period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName, season, null);
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -174,13 +237,28 @@ public final class BridgeDtos {
                          List<Animal> animals, List<StorageEntry> storage) {
     }
 
-    /** Roadmap V3 R3-V3: {@code name} and {@code xmlFilename} are optional (null with an older mod). */
+    /**
+     * Roadmap V3 R3-V3: {@code name} and {@code xmlFilename} are optional (null with an older mod). Roadmap V3.1
+     * (R31-Q1): {@code category} = shop category in upper case (A4, D8), {@code fuel} = diesel of a vehicle with a
+     * diesel tank (D8); both null with an older mod, fuel also without a diesel tank.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename) {
+    public record Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename,
+                          String category, Fuel fuel) {
 
         public Vehicle(String uniqueId, Double value, Double condition) {
             this(uniqueId, value, condition, null, null);
         }
+
+        /** Roadmap V3 contract without category and diesel (older mod). */
+        public Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename) {
+            this(uniqueId, value, condition, name, xmlFilename, null, null);
+        }
+    }
+
+    /** Roadmap V3.1 (R31-Q1, D8): diesel level and tank capacity in litres (getFillUnitFillLevel / getFillUnitCapacity). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Fuel(Double liters, Double capacity) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -220,16 +298,43 @@ public final class BridgeDtos {
     public record Price(String sellPoint, String fillType, Double currentPrice, String trend) {
     }
 
-    /** Roadmap V3 (R3-Q1): {@code storeVehicles} (R3-V1) is optional; null = not present (older mod or switched off). */
+    /**
+     * Roadmap V3 (R3-Q1): {@code storeVehicles} (R3-V1) is optional; null = not present (older mod or switched off).
+     * Roadmap V3.1 (R31-Q1): {@code fieldShapes} (R31-K1) likewise.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
-                                List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles) {
+                                List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles,
+                                FieldShapes fieldShapes) {
 
         /** Contract without the vehicle catalog (older mod). */
         public MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
                              List<MapFarmland> farmlands, List<String> detectedMods) {
             this(savegameId, mapName, sellPoints, fillTypes, farmlands, detectedMods, null);
         }
+
+        /** Roadmap V3 contract without the field outlines (older mod). */
+        public MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
+                             List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles) {
+            this(savegameId, mapName, sellPoints, fillTypes, farmlands, detectedMods, storeVehicles, null);
+        }
+    }
+
+    /**
+     * Roadmap V3.1 R31-K1 (contract R31-Q1): outline of every field ({@code field.polygonPoints}) and the map size in
+     * metres ({@code g_currentMission.terrainSize}).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FieldShapes(Double mapSize, List<FieldShape> fields) {
+    }
+
+    /** Roadmap V3.1 R31-K1: one field outline, at least 3 points in world coordinates (x / z in metres). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FieldShape(Integer farmlandId, String name, List<ShapePoint> points) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ShapePoint(Double x, Double z) {
     }
 
     /**

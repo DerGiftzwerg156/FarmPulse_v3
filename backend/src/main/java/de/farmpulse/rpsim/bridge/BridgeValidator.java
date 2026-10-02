@@ -15,6 +15,9 @@ import de.farmpulse.rpsim.bridge.BridgeDtos.MarketContext;
  */
 public final class BridgeValidator {
 
+    /** Roadmap V3.1 (R31-Q1, D4): calendar.dayTimeMs lies within one in-game day. */
+    private static final long MS_PER_DAY = 24L * 60 * 60 * 1000;
+
     private BridgeValidator() {
     }
 
@@ -34,7 +37,9 @@ public final class BridgeValidator {
             } else {
                 a.vehicles().forEach(v -> {
                     if (v == null || blank(v.uniqueId()) || v.value() == null || v.condition() == null
-                            || v.condition() < 0 || v.condition() > 100) e.add("invalid vehicle " + v);
+                            || v.condition() < 0 || v.condition() > 100 || invalidRoadmapV31Vehicle(v)) {
+                        e.add("invalid vehicle " + v);
+                    }
                 });
                 a.farmland().forEach(fl -> {
                     if (fl == null || fl.farmlandId() == null || fl.price() == null) e.add("invalid farmland " + fl);
@@ -59,7 +64,8 @@ public final class BridgeValidator {
             var c = f.calendar();
             if (c.period() == null || c.period() < 1 || c.period() > 12 || c.daysPerPeriod() == null || c.daysPerPeriod() < 1
                     || c.monotonicDay() == null || c.monotonicDay() < 0
-                    || (c.dayInPeriod() != null && (c.dayInPeriod() < 1 || c.dayInPeriod() > c.daysPerPeriod()))) {
+                    || (c.dayInPeriod() != null && (c.dayInPeriod() < 1 || c.dayInPeriod() > c.daysPerPeriod()))
+                    || (c.dayTimeMs() != null && (c.dayTimeMs() < 0 || c.dayTimeMs() >= MS_PER_DAY))) {
                 e.add("invalid calendar " + c);
             }
         }
@@ -72,7 +78,30 @@ public final class BridgeValidator {
         }
         validateRoadmapV2(f, e);
         validateRoadmapV3(f, e);
+        validateRoadmapV31(f, e);
         return e;
+    }
+
+    /** Roadmap V3.1 (R31-Q1, D5): the optional block is only checked when present. */
+    private static void validateRoadmapV31(FarmFacts f, List<String> e) {
+        if (f.vehiclePositions() != null) {
+            f.vehiclePositions().forEach(p -> {
+                if (p == null || blank(p.uniqueId()) || p.x() == null || p.z() == null
+                        || (p.farmlandId() != null && p.farmlandId() < 1)) {
+                    e.add("invalid vehicle position " + p);
+                }
+            });
+        }
+    }
+
+    /** Roadmap V3.1 (R31-Q1): category (A4, D8) and diesel (D8) of a vehicle, each optional. */
+    private static boolean invalidRoadmapV31Vehicle(BridgeDtos.Vehicle v) {
+        if (v.category() != null && v.category().isBlank()) {
+            return true;
+        }
+        var fuel = v.fuel();
+        return fuel != null && (negativeOrNull(fuel.liters()) || fuel.capacity() == null || fuel.capacity() <= 0
+                || fuel.liters() > fuel.capacity());
     }
 
     /** Roadmap V3 (R3-Q1): like V2, the optional blocks are only checked when present. */
@@ -95,7 +124,8 @@ public final class BridgeValidator {
         return fd == null || fd.farmlandId() == null || fd.name() == null || negativeOrNull(fd.hectares())
                 || Stream.of(fd.growthState(), fd.weedState(), fd.stoneLevel(), fd.sprayLevel(), fd.limeLevel(),
                 fd.plowLevel()).anyMatch(v -> v == null || v < 0)
-                || (fd.litersPerSqm() != null && fd.litersPerSqm() < 0);
+                || (fd.litersPerSqm() != null && fd.litersPerSqm() < 0)
+                || (fd.sprayType() != null && fd.sprayType().isBlank()); // Roadmap V3.1 (R31-Q1, B3)
     }
 
     /** Roadmap V2 (R2-Q1): the optional blocks are only checked when present; a missing block is no error. */
@@ -129,7 +159,8 @@ public final class BridgeValidator {
             f.husbandries().forEach(h -> {
                 if (h == null || blank(h.husbandryUniqueId()) || negativeOrNull(h.health()) || negativeOrNull(h.food())
                         || (h.productivity() != null && h.productivity() < 0) || h.conditions() == null
-                        || h.conditions().stream().anyMatch(c -> c == null || c.title() == null || negativeOrNull(c.ratio()))) {
+                        || h.conditions().stream().anyMatch(c -> c == null || c.title() == null || negativeOrNull(c.ratio()))
+                        || invalidSubTypes(h)) { // subtypes / free places: Roadmap V3.1 R31-A3
                     e.add("invalid husbandry " + h);
                 }
             });
@@ -147,10 +178,19 @@ public final class BridgeValidator {
         }
         if (f.weather() != null) {
             var w = f.weather();
-            if (w.raining() == null || negativeOrNull(w.rainFallScale()) || negativeOrNull(w.groundWetness())) {
+            if (w.raining() == null || negativeOrNull(w.rainFallScale()) || negativeOrNull(w.groundWetness())
+                    || (w.snowHeight() != null && w.snowHeight() < 0)) { // snowHeight: Roadmap V3.1 (R31-Q1, A4)
                 e.add("invalid weather " + w);
             }
         }
+    }
+
+    /** Roadmap V3.1 R31-A3: the optional subtypes and free places of a husbandry. */
+    private static boolean invalidSubTypes(BridgeDtos.Husbandry h) {
+        return (h.subTypes() != null && h.subTypes().stream().anyMatch(s -> s == null || blank(s.name())
+                || s.count() == null || s.count() < 0))
+                || (h.supportedSubTypes() != null && h.supportedSubTypes().stream().anyMatch(BridgeValidator::blank))
+                || (h.freeSlots() != null && h.freeSlots() < 0);
     }
 
     private static boolean negativeOrNull(Double v) {
@@ -176,6 +216,20 @@ public final class BridgeValidator {
                     e.add("invalid store vehicle " + v);
                 }
             });
+        }
+        if (m.fieldShapes() != null) { // Roadmap V3.1 (R31-Q1 / R31-K1)
+            var s = m.fieldShapes();
+            if (s.mapSize() == null || s.mapSize() <= 0 || s.fields() == null) {
+                e.add("invalid fieldShapes (mapSize > 0 and fields required)");
+            } else {
+                s.fields().forEach(fs -> {
+                    if (fs == null || fs.farmlandId() == null || fs.name() == null || fs.points() == null
+                            || fs.points().size() < 3
+                            || fs.points().stream().anyMatch(p -> p == null || p.x() == null || p.z() == null)) {
+                        e.add("invalid field shape " + fs);
+                    }
+                });
+            }
         }
         return e;
     }

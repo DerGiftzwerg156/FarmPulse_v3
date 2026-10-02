@@ -192,7 +192,7 @@ function RPSimBridge:exportMarketContext(force)
         self.conflictsLogged = true
         RPSimLog.warning("Mods with overlapping features detected: %s", table.concat(raw.detectedMods, ", "))
     end
-    local encoded = self:encode(self.paths.marketContext, RPSimMarketContext.build(raw))
+    local encoded = self:encode(self.paths.marketContext, RPSimMarketContext.build(raw, self.cfg))
     if encoded == nil then
         return false
     end
@@ -323,6 +323,10 @@ function RPSimBridge:pollInstructions()
                     end or nil,
                     vehicleRemove = adapter.removeVehicle ~= nil
                         and function(ins) return adapter:removeVehicle(ins.vehicleId) end or nil,
+                    -- Roadmap V3.1 R31-A1 and R31-A3 (VEHICLE_FUEL follows with R31-D8)
+                    fieldWork = adapter.fieldWork ~= nil and function(ins) return adapter:fieldWork(ins) end or nil,
+                    animalTransfer = adapter.animalTransfer ~= nil
+                        and function(ins) return adapter:animalTransfer(ins) end or nil,
                 },
             })
             -- R2-F1 / R2-F2: processed answers and questions decided in the browser

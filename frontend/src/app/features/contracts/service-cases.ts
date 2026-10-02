@@ -60,6 +60,12 @@ const ROLEPLAY_CASES = ['TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST'
                   @if (c.kind === 'REPAIR' && c.reference) { · {{ 'contracts.vehicle' | t: { id: c.reference, condition: c.quantity } }} }
                   @if (c.kind === 'DROUGHT_AID') {
                     · {{ 'authorities.aidHistory' | t: { hectares: c.hectares, amount: ((c.payoutAmount ?? c.offerAmount) | money) } }}
+                  } @else if (c.kind === 'CONTRACTOR_WORK') {
+                    · {{ c.reference | label: 'fieldWork' }} · {{ c.offerAmount | money }}
+                  } @else if (c.kind === 'ANIMAL_OFFER' || c.kind === 'ANIMAL_REQUEST') {
+                    · {{ 'trade.animals.history' | t: { count: c.quantity, subType: c.reference ?? '–', amount: (c.offerAmount | money) } }}
+                  } @else if (c.kind === 'MACHINE_DEMO_OFFER') {
+                    · {{ c.title }}
                   } @else if (isRoleplayCase(c)) {
                     @if (c.kind === 'TAX_BILL') { · {{ c.title ?? (c.reference | label: 'taxBill') }} }
                     @if (c.kind === 'AUTHORITY_INSPECTION') { · {{ c.title | label: 'authorityRule' }} }

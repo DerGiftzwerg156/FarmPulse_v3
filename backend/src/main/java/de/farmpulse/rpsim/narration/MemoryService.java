@@ -91,6 +91,10 @@ public class MemoryService {
             case FORWARD_CONTRACT_FULFILLED -> "Vorkontrakt voll geliefert";
             case FORWARD_CONTRACT_SHORTFALL -> "Vorkontrakt nicht voll geliefert";
             case LEASE_OUT_RECLAIMED -> "verpachtetes Feld im Spielmenü zurückgeholt";
+            case CONTRACTOR_WORK -> "Lohnauftrag auf dem eigenen Feld erledigt"; // R31-A1
+            case MACHINE_LOAN_DAMAGE -> "geliehene Maschine beschädigt zurückgegeben"; // R31-A2
+            case MACHINE_LOAN_LOST -> "geliehene Maschine nicht zurückgegeben";
+            case MACHINE_LOAN_RENT_MISSED -> "Miete für die geliehene Maschine nicht bezahlt";
             case FAMILY_FIELD_LEASED -> "Familienfeld verpachtet";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();

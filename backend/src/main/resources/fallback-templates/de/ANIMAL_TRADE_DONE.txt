@@ -1,0 +1,6 @@
+Danke für den Handel
+Moin,
+
+das hat geklappt: {{count}} Tiere ({{subType}}) für {{price}} €. Gern wieder!
+
+{{characterName}}

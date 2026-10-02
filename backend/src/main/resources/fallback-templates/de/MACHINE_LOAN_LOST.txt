@@ -1,0 +1,6 @@
+Wo ist der {{vehicleName}}?
+Hallo,
+
+der {{vehicleName}} ist nicht mehr auf deinem Hof und kam nie bei mir an. Ich verlange {{claim}} € Ersatz – das ist abgebucht.
+
+{{characterName}}

@@ -153,4 +153,92 @@ class BridgeValidatorTest {
                 BridgeDtos.MarketContext.class);
         assertThat(BridgeValidator.validate(broken)).singleElement().asString().startsWith("invalid store vehicle");
     }
+
+    // Roadmap V3.1 (R31-Q1): snowHeight, sprayType, category, fuel, dayTimeMs, vehiclePositions and fieldShapes are
+    // optional like the V2/V3 blocks
+
+    @Test
+    void roadmapV31FieldsAreNotPresentForAnOlderMod() {
+        FarmFacts old = facts("""
+                "calendar": { "period": 10, "dayInPeriod": 1, "daysPerPeriod": 1, "year": 1, "monotonicDay": 0 },
+                "weather": { "raining": false, "rainFallScale": 0, "groundWetness": 0 }""");
+        assertThat(BridgeValidator.validate(old)).isEmpty();
+        assertThat(old.vehiclePositions()).isNull();
+        assertThat(old.calendar().dayTimeMs()).isNull();
+        assertThat(old.weather().snowHeight()).isNull();
+        FarmFacts empty = facts("\"vehiclePositions\": []");
+        assertThat(BridgeValidator.validate(empty)).isEmpty();
+        assertThat(empty.vehiclePositions()).isEmpty();
+    }
+
+    @Test
+    void roadmapV31FieldsAreParsedAndChecked() {
+        FarmFacts f = JSON.readValue("""
+                { "schemaVersion": 1, "gameTime": 48300000, "savegameId": "sg", "liquidity": { "balance": 245000 },
+                  "assets": { "vehicles": [{ "uniqueId": "veh_1", "value": 180000, "condition": 85,
+                                             "category": "TRACTORSL", "fuel": { "liters": 212, "capacity": 400 } }],
+                              "placeables": [], "farmland": [], "animals": [], "storage": [] },
+                  "liabilities": { "vanillaLoan": { "active": false, "remainingAmount": 0 } }, "prices": [],
+                  "calendar": { "period": 10, "dayInPeriod": 1, "daysPerPeriod": 1, "year": 1, "monotonicDay": 0,
+                                "dayTimeMs": 18000000 },
+                  "weather": { "raining": false, "rainFallScale": 0, "groundWetness": 0, "snowHeight": 0.12 },
+                  "fields": [{ "farmlandId": 4, "name": "4", "hectares": 3, "growthState": 0, "weedState": 0,
+                               "stoneLevel": 0, "sprayLevel": 1, "limeLevel": 0, "plowLevel": 0,
+                               "sprayType": "LIQUID_MANURE" }],
+                  "vehiclePositions": [{ "uniqueId": "veh_1", "x": -312.5, "z": 88, "farmlandId": 7, "onCrop": true },
+                                       { "uniqueId": "veh_2", "x": 10, "z": 20 }] }""", FarmFacts.class);
+        assertThat(BridgeValidator.validate(f)).isEmpty();
+        var v = f.assets().vehicles().get(0);
+        assertThat(v.category()).isEqualTo("TRACTORSL");
+        assertThat(v.fuel().liters()).isEqualTo(212.0);
+        assertThat(f.calendar().dayTimeMs()).isEqualTo(18_000_000L);
+        assertThat(f.weather().snowHeight()).isEqualTo(0.12);
+        assertThat(f.fields().get(0).sprayType()).isEqualTo("LIQUID_MANURE");
+        assertThat(f.vehiclePositions().get(0).onCrop()).isTrue();
+        assertThat(f.vehiclePositions().get(1).farmlandId()).isNull();
+
+        String vehicle = "\"uniqueId\": \"veh_1\", \"value\": 1, \"condition\": 50";
+        assertThat(BridgeValidator.validate(JSON.readValue(("{" + V1 + "}").replace("\"vehicles\": []",
+                "\"vehicles\": [{" + vehicle + ", \"fuel\": { \"liters\": 500, \"capacity\": 400 } }]"), FarmFacts.class)))
+                .singleElement().asString().startsWith("invalid vehicle");
+        assertThat(BridgeValidator.validate(JSON.readValue(("{" + V1 + "}").replace("\"vehicles\": []",
+                "\"vehicles\": [{" + vehicle + ", \"category\": \" \" }]"), FarmFacts.class)))
+                .singleElement().asString().startsWith("invalid vehicle");
+        assertThat(BridgeValidator.validate(facts("""
+                "calendar": { "period": 10, "dayInPeriod": 1, "daysPerPeriod": 1, "year": 1, "monotonicDay": 0,
+                              "dayTimeMs": 86400000 }""")))
+                .singleElement().asString().startsWith("invalid calendar");
+        assertThat(BridgeValidator.validate(facts(
+                "\"weather\": { \"raining\": false, \"rainFallScale\": 0, \"groundWetness\": 0, \"snowHeight\": -1 }")))
+                .singleElement().asString().startsWith("invalid weather");
+        assertThat(BridgeValidator.validate(facts(
+                "\"vehiclePositions\": [{ \"uniqueId\": \"veh_1\", \"x\": 1 }]")))
+                .singleElement().asString().startsWith("invalid vehicle position");
+        assertThat(BridgeValidator.validate(facts(
+                "\"vehiclePositions\": [{ \"uniqueId\": \"veh_1\", \"x\": 1, \"z\": 2, \"farmlandId\": 0 }]")))
+                .singleElement().asString().startsWith("invalid vehicle position");
+    }
+
+    @Test
+    void fieldShapesAreOptionalInTheMarketContext() {
+        String base = """
+                "savegameId": "sg", "mapName": "Erlengrund", "sellPoints": [], "fillTypes": [], "farmlands": [],
+                "detectedMods": []""";
+        var old = JSON.readValue("{" + base + "}", BridgeDtos.MarketContext.class);
+        assertThat(old.fieldShapes()).isNull();
+        var ctx = JSON.readValue("{" + base + """
+                , "fieldShapes": { "mapSize": 2048, "fields": [{ "farmlandId": 4, "name": "4",
+                    "points": [{ "x": 10, "z": -20.1 }, { "x": 30, "z": -20 }, { "x": 30, "z": 5 }] }] } }""",
+                BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(ctx)).isEmpty();
+        assertThat(ctx.fieldShapes().mapSize()).isEqualTo(2048.0);
+        assertThat(ctx.fieldShapes().fields().get(0).points()).hasSize(3);
+        var tooFew = JSON.readValue("{" + base + """
+                , "fieldShapes": { "mapSize": 2048, "fields": [{ "farmlandId": 4, "name": "4",
+                    "points": [{ "x": 10, "z": -20 }, { "x": 30, "z": -20 }] }] } }""", BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(tooFew)).singleElement().asString().startsWith("invalid field shape");
+        var noSize = JSON.readValue("{" + base + ", \"fieldShapes\": { \"fields\": [] } }",
+                BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(noSize)).singleElement().asString().startsWith("invalid fieldShapes");
+    }
 }

@@ -64,10 +64,14 @@ public class MaintenanceService {
     private final RpsimProperties props;
     private final GameTime gameTime;
 
+    /** Roadmap V3.1 R31-A2: borrowed and demo machines are no part of the contract (owner decision). */
+    private final de.farmpulse.rpsim.farmwork.LoanedVehicles loaned;
+
     public MaintenanceService(ContractRepository contracts, ServiceCaseRepository cases, SavegameRepository savegames,
                               ContractBillingService billing, FactsService facts, OutboxService outbox,
                               ServiceRoleService roles, NarrationRequestService narration, DiaryService diary,
-                              RpsimProperties props, GameTime gameTime) {
+                              RpsimProperties props, GameTime gameTime, de.farmpulse.rpsim.farmwork.LoanedVehicles loaned) {
+        this.loaned = loaned;
         this.contracts = contracts;
         this.cases = cases;
         this.savegames = savegames;
@@ -87,7 +91,7 @@ public class MaintenanceService {
 
     private List<BridgeDtos.Vehicle> vehicles(Savegame sg) {
         FarmFacts f = facts.latest(sg).orElse(null);
-        return f == null || f.assets() == null ? List.of() : f.assets().vehicles().stream()
+        return f == null || f.assets() == null ? List.of() : loaned.own(sg, f.assets().vehicles()).stream()
                 .filter(v -> v.uniqueId() != null && v.condition() != null).toList();
     }
 

@@ -14,9 +14,12 @@ RPSimWorkforce = {}
 --- Only machine operators drive helpers (R2-A2).
 RPSimWorkforce.DRIVER_ROLE = "MACHINE_OPERATOR"
 --- Roadmap V3 R3-P2: roles that drive helpers, by assignment priority (machine operators first, then apprentices -
--- apprentices drive like an operator without trainings).
-RPSimWorkforce.DRIVER_ROLES = { MACHINE_OPERATOR = 1, APPRENTICE = 2 }
+-- apprentices drive like an operator without trainings). Roadmap V3.1 R31-A5: seasonal workers drive without trainings
+-- like apprentices, after the machine operators and before the apprentices (owner decision).
+RPSimWorkforce.DRIVER_ROLES = { MACHINE_OPERATOR = 1, SEASONAL_WORKER = 2, APPRENTICE = 3 }
 RPSimWorkforce.APPRENTICE_ROLE = "APPRENTICE"
+--- Roles that never have a training (R3-P2 apprentice, R31-A5 seasonal worker).
+RPSimWorkforce.UNTRAINED_ROLES = { APPRENTICE = true, SEASONAL_WORKER = true }
 
 --- "Schulungen": titles of the trainings for the game messages (the backend sends the codes).
 RPSimWorkforce.TRAINING_TITLES = { LARGE_TRACTOR = "Große Traktoren", COMBINE = "Mähdrescher",
@@ -82,9 +85,9 @@ end
 function RPSimWorkforce.setRoster(state, ins)
     local employees = {}
     for _, e in ipairs(ins.employees or {}) do
-        -- R3-P2: an apprentice never has a training (trainings in the list are ignored)
+        -- R3-P2 / R31-A5: apprentices and seasonal workers never have a training (trainings in the list are ignored)
         employees[#employees + 1] = { employeeId = e.employeeId, name = e.name, role = e.role, status = e.status,
-            trainings = e.role == RPSimWorkforce.APPRENTICE_ROLE and {} or trainingSet(e.trainings) }
+            trainings = RPSimWorkforce.UNTRAINED_ROLES[e.role] and {} or trainingSet(e.trainings) }
     end
     local byTraining, byCategory = categoryIndex(ins.trainingCategories)
     state.roster = { employees = employees, helperWageMode = ins.helperWageMode,

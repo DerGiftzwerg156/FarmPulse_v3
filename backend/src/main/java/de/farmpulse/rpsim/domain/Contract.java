@@ -89,4 +89,15 @@ public class Contract extends SavegameScoped {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    /** Roadmap V3.1 R31-A4 (WINTER_SERVICE): snow days of the running winter month and of the whole winter. */
+    @Column(name = "snow_days", nullable = false)
+    private int snowDays;
+
+    @Column(name = "snow_days_total", nullable = false)
+    private int snowDaysTotal;
+
+    /** Game day index of the last counted snow day (a day counts once). */
+    @Column(name = "last_snow_day")
+    private Long lastSnowDay;
 }

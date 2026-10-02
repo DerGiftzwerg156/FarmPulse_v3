@@ -129,12 +129,14 @@ public final class Views {
     /**
      * Roadmap V2 R2-A: onStrike (A5); hoursThisMonth / hoursLastMonth = hours driven as FS25 helper (A4), null when the mod
      * reports no worked time or the employee is no machine operator. "Schulungen": finished trainings, the running one
-     * and its end (the employee is away until then).
+     * and its end (the employee is away until then). Roadmap V3.1 R31-A5: contractEndsAtGameTime = end of a seasonal
+     * worker's fixed-term contract.
      */
     public record EmployeeView(Long id, CharacterRef character, String jobRole, int skill, long monthlySalary, String status,
                                NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
                                boolean onStrike, Double hoursThisMonth, Double hoursLastMonth, List<String> trainings,
-                               String trainingInProgress, Long trainingUntilGameTime, Long apprenticeshipEndsAtGameTime) {
+                               String trainingInProgress, Long trainingUntilGameTime, Long apprenticeshipEndsAtGameTime,
+                               Long contractEndsAtGameTime) {
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */
@@ -266,7 +268,7 @@ public final class Views {
                                long monthlyAmount, Integer coveragePercent, Long deductible, Integer termMonths,
                                Long startedAtGameTime, Long endsAtGameTime, Long nextDueGameTime, Long offerExpiresAtGameTime,
                                int missedPayments, boolean paymentOverdue, String endReason, Long renewalAmount,
-                               Long purchasePrice) {
+                               Long purchasePrice, Integer snowDays, Integer snowDaysTotal) {
     }
 
     /** TODO T-20 / T-22: simulated incident or one-off offer of a service character. */

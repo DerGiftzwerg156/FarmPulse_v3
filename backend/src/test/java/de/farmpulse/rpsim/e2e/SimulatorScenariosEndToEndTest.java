@@ -161,6 +161,69 @@ class SimulatorScenariosEndToEndTest {
         });
     }
 
+    /**
+     * Roadmap V3.1 (R31-Q2): snow height, categories, diesel, time of day, vehicle positions, spray types and field
+     * outlines of the V3.1 scenarios reach the backend; an older scenario leaves them out.
+     */
+    @Test
+    void roadmapV31FieldsArriveFromTheNewScenarios() {
+        Savegame winter = link("winter-schnee", "sim_winter_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            var f = facts.latest(savegames.findById(winter.getId()).orElseThrow()).orElseThrow();
+            assertThat(f.weather().snowHeight()).isEqualTo(0.15);
+            assertThat(f.calendar().dayTimeMs()).isNotNull();
+            assertThat(f.vehiclePositions()).isEmpty();
+            assertThat(f.assets().vehicles()).extracting(v -> v.category()).containsExactly("TRACTORSL", "TRACTORSM", "TRAILERS");
+            assertThat(f.assets().vehicles().get(0).fuel().capacity()).isEqualTo(400.0);
+            assertThat(f.assets().vehicles().get(2).fuel()).isNull();
+        });
+        Savegame contractor = link("lohnunternehmer", "sim_lohn_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(contractor.getId()).orElseThrow();
+            assertThat(facts.latest(sg).orElseThrow().fields()).extracting(fd -> fd.sprayType())
+                    .containsExactly("NONE", "MANURE", "LIQUID_MANURE", "NONE");
+            var shapes = facts.marketContext(sg).orElseThrow().fieldShapes();
+            assertThat(shapes.mapSize()).isEqualTo(2048.0);
+            assertThat(shapes.fields()).hasSize(15);
+        });
+        Savegame old = link("wohlhabender-hof", "sim_alt31_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(old.getId()).orElseThrow();
+            var f = facts.latest(sg).orElseThrow();
+            assertThat(f.vehiclePositions()).isNull();
+            assertThat(f.calendar().dayTimeMs()).isNull();
+            assertThat(f.weather().snowHeight()).isNull();
+            assertThat(f.assets().vehicles()).allSatisfy(v -> assertThat(v.fuel()).isNull());
+            assertThat(facts.marketContext(sg).orElseThrow().fieldShapes()).isNull();
+        });
+    }
+
+    /** Roadmap V3.1 (R31-Q2): a VEHICLE_FUEL goes out, the simulator takes the diesel and the litres come back. */
+    @Test
+    void vehicleFuelReturnsTheLitresTakenInTheAck() {
+        String id = "sim_fuel_" + System.nanoTime();
+        Savegame sg = link("winter-schnee", id);
+        String instructionId = tx.execute(s -> {
+            OutboxInstruction o = new OutboxInstruction();
+            o.setSavegame(savegames.findById(sg.getId()).orElseThrow());
+            o.setInstructionId(OutboxService.newInstructionId());
+            o.setType(de.farmpulse.rpsim.domain.InstructionType.VEHICLE_FUEL);
+            o.setPayloadJson("{\"vehicleId\":\"veh_00002\",\"delta\":-500}");
+            o.setStatus(InstructionStatus.PENDING);
+            o.setCreatedAtGameTime(0);
+            o.setCreatedAt(java.time.Instant.now());
+            return outbox.save(o).getInstructionId();
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "winter-schnee", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            OutboxInstruction done = outbox.findByInstructionId(instructionId).orElseThrow();
+            assertThat(done.getStatus()).isEqualTo(InstructionStatus.APPLIED);
+            assertThat(outboxService.ackResult(done)).containsEntry("liters", 90);
+        });
+    }
+
     /** Roadmap V3 (R3-W2): the growing own fields of duerre-sommer are recorded for the drought aid. */
     @Test
     void duerreSommerRecordsTheGrowingOwnFields() {

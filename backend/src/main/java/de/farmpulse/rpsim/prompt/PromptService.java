@@ -240,6 +240,9 @@ public class PromptService {
                     case TAX_ADVISOR -> from + " übernimmt deine Steuern für " + money(c.getMonthlyAmount())
                             + " im Monat und senkt die Steuer um "
                             + Math.round(props.getFormulas().getTax().getAdvisorTaxReduction() * 100) + " %.";
+                    case WINTER_SERVICE -> from + " bietet den Winterdienst für " + money(c.getMonthlyAmount())
+                            + " je Wintermonat plus " + money(props.getFormulas().getWinterService().getFeePerSnowDay())
+                            + " je Einsatztag an."; // R31-A4
                     default -> null;
                 };
                 if (text != null) {

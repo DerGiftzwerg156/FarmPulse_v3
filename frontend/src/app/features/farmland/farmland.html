@@ -110,9 +110,12 @@
               }
               <span class="text-[11px] text-muted">{{ 'farmland.familyFieldHint' | t }}</span>
             </div>
+            <!-- Roadmap V3.1 R31-A1: the contractor works the own field -->
+            <app-contractor-work-card [farmlandId]="f.farmlandId" (ordered)="casesView()?.load()" />
           } @else if (f.leased) {
             <p class="mt-2 text-[12px] text-muted" data-testid="leased">{{ 'farmland.leasedHint' | t }}
               <a routerLink="/contracts" class="fp-label hover:text-accent">{{ 'farmland.toContracts' | t }}</a></p>
+            <app-contractor-work-card [farmlandId]="f.farmlandId" (ordered)="casesView()?.load()" />
           } @else if (f.ownerType === 'CHARACTER' && f.owner) {
             <div class="mt-3 flex flex-wrap items-center gap-2">
               <app-button [disabled]="busy()" (pressed)="startDirect(f)" data-testid="start-direct">{{ 'farmland.startDirect' | t }}</app-button>
@@ -244,7 +247,7 @@
     </div>
   }
 
-  <app-service-cases [caseKinds]="['COMPENSATION_CLAIM', 'MISSION_REFERRAL']" [contractKinds]="['LEASE']" openTitle="farmland.claims"
+  <app-service-cases [caseKinds]="['COMPENSATION_CLAIM', 'MISSION_REFERRAL', 'CONTRACTOR_WORK']" [contractKinds]="['LEASE']" openTitle="farmland.claims"
     contractsTitle="farmland.leases" [showEmpty]="false" [highlightCase]="highlightedCase()" [highlightContract]="highlightedContract()" testId="field-cases">
     <p contracts-intro class="mb-3 text-[12px] text-muted">{{ 'contracts.leaseHint' | t }}</p>
   </app-service-cases>

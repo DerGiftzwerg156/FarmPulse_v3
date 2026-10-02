@@ -201,6 +201,32 @@ public class OutboxService {
     }
 
     /**
+     * Roadmap V3.1 R31-A2: a borrowed or demo machine - VEHICLE_SPAWN with price 0 (nothing is booked by the mod; the
+     * rent runs as MACHINE_RENT per game day).
+     */
+    @Transactional
+    public OutboxInstruction loanSpawn(Savegame sg, String storeXmlFilename, int ageMonths, int operatingHours,
+                                       double damage, double wear, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("storeXmlFilename", storeXmlFilename);
+        p.put("ageMonths", ageMonths);
+        p.put("operatingHours", operatingHours);
+        p.put("damage", damage);
+        p.put("wear", wear);
+        p.put("price", 0);
+        p.put("moneyReason", MoneyReason.MACHINE_RENT.name());
+        return enqueue(sg, InstructionType.VEHICLE_SPAWN, p, null, null, related);
+    }
+
+    /** Roadmap V3.1 R31-A2: a borrowed or demo machine goes back (VEHICLE_REMOVE without money). */
+    @Transactional
+    public OutboxInstruction vehicleRemove(Savegame sg, String vehicleId, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("vehicleId", vehicleId);
+        return enqueue(sg, InstructionType.VEHICLE_REMOVE, p, null, null, related);
+    }
+
+    /**
      * Roadmap V3 R3-V3: an own machine sold to a neighbour - VEHICLE_REMOVE first, then the proceeds (VEHICLE_SALE) in
      * the same batch, so a refused removal books nothing.
      */
@@ -212,6 +238,57 @@ public class OutboxService {
         OutboxInstruction remove = enqueue(sg, InstructionType.VEHICLE_REMOVE, p, batchId, null, related);
         OutboxInstruction money = money(sg, price, MoneyReason.VEHICLE_SALE, note, related, batchId, null);
         return List.of(remove, money);
+    }
+
+    /**
+     * Roadmap V3.1 R31-A1: the contractor's work on an own field as one batch - FIELD_WORK first, for a harvest the
+     * yield into the own silos (STORAGE_TRANSFER IN), then the fee (CONTRACTOR_FEE); a refused work books nothing.
+     * {@code fruitType} only for SOW; {@code harvestFillType} / {@code harvestLiters} only for HARVEST.
+     */
+    @Transactional
+    public List<OutboxInstruction> fieldWorkDeal(Savegame sg, int farmlandId, String work, String fruitType,
+                                                 String harvestFillType, long harvestLiters, long price, String note,
+                                                 Related related) {
+        String batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("farmlandId", farmlandId);
+        p.put("work", work);
+        if (fruitType != null) {
+            p.put("fruitType", fruitType);
+        }
+        List<OutboxInstruction> list = new java.util.ArrayList<>();
+        list.add(enqueue(sg, InstructionType.FIELD_WORK, p, batchId, null, related));
+        if (harvestFillType != null && harvestLiters > 0) {
+            Map<String, Object> t = new LinkedHashMap<>();
+            t.put("direction", "IN");
+            t.put("fillType", harvestFillType);
+            t.put("amount", harvestLiters);
+            list.add(enqueue(sg, InstructionType.STORAGE_TRANSFER, t, batchId, null, related));
+        }
+        list.add(money(sg, -price, MoneyReason.CONTRACTOR_FEE, note, related, batchId, null));
+        return list;
+    }
+
+    /**
+     * Roadmap V3.1 R31-A3: animals into (IN, purchase) or out of (OUT, sale) an own husbandry and the money as one batch -
+     * ANIMAL_TRANSFER first, so a refused transfer books nothing. {@code price} is the positive total.
+     */
+    @Transactional
+    public List<OutboxInstruction> animalDeal(Savegame sg, boolean in, String husbandryUniqueId, String subType, int count,
+                                              Integer ageMonths, long price, String note, Related related) {
+        String batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("husbandryUniqueId", husbandryUniqueId);
+        p.put("subType", subType);
+        p.put("count", count);
+        if (ageMonths != null) {
+            p.put("age", ageMonths);
+        }
+        p.put("direction", in ? "IN" : "OUT");
+        OutboxInstruction transfer = enqueue(sg, InstructionType.ANIMAL_TRANSFER, p, batchId, null, related);
+        OutboxInstruction money = money(sg, in ? -price : price, in ? MoneyReason.LIVESTOCK_PURCHASE
+                : MoneyReason.LIVESTOCK_SALE, note, related, batchId, null);
+        return List.of(transfer, money);
     }
 
     /** Roadmap V3 R3-H5: a real contract of the game on the field of an NPC farmland (result.missionId in the ack). */

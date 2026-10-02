@@ -187,6 +187,29 @@ public enum NarrationEventType {
     LEASE_OUT_RECLAIMED,
     FAMILY_FIELD_LEASED,
     COLLATERAL_LEASE_CONSENT,
+    // Roadmap V3.1 R31-A1: contractor works an own field
+    CONTRACTOR_WORK_DONE,
+    CONTRACTOR_WORK_CANCELLED,
+    // Roadmap V3.1 R31-A2: borrowed and demo machines
+    MACHINE_LOAN_DELIVERED,
+    MACHINE_LOAN_RETURNED,
+    MACHINE_LOAN_RECALLED,
+    MACHINE_LOAN_LOST,
+    MACHINE_LOAN_FAILED,
+    MACHINE_DEMO_OFFER,
+    MACHINE_DEMO_PURCHASE_OFFER,
+    // Roadmap V3.1 R31-A3: livestock trade with the neighbours
+    ANIMAL_OFFER,
+    ANIMAL_REQUEST,
+    ANIMAL_TRADE_DONE,
+    ANIMAL_TRADE_FAILED,
+    ANIMAL_TRADE_GOSSIP,
+    // Roadmap V3.1 R31-A4: winter service for the municipality
+    WINTER_SERVICE_OFFER,
+    WINTER_SERVICE_ENDED,
+    // Roadmap V3.1 R31-A5: seasonal workers
+    SEASONAL_WORKER_FAREWELL,
+    SEASONAL_WORKER_RETURN,
     // conversation
     REPLY,
     CALL_CONVERSATION

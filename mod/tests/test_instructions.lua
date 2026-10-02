@@ -15,7 +15,9 @@ function T.TestInstructions:testAllMoneyReasonsAccepted()
         "CREDIT_SPECIAL_REPAYMENT", "CREDIT_PREPAYMENT_FEE",
         "SALARY_PAYMENT", "EMPLOYEE_EFFECT", "SUBSIDY", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE",
         "FARMLAND_SALE", "OTHER", "TAX_PAYMENT", "TAX_REFUND", "FINE", "FAMILY", "SPONSORING", "COMPENSATION",
-        "LEASE_INCOME", "GOODS_PURCHASE", "GOODS_SALE", "VEHICLE_PURCHASE", "VEHICLE_SALE", "CONTRACT_PENALTY" }) do
+        "LEASE_INCOME", "GOODS_PURCHASE", "GOODS_SALE", "VEHICLE_PURCHASE", "VEHICLE_SALE", "CONTRACT_PENALTY",
+        "CONTRACTOR_FEE", "MACHINE_RENT", "LIVESTOCK_PURCHASE", "LIVESTOCK_SALE", "WINTER_SERVICE", "DIRECT_PAYMENT",
+        "INVESTMENT_GRANT", "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND" }) do
         lu.assertTrue(RPSimInstructions.validate(money("i", 1, r)), r)
     end
     local ok, why = RPSimInstructions.validate(money("i", 1, "FREE_MONEY"))
@@ -344,8 +346,10 @@ end
 function T.TestInstructions:testVehicleSpawnValidation()
     lu.assertTrue(RPSimInstructions.validate(spawn()))
     lu.assertTrue(RPSimInstructions.validate(spawn({ ageMonths = 0, operatingHours = 0, damage = 0, wear = 1 })))
+    -- Roadmap V3.1 R31-A2: price 0 = borrowed or demo machine
+    lu.assertTrue(RPSimInstructions.validate(spawn({ price = 0, moneyReason = "MACHINE_RENT" })))
     local cases = { { storeXmlFilename = "" }, { ageMonths = -1 }, { operatingHours = -1 }, { damage = 1.2 },
-        { wear = -0.1 }, { price = 0 }, { price = -98000 }, { moneyReason = "FREE_MONEY" } }
+        { wear = -0.1 }, { price = -98000 }, { moneyReason = "FREE_MONEY" } }
     for _, c in ipairs(cases) do
         local ok, why = RPSimInstructions.validate(spawn(c))
         lu.assertFalse(ok, why)
@@ -402,6 +406,106 @@ function T.TestInstructions:testActionResultIsWrittenIntoTheAck()
     lu.assertEquals(byId.ins_vs.result, { vehicleId = "veh_9" })
     lu.assertNil(byId.ins_vr.result)
     lu.assertStrContains(RPSimJson.encode(ack), '"result":{"vehicleId":"veh_9"}')
+end
+
+-- Roadmap V3.1 (R31-Q1): the three new instruction types
+local function fieldWork(extra)
+    local ins = { instructionId = "ins_fw", type = "FIELD_WORK", farmlandId = 4, work = "PLOW" }
+    for k, v in pairs(extra or {}) do ins[k] = v end
+    return ins
+end
+
+local function animals(extra)
+    local ins = { instructionId = "ins_at", type = "ANIMAL_TRANSFER", husbandryUniqueId = "hus_00001",
+        subType = "COW_HOLSTEIN", count = 3, age = 6, direction = "IN" }
+    for k, v in pairs(extra or {}) do ins[k] = v end
+    return ins
+end
+
+local function fuel(extra)
+    local ins = { instructionId = "ins_vf", type = "VEHICLE_FUEL", vehicleId = "veh_1", delta = -120 }
+    for k, v in pairs(extra or {}) do ins[k] = v end
+    return ins
+end
+
+function T.TestInstructions:testFieldWorkValidation()
+    for _, w in ipairs({ "PLOW", "CULTIVATE", "LIME", "HARVEST" }) do
+        lu.assertTrue(RPSimInstructions.validate(fieldWork({ work = w })), w)
+    end
+    lu.assertTrue(RPSimInstructions.validate(fieldWork({ work = "SOW", fruitType = "WHEAT" })))
+    local cases = { { farmlandId = "4" }, { work = "MOW" }, { work = "SOW" }, { work = "SOW", fruitType = "" },
+        { work = "PLOW", fruitType = "WHEAT" } }
+    for _, c in ipairs(cases) do
+        local ok, why = RPSimInstructions.validate(fieldWork(c))
+        lu.assertFalse(ok, why)
+    end
+end
+
+function T.TestInstructions:testAnimalTransferValidation()
+    lu.assertTrue(RPSimInstructions.validate(animals()))
+    lu.assertTrue(RPSimInstructions.validate(animals({ direction = "OUT", age = 0 })))
+    local withoutAge = animals()
+    withoutAge.age = nil
+    lu.assertTrue(RPSimInstructions.validate(withoutAge))
+    local cases = { { husbandryUniqueId = "" }, { subType = "" }, { count = 0 }, { count = 1.5 }, { count = "3" },
+        { age = -1 }, { direction = "SIDEWAYS" } }
+    for _, c in ipairs(cases) do
+        local ok, why = RPSimInstructions.validate(animals(c))
+        lu.assertFalse(ok, why)
+    end
+end
+
+function T.TestInstructions:testVehicleFuelValidation()
+    lu.assertTrue(RPSimInstructions.validate(fuel()))
+    for _, c in ipairs({ { vehicleId = "" }, { delta = 0 }, { delta = 50 }, { delta = "-5" } }) do
+        local ok, why = RPSimInstructions.validate(fuel(c))
+        lu.assertFalse(ok, why)
+    end
+end
+
+function T.TestInstructions:testRoadmapV31TypesAreNotSupportedWithoutTheirAction()
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    local res = RPSimProcessor.process(state, { savegameId = SG, instructions = { fieldWork(), animals(), fuel() } },
+        { savegameId = SG, gameTime = 1000, actions = {} })
+    lu.assertEquals(res.applied, 0)
+    for _, id in ipairs({ "ins_fw", "ins_at", "ins_vf" }) do
+        lu.assertEquals(state.processed[id].status, "FAILED", id)
+        lu.assertEquals(state.processed[id].message, "NOT_SUPPORTED", id)
+    end
+end
+
+function T.TestInstructions:testFieldWorkBatchIsAbortedWithoutSupport()
+    -- a contractor job is a batch: FIELD_WORK first, then the MONEY_TRANSACTION - nothing is booked
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    local booked = 0
+    RPSimProcessor.process(state, { savegameId = SG, instructions = {
+        fieldWork({ batchId = "b1" }),
+        { instructionId = "ins_m", batchId = "b1", type = "MONEY_TRANSACTION", amount = -900,
+            reason = "CONTRACTOR_FEE" } } },
+        { savegameId = SG, gameTime = 1000, actions = {
+            money = function() booked = booked + 1; return true end } })
+    lu.assertEquals(booked, 0)
+    lu.assertEquals(state.processed.ins_fw.message, "NOT_SUPPORTED")
+    lu.assertEquals(state.processed.ins_m.status, "FAILED")
+    lu.assertStrContains(state.processed.ins_m.message, "BATCH_ABORTED")
+end
+
+function T.TestInstructions:testRoadmapV31ActionsAndFuelResult()
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    state.savegameId = SG
+    local called = {}
+    RPSimProcessor.process(state, { savegameId = SG, instructions = { fieldWork(), animals(), fuel() } },
+        { savegameId = SG, gameTime = 1000, actions = {
+            fieldWork = function(ins) called[#called + 1] = ins.type; return true end,
+            animalTransfer = function(ins) called[#called + 1] = ins.type; return false, "NO_ANIMAL_SPACE" end,
+            vehicleFuel = function(ins) called[#called + 1] = ins.type; return true, nil, { liters = 80 } end } })
+    lu.assertEquals(called, { "FIELD_WORK", "ANIMAL_TRANSFER", "VEHICLE_FUEL" })
+    lu.assertEquals(state.processed.ins_fw.status, "APPLIED")
+    lu.assertEquals(state.processed.ins_at.message, "NO_ANIMAL_SPACE")
+    local ack = RPSimProcessor.buildAckDocument(state)
+    local byId = {}
+    for _, a in ipairs(ack.acks) do byId[a.instructionId] = a end
+    lu.assertEquals(byId.ins_vf.result, { liters = 80 })
 end
 
 return T

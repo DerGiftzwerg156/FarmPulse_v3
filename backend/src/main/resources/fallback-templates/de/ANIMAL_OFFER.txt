@@ -1,0 +1,6 @@
+Tiere von mir: {{count}} {{subType}}
+Moin,
+
+ich kann dir {{count}} Tiere ({{subType}}) abgeben, für {{price}} € ({{unitPrice}} € je Tier). Sie kommen direkt in deinen Stall. Das Angebot gilt {{answerDays}} Tage – sag in der App „Handel“ Bescheid.
+
+{{characterName}}
