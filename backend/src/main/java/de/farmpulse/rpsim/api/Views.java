@@ -65,7 +65,14 @@ public final class Views {
 
     /** Roadmap V3 R3-K1: a field pledged for a loan; {@code saleConsent} = the bank agreed to a sale. */
     public record CollateralView(int farmlandId, long collateralValue, String status, boolean saleConsent, Long loanId,
-                                 String purpose) {
+                                 String purpose, boolean leaseConsent) {
+    }
+
+    /**
+     * Roadmap V3 R3-L1: leasing out own fields - the term range of the form and the lease-out contracts (newest
+     * first). Amounts per ha and month are in the negotiations; the contracts carry the monthly rent.
+     */
+    public record LeaseOutView(int termYearsMin, int termYearsMax, List<ContractView> contracts) {
     }
 
     /** Roadmap V3 R3-K1: own fields for the credit form and the pledged fields. */
@@ -137,7 +144,8 @@ public final class Views {
     /** Roadmap V2 R2-C: fruitType and phase (EMPTY, GROWING, HARVESTABLE, HARVESTED, WITHERED) of own fields only. */
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,
                                boolean inNegotiation, boolean tradeable, boolean leased, String fruitType, String phase,
-                               boolean familyField, String collateral, boolean saleConsent) {
+                               boolean familyField, String collateral, boolean saleConsent,
+                               boolean leasedOut, boolean leaseConsent, Long leaseOutGuideRate) {
     }
 
     /**
@@ -189,7 +197,8 @@ public final class Views {
     public record NegotiationView(Long id, String assetType, String assetId, String kind, String direction, String initiatedBy,
                                   String status, CharacterRef counterpart, CharacterRef announcer, long basePrice,
                                   Long askingPrice, int roundsUsed, int maxRounds, Long lastCounterOffer, Long finalPrice,
-                                  Long closesAtGameTime, CharacterRef winner, List<OfferView> offers) {
+                                  Long closesAtGameTime, CharacterRef winner, List<OfferView> offers,
+                                  Integer leaseTermMonths) {
     }
 
     public record OfferResultView(String result, Long counterAmount, int roundsLeft, NegotiationView negotiation) {

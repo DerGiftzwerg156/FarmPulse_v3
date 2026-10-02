@@ -145,6 +145,17 @@ export class ApiService {
   requestSaleConsent(farmlandId: number): Observable<M.CollateralView> {
     return this.post(`/credit/collateral/${farmlandId}/sale-consent`);
   }
+  /** Roadmap V3 R3-L1: the bank's consent to lease out a pledged field. */
+  requestLeaseConsent(farmlandId: number): Observable<M.CollateralView> {
+    return this.post(`/credit/collateral/${farmlandId}/lease-consent`);
+  }
+  // Roadmap V3 R3-L1: leasing out own fields
+  leaseOut(): Observable<M.LeaseOutView> {
+    return this.get('/lease-out');
+  }
+  leaseOutOffer(farmlandId: number, termYears: number, desiredRate: number): Observable<M.NegotiationView[]> {
+    return this.post(`/farmlands/${farmlandId}/lease-out`, { termYears, desiredRate });
+  }
   liquidityPlan(): Observable<M.LiquidityPlanView> {
     return this.get('/liquidity-plan');
   }

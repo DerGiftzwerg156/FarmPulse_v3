@@ -9,5 +9,7 @@ public enum ContractKind {
     /** Maintenance contract with the workshop: monthly fee, repairs of worn vehicles included. */
     MAINTENANCE,
     /** Roadmap V2 R2-E1: tax advisor - monthly fee, lower tax, reminders, fewer audits. */
-    TAX_ADVISOR
+    TAX_ADVISOR,
+    /** Roadmap V3 R3-L1: own field leased out to a neighbour - monthly rent income, field comes back at the end. */
+    LEASE_OUT
 }

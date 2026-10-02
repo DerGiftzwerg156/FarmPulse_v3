@@ -41,6 +41,10 @@ public class LoanCollateral extends SavegameScoped {
     @Column(name = "sale_consent", nullable = false)
     private boolean saleConsent;
 
+    /** Roadmap V3 R3-L1: the bank agreed to lease the field out; the Grundschuld stays. */
+    @Column(name = "lease_consent", nullable = false)
+    private boolean leaseConsent;
+
     /** Repayment booked with the sale of the field (re-pledged when the mod refuses it). */
     @Column(name = "release_instruction_id", length = 64)
     private String releaseInstructionId;

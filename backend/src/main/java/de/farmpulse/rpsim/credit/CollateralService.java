@@ -130,6 +130,13 @@ public class CollateralService {
             long price = Math.round(fl.price());
             out.add(new FieldOption(fl.farmlandId(), fl.hectares() == null ? 0 : fl.hectares(), price, Math.round(price * ltv)));
         }
+        // R3-L1: leased-out fields have no owner in the game but stay the player's and stay selectable (owner decision)
+        for (FarmlandOwnership o : owned.values()) {
+            if (o.isLeasedFromPlayer() && o.getReferencePrice() > 0 && !tied.contains(o.getFarmlandId())) {
+                out.add(new FieldOption(o.getFarmlandId(), o.getHectares(), o.getReferencePrice(),
+                        Math.round(o.getReferencePrice() * ltv)));
+            }
+        }
         out.sort(Comparator.comparingLong(FieldOption::collateralValue).reversed().thenComparingInt(FieldOption::farmlandId));
         return out;
     }
@@ -250,6 +257,40 @@ public class CollateralService {
             throw new BusinessRuleException("FIELD_PLEDGED", "Auf Feld " + farmlandId
                     + " liegt eine Grundschuld. Bitte zuerst in der App „Bank“ die Zustimmung zum Verkauf einholen.");
         }
+    }
+
+    /** Roadmap V3 R3-L1: leasing out a pledged field needs the bank's consent; one tied to an application cannot. */
+    public void requireLeasable(Savegame sg, int farmlandId) {
+        LoanCollateral c = tied(sg, farmlandId).orElse(null);
+        if (c == null) {
+            return;
+        }
+        if (c.getStatus() != CollateralStatus.PLEDGED) {
+            throw new BusinessRuleException("FIELD_IN_CREDIT_APPLICATION",
+                    "Feld " + farmlandId + " ist für einen offenen Kreditantrag als Sicherheit vorgesehen.");
+        }
+        if (!c.isLeaseConsent()) {
+            throw new BusinessRuleException("FIELD_PLEDGED_LEASE", "Auf Feld " + farmlandId
+                    + " liegt eine Grundschuld. Bitte zuerst in der App „Bank“ die Zustimmung zur Verpachtung einholen.");
+        }
+    }
+
+    /** Roadmap V3 R3-L1: the bank agrees by mail to lease out a pledged field (owner decision); the Grundschuld stays. */
+    @Transactional
+    public LoanCollateral requestLeaseConsent(Savegame sg, int farmlandId) {
+        LoanCollateral c = tied(sg, farmlandId).filter(x -> x.getStatus() == CollateralStatus.PLEDGED)
+                .orElseThrow(() -> new BusinessRuleException("NOT_PLEDGED", "Auf Feld " + farmlandId + " liegt keine Grundschuld."));
+        if (c.isLeaseConsent()) {
+            return c;
+        }
+        c.setLeaseConsent(true);
+        Loan l = c.getLoan();
+        narration.request(sg, NarrationEventType.COLLATERAL_LEASE_CONSENT).from(lookup.bank(sg).orElse(null))
+                .facts(NarrationFacts.builder().put("farmlandId", farmlandId).put("purpose", l.getPurpose()).build())
+                .category(CommunicationCategory.CREDIT).related(LoanService.RELATED, l.getId()).submit();
+        diary.addAuto(sg, "CREDIT", "Zustimmung zur Verpachtung", "Die Bank ist einverstanden, dass Feld " + farmlandId
+                + " verpachtet wird. Die Grundschuld bleibt eingetragen.", LoanService.RELATED, l.getId());
+        return c;
     }
 
     /**

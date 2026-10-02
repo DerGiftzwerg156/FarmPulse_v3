@@ -1,0 +1,7 @@
+Keine Pächter für Feld {{farmlandId}}
+Hallo,
+
+für Feld {{farmlandId}} hat sich zu {{desiredRate}} € je Hektar und Monat niemand gemeldet, der die Pacht für {{termYears}} Jahre stemmen kann. Vielleicht klappt es mit einer niedrigeren Wunschpacht oder einer kürzeren Laufzeit.
+
+Viele Grüße
+{{characterName}}

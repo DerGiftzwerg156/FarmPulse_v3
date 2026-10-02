@@ -69,6 +69,11 @@ public class NegotiationEngine {
     private final RpsimProperties props;
     private final de.farmpulse.rpsim.credit.CollateralService collateral;
     private final org.springframework.context.ApplicationEventPublisher events;
+    private final de.farmpulse.rpsim.contract.LeaseOutPhase leaseOutPhase;
+
+    /** Roadmap V3 R3-L1: a lease-out negotiation ended with an agreement - LeaseOutService starts the lease. */
+    public record LeaseAgreed(Long savegameId, Long negotiationId) {
+    }
 
     /** Roadmap V3 R3-V: a negotiation about a machine ended with an agreement - the vehicle trade takes over. */
     public record VehicleAgreed(Long savegameId, Long negotiationId) {
@@ -79,8 +84,10 @@ public class NegotiationEngine {
                              LiquidityService liquidity, NarrationRequestService narration, CharacterLookup lookup,
                              TrustScoreService trust, DiaryService diary, RandomSource random, RpsimProperties props,
                              de.farmpulse.rpsim.credit.CollateralService collateral,
-                             org.springframework.context.ApplicationEventPublisher events) {
+                             org.springframework.context.ApplicationEventPublisher events,
+                             de.farmpulse.rpsim.contract.LeaseOutPhase leaseOutPhase) {
         this.events = events;
+        this.leaseOutPhase = leaseOutPhase;
         this.negotiations = negotiations;
         this.offers = offers;
         this.ownership = ownership;
@@ -240,6 +247,9 @@ public class NegotiationEngine {
             throw new BusinessRuleException("NOT_PLAYER_FIELD", "Nur eigene Felder können verkauft werden.");
         }
         requireTradeable(field);
+        if (field.isLeasedFromPlayer()) {
+            throw new BusinessRuleException("FIELD_LEASED_OUT", "Feld " + farmlandId + " ist verpachtet.");
+        }
         collateral.requireSellable(sg, farmlandId); // R3-K1: a Grundschuld needs the bank's consent first
         if (askingPrice <= 0) {
             throw new BusinessRuleException("INVALID_PRICE", "Der Wunschpreis muss positiv sein.");
@@ -310,6 +320,31 @@ public class NegotiationEngine {
         return negotiations.save(n);
     }
 
+    /**
+     * Roadmap V3 R3-L1: a lease-out negotiation with one interested neighbour - the amounts (guide value, desired and
+     * negotiated rent) are € per ha and month; the term is fixed by the form.
+     */
+    @Transactional
+    public Negotiation openLease(Savegame sg, FarmlandOwnership field, Character tenant, long guideRate, long desiredRate,
+                                 int termMonths, String saleGroupId, long closesAtGameTime) {
+        Negotiation n = newNegotiation(sg, NegotiationKind.LEASE_OFFER, NegotiationDirection.PLAYER_SELLS,
+                Initiator.CHARACTER, field);
+        n.setBasePrice(guideRate);
+        n.setCounterpartCharacter(tenant);
+        n.setAskingPrice(desiredRate);
+        n.setSaleGroupId(saleGroupId);
+        n.setClosesAtGameTime(closesAtGameTime);
+        n.setLeaseTermMonths(termMonths);
+        return negotiations.save(n);
+    }
+
+    /** R3-L1: the most an interested neighbour pays per ha and month (same formula as for a field sale). */
+    public long leaseMaxAccept(Negotiation n) {
+        Character tenant = n.getCounterpartCharacter();
+        return NegotiationFormula.effectiveMaxAccept(n.getBasePrice(), tenant.getNegotiationTrait(),
+                trust.getCurrentTrust(tenant), cfg());
+    }
+
     /** Records an offer of the counterpart (e.g. the first offer of an interested neighbour). */
     @Transactional
     public void counterpartOffer(Negotiation n, long amount) {
@@ -351,6 +386,7 @@ public class NegotiationEngine {
             case AUCTION -> auctionBid(sg, n, amount);
             case DIRECT -> directOffer(sg, n, amount);
             case SALE_OFFER -> saleDemand(sg, n, amount);
+            case LEASE_OFFER -> leaseDemand(sg, n, amount);
         };
     }
 
@@ -387,6 +423,12 @@ public class NegotiationEngine {
                 trust.getCurrentTrust(seller), cfg());
         OfferResult r = NegotiationFormula.evaluatePurchase(amount, effMin, cfg());
         return respond(sg, n, amount, r, r == OfferResult.COUNTER ? effMin : null, seller);
+    }
+
+    /** R3-L1: the player demands a rent per ha and month; the field must still be empty or harvested (fallback). */
+    private OfferOutcome leaseDemand(Savegame sg, Negotiation n, long demand) {
+        leaseOutPhase.requireBare(sg, Integer.parseInt(n.getAssetId()));
+        return saleDemand(sg, n, demand);
     }
 
     private OfferOutcome saleDemand(Savegame sg, Negotiation n, long demand) {
@@ -433,6 +475,11 @@ public class NegotiationEngine {
         n.setStatus(NegotiationStatus.ACCEPTED);
         n.setFinalPrice(price);
         n.setClosedAtGameTime(sg.getCurrentGameTime());
+        if (n.getKind() == NegotiationKind.LEASE_OFFER) {
+            expireSiblings(sg, n);
+            events.publishEvent(new LeaseAgreed(sg.getId(), n.getId())); // R3-L1: contract, transfer, mail and diary there
+            return;
+        }
         if (n.getAssetType() == AssetType.VEHICLE) {
             if (n.getSaleGroupId() != null) {
                 negotiations.findBySaleGroupId(n.getSaleGroupId()).stream()
@@ -473,6 +520,18 @@ public class NegotiationEngine {
                 .category(CommunicationCategory.NEGOTIATION).related(RELATED, n.getId()).submit();
         diary.addAuto(sg, "NEGOTIATION", toPlayer ? "Feld " + farmlandId + " gekauft" : "Feld " + farmlandId + " verkauft",
                 (toPlayer ? "Kaufpreis: " : "Verkaufspreis: ") + price + " €", RELATED, n.getId());
+    }
+
+    private void expireSiblings(Savegame sg, Negotiation n) {
+        if (n.getSaleGroupId() == null) {
+            return;
+        }
+        negotiations.findBySaleGroupId(n.getSaleGroupId()).stream()
+                .filter(o -> !o.getId().equals(n.getId()) && o.getStatus() == NegotiationStatus.OPEN)
+                .forEach(o -> {
+                    o.setStatus(NegotiationStatus.EXPIRED);
+                    o.setClosedAtGameTime(sg.getCurrentGameTime());
+                });
     }
 
     /**

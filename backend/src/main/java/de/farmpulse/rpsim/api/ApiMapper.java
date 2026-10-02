@@ -4,6 +4,7 @@ import java.util.List;
 
 import de.farmpulse.rpsim.api.Views.*;
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.contract.LeaseOutService;
 import de.farmpulse.rpsim.credit.CollateralService;
 import de.farmpulse.rpsim.credit.LoanService;
 import de.farmpulse.rpsim.domain.*;
@@ -78,7 +79,8 @@ public class ApiMapper {
 
     public CollateralView collateral(LoanCollateral c) {
         return new CollateralView(c.getFarmlandId(), c.getCollateralValue(), c.getStatus().name(), c.isSaleConsent(),
-                c.getLoan() == null ? null : c.getLoan().getId(), c.getLoan() == null ? null : c.getLoan().getPurpose());
+                c.getLoan() == null ? null : c.getLoan().getId(), c.getLoan() == null ? null : c.getLoan().getPurpose(),
+                c.isLeaseConsent());
     }
 
     public LoanView loan(Loan l) {
@@ -137,7 +139,11 @@ public class ApiMapper {
                 field == null ? null : field.getPhase().name(),
                 Integer.valueOf(o.getFarmlandId()).equals(sg.getFamilyFieldId()),
                 collateral.tied(sg, o.getFarmlandId()).map(c -> c.getStatus().name()).orElse(null),
-                collateral.tied(sg, o.getFarmlandId()).map(LoanCollateral::isSaleConsent).orElse(false));
+                collateral.tied(sg, o.getFarmlandId()).map(LoanCollateral::isSaleConsent).orElse(false),
+                o.isLeasedFromPlayer(), collateral.tied(sg, o.getFarmlandId()).map(LoanCollateral::isLeaseConsent).orElse(false),
+                o.getOwnerType() == OwnerType.PLAYER && !o.isLeasedToPlayer()
+                        ? LeaseOutService.guideRate(o.getReferencePrice(), o.getHectares(), props.getFormulas().getLeaseOut())
+                        : null);
     }
 
     public NegotiationView negotiation(Negotiation n) {
@@ -150,7 +156,8 @@ public class ApiMapper {
         return new NegotiationView(n.getId(), n.getAssetType().name(), n.getAssetId(), n.getKind().name(),
                 n.getDirection().name(), n.getInitiatedBy().name(), n.getStatus().name(), ref(n.getCounterpartCharacter()),
                 ref(n.getAnnouncingCharacter()), n.getBasePrice(), n.getAskingPrice(), n.getRoundsUsed(), n.getMaxRounds(),
-                n.getLastCounterOffer(), n.getFinalPrice(), n.getClosesAtGameTime(), ref(n.getWinnerCharacter()), offers);
+                n.getLastCounterOffer(), n.getFinalPrice(), n.getClosesAtGameTime(), ref(n.getWinnerCharacter()), offers,
+                n.getLeaseTermMonths());
     }
 
     public MarketEventView marketEvent(MarketEvent e) {

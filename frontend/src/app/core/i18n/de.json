@@ -243,7 +243,8 @@
     "negotiationKind": {
       "AUCTION": "Versteigerung",
       "DIRECT": "Direktverhandlung",
-      "SALE_OFFER": "Verkaufsangebot"
+      "SALE_OFFER": "Verkaufsangebot",
+      "LEASE_OFFER": "Verpachtung"
     },
     "negotiationStatus": {
       "OPEN": "Offen",
@@ -435,7 +436,8 @@
       "INSURANCE": "Sturm- und Hagelversicherung",
       "LEASE": "Pacht",
       "MAINTENANCE": "Wartungsvertrag",
-      "TAX_ADVISOR": "Steuerberatung"
+      "TAX_ADVISOR": "Steuerberatung",
+      "LEASE_OUT": "Verpachtung"
     },
     "contractStatus": {
       "OFFERED": "Angebot",
@@ -566,7 +568,8 @@
       "RENT_MISSED": "wegen unbezahlter Pacht",
       "TRANSFER_FAILED": "Übergabe im Spiel fehlgeschlagen",
       "TERMINATED_BY_PLAYER": "von dir gekündigt",
-      "FEE_MISSED": "wegen unbezahlter Gebühren"
+      "FEE_MISSED": "wegen unbezahlter Gebühren",
+      "RECLAIMED_IN_MENU": "im Spielmenü zurückgeholt"
     },
     "financeCategory": {
       "HARVEST_INCOME": "Ernteverkauf",
@@ -1019,7 +1022,8 @@
     "amount": {
       "AUCTION": "Dein Gebot (€)",
       "DIRECT": "Dein Angebot (€)",
-      "SALE_OFFER": "Deine Forderung (€)"
+      "SALE_OFFER": "Deine Forderung (€)",
+      "LEASE_OFFER": "Deine Pachtforderung (€ je ha und Monat)"
     },
     "submitOffer": "Abgeben",
     "acceptAmount": "{amount} annehmen",
@@ -1071,6 +1075,20 @@
       "same": "Felder {fields}: dieselbe Kultur wie im Vorjahr – das Amt schickt einen Hinweis.",
       "cut": "Felder {fields}: dieselbe Kultur zum zweiten Mal – die Prämie des Jahres wird gekürzt.",
       "premiumNote": "Das Amt rechnet am Ende des FS25-Jahres mit der Hauptkultur jedes Feldes."
+    },
+    "leaseOut": {
+      "badge": "Verpachtet",
+      "leasedHint": "Das Feld ist an einen Nachbarn verpachtet. Im Spiel gehört es niemandem, im Tool bleibt es deins. Pacht und Ende stehen unter „Verpachtete Felder“.",
+      "term": "Laufzeit",
+      "years": "{n} FS25-Jahr(e)",
+      "rate": "Wunschpacht (€ je ha und Monat)",
+      "submit": "Verpachten",
+      "guide": "Richtwert: {rate} je ha und Monat · bei deiner Wunschpacht {monthly} im Monat. Nur wenn das Feld leer oder abgeerntet ist.",
+      "offered": "{n} Nachbar(n) haben ein Pachtgebot abgegeben.",
+      "noInterest": "Niemand hat sich gemeldet – der Berater schreibt dir.",
+      "terms": "Laufzeit {years} Jahr(e) · deine Wunschpacht {rate} je ha und Monat",
+      "title": "Verpachtete Felder",
+      "intro": "Die Pacht kommt jeden Monat als Einnahme. Einen Monat vor dem Ende bietet der Pächter eine Verlängerung an; ohne Antwort bekommst du das Feld zurück."
     }
   },
   "market": {
@@ -1374,7 +1392,8 @@
     "rsvpDecline": "Absagen",
     "invitationHint": "Eine Zusage freut die Gastgeber. Absagen ist in Ordnung – nur gar nicht zu antworten kommt schlecht an.",
     "fine": "Bußgeld {amount}",
-    "paid": "Bezahlt {amount}"
+    "paid": "Bezahlt {amount}",
+    "renewLeaseOut": "Verlängern ({amount} / Monat)"
   },
   "tasks": {
     "filter": "Aufgaben filtern",
@@ -1412,7 +1431,8 @@
     "todayDiary": "Heute im Tagebuch",
     "nothingToday": "Heute ist noch nichts eingetragen.",
     "toDiary": "Zum Tagebuch",
-    "counterOfferShort": "Gegenangebot der Bank"
+    "counterOfferShort": "Gegenangebot der Bank",
+    "leaseOutEndsHint": "Der Pächter möchte verlängern – ohne Antwort bekommst du das Feld zum Ende zurück."
   },
   "calendar": {
     "nextDays": "Nächste Tage",
@@ -1696,6 +1716,8 @@
       "animals": "Tiere",
       "reputation": "Ansehen im Dorf",
       "inspections": "{n} Tierwohl-Kontrolle(n) im Jahr"
-    }
+    },
+    "leaseConsentGiven": "Verpachtung erlaubt",
+    "requestLeaseConsent": "Zustimmung zur Verpachtung"
   }
 }

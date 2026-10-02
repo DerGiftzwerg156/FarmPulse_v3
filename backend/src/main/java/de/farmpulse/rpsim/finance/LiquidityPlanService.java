@@ -163,6 +163,9 @@ public class LiquidityPlanService {
                 }
             }
             for (ContractSim c : contractSims) {
+                if (c.contract.getKind() == ContractKind.LEASE_OUT) {
+                    continue; // R3-L1: income, below
+                }
                 long paid = c.due(sg, start);
                 if (paid > 0) {
                     postings.add(new Posting("CONTRACT", c.contract.getKind().name()
@@ -174,6 +177,14 @@ public class LiquidityPlanService {
                 postings.add(new Posting("RETIREMENT", null, -retirement, false));
             }
             long fixed = -postings.stream().mapToLong(Posting::amount).sum();
+            // R3-L1: rent of a leased-out field - known income (owner decision)
+            for (ContractSim c : contractSims) {
+                long received = c.contract.getKind() == ContractKind.LEASE_OUT ? c.due(sg, start) : 0;
+                if (received > 0) {
+                    postings.add(new Posting("CONTRACT", ContractKind.LEASE_OUT.name() + ":" + c.contract.getFarmlandId(),
+                            received, false));
+                }
+            }
             // R3-M2: expected income of a forward contract delivered in this month (owner decision: own posting, marked)
             for (var fc : forwardContracts.open(sg)) {
                 if (anchor.monthIndex(fc.getDeliveryStartGameTime()) == idx) {

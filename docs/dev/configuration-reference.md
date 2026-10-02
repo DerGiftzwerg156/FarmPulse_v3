@@ -870,6 +870,26 @@ Office clerk with more effect and apprentices. Owner decisions in `QUESTIONS.md`
 | `rpsim.formulas.apprentice.takeover-notice-months` | `1` | The apprentice asks to be taken over this many months before the end (salary = machine operator formula at his skill). | Roadmap V3 R3-P2 |
 | `rpsim.formulas.apprentice.counter-accept-share` | `0.9` | A counter offer from this share of his demand is accepted; below he leaves at the end of the training. | Roadmap V3 R3-P2 |
 
+## `rpsim.formulas.lease-out` (Roadmap V3 R3-L)
+
+Leasing out own fields to neighbours. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.lease-out.annual-rent-share` | `0.05` | Guide rent per ha and month = field price × value / 12 / ha (also the base of the neighbours' limit in the negotiation formula). | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.term-years-min` | `1` | Shortest term the player can choose (FS25 years). | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.term-years-max` | `3` | Longest term. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.max-interested` | `3` | Active neighbours (`NEIGHBOR_FARMER`) with capital ≥ desired rent × ha × 12 × years who answer with a bid, at most. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.first-bid-min` | `0.85` | First bid of a neighbour = desired rent × random(min, max) … | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.first-bid-max` | `1.0` | … capped at the limit of the negotiation formula. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.offer-valid-days` | `5` | Game days the bids stay open. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.warning-months` | `1` | The tenant offers a renewal this many game months before the end. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.renewal-factor-min` | `0.95` | Renewal rent = current rent × random(min, max) … | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.renewal-factor-max` | `1.1` | … | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.return-delay-max-months` | `1` | Fallback (field state at the return): the return waits for an empty or harvested field (neighbour-field export) at most this long. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.family-trust-delta` | `-5` | Trust of every family member when the family field is leased out (a sale costs `family.field-sold-trust-delta`). | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.reclaim-trust-delta` | `-10` | Trust of the tenant when the player takes the field back in the game menu. | Roadmap V3 R3-L1 |
+
 ## `rpsim.formulas.milestones` (Roadmap V3 R3-T)
 
 Milestones of the chronicle, each reached once and without mechanical effect. Owner decisions in `QUESTIONS.md`.

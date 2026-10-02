@@ -414,3 +414,20 @@ Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section T. No mod
 | 19.5 | Settings → *Hof*: enter a farm name and save; diary → *Chronik herunterladen* | the file `chronik-<farm name>.md` with farm name, backstory, milestones, all entries by day (notes marked) and the farm reports |
 | 19.6 | Diary → *Chronik drucken* | the print view opens the print dialog; the preview shows black text on white without status bar, app header and dock; *Als PDF speichern* works |
 
+## 20. Leasing out own fields (Roadmap V3 R3-L)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section L. No mod change; check the 🟡 points (field
+state at the change of hands, base-game contracts on the field during the lease).
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 20.1 | Flurkarte → own field with a crop → *Verpachten* | refused: only an empty or harvested field |
+| 20.2 | Harvest the field, *Verpachten* for 1 year at the guide value | 1–3 neighbours send a bid by mail; the bids appear as *Verpachtung* among the negotiations |
+| 20.3 | Accept a bid (or demand and agree) | in the game the field has no owner any more and the base game farms it; no sale is reported, no diary entry "im Spielmenü verkauft"; the card *Verpachtete Felder* shows tenant, rent and end |
+| 20.4 | Wait for the next month start | the rent is booked in the game (`LEASE_INCOME`), the bank shows it as income; the liquidity plan lists it |
+| 20.5 | One month before the end | the tenant offers a renewal; *Verlängern* extends the term at the new rent |
+| 20.6 | Let the term end without renewal | the field comes back (`TO_PLAYER`) once the base game left it empty or harvested, at the latest one month later |
+| 20.7 | Lease out again and buy the field in the game's field menu | the lease ends at once, the tenant writes annoyed; no purchase is reported |
+| 20.8 | A pledged field: *Verpachten* | refused until *Zustimmung zur Verpachtung* in the bank; then possible, the Grundschuld stays |
+| 20.9 | Lease out the family field | the family is a little disappointed (mail), it stays the family field |
+

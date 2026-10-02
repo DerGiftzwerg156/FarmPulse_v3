@@ -47,4 +47,11 @@ public class FarmlandOwnership extends SavegameScoped {
     /** TODO T-22: leased to the player - owned by the character in the tool, by the player farm in the game. */
     @Column(name = "leased_to_player", nullable = false)
     private boolean leasedToPlayer;
+
+    /**
+     * Roadmap V3 R3-L1: leased out by the player - owned by the player in the tool, without owner in the game (the
+     * base game farms it as NPC field). Counterpart of {@link #leasedToPlayer}.
+     */
+    @Column(name = "leased_from_player", nullable = false)
+    private boolean leasedFromPlayer;
 }

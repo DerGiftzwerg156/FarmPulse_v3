@@ -91,6 +91,10 @@ public final class Requests {
     public record SellOfferRequest(@NotNull @Positive Long askingPrice) {
     }
 
+    /** Roadmap V3 R3-L1: lease-out form - term in FS25 years, desired rent in € per ha and month. */
+    public record LeaseOutRequest(@NotNull @Positive Integer termYears, @NotNull @Positive Long desiredRate) {
+    }
+
     public record OfferRequest(@NotNull @Positive Long amount) {
     }
 

@@ -42,6 +42,7 @@ public class ContractActions {
     private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
     private final de.farmpulse.rpsim.drought.DroughtService drought;
     private final de.farmpulse.rpsim.employee.ApprenticeService apprentices;
+    private final LeaseOutService leaseOut;
 
     public ContractActions(ContractRepository contracts, ServiceCaseRepository cases, InsuranceService insurance,
                            HuntingService hunting, LivestockService livestock, LeaseService lease,
@@ -50,8 +51,9 @@ public class ContractActions {
                            CollateralService collateral, AnnualReviewService annualReview,
                            de.farmpulse.rpsim.neighbor.FarmShopService farmShop,
                            de.farmpulse.rpsim.drought.DroughtService drought,
-                           de.farmpulse.rpsim.employee.ApprenticeService apprentices) {
+                           de.farmpulse.rpsim.employee.ApprenticeService apprentices, LeaseOutService leaseOut) {
         this.apprentices = apprentices;
+        this.leaseOut = leaseOut;
         this.farmShop = farmShop;
         this.drought = drought;
         this.trade = trade;
@@ -108,6 +110,7 @@ public class ContractActions {
     public Contract renew(Savegame sg, Long id) {
         return switch (contract(sg, id).getKind()) {
             case LEASE -> lease.renew(sg, id);
+            case LEASE_OUT -> leaseOut.renew(sg, id); // R3-L1: the tenant's renewal offer
             default -> throw unsupported();
         };
     }

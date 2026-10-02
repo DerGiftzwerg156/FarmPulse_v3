@@ -1,0 +1,7 @@
+Feld {{farmlandId}} zurück
+Hallo,
+
+die Pacht ist um, Feld {{farmlandId}} gehört wieder Ihnen. Danke für die gute Zusammenarbeit.
+
+Viele Grüße
+{{characterName}}

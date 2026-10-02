@@ -1,0 +1,7 @@
+Pacht für Feld {{farmlandId}} läuft aus
+Hallo,
+
+meine Pacht für Feld {{farmlandId}} endet in {{endsInDays}} Tagen. Ich würde gern für weitere {{termMonths}} Monate verlängern und dann {{renewalRent}} € im Monat zahlen. Ohne Antwort gebe ich das Feld zum Ende zurück.
+
+Viele Grüße
+{{characterName}}

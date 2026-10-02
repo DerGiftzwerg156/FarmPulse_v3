@@ -166,7 +166,8 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   Kredit (über die Hälfte deines Vermögens) verlangt die Bank eine Grundschuld für den Teil darüber. Reichen deine
   Felder dafür, macht sie ein Gegenangebot „mit Grundschuld“ und nennt die Felder. Gepachtete Felder zählen nicht.
   Ein belastetes Feld ist in der **Flurkarte** markiert. Verkaufen kannst du es dort erst, wenn die Bank zustimmt
-  (Knopf *Verkauf erlauben lassen* am Kredit). Der Erlös tilgt dann den Beleihungswert, ohne Gebühr. Verkaufst du es
+  (Knopf *Verkauf erlauben lassen* am Kredit). Der Erlös tilgt dann den Beleihungswert, ohne Gebühr. Verpachten
+  kannst du es nach *Zustimmung zur Verpachtung*; die Grundschuld bleibt, verpachtete Felder zählen weiter als Vermögen. Verkaufst du es
   stattdessen im Spielmenü, ist die Bankberaterin verärgert und fordert die gleiche Sondertilgung binnen 10 Tagen.
   Zahlst du nicht, zählt das wie eine verpasste Rate, und es gibt keine neuen Kredite, bis die Forderung bezahlt ist.
   Ist der Kredit getilgt, ist die Grundschuld gelöscht. Im Ton *Hart* nimmt die Bank bei einer Fälligstellung die
@@ -316,6 +317,18 @@ die Laufzeit (du kannst es ganz normal bewirtschaften), die Pacht wird zu jedem 
 vor dem Ende meldet sich der Besitzer mit einer Verlängerung zum neuen Pachtpreis und – wenn er verkaufen würde –
 einem Kaufangebot. Antwortest du nicht, geht das Feld zum Ende automatisch zurück. Bleibt die Pacht zweimal offen,
 nimmt er das Feld vorzeitig zurück.
+
+**Verpachten.** Ein eigenes Feld kannst du auch an einen Nachbarn verpachten: Detailansicht → **Verpachten** mit
+Laufzeit (1–3 FS25-Jahre) und Wunschpacht je Hektar und Monat; der Richtwert steht darunter (5 % des Feldpreises im
+Jahr). Das geht nur, wenn das Feld leer oder abgeerntet ist. Bis zu drei Nachbarn mit genug Geld melden sich mit
+einem Gebot, das du wie beim Verkauf in bis zu drei Runden verhandelst. Einigt ihr euch, gehört das Feld im Spiel
+für die Laufzeit niemandem – das Spiel bewirtschaftet es wie ein Nachbarfeld –, in FarmPulse bleibt es deins. Die
+Pacht kommt zu jedem Monatsbeginn als Einnahme (erstmals im Folgemonat) und zählt für Steuer und Bank. Einen Monat
+vor dem Ende bietet der Pächter eine Verlängerung an (Knopf *Verlängern* in der Karte **Verpachtete Felder**);
+sonst bekommst du das Feld zurück, sobald es dort leer oder abgeerntet ist (spätestens einen Monat später). Kaufst du
+es während der Pacht im Feldmenü des Spiels zurück, endet die Pacht sofort und der Pächter ist verärgert. Liegt eine
+Grundschuld auf dem Feld, brauchst du vorher die Zustimmung der Bank; das Familienfeld zu verpachten, nimmt dir die
+Familie weniger übel als einen Verkauf.
 
 **Feldmenü des Spiels:** Du kannst Felder weiter direkt im Feldmenü von FS25 kaufen und verkaufen – gesperrt wird
 nichts, aber das Dorf merkt es. Kaufst du das Feld einer Figur über ihren Kopf hinweg, ist sie verärgert (weniger

@@ -84,6 +84,21 @@ describe('Bank with collateral (R3-K1)', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="sale-consent"]')).not.toBeNull();
   });
+
+  // Roadmap V3 R3-L1
+  it('asks the bank to allow a lease of the pledged field', () => {
+    const { el, http, fixture } = setup([loan()]);
+    (el.querySelector('[data-testid="lease-consent-request"] button') as HTMLButtonElement).click();
+    const pledged = { farmlandId: 12, collateralValue: 32400, status: 'PLEDGED', saleConsent: false, loanId: 4, purpose: 'Halle',
+      leaseConsent: true };
+    http.expectOne('/api/credit/collateral/12/lease-consent').flush(pledged);
+    http.expectOne('/api/credit-applications').flush([]);
+    http.expectOne('/api/loans').flush([loan({ collateral: [pledged] })]);
+    http.match('/api/settings/vanilla-bypass').forEach((r) => r.flush({ reactionsEnabled: true, interestSurchargePercent: 0 }));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="lease-consent"]')?.textContent).toContain('Verpachtung erlaubt');
+    expect(el.querySelector('[data-testid="sale-consent-request"]')).not.toBeNull();
+  });
 });
 
 describe('Bank cases (R3-K1 / R3-K3)', () => {

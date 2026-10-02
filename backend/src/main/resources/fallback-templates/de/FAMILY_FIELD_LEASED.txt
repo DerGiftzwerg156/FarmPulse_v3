@@ -1,0 +1,6 @@
+Unser Familienfeld
+Hallo,
+
+du hast Feld {{farmlandId}} verpachtet. Das Feld war schon beim Großvater in der Familie. Wenigstens ist es nicht verkauft – pass auf, dass es zurückkommt.
+
+{{characterName}}

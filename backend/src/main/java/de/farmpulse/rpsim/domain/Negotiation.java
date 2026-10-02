@@ -84,4 +84,8 @@ public class Negotiation extends SavegameScoped {
 
     @Column(name = "sale_group_id", length = 64)
     private String saleGroupId;
+
+    /** Roadmap V3 R3-L1: term of a lease-out (LEASE_OFFER); the negotiated amount is the rent per ha and month. */
+    @Column(name = "lease_term_months")
+    private Integer leaseTermMonths;
 }

@@ -396,25 +396,37 @@ monatliche Pacht.
 **Beleg:** – (kein neuer Mod-Eingriff). `LeaseService` überträgt das Feld schon heute per `FARMLAND_TRANSFER`
 (`TO_PLAYER` bei Beginn, `FROM_PLAYER` am Ende). Die Verpachtung nutzt dieselbe Anweisung in umgekehrter Richtung.
 
+**Stand 02.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Laufzeit 1–3 FS25-Jahre, Wunschpacht in € je ha
+und Monat, Richtwert = Feldpreis × 5 % / 12 je ha. Interessenten sind bis zu drei aktive Nachbarn
+(`NEIGHBOR_FARMER`) mit Kapital ≥ Wunschpacht × ha × 12 × Jahre; erstes Gebot 85–100 % der Wunschpacht, gedeckelt
+durch die Verhandlungsformel, bis 3 Runden, 5 Spieltage offen; ohne Interessenten schreibt der Berater. Fallback
+(🟡): Verpachten nur bei leerem oder abgeerntetem Feld; die Rückgabe wartet, bis der Nachbarfeld-Export (H1) das Feld
+leer oder abgeerntet zeigt, höchstens einen Monat. Ein verpfändetes Feld braucht die Zustimmung der Bank (neuer Knopf
+in der Bank, die Grundschuld bleibt); verpachtete Felder zählen weiter als Vermögen und Sicherheit. Familienfeld:
+Vertrauen −5 je Familienmitglied (Verkauf −15). Ein Monat vor Ende bietet der Pächter die Verlängerung an (Pacht ×
+0,95–1,1), keine vorzeitige Kündigung. Die Pacht kommt ab dem Folgemonat, der Pächter zahlt immer; der
+Liquiditätsplan zeigt sie als Einnahme. Holst du das Feld im Spielmenü zurück, endet die Pacht sofort (Pächter −10
+Vertrauen). Neue Karte „Verpachtete Felder“ in der Flurkarte, Gebote wie Verkaufsverhandlungen.
+
 ### R3-L1 Verpachtung anbieten und abschließen
 
-- [ ] Flurkarte → eigenes Feld → **„Verpachten“**: Das Formular nennt Laufzeit (FS25-Jahre, Konfig) und Wunschpacht.
+- [x] Flurkarte → eigenes Feld → **„Verpachten“**: Das Formular nennt Laufzeit (FS25-Jahre, Konfig) und Wunschpacht.
   Nicht möglich bei gepachteten Feldern, bei laufender Verhandlung oder Versteigerung und bei einem als Sicherheit
   eingetragenen Feld ohne Zustimmung der Bank (K1).
-- [ ] Interessenten wie beim Feldverkauf (Verhandlungs-Engine): Nachbarn mit Interesse und Kapital geben ein Gebot je
+- [x] Interessenten wie beim Feldverkauf (Verhandlungs-Engine): Nachbarn mit Interesse und Kapital geben ein Gebot je
   Hektar und Monat ab, bis zu drei Runden. Richtwert: Feldpreis × Pachtrendite (Konfig) / 12.
-- [ ] Beginn: Batch `FARMLAND_TRANSFER FROM_PLAYER`. Das Feld gehört im Spiel keiner Farm mehr, und das Grundspiel
+- [x] Beginn: Batch `FARMLAND_TRANSFER FROM_PLAYER`. Das Feld gehört im Spiel keiner Farm mehr, und das Grundspiel
   bewirtschaftet es als NPC-Feld. Im Tool bleibt der Spieler Eigentümer mit dem neuen Merkmal `leasedFromPlayer`, als
   Gegenstück zu `isLeasedToPlayer` in `FarmlandOwnershipService.reconcile`. Der Abgleich wertet die Übertragung also
   nicht als Verkauf.
-- [ ] Monatliche Pacht als `MONEY_TRANSACTION` `LEASE_INCOME` über `ContractBillingService`.
-- [ ] Ende: `FARMLAND_TRANSFER TO_PLAYER`, Mail des Pächters, Verlängerung per Knopf (wie `/renew`).
-- [ ] Auswirkungen:
+- [x] Monatliche Pacht als `MONEY_TRANSACTION` `LEASE_INCOME` über `ContractBillingService`.
+- [x] Ende: `FARMLAND_TRANSFER TO_PLAYER`, Mail des Pächters, Verlängerung per Knopf (wie `/renew`).
+- [x] Auswirkungen:
   - Steuer: Die Pacht zählt als operative Einnahme (Journal, R2-B2).
   - Bank: laufende Einnahme im Cashflow.
   - Familie: Das Verpachten des Familienfelds kostet weniger Familien-Vertrauen als ein Verkauf (Konfig).
   - Amt: Die Bewirtschaftungspflicht (R2-E2) prüft nur eigene bewirtschaftete Felder, das verpachtete Feld fällt heraus.
-- [ ] Werte unter `rpsim.formulas.lease-out.*`.
+- [x] Werte unter `rpsim.formulas.lease-out.*`.
 
 **🟡 Im Spiel prüfen:** Was passiert mit dem Aufwuchs beim Übergang? Bleibt der Feldzustand beim Besitzerwechsel
 über `FarmlandManager:setLandOwnership` stehen, und bekommt das Feld während der Pacht Aufträge des Grundspiels?

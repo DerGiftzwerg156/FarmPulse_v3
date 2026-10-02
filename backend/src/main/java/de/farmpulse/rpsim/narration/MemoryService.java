@@ -90,6 +90,8 @@ public class MemoryService {
             case COLLATERAL_CLAIM_OVERDUE -> "geforderte Sondertilgung nicht gezahlt";
             case FORWARD_CONTRACT_FULFILLED -> "Vorkontrakt voll geliefert";
             case FORWARD_CONTRACT_SHORTFALL -> "Vorkontrakt nicht voll geliefert";
+            case LEASE_OUT_RECLAIMED -> "verpachtetes Feld im Spielmenü zurückgeholt";
+            case FAMILY_FIELD_LEASED -> "Familienfeld verpachtet";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

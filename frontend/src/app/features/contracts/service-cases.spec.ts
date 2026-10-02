@@ -31,7 +31,7 @@ const damage = (over: Partial<CaseView> = {}): CaseView => ({
 const ALL_CASES = ['STORM_DAMAGE', 'HAIL_DAMAGE', 'WILDLIFE_DAMAGE', 'LIVESTOCK_OFFER', 'VET_VISIT', 'BREEDING_ADVICE', 'REPAIR',
   'MISSION_REFERRAL', 'COMPENSATION_CLAIM', 'TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION', 'DROUGHT_AID',
   'APPRENTICE_TAKEOVER'];
-const ALL_CONTRACTS = ['LEASE', 'MAINTENANCE', 'TAX_ADVISOR'];
+const ALL_CONTRACTS = ['LEASE', 'MAINTENANCE', 'TAX_ADVISOR', 'LEASE_OUT'];
 
 /** The service cases and contracts section used by Versicherung, Werkstatt, Ämter, Stall, Flurkarte, Kontakte, Kalender. */
 describe('ServiceCases', () => {
@@ -132,6 +132,20 @@ describe('ServiceCases', () => {
     expect(el.querySelector('[data-testid="lease-buy"]')?.textContent).toContain('75.600');
     (el.querySelector('[data-testid="lease-buy"] button') as HTMLButtonElement).click();
     http.expectOne('/api/contracts/5/buy').flush({ ...lease, status: 'ENDED', endReason: 'PURCHASED' });
+  });
+
+  // Roadmap V3 R3-L1
+  it('renews a leased-out field at the rent the tenant offers, without early termination', () => {
+    const out = contract({ id: 8, kind: 'LEASE_OUT', status: 'ACTIVE', level: null, farmlandId: 12, monthlyAmount: 225,
+      coveragePercent: null, deductible: null, termMonths: 12, endsAtGameTime: 40 * DAY, offerExpiresAtGameTime: null,
+      renewalAmount: 240, purchasePrice: null });
+    const { fixture, http, el } = setup([out], []);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="contract"][data-kind="LEASE_OUT"]')?.textContent).toContain('Verpachtung');
+    expect(el.querySelector('[data-testid="lease-cancel"]')).toBeNull();
+    expect(el.querySelector('[data-testid="lease-out-renew"]')?.textContent).toContain('240');
+    (el.querySelector('[data-testid="lease-out-renew"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/contracts/8/renew').flush({ ...out, renewalAmount: null, monthlyAmount: 240 });
   });
 
   it('accepts a maintenance offer, repairs appear in the history', () => {

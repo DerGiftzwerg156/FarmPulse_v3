@@ -105,6 +105,13 @@ public class CreditController {
         return mapper.collateral(collateral.requestSaleConsent(context.requireActive(), farmlandId));
     }
 
+    /** Roadmap V3 R3-L1: ask the bank to agree to lease out a pledged field (the Grundschuld stays). */
+    @PostMapping("/api/credit/collateral/{farmlandId}/lease-consent")
+    @Transactional
+    public CollateralView leaseConsent(@PathVariable int farmlandId) {
+        return mapper.collateral(collateral.requestLeaseConsent(context.requireActive(), farmlandId));
+    }
+
     /** Roadmap V3 R3-K2: the next FS25 months with known postings and the income estimate. */
     @GetMapping("/api/liquidity-plan")
     @Transactional(readOnly = true)

@@ -133,6 +133,15 @@ most two, roster role without trainings), the monthly skill gain and the takeove
 below, no answer). Mod `test_workforce.lua` and simulator `test/instructions.test.js`: apprentices drive after the
 operators and never with a training. Frontend: the takeover case in `features/contracts/service-cases.spec.ts`. In the
 game: manual test plan section 18.
+Roadmap V3 R3-L (leasing out own fields): `LeaseOutTest` covers the guide value, the neighbours' bids (capital,
+85–100 % of the desired rent, the land agent without interest), the fallback on the field phase (offer and demand),
+the bank's consent for a pledged field, the agreement (contract, `FARMLAND_TRANSFER FROM_PLAYER`, `LEASE_INCOME` also
+with an empty account), the reconciliation without sale or purchase, the asset value and collateral of a leased-out
+field, the family field (trust −5, stays the family field), the renewal offer and renewal, the delayed and the
+immediate return, the buy-back in the game menu and a failed transfer. `ApiIntegrationTest` covers `/api/lease-out`,
+the lease-out form and the lease consent. Frontend: the form and the bids in `features/farmland/farmland.spec.ts`, the
+renewal in `features/contracts/service-cases.spec.ts`, the consent in `features/bank/credit-planning.spec.ts`. In the
+game: manual test plan section 20.
 Roadmap V3 R3-T (chronicle): `ChronicleTest` covers the milestones from stored data (repaid loan also for an older
 savegame, area, record harvest, neighbour trade, a switched-off milestone), the payment-delay year (only a fully
 observed year, a delay breaks it, a delay still open at the year change counts for the new year, the salary hook),

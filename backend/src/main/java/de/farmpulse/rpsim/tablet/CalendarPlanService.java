@@ -106,7 +106,8 @@ public class CalendarPlanService {
             }
         }
         for (Contract c : activeContracts) {
-            if (c.getNextDueGameTime() != null && c.getNextDueGameTime() <= nextStart && c.getMonthlyAmount() > 0) {
+            if (c.getNextDueGameTime() != null && c.getNextDueGameTime() <= nextStart && c.getMonthlyAmount() > 0
+                    && c.getKind() != ContractKind.LEASE_OUT) { // R3-L1: income, no debit
                 out.add(new DebitView("CONTRACT", c.getKind().name(),
                         c.getKind() == ContractKind.LEASE && c.getFarmlandId() != null ? String.valueOf(c.getFarmlandId())
                                 : c.getLevel(), c.getMonthlyAmount(), 1));
@@ -151,7 +152,7 @@ public class CalendarPlanService {
                 .ifPresent(t -> out.add(new AgendaEntryView(t, "SALARIES", null, null, salaries, null)));
         for (Contract c : activeContracts) {
             if (c.getNextDueGameTime() != null && c.getNextDueGameTime() > now && c.getNextDueGameTime() <= until
-                    && c.getMonthlyAmount() > 0) {
+                    && c.getMonthlyAmount() > 0 && c.getKind() != ContractKind.LEASE_OUT) {
                 out.add(new AgendaEntryView(c.getNextDueGameTime(), "CONTRACT_PAYMENT", c.getKind().name(), null,
                         c.getMonthlyAmount(), c.getFarmlandId() == null ? null : String.valueOf(c.getFarmlandId())));
             }

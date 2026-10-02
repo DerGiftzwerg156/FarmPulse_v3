@@ -57,6 +57,9 @@ public enum TrustReason {
     /** Roadmap V3 R3-M2: forward contract delivered in full / with a shortfall. */
     FORWARD_CONTRACT_FULFILLED,
     FORWARD_CONTRACT_SHORTFALL,
+    /** Roadmap V3 R3-L1: the leased-out field was taken back in the game menu / the family field was leased out. */
+    LEASE_OUT_RECLAIMED,
+    FAMILY_FIELD_LEASED,
     INITIAL,
     OTHER
 }

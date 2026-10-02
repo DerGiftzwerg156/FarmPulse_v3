@@ -70,6 +70,7 @@ public class FailedInstructionService {
     private final NeighborTradeService trade;
     private final NeighborMissionService neighborMissions;
     private final de.farmpulse.rpsim.vehicle.VehicleTradeService vehicles;
+    private final de.farmpulse.rpsim.contract.LeaseOutService leaseOut;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
@@ -77,7 +78,9 @@ public class FailedInstructionService {
                                     TrainingService training, NeighborTradeService trade,
                                     NeighborMissionService neighborMissions, JsonMapper json,
                                     de.farmpulse.rpsim.neighbor.FarmShopService farmShop,
-                                    de.farmpulse.rpsim.vehicle.VehicleTradeService vehicles) {
+                                    de.farmpulse.rpsim.vehicle.VehicleTradeService vehicles,
+                                    de.farmpulse.rpsim.contract.LeaseOutService leaseOut) {
+        this.leaseOut = leaseOut;
         this.farmShop = farmShop;
         this.vehicles = vehicles;
         this.trade = trade;
@@ -145,6 +148,9 @@ public class FailedInstructionService {
         } else if (LeaseService.RELATED.equals(related) && relatedId != null) {
             handled = lease.onInstructionFailed(relatedId, ins.getType(),
                     "TO_PLAYER".equals(p.path("direction").asString("")), reason);
+        } else if (de.farmpulse.rpsim.contract.LeaseOutService.RELATED.equals(related) && relatedId != null) {
+            handled = leaseOut.onInstructionFailed(relatedId, ins.getType(), // R3-L1
+                    "TO_PLAYER".equals(p.path("direction").asString("")));
         } else if (NeighborTradeService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = trade.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-H3 / R3-H4

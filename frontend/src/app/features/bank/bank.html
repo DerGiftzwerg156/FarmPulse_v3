@@ -133,11 +133,19 @@
                 @for (c of pledged(l); track c.farmlandId) {
                   <div class="flex flex-wrap items-center justify-between gap-2 text-[12px]">
                     <span class="text-text">{{ 'credit.pledged' | t: { id: c.farmlandId, value: (c.collateralValue | money) } }}</span>
-                    @if (c.saleConsent) {
-                      <app-badge variant="positive" data-testid="sale-consent">{{ 'credit.saleConsentGiven' | t }}</app-badge>
-                    } @else if (l.status === 'ACTIVE') {
-                      <app-button variant="secondary" [disabled]="consentBusy() === c.farmlandId" (pressed)="requestSaleConsent(l, c)" data-testid="sale-consent-request">{{ 'credit.requestSaleConsent' | t }}</app-button>
-                    }
+                    <span class="flex flex-wrap items-center gap-2">
+                      @if (c.saleConsent) {
+                        <app-badge variant="positive" data-testid="sale-consent">{{ 'credit.saleConsentGiven' | t }}</app-badge>
+                      } @else if (l.status === 'ACTIVE') {
+                        <app-button variant="secondary" [disabled]="consentBusy() === c.farmlandId" (pressed)="requestSaleConsent(l, c)" data-testid="sale-consent-request">{{ 'credit.requestSaleConsent' | t }}</app-button>
+                      }
+                      <!-- Roadmap V3 R3-L1: consent to lease the field out (the Grundschuld stays) -->
+                      @if (c.leaseConsent) {
+                        <app-badge variant="positive" data-testid="lease-consent">{{ 'credit.leaseConsentGiven' | t }}</app-badge>
+                      } @else if (l.status === 'ACTIVE') {
+                        <app-button variant="secondary" [disabled]="consentBusy() === c.farmlandId" (pressed)="requestLeaseConsent(l, c)" data-testid="lease-consent-request">{{ 'credit.requestLeaseConsent' | t }}</app-button>
+                      }
+                    </span>
                   </div>
                 }
               </div>

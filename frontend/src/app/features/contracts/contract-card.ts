@@ -55,6 +55,10 @@ export const CONTRACT_BADGE: Record<string, BadgeVariant> = {
           <app-button variant="danger" [disabled]="busy()" (pressed)="act('cancel')" data-testid="lease-cancel">{{ 'contracts.endLease' | t }}</app-button>
         </div>
       }
+      @if (c.kind === 'LEASE_OUT' && c.status === 'ACTIVE' && c.renewalAmount) {
+        <!-- Roadmap V3 R3-L1: the tenant's renewal offer; no early termination (owner decision) -->
+        <div class="mt-2"><app-button [disabled]="busy()" (pressed)="act('renew')" data-testid="lease-out-renew">{{ 'contracts.renewLeaseOut' | t: { amount: (c.renewalAmount | money) } }}</app-button></div>
+      }
       @if (error(); as e) {
         <p class="mt-2 text-[12px] text-danger" data-testid="contract-error">{{ e }}</p>
       }

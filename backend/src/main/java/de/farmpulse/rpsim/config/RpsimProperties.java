@@ -165,6 +165,7 @@ public class RpsimProperties {
         private OfficeClerk officeClerk = new OfficeClerk();
         private Apprentice apprentice = new Apprentice();
         private Milestones milestones = new Milestones();
+        private LeaseOut leaseOut = new LeaseOut();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
@@ -1042,6 +1043,34 @@ public class RpsimProperties {
         private double auditReductionMax = 0.5;
         /** Below this workload the clerk is overloaded and does not pay tax bills on the deadline day. */
         private double overloadWorkload = 30;
+    }
+
+    /** Roadmap V3 R3-L1: leasing out own fields to neighbours (owner decisions in QUESTIONS.md). */
+    @Getter @Setter
+    public static class LeaseOut {
+        /** Guide rent per year as share of the field price; per ha and month = price x share / 12 / ha. */
+        private double annualRentShare = 0.05;
+        /** Term the player can choose, in FS25 years. */
+        private int termYearsMin = 1;
+        private int termYearsMax = 3;
+        /** Interested neighbours: capital >= desired rent x ha x 12 x years; at most this many. */
+        private int maxInterested = 3;
+        /** First bid of a neighbour = desired rent x random(min, max), capped at the negotiation formula's limit. */
+        private double firstBidMin = 0.85;
+        private double firstBidMax = 1.0;
+        /** Game days the bids stay open. */
+        private double offerValidDays = 5;
+        /** The tenant offers a renewal this many game months before the end ... */
+        private int warningMonths = 1;
+        /** ... at the current rent x random(min, max). */
+        private double renewalFactorMin = 0.95;
+        private double renewalFactorMax = 1.1;
+        /** Fallback (field state at the return): the return waits for an empty or harvested field at most this long. */
+        private int returnDelayMaxMonths = 1;
+        /** Trust of every family member when the family field is leased out (a sale costs family.field-sold-trust-delta). */
+        private double familyTrustDelta = -5;
+        /** Trust of the tenant when the player takes the field back in the game menu. */
+        private double reclaimTrustDelta = -10;
     }
 
     /** Roadmap V3 R3-T1: the fixed list of milestones - each can be switched off (owner decisions). */

@@ -263,6 +263,21 @@ class ApiIntegrationTest {
         postJson("/api/farmlands/12/sell-offer", java.util.Map.of("askingPrice", -1)).andExpect(status().isBadRequest());
     }
 
+    /** Roadmap V3 R3-L1: leasing out an own field. */
+    @Test
+    void leaseOut() throws Exception {
+        mvc.perform(get("/api/lease-out")).andExpect(status().isOk()).andExpect(jsonPath("$.termYearsMin").value(1))
+                .andExpect(jsonPath("$.termYearsMax").value(3)).andExpect(jsonPath("$.contracts", hasSize(0)));
+        mvc.perform(get("/api/farmlands")).andExpect(jsonPath("$[?(@.farmlandId == 12)].leaseOutGuideRate").value(hasItem(50)));
+        postJson("/api/farmlands/12/lease-out", java.util.Map.of("termYears", 9, "desiredRate", 50))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("INVALID_TERM"));
+        postJson("/api/farmlands/12/lease-out", java.util.Map.of("termYears", 1, "desiredRate", -5))
+                .andExpect(status().isBadRequest());
+        postJson("/api/farmlands/12/lease-out", java.util.Map.of("termYears", 1, "desiredRate", 50)).andExpect(status().isOk());
+        postJson("/api/credit/collateral/12/lease-consent", java.util.Map.of()).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("NOT_PLEDGED"));
+    }
+
     @Test
     void marketEventEndpoints() throws Exception {
         MarketEvent offer = createOffer();

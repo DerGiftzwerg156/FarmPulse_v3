@@ -31,6 +31,24 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Leasing out own fields (Roadmap V3, R3-L):**
+  - Flurkarte → own field → **Verpachten**: term 1–3 FS25 years and a desired rent per ha and month (guide value =
+    field price × 5 % / 12 per ha). Up to three active neighbours with enough capital answer with a first bid
+    (85–100 % of the desired rent); the player demands in up to three rounds (negotiation kind `LEASE_OFFER`).
+  - Start: `FARMLAND_TRANSFER FROM_PLAYER` - the game farms the field as NPC field, the tool keeps the player as owner
+    (`leasedFromPlayer`); the reconciliation reports neither a sale nor a purchase. Rent as `LEASE_INCOME` from the
+    next month on (the tenant always pays); operating income for the tax and the bank, known income in the liquidity
+    plan, no debit in the calendar.
+  - One month before the end the tenant offers a renewal (rent × 0.95–1.1, button *Verlängern*); otherwise the field
+    comes back with `FARMLAND_TRANSFER TO_PLAYER`. Fallback: leasing out only an empty or harvested field, the return
+    waits up to one month for an empty or harvested field. Taking the field back in the game menu ends the lease
+    (tenant trust −10).
+  - Bank: consent button *Zustimmung zur Verpachtung* for a pledged field (the Grundschuld stays); leased-out fields
+    keep counting as assets and collateral. Family field: trust −5 per family member, it stays the family field.
+    Authority: the cultivation duty no longer checks the leased-out field.
+  - New card *Verpachtete Felder* in the Flurkarte, tasks for bids and renewals. Config `rpsim.formulas.lease-out.*`;
+    migration V32; `GET /api/lease-out`, `POST /api/farmlands/{id}/lease-out`,
+    `POST /api/credit/collateral/{farmlandId}/lease-consent`; nine new narration types. No mod change.
 - **Chronicle (Roadmap V3, R3-T):**
   - Milestones (`DiaryEntryType.MILESTONE`, no mechanical effect): first bank loan repaid, a full FS25 year without a
     payment delay (missed installment, overdue tax bill, missed contract payment, overdue salary, unpaid claim after

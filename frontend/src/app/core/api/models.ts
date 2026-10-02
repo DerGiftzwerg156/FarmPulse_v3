@@ -266,6 +266,15 @@ export interface CollateralView {
   saleConsent: boolean;
   loanId: number | null;
   purpose: string | null;
+  /** Roadmap V3 R3-L1: the bank agreed to lease the field out (the Grundschuld stays). */
+  leaseConsent?: boolean;
+}
+
+/** Roadmap V3 R3-L1: term range of the lease-out form and the lease-out contracts (newest first). */
+export interface LeaseOutView {
+  termYearsMin: number;
+  termYearsMax: number;
+  contracts: ContractView[];
 }
 
 export interface CollateralOptionView {
@@ -551,6 +560,12 @@ export interface FarmlandView {
   collateral?: string | null;
   /** Roadmap V3 R3-K1: the bank agreed to a sale of the pledged field. */
   saleConsent?: boolean;
+  /** Roadmap V3 R3-L1: leased out to a neighbour - no owner in the game, still the player's in the tool. */
+  leasedOut?: boolean;
+  /** Roadmap V3 R3-L1: the bank agreed to lease the pledged field out. */
+  leaseConsent?: boolean;
+  /** Roadmap V3 R3-L1: guide rent in € per ha and month (own fields only). */
+  leaseOutGuideRate?: number | null;
 }
 
 export type FieldPhase = 'EMPTY' | 'GROWING' | 'HARVESTABLE' | 'HARVESTED' | 'WITHERED';
@@ -569,7 +584,7 @@ export interface NegotiationView {
   id: number;
   assetType: string;
   assetId: string;
-  kind: 'AUCTION' | 'DIRECT' | 'SALE_OFFER';
+  kind: 'AUCTION' | 'DIRECT' | 'SALE_OFFER' | 'LEASE_OFFER';
   direction: 'PLAYER_BUYS' | 'PLAYER_SELLS';
   initiatedBy: string;
   status: 'OPEN' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'LOST' | 'EXPIRED';
@@ -584,6 +599,8 @@ export interface NegotiationView {
   closesAtGameTime: number | null;
   winner: CharacterRef | null;
   offers: OfferView[];
+  /** Roadmap V3 R3-L1: term of a lease-out (LEASE_OFFER); its amounts are € per ha and month. */
+  leaseTermMonths?: number | null;
 }
 
 /** Roadmap V3 R3-V: an own machine of the latest export; saleDealId = a running sale. */

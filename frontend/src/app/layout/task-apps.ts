@@ -37,6 +37,7 @@ const CONTRACT_APP: Record<string, string> = {
   LEASE: 'fields',
   MAINTENANCE: 'workshop',
   TAX_ADVISOR: 'authorities',
+  LEASE_OUT: 'fields', // Roadmap V3 R3-L1
 };
 
 const TYPE_APP: Record<string, string> = {

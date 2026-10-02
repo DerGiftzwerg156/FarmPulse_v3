@@ -568,6 +568,20 @@ rpsim:
       reminder-days: 3            # reminder this many game days before a deadline
       audit-reduction-max: 0.5    # audit factor 1 - 0.5 x effective skill / 100
       overload-workload: 30       # below: overloaded, no payment on the deadline day
+    lease-out:                    # Roadmap V3 R3-L1: leasing out own fields (owner decisions)
+      annual-rent-share: 0.05     # guide rent per ha and month = field price x share / 12 / ha
+      term-years-min: 1           # term the player can choose (FS25 years)
+      term-years-max: 3
+      max-interested: 3           # neighbours with capital >= rent x ha x 12 x years
+      first-bid-min: 0.85         # first bid = desired rent x random(min, max), capped at the formula limit
+      first-bid-max: 1.0
+      offer-valid-days: 5         # bids open this many game days
+      warning-months: 1           # renewal offer of the tenant before the end
+      renewal-factor-min: 0.95    # renewal rent = current rent x random(min, max)
+      renewal-factor-max: 1.1
+      return-delay-max-months: 1  # fallback: the return waits for an empty / harvested field at most this long
+      family-trust-delta: -5      # family field leased out (a sale costs family.field-sold-trust-delta)
+      reclaim-trust-delta: -10    # tenant when the field is taken back in the game menu
     milestones:                   # Roadmap V3 R3-T1: milestones (owner decisions), no mechanical effect
       loan-repaid-enabled: true   # first bank loan fully repaid
       year-without-delay-enabled: true  # a full FS25 year without a payment delay

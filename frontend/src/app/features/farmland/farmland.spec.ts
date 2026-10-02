@@ -8,7 +8,7 @@ import { Farmland, acceptableAmount, highestBid } from './farmland';
 
 const gerd = character({ id: 4, name: 'Gerd Albers', role: 'NEIGHBOR_FARMER' });
 const fields: FarmlandView[] = [
-  { farmlandId: 1, hectares: 3.2, referencePrice: 96000, ownerType: 'PLAYER', owner: null, inNegotiation: false },
+  { farmlandId: 1, hectares: 3.2, referencePrice: 96000, ownerType: 'PLAYER', owner: null, inNegotiation: false, leaseOutGuideRate: 125 },
   { farmlandId: 2, hectares: 5.5, referencePrice: 165000, ownerType: 'CHARACTER', owner: gerd, inNegotiation: false },
   { farmlandId: 3, hectares: 2.1, referencePrice: 63000, ownerType: 'UNCLAIMED', owner: null, inNegotiation: true },
 ];
@@ -44,6 +44,7 @@ describe('Farmland', () => {
     http.expectOne('/api/farmlands').flush(fields);
     http.expectOne('/api/negotiations').flush(negotiations);
     http.expectOne('/api/mails').flush(mails);
+    http.expectOne('/api/lease-out').flush({ termYearsMin: 1, termYearsMax: 3, contracts: [] });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const btn = (id: string, i = 0) => el.querySelectorAll(`[data-testid="${id}"] button`)[i] as HTMLButtonElement;
@@ -104,6 +105,7 @@ describe('Farmland', () => {
     http.expectOne('/api/farmlands').flush(fields.map((f) => (f.farmlandId === 2 ? { ...f, leased: true } : f)));
     http.expectOne('/api/negotiations').flush([]);
     http.expectOne('/api/mails').flush([]);
+    http.expectOne('/api/lease-out').flush({ termYearsMin: 1, termYearsMax: 3, contracts: [] });
     fixture.detectChanges();
     expect(el.textContent).toContain('Gerd Albers bietet dir eine Pacht an');
     expect(el.querySelector('[data-testid="leased"]')).not.toBeNull();
@@ -200,4 +202,46 @@ describe('Farmland', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="family-field"]')).toBeNull();
   });
+
+  // Roadmap V3 R3-L1
+  it('offers an own field for lease with term and desired rent per ha and month', () => {
+    const { el, tile, btn, http, fixture, setAmount } = setup();
+    tile(0);
+    const term = el.querySelector('[data-testid="lease-out-term"]') as HTMLSelectElement;
+    expect([...term.options].map((o) => o.value)).toEqual(['1', '2', '3']);
+    expect((el.querySelector('[data-testid="lease-out-rate"]') as HTMLInputElement).value).toBe('125');
+    const guide = el.querySelector('[data-testid="lease-out-guide"]')?.textContent?.replace(/\s/g, ' ');
+    expect(guide).toContain('125 € je ha und Monat');
+    expect(guide).toContain('400 € im Monat');
+    term.value = '2';
+    term.dispatchEvent(new Event('change'));
+    setAmount('lease-out-rate', '130');
+    btn('lease-out-submit').click();
+    const req = http.expectOne('/api/farmlands/1/lease-out');
+    expect(req.request.body).toEqual({ termYears: 2, desiredRate: 130 });
+    req.flush([neg({ id: 11, assetId: '1', kind: 'LEASE_OFFER', direction: 'PLAYER_SELLS', basePrice: 125, askingPrice: 130,
+      leaseTermMonths: 24, offers: [
+        { round: 0, offeredBy: 'CHARACTER', characterName: 'Gerd Albers', amount: 118, result: 'BID', counterAmount: null, gameTime: 0 },
+      ] })]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="farmland-info"]')?.textContent).toContain('1 Nachbar(n)');
+    expect(el.querySelector('[data-testid="negotiation-detail"]')?.textContent).toContain('Verpachtung');
+    expect(el.querySelector('[data-testid="lease-out-terms"]')?.textContent).toContain('Laufzeit 2 Jahr(e)');
+    expect(el.querySelector('[data-testid="accept-counter"]')?.textContent?.replace(/\s/g, ' ')).toContain('118 € annehmen');
+  });
+
+  it('shows a leased-out field without sale or lease form', () => {
+    fields[0].leasedOut = true;
+    try {
+      const { el, tile } = setup();
+      tile(0);
+      expect(el.querySelector('[data-testid="leased-out"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="leased-out-hint"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="sell-form"]')).toBeNull();
+      expect(el.querySelector('[data-testid="lease-out-form"]')).toBeNull();
+    } finally {
+      fields[0].leasedOut = false;
+    }
+  });
 });
+

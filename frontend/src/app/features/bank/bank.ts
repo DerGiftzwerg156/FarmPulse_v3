@@ -228,6 +228,21 @@ export class Bank {
     });
   }
 
+  /** Roadmap V3 R3-L1: ask the bank to agree to lease the pledged field out. */
+  requestLeaseConsent(l: LoanView, c: CollateralView): void {
+    this.consentBusy.set(c.farmlandId);
+    this.api.requestLeaseConsent(c.farmlandId).subscribe({
+      next: () => {
+        this.consentBusy.set(null);
+        this.load();
+      },
+      error: (e) => {
+        this.consentBusy.set(null);
+        this.setActionError(l.id, e);
+      },
+    });
+  }
+
   pledged(l: LoanView): CollateralView[] {
     return (l.collateral ?? []).filter((c) => c.status === 'PLEDGED');
   }

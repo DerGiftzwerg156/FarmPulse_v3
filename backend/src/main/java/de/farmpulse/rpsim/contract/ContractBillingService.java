@@ -61,6 +61,7 @@ public class ContractBillingService {
             case LEASE -> MoneyReason.LEASE_PAYMENT;
             case MAINTENANCE -> MoneyReason.MAINTENANCE_FEE;
             case TAX_ADVISOR -> MoneyReason.OTHER; // R2-E1: no own booking reason (the mod knows OTHER)
+            case LEASE_OUT -> MoneyReason.LEASE_INCOME; // R3-L1: income
         };
     }
 
@@ -94,11 +95,13 @@ public class ContractBillingService {
         for (Contract c : contracts.findBySavegameAndStatusOrderByIdAsc(sg, ContractStatus.ACTIVE)) {
             while (c.getNextDueGameTime() != null && c.getNextDueGameTime() <= now
                     && (c.getEndsAtGameTime() == null || c.getNextDueGameTime() < c.getEndsAtGameTime())) {
-                if (liquidity.available(sg) < c.getMonthlyAmount()) {
+                boolean income = c.getKind() == ContractKind.LEASE_OUT; // R3-L1: the tenant always pays (owner decision)
+                if (!income && liquidity.available(sg) < c.getMonthlyAmount()) {
                     missed(sg, c);
                     break;
                 }
-                outbox.money(sg, -c.getMonthlyAmount(), reason(c.getKind()), note(c), new Related(RELATED, c.getId()));
+                outbox.money(sg, income ? c.getMonthlyAmount() : -c.getMonthlyAmount(), reason(c.getKind()), note(c),
+                        new Related(RELATED, c.getId()));
                 c.setNextDueGameTime(gameTime.addMonths(sg, c.getNextDueGameTime(), 1));
                 c.setPaymentOverdue(false);
                 events.publishEvent(new ContractEvents.PaymentBooked(sg.getId(), c.getId()));
@@ -126,7 +129,9 @@ public class ContractBillingService {
         Savegame sg = c.getSavegame();
         c.setNextDueGameTime(gameTime.addMonths(sg, c.getNextDueGameTime(), -1));
         c.setPaymentOverdue(false);
-        missed(sg, c);
+        if (c.getKind() != ContractKind.LEASE_OUT) { // R3-L1: a refused rent income is simply booked again
+            missed(sg, c);
+        }
         return true;
     }
 
@@ -136,6 +141,7 @@ public class ContractBillingService {
             case LEASE -> "Pacht Feld " + c.getFarmlandId();
             case MAINTENANCE -> "Wartungsvertrag";
             case TAX_ADVISOR -> "Honorar Steuerberatung";
+            case LEASE_OUT -> "Pachteinnahme Feld " + c.getFarmlandId();
         };
     }
 

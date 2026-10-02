@@ -1,0 +1,6 @@
+Feld {{farmlandId}} einfach zurückgeholt?
+Hallo,
+
+ich habe Feld {{farmlandId}} gepachtet und jetzt ist es plötzlich wieder Ihres. So geht man mit einem Pächter nicht um. Die Pacht ist damit für mich erledigt.
+
+{{characterName}}
