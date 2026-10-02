@@ -70,7 +70,10 @@ export function startControlServer(sim, port, log = () => {}) {
         '/weather': (b) => sim.setWeather(b), '/husbandry': (b) => sim.setHusbandry(b),
         '/field': (b) => sim.setField(b), '/field-rules': (b) => sim.setFieldRules(b), '/jobs': (b) => sim.setActiveJobs(b.activeJobs ?? []),
         // Roadmap V3 R3-H1 / R3-H5 (scenario nachbarhandel)
-        '/npc-field': (b) => sim.setNpcField(b), '/mission-limit': (b) => sim.setMissionLimit(b.reached) };
+        '/npc-field': (b) => sim.setNpcField(b), '/mission-limit': (b) => sim.setMissionLimit(b.reached),
+        // Roadmap V3.1 (R31-Q2)
+        '/snow': (b) => sim.setSnow(b.height), '/vehicle-positions': (b) => sim.setVehiclePositions(b.positions),
+        '/fuel': (b) => sim.setFuel(b.uniqueId, b.liters) };
       if (req.method === 'POST' && patches[url.pathname]) {
         const result = patches[url.pathname](await body(req));
         sim.exportFarmFacts();

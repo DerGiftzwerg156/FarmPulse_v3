@@ -192,7 +192,7 @@ function RPSimBridge:exportMarketContext(force)
         self.conflictsLogged = true
         RPSimLog.warning("Mods with overlapping features detected: %s", table.concat(raw.detectedMods, ", "))
     end
-    local encoded = self:encode(self.paths.marketContext, RPSimMarketContext.build(raw))
+    local encoded = self:encode(self.paths.marketContext, RPSimMarketContext.build(raw, self.cfg))
     if encoded == nil then
         return false
     end

@@ -46,6 +46,9 @@ RPSimConfig.DEFAULTS = {
     storeCatalogExport = true,
     -- Roadmap V3 R3-V1: at most this many catalog entries; above that they are cut after sorting by xmlFilename
     storeCatalogMaxEntries = 2000,
+    -- Roadmap V3.1 R31-K1 (contract R31-Q1): at most this many points per field outline in market_context.fieldShapes;
+    -- longer outlines are thinned out evenly
+    fieldShapeMaxPoints = 64,
 }
 
 function RPSimConfig.new(overrides)

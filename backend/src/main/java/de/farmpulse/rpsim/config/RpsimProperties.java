@@ -1231,6 +1231,12 @@ public class RpsimProperties {
             m.put("RPSIM_TAX_REFUND", FinanceClass.OPERATING_INCOME);
             m.put("RPSIM_LEASE_INCOME", FinanceClass.OPERATING_INCOME); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_GOODS_SALE", FinanceClass.OPERATING_INCOME); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_LIVESTOCK_SALE", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_WINTER_SERVICE", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_DIRECT_PAYMENT", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_INVESTMENT_GRANT", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_GUEST_INCOME", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_COOP_DIVIDEND", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
             m.put("PURCHASE_FUEL", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_SEEDS", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_FERTILIZER", FinanceClass.OPERATING_EXPENSE);
@@ -1257,6 +1263,10 @@ public class RpsimProperties {
             m.put("RPSIM_TRAINING", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_GOODS_PURCHASE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_CONTRACT_PENALTY", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_CONTRACTOR_FEE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_MACHINE_RENT", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_LIVESTOCK_PURCHASE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_SOCIAL_INSURANCE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_BUY", FinanceClass.INVESTMENT);
@@ -1275,6 +1285,7 @@ public class RpsimProperties {
             m.put("RPSIM_CREDIT_SPECIAL_REPAYMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_PREPAYMENT_FEE", FinanceClass.FINANCING);
             m.put("RPSIM_STARTING_CAPITAL_ADJUSTMENT", FinanceClass.FINANCING);
+            m.put("RPSIM_COOP_SHARES", FinanceClass.FINANCING); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_DAMAGE", FinanceClass.IGNORE);
             m.put("RPSIM_INSURANCE_PAYOUT", FinanceClass.IGNORE);
             m.put("RPSIM_WILDLIFE_COMPENSATION", FinanceClass.IGNORE);

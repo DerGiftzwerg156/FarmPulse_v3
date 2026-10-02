@@ -40,5 +40,18 @@ public enum MoneyReason {
     VEHICLE_PURCHASE,
     VEHICLE_SALE,
     CONTRACT_PENALTY,
+    // Roadmap V3.1 (R31-Q1): contractor (A1), machine rent (A2), livestock trade (A3), winter service (A4), area payment
+    // (B1), investment grant (B2), social insurance (B5), farm holidays (D6), cooperative shares and dividend (D7)
+    CONTRACTOR_FEE,
+    MACHINE_RENT,
+    LIVESTOCK_PURCHASE,
+    LIVESTOCK_SALE,
+    WINTER_SERVICE,
+    DIRECT_PAYMENT,
+    INVESTMENT_GRANT,
+    SOCIAL_INSURANCE,
+    GUEST_INCOME,
+    COOP_SHARES,
+    COOP_DIVIDEND,
     OTHER
 }

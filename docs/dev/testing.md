@@ -121,6 +121,14 @@ as ack `result`; `BridgeSyncIntegrationTest.ackResultIsStoredWithTheInstruction`
 blocks) and `FailedInstructionTest` (notice "Mod aktualisieren") cover the backend side. The mod covers normalisation,
 validation, `NOT_SUPPORTED` and `result` in `test_farm_facts.lua`, `test_market_context.lua`, `test_instructions.lua`
 and `test_persistence.lua`, the simulator the execution in `test/roadmap-v3.test.js`.
+Roadmap V3.1 (R31-Q2): `SimulatorScenariosEndToEndTest` checks that snow height, categories, diesel, time of day and
+vehicle positions of `winter-schnee` and spray types and field outlines of `lohnunternehmer` arrive (and stay `null`
+for `wohlhabender-hof`) and that the litres of a `VEHICLE_FUEL` come back as ack `result`; `BridgeValidatorTest` (the
+new fields and blocks) and `FailedInstructionTest` (notice "Mod aktualisieren" for the three new types) cover the
+backend side. The mod covers normalisation, validation and `NOT_SUPPORTED` in `test_farm_facts.lua`,
+`test_market_context.lua` and `test_instructions.lua` (every booking reason needs its title in `modDesc.xml`,
+`test_game_adapter.lua`), the simulator the scenarios, the execution and the control endpoints in
+`test/roadmap-v31.test.js`. Q brings no formula; the formula boundary tests come with the features.
 Roadmap V3 R3-M (market and marketing): `MarketingTest` covers the price alarm (best price, hint, mail, once,
 re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_EVENT / FIXED` held back until the
 delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and

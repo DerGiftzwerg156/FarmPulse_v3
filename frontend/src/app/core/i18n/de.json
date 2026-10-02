@@ -399,7 +399,18 @@
       "GOODS_SALE": "Warenverkauf",
       "VEHICLE_PURCHASE": "Maschinenkauf (gebraucht)",
       "VEHICLE_SALE": "Maschinenverkauf",
-      "CONTRACT_PENALTY": "Vertragsstrafe"
+      "CONTRACT_PENALTY": "Vertragsstrafe",
+      "CONTRACTOR_FEE": "Lohnunternehmer",
+      "MACHINE_RENT": "Maschinenmiete",
+      "LIVESTOCK_PURCHASE": "Tierkauf",
+      "LIVESTOCK_SALE": "Tierverkauf",
+      "WINTER_SERVICE": "Winterdienst",
+      "DIRECT_PAYMENT": "Flächenprämie",
+      "INVESTMENT_GRANT": "Investitionsförderung",
+      "SOCIAL_INSURANCE": "Berufsgenossenschaft",
+      "GUEST_INCOME": "Ferien auf dem Hof",
+      "COOP_SHARES": "Genossenschaftsanteile",
+      "COOP_DIVIDEND": "Genossenschaftsdividende"
     },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
@@ -631,7 +642,18 @@
       "RPSIM_GOODS_SALE": "Warenverkauf",
       "RPSIM_VEHICLE_PURCHASE": "Maschinenkauf (gebraucht)",
       "RPSIM_VEHICLE_SALE": "Maschinenverkauf",
-      "RPSIM_CONTRACT_PENALTY": "Vertragsstrafe"
+      "RPSIM_CONTRACT_PENALTY": "Vertragsstrafe",
+      "RPSIM_CONTRACTOR_FEE": "Lohnunternehmer",
+      "RPSIM_MACHINE_RENT": "Maschinenmiete",
+      "RPSIM_LIVESTOCK_PURCHASE": "Tierkauf",
+      "RPSIM_LIVESTOCK_SALE": "Tierverkauf",
+      "RPSIM_WINTER_SERVICE": "Winterdienst",
+      "RPSIM_DIRECT_PAYMENT": "Flächenprämie",
+      "RPSIM_INVESTMENT_GRANT": "Investitionsförderung",
+      "RPSIM_SOCIAL_INSURANCE": "Berufsgenossenschaft",
+      "RPSIM_GUEST_INCOME": "Ferien auf dem Hof",
+      "RPSIM_COOP_SHARES": "Genossenschaftsanteile",
+      "RPSIM_COOP_DIVIDEND": "Genossenschaftsdividende"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",

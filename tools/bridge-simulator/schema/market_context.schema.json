@@ -22,6 +22,12 @@
     "storeVehicles": { "type": "array", "items": { "type": "object", "required": ["xmlFilename", "name", "price", "isMod"],
       "properties": { "xmlFilename": { "type": "string", "minLength": 1 }, "name": { "type": "string" },
         "price": { "type": "number", "minimum": 0 }, "lifetime": { "type": "number", "minimum": 0 },
-        "categoryName": { "type": "string" }, "isMod": { "type": "boolean" }, "motorized": { "type": "boolean" } } } }
+        "categoryName": { "type": "string" }, "isMod": { "type": "boolean" }, "motorized": { "type": "boolean" } } } },
+    "fieldShapes": { "type": "object", "required": ["mapSize", "fields"], "properties": {
+      "mapSize": { "type": "number", "exclusiveMinimum": 0 },
+      "fields": { "type": "array", "items": { "type": "object", "required": ["farmlandId", "name", "points"],
+        "properties": { "farmlandId": { "type": "integer" }, "name": { "type": "string" },
+          "points": { "type": "array", "minItems": 3, "maxItems": 64, "items": { "type": "object",
+            "required": ["x", "z"], "properties": { "x": { "type": "number" }, "z": { "type": "number" } } } } } } } } }
   }
 }

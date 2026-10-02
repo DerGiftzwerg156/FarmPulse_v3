@@ -257,4 +257,37 @@ class FailedInstructionTest {
         assertThat(notices.open(sg)).singleElement().satisfies(n -> assertThat(notices.details(n))
                 .containsEntry("modOutdated", false).containsEntry("vehicleId", "veh_1"));
     }
+
+    // Roadmap V3.1 (R31-Q1): the three new types count as "Mod aktualisieren" like the V3 types
+
+    @Test
+    void anOlderModRefusingARoadmapV31TypeAsksForAModUpdate() {
+        OutboxInstruction work = v3Instruction(InstructionType.FIELD_WORK,
+                "{\"farmlandId\":4,\"work\":\"SOW\",\"fruitType\":\"WHEAT\"}", "batch_contractor");
+        OutboxInstruction money = v3Instruction(InstructionType.MONEY_TRANSACTION,
+                "{\"amount\":-900,\"reason\":\"CONTRACTOR_FEE\"}", "batch_contractor");
+        refuse(work, "FAILED", "NOT_SUPPORTED");
+        refuse(money, "FAILED", "BATCH_ABORTED: " + work.getInstructionId());
+
+        // one notice for the job: the money part is reported together with its instruction
+        assertThat(notices.open(sg)).singleElement().satisfies(n -> assertThat(notices.details(n))
+                .containsEntry("type", "FIELD_WORK").containsEntry("modOutdated", true)
+                .containsEntry("work", "SOW").containsEntry("fruitType", "WHEAT").containsEntry("farmlandId", 4.0));
+    }
+
+    @Test
+    void roadmapV31TypesAreOutdatedOnlyWhenUnknownOrNotSupported() {
+        assertThat(FailedInstructionService.modOutdated(InstructionType.ANIMAL_TRANSFER,
+                "a: unknown type ANIMAL_TRANSFER")).isTrue();
+        assertThat(FailedInstructionService.modOutdated(InstructionType.VEHICLE_FUEL, "NOT_SUPPORTED")).isTrue();
+        assertThat(FailedInstructionService.modOutdated(InstructionType.ANIMAL_TRANSFER, "NO_ANIMAL_SPACE")).isFalse();
+
+        OutboxInstruction animals = v3Instruction(InstructionType.ANIMAL_TRANSFER,
+                "{\"husbandryUniqueId\":\"hus_00001\",\"subType\":\"COW_HOLSTEIN\",\"count\":3,\"direction\":\"IN\"}",
+                null);
+        refuse(animals, "FAILED", "NO_ANIMAL_SPACE");
+        assertThat(notices.open(sg)).singleElement().satisfies(n -> assertThat(notices.details(n))
+                .containsEntry("modOutdated", false).containsEntry("subType", "COW_HOLSTEIN")
+                .containsEntry("count", 3.0).containsEntry("husbandryUniqueId", "hus_00001"));
+    }
 }

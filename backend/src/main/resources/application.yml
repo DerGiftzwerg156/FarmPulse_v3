@@ -663,6 +663,12 @@ rpsim:
         RPSIM_TAX_REFUND: OPERATING_INCOME
         RPSIM_LEASE_INCOME: OPERATING_INCOME          # Roadmap V3 (R3-Q1): lease of own fields (R3-L1)
         RPSIM_GOODS_SALE: OPERATING_INCOME            # Roadmap V3 (R3-Q1): goods to neighbours / farm shop (R3-H4, R3-M3)
+        RPSIM_LIVESTOCK_SALE: OPERATING_INCOME        # Roadmap V3.1 (R31-Q1): animals to a neighbour (R31-A3)
+        RPSIM_WINTER_SERVICE: OPERATING_INCOME        # Roadmap V3.1 (R31-Q1): winter service for the municipality (R31-A4)
+        RPSIM_DIRECT_PAYMENT: OPERATING_INCOME        # Roadmap V3.1 (R31-Q1): area payment (R31-B1)
+        RPSIM_INVESTMENT_GRANT: OPERATING_INCOME      # Roadmap V3.1 (R31-Q1): investment grant (R31-B2)
+        RPSIM_GUEST_INCOME: OPERATING_INCOME          # Roadmap V3.1 (R31-Q1): farm holiday guests (R31-D6)
+        RPSIM_COOP_DIVIDEND: OPERATING_INCOME         # Roadmap V3.1 (R31-Q1): dividend of the cooperative (R31-D7)
         PURCHASE_FUEL: OPERATING_EXPENSE
         PURCHASE_SEEDS: OPERATING_EXPENSE
         PURCHASE_FERTILIZER: OPERATING_EXPENSE
@@ -689,6 +695,10 @@ rpsim:
         RPSIM_TRAINING: OPERATING_EXPENSE
         RPSIM_GOODS_PURCHASE: OPERATING_EXPENSE       # Roadmap V3 (R3-Q1): goods from neighbours (R3-H3)
         RPSIM_CONTRACT_PENALTY: OPERATING_EXPENSE     # Roadmap V3 (R3-Q1): shortfall of a forward contract (R3-M2)
+        RPSIM_CONTRACTOR_FEE: OPERATING_EXPENSE       # Roadmap V3.1 (R31-Q1): contractor works an own field (R31-A1)
+        RPSIM_MACHINE_RENT: OPERATING_EXPENSE         # Roadmap V3.1 (R31-Q1): rented machine of a neighbour (R31-A2)
+        RPSIM_LIVESTOCK_PURCHASE: OPERATING_EXPENSE   # Roadmap V3.1 (R31-Q1): animals from a neighbour (R31-A3)
+        RPSIM_SOCIAL_INSURANCE: OPERATING_EXPENSE     # Roadmap V3.1 (R31-Q1): agricultural social insurance (R31-B5)
         RPSIM_OTHER: OPERATING_EXPENSE
         SHOP_PROPERTY_BUY: INVESTMENT
         SHOP_VEHICLE_BUY: INVESTMENT
@@ -707,6 +717,7 @@ rpsim:
         RPSIM_CREDIT_SPECIAL_REPAYMENT: FINANCING
         RPSIM_CREDIT_PREPAYMENT_FEE: FINANCING
         RPSIM_STARTING_CAPITAL_ADJUSTMENT: FINANCING
+        RPSIM_COOP_SHARES: FINANCING                  # Roadmap V3.1 (R31-Q1): cooperative shares and their repayment (R31-D7)
         RPSIM_DAMAGE: IGNORE
         RPSIM_INSURANCE_PAYOUT: IGNORE
         RPSIM_WILDLIFE_COMPENSATION: IGNORE

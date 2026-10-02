@@ -13,6 +13,7 @@ versions or this changelog do not match.
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training
 is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
 types and booking reasons (the neighbour trade and contracts then fail); the notice then says "Mod aktualisieren".
+The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q).
 
 The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
 filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
@@ -31,6 +32,25 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Roadmap V3.1 groundwork (R31-Q):** the bridge contract for the V3.1 features, without game-visible changes yet.
+  - `farm_facts.json`, new optional values: `weather.snowHeight` (A4), `fields[].sprayType` (B3, name from the game's
+    `FieldSprayType` table incl. `NONE`), `assets.vehicles[].category` (shop category in upper case) and `fuel`
+    (`{ liters, capacity }` of the diesel tank, D8), `calendar.dayTimeMs` (time of day, D4) and the block
+    `vehiclePositions` (own vehicles being driven, D5). `market_context.json`: optional block `fieldShapes` (map size and
+    field outlines with at most 64 points, mod switch `fieldShapeMaxPoints`, K1). A missing value means "not present";
+    the mod normalises the values once the features read them, `BridgeDtos` / `BridgeValidator` read and check them.
+  - New instruction types `FIELD_WORK` (A1: `PLOW`, `CULTIVATE`, `LIME`, `SOW` with fruit type, `HARVEST`),
+    `ANIMAL_TRANSFER` (A3) and `VEHICLE_FUEL` (D8, ack `result.liters`) are validated by the mod and acknowledged
+    `FAILED` / `NOT_SUPPORTED` until the features execute them; a refused one asks for a mod update like the V3 types.
+  - New booking reasons `CONTRACTOR_FEE`, `MACHINE_RENT`, `LIVESTOCK_PURCHASE`, `LIVESTOCK_SALE`, `WINTER_SERVICE`,
+    `DIRECT_PAYMENT`, `INVESTMENT_GRANT`, `SOCIAL_INSURANCE`, `GUEST_INCOME`, `COOP_SHARES`, `COOP_DIVIDEND` in mod,
+    backend, booking titles (`modDesc.xml`), the German UI labels and the chronicle; journal classes in
+    `rpsim.formulas.finance.categories` (grants and income operating, contractor, machine rent, livestock purchase and
+    social insurance operating expense, cooperative shares financing).
+  - Bridge simulator: scenarios `winter-schnee`, `lohnunternehmer` and `viehhandel`, control endpoints `/snow`,
+    `/vehicle-positions` and `/fuel`; the simulator executes the new instructions like the planned mod.
+  - Docs: every new field and instruction with its source in the FS25 code (`docs/dev/bridge-protocol.md`) and
+    section 21 of the manual test plan with one check per "Im Spiel prüfen" point of Roadmap V3.1.
 - **Leasing out own fields (Roadmap V3, R3-L):**
   - Flurkarte → own field → **Verpachten**: term 1–3 FS25 years and a desired rent per ha and month (guide value =
     field price × 5 % / 12 per ha). Up to three active neighbours with enough capital answer with a first bid

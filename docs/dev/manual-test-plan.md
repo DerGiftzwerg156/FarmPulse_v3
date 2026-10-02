@@ -431,3 +431,22 @@ state at the change of hands, base-game contracts on the field during the lease)
 | 20.8 | A pledged field: *Verpachten* | refused until *Zustimmung zur Verpachtung* in the bank; then possible, the Grundschuld stays |
 | 20.9 | Lease out the family field | the family is a little disappointed (mail), it stays the family field |
 
+
+## 21. Roadmap V3.1 in the real FS25
+
+Every point of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) marked 🟡 ("Im Spiel prüfen") has one row here.
+Check a row once the roadmap item named in the first column is built; until then the mod does not collect the value
+(the field or block is missing, see
+[bridge protocol](bridge-protocol.md#roadmap-v31-fields-and-blocks-optional-r31-q1)) or acknowledges the instruction
+`FAILED` / `NOT_SUPPORTED`. Note the result in the row's issue and, if the fallback is needed, switch the
+implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 21.1 | Field state taken over by the update task (R31-A1) | Let the contractor plow an own field (`FIELD_WORK` `PLOW`): the mod changes the field state and calls `createFieldUpdateTask()` like `PlowMission:getFieldFinishTask`; look at the field in the game and at `farm_facts.json` → `fields[]` | the field is plowed (`groundType` `PLOWED`, no crop, plow level full) right after the instruction | call the setters of the task directly (`setGroundType`, `setFruit`, `setPlowLevel` …, dump `field/FieldManager.lua`) |
+| 21.2 | Straw after a harvest by state jump (R31-A1) | Let the contractor harvest a grain field (`FIELD_WORK` `HARVEST`), look at the field | note whether straw (swath) lies on the field afterwards | straw is no part of the service: only the main crop is stored (`STORAGE_TRANSFER IN`) |
+| 21.3 | New animals shown at once (R31-A3) | Buy calves from a neighbour (`ANIMAL_TRANSFER` `IN`), open the husbandry menu of the stable and look at `farm_facts.json` → `assets.animals[]` | the animals are shown immediately (`addPendingAddCluster` + `raiseActive`) and counted by the next export | the display follows with the next update of the stable; the export counts the animals only afterwards |
+| 21.4 | Snow height with snow switched off (R31-A4) | Read `farm_facts.json` → `weather.snowHeight` in a winter with snow and in a savegame with snow switched off in the savegame settings | with snow the value rises above 0 on a snow day; note what `g_currentMission.snowSystem.height` gives with snow off | the mod leaves `snowHeight` out with snow off; the authority then does not offer the winter service contract |
+| 21.5 | Spray type after spreading (R31-B3) | Spread liquid manure on an own field, read `farm_facts.json` → `fields[].sprayType` and `sprayLevel` over the following days until the next work | `sprayType` stays `LIQUID_MANURE` until the next work changes it | value only a rising `sprayLevel` in the closed period and leave the kind open; the authority writes "Düngung festgestellt" instead of "Gülle" |
+| 21.6 | False alarms of the crop damage sample (R31-D5) | Drive on field paths that cross a neighbour's farmland and to an own contract field through neighbour land; read `farm_facts.json` → `vehiclePositions[]` (`farmlandId`, `onCrop`) | note how many samples in a row land on a neighbour's field with a crop without real damage | off by default, raise the threshold of samples in a row, a hint before the first complaint ("Pass auf, wo du langfährst") |
+| 21.7 | Orientation of the field outlines (R31-K1) | Compare the map view of the Flurkarte with the map of the game (`market_context.json` → `fieldShapes`) | north is up and the fields lie where the game's map shows them | mirror the axis in the frontend (switch in the code, set once in the playtest) |

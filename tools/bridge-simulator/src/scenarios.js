@@ -261,6 +261,117 @@ Object.assign(SCENARIOS, {
   },
 });
 
+// Roadmap V3.1 (R31-Q2): winter-schnee, lohnunternehmer and viehhandel stand for a mod with the R31-Q1 contract
+// (roadmapV31: true): the own vehicles carry their shop category and diesel, own fields their spray type, the calendar
+// the time of day, and farm_facts the block vehiclePositions (empty until /vehicle-positions). lohnunternehmer also
+// exports the field outlines (market_context.fieldShapes). `stables` is the simulator's own model of the husbandries
+// (free places and animals per subtype) that the planned mod reads at ANIMAL_TRANSFER; it is not exported.
+// All other scenarios leave the Roadmap V3.1 fields out and stand for a mod without them.
+// All numbers and names (fruit types, animal subtypes, outlines) are simulated examples, not values read from FS25.
+
+/** Simulated FS25 fruit types a contractor can sow (FIELD_WORK SOW). */
+export const FRUIT_TYPES = ['WHEAT', 'BARLEY', 'OAT', 'CANOLA', 'MAIZE', 'SUNFLOWER', 'SOYBEAN', 'POTATO', 'SUGARBEET'];
+
+/** Simulated FS25 animal subtypes and their animal type (ANIMAL_TRANSFER). */
+export const SUB_TYPES = { COW_HOLSTEIN: 'COW', COW_ANGUS: 'COW', COW_SWISS_BROWN: 'COW', PIG_LANDRACE: 'PIG',
+  PIG_BLACK_PIED: 'PIG', SHEEP_LANDRACE: 'SHEEP', SHEEP_STEINSCHAF: 'SHEEP', CHICKEN: 'CHICKEN' };
+
+/** Simulated field outlines: farmlands 1-15 on a 4 x 4 grid of a 2048 m map (world origin in the map centre). */
+function gridShapes() {
+  const size = 2048;
+  const cell = size / 4;
+  const fields = [];
+  for (let id = 1; id <= 15; id++) {
+    const x0 = -size / 2 + ((id - 1) % 4) * cell + 40;
+    const z0 = -size / 2 + Math.floor((id - 1) / 4) * cell + 40;
+    const w = cell - 80;
+    // a slanted edge so the outline is no plain rectangle
+    fields.push({ farmlandId: id, name: String(id), points: [{ x: x0, z: z0 }, { x: x0 + w, z: z0 },
+      { x: x0 + w, z: z0 + w * 0.8 }, { x: x0 + w * 0.6, z: z0 + w }, { x: x0, z: z0 + w }] });
+  }
+  return { mapSize: size, fields };
+}
+
+Object.assign(SCENARIOS, {
+  'winter-schnee': {
+    description: 'Winter (Dezember) mit Schnee: Traktoren mit Shop-Kategorie und Dieselstand, Tageszeit, '
+      + 'Fahrzeugpositionen (R31-A4, R31-D5, R31-D8).',
+    balance: 95000, vanillaLoan: 0, ownedFarmlands: [1, 3], startPeriod: 10, roadmapV31: true,
+    vehicles: [
+      { ...vehicle(1, 180000, 0.15), name: 'Fendt 700 Vario', xmlFilename: 'data/vehicles/fendt/vario700/vario700.xml',
+        category: 'TRACTORSL', fuel: { liters: 260, capacity: 400 } },
+      { ...vehicle(2, 70000, 0.25), name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml',
+        category: 'TRACTORSM', fuel: { liters: 90, capacity: 150 } },
+      // a trailer has no diesel tank: no fuel
+      { ...vehicle(3, 25000, 0.1), name: 'Krampe Bandit 750', xmlFilename: 'data/vehicles/krampe/bandit750/bandit750.xml',
+        category: 'TRAILERS' },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 60000 }],
+    animals: [], storage: { WHEAT: { amount: 20000, capacity: 80000 } },
+    drift: { income: 1200, expense: 1500 },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.3, temperature: -4, snowHeight: 0.15 },
+  },
+  lohnunternehmer: {
+    description: 'Erntezeit (August): eigene Felder in verschiedenen Phasen mit Düngungsart, eigene Silos mit freier '
+      + 'Kapazität, Feldumrisse der Karte (R31-A1, R31-B3, R31-K1).',
+    balance: 140000, vanillaLoan: 0, ownedFarmlands: [2, 4, 5, 7], startPeriod: 6, roadmapV31: true,
+    vehicles: [
+      { ...vehicle(1, 150000, 0.2), name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml',
+        category: 'TRACTORSM', fuel: { liters: 120, capacity: 150 } },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 90000 }],
+    animals: [],
+    storage: { WHEAT: { amount: 20000, capacity: 150000 }, BARLEY: { amount: 5000, capacity: 60000 } },
+    tradeStorage: { WHEAT: { amount: 20000, capacity: 150000 }, BARLEY: { amount: 5000, capacity: 60000 } },
+    drift: { income: 2600, expense: 2200 },
+    fields: [
+      // harvestable wheat (candidate for HARVEST)
+      { farmlandId: 2, fruitType: 'WHEAT', growthState: 8, minHarvestingGrowthState: 8, maxHarvestingGrowthState: 8,
+        withered: false, cut: false, fillType: 'WHEAT', litersPerSqm: 0.95,
+        weedState: 0, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN', sprayType: 'NONE' },
+      // harvested barley (candidate for PLOW / CULTIVATE)
+      { farmlandId: 4, fruitType: 'BARLEY', growthState: 10, minHarvestingGrowthState: 9, maxHarvestingGrowthState: 9,
+        withered: false, cut: true, fillType: 'BARLEY', litersPerSqm: 0.97,
+        weedState: 1, stoneLevel: 1, sprayLevel: 1, limeLevel: 0, plowLevel: 0, groundType: 'HARVEST_READY',
+        sprayType: 'MANURE' },
+      // empty cultivated field after slurry (candidate for SOW / LIME)
+      { farmlandId: 5, growthState: 0, weedState: 0, stoneLevel: 0, sprayLevel: 1, limeLevel: 0, plowLevel: 1,
+        groundType: 'CULTIVATED', sprayType: 'LIQUID_MANURE' },
+      // growing canola
+      { farmlandId: 7, fruitType: 'CANOLA', growthState: 3, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'CANOLA', litersPerSqm: 0.45,
+        weedState: 0, stoneLevel: 0, sprayLevel: 2, limeLevel: 1, plowLevel: 1, groundType: 'SOWN', sprayType: 'NONE' },
+    ],
+    fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.2, temperature: 24, snowHeight: 0 },
+    fieldShapes: gridShapes(),
+  },
+  viehhandel: {
+    description: 'Tierhof: Kuhstall mit freien Plätzen und zwei Rassen, voller Schafstall (R31-A3).',
+    balance: 120000, vanillaLoan: 0, ownedFarmlands: [3], roadmapV31: true,
+    vehicles: [
+      { ...vehicle(1, 90000, 0.3), name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml',
+        category: 'TRACTORSM', fuel: { liters: 70, capacity: 150 } },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 150000 }, { uniqueId: 'plc_00002', value: 40000 }],
+    animals: [{ husbandryUniqueId: 'hus_00001', type: 'COW', count: 40, estimatedValue: 160000 },
+      { husbandryUniqueId: 'hus_00002', type: 'SHEEP', count: 20, estimatedValue: 6000 }],
+    stables: {
+      hus_00001: { capacity: 60, valuePerAnimal: 4000, subTypes: { COW_HOLSTEIN: 30, COW_ANGUS: 10 } },
+      hus_00002: { capacity: 20, valuePerAnimal: 300, subTypes: { SHEEP_LANDRACE: 20 } },
+    },
+    storage: { WHEAT: { amount: 10000, capacity: 40000 } },
+    drift: { income: 2000, expense: 1800 },
+    husbandries: [
+      { husbandryUniqueId: 'hus_00001', health: 88, productivity: 0.8, food: 0.7,
+        conditions: [{ title: 'Wasser', ratio: 0.9 }, { title: 'Stroh', ratio: 0.6 }, { title: 'Gülle', ratio: 0.4 }] },
+      { husbandryUniqueId: 'hus_00002', health: 92, productivity: 0.85, food: 0.8,
+        conditions: [{ title: 'Wasser', ratio: 0.95 }] },
+    ],
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.3, temperature: 14, snowHeight: 0 },
+  },
+});
+
 // Simulated vanilla contracts (TODO T-22); the mod reads them from g_missionManager:getMissions().
 export const MISSIONS = [
   { uniqueId: 'mission_001', title: 'Ernte', typeName: 'harvestMission', field: '7', npcIndex: 3, npcTitle: 'Otto Wendler',

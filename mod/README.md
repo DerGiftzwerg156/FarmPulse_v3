@@ -31,6 +31,11 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Exportiert für **Gebrauchtmaschinen** (Roadmap V3, R3-V): einmal beim Spielstart den Fahrzeug-Katalog des Shops
   (`storeVehicles`, Schalter `storeCatalogExport`, höchstens `storeCatalogMaxEntries` Einträge) und zu jeder eigenen
   Maschine Name und Shop-XML (`assets.vehicles[].name`, `xmlFilename`).
+- Kennt den Vertrag für **Roadmap V3.1** (R31-Q1): Schneehöhe (`weather.snowHeight`), Düngungsart je Feld
+  (`fields[].sprayType`), Shop-Kategorie und Dieselstand je Maschine (`assets.vehicles[].category`, `fuel`), Tageszeit
+  (`calendar.dayTimeMs`), Fahrzeugpositionen (`vehiclePositions`) und die Feldumrisse (`market_context.fieldShapes`,
+  höchstens `fieldShapeMaxPoints` Punkte je Feld). Ausgelesen werden die Werte erst mit den Funktionen (A4, B3, D4,
+  D5, D8, K1); bis dahin fehlen sie im Export.
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -66,6 +71,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     `VEHICLE_IN_USE` (jemand sitzt drin oder ein Helfer fährt) oder `VEHICLE_ATTACHED` (angehängt oder mit Anbaugerät,
     bis zum Spieltest gilt: erst abkoppeln). Eine Quittung kann ein Ergebnis `result` tragen (z. B. `vehicleId`,
     `missionId`); es wird mit im Spielstand gespeichert
+  - `FIELD_WORK`, `ANIMAL_TRANSFER`, `VEHICLE_FUEL` (Roadmap V3.1, R31-Q1) – werden geprüft (Arbeit und Fruchtsorte,
+    Stall, Untertyp, Anzahl und Richtung, Fahrzeug und negative Menge) und bis zu den Funktionen R31-A1, R31-A3 und
+    R31-D8 mit `FAILED` / `NOT_SUPPORTED` quittiert; der Batch bucht dann nichts
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.
@@ -129,6 +137,7 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | `npcFieldExport` | `true` | Roadmap V3 R3-H1: die Felder der Nachbarn (ohne Besitzer) mit exportieren (`npcFields`, gleiche Taktung wie die eigenen Felder); aus = keine Ernte-Vorräte und keine Aufträge der Nachbarn |
 | `storeCatalogExport` | `true` | Roadmap V3 R3-V1: den Fahrzeug-Katalog des Shops einmal beim Spielstart exportieren (`storeVehicles`); aus = keine Gebrauchtmaschinen-Angebote |
 | `storeCatalogMaxEntries` | `2000` | Roadmap V3 R3-V1: höchstens so viele Katalog-Einträge (nach `xmlFilename` sortiert, der Rest wird mit Log-Eintrag weggelassen) |
+| `fieldShapeMaxPoints` | `64` | Roadmap V3.1 R31-K1 (Vertrag R31-Q1): höchstens so viele Punkte je Feldumriss in `market_context.fieldShapes`; längere Umrisse werden gleichmäßig ausgedünnt |
 | `promptsInVehicle` | `true` | Roadmap V2 R2-F2: Ja/Nein-Fragen erscheinen auch, während du im Fahrzeug sitzt; `false` = nur zu Fuß (die Taste öffnet sie trotzdem) |
 | `moneyTypeStatistics` | `{}` | Finanzstatistik je Buchungsgrund, z. B. `{ "SALARY_PAYMENT": "wagePayment" }`. Belegt ist nur `other` (FS25 `FillTrigger.lua`); andere Namen erst im Spiel prüfen (Testplan 8.18) |
 

@@ -55,41 +55,62 @@ sichtbarer. A braucht die Bausteine aus V3. B ist überwiegend Backend-Arbeit.
 
 ## Q – Querschnitt
 
+**Stand 02.10.2026: umgesetzt.** Q legt wie R2-Q und R3-Q nur den Vertrag an (Schemas, DTOs, Validator,
+Normalisierung im Mod, Simulator, Doku). Das Auslesen im Mod folgt mit A4 (`snowHeight`, `category`), B3
+(`sprayType`), D4 (`dayTimeMs`), D5 (`vehiclePositions`), D8 (`fuel`) und K1 (`fieldShapes`), bis dahin fehlen die
+Werte. Die drei neuen Anweisungen quittiert der Mod bis A1/A3/D8 mit `FAILED` / `NOT_SUPPORTED`. Entscheidungen
+(siehe `QUESTIONS.md`): `calendar.dayTimeMs` (D4) gehört mit in Q. `vehiclePositions[]` = `{ uniqueId, x, z,
+farmlandId?, onCrop? }`, `fieldShapes` = `{ mapSize, fields: [{ farmlandId, name, points }] }` mit höchstens 64
+Punkten je Feld (Mod-Schalter `fieldShapeMaxPoints`), `fuel` = `{ liters, capacity }`, `sprayType` mit `NONE`,
+`category` in Großbuchstaben. `FIELD_WORK.work` ∈ `PLOW`, `CULTIVATE`, `LIME`, `SOW` (mit `fruitType`), `HARVEST`.
+Fehlercodes je Anweisung und `result.liters` nach `VEHICLE_FUEL` wie im Bridge-Protokoll. Die Buchungstitel und
+-klassen folgen dem Vorschlag. Der Simulator führt die neuen Anweisungen aus wie der spätere Mod. Spieler-Doku nur
+im `CHANGELOG`; der Testplan-Abschnitt ist **21** (12 war schon belegt).
+
 ### R31-Q1 Bridge-Schema erweitern
 
-- [ ] `farm_facts.json`, neue optionale Felder:
+- [x] `farm_facts.json`, neue optionale Felder:
   - `weather.snowHeight`: Schneehöhe der Welt (A4).
   - `fields[].sprayType`: Art der letzten Düngung (B3).
   - `assets.vehicles[].category`: Shop-Kategorie jedes eigenen Fahrzeugs (A4, D8).
   - `assets.vehicles[].fuel`: Dieselstand (D8).
   - `vehiclePositions[]`: Stichprobe der Fahrzeugpositionen (D5).
-- [ ] `market_context.json`, neuer optionaler Block `fieldShapes` (K1): Umriss jedes Feldes und Kartengröße.
-- [ ] Neue Anweisungstypen:
+  - `calendar.dayTimeMs`: Tageszeit (D4, Entscheidung 02.10.2026).
+- [x] `market_context.json`, neuer optionaler Block `fieldShapes` (K1): Umriss jedes Feldes und Kartengröße.
+- [x] Neue Anweisungstypen:
   - `FIELD_WORK` (A1): Endzustand einer Feldarbeit setzen,
   - `ANIMAL_TRANSFER` (A3): Tiere ein- oder ausstallen,
   - `VEHICLE_FUEL` (D8): Diesel abziehen.
 
-  Ein älterer Mod lehnt einen unbekannten Typ ab (`FAILED`). Das Backend storniert dann den Vorgang und rät zum Update.
-- [ ] Neue `MoneyReason`-Werte:
+  Ein älterer Mod lehnt einen unbekannten Typ ab (`REJECTED` bei der Prüfung, ein Mod mit R31-Q ohne das Feature
+  `FAILED` / `NOT_SUPPORTED`). Das Backend rät dann per Hinweis zum Update (`modOutdated`, „Mod aktualisieren“); das
+  Stornieren des Vorgangs kommt mit dem jeweiligen Feature.
+- [x] Neue `MoneyReason`-Werte:
   - `CONTRACTOR_FEE` (A1), `MACHINE_RENT` (A2), `LIVESTOCK_PURCHASE` / `LIVESTOCK_SALE` (A3),
   - `WINTER_SERVICE` (A4), `DIRECT_PAYMENT` (B1), `INVESTMENT_GRANT` (B2), `SOCIAL_INSURANCE` (B5),
   - `GUEST_INCOME` (D6), `COOP_SHARES` / `COOP_DIVIDEND` (D7).
 
   Dazu die Klassen in `rpsim.formulas.finance.categories`: Förderungen und Einnahmen operativ, Genossenschaftsanteile
   als Finanzierung.
-- [ ] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code.
+- [x] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code.
 
 ### R31-Q2 Simulator, Tests, Konfiguration, Doku, Testplan
 
-- [ ] Bridge-Simulator:
+- [x] Bridge-Simulator:
   - Szenarien `winter-schnee`, `lohnunternehmer` und `viehhandel`,
   - Steuer-Endpunkte für Schnee, Fahrzeugpositionen und Diesel.
-- [ ] Mod-Tests je Adapter-Funktion mit gemockten FS25-Globals.
-- [ ] Backend: Grenzwert-Tests je Formel, End-to-End-Test gegen den Simulator.
-- [ ] Neue Werte unter `rpsim.formulas.*` samt `docs/dev/configuration-reference.md`
-  (`ConfigurationReferenceDocTest`).
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`.
-- [ ] `docs/dev/manual-test-plan.md`: Abschnitt **„12. Roadmap V3.1 im echten FS25“**, eine Zeile je 🟡.
+- [x] Mod-Tests je Adapter-Funktion mit gemockten FS25-Globals. In Q: Normalisierung der neuen Felder und Blöcke,
+  Prüfung der neuen Anweisungen, `NOT_SUPPORTED`, `result` in der Quittung, Buchungstitel. Gilt weiter für jede
+  Adapter-Funktion der Features.
+- [x] Backend: Grenzwert-Tests je Formel, End-to-End-Test gegen den Simulator. Q bringt keine Formel;
+  `BridgeValidatorTest`, `FailedInstructionTest` und `SimulatorScenariosEndToEndTest` prüfen die neuen Felder, den
+  Hinweis und `result.liters`.
+- [x] Neue Werte unter `rpsim.formulas.*` samt `docs/dev/configuration-reference.md`
+  (`ConfigurationReferenceDocTest`). Q bringt nur die Klassen der neuen Buchungsgründe unter
+  `rpsim.formulas.finance.categories`.
+- [x] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`. Q ist für Spieler nicht sichtbar, daher nur der
+  `CHANGELOG`-Eintrag.
+- [x] `docs/dev/manual-test-plan.md`: Abschnitt **„21. Roadmap V3.1 im echten FS25“**, eine Zeile je 🟡.
 
 ---
 
