@@ -13,19 +13,26 @@ import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.diary.DiaryService;
+import de.farmpulse.rpsim.diary.PaymentDelayService;
 import de.farmpulse.rpsim.domain.Character;
+import de.farmpulse.rpsim.domain.CollateralStatus;
 import de.farmpulse.rpsim.domain.CommunicationCategory;
 import de.farmpulse.rpsim.domain.Loan;
+import de.farmpulse.rpsim.domain.LoanCollateral;
 import de.farmpulse.rpsim.domain.LoanPayment;
 import de.farmpulse.rpsim.domain.LoanPaymentType;
 import de.farmpulse.rpsim.domain.LoanStatus;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.OwnerType;
+import de.farmpulse.rpsim.domain.PaymentDelay;
 import de.farmpulse.rpsim.domain.PublicActionType;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.TrustReason;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
+import de.farmpulse.rpsim.negotiation.FarmlandOwnershipService;
+import de.farmpulse.rpsim.repository.LoanCollateralRepository;
 import de.farmpulse.rpsim.repository.LoanPaymentRepository;
 import de.farmpulse.rpsim.repository.LoanRepository;
 import de.farmpulse.rpsim.time.CalendarChangedEvent;
@@ -67,11 +74,16 @@ public class LoanService {
     private final CreditConfigResolver configs;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final LoanCollateralRepository collaterals;
+    private final FarmlandOwnershipService ownership;
+    private final PaymentDelayService delays;
 
     public LoanService(LoanRepository loans, LoanPaymentRepository payments, OutboxService outbox,
                        LiquidityService liquidity, NarrationRequestService narration, CharacterLookup lookup,
                        TrustScoreService trust, PublicActionService publicActions, DiaryService diary,
-                       CreditConfigResolver configs, RpsimProperties props, GameTime gameTime) {
+                       CreditConfigResolver configs, RpsimProperties props, GameTime gameTime,
+                       LoanCollateralRepository collaterals, FarmlandOwnershipService ownership,
+                       PaymentDelayService delays) {
         this.loans = loans;
         this.payments = payments;
         this.outbox = outbox;
@@ -84,6 +96,9 @@ public class LoanService {
         this.configs = configs;
         this.props = props;
         this.gameTime = gameTime;
+        this.collaterals = collaterals;
+        this.ownership = ownership;
+        this.delays = delays;
     }
 
     /** Creates a loan. Non-legacy loans are disbursed via CREDIT_DISBURSEMENT. */
@@ -146,6 +161,7 @@ public class LoanService {
         payment(l, remaining, LoanPaymentType.CALLBACK, ins.getInstructionId());
         l.setRemainingAmount(0);
         l.setStatus(LoanStatus.CALLED);
+        releaseCollateral(sg, l, ins.getInstructionId());
         diary.addAuto(sg, "CREDIT", "Restschuld eingezogen", "Die Bank hat die offene Restschuld von " + remaining
                 + " € eingezogen.", RELATED, l.getId());
     }
@@ -201,12 +217,17 @@ public class LoanService {
                     TrustReason.ON_TIME_PAYMENT, "Rate pünktlich"));
         }
         if (l.getRemainingAmount() <= 0) {
-            paidOff(sg, l);
+            paidOff(sg, l, ins.getInstructionId());
         }
     }
 
     private void paidOff(Savegame sg, Loan l) {
+        paidOff(sg, l, null);
+    }
+
+    private void paidOff(Savegame sg, Loan l, String instructionId) {
         l.setStatus(LoanStatus.PAID_OFF);
+        releaseCollateral(sg, l, instructionId);
         narrate(sg, l, NarrationEventType.CREDIT_PAID_OFF, NarrationFacts.builder()
                 .put("principal", l.getPrincipal()).put("purpose", l.getPurpose()).build());
         diary.addAuto(sg, "CREDIT", "Kredit vollständig getilgt", "Der Kredit \"" + l.getPurpose() + "\" über "
@@ -229,6 +250,7 @@ public class LoanService {
         for (; due <= now; due = gameTime.addMonths(sg, due, 1)) {
             l.setMissedInstallments(l.getMissedInstallments() + 1);
             l.setLastMissedDueGameTime(due);
+            delays.record(sg, PaymentDelay.LOAN, due);
             payment(l, l.getMonthlyInstallment(), LoanPaymentType.MISSED, null);
         }
     }
@@ -302,6 +324,7 @@ public class LoanService {
                 l.setRemainingAmount(l.getRemainingAmount() + p.getAmount());
                 l.setStatus(LoanStatus.DEFAULTED);
                 l.setBlocksNewCredit(true);
+                repledge(sg, p.getInstructionId());
                 narrate(sg, l, NarrationEventType.CREDIT_BLOCKED, NarrationFacts.builder()
                         .put("missedInstallments", l.getMissedInstallments()).build());
                 diary.addAuto(sg, "CREDIT", "Restschuld nicht eingezogen", "Die Bank konnte die fällige Restschuld von "
@@ -326,6 +349,7 @@ public class LoanService {
         if (l.getStatus() == LoanStatus.PAID_OFF) {
             l.setStatus(LoanStatus.ACTIVE);
         }
+        repledge(sg, p.getInstructionId());
         if (Boolean.TRUE.equals(p.getTrustBonusGiven())) {
             lookup.bank(sg).ifPresent(b -> trust.recordEvent(b, -props.getFormulas().getTrust().getOnTimePayment(),
                     TrustReason.ON_TIME_PAYMENT_REVERSED, "Rate nicht gebucht"));
@@ -341,6 +365,7 @@ public class LoanService {
         if (l.getStatus() == LoanStatus.PAID_OFF) {
             l.setStatus(LoanStatus.ACTIVE);
         }
+        repledge(sg, p.getInstructionId()); // R3-K1: the Grundschuld released by this repayment applies again
         if (Boolean.TRUE.equals(p.getTrustBonusGiven())) {
             lookup.bank(sg).ifPresent(b -> trust.recordEvent(b, -cfg.getSpecialRepaymentTrustDelta(),
                     TrustReason.SPECIAL_REPAYMENT_REVERSED, "Sondertilgung nicht gebucht"));
@@ -349,14 +374,19 @@ public class LoanService {
                 + " € konnte nicht abgebucht werden. Die Restschuld bleibt unverändert.", RELATED, l.getId());
     }
 
-    private void callBack(Savegame sg, Loan l, RpsimProperties.Credit cfg) {
+    void callBack(Savegame sg, Loan l, RpsimProperties.Credit cfg) {
         long remaining = l.getRemainingAmount();
+        // R3-K1 (owner decision): in the harsh world mode the bank realises the pledged fields first
+        if (cfg.getCollateral().isRealiseOnCallback()) {
+            realise(sg, l, remaining);
+        }
         var ins = outbox.money(sg, -remaining, MoneyReason.CREDIT_CALLBACK, "Fälligstellung Restschuld",
                 new Related(RELATED, l.getId()));
         payment(l, remaining, LoanPaymentType.CALLBACK, ins.getInstructionId());
         l.setRemainingAmount(0);
         l.setStatus(LoanStatus.CALLED);
         l.setBlocksNewCredit(true);
+        releaseCollateral(sg, l, ins.getInstructionId());
         // A public call-back becomes known in the village (technical concept "Dorf-Ansehen").
         publicActions.record(sg, PublicActionType.PUBLIC_DEFAULT, cfg.getPublicDefaultDelta(),
                 "Kredit fällig gestellt: " + l.getPurpose());
@@ -364,6 +394,127 @@ public class LoanService {
                 .put("purpose", l.getPurpose()).build());
         diary.addAuto(sg, "CREDIT", "Kredit fällig gestellt", "Die Bank hat die Restschuld von " + remaining
                 + " € sofort fällig gestellt.", RELATED, l.getId());
+    }
+
+    /**
+     * Roadmap V3 R3-K1 realisation: field by field, highest collateral value first, while debt is open - each one a
+     * farmland deal (FARMLAND_TRANSFER FROM_PLAYER + its collateral value as FARMLAND_SALE). The call-back itself books
+     * the whole remaining debt afterwards, so a surplus of the last field stays with the player and debt above the
+     * fields is called in as money. The other pledged fields are released with the loan.
+     */
+    List<LoanCollateral> realise(Savegame sg, Loan l, long remaining) {
+        List<LoanCollateral> pledged = new java.util.ArrayList<>(collaterals.findByLoanAndStatus(l, CollateralStatus.PLEDGED));
+        pledged.sort(java.util.Comparator.comparingLong(LoanCollateral::getCollateralValue).reversed()
+                .thenComparingInt(LoanCollateral::getFarmlandId));
+        List<LoanCollateral> out = new java.util.ArrayList<>();
+        long open = remaining;
+        for (LoanCollateral c : pledged) {
+            if (open <= 0) {
+                break;
+            }
+            outbox.farmlandDeal(sg, c.getFarmlandId(), false, c.getCollateralValue(), "Verwertung Feld " + c.getFarmlandId(),
+                    new Related(COLLATERAL_RELATED, c.getId()));
+            ownership.setOwner(sg, c.getFarmlandId(), OwnerType.UNCLAIMED, null);
+            c.setStatus(CollateralStatus.REALISED);
+            c.setReleasedGameTime(sg.getCurrentGameTime());
+            open -= c.getCollateralValue();
+            out.add(c);
+        }
+        if (!out.isEmpty()) {
+            long value = out.stream().mapToLong(LoanCollateral::getCollateralValue).sum();
+            String fields = String.join(", ", out.stream().map(c -> String.valueOf(c.getFarmlandId())).toList());
+            narrate(sg, l, NarrationEventType.CREDIT_COLLATERAL_REALISED, NarrationFacts.builder()
+                    .put("fields", fields).put("collateralValue", value).put("remainingDebt", remaining)
+                    .put("surplus", Math.max(0, value - remaining)).put("purpose", l.getPurpose()).build());
+            diary.addAuto(sg, "CREDIT", "Grundschuld verwertet", "Die Bank hat Feld " + fields + " für "
+                    + euro(value) + " verwertet und gegen die Restschuld von " + euro(remaining) + " gerechnet.",
+                    RELATED, l.getId());
+        }
+        return out;
+    }
+
+    /** Related type of the realisation deals (FailedInstructionService gives the field back when the mod refuses). */
+    public static final String COLLATERAL_RELATED = "COLLATERAL";
+
+    /** R3-K1: the realisation deal of a field was not executed - the field stays with the player, no credit. */
+    @Transactional
+    public boolean onRealisationFailed(Savegame sg, Long collateralId) {
+        LoanCollateral c = collaterals.findById(collateralId).orElse(null);
+        if (c == null || c.getStatus() != CollateralStatus.REALISED) {
+            return false;
+        }
+        c.setStatus(CollateralStatus.RELEASED);
+        ownership.get(sg, c.getFarmlandId()).ifPresent(o -> ownership.setOwner(sg, c.getFarmlandId(), OwnerType.PLAYER, null));
+        diary.addAuto(sg, "CREDIT", "Verwertung nicht ausgeführt", "Feld " + c.getFarmlandId()
+                + " konnte nicht verwertet werden und bleibt bei dir.", RELATED, c.getLoan() == null ? null : c.getLoan().getId());
+        return true;
+    }
+
+    /** R3-K1: the Grundschuld of a repaid (or called) loan is released. */
+    void releaseCollateral(Savegame sg, Loan l, String instructionId) {
+        List<LoanCollateral> pledged = collaterals.findByLoanAndStatus(l, CollateralStatus.PLEDGED);
+        for (LoanCollateral c : pledged) {
+            c.setStatus(CollateralStatus.RELEASED);
+            c.setReleasedGameTime(sg.getCurrentGameTime());
+            c.setReleaseInstructionId(instructionId);
+        }
+        if (!pledged.isEmpty() && l.getStatus() == LoanStatus.PAID_OFF) {
+            diary.addAuto(sg, "CREDIT", "Grundschuld gelöscht", "Mit der Tilgung des Kredits \"" + l.getPurpose()
+                    + "\" ist die Grundschuld auf Feld " + String.join(", ", pledged.stream()
+                    .map(c -> String.valueOf(c.getFarmlandId())).toList()) + " frei.", RELATED, l.getId());
+        }
+    }
+
+    /** R3-K1: a repayment that released a Grundschuld was not booked - the fields are pledged again. */
+    void repledge(Savegame sg, String instructionId) {
+        if (instructionId == null) {
+            return;
+        }
+        for (LoanCollateral c : collaterals.findByReleaseInstructionId(instructionId)) {
+            if (c.getStatus() == CollateralStatus.RELEASED) {
+                c.setStatus(CollateralStatus.PLEDGED);
+                c.setReleasedGameTime(null);
+                c.setReleaseInstructionId(null);
+            }
+        }
+    }
+
+    /**
+     * Roadmap V3 R3-K1: repayment of a collateral value without prepayment fee - with the sale of a pledged field (in
+     * the sale batch, {@code batchId}; the proceeds pay it) or a claim after a sale in the game menu (by button,
+     * liquidity checked). Reduces the debt like a Sondertilgung (same installment, shorter term). Returns the
+     * instruction id, or null when nothing is open.
+     */
+    @Transactional
+    public String collateralRepayment(Savegame sg, Loan l, long amount, String batchId, String note) {
+        long due = Math.min(amount, l.getRemainingAmount());
+        if (l.getStatus() != LoanStatus.ACTIVE || due <= 0) {
+            return null;
+        }
+        if (batchId == null && liquidity.available(sg) < due) {
+            throw new BusinessRuleException("INSUFFICIENT_LIQUIDITY", "Das Guthaben reicht für die Tilgung von "
+                    + euro(due) + " nicht aus.");
+        }
+        var ins = outbox.money(sg, -due, MoneyReason.CREDIT_SPECIAL_REPAYMENT, note, new Related(RELATED, l.getId()),
+                batchId, null);
+        LoanPayment p = payment(l, due, LoanPaymentType.SPECIAL_REPAYMENT, ins.getInstructionId());
+        p.setPrincipalPart(due);
+        p.setTrustBonusGiven(false);
+        l.setRemainingAmount(l.getRemainingAmount() - due);
+        diary.addAuto(sg, "CREDIT", "Tilgung aus Grundschuld", note + ": " + euro(due) + ". Restschuld: "
+                + euro(l.getRemainingAmount()) + ".", RELATED, l.getId());
+        if (l.getRemainingAmount() <= 0) {
+            paidOff(sg, l, ins.getInstructionId());
+        }
+        return ins.getInstructionId();
+    }
+
+    /** R3-K1: a claim after a menu sale stayed unpaid - counts as a missed installment in the payment history. */
+    void registerClaimMiss(Loan l) {
+        delays.record(l.getSavegame(), PaymentDelay.COLLATERAL_CLAIM,
+                l.getSavegame().getCurrentGameTime());
+        l.setMissedInstallments(l.getMissedInstallments() + 1);
+        payment(l, 0, LoanPaymentType.MISSED, null);
     }
 
     public record DeferralResult(boolean granted, String reasonCategory) {
@@ -529,7 +680,7 @@ public class LoanService {
         return new SpecialRepaymentResult(amount, interest, fee, l.getRemainingAmount(), left, paidOff, trustBonus);
     }
 
-    private static String euro(long amount) {
+    static String euro(long amount) {
         return NumberFormat.getIntegerInstance(Locale.GERMANY).format(amount) + " €";
     }
 

@@ -95,6 +95,23 @@ Spielzeit.
 Die Live-Verbindung zum Backend ist unterbrochen. Läuft das Backend-Fenster noch? Nach einem Neustart verbindet
 sich die Oberfläche von selbst wieder (nach 1 bis 30 Sekunden); notfalls die Seite neu laden.
 
+## Das Tablet erreicht FarmPulse nicht
+
+- **Seite lädt nicht (Zeitüberschreitung):** Meist blockiert die **Windows-Firewall**. Beim ersten Start fragt Windows,
+  ob Java im Netzwerk kommunizieren darf – dort **Private Netzwerke** erlauben. Nachträglich: *Windows-Sicherheit →
+  Firewall- & Netzwerkschutz → Zugriff von Apps durch die Firewall zulassen* → *Java(TM) Platform SE binary* (bzw.
+  *OpenJDK Platform binary*) für **Privat** anhaken. Außerdem muss das WLAN des PCs in Windows als **privates** Netzwerk
+  eingestellt sein, nicht als öffentliches.
+- **Tablet im Gast-WLAN:** Viele Router trennen das Gast-WLAN vom Heimnetz – das Tablet sieht den PC dann nicht. Das
+  Tablet ins normale WLAN bringen (dasselbe Netz wie der Spiele-PC).
+- **Meldung „Zugriff nur vom Spiele-PC …“ (403):** Der Schalter **Im Heimnetz erreichbar** ist aus, oder das Gerät
+  kommt nicht aus dem Heimnetz (z. B. über mobile Daten). Am Spiele-PC unter *Einstellungen → Tablet & Netzwerk*
+  einschalten und das Tablet ins WLAN bringen.
+- **Adresse passt nicht mehr:** Der Router hat dem PC eine neue Adresse gegeben. Die aktuelle steht in der
+  Einstellungskarte und im Backend-Fenster.
+- **Immer wieder nach der PIN gefragt:** Die PIN wurde geändert oder der Heimnetz-Zugriff aus- und wieder eingeschaltet
+  – dann meldet sich jedes Tablet neu an. Nach fünf falschen PINs fünf Minuten warten.
+
 ## Neu anfangen
 
 - **Neuer Spielstand:** einfach das Onboarding erneut durchlaufen und mit dem neuen FS25-Spielstand verknüpfen.

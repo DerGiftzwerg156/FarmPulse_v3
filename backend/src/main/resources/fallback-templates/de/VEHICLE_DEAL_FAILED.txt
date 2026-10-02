@@ -1,0 +1,6 @@
+Geschäft über {{vehicleName}} geplatzt
+Hallo,
+
+aus dem Geschäft über den {{vehicleName}} wird leider nichts ({{reason}}). Es wurde nichts gebucht.
+
+{{characterName}}

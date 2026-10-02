@@ -15,6 +15,8 @@ import { Card } from '../../shared/ui/card';
 import { ChartSeries, ChartWrapper } from '../../shared/ui/chart-wrapper';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { Stat } from '../../shared/ui/stat';
+import { ForwardContractCard } from './forward-contract-card';
+import { PriceAlarmCard } from './price-alarm-card';
 
 const DAY = 86_400_000;
 export const RANGES = [7, 30, 90, 0] as const; // 0 = whole savegame
@@ -35,7 +37,8 @@ export function toChartSeries(series: PriceSeries[], sellPointOrder: string[]): 
  */
 @Component({
   selector: 'app-market',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, ChartWrapper, PageErrorView],
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, ChartWrapper, PageErrorView,
+    PriceAlarmCard, ForwardContractCard],
   templateUrl: './market.html',
 })
 export class Market {

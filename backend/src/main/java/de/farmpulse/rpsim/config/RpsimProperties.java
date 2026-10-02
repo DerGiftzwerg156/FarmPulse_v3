@@ -34,6 +34,30 @@ public class RpsimProperties {
          * SPA fallback to index.html, so players only start one process. Empty = API only (dev: ng serve).
          */
         private String staticDir = "";
+        /** Roadmap V3 R3-N1/N2: access from devices in the home network (tablet). */
+        private Lan lan = new Lan();
+    }
+
+    /**
+     * Roadmap V3 R3-N2: PIN login of devices in the home network (owner decisions, QUESTIONS.md). The switch "Im
+     * Heimnetz erreichbar" and the PIN hash live in the database of the installation, not in the savegame.
+     */
+    @Getter @Setter
+    public static class Lan {
+        /** Shortest PIN (digits only). */
+        private int pinMinLength = 4;
+        /** Longest PIN (digits only). */
+        private int pinMaxLength = 8;
+        /** Wrong PINs from one sender address before it is locked. */
+        private int maxFailedAttempts = 5;
+        /** Lock of a sender address after too many wrong PINs (real minutes). */
+        private int lockoutMinutes = 5;
+        /** Validity of a session cookie (real days); only the hash of the cookie value is stored. */
+        private int sessionDays = 30;
+        /** PBKDF2WithHmacSHA256 iterations of the PIN hash (OWASP Password Storage Cheat Sheet: 600,000). */
+        private int pbkdf2Iterations = 600_000;
+        /** Name of the session cookie (HttpOnly, SameSite=Strict). */
+        private String cookieName = "FP_LAN_SESSION";
     }
 
     @Getter @Setter
@@ -128,8 +152,20 @@ public class RpsimProperties {
         private Maintenance maintenance = new Maintenance();
         private ProductionSupply productionSupply = new ProductionSupply();
         private Contractor contractor = new Contractor();
+        private NeighborTrade neighborTrade = new NeighborTrade();
+        private NeighborMissions neighborMissions = new NeighborMissions();
+        private PriceAlarm priceAlarm = new PriceAlarm();
+        private ForwardContract forwardContract = new ForwardContract();
+        private FarmShop farmShop = new FarmShop();
         private Finance finance = new Finance();
+        private LiquidityPlan liquidityPlan = new LiquidityPlan();
+        private Drought drought = new Drought();
+        private UsedVehicle usedVehicle = new UsedVehicle();
         private Mechanic mechanic = new Mechanic();
+        private OfficeClerk officeClerk = new OfficeClerk();
+        private Apprentice apprentice = new Apprentice();
+        private Milestones milestones = new Milestones();
+        private LeaseOut leaseOut = new LeaseOut();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
@@ -241,6 +277,10 @@ public class RpsimProperties {
         /** Trust bonus at the bank advisor for a Sondertilgung of at least this share of the remaining debt. */
         private double specialRepaymentTrustDelta = 3;
         private double specialRepaymentTrustMinShare = 0.05;
+        /** Roadmap V3 R3-K1: own fields as loan collateral (Grundschuld). */
+        private Collateral collateral = new Collateral();
+        /** Roadmap V3 R3-K3: annual review with the bank advisor at the year change. */
+        private AnnualReview annualReview = new AnnualReview();
 
         static Credit hardDefaults() {
             Credit c = new Credit();
@@ -248,8 +288,47 @@ public class RpsimProperties {
             c.setApproveThreshold(85);
             c.setCounterThreshold(55);
             c.setTrustCap(5);
+            // R3-K1 (owner decision): the bank realises pledged fields on a call-back only in the harsh world mode
+            c.getCollateral().setRealiseOnCallback(true);
             return c;
         }
+    }
+
+    /** Roadmap V3 R3-K1: collateral of a loan - own fields with a Grundschuld (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class Collateral {
+        /** Collateral value = field price (assets.farmland[].price) x loan-to-value. */
+        private double loanToValue = 0.6;
+        /** Interest discount at full coverage (collateral value / loan amount, max 1), proportional below. */
+        private double maxInterestDiscount = 0.01;
+        /** Bonus on the metric "loan too large for the farm": points x coverage (the metric stays capped at 100). */
+        private double farmSizeBonus = 20;
+        /** Loans above this share of the farm assets need collateral covering the part above it. */
+        private double requiredAboveShare = 0.5;
+        /** Pledged field sold in the game menu: trust delta at the bank advisor ... */
+        private double menuSaleTrustDelta = -10;
+        /** ... and game days to pay the claimed Sondertilgung. */
+        private double claimDays = 10;
+        /** Claim unpaid after the deadline: trust delta (plus a missed installment and no new credit until paid). */
+        private double claimOverdueTrustDelta = -5;
+        /** Call-back: the bank takes the pledged fields and credits their collateral value (profile credit-hard only). */
+        private boolean realiseOnCallback = false;
+    }
+
+    /** Roadmap V3 R3-K3: annual review (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class AnnualReview {
+        private boolean enabled = true;
+        /** Game days to accept the invitation and, afterwards, the offered rate cut. */
+        private double invitationDays = 10;
+        private double offerDays = 10;
+        /** Credit score at the cut-off date: from good-score a rate cut is offered, below bad-score a serious talk. */
+        private double goodScore = 75;
+        private double badScore = 45;
+        /** Rate cut per review on every running loan, at most max-cut-per-loan over its term, never below min-rate. */
+        private double rateCut = 0.0025;
+        private double maxCutPerLoan = 0.01;
+        private double minRate = 0.01;
     }
 
     /** Technical concept "Preis-Events & Sonderkontrakte". */
@@ -592,6 +671,9 @@ public class RpsimProperties {
         private double reofferCooldownDays = 30;
         /** Insurance ends after this many missed premiums. */
         private int cancelAfterMissedPayments = 2;
+        /** Roadmap V3 R3-W3: weather-index drought insurance - premium per hectare and month, payout per hectare. */
+        private double droughtPremiumPerHectare = 4;
+        private double droughtPayoutPerHectare = 200;
         /** Insured value = farmland reference prices + building values; monthly premium = value × premiumRate. */
         private Map<String, InsuranceLevel> levels = new LinkedHashMap<>(Map.of(
                 "BASIC", new InsuranceLevel(0.6, 2000, 0.00025, 50),
@@ -802,9 +884,316 @@ public class RpsimProperties {
         private double failedTrustDelta = -3;
     }
 
+    /**
+     * Roadmap V3 R3-H2..H4: trade with the neighbours (owner decisions, QUESTIONS.md; placeholders). Stock and needs of a
+     * neighbour are backend fiction derived from his real fields; the goods move for real in the own silos.
+     * <ul>
+     *   <li>roles: role -> fill types the neighbour needs (only goods an own silo accepts are traded).</li>
+     *   <li>price per 1000 l: best current price of the sell points, else reference-prices; the neighbour sells at
+     *   neighbor-sell-share and buys at neighbor-buy-share of it; trust moves the price by trust / trust-divisor,
+     *   capped at trust-cap (like the negotiation engine) in the player's favour.</li>
+     *   <li>stock: harvest-share of a harvest (area x litersPerSqm) goes into the neighbour's stock, by-products (fruit ->
+     *   by-product) add by-product-share of it; the stock sinks by monthly-decay every game month.</li>
+     * </ul>
+     */
+    @Getter @Setter
+    public static class NeighborTrade {
+        private Map<String, List<String>> roles = defaultRoles();
+        private double neighborSellShare = 1.05;
+        private double neighborBuyShare = 0.95;
+        private double trustDivisor = 20;
+        private double trustCap = 0.05;
+        private double harvestShare = 0.3;
+        private Map<String, String> byProducts = defaultByProducts();
+        private double byProductShare = 0.5;
+        private double monthlyDecay = 0.2;
+        /** € per 1000 l for goods without a sell point on the map. */
+        private Map<String, Double> referencePrices = defaultReferencePrices();
+        /** Messages of neighbours about trade (offers and requests) per game month. */
+        private int maxMessagesPerMonth = 2;
+        /** Chance per game month that a neighbour offers goods of his stock on his own (R3-H3). */
+        private double offerProbabilityPerMonth = 0.3;
+        /** Chance per game month that a neighbour asks for goods of the player (R3-H4). */
+        private double requestProbabilityPerMonth = 0.3;
+        private int amountMin = 2000;
+        private int amountMax = 10000;
+        private int amountStep = 500;
+        /** At most this share of the neighbour's stock (offer) or the player's stock (request). */
+        private double maxShare = 0.5;
+        /** Game days to answer an offer or a request; the price holds that long. */
+        private double answerDays = 5;
+        private double tradeTrustDelta = 2;
+        private double declineTrustDelta = -1;
+        private double ignoreTrustDelta = -2;
+        /** R3-H4: the goods were no longer in the silo when the sale was executed - the neighbour is disappointed. */
+        private double stockMissingTrustDelta = -1;
+        /** R3-H4: village reputation per fulfilled request of a neighbour ... */
+        private double reputationDelta = 1;
+        /** ... at most this many times per FS25 year. */
+        private int reputationMaxPerYear = 3;
+
+        private static Map<String, List<String>> defaultRoles() {
+            Map<String, List<String>> m = new LinkedHashMap<>();
+            m.put("DAIRY", new ArrayList<>(List.of("STRAW", "SILAGE", "DRYGRASS_WINDROW")));
+            m.put("ARABLE", new ArrayList<>(List.of("SEEDS", "FERTILIZER", "LIQUIDFERTILIZER")));
+            m.put("MIXED", new ArrayList<>(List.of("STRAW", "SEEDS")));
+            return m;
+        }
+
+        private static Map<String, String> defaultByProducts() {
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("WHEAT", "STRAW");
+            m.put("BARLEY", "STRAW");
+            m.put("OAT", "STRAW");
+            return m;
+        }
+
+        private static Map<String, Double> defaultReferencePrices() {
+            Map<String, Double> m = new LinkedHashMap<>();
+            m.put("STRAW", 120.0);
+            m.put("SILAGE", 180.0);
+            m.put("DRYGRASS_WINDROW", 250.0);
+            m.put("SEEDS", 900.0);
+            m.put("FERTILIZER", 1500.0);
+            m.put("LIQUIDFERTILIZER", 1200.0);
+            return m;
+        }
+    }
+
+    /**
+     * Roadmap V3 R3-H5: neighbours ask for help with real contracts of the game on their own fields (owner decisions,
+     * placeholders). The game pays the reward; the tool adds a bonus on success and moves trust.
+     */
+    /** Roadmap V3 R3-M1: price alarms in the Agrarbörse (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class PriceAlarm {
+        /** Active alarms per savegame. */
+        private int maxActive = 10;
+        /** Game days the in-game hint stays valid (the mod drops it when processed later). */
+        private double notificationDays = 1;
+    }
+
+    /** Roadmap V3 R3-M2: forward contracts - harvest sold in advance at a fixed price (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class ForwardContract {
+        /** Fixed price = current price x (1 + factor-per-month x months of lead); negative = discount. */
+        private double factorPerMonth = -0.02;
+        private int minLeadMonths = 1;
+        private int maxLeadMonths = 12;
+        private long minQuantity = 1000;
+        private long maxQuantity = 200000;
+        private long quantityStep = 1000;
+        private int maxOpen = 5;
+        /** Penalty = shortfall x fixed price x share, booked as CONTRACT_PENALTY. */
+        private double penaltyShare = 0.25;
+        /** Trust of the land agent: shortfall / full delivery. */
+        private double shortfallTrustDelta = -5;
+        private double fulfilledTrustDelta = 3;
+    }
+
+    /** Roadmap V3 R3-M3: farm shop - villagers order small amounts from the own silos (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class FarmShop {
+        private boolean enabled = true;
+        /** Fill types the villagers ask for (only what lies in own silos is ordered). */
+        private List<String> fillTypes = new ArrayList<>(List.of("POTATO", "WHEAT", "OAT", "SUGARBEET", "CANOLA"));
+        /** Farm-shop price = best market price x markup. */
+        private double markup = 1.3;
+        private long amountMin = 200;
+        private long amountMax = 2000;
+        private long amountStep = 100;
+        /** At most this share of the stock of a fill type. */
+        private double maxShare = 0.2;
+        private int maxOrdersPerMonth = 2;
+        /** Chance per possible order and month, multiplied by the refusal factor of the savegame. */
+        private double probability = 0.4;
+        private double answerDays = 3;
+        /** Each refused or ignored order multiplies the factor with this; a delivered order divides by it (max 1). */
+        private double refusalFactor = 0.75;
+        private double minFactor = 0.1;
+        /** Village reputation per delivered order, at most reputation-max-per-year times per FS25 year. */
+        private double reputationDelta = 1;
+        private int reputationMaxPerYear = 4;
+    }
+
+    @Getter @Setter
+    public static class NeighborMissions {
+        /** Tool names of the evidenced contract types (the mod maps them to PlowMission / StonePickMission). */
+        private List<String> types = new ArrayList<>(List.of("PLOW", "STONE_PICK"));
+        private double probabilityPerMonth = 0.4;
+        private int maxPerMonth = 1;
+        private double answerDays = 5;
+        /** Booked as OTHER when the contract finished successfully. */
+        private long successBonus = 250;
+        private double successTrustDelta = 3;
+        private double failureTrustDelta = -3;
+    }
+
     /** Roadmap V2 R2-B2: class of a booking in the journal (farm_facts.finances). */
     public enum FinanceClass {
         OPERATING_INCOME, OPERATING_EXPENSE, INVESTMENT, DIVESTMENT, FINANCING, IGNORE
+    }
+
+    /** Roadmap V3 R3-P1: the office clerk reminds of deadlines, lowers audits and pays tax bills in time (placeholders). */
+    @Getter @Setter
+    public static class OfficeClerk {
+        /** Game days before a deadline the clerk writes a reminder. */
+        private double reminderDays = 3;
+        /** Audit factor = 1 - audit-reduction-max x effective skill / 100 (best clerk; with a tax advisor the smaller factor). */
+        private double auditReductionMax = 0.5;
+        /** Below this workload the clerk is overloaded and does not pay tax bills on the deadline day. */
+        private double overloadWorkload = 30;
+    }
+
+    /** Roadmap V3 R3-L1: leasing out own fields to neighbours (owner decisions in QUESTIONS.md). */
+    @Getter @Setter
+    public static class LeaseOut {
+        /** Guide rent per year as share of the field price; per ha and month = price x share / 12 / ha. */
+        private double annualRentShare = 0.05;
+        /** Term the player can choose, in FS25 years. */
+        private int termYearsMin = 1;
+        private int termYearsMax = 3;
+        /** Interested neighbours: capital >= desired rent x ha x 12 x years; at most this many. */
+        private int maxInterested = 3;
+        /** First bid of a neighbour = desired rent x random(min, max), capped at the negotiation formula's limit. */
+        private double firstBidMin = 0.85;
+        private double firstBidMax = 1.0;
+        /** Game days the bids stay open. */
+        private double offerValidDays = 5;
+        /** The tenant offers a renewal this many game months before the end ... */
+        private int warningMonths = 1;
+        /** ... at the current rent x random(min, max). */
+        private double renewalFactorMin = 0.95;
+        private double renewalFactorMax = 1.1;
+        /** Fallback (field state at the return): the return waits for an empty or harvested field at most this long. */
+        private int returnDelayMaxMonths = 1;
+        /** Trust of every family member when the family field is leased out (a sale costs family.field-sold-trust-delta). */
+        private double familyTrustDelta = -5;
+        /** Trust of the tenant when the player takes the field back in the game menu. */
+        private double reclaimTrustDelta = -10;
+    }
+
+    /** Roadmap V3 R3-T1: the fixed list of milestones - each can be switched off (owner decisions). */
+    @Getter @Setter
+    public static class Milestones {
+        /** The first bank loan fully repaid. */
+        private boolean loanRepaidEnabled = true;
+        /** A full FS25 year without a payment delay. */
+        private boolean yearWithoutDelayEnabled = true;
+        /** The area of all fields of the farm reaches area-hectares. */
+        private boolean areaEnabled = true;
+        private double areaHectares = 100;
+        /** The first congratulation of the cooperative on a record harvest revenue. */
+        private boolean recordHarvestEnabled = true;
+        /** crop-rotation-years closed harvest years in a row without a crop-rotation complaint. */
+        private boolean cropRotationEnabled = true;
+        private int cropRotationYears = 5;
+        /** The first completed goods trade with a neighbour. */
+        private boolean neighborTradeEnabled = true;
+    }
+
+    /** Roadmap V3 R3-P2: apprentices (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class Apprentice {
+        /** Fixed monthly salary (no skill premium). */
+        private long salary = 900;
+        private int skillMin = 10;
+        private int skillMax = 30;
+        /** Skill points at every month start, up to skill-cap. */
+        private int skillPerMonth = 2;
+        private int skillCap = 70;
+        /** Training time in FS25 years. */
+        private int trainingYears = 2;
+        private int maxApprentices = 2;
+        /** The takeover request comes this many months before the end. */
+        private int takeoverNoticeMonths = 1;
+        /** A counter offer is accepted from this share of the demand. */
+        private double counterAcceptShare = 0.9;
+    }
+
+    /**
+     * Roadmap V3 R3-V2 / R3-V3: used machines bought from the workshop or a neighbour and own machines sold to neighbours
+     * (owner decisions, placeholders). The used price follows the game's formula (Vehicle.calculateSellPrice).
+     */
+    @Getter @Setter
+    public static class UsedVehicle {
+        private boolean enabled = true;
+        /** Chance of one offer at every month start (at most one open offer). */
+        private double offerProbability = 0.5;
+        /** Share of offers made by the workshop; the rest by an active neighbour. */
+        private double workshopShare = 0.5;
+        /** Price of the workshop = game used price x (1 + markup). */
+        private double workshopMarkup = 0.10;
+        /** Price of a neighbour = game used price x (1 - discount). */
+        private double neighborDiscount = 0.05;
+        /** Catalog entries offered: list price range. */
+        private double minListPrice = 5000;
+        private double maxListPrice = 400000;
+        private int ageMonthsMin = 12;
+        private int ageMonthsMax = 120;
+        /** Operating hours so that the hour factor of the formula lies in this range. */
+        private double hourFactorMin = 0.3;
+        private double hourFactorMax = 0.9;
+        private double damageMin = 0;
+        private double damageMax = 0.3;
+        private double wearMin = 0;
+        private double wearMax = 0.5;
+        /** Game formula: hour factor exponent with / without an engine, floor share of the list price. */
+        private double motorizedExponent = 1.0;
+        private double unmotorizedExponent = 1.3;
+        private double minPriceShare = 0.03;
+        /** Game days an offer (negotiation) stays open. */
+        private double negotiationDays = 7;
+        /** Delivery attempts after NO_SPACE (one per game day). */
+        private int spawnMaxAttempts = 5;
+        /** Validity of the in-game hint after a failed delivery or removal (game days). */
+        private double notificationDays = 1;
+        /** Sale to neighbours: interested buyers, first offer and cap as share of the game value. */
+        private int saleBuyersMin = 1;
+        private int saleBuyersMax = 3;
+        private double saleOfferMin = 1.0;
+        private double saleOfferMax = 1.1;
+        private double saleCap = 1.1;
+    }
+
+    /** Roadmap V3 R3-W1 / R3-W2: drought from the rain share of growth months, drought aid (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class Drought {
+        private boolean enabled = true;
+        /** Growth months (FS25 periods, 1 = March). */
+        private List<Integer> periods = new ArrayList<>(List.of(3, 4, 5, 6, 7, 8));
+        /** Dry growth months in a row that declare a drought. */
+        private int minPeriods = 2;
+        /** A month is dry when rain was below this share of the observed time ... */
+        private double maxRainShare = 0.03;
+        /** ... and counts only when at least this share of the month was observed (else unknown, breaks the series). */
+        private double minObservedShare = 0.5;
+        /** HARVEST_FAILURE for at most this many crops (largest area first) at every sell point accepting them. */
+        private int maxCrops = 3;
+        /** Drought aid of the authority per hectare of own fields growing in a drought month. */
+        private double aidPerHectare = 150;
+        private double aidApplicationDays = 15;
+        /** Deduction on the aid with a drought insurance. */
+        private double aidInsuranceDeduction = 0.5;
+    }
+
+    /** Roadmap V3 R3-K2: 12-month liquidity plan in the Bank app (owner decisions, placeholders). */
+    @Getter @Setter
+    public static class LiquidityPlan {
+        /** Months ahead the plan shows (FS25 months). */
+        private int horizonMonths = 12;
+        /** Liquidity reserve = the known fixed postings of the month (salaries, installments, contracts, retirement) x factor. */
+        private double reserveFactor = 1.0;
+        /**
+         * Journal categories the plan already lists as known postings: added back to the operating result so the
+         * income estimate does not count them twice (the tax advisor fee is booked as OTHER and cannot be separated).
+         */
+        private List<String> knownPostingCategories = new ArrayList<>(List.of("RPSIM_SALARY_PAYMENT",
+                "RPSIM_TAX_PAYMENT", "RPSIM_INSURANCE_PREMIUM", "RPSIM_MAINTENANCE_FEE", "RPSIM_LEASE_PAYMENT",
+                "RPSIM_FAMILY"));
+        /** The bank advisor writes once when the balance falls below zero within this many months. */
+        private boolean advisorWarningEnabled = true;
+        private int advisorWarningMonths = 3;
     }
 
     /**
@@ -840,6 +1229,8 @@ public class RpsimProperties {
             m.put("RPSIM_SUBSIDY", FinanceClass.OPERATING_INCOME);
             m.put("RPSIM_LIVESTOCK_PREMIUM", FinanceClass.OPERATING_INCOME);
             m.put("RPSIM_TAX_REFUND", FinanceClass.OPERATING_INCOME);
+            m.put("RPSIM_LEASE_INCOME", FinanceClass.OPERATING_INCOME); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_GOODS_SALE", FinanceClass.OPERATING_INCOME); // Roadmap V3 (R3-Q1)
             m.put("PURCHASE_FUEL", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_SEEDS", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_FERTILIZER", FinanceClass.OPERATING_EXPENSE);
@@ -864,15 +1255,19 @@ public class RpsimProperties {
             m.put("RPSIM_SPONSORING", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_COMPENSATION", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_TRAINING", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_GOODS_PURCHASE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_CONTRACT_PENALTY", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_BUY", FinanceClass.INVESTMENT);
             m.put("FIELD_BUY", FinanceClass.INVESTMENT);
             m.put("RPSIM_FARMLAND_PURCHASE", FinanceClass.INVESTMENT);
+            m.put("RPSIM_VEHICLE_PURCHASE", FinanceClass.INVESTMENT); // Roadmap V3 (R3-Q1)
             m.put("SHOP_VEHICLE_SELL", FinanceClass.DIVESTMENT);
             m.put("SHOP_PROPERTY_SELL", FinanceClass.DIVESTMENT);
             m.put("FIELD_SELL", FinanceClass.DIVESTMENT);
             m.put("RPSIM_FARMLAND_SALE", FinanceClass.DIVESTMENT);
+            m.put("RPSIM_VEHICLE_SALE", FinanceClass.DIVESTMENT); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_CREDIT_DISBURSEMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_INSTALLMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_PENALTY", FinanceClass.FINANCING);

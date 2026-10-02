@@ -275,6 +275,21 @@ test('EMPLOYEE_ROSTER: machines that need a training only get a trained operator
   assert.equal(validate('farmFacts', sim.buildFarmFacts()), null);
 });
 
+test('EMPLOYEE_ROSTER: apprentices drive after the operators and never with a training (R3-P2)', () => {
+  const { sim, write } = setup('helfer-hof');
+  write([{ instructionId: 't2', type: 'EMPLOYEE_ROSTER', helperWageMode: 'EMPLOYEES', strictHelperLimit: false,
+    employees: [{ employeeId: 3, name: 'Tim Lehrling', role: 'APPRENTICE', status: 'ACTIVE', trainings: ['COMBINE'] },
+      { employeeId: 1, name: 'Klaus Berger', role: 'MACHINE_OPERATOR', status: 'ACTIVE', trainings: [] }],
+    trainingCategories: { COMBINE: ['HARVESTERS'] } }]);
+  sim.processInstructions();
+  sim.setActiveJobs([{ jobId: 1, title: 'Fendt 516', categories: ['TRACTORSM'] },
+    { jobId: 2, title: 'Fendt 314', categories: ['TRACTORSS'] },
+    { jobId: 3, title: 'CLAAS LEXION 8900', categories: ['HARVESTERS'] }]);
+  const jobs = sim.buildFarmFacts().workforce.activeJobs;
+  // Klaus first, then the apprentice; the combine needs a training the apprentice never has
+  assert.deepEqual(jobs.map((j) => [j.jobId, j.employeeId]), [[1, 1], [2, 3], [3, undefined]]);
+});
+
 test('PROMPT is shown once; an expired one is acknowledged but not shown (R2-F2)', () => {
   const { sim, write } = setup();
   const prompt = (id, expiresGameTime) => ({ instructionId: id, type: 'PROMPT', promptId: `prm_${id}`,

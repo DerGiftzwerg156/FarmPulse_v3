@@ -125,6 +125,22 @@ public class SettingsController {
         return new Views.FieldSettingsView(sg.isFieldHintsEnabled(), sg.isFieldsTracked());
     }
 
+    /** Roadmap V3 R3-T2: optional farm name, heads the chronicle (without it the map name). */
+    @GetMapping("/api/settings/farm")
+    @Transactional(readOnly = true)
+    public Views.FarmSettingsView farm() {
+        Savegame sg = context.requireActive();
+        return new Views.FarmSettingsView(sg.getFarmName(), sg.getMapName());
+    }
+
+    @PutMapping("/api/settings/farm")
+    @Transactional
+    public Views.FarmSettingsView saveFarm(@Valid @RequestBody Requests.FarmSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setFarmName(r.farmName() == null || r.farmName().isBlank() ? null : r.farmName().strip());
+        return new Views.FarmSettingsView(sg.getFarmName(), sg.getMapName());
+    }
+
     private AiSettingsView view(AiSettingsService.View v) {
         List<String> providers = registry.ids().stream().filter(id -> !"FAKE".equals(id)).toList();
         return new AiSettingsView(v.provider(), v.model(), v.baseUrl(), v.apiKeySet(), providers);

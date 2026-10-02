@@ -138,6 +138,25 @@ function RPSimFarmFacts.buildFields(raw)
     return list
 end
 
+--- Roadmap V3 R3-H2 (contract R3-Q1): tradeable goods of the player = fill level and free capacity per fill type of the
+-- own silos and silo extensions only (the adapter sums them). raw = { {fillType, amount, freeCapacity} }. An entry
+-- counts when an own silo accepts the fill type (freeCapacity + amount > 0).
+function RPSimFarmFacts.buildTradeStorage(raw)
+    local list = RPSimJson.array({})
+    for _, e in ipairs(raw) do
+        if type(e.fillType) == "string" and e.fillType ~= "" and type(e.amount) == "number"
+            and type(e.freeCapacity) == "number" then
+            local amount = math.max(0, round(e.amount))
+            local free = math.max(0, round(e.freeCapacity))
+            if amount + free > 0 then
+                list[#list + 1] = { fillType = e.fillType, amount = amount, freeCapacity = free }
+            end
+        end
+    end
+    table.sort(list, function(a, b) return a.fillType < b.fillType end)
+    return list
+end
+
 local FIELD_RULES = { "plowingRequired", "limeRequired", "weedsEnabled", "stonesEnabled" }
 
 --- R2-C: game settings that decide whether plowing, lime, weeds and stones matter at all (the game's soil map shows
@@ -169,20 +188,29 @@ end
 
 --- raw: {
 --   savegameId, gameTime, balance,
---   vehicles = { {uniqueId, value, damage} }, placeables = { {uniqueId, value} },
+--   vehicles = { {uniqueId, value, damage, name?, xmlFilename?} }, placeables = { {uniqueId, value} },
 --   leasedVehicles = { {uniqueId, costPerPeriod?} },
 --   farmland = { {farmlandId, hectares, price} }, animals = { {husbandryUniqueId, type, count, estimatedValue} },
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
 --   prices = { {sellPoint, fillType, pricePerLiter, trend?} },
 --   calendar = { period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName?, season? } | nil,
 --   Roadmap V2, each optional (nil = not collected): finances, workforce, husbandries, fields, fieldRules, weather
---   (see the build* functions above) }
+--   (see the build* functions above),
+--   Roadmap V3 (R3-Q1), each optional: npcFields (R3-H1, same entries as fields), tradeStorage (R3-H2) }
 function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
     local vehicles = RPSimJson.array({})
     for _, v in ipairs(raw.vehicles or {}) do
-        vehicles[#vehicles + 1] = { uniqueId = tostring(v.uniqueId), value = round(v.value),
+        local e = { uniqueId = tostring(v.uniqueId), value = round(v.value),
             condition = RPSimFarmFacts.conditionFromDamage(v.damage) }
+        -- Roadmap V3 R3-V3: optional name and shop XML of the vehicle
+        if type(v.name) == "string" and v.name ~= "" then
+            e.name = v.name
+        end
+        if type(v.xmlFilename) == "string" and v.xmlFilename ~= "" then
+            e.xmlFilename = v.xmlFilename
+        end
+        vehicles[#vehicles + 1] = e
     end
     local placeables = RPSimJson.array({})
     for _, p in ipairs(raw.placeables or {}) do
@@ -285,6 +313,17 @@ function RPSimFarmFacts.build(raw, cfg)
     end
     if type(raw.weather) == "table" then
         doc.weather = RPSimFarmFacts.buildWeather(raw.weather)
+    end
+    -- Roadmap V3 (R3-Q1): fields without an owner that the game's NPCs farm (R3-H1) and the own silo goods (R3-H2)
+    if type(raw.npcFields) == "table" then
+        doc.npcFields = RPSimFarmFacts.buildFields(raw.npcFields)
+    end
+    if type(raw.tradeStorage) == "table" then
+        doc.tradeStorage = RPSimFarmFacts.buildTradeStorage(raw.tradeStorage)
+    end
+    -- Roadmap V3 R3-H5: the game's contract limit of the player farm (hasFarmReachedMissionLimit)
+    if type(raw.missionLimitReached) == "boolean" then
+        doc.missionLimitReached = raw.missionLimitReached
     end
     return doc
 end

@@ -42,6 +42,18 @@ describe('NoticesCard', () => {
     expect(items[1].querySelector('[data-testid="notice-resend"]')).not.toBeNull();
   });
 
+  it('asks for a mod update when an older mod does not know the instruction (Roadmap V3 R3-Q1)', () => {
+    const { fixture, http, el } = setup();
+    http.expectOne('/api/notices').flush([
+      { id: 3, kind: 'INSTRUCTION_FAILED', status: 'OPEN', gameTime: DAY, relatedType: null, relatedId: null,
+        details: { type: 'STORAGE_TRANSFER', message: 'ins_1: unknown type STORAGE_TRANSFER', modOutdated: true } },
+    ]);
+    fixture.detectChanges();
+    const text = el.querySelector('[data-testid="notice"]')?.textContent ?? '';
+    expect(text).toContain('Mod aktualisieren');
+    expect(text).not.toContain('unknown type');
+  });
+
   it('warns about installed mods with overlapping features (TODO T-09)', () => {
     const { fixture, http, el } = setup();
     TestBed.inject(GameStateStore).savegame.set(savegame({ detectedMods: ['FS25_UsedPlus'] }));

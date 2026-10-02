@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { DiaryView } from '../../core/api/models';
 import { GameStateStore } from '../../core/state/game-state.store';
 import { DAY } from '../../../testing/fixtures';
-import { Diary, groupByDay } from './diary';
+import { Diary, fileNameOf, groupByDay } from './diary';
 
 const entry = (id: number, day: number, over: Partial<DiaryView> = {}): DiaryView => ({
   id, gameTime: day * DAY + id, gameDay: day, entryType: 'AUTO', category: 'CREDIT', title: `Eintrag ${id}`, text: 'Text', ...over,
@@ -17,6 +17,14 @@ describe('groupByDay', () => {
     const list = [backstory, entry(2, 3), entry(3, 3), entry(4, 5)];
     expect(groupByDay(list, false).map((d) => [d.day, d.entries.length])).toEqual([[0, 1], [3, 2], [5, 1]]);
     expect(groupByDay(list, true)[0].day).toBe(5);
+  });
+});
+
+describe('fileNameOf', () => {
+  it('reads the RFC 5987 name first, then the plain one', () => {
+    expect(fileNameOf("attachment; filename*=UTF-8''chronik-Hof-M%C3%BChlenbach.md")).toBe('chronik-Hof-Mühlenbach.md');
+    expect(fileNameOf('attachment; filename="chronik-Erlengrund.md"')).toBe('chronik-Erlengrund.md');
+    expect(fileNameOf(null)).toBe('chronik.md');
   });
 });
 
@@ -91,5 +99,40 @@ describe('Diary', () => {
     http.expectOne('/api/diary').flush([backstory, entry(2, 1)]);
     fixture.detectChanges();
     expect(el.querySelectorAll('[data-testid="diary-entry"]').length).toBe(2);
+  });
+
+  // Roadmap V3 R3-T
+  it('marks milestone entries', () => {
+    const { el } = setup([backstory, entry(2, 3, { entryType: 'MILESTONE', category: 'MILESTONE', title: 'Erster Kredit getilgt' })]);
+    const m = el.querySelector('[data-testid="diary-entry"][data-type="MILESTONE"]');
+    expect(m?.querySelector('[data-testid="milestone-badge"]')?.textContent).toContain('Meilenstein');
+  });
+
+  it('downloads the chronicle under the name of the backend and links the print view', () => {
+    const { el, fixture, http } = setup([backstory]);
+    expect(el.querySelector('[data-testid="chronicle-print"]')?.getAttribute('href')).toBe('/diary/chronik');
+    const created = vi.fn(() => 'blob:chronik');
+    const revoked = vi.fn();
+    Object.assign(URL, { createObjectURL: created, revokeObjectURL: revoked });
+    let name = '';
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      name = this.download;
+    });
+    (el.querySelector('[data-testid="chronicle-download"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/diary/chronicle').flush(new Blob(['# Hofchronik']),
+      { headers: { 'Content-Disposition': "attachment; filename*=UTF-8''chronik-Erlengrund.md" } });
+    fixture.detectChanges();
+    expect(name).toBe('chronik-Erlengrund.md');
+    expect(created).toHaveBeenCalled();
+    expect(revoked).toHaveBeenCalledWith('blob:chronik');
+    click.mockRestore();
+  });
+
+  it('shows an error when the download fails', () => {
+    const { el, fixture, http } = setup([backstory]);
+    (el.querySelector('[data-testid="chronicle-download"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/diary/chronicle').flush(new Blob(['x']), { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="download-error"]')?.textContent).toContain('nicht heruntergeladen');
   });
 });

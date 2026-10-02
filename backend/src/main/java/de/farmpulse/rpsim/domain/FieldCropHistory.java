@@ -36,4 +36,12 @@ public class FieldCropHistory extends SavegameScoped {
 
     @Column(name = "withered", nullable = false)
     private boolean withered;
+
+    /** Roadmap V3 R3-K3: area x litersPerSqm of the last ripe sighting (litres). */
+    @Column(name = "ripe_liters")
+    private Double ripeLiters;
+
+    /** Roadmap V3 R3-K3: yield of the harvest = ripeLiters when the field was harvested; null for older crops. */
+    @Column(name = "yield_liters")
+    private Double yieldLiters;
 }

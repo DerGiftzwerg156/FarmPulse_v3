@@ -1,0 +1,6 @@
+Kein Platz für {{vehicleName}}
+Hallo,
+
+wir wollten Ihnen den {{vehicleName}} bringen, aber auf dem Hof ist kein Platz frei. Stellen Sie erst Platz auf dem Hof frei – wir versuchen es morgen noch einmal (Versuch {{attempt}} von {{maxAttempts}}). Abgebucht wird erst bei der Lieferung.
+
+{{characterName}}

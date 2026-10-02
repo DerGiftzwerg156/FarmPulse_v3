@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -262,6 +263,21 @@ class ApiIntegrationTest {
         postJson("/api/farmlands/12/sell-offer", java.util.Map.of("askingPrice", -1)).andExpect(status().isBadRequest());
     }
 
+    /** Roadmap V3 R3-L1: leasing out an own field. */
+    @Test
+    void leaseOut() throws Exception {
+        mvc.perform(get("/api/lease-out")).andExpect(status().isOk()).andExpect(jsonPath("$.termYearsMin").value(1))
+                .andExpect(jsonPath("$.termYearsMax").value(3)).andExpect(jsonPath("$.contracts", hasSize(0)));
+        mvc.perform(get("/api/farmlands")).andExpect(jsonPath("$[?(@.farmlandId == 12)].leaseOutGuideRate").value(hasItem(50)));
+        postJson("/api/farmlands/12/lease-out", java.util.Map.of("termYears", 9, "desiredRate", 50))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("INVALID_TERM"));
+        postJson("/api/farmlands/12/lease-out", java.util.Map.of("termYears", 1, "desiredRate", -5))
+                .andExpect(status().isBadRequest());
+        postJson("/api/farmlands/12/lease-out", java.util.Map.of("termYears", 1, "desiredRate", 50)).andExpect(status().isOk());
+        postJson("/api/credit/collateral/12/lease-consent", java.util.Map.of()).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("NOT_PLEDGED"));
+    }
+
     @Test
     void marketEventEndpoints() throws Exception {
         MarketEvent offer = createOffer();
@@ -338,6 +354,27 @@ class ApiIntegrationTest {
         postJson("/api/diary/entries", java.util.Map.of("text", "ohne Titel")).andExpect(status().isBadRequest());
         mvc.perform(get("/api/village-reputation")).andExpect(jsonPath("$.tier").exists())
                 .andExpect(jsonPath("$.label").exists()).andExpect(jsonPath("$.score").doesNotExist());
+    }
+
+    /** Roadmap V3 R3-T: milestones, farm name and the chronicle (download and print view). */
+    @Test
+    void milestonesFarmNameAndChronicle() throws Exception {
+        mvc.perform(get("/api/milestones")).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(get("/api/settings/farm")).andExpect(jsonPath("$.farmName").value(nullValue()))
+                .andExpect(jsonPath("$.mapName").value("Erlengrund"));
+        mvc.perform(put("/api/settings/farm").contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(java.util.Map.of("farmName", "x".repeat(61)))))
+                .andExpect(status().isBadRequest());
+        mvc.perform(put("/api/settings/farm").contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(java.util.Map.of("farmName", "  Hof Lindenhain "))))
+                .andExpect(jsonPath("$.farmName").value("Hof Lindenhain"));
+        mvc.perform(get("/api/diary/chronicle")).andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("chronik-Hof-Lindenhain.md")))
+                .andExpect(content().contentTypeCompatibleWith("text/markdown"))
+                .andExpect(content().string(org.hamcrest.Matchers.startsWith("# Hofchronik – Hof Lindenhain")));
+        mvc.perform(get("/api/diary/chronicle/view")).andExpect(jsonPath("$.farmName").value("Hof Lindenhain"))
+                .andExpect(jsonPath("$.backstory").exists()).andExpect(jsonPath("$.reports", hasSize(0)));
     }
 
     // ------------------------------------------------------------------ roadmap V2 R2-E

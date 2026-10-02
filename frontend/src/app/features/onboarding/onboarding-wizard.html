@@ -26,6 +26,12 @@
     @case (1) {
       <app-card [title]="'onboarding.steps.1' | t" data-testid="step-1">
         <form [formGroup]="form" class="grid gap-4 sm:grid-cols-2" (ngSubmit)="nextFromBackstory()">
+          <label class="space-y-1 sm:col-span-2">
+            <span class="fp-label">{{ 'onboarding.farmName' | t }} ({{ 'common.optional' | t }})</span>
+            <input class="fp-input max-w-md" type="text" maxlength="60" formControlName="farmName" data-testid="farm-name"
+              [placeholder]="'onboarding.farmNamePlaceholder' | t" />
+            <span class="block text-[11px] text-muted">{{ 'onboarding.farmNameHint' | t }}</span>
+          </label>
           <label class="space-y-1">
             <span class="fp-label">{{ 'onboarding.farmOrigin' | t }}</span>
             <select class="fp-input" formControlName="farmOrigin" data-testid="farm-origin">

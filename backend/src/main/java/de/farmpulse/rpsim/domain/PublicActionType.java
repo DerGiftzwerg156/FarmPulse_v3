@@ -14,5 +14,9 @@ public enum PublicActionType {
     /** Roadmap V2 R2-E: sponsoring of a club (positive), fine of the authority (negative). */
     SPONSORING,
     AUTHORITY_FINE,
+    /** Roadmap V3 R3-H4: goods sold to a neighbour who asked for them (positive, capped per FS25 year). */
+    NEIGHBOR_HELP,
+    /** Roadmap V3 R3-M3: a farm-shop order of a villager delivered (positive, capped per FS25 year). */
+    FARM_SHOP,
     OTHER
 }

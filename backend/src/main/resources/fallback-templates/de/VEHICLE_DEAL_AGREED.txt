@@ -1,0 +1,6 @@
+Einigung über {{vehicleName}}
+Hallo,
+
+abgemacht – wir sind uns beim {{vehicleName}} für {{finalPrice}} € einig.
+
+{{characterName}}

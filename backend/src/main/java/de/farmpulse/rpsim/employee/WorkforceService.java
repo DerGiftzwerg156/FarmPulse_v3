@@ -199,7 +199,7 @@ public class WorkforceService {
         List<Employee> active = employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE);
         if (sg.isWorkforceTracked()) {
             for (Employee e : active) {
-                if (e.getJobRole() != JobRole.MACHINE_OPERATOR) {
+                if (!e.getJobRole().drives()) { // R3-P2: apprentices drive too
                     continue;
                 }
                 double hours = e.getWorkedMsToday() / (double) GameTime.hours(1);
@@ -227,12 +227,12 @@ public class WorkforceService {
 
     /** Hours of the current game month, null without worked time from the mod. */
     public static Double hoursThisMonth(Employee e) {
-        return e.getSavegame().isWorkforceTracked() && e.getJobRole() == JobRole.MACHINE_OPERATOR
+        return e.getSavegame().isWorkforceTracked() && e.getJobRole().drives()
                 ? e.getWorkedMsMonth() / (double) GameTime.hours(1) : null;
     }
 
     public static Double hoursLastMonth(Employee e) {
-        return e.getSavegame().isWorkforceTracked() && e.getJobRole() == JobRole.MACHINE_OPERATOR
+        return e.getSavegame().isWorkforceTracked() && e.getJobRole().drives()
                 ? e.getWorkedMsLastMonth() / (double) GameTime.hours(1) : null;
     }
 }

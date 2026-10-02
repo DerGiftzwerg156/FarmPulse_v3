@@ -20,7 +20,7 @@ import { FieldTable } from './field-table';
 export function acceptableAmount(n: NegotiationView): number | null {
   if (n.status !== 'OPEN' || n.roundsUsed >= n.maxRounds) return null;
   if (n.lastCounterOffer !== null) return n.lastCounterOffer;
-  if (n.kind === 'SALE_OFFER') {
+  if (n.kind === 'SALE_OFFER' || n.kind === 'LEASE_OFFER') {
     const first = [...n.offers].reverse().find((o) => o.offeredBy === 'CHARACTER');
     return first?.amount ?? null;
   }
@@ -66,6 +66,10 @@ export class Farmland {
   readonly actionError = signal<string | null>(null);
   readonly busy = signal(false);
   readonly showClosed = signal(false);
+  /** Roadmap V3 R3-L1: lease-out form (term in FS25 years, desired rent in € per ha and month). */
+  readonly leaseTerms = signal<number[]>([]);
+  readonly leaseYears = signal<number | null>(null);
+  readonly leaseRate = signal<number | null>(null);
 
   readonly field = computed(() => this.fields()?.find((f) => f.farmlandId === this.selectedField()) ?? null);
   readonly open = computed(() => (this.negotiations() ?? []).filter((n) => n.status === 'OPEN'));
@@ -97,14 +101,20 @@ export class Farmland {
   }
 
   load(): void {
-    forkJoin({ fields: this.api.farmlands(), negotiations: this.api.negotiations(), mails: this.api.mails() }).subscribe({
-      next: ({ fields, negotiations, mails }) => {
+    forkJoin({ fields: this.api.farmlands(), negotiations: this.api.negotiations(), mails: this.api.mails(),
+      leaseOut: this.api.leaseOut() }).subscribe({
+      next: ({ fields, negotiations, mails, leaseOut }) => {
+        const terms: number[] = [];
+        for (let y = leaseOut.termYearsMin; y <= leaseOut.termYearsMax; y++) terms.push(y);
+        this.leaseTerms.set(terms);
+        // Roadmap V3 R3-V: machine negotiations live in the workshop app
+        const own = negotiations.filter((n) => n.assetType !== 'VEHICLE');
         this.fields.set(fields);
-        this.negotiations.set(negotiations);
+        this.negotiations.set(own);
         this.mails.set(mails);
         this.error.set(null);
-        if (this.selectedNegotiation() === null && negotiations.some((n) => n.status === 'OPEN')) {
-          this.selectNegotiation(negotiations.find((n) => n.status === 'OPEN')!.id);
+        if (this.selectedNegotiation() === null && own.some((n) => n.status === 'OPEN')) {
+          this.selectNegotiation(own.find((n) => n.status === 'OPEN')!.id);
         }
       },
       error: (e) => this.error.set(toPageError(e, this.i18n.t('common.error'))),
@@ -115,6 +125,8 @@ export class Farmland {
     this.selectedField.set(this.selectedField() === id ? null : id);
     const f = this.field();
     this.askingPrice.set(f ? f.referencePrice : null);
+    this.leaseYears.set(this.leaseTerms()[0] ?? null);
+    this.leaseRate.set(f?.leaseOutGuideRate ?? null);
     this.clearMessages();
   }
 
@@ -186,6 +198,26 @@ export class Farmland {
       if (list[0]) this.selectNegotiation(list[0].id);
       this.info.set(this.i18n.t('farmland.saleOffered', { n: list.length }));
     });
+  }
+
+  /** Roadmap V3 R3-L1: offer the field for lease; interested neighbours answer with a first bid. */
+  offerLease(f: FarmlandView): void {
+    const rate = Number(this.leaseRate());
+    const years = Number(this.leaseYears());
+    if (!Number.isFinite(rate) || rate <= 0 || !Number.isFinite(years) || years <= 0) {
+      this.actionError.set(this.i18n.t('farmland.invalidAmount'));
+      return;
+    }
+    this.run(this.api.leaseOutOffer(f.farmlandId, years, Math.round(rate)), (list) => {
+      list.forEach((n) => this.upsert(n));
+      if (list[0]) this.selectNegotiation(list[0].id);
+      this.info.set(this.i18n.t(list.length ? 'farmland.leaseOut.offered' : 'farmland.leaseOut.noInterest', { n: list.length }));
+    });
+  }
+
+  /** Monthly rent of the whole field at a rate per ha (for the form hint). */
+  monthly(f: FarmlandView, rate: number | null): number | null {
+    return rate === null || !Number.isFinite(rate) ? null : Math.round(rate * f.hectares);
   }
 
   placeOffer(n: NegotiationView, value: number | null = this.amount()): void {

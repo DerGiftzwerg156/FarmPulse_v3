@@ -18,5 +18,7 @@ public enum CommunicationCategory {
     LIVESTOCK,
     ENERGY,
     CONTRACT,
+    /** Roadmap V3 R3-H: trade and contracts of the neighbours. */
+    TRADE,
     GENERAL
 }

@@ -58,6 +58,9 @@
               <app-badge>{{ d.role | label: 'characterRole' }}</app-badge>
               <app-badge [variant]="d.status === 'ACTIVE' ? 'positive' : 'warning'">{{ d.status | label: 'characterStatus' }}</app-badge>
             </div>
+            @if (d.role === 'NEIGHBOR_FARMER' && d.status === 'ACTIVE') {
+              <a class="mt-2 inline-block text-[12px] text-accent hover:underline" [routerLink]="['/handel']" [queryParams]="{ neighbor: d.id }" data-testid="trade-link">{{ 'trade.contactLink' | t }}</a>
+            }
             @if (d.shortDescription) {
               <p class="mt-3 font-body text-[13px] text-text">{{ d.shortDescription }}</p>
             }

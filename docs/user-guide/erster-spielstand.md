@@ -13,6 +13,7 @@ Spielstand in Farming Simulator 25.
 
 | Feld | Wirkung |
 | --- | --- |
+| **Hofname** | optional – steht über der Hofchronik im Tagebuch; ohne ihn der Kartenname. Später unter **Einstellungen** änderbar |
 | **Ursprung des Hofs** | geerbt, gekauft (Neustart), Rückkehr in die Heimat oder Pacht übernommen – färbt Geschichten und Beziehungen |
 | **Verhältnis zum Dorf** | unbekannt, gut vernetzt oder belastet – bestimmt, wie viel Vertrauen dir die Leute anfangs entgegenbringen |
 | **Startkapital** | FarmPulse gleicht deinen Kontostand im Spiel einmalig auf diesen Betrag an |

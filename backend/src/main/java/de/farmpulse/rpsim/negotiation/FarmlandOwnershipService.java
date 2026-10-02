@@ -15,6 +15,7 @@ import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.character.GameNpcService;
 import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.contract.LeaseOutService;
 import de.farmpulse.rpsim.domain.Character;
 import de.farmpulse.rpsim.domain.FarmlandOwnership;
 import de.farmpulse.rpsim.domain.InstructionStatus;
@@ -138,6 +139,16 @@ public class FarmlandOwnershipService {
             boolean ownedInGame = playerOwned.contains(o.getFarmlandId());
             if (o.isLeasedToPlayer()) {
                 continue; // T-22: leased - the game shows the player farm, the tool keeps the owner character
+            }
+            if (o.isLeasedFromPlayer()) {
+                // R3-L1: leased out - the game shows no owner, the tool keeps the player; neither a sale nor a purchase
+                if (ownedInGame) {
+                    // bought back in the game menu: the lease ends at once (owner decision)
+                    o.setLeasedFromPlayer(false);
+                    publisher.publishEvent(new LeaseOutService.Reclaimed(sg.getId(),
+                            o.getFarmlandId()));
+                }
+                continue;
             }
             if (ownedInGame && o.getOwnerType() != OwnerType.PLAYER) {
                 // vanilla purchase in the field menu -> follow up; R2-D2: the former owner reacts

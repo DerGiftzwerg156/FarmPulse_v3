@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import {
-  AiSettingsView, BypassSettingsView, FieldSettingsView, GameSettingsView, PromptSettingsView,
+  AiSettingsView, BypassSettingsView, FarmSettingsView, FieldSettingsView, GameSettingsView, PromptSettingsView,
 } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
@@ -11,6 +11,7 @@ import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
+import { LanSettingsCard } from '../lan/lan-settings-card';
 
 /** Providers that need an API key / that talk to a configurable local endpoint. */
 export const KEY_PROVIDERS = ['OPENAI', 'ANTHROPIC', 'GEMINI'];
@@ -23,7 +24,7 @@ export const URL_PROVIDERS = ['OLLAMA'];
  */
 @Component({
   selector: 'app-settings',
-  imports: [TranslatePipe, LabelPipe, Card, Badge, Button],
+  imports: [TranslatePipe, LabelPipe, Card, Badge, Button, LanSettingsCard],
   templateUrl: './settings.html',
 })
 export class Settings {
@@ -34,6 +35,9 @@ export class Settings {
   readonly ai = signal<AiSettingsView | null>(null);
   readonly game = signal<GameSettingsView | null>(null);
   readonly fields = signal<FieldSettingsView | null>(null);
+  readonly farm = signal<FarmSettingsView | null>(null);
+  readonly farmName = signal('');
+  readonly farmSaved = signal(false);
   readonly bypass = signal<BypassSettingsView | null>(null);
   readonly prompts = signal<PromptSettingsView | null>(null);
   readonly provider = signal('');
@@ -56,6 +60,7 @@ export class Settings {
     });
     this.api.gameSettings().subscribe({ next: (g) => this.game.set(g), error: () => this.game.set(null) });
     this.api.fieldSettings().subscribe({ next: (f) => this.fields.set(f), error: () => this.fields.set(null) });
+    this.api.farmSettings().subscribe({ next: (f) => this.applyFarm(f), error: () => this.farm.set(null) });
     this.api.bypassSettings().subscribe({ next: (b) => this.bypass.set(b), error: () => this.bypass.set(null) });
     this.api.promptSettings().subscribe({ next: (p) => this.prompts.set(p), error: () => this.prompts.set(null) });
   }
@@ -84,6 +89,23 @@ export class Settings {
       next: (f) => this.fields.set(f),
       error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
     });
+  }
+
+  /** Roadmap V3 R3-T2: the optional farm name; empty = the map name heads the chronicle. */
+  saveFarm(): void {
+    this.farmSaved.set(false);
+    this.api.saveFarmSettings({ farmName: this.farmName().trim() || null }).subscribe({
+      next: (f) => {
+        this.applyFarm(f);
+        this.farmSaved.set(true);
+      },
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
+  }
+
+  private applyFarm(f: FarmSettingsView): void {
+    this.farm.set(f);
+    this.farmName.set(f.farmName ?? '');
   }
 
   private apply(s: AiSettingsView): void {

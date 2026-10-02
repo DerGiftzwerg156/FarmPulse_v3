@@ -1,0 +1,6 @@
+Gebrauchtmaschine abzugeben: {{vehicleName}}
+Hallo,
+
+ich hätte einen {{vehicleName}} für Sie: {{ageYears}} Jahre alt, {{operatingHours}} Betriebsstunden, {{damagePercent}} % Schaden. Mein Preis: {{price}} €. Wenn Sie Interesse haben, machen Sie mir in den nächsten {{validDays}} Tagen ein Angebot – in der App „Werkstatt“.
+
+{{characterName}}

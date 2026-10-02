@@ -1,0 +1,6 @@
+Feld {{farmlandId}} pachten
+Hallo,
+
+ich habe gehört, Sie wollen Feld {{farmlandId}} ({{hectares}} ha) für {{termYears}} Jahre verpachten. Ich würde {{bidRate}} € je Hektar und Monat zahlen, also {{monthlyRent}} € im Monat.
+
+{{characterName}}

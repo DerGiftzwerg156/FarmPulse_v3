@@ -5,6 +5,8 @@
   frontend/public/favicon.ico          16/32/48/256 px (PNG entries) - web app, start script shortcut
   frontend/public/favicon.svg          vector favicon for modern browsers
   frontend/public/apple-touch-icon.png 180x180 home-screen icon
+  frontend/public/icon-192.png         192x192 web app manifest icon (Roadmap V3 R3-N4)
+  frontend/public/icon-512.png         512x512 web app manifest icon (Roadmap V3 R3-N4)
 
 Design (FarmPulse tokens): dark background #0B0F0D, accent #38B000 frame and a bold "F" with a pulse line.
 Every shape is aligned to the 4x4 block grid, so each BC1 block holds at most two colours and is encoded exactly.
@@ -134,6 +136,9 @@ if __name__ == '__main__':
         'frontend/public/favicon.ico': ico(rows),
         'frontend/public/favicon.svg': svg(),
         'frontend/public/apple-touch-icon.png': png(render(rows, 180)),
+        # Roadmap V3 R3-N4: icons of manifest.webmanifest (home screen of the tablet)
+        'frontend/public/icon-192.png': png(render(rows, 192)),
+        'frontend/public/icon-512.png': png(render(rows, 512)),
     }
     for rel, data in outputs.items():
         (ROOT / rel).write_bytes(data)

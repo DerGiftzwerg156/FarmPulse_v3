@@ -10,6 +10,9 @@
       <p class="rounded-sm border border-danger/50 px-3 py-2 text-sm text-danger" data-testid="employees-error">{{ actionError() }}</p>
     }
 
+    <app-service-cases [caseKinds]="['APPRENTICE_TAKEOVER']" openTitle="employees.takeovers" [showEmpty]="false" [history]="false"
+      [highlightCase]="highlightedCase()" testId="apprentice-takeovers" />
+
     <app-card [title]="'employees.staff' | t" data-testid="staff">
       <span card-actions class="fp-label">{{ 'employees.payroll' | t: { amount: (payroll() | money) } }}</span>
       @if (employees() !== null && active().length === 0) {
@@ -40,6 +43,9 @@
               @if (e.salaryOverdue) { <app-badge variant="negative">{{ 'employees.salaryOverdue' | t }}</app-badge> }
               @if (e.timeOffUntilGameTime) { <app-badge>{{ 'employees.timeOffUntil' | t: { at: (e.timeOffUntilGameTime | gameTime) } }}</app-badge> }
               @if (e.onStrike) { <app-badge variant="negative" data-testid="strike">{{ 'employees.strike' | t }}</app-badge> }
+              @if (e.apprenticeshipEndsAtGameTime) {
+                <app-badge data-testid="apprenticeship">{{ 'employees.apprenticeUntil' | t: { at: (e.apprenticeshipEndsAtGameTime | gameTime) } }}</app-badge>
+              }
               @if (e.trainingInProgress && e.trainingUntilGameTime) {
                 <app-badge variant="warning" data-testid="in-training">
                   {{ 'employees.inTraining' | t: { training: (e.trainingInProgress | label: 'training'), at: (e.trainingUntilGameTime | gameTime) } }}

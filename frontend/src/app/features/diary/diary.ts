@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import { DiaryView } from '../../core/api/models';
@@ -11,6 +12,31 @@ import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
+
+/** File name of a Content-Disposition header (RFC 5987 {@code filename*} first), fallback "chronik.md". */
+export function fileNameOf(disposition: string | null): string {
+  if (!disposition) return 'chronik.md';
+  const star = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  if (star) {
+    try {
+      return decodeURIComponent(star[1].trim());
+    } catch {
+      // malformed encoding: fall through to the plain name
+    }
+  }
+  const plain = /filename="?([^";]+)"?/i.exec(disposition);
+  return plain ? plain[1].trim() : 'chronik.md';
+}
+
+/** Hands a downloaded file to the browser (temporary link with the download attribute). */
+export function saveFile(blob: Blob, name: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export interface DiaryDay {
   day: number;
@@ -36,7 +62,7 @@ export function groupByDay(entries: DiaryView[], newestFirst: boolean): DiaryDay
  */
 @Component({
   selector: 'app-diary',
-  imports: [TranslatePipe, LabelPipe, GameTimePipe, Card, Badge, Button, PageErrorView],
+  imports: [TranslatePipe, LabelPipe, GameTimePipe, Card, Badge, Button, PageErrorView, RouterLink],
   templateUrl: './diary.html',
 })
 export class Diary {
@@ -52,6 +78,8 @@ export class Diary {
   readonly text = signal('');
   readonly saving = signal(false);
   readonly formError = signal<string | null>(null);
+  readonly downloading = signal(false);
+  readonly downloadError = signal<string | null>(null);
 
   readonly categories = computed(() => [...new Set((this.entries() ?? []).map((e) => e.category ?? (e.entryType === 'PLAYER_NOTE' ? 'PLAYER_NOTE' : 'OTHER')))]);
   readonly filtered = computed(() => {
@@ -74,6 +102,22 @@ export class Diary {
         this.error.set(null);
       },
       error: (e) => this.error.set(toPageError(e, this.i18n.t('common.error'))),
+    });
+  }
+
+  /** Roadmap V3 R3-T2: downloads the chronicle as Markdown file (name from the backend). */
+  download(): void {
+    this.downloading.set(true);
+    this.downloadError.set(null);
+    this.api.chronicleFile().subscribe({
+      next: (res) => {
+        this.downloading.set(false);
+        if (res.body) saveFile(res.body, fileNameOf(res.headers.get('Content-Disposition')));
+      },
+      error: () => {
+        this.downloading.set(false);
+        this.downloadError.set(this.i18n.t('diary.downloadError'));
+      },
     });
   }
 

@@ -97,6 +97,11 @@ public class HiringService {
     }
 
     public TrainedOffer rollApplicant(JobRole role, RandomSource r) {
+        if (role == JobRole.APPRENTICE) {
+            // R3-P2: low skill and a fixed salary, no training
+            RpsimProperties.Apprentice a = props.getFormulas().getApprentice();
+            return new TrainedOffer(r.intBetween(a.getSkillMin(), a.getSkillMax()), a.getSalary(), null);
+        }
         Offer o = rollOffer(role, r);
         RpsimProperties.Trainings t = props.getFormulas().getTraining();
         if (role != JobRole.MACHINE_OPERATOR || !r.chance(t.getApplicantChance())) {
@@ -109,6 +114,7 @@ public class HiringService {
 
     @Transactional
     public JobPosting createPosting(Savegame sg, JobRole role) {
+        requireApprenticePlace(sg, role);
         JobPosting p = new JobPosting();
         p.setSavegame(sg);
         p.setJobRole(role);
@@ -166,6 +172,7 @@ public class HiringService {
             throw new BusinessRuleException("POSTING_CLOSED", "Die Stelle ist bereits besetzt.");
         }
         JobApplication chosen = application(sg, postingId, applicationId);
+        requireApprenticePlace(sg, p.getJobRole());
         Employee e = createEmployee(sg, chosen.getCharacter(), p.getJobRole(), chosen.getSkill(), chosen.getExpectedSalary());
         if (chosen.getTraining() != null) {
             e.addTraining(chosen.getTraining());
@@ -215,9 +222,23 @@ public class HiringService {
         e.setLastEffectMultiplier(1.0);
         // T-08: salaries are paid at the start of each FS25 period
         e.setNextSalaryDueGameTime(gameTime.addMonths(sg, sg.getCurrentGameTime(), 1));
+        if (role == JobRole.APPRENTICE) {
+            // R3-P2: training of training-years FS25 years
+            e.setApprenticeshipEndsAtGameTime(gameTime.addMonths(sg, sg.getCurrentGameTime(),
+                    (long) GameTime.PERIODS_PER_YEAR * props.getFormulas().getApprentice().getTrainingYears()));
+        }
         Employee saved = employees.save(e);
         publisher.publishEvent(new RosterChangedEvent(sg.getId())); // R2-A0
         return saved;
+    }
+
+    /** R3-P2: at most max-apprentices apprentices at a time. */
+    void requireApprenticePlace(Savegame sg, JobRole role) {
+        if (role == JobRole.APPRENTICE && employees.findBySavegameAndStatusAndJobRole(sg, EmployeeStatus.ACTIVE,
+                JobRole.APPRENTICE).size() >= props.getFormulas().getApprentice().getMaxApprentices()) {
+            throw new BusinessRuleException("APPRENTICE_LIMIT", "Es sind höchstens "
+                    + props.getFormulas().getApprentice().getMaxApprentices() + " Azubis gleichzeitig möglich.");
+        }
     }
 
     /** Dismissal by the player. */

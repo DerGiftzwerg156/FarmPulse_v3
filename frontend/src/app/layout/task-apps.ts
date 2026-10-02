@@ -16,6 +16,20 @@ const CASE_APP: Record<string, string> = {
   AUTHORITY_INSPECTION: 'authorities',
   SPONSORING_REQUEST: 'contacts',
   INVITATION: 'calendar',
+  // Roadmap V3 R3-H
+  GOODS_OFFER: 'trade',
+  GOODS_REQUEST: 'trade',
+  NEIGHBOR_MISSION: 'trade',
+  // Roadmap V3 R3-K
+  COLLATERAL_CLAIM: 'bank',
+  ANNUAL_REVIEW: 'bank',
+  ANNUAL_REVIEW_OFFER: 'bank',
+  // Roadmap V3 R3-M3
+  FARM_SHOP_ORDER: 'trade',
+  // Roadmap V3 R3-W2
+  DROUGHT_AID: 'authorities',
+  // Roadmap V3 R3-P2
+  APPRENTICE_TAKEOVER: 'staff',
 };
 
 const CONTRACT_APP: Record<string, string> = {
@@ -23,6 +37,7 @@ const CONTRACT_APP: Record<string, string> = {
   LEASE: 'fields',
   MAINTENANCE: 'workshop',
   TAX_ADVISOR: 'authorities',
+  LEASE_OUT: 'fields', // Roadmap V3 R3-L1
 };
 
 const TYPE_APP: Record<string, string> = {
@@ -54,6 +69,7 @@ export function contractAppId(kind: string): string {
 export function taskAppId(t: TaskView): string {
   if (t.type === 'CASE') return caseAppId(t.kind ?? '');
   if (t.type === 'CONTRACT_OFFER') return contractAppId(t.kind ?? '');
+  if (t.type === 'NEGOTIATION' && t.negotiation?.assetType === 'VEHICLE') return known('workshop'); // R3-V
   return known(TYPE_APP[t.type] ?? FALLBACK_APP);
 }
 

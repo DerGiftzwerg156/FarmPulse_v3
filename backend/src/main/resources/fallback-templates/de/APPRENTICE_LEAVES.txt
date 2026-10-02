@@ -1,0 +1,6 @@
+Ich gehe nach der Ausbildung
+Hallo,
+
+schade, dass wir nicht zusammenkommen. Ich mache meine Ausbildung noch fertig und gehe dann in {{daysLeft}} Tagen.
+
+{{characterName}}

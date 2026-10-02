@@ -1,0 +1,6 @@
+Hilfe auf meinem Feld?
+Moin,
+
+auf meinem Feld {{field}} ({{hectares}} ha) steht Arbeit an: {{missionType}}. Hättest du Zeit? Wenn du zusagst, findest du den Auftrag im Auftragsmenü des Spiels – die Vergütung zahlt das Spiel, und bei Erfolg lege ich {{bonus}} € drauf. Sag mir binnen {{answerDays}} Tagen in der App „Handel“ Bescheid.
+
+{{characterName}}

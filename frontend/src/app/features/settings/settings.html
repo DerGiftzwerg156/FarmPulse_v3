@@ -107,6 +107,25 @@
     }
   </app-card>
 
+  <app-card [title]="'settings.farm.title' | t" data-testid="farm-settings">
+    @if (farm(); as f) {
+      <form class="flex flex-wrap items-end gap-2" (submit)="$event.preventDefault(); saveFarm()">
+        <label class="block min-w-0 flex-1 space-y-1">
+          <span class="fp-label">{{ 'settings.farm.name' | t }} ({{ 'common.optional' | t }})</span>
+          <input class="fp-input" type="text" maxlength="60" [value]="farmName()" (input)="farmName.set($any($event.target).value); farmSaved.set(false)"
+            [placeholder]="f.mapName ?? ''" data-testid="farm-name" />
+        </label>
+        <app-button type="submit" data-testid="farm-save">{{ 'common.save' | t }}</app-button>
+      </form>
+      <p class="mt-1 text-[11px] text-muted">{{ 'settings.farm.hint' | t }}</p>
+      @if (farmSaved()) {
+        <p class="mt-1 text-[11px] text-accent" data-testid="farm-saved">{{ 'settings.saved' | t }}</p>
+      }
+    } @else {
+      <p class="text-[12px] text-muted">–</p>
+    }
+  </app-card>
+
   <app-card [title]="'settings.fields.title' | t" data-testid="field-settings">
     @if (fields(); as f) {
       <label class="flex items-start gap-2 text-[12px] text-text">
@@ -120,4 +139,7 @@
       <p class="text-[12px] text-muted">–</p>
     }
   </app-card>
+
+  <!-- Roadmap V3 R3-N: tablet in the home network (installation setting, not per savegame) -->
+  <app-lan-settings-card />
 </section>

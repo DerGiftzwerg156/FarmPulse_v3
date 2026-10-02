@@ -1,0 +1,7 @@
+Feld {{farmlandId}} mit Grundschuld verkauft
+Guten Tag,
+
+Sie haben Feld {{farmlandId}} verkauft, obwohl darauf eine Grundschuld für Ihren Kredit „{{purpose}}“ lag – ohne mit uns zu sprechen. Wir fordern deshalb eine Sondertilgung von {{claim}} €. Bitte zahlen Sie innerhalb von {{claimDays}} Tagen in der App „Bank“.
+
+Mit freundlichen Grüßen
+{{characterName}}

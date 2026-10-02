@@ -115,6 +115,10 @@ public class Employee extends SavegameScoped {
     @Column(name = "training_until_game_time")
     private Long trainingUntilGameTime;
 
+    /** Roadmap V3 R3-P2: end of the training of an apprentice (null = no apprentice). */
+    @Column(name = "apprenticeship_ends_at_game_time")
+    private Long apprenticeshipEndsAtGameTime;
+
     public Set<Training> trainingSet() {
         Set<Training> set = EnumSet.noneOf(Training.class);
         if (trainings != null && !trainings.isBlank()) {

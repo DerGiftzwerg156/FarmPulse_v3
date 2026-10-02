@@ -21,9 +21,12 @@ const pages: Routes = [
   { path: 'versicherung', loadComponent: () => import('./features/insurance/insurance').then((m) => m.Insurance), title: 'nav.insurance' },
   { path: 'stall', loadComponent: () => import('./features/stable/stable').then((m) => m.Stable), title: 'nav.stable' },
   { path: 'werkstatt', loadComponent: () => import('./features/workshop/workshop').then((m) => m.Workshop), title: 'nav.workshop' },
+  { path: 'handel', loadComponent: () => import('./features/trade/trade').then((m) => m.Trade), title: 'nav.trade' },
   /** Old address of "Verträge & Vorgänge" (links in stored mails): forwards to the app of the entry. */
   { path: 'contracts', loadComponent: () => import('./features/contracts/contracts-redirect').then((m) => m.ContractsRedirect) },
   { path: 'village', loadComponent: () => import('./features/village/village').then((m) => m.Village), title: 'nav.village' },
+  /** Roadmap V3 R3-T2: print view of the farm chronicle (PDF via the browser's print function). */
+  { path: 'diary/chronik', loadComponent: () => import('./features/diary/chronicle-print').then((m) => m.ChroniclePrint), title: 'diary.print' },
   { path: 'diary', loadComponent: () => import('./features/diary/diary').then((m) => m.Diary), title: 'nav.diary' },
   { path: 'settings', loadComponent: () => import('./features/settings/settings').then((m) => m.Settings), title: 'nav.settings' },
   {

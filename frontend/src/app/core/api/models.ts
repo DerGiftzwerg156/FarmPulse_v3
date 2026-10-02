@@ -101,6 +101,54 @@ export interface InsuranceQuoteView {
   deductible: number;
 }
 
+/** Roadmap V3 R3-W: one game month - rain and observed time in percent. */
+export interface DroughtMonthView {
+  monthIndex: number;
+  month: string;
+  rainPercent: number | null;
+  observedPercent: number;
+  rating: 'DRY' | 'WET' | 'UNKNOWN' | 'OUTSIDE' | 'RUNNING' | string;
+}
+
+export interface DroughtQuoteView {
+  hectares: number;
+  premiumPerHectare: number;
+  monthlyPremium: number;
+  payoutPerHectare: number;
+  payout: number;
+}
+
+export interface DroughtView {
+  id: number;
+  firstMonth: string;
+  lastMonth: string;
+  dryMonths: number;
+  declaredGameTime: number;
+  crops: string[];
+  priceEvents: number;
+  insuranceResult: 'PAID' | 'NONE' | 'TOO_LATE' | 'COVER_SUSPENDED' | string;
+  insuredHectares: number | null;
+  insurancePayout: number | null;
+  aidHectares: number | null;
+  aidCaseId: number | null;
+}
+
+export interface DroughtStatusView {
+  enabled: boolean;
+  growthMonths: string[];
+  minPeriods: number;
+  maxRainPercent: number;
+  minObservedPercent: number;
+  dryMonths: number;
+  seriesStartMonth: string | null;
+  seriesDeclared: boolean;
+  months: DroughtMonthView[];
+  quote: DroughtQuoteView;
+  aidPerHectare: number;
+  aidDeductionPercent: number;
+  droughts: DroughtView[];
+}
+
 /** Dashboard notice of the fact layer (TODO T-02 rewind, T-03 bookings the game did not execute). */
 export interface NoticeView {
   id: number;
@@ -148,6 +196,8 @@ export interface OnboardingRequest {
   familyParents?: boolean;
   familyPartner?: boolean;
   familyChildren?: boolean;
+  /** Roadmap V3 R3-T2: optional farm name (heads the chronicle). */
+  farmName?: string | null;
 }
 
 export interface CharacterRef {
@@ -197,6 +247,113 @@ export interface CreditApplicationView {
   offeredTermMonths: number | null;
   offeredInterestRatePercent: number | null;
   loanId: number | null;
+  /** Roadmap V3 R3-K1: own fields offered as collateral by the player. */
+  collateralFarmlandIds?: number[];
+  /** Roadmap V3 R3-K1: fields the bank names for a counter offer "mit Grundschuld". */
+  proposedFarmlandIds?: number[];
+  collateralValue?: number | null;
+  coveragePercent?: number | null;
+  interestDiscountPercent?: number | null;
+  collateralRequired?: boolean | null;
+}
+
+/** Roadmap V3 R3-K1: a field with a Grundschuld (status REQUESTED / PROPOSED / PLEDGED / RELEASED / REALISED). */
+export interface CollateralView {
+  farmlandId: number;
+  collateralValue: number;
+  status: string;
+  /** The bank agreed to a sale in the tool (the proceeds repay the collateral value). */
+  saleConsent: boolean;
+  loanId: number | null;
+  purpose: string | null;
+  /** Roadmap V3 R3-L1: the bank agreed to lease the field out (the Grundschuld stays). */
+  leaseConsent?: boolean;
+}
+
+/** Roadmap V3 R3-L1: term range of the lease-out form and the lease-out contracts (newest first). */
+export interface LeaseOutView {
+  termYearsMin: number;
+  termYearsMax: number;
+  contracts: ContractView[];
+}
+
+export interface CollateralOptionView {
+  farmlandId: number;
+  hectares: number;
+  price: number;
+  collateralValue: number;
+}
+
+export interface CollateralOverviewView {
+  loanToValuePercent: number;
+  requiredAboveSharePercent: number;
+  maxInterestDiscountPercent: number;
+  /** Loans above this amount need collateral for the part above it. */
+  requiredAboveAmount: number;
+  eligible: CollateralOptionView[];
+  pledged: CollateralView[];
+}
+
+/** Roadmap V3 R3-K2: liquidity plan. */
+export interface PlanPosting {
+  /** SALARIES / LOAN / CONTRACT / RETIREMENT / TAX_PREPAYMENT */
+  kind: string;
+  /** LOAN: purpose; CONTRACT: kind[:farmland]; TAX_PREPAYMENT: Q1..Q4 */
+  label: string | null;
+  amount: number;
+  /** Not fixed yet (tax prepayment after the next year change). */
+  estimate: boolean;
+}
+
+export interface PlanMonth {
+  monthIndex: number;
+  startGameTime: number;
+  period: number | null;
+  year: number | null;
+  postings: PlanPosting[];
+  knownTotal: number;
+  incomeEstimate: number | null;
+  /** PREVIOUS_YEAR / AVERAGE / NONE */
+  incomeSource: string;
+  reserve: number;
+  balanceEnd: number;
+  belowZero: boolean;
+  belowReserve: boolean;
+}
+
+export interface LiquidityPlanView {
+  available: boolean;
+  journalAvailable: boolean;
+  balance: number;
+  reserveFactor: number;
+  months: PlanMonth[];
+  firstBelowZero: PlanMonth | null;
+  firstBelowReserve: PlanMonth | null;
+}
+
+/** Roadmap V3 R3-K3: farm report of a finished FS25 year. */
+export interface FarmReportSnapshot {
+  staff: number;
+  monthlyWages: number;
+  animals: number;
+  averageHealth: number | null;
+  reputationTier: string;
+  trust: { characterId: number; name: string; role: string | null; level: string }[];
+}
+
+export interface FarmReportView {
+  year: number;
+  months: number;
+  income: { category: string; amount: number }[];
+  expenses: { category: string; amount: number }[];
+  totals: { operatingIncome: number; operatingExpense: number; operatingResult: number; investment: number; divestment: number; financing: number };
+  tax: { status: string; profit: number | null; tax: number | null } | null;
+  fields: { farmlandId: number; fruitType: string; hectares: number | null; harvested: boolean; withered: boolean; yieldLiters: number | null }[];
+  rain: { period: number; rainHours: number; observedHours: number }[];
+  stables: { type: string; count: number; health: number | null; productivity: number | null }[];
+  welfareInspections: number;
+  snapshot: FarmReportSnapshot;
+  previous: FarmReportSnapshot | null;
 }
 
 export interface LoanPaymentView {
@@ -226,6 +383,10 @@ export interface LoanView {
   /** Installments left with the current installment (a Sondertilgung shortens the term). */
   remainingInstallments: number;
   specialRepayment: SpecialRepaymentTermsView;
+  /** Roadmap V3 R3-K1: fields with a Grundschuld for this loan. */
+  collateral?: CollateralView[];
+  /** Roadmap V3 R3-K3: rate cuts of the annual review so far (percentage points). */
+  rateCutTotalPercent?: number;
 }
 
 export interface DeferralView {
@@ -306,6 +467,8 @@ export interface EmployeeView {
   trainings: string[];
   trainingInProgress: string | null;
   trainingUntilGameTime: number | null;
+  /** Roadmap V3 R3-P2: end of the training of an apprentice. */
+  apprenticeshipEndsAtGameTime?: number | null;
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
@@ -325,6 +488,45 @@ export interface BypassSettingsView {
 }
 
 /** Roadmap V2 R2-C6: field work hints of the cooperative. */
+/** Roadmap V3 R3-T2: optional farm name; the map name is the fallback. */
+export interface FarmSettingsView {
+  farmName: string | null;
+  mapName: string | null;
+}
+
+/** Roadmap V3 R3-T1: a reached milestone. */
+export interface MilestoneView {
+  key: 'LOAN_REPAID' | 'YEAR_WITHOUT_DELAY' | 'AREA' | 'RECORD_HARVEST' | 'CROP_ROTATION' | 'NEIGHBOR_TRADE';
+  title: string | null;
+  gameTime: number;
+  gameDay: number;
+}
+
+/** Roadmap V3 R3-T2: the farm chronicle (same content as the Markdown file). */
+export interface ChronicleView {
+  farmName: string;
+  gameTime: number;
+  gameDay: number;
+  backstory: string | null;
+  milestones: { key: string; title: string; text: string | null; gameTime: number; gameDay: number }[];
+  days: { gameDay: number; entries: { gameTime: number; entryType: string; title: string; text: string | null; note: boolean }[] }[];
+  reports: ChronicleReport[];
+}
+
+export interface ChronicleReport {
+  year: number;
+  months: number;
+  operatingIncome: number;
+  operatingExpense: number;
+  operatingResult: number;
+  taxStatus: string | null;
+  profit: number | null;
+  tax: number | null;
+  income: { label: string; amount: number }[];
+  expenses: { label: string; amount: number }[];
+  fields: { farmlandId: number; fruit: string; hectares: number | null; harvested: boolean; withered: boolean; yieldLiters: number | null }[];
+}
+
 export interface FieldSettingsView {
   fieldHintsEnabled: boolean;
   /** The mod reports the fields (farm_facts.fields). */
@@ -354,6 +556,16 @@ export interface FarmlandView {
   phase?: FieldPhase | null;
   /** Roadmap V2 R2-E3: marked by the player as the family field. */
   familyField?: boolean;
+  /** Roadmap V3 R3-K1: REQUESTED / PROPOSED / PLEDGED when the field is collateral; null otherwise. */
+  collateral?: string | null;
+  /** Roadmap V3 R3-K1: the bank agreed to a sale of the pledged field. */
+  saleConsent?: boolean;
+  /** Roadmap V3 R3-L1: leased out to a neighbour - no owner in the game, still the player's in the tool. */
+  leasedOut?: boolean;
+  /** Roadmap V3 R3-L1: the bank agreed to lease the pledged field out. */
+  leaseConsent?: boolean;
+  /** Roadmap V3 R3-L1: guide rent in € per ha and month (own fields only). */
+  leaseOutGuideRate?: number | null;
 }
 
 export type FieldPhase = 'EMPTY' | 'GROWING' | 'HARVESTABLE' | 'HARVESTED' | 'WITHERED';
@@ -372,7 +584,7 @@ export interface NegotiationView {
   id: number;
   assetType: string;
   assetId: string;
-  kind: 'AUCTION' | 'DIRECT' | 'SALE_OFFER';
+  kind: 'AUCTION' | 'DIRECT' | 'SALE_OFFER' | 'LEASE_OFFER';
   direction: 'PLAYER_BUYS' | 'PLAYER_SELLS';
   initiatedBy: string;
   status: 'OPEN' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'LOST' | 'EXPIRED';
@@ -387,6 +599,52 @@ export interface NegotiationView {
   closesAtGameTime: number | null;
   winner: CharacterRef | null;
   offers: OfferView[];
+  /** Roadmap V3 R3-L1: term of a lease-out (LEASE_OFFER); its amounts are € per ha and month. */
+  leaseTermMonths?: number | null;
+}
+
+/** Roadmap V3 R3-V: an own machine of the latest export; saleDealId = a running sale. */
+export interface OwnVehicleView {
+  uniqueId: string;
+  name: string | null;
+  value: number;
+  condition: number | null;
+  saleDealId: number | null;
+}
+
+export interface VehicleDealView {
+  id: number;
+  direction: 'BUY' | 'SELL';
+  status: 'OPEN' | 'AGREED' | 'DONE' | 'FAILED' | 'ENDED' | string;
+  sellerKind: 'WORKSHOP' | 'NEIGHBOR' | null;
+  character: CharacterRef | null;
+  vehicleName: string;
+  categoryName: string | null;
+  listPrice: number | null;
+  ageMonths: number | null;
+  operatingHours: number | null;
+  damage: number | null;
+  wear: number | null;
+  gamePrice: number | null;
+  basePrice: number;
+  askingPrice: number | null;
+  finalPrice: number | null;
+  vehicleId: string | null;
+  attempts: number;
+  nextAttemptGameTime: number | null;
+  failureReason: string | null;
+  createdGameTime: number;
+  closedGameTime: number | null;
+  negotiations: NegotiationView[];
+}
+
+export interface VehiclesView {
+  enabled: boolean;
+  maxRounds: number;
+  saleCapPercent: number;
+  spawnMaxAttempts: number;
+  vehicles: OwnVehicleView[];
+  deals: VehicleDealView[];
 }
 
 export interface OfferResultView {
@@ -505,6 +763,67 @@ export interface PriceView {
   trend?: 'CLIMBING' | 'FALLING' | 'STABLE' | null;
 }
 
+/** Roadmap V3 R3-M1: price alarm; sellPoint null = best price of all sell points. */
+export interface PriceAlarmView {
+  id: number;
+  fillType: string;
+  sellPoint: string | null;
+  threshold: number;
+  direction: 'ABOVE' | 'BELOW';
+  status: 'ACTIVE' | 'FIRED';
+  createdGameTime: number;
+  firedGameTime: number | null;
+  firedPrice: number | null;
+  firedSellPoint: string | null;
+}
+
+export interface PriceAlarmsView {
+  maxActive: number;
+  alarms: PriceAlarmView[];
+}
+
+/** Roadmap V3 R3-M2: forward contract (status OPEN / FULFILLED / SHORTFALL). */
+export interface ForwardContractView {
+  id: number;
+  fillType: string;
+  sellPoint: string;
+  quantity: number;
+  fixedPrice: number;
+  basePrice: number;
+  leadMonths: number;
+  deliveryStartGameTime: number;
+  deadlineGameTime: number;
+  status: string;
+  deliveredQuantity: number | null;
+  penalty: number | null;
+  createdGameTime: number;
+}
+
+export interface ForwardContractsView {
+  minLeadMonths: number;
+  maxLeadMonths: number;
+  minQuantity: number;
+  maxQuantity: number;
+  quantityStep: number;
+  maxOpen: number;
+  factorPerMonthPercent: number;
+  penaltySharePercent: number;
+  contracts: ForwardContractView[];
+}
+
+export interface ForwardQuoteView {
+  fillType: string;
+  sellPoint: string;
+  quantity: number;
+  leadMonths: number;
+  basePrice: number;
+  fixedPrice: number;
+  deliveryStartGameTime: number;
+  deadlineGameTime: number;
+  deliveryPeriod: number | null;
+  expectedIncome: number;
+}
+
 export interface PricePoint {
   gameTime: number;
   price: number;
@@ -555,7 +874,7 @@ export interface DiaryView {
   id: number;
   gameTime: number;
   gameDay: number;
-  entryType: 'AUTO' | 'PLAYER_NOTE';
+  entryType: 'AUTO' | 'PLAYER_NOTE' | 'MILESTONE';
   category: string | null;
   title: string;
   text: string | null;
@@ -564,6 +883,61 @@ export interface DiaryView {
 export interface ReputationView {
   tier: 'GOOD' | 'NEUTRAL' | 'CONTROVERSIAL';
   label: string;
+}
+
+/** Roadmap V3 R3-H: app "Handel" - neighbours, own silo goods and the offers, requests and contracts. */
+export interface TradeStockView {
+  fillType: string;
+  amount: number;
+  /** Price per 1000 l the neighbour asks from the player; null = no price known. */
+  unitPrice: number | null;
+}
+
+export interface TradeNeighborView {
+  id: number;
+  name: string;
+  /** DAIRY / ARABLE / MIXED */
+  role: string | null;
+  trustLevel: TrustLevel;
+  stock: TradeStockView[];
+  needs: string[];
+  farmlands: number[];
+}
+
+export interface TradeSiloView {
+  fillType: string;
+  amount: number;
+  freeCapacity: number;
+}
+
+export interface TradeView {
+  /** The mod reports the own silos (else no trade: older mod). */
+  silosTracked: boolean;
+  /** The mod reports the neighbour fields (else no stock from harvests, no contracts). */
+  fieldsTracked: boolean;
+  missionLimitReached: boolean | null;
+  silos: TradeSiloView[];
+  neighbors: TradeNeighborView[];
+  cases: CaseView[];
+}
+
+/** Roadmap V3 R3-N1..N3: home-network access (card "Tablet & Netzwerk", PIN login). */
+export interface LanStatusView {
+  enabled: boolean;
+  pinSet: boolean;
+  /** The request comes from the gaming PC (loopback): only it may change switch and PIN. */
+  gamePc: boolean;
+  /** This device may use the API (gaming PC, no PIN set, or a valid session). */
+  authenticated: boolean;
+  /** http://<private IPv4>:<port> of the gaming PC. */
+  urls: string[];
+  pinMinLength: number;
+  pinMaxLength: number;
+}
+
+export interface LanLoginView {
+  result: 'OK' | 'NO_PIN' | 'WRONG_PIN' | 'LOCKED';
+  lockedSeconds: number;
 }
 
 export interface AiSettingsView {

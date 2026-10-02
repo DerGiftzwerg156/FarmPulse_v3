@@ -76,6 +76,7 @@ printf '%s\r\n' \
   'title FarmPulse' \
   'cd /d "%~dp0"' \
   'echo FarmPulse startet ... danach im Browser http://localhost:8080 oeffnen. Fenster offen lassen.' \
+  'echo Tablet oder Handy im Heimnetz: Adresse und QR-Code unter Einstellungen - Tablet und Netzwerk.' \
   'java -jar rpsim-backend.jar --spring.profiles.active=prod --rpsim.web.static-dir=web %*' \
   'pause' > "$B/start.bat"
 

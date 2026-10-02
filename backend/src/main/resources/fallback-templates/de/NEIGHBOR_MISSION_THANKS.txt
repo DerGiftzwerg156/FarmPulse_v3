@@ -1,0 +1,6 @@
+Danke für die Hilfe
+Moin,
+
+danke, dass du auf meinem Feld {{field}} geholfen hast ({{missionType}}). Wie versprochen lege ich {{bonus}} € drauf.
+
+{{characterName}}

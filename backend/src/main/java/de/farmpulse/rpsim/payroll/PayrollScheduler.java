@@ -5,9 +5,11 @@ import de.farmpulse.rpsim.bridge.OutboxService;
 import de.farmpulse.rpsim.bridge.OutboxService.Related;
 import de.farmpulse.rpsim.credit.CreditApplicationService;
 import de.farmpulse.rpsim.credit.LoanService;
+import de.farmpulse.rpsim.diary.PaymentDelayService;
 import de.farmpulse.rpsim.domain.Employee;
 import de.farmpulse.rpsim.domain.EmployeeStatus;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.PaymentDelay;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.SatisfactionService;
 import de.farmpulse.rpsim.repository.EmployeeRepository;
@@ -37,10 +39,12 @@ public class PayrollScheduler {
     private final OutboxService outbox;
     private final SatisfactionService satisfaction;
     private final GameTime gameTime;
+    private final PaymentDelayService delays;
 
     public PayrollScheduler(SavegameRepository savegames, CreditApplicationService applications, LoanService loans,
                             EmployeeRepository employees, LiquidityService liquidity, OutboxService outbox,
-                            SatisfactionService satisfaction, GameTime gameTime) {
+                            SatisfactionService satisfaction, GameTime gameTime,
+                            PaymentDelayService delays) {
         this.savegames = savegames;
         this.applications = applications;
         this.loans = loans;
@@ -49,6 +53,7 @@ public class PayrollScheduler {
         this.outbox = outbox;
         this.satisfaction = satisfaction;
         this.gameTime = gameTime;
+        this.delays = delays;
     }
 
     @EventListener
@@ -75,6 +80,8 @@ public class PayrollScheduler {
         if (!emp.isSalaryOverdue()) {
             emp.setSalaryOverdue(true);
             satisfaction.salaryOverdue(emp);
+            delays.record(emp.getSavegame(), PaymentDelay.SALARY,
+                    emp.getSavegame().getCurrentGameTime());
         }
         return true;
     }
@@ -98,6 +105,7 @@ public class PayrollScheduler {
                     if (!emp.isSalaryOverdue()) {
                         emp.setSalaryOverdue(true);
                         satisfaction.salaryOverdue(emp);
+                        delays.record(sg, PaymentDelay.SALARY, now);
                     }
                     break;
                 }

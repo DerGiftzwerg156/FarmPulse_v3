@@ -1,0 +1,6 @@
+Schade mit der Ware
+Moin,
+
+als es so weit war, lag in deinem Silo nicht mehr genug {{fillType}} ({{amount}} Liter). Schade – ich muss mich jetzt anderweitig umsehen.
+
+{{characterName}}

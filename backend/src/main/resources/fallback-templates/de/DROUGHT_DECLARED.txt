@@ -1,0 +1,7 @@
+Dürre in der Region
+Moin,
+
+nach {{dryMonths}} trockenen Monaten in Folge ist es amtlich: Wir haben eine Dürre. Auf den Feldern im Dorf steht es schlecht um {{crops}}, die Abnehmer in der Region zahlen dafür jetzt mehr. Schau auf der Agrarbörse nach den Preisen.
+
+Viele Grüße
+{{characterName}}

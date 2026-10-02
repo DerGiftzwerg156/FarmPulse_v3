@@ -45,6 +45,21 @@ public enum TrustReason {
     SPONSORING_DECLINED,
     INVITATION_ACCEPTED,
     INVITATION_IGNORED,
+    /** Roadmap V3 R3-H: trade with a neighbour done / offer declined / ignored / goods missing in the silo. */
+    NEIGHBOR_TRADE,
+    NEIGHBOR_TRADE_DECLINED,
+    NEIGHBOR_TRADE_IGNORED,
+    NEIGHBOR_DISAPPOINTED,
+    /** Roadmap V3 R3-K1: a pledged field was sold in the game menu. */
+    COLLATERAL_SOLD,
+    /** Roadmap V3 R3-K1: the claimed Sondertilgung after such a sale stayed unpaid. */
+    COLLATERAL_CLAIM_OVERDUE,
+    /** Roadmap V3 R3-M2: forward contract delivered in full / with a shortfall. */
+    FORWARD_CONTRACT_FULFILLED,
+    FORWARD_CONTRACT_SHORTFALL,
+    /** Roadmap V3 R3-L1: the leased-out field was taken back in the game menu / the family field was leased out. */
+    LEASE_OUT_RECLAIMED,
+    FAMILY_FIELD_LEASED,
     INITIAL,
     OTHER
 }

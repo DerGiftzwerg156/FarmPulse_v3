@@ -13,6 +13,10 @@ RPSimWorkforce = {}
 
 --- Only machine operators drive helpers (R2-A2).
 RPSimWorkforce.DRIVER_ROLE = "MACHINE_OPERATOR"
+--- Roadmap V3 R3-P2: roles that drive helpers, by assignment priority (machine operators first, then apprentices -
+-- apprentices drive like an operator without trainings).
+RPSimWorkforce.DRIVER_ROLES = { MACHINE_OPERATOR = 1, APPRENTICE = 2 }
+RPSimWorkforce.APPRENTICE_ROLE = "APPRENTICE"
 
 --- "Schulungen": titles of the trainings for the game messages (the backend sends the codes).
 RPSimWorkforce.TRAINING_TITLES = { LARGE_TRACTOR = "Große Traktoren", COMBINE = "Mähdrescher",
@@ -78,8 +82,9 @@ end
 function RPSimWorkforce.setRoster(state, ins)
     local employees = {}
     for _, e in ipairs(ins.employees or {}) do
+        -- R3-P2: an apprentice never has a training (trainings in the list are ignored)
         employees[#employees + 1] = { employeeId = e.employeeId, name = e.name, role = e.role, status = e.status,
-            trainings = trainingSet(e.trainings) }
+            trainings = e.role == RPSimWorkforce.APPRENTICE_ROLE and {} or trainingSet(e.trainings) }
     end
     local byTraining, byCategory = categoryIndex(ins.trainingCategories)
     state.roster = { employees = employees, helperWageMode = ins.helperWageMode,
@@ -149,20 +154,21 @@ local function countTrainings(e)
     return n
 end
 
---- Free ACTIVE machine operator with the required trainings: the one with the fewest trainings (specialists stay free
--- for their machines), ties in list order (= skill, highest first). nil when there is none.
+--- Free ACTIVE driver with the required trainings: machine operators before apprentices (R3-P2), among them the one
+-- with the fewest trainings (specialists stay free for their machines), ties in list order (= skill, highest first).
+-- nil when there is none.
 local function pickDriver(state, required)
     local busy = {}
     for _, id in pairs(state.assignments) do
         busy[id] = true
     end
-    local best, bestCount = nil, nil
+    local best, bestRank, bestCount = nil, nil, nil
     for _, e in ipairs(state.roster.employees) do
-        if e.role == RPSimWorkforce.DRIVER_ROLE and e.status == "ACTIVE" and not busy[e.employeeId]
-            and RPSimWorkforce.qualified(e, required) then
+        local rank = RPSimWorkforce.DRIVER_ROLES[e.role]
+        if rank ~= nil and e.status == "ACTIVE" and not busy[e.employeeId] and RPSimWorkforce.qualified(e, required) then
             local n = countTrainings(e)
-            if best == nil or n < bestCount then
-                best, bestCount = e, n
+            if best == nil or rank < bestRank or (rank == bestRank and n < bestCount) then
+                best, bestRank, bestCount = e, rank, n
             end
         end
     end
@@ -214,11 +220,12 @@ function RPSimWorkforce.wageFree(state, jobId)
         and state.assignments[jobId] ~= nil
 end
 
---- Number of ACTIVE machine operators (on leave, at a training or on strike do not count).
+--- Number of ACTIVE drivers - machine operators and apprentices (R3-P2); on leave, at a training or on strike do not
+-- count.
 function RPSimWorkforce.activeOperators(state)
     local n = 0
     for _, e in ipairs(state.roster ~= nil and state.roster.employees or {}) do
-        if e.role == RPSimWorkforce.DRIVER_ROLE and e.status == "ACTIVE" then
+        if RPSimWorkforce.DRIVER_ROLES[e.role] ~= nil and e.status == "ACTIVE" then
             n = n + 1
         end
     end

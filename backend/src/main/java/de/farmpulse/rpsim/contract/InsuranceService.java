@@ -1,10 +1,13 @@
 package de.farmpulse.rpsim.contract;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.farmpulse.rpsim.bridge.BridgeDtos;
 import de.farmpulse.rpsim.bridge.BridgeDtos.FarmFacts;
@@ -27,6 +30,7 @@ import de.farmpulse.rpsim.domain.CommunicationCategory;
 import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.ContractKind;
 import de.farmpulse.rpsim.domain.ContractStatus;
+import de.farmpulse.rpsim.domain.FarmlandOwnership;
 import de.farmpulse.rpsim.domain.MoneyReason;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
@@ -35,6 +39,7 @@ import de.farmpulse.rpsim.narration.FallbackTemplates;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
+import de.farmpulse.rpsim.negotiation.FarmlandOwnershipService;
 import de.farmpulse.rpsim.repository.ContractRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
@@ -51,12 +56,17 @@ import org.springframework.transaction.annotation.Transactional;
  * Storms and hail are only simulated (no game event is read): per game month in the configured periods a damage may
  * occur; it always costs money (DAMAGE). With an active, paid-up insurance the player reports the damage within the
  * deadline and receives {@code round(damage × coverage) − deductible} (INSURANCE_PAYOUT) after a short settlement delay.
+ * Roadmap V3 R3-W3: a second cover type of the same contract kind - the weather-index insurance against drought (level
+ * {@link #DROUGHT}): premium per hectare of the own fields and month, payout per hectare on a declared drought without a
+ * claim ({@code DroughtService}). It runs beside a storm/hail insurance and never pays storm or hail damages.
  */
 @Service
 public class InsuranceService {
 
     public static final String RELATED = "SERVICE_CASE";
     static final EnumSet<CaseKind> KINDS = EnumSet.of(CaseKind.STORM_DAMAGE, CaseKind.HAIL_DAMAGE);
+    /** R3-W3: level of the weather-index insurance against drought. */
+    public static final String DROUGHT = "DROUGHT_INDEX";
 
     private final ContractRepository contracts;
     private final ServiceCaseRepository cases;
@@ -73,12 +83,13 @@ public class InsuranceService {
     private final GameTime gameTime;
     private final FieldService fields;
     private final FallbackTemplates labels;
+    private final FarmlandOwnershipService ownership;
 
     public InsuranceService(ContractRepository contracts, ServiceCaseRepository cases, SavegameRepository savegames,
                             ContractBillingService billing, FactsService facts, OutboxService outbox,
                             ServiceRoleService roles, CharacterLookup lookup, NarrationRequestService narration,
                             DiaryService diary, RandomSource random, RpsimProperties props, GameTime gameTime,
-                            FieldService fields, FallbackTemplates labels) {
+                            FieldService fields, FallbackTemplates labels, FarmlandOwnershipService ownership) {
         this.contracts = contracts;
         this.cases = cases;
         this.savegames = savegames;
@@ -94,6 +105,7 @@ public class InsuranceService {
         this.gameTime = gameTime;
         this.fields = fields;
         this.labels = labels;
+        this.ownership = ownership;
     }
 
     private RpsimProperties.Insurance cfg() {
@@ -126,23 +138,44 @@ public class InsuranceService {
         return l;
     }
 
-    public Optional<Contract> active(Savegame sg) {
-        return contracts.findBySavegameAndKindAndStatusInOrderByIdAsc(sg, ContractKind.INSURANCE,
-                List.of(ContractStatus.ACTIVE)).stream().findFirst();
+    public static boolean isDrought(Contract c) {
+        return DROUGHT.equals(c.getLevel());
     }
 
-    /** A written offer of the insurance agent (replaces an older open offer). */
+    /** Insurance contracts of one cover type (storm/hail or drought) in the given states, oldest first. */
+    private List<Contract> insurances(Savegame sg, boolean drought, Collection<ContractStatus> states) {
+        return contracts.findBySavegameAndKindAndStatusInOrderByIdAsc(sg, ContractKind.INSURANCE, states).stream()
+                .filter(c -> isDrought(c) == drought).toList();
+    }
+
+    /** The running storm/hail insurance. */
+    public Optional<Contract> active(Savegame sg) {
+        return insurances(sg, false, List.of(ContractStatus.ACTIVE)).stream().findFirst();
+    }
+
+    /** R3-W3: the running drought insurance. */
+    public Optional<Contract> activeDrought(Savegame sg) {
+        return insurances(sg, true, List.of(ContractStatus.ACTIVE)).stream().findFirst();
+    }
+
+    private void replaceOffers(Savegame sg, boolean drought) {
+        for (Contract old : insurances(sg, drought, List.of(ContractStatus.OFFERED))) {
+            old.setStatus(ContractStatus.DECLINED);
+            old.setEndReason("REPLACED");
+        }
+    }
+
+    /** A written offer of the insurance agent (replaces an older open offer of the same cover type). */
     @Transactional
     public Contract offer(Savegame sg, String level) {
+        if (DROUGHT.equals(level)) {
+            return offerDrought(sg, false);
+        }
         if (active(sg).isPresent()) {
             throw new BusinessRuleException("INSURANCE_ACTIVE", "Es besteht bereits eine Versicherung.");
         }
         RpsimProperties.InsuranceLevel l = level(level);
-        for (Contract old : contracts.findBySavegameAndKindAndStatusInOrderByIdAsc(sg, ContractKind.INSURANCE,
-                List.of(ContractStatus.OFFERED))) {
-            old.setStatus(ContractStatus.DECLINED);
-            old.setEndReason("REPLACED");
-        }
+        replaceOffers(sg, false);
         Character agent = roles.ensure(sg, CharacterRole.INSURANCE_AGENT);
         Contract c = new Contract();
         c.setSavegame(sg);
@@ -179,8 +212,9 @@ public class InsuranceService {
                 .facts(NarrationFacts.builder().put("level", c.getLevel()).put("monthlyPremium", c.getMonthlyAmount())
                         .build())
                 .category(CommunicationCategory.INSURANCE).related(ContractBillingService.RELATED, c.getId()).submit();
-        diary.addAuto(sg, "INSURANCE", "Versicherung abgeschlossen", "Sturm- und Hagelversicherung (" + c.getLevel()
-                + "), Prämie " + c.getMonthlyAmount() + " € pro Monat.", ContractBillingService.RELATED, c.getId());
+        diary.addAuto(sg, "INSURANCE", "Versicherung abgeschlossen", (isDrought(c) ? "Dürreversicherung (Wetterindex)"
+                : "Sturm- und Hagelversicherung (" + c.getLevel() + ")") + ", Prämie " + c.getMonthlyAmount()
+                + " € pro Monat.", ContractBillingService.RELATED, c.getId());
         return c;
     }
 
@@ -211,11 +245,15 @@ public class InsuranceService {
         c.setEndReason(reason);
         c.setEndsAtGameTime(sg.getCurrentGameTime());
         narration.request(sg, NarrationEventType.INSURANCE_CANCELLED).from(c.getCharacter())
-                .facts(NarrationFacts.builder().put("reason", reason).build())
+                .facts(NarrationFacts.builder().put("reason", reason).put("insuranceName", name(c)).build())
                 .category(CommunicationCategory.INSURANCE).related(ContractBillingService.RELATED, c.getId()).submit();
         diary.addAuto(sg, "INSURANCE", "Versicherung beendet", "MISSED_PAYMENTS".equals(reason)
-                ? "Die Versicherung wurde wegen unbezahlter Prämien gekündigt." : "Die Versicherung wurde gekündigt.",
+                ? "Die " + name(c) + " wurde wegen unbezahlter Prämien gekündigt." : "Die " + name(c) + " wurde gekündigt.",
                 ContractBillingService.RELATED, c.getId());
+    }
+
+    static String name(Contract c) {
+        return isDrought(c) ? "Dürreversicherung" : "Sturm- und Hagelversicherung";
     }
 
     Contract own(Savegame sg, Long id) {
@@ -273,8 +311,7 @@ public class InsuranceService {
     void maybeFirstOffer(Savegame sg) {
         if (sg.getFirstGameTime() == null
                 || sg.getCurrentGameTime() - sg.getFirstGameTime() < GameTime.days(cfg().getFirstOfferAfterDays())
-                || !contracts.findBySavegameAndKindAndStatusInOrderByIdAsc(sg, ContractKind.INSURANCE,
-                        EnumSet.allOf(ContractStatus.class)).isEmpty()
+                || !insurances(sg, false, EnumSet.allOf(ContractStatus.class)).isEmpty()
                 || insuredValue(facts.latest(sg).orElse(null)) <= 0) {
             return;
         }
@@ -424,8 +461,7 @@ public class InsuranceService {
             return;
         }
         long now = sg.getCurrentGameTime();
-        boolean recent = contracts.findBySavegameAndKindAndStatusInOrderByIdAsc(sg, ContractKind.INSURANCE,
-                EnumSet.allOf(ContractStatus.class)).stream()
+        boolean recent = insurances(sg, false, EnumSet.allOf(ContractStatus.class)).stream()
                 .anyMatch(c -> c.getCreatedAt() != null && c.getOfferExpiresAtGameTime() != null
                         && now - (c.getOfferExpiresAtGameTime() - GameTime.days(cfg().getOfferValidDays()))
                         < GameTime.days(cfg().getReofferCooldownDays()));
@@ -473,6 +509,76 @@ public class InsuranceService {
 
     public List<ServiceCase> cases(Savegame sg) {
         return cases.findBySavegameAndKindInOrderByIdDesc(sg, KINDS);
+    }
+
+    // ------------------------------------------------------------------------------------------ R3-W3 drought
+
+    /** Insured area of the drought insurance: own fields of the game (farmland export) without leased ones, in ha. */
+    public double droughtArea(Savegame sg) {
+        FarmFacts f = facts.latest(sg).orElse(null);
+        if (f == null || f.assets() == null || f.assets().farmland() == null) {
+            return 0;
+        }
+        Set<Integer> leased = ownership.list(sg).stream().filter(FarmlandOwnership::isLeasedToPlayer)
+                .map(FarmlandOwnership::getFarmlandId).collect(Collectors.toSet());
+        return f.assets().farmland().stream()
+                .filter(x -> x.farmlandId() != null && x.hectares() != null && !leased.contains(x.farmlandId()))
+                .mapToDouble(BridgeDtos.OwnedFarmland::hectares).sum();
+    }
+
+    public long droughtPremium(double hectares) {
+        return Math.round(hectares * cfg().getDroughtPremiumPerHectare());
+    }
+
+    public long droughtPayout(double hectares) {
+        return Math.round(hectares * cfg().getDroughtPayoutPerHectare());
+    }
+
+    /**
+     * Offer of the drought insurance (on request in the insurance app or with the cooperative's drought warning,
+     * {@code afterWarning}); replaces an older open drought offer, valid offer-valid-days.
+     */
+    @Transactional
+    public Contract offerDrought(Savegame sg, boolean afterWarning) {
+        if (activeDrought(sg).isPresent()) {
+            throw new BusinessRuleException("INSURANCE_ACTIVE", "Es besteht bereits eine Dürreversicherung.");
+        }
+        double ha = droughtArea(sg);
+        if (ha <= 0) {
+            throw new BusinessRuleException("NO_FIELDS", "Ohne eigene Felder gibt es keine Dürreversicherung.");
+        }
+        replaceOffers(sg, true);
+        Character agent = roles.ensure(sg, CharacterRole.INSURANCE_AGENT);
+        Contract c = new Contract();
+        c.setSavegame(sg);
+        c.setKind(ContractKind.INSURANCE);
+        c.setStatus(ContractStatus.OFFERED);
+        c.setCharacter(agent);
+        c.setLevel(DROUGHT);
+        c.setMonthlyAmount(droughtPremium(ha));
+        c.setOfferExpiresAtGameTime(sg.getCurrentGameTime() + GameTime.days(cfg().getOfferValidDays()));
+        c.setCreatedAt(Instant.now());
+        contracts.save(c);
+        narration.request(sg, NarrationEventType.DROUGHT_INSURANCE_OFFER).from(agent)
+                .facts(NarrationFacts.builder().put("hectares", Math.round(ha * 10) / 10.0)
+                        .put("premiumPerHectare", cfg().getDroughtPremiumPerHectare())
+                        .put("monthlyPremium", c.getMonthlyAmount())
+                        .put("payoutPerHectare", cfg().getDroughtPayoutPerHectare())
+                        .put("payout", droughtPayout(ha)).put("afterWarning", afterWarning)
+                        .put("warningNote", afterWarning ? "Die Genossenschaft warnt gerade vor Trockenheit. " : "")
+                        .put("validDays", Math.round(cfg().getOfferValidDays())).build())
+                .category(CommunicationCategory.INSURANCE).related(ContractBillingService.RELATED, c.getId())
+                .formLink("/versicherung?contract=" + c.getId()).submit();
+        return c;
+    }
+
+    /** R3-W3: the drought offer with the cooperative's warning - only when no drought insurance runs. */
+    @Transactional
+    public Optional<Contract> maybeOfferDrought(Savegame sg) {
+        if (activeDrought(sg).isPresent() || droughtArea(sg) <= 0) {
+            return Optional.empty();
+        }
+        return Optional.of(offerDrought(sg, true));
     }
 
     private static long round10(double v) {

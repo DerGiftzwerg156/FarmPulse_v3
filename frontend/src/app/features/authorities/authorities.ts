@@ -5,7 +5,8 @@ import { ServiceCases } from '../contracts/service-cases';
 
 /**
  * Hof-Tablet app "Ämter" (Roadmap V2 R2-E1 / R2-E2): the tax office (estimate, assessment, bills to pay by button,
- * tax advisor) and the agricultural authority (announced inspections, their result and fines).
+ * tax advisor) and the agricultural authority (announced inspections, their result and fines; Roadmap V3 R3-W2 the
+ * drought aid, applied for by button).
  */
 @Component({
   selector: 'app-authorities',
@@ -25,6 +26,11 @@ import { ServiceCases } from '../contracts/service-cases';
         <app-service-cases [caseKinds]="['AUTHORITY_INSPECTION']" openTitle="authorities.inspections" [highlightCase]="highlightedCase()" testId="inspections">
           <p open-intro class="mb-3 text-[12px] text-muted">{{ 'authorities.inspectionsIntro' | t }}</p>
         </app-service-cases>
+        <div class="mt-4">
+          <app-service-cases [caseKinds]="['DROUGHT_AID']" openTitle="authorities.droughtAid" [highlightCase]="highlightedCase()" testId="drought-aid">
+            <p open-intro class="mb-3 text-[12px] text-muted">{{ 'authorities.droughtAidIntro' | t }}</p>
+          </app-service-cases>
+        </div>
       </div>
     </section>
   `,

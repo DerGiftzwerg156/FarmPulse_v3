@@ -1,0 +1,28 @@
+-- Roadmap V3 R3-V2 / R3-V3: used machines bought from the workshop or a neighbour, own machines sold to neighbours.
+CREATE TABLE vehicle_deal (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    savegame_id BIGINT NOT NULL REFERENCES savegame(id),
+    direction VARCHAR(16) NOT NULL,
+    status VARCHAR(16) NOT NULL,
+    seller_kind VARCHAR(16),
+    character_id BIGINT REFERENCES game_character(id),
+    store_xml_filename VARCHAR(512),
+    vehicle_name VARCHAR(255),
+    category_name VARCHAR(64),
+    list_price BIGINT,
+    age_months INT,
+    operating_hours INT,
+    damage DOUBLE,
+    wear DOUBLE,
+    game_price BIGINT,
+    base_price BIGINT NOT NULL,
+    asking_price BIGINT,
+    final_price BIGINT,
+    vehicle_id VARCHAR(64),
+    sale_group_id VARCHAR(64),
+    attempts INT DEFAULT 0 NOT NULL,
+    next_attempt_game_time BIGINT,
+    failure_reason VARCHAR(64),
+    created_game_time BIGINT NOT NULL,
+    closed_game_time BIGINT
+);

@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { RouterLink } from '@angular/router';
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
-import { CalendarOverviewView, FarmlandView, FinanceOverview, ReputationView, StablesView } from '../../core/api/models';
+import { CalendarOverviewView, FarmlandView, FinanceOverview, MilestoneView, ReputationView, StablesView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -10,7 +10,7 @@ import { TasksStore } from '../../core/state/tasks.store';
 import { calendarLabel } from '../../shared/format/calendar';
 import { clockTime } from '../../shared/format/format';
 import { weatherLong } from '../../shared/format/weather';
-import { MoneyPipe, NumberPipe } from '../../shared/format/format.pipes';
+import { GameTimePipe, MoneyPipe, NumberPipe } from '../../shared/format/format.pipes';
 import { LabelPipe } from '../../shared/format/label.pipe';
 import { Icon } from '../../shared/ui/icon';
 import { AppTile } from '../../layout/app-tile';
@@ -23,7 +23,7 @@ import { TaskCardLine } from './task-line';
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, Icon, AppTile, TaskCardLine],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Icon, AppTile, TaskCardLine],
   templateUrl: './home.html',
 })
 export class Home {
@@ -39,6 +39,8 @@ export class Home {
   readonly fields = signal<FarmlandView[]>([]);
   readonly stables = signal<StablesView | null>(null);
   readonly loaded = signal(false);
+  /** Roadmap V3 R3-T1: reached milestones only (owner decision); the widget stays hidden without one. */
+  readonly milestones = signal<MilestoneView[]>([]);
 
   /** The four most pressing open decisions (the list is sorted by deadline). */
   readonly topTasks = computed(() => this.tasks.items().slice(0, 4));
@@ -70,6 +72,15 @@ export class Home {
       const sg = this.store.savegame();
       if (sg) untracked(() => this.load());
     });
+    effect(() => {
+      this.store.diaryVersion();
+      const sg = this.store.savegame();
+      if (sg) untracked(() => this.loadMilestones());
+    });
+  }
+
+  loadMilestones(): void {
+    this.api.milestones().pipe(catchError(() => of([] as MilestoneView[]))).subscribe((m) => this.milestones.set(m));
   }
 
   load(): void {

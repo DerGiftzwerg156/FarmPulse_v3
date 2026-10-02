@@ -18,6 +18,10 @@
         "showOnFarmlandsScreen": { "type": "boolean" }, "defaultFarmProperty": { "type": "boolean" },
         "npc": { "type": "object", "required": ["index"], "properties": { "index": { "type": "integer" },
           "name": { "type": "string" }, "title": { "type": "string" } } } } } },
-    "detectedMods": { "type": "array", "items": { "type": "string" } }
+    "detectedMods": { "type": "array", "items": { "type": "string" } },
+    "storeVehicles": { "type": "array", "items": { "type": "object", "required": ["xmlFilename", "name", "price", "isMod"],
+      "properties": { "xmlFilename": { "type": "string", "minLength": 1 }, "name": { "type": "string" },
+        "price": { "type": "number", "minimum": 0 }, "lifetime": { "type": "number", "minimum": 0 },
+        "categoryName": { "type": "string" }, "isMod": { "type": "boolean" }, "motorized": { "type": "boolean" } } } }
   }
 }

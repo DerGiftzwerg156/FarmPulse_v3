@@ -40,6 +40,12 @@ RPSimConfig.DEFAULTS = {
     -- Roadmap V2 R2-F2: show the yes/no questions also while the player sits in a vehicle. false = only on foot (the
     -- fallback of the roadmap); the key of R2-F3 opens a waiting question anywhere.
     promptsInVehicle = true,
+    -- Roadmap V3 R3-H1: export the fields the game's NPCs farm (farm_facts.npcFields), sampled like the own fields.
+    npcFieldExport = true,
+    -- Roadmap V3 R3-V1: export the vehicle catalog of the shop once at the mission start (market_context.storeVehicles)
+    storeCatalogExport = true,
+    -- Roadmap V3 R3-V1: at most this many catalog entries; above that they are cut after sorting by xmlFilename
+    storeCatalogMaxEntries = 2000,
 }
 
 function RPSimConfig.new(overrides)

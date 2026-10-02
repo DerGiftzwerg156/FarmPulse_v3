@@ -3,9 +3,11 @@
 -- luacheck: globals g_currentMission g_farmManager g_farmlandManager g_fillTypeManager g_npcManager
 -- luacheck: globals MoneyType FarmManager FarmlandManager VehiclePropertyState SellingStation Utils g_modIsLoaded
 -- luacheck: globals FSBaseMission Season g_missionManager MissionStatus MissionFinishState
+-- luacheck: globals PlowMission StonePickMission g_client
 -- luacheck: globals AnimalType Class AIMessage AIMessageErrorUnknown
 -- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
 -- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
+-- luacheck: globals StoreSpecies StoreItemUtil VehicleLoadingData VehicleLoadingState
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -411,8 +413,11 @@ function RPSimGameAdapter:collectFarmFacts()
                 local state = RPSimGameAdapter.propertyState(v)
                 if state == "OWNED" then
                     local damage = v.getDamageAmount ~= nil and v:getDamageAmount() or 0
+                    -- Roadmap V3 R3-V3: name and shop XML for the list in the workshop app (Vehicle:getFullName,
+                    -- vehicle.configFileName as in jobVehicleInfo)
                     raw.vehicles[#raw.vehicles + 1] = { uniqueId = v:getUniqueId(), value = v:getSellPrice(),
-                        damage = damage }
+                        damage = damage, name = safe(function() return v:getFullName() end, nil),
+                        xmlFilename = v.configFileName }
                 elseif state == "LEASED" then
                     -- Leasing costs per vehicle have no documented API yet (manual test plan) - list only.
                     raw.leasedVehicles[#raw.leasedVehicles + 1] = { uniqueId = v:getUniqueId() }
@@ -483,6 +488,9 @@ function RPSimGameAdapter:collectFarmFacts()
             return true
         end)
     end
+    -- Roadmap V3 R3-H2 / R3-H5
+    raw.tradeStorage = self:collectTradeStorage()
+    raw.missionLimitReached = self:missionLimitReached()
     return raw
 end
 
@@ -630,6 +638,139 @@ function RPSimGameAdapter:repairVehicle(uniqueId, targetDamage)
     return true
 end
 
+-- ---------------------------------------------------------------------------------------------- Roadmap V3 R3-V
+
+--- R3-V1: the vehicle catalog of the shop - g_storeManager:getItems() with species == StoreSpecies.VEHICLE and
+-- showInStore (LUADOC Shop/StoreManager.md, fields of loadItem). motorized = an engine after
+-- StoreItemUtil.loadSpecsFromXML(storeItem) (storeItem.specs.power, as in Vehicle.calculateSellPrice); left out when
+-- the specs cannot be read (the backend then uses the factor of motorised vehicles).
+function RPSimGameAdapter:collectStoreVehicles()
+    local list = {}
+    local items = safe(function() return g_storeManager:getItems() end, {})
+    for _, item in ipairs(items) do
+        safe(function()
+            if item.species == StoreSpecies.VEHICLE and item.showInStore then
+                local e = { xmlFilename = item.xmlFilename, name = item.name, price = item.price,
+                    lifetime = item.lifetime, categoryName = item.categoryName, isMod = item.isMod == true }
+                local ok = pcall(StoreItemUtil.loadSpecsFromXML, item)
+                if ok and type(item.specs) == "table" then
+                    e.motorized = item.specs.power ~= nil
+                end
+                list[#list + 1] = e
+            end
+            return true
+        end)
+    end
+    return list
+end
+
+--- R3-V2: a used vehicle from the workshop or a neighbour, loaded like AbstractMission:spawnVehicle (LUADOC
+-- Missions/AbstractMission.md): VehicleLoadingData with setFilename, setLoadingPlace on the shop places (false = no
+-- free place, dump VehicleLoadingData.lua), OWNED for the player farm, load(callback). Loading is asynchronous, so the
+-- price is booked in the callback after the used values are set. done(ok, err, result) is called exactly once - from
+-- the callback, or directly when the loading cannot start. Returns true (loading started) or false, err.
+function RPSimGameAdapter:spawnVehicle(ins, done)
+    local balance = self:getBalance()
+    if balance == nil or balance < ins.price then
+        return false, "INSUFFICIENT_FUNDS"
+    end
+    local storeItem = safe(function() return g_storeManager:getItemByXMLFilename(ins.storeXmlFilename) end, nil)
+    if storeItem == nil then
+        return false, "UNKNOWN_STORE_ITEM"
+    end
+    local farmId = self:getFarmId()
+    local ok, err = pcall(function()
+        local data = VehicleLoadingData.new()
+        data:setFilename(storeItem.xmlFilename)
+        if not data:setLoadingPlace(g_currentMission.storeSpawnPlaces, g_currentMission.usedStorePlaces) then
+            error("NO_SPACE")
+        end
+        data:setPropertyState(VehiclePropertyState.OWNED)
+        data:setOwnerFarmId(farmId)
+        data:load(function(_, vehicles, loadState)
+            self:onVehicleSpawned(ins, vehicles, loadState, done)
+        end, self, nil)
+    end)
+    if not ok then
+        local msg = tostring(err)
+        return false, msg:match("NO_SPACE") and "NO_SPACE" or msg
+    end
+    return true
+end
+
+--- Loading callback of spawnVehicle: used values (Vehicle:setOperatingTime(ms, true), the field age in months, dump
+-- Vehicle.lua; Wearable setDamageAmount / addWearAmount, LUADOC Specializations/Wearable.md), then the booking and
+-- result.vehicleId. A failed load (vehicleLoadState NO_SPACE or another error) books nothing.
+function RPSimGameAdapter:onVehicleSpawned(ins, vehicles, loadState, done)
+    local loaded = type(vehicles) == "table" and vehicles[1] ~= nil
+    if not loaded or (VehicleLoadingState ~= nil and loadState ~= VehicleLoadingState.OK) then
+        for _, v in ipairs(type(vehicles) == "table" and vehicles or {}) do
+            pcall(function() v:delete() end)
+        end
+        local noSpace = VehicleLoadingState ~= nil and loadState == VehicleLoadingState.NO_SPACE
+        done(false, noSpace and "NO_SPACE" or "LOAD_FAILED")
+        return
+    end
+    for _, v in ipairs(vehicles) do
+        pcall(function()
+            if v.setOperatingTime ~= nil then
+                v:setOperatingTime(ins.operatingHours * RPSimConfig.MS_PER_GAME_HOUR, true)
+            end
+            v.age = ins.ageMonths
+            if v.setDamageAmount ~= nil then
+                v:setDamageAmount(ins.damage, true)
+            end
+            if v.addWearAmount ~= nil then
+                v:addWearAmount(ins.wear, true)
+            end
+        end)
+    end
+    local booked, err = self:addMoney(-ins.price, ins.moneyReason, "Gebrauchtmaschine")
+    if not booked then
+        for _, v in ipairs(vehicles) do
+            pcall(function() v:delete() end)
+        end
+        done(false, err)
+        return
+    end
+    local id = safe(function() return vehicles[1]:getUniqueId() end, nil)
+    RPSimLog.info("Used vehicle %s delivered as %s", tostring(ins.storeXmlFilename), tostring(id))
+    done(true, nil, { vehicleId = id })
+end
+
+--- R3-V3: an own vehicle sold to a neighbour (VehicleSystem:getVehicleByUniqueId, dump VehicleSystem.lua). Only an
+-- owned vehicle of the player farm, nobody inside (Enterable getIsControlled), no helper (getIsAIActive), and - until
+-- the playtest of the manual test plan - only a root vehicle with nothing attached (getRootVehicle,
+-- getAttachedImplements). Then vehicle:delete() like AbstractMission removes its vehicles.
+function RPSimGameAdapter:removeVehicle(vehicleId)
+    local v = safe(function() return g_currentMission.vehicleSystem:getVehicleByUniqueId(vehicleId) end, nil)
+    if v == nil then
+        return false, "VEHICLE_NOT_FOUND"
+    end
+    local owner = safe(function() return v:getOwnerFarmId() end, nil)
+    if owner ~= self:getFarmId() or RPSimGameAdapter.propertyState(v) ~= "OWNED" then
+        return false, "NOT_OWN_VEHICLE"
+    end
+    local controlled = safe(function() return v.getIsControlled ~= nil and v:getIsControlled() end, false)
+    local ai = safe(function() return v.getIsAIActive ~= nil and v:getIsAIActive() end, false)
+    if controlled or ai then
+        return false, "VEHICLE_IN_USE"
+    end
+    local root = safe(function() return v.getRootVehicle ~= nil and v:getRootVehicle() or v end, v)
+    local attached = safe(function()
+        return v.getAttachedImplements ~= nil and next(v:getAttachedImplements() or {}) ~= nil
+    end, false)
+    if root ~= v or attached then
+        return false, "VEHICLE_ATTACHED"
+    end
+    local ok, err = pcall(function() v:delete() end)
+    if not ok then
+        return false, tostring(err)
+    end
+    RPSimLog.info("Vehicle %s removed (sold to a neighbour)", tostring(vehicleId))
+    return true
+end
+
 --- In-game notification (TODO T-21): g_currentMission:addIngameNotification(FSBaseMission.INGAME_NOTIFICATION_*, text),
 -- the pattern of FS25_MarketDynamics (MarketDynamics.lua, FuturesMarket.lua).
 --- Roadmap V2 R2-A7: state of one husbandry, the way the game computes it itself (all functions are placeable functions
@@ -732,6 +873,23 @@ end
 -- getIsWithered / getIsCut (FruitTypeDesc). Fields without a valid state are left out. nil = no field manager.
 function RPSimGameAdapter:collectFields()
     local farmId = self:getFarmId()
+    return self:collectFieldsWhere(function(field)
+        local farmland = field.farmland
+        return farmland ~= nil and g_farmlandManager:getFarmlandOwner(farmland.id) == farmId
+    end)
+end
+
+--- Roadmap V3 R3-H1: fields the game's NPCs farm - no owner and missions allowed, the same selection FS25
+-- FieldManager.lua uses to plan the NPC fruit (not field:getHasOwner() and field.isMissionAllowed). Same entries as
+-- collectFields. nil = no field manager.
+function RPSimGameAdapter:collectNpcFields()
+    return self:collectFieldsWhere(function(field)
+        return field.farmland ~= nil and not field:getHasOwner() and field.isMissionAllowed
+    end)
+end
+
+--- One export entry per field that passes `accept(field)` (errors of a single field are skipped).
+function RPSimGameAdapter:collectFieldsWhere(accept)
     local fields = safe(function() return g_fieldManager.fields end, nil)
     if fields == nil then
         return nil
@@ -739,10 +897,10 @@ function RPSimGameAdapter:collectFields()
     local list = {}
     for _, field in pairs(fields) do
         safe(function()
-            local farmland = field.farmland
-            if farmland == nil or g_farmlandManager:getFarmlandOwner(farmland.id) ~= farmId then
+            if not accept(field) then
                 return true
             end
+            local farmland = field.farmland
             local state = field:getFieldState()
             if state == nil or not state.isValid then
                 return true
@@ -769,6 +927,173 @@ function RPSimGameAdapter:collectFields()
         end)
     end
     return list
+end
+
+--- Roadmap V3 R3-H2: storages of the own silos and silo extensions only (FS25 Storage objects) - the same ownership
+-- rule as storageSources (spec_silo.storages with storage.ownerFarmId, spec_siloExtension.storage).
+function RPSimGameAdapter:ownSiloStorages()
+    local farmId = self:getFarmId()
+    local out = {}
+    for _, p in pairs(placeableList()) do
+        safe(function()
+            local owner = safe(function() return p:getOwnerFarmId() end, nil)
+            local function own(storage)
+                return storage ~= nil and (storage.ownerFarmId or owner) == farmId
+            end
+            if p.spec_silo ~= nil then
+                for _, storage in ipairs(p.spec_silo.storages or {}) do
+                    if own(storage) then
+                        out[#out + 1] = storage
+                    end
+                end
+            end
+            if p.spec_siloExtension ~= nil and own(p.spec_siloExtension.storage) then
+                out[#out + 1] = p.spec_siloExtension.storage
+            end
+            return true
+        end)
+    end
+    return out
+end
+
+--- R3-H2: fill level and free capacity per fill type of the own silos (storage:getFillLevels lists every fill type a
+-- storage accepts, storage:getFreeCapacity(fillTypeIndex) - LUADOC PlaceableSilo:getFillLevels / refillAmount).
+-- Returns { {fillType, amount, freeCapacity} } (normalised by RPSimFarmFacts.buildTradeStorage).
+function RPSimGameAdapter:collectTradeStorage()
+    local byType, list = {}, {}
+    for _, storage in ipairs(self:ownSiloStorages()) do
+        safe(function()
+            for index, level in pairs(storage:getFillLevels() or {}) do
+                local name = fillTypeName(index)
+                local e = byType[name]
+                if e == nil then
+                    e = { fillType = name, amount = 0, freeCapacity = 0 }
+                    byType[name] = e
+                    list[#list + 1] = e
+                end
+                e.amount = e.amount + (level or 0)
+                e.freeCapacity = e.freeCapacity + (storage:getFreeCapacity(index) or 0)
+            end
+            return true
+        end)
+    end
+    return list
+end
+
+--- R3-H3 / R3-H4 / R3-M3: STORAGE_TRANSFER. IN spreads the amount over the own silo storages with free capacity like
+-- PlaceableSilo:refillAmount (getFreeCapacity -> setFillLevel(getFillLevel + moved)) but without the game's booking
+-- BOUGHT_MATERIALS (the MONEY_TRANSACTION of the batch books the money); OUT takes it out
+-- (setFillLevel(getFillLevel - moved)). The whole amount or nothing: NO_CAPACITY / INSUFFICIENT_STOCK.
+function RPSimGameAdapter:transferStorage(fillType, amount, direction)
+    local index = safe(function() return g_fillTypeManager:getFillTypeIndexByName(fillType) end, nil)
+    if index == nil then
+        return false, "UNKNOWN_FILLTYPE"
+    end
+    local storages = self:ownSiloStorages()
+    local available = 0
+    for _, storage in ipairs(storages) do
+        available = available + safe(function()
+            if direction == "IN" then
+                return storage:getFreeCapacity(index)
+            end
+            return storage:getFillLevel(index)
+        end, 0)
+    end
+    if available + 0.001 < amount then
+        return false, direction == "IN" and "NO_CAPACITY" or "INSUFFICIENT_STOCK"
+    end
+    local ok, err = pcall(function()
+        local rest = amount
+        for _, storage in ipairs(storages) do
+            local level = storage:getFillLevel(index) or 0
+            local moved
+            if direction == "IN" then
+                moved = math.min(rest, storage:getFreeCapacity(index) or 0)
+                if moved > 0 then
+                    storage:setFillLevel(level + moved, index)
+                end
+            else
+                moved = math.min(rest, level)
+                if moved > 0 then
+                    storage:setFillLevel(level - moved, index)
+                end
+            end
+            rest = rest - moved
+            if rest <= 0.001 then
+                break
+            end
+        end
+    end)
+    if not ok then
+        return false, tostring(err)
+    end
+    return true
+end
+
+--- R3-H5: mission types the tool offers, by the FS25 class (PlowMission / StonePickMission: tryGenerateMission and
+-- isAvailableForField are evidenced in the LUADOC). Other names go through g_missionManager:getMissionType(name).
+RPSimGameAdapter.MISSION_CLASSES = {
+    PLOW = function() return PlowMission end,
+    STONE_PICK = function() return StonePickMission end,
+}
+
+--- R3-H5: MISSION_CREATE - a real contract on the field of the farmland, created like the game's tryGenerateMission:
+-- field without owner, no running contract, type available for the field, then new(true, g_client ~= nil) ->
+-- init(field) -> setDefaultEndDate() -> g_missionManager:registerMission(mission, missionType). Returns ok, err,
+-- { missionId = uniqueId }. NOT_AVAILABLE when a check fails.
+function RPSimGameAdapter:createMission(missionType, farmlandId)
+    local ok, created, why = pcall(function()
+        local classObject, typeEntry
+        local byClass = RPSimGameAdapter.MISSION_CLASSES[missionType]
+        if byClass ~= nil then
+            classObject = byClass()
+            typeEntry = classObject ~= nil and g_missionManager:getMissionType(classObject.NAME) or nil
+        else
+            typeEntry = g_missionManager:getMissionType(missionType)
+            classObject = typeEntry ~= nil and typeEntry.classObject or nil
+        end
+        if classObject == nil or typeEntry == nil then
+            return nil, "UNKNOWN_MISSION_TYPE"
+        end
+        local field
+        for _, f in pairs(g_fieldManager.fields or {}) do
+            if f.farmland ~= nil and f.farmland.id == farmlandId then
+                field = f
+                break
+            end
+        end
+        if field == nil or field:getHasOwner() or field.currentMission ~= nil then
+            return nil, "NOT_AVAILABLE"
+        end
+        if classObject.canRun ~= nil and not classObject.canRun() then
+            return nil, "NOT_AVAILABLE"
+        end
+        if not classObject.isAvailableForField(field, nil) then
+            return nil, "NOT_AVAILABLE"
+        end
+        local mission = classObject.new(true, g_client ~= nil)
+        if not mission:init(field) then
+            mission:delete()
+            return nil, "NOT_AVAILABLE"
+        end
+        mission:setDefaultEndDate()
+        g_missionManager:registerMission(mission, typeEntry)
+        return mission
+    end)
+    if not ok then
+        return false, tostring(created)
+    end
+    if created == nil then
+        return false, why or "NOT_AVAILABLE"
+    end
+    return true, nil, { missionId = safe(function() return created:getUniqueId() end, nil) }
+end
+
+--- R3-H5: the game's contract limit of the player farm (MissionManager:hasFarmReachedMissionLimit); nil = unknown.
+function RPSimGameAdapter:missionLimitReached()
+    return safe(function()
+        return g_missionManager:hasFarmReachedMissionLimit(self:getFarmId()) == true
+    end, nil)
 end
 
 --- Name of a field ground type in the global FieldGroundType table (reverse lookup, numbers only), nil if unknown.

@@ -31,6 +31,26 @@ public class OutboxService {
         this.json = json;
     }
 
+    /**
+     * Roadmap V3 (R3-Q1): the optional result of an ack (e.g. vehicleId after VEHICLE_SPAWN) as JSON for
+     * {@link OutboxInstruction#getAckResultJson()}; null when the ack carries none.
+     */
+    public String ackResultJson(Map<String, Object> result) {
+        if (result == null || result.isEmpty()) {
+            return null;
+        }
+        return json.writeValueAsString(result);
+    }
+
+    /** Roadmap V3 (R3-Q1): the stored result of an ack, empty when there is none. */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> ackResult(OutboxInstruction ins) {
+        if (ins.getAckResultJson() == null || ins.getAckResultJson().isBlank()) {
+            return Map.of();
+        }
+        return json.readValue(ins.getAckResultJson(), Map.class);
+    }
+
     public static String newInstructionId() {
         return "ins_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }
@@ -142,6 +162,65 @@ public class OutboxService {
         OutboxInstruction money = money(sg, toPlayer ? -price : price,
                 toPlayer ? MoneyReason.FARMLAND_PURCHASE : MoneyReason.FARMLAND_SALE, note, related, batchId, null);
         return List.of(transfer, money);
+    }
+
+    /**
+     * Roadmap V3 R3-H3 / R3-H4 / R3-M3: goods into (IN) or out of (OUT) the own silos and the matching money booking as
+     * one batch - STORAGE_TRANSFER first, so a refused transfer aborts the money part. {@code price} is the positive
+     * amount; IN is booked as expense, OUT as income.
+     */
+    @Transactional
+    public List<OutboxInstruction> storageDeal(Savegame sg, boolean in, String fillType, long liters, long price,
+                                               MoneyReason reason, String note, Related related) {
+        String batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("direction", in ? "IN" : "OUT");
+        p.put("fillType", fillType);
+        p.put("amount", liters);
+        OutboxInstruction transfer = enqueue(sg, InstructionType.STORAGE_TRANSFER, p, batchId, null, related);
+        OutboxInstruction money = money(sg, in ? -price : price, reason, note, related, batchId, null);
+        return List.of(transfer, money);
+    }
+
+    /**
+     * Roadmap V3 R3-V2: a used machine delivered on a shop place. Not in a batch - loading is asynchronous, the mod
+     * books {@code -price} itself in the loading callback and acknowledges with result.vehicleId.
+     */
+    @Transactional
+    public OutboxInstruction vehicleSpawn(Savegame sg, String storeXmlFilename, int ageMonths, int operatingHours,
+                                          double damage, double wear, long price, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("storeXmlFilename", storeXmlFilename);
+        p.put("ageMonths", ageMonths);
+        p.put("operatingHours", operatingHours);
+        p.put("damage", damage);
+        p.put("wear", wear);
+        p.put("price", price);
+        p.put("moneyReason", MoneyReason.VEHICLE_PURCHASE.name());
+        return enqueue(sg, InstructionType.VEHICLE_SPAWN, p, null, null, related);
+    }
+
+    /**
+     * Roadmap V3 R3-V3: an own machine sold to a neighbour - VEHICLE_REMOVE first, then the proceeds (VEHICLE_SALE) in
+     * the same batch, so a refused removal books nothing.
+     */
+    @Transactional
+    public List<OutboxInstruction> vehicleSale(Savegame sg, String vehicleId, long price, String note, Related related) {
+        String batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("vehicleId", vehicleId);
+        OutboxInstruction remove = enqueue(sg, InstructionType.VEHICLE_REMOVE, p, batchId, null, related);
+        OutboxInstruction money = money(sg, price, MoneyReason.VEHICLE_SALE, note, related, batchId, null);
+        return List.of(remove, money);
+    }
+
+    /** Roadmap V3 R3-H5: a real contract of the game on the field of an NPC farmland (result.missionId in the ack). */
+    @Transactional
+    public OutboxInstruction missionCreate(Savegame sg, String missionType, int farmlandId, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("missionType", missionType);
+        p.put("farmlandId", farmlandId);
+        return enqueue(sg, InstructionType.MISSION_CREATE, p, null, null, related);
     }
 
     /**

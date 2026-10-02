@@ -130,6 +130,25 @@ class RewindIntegrationTest {
         assertThat(status(ins[1])).isEqualTo(InstructionStatus.APPLIED);
     }
 
+    /** Roadmap V3 R3-V2 / R3-V3: a used machine bought or sold after the save is sent again like a farmland deal. */
+    @Test
+    void lostVehiclePurchaseAndSaleAreResent() {
+        facts(10 * DAY - 2 * HOUR);
+        OutboxInstruction spawn = outboxService.vehicleSpawn(sg, "data/vehicles/fendt/vario700.xml", 36, 2400, 0.2, 0.3,
+                52_000, OutboxService.Related.none());
+        List<OutboxInstruction> sale = outboxService.vehicleSale(sg, "veh_00042", 30_000, "Verkauf",
+                OutboxService.Related.none());
+        sync.runCycle();
+        ack(applied(spawn, 10 * DAY + HOUR), applied(sale.get(0), 10 * DAY + HOUR), applied(sale.get(1), 10 * DAY + HOUR));
+        facts(10 * DAY + 5 * HOUR);
+        facts(10 * DAY); // reloaded the save of day 10
+        ack();
+        assertThat(rewind().getStatus()).isEqualTo(RewindStatus.RESENT);
+        assertThat(status(spawn)).isEqualTo(InstructionStatus.PENDING);
+        assertThat(status(sale.get(0))).isEqualTo(InstructionStatus.PENDING);
+        assertThat(status(sale.get(1))).isEqualTo(InstructionStatus.PENDING);
+    }
+
     @Test
     void deepRewindAsksThePlayerAndResendsOnDecision() {
         OutboxInstruction[] ins = playAndApply();

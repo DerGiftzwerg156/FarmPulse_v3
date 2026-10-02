@@ -21,5 +21,11 @@ public enum PromptKind {
     /** Owner decision: tax bill of R2-E1 (pay; "no" leaves it open). */
     TAX_BILL,
     /** Owner decision: offer of the tax advisor of R2-E1 (accept / decline). */
-    TAX_ADVISOR
+    TAX_ADVISOR,
+    /** Roadmap V3 R3-H3 / R3-H4: goods offer or request of a neighbour (accept / decline; default off). */
+    NEIGHBOR_TRADE,
+    /** Roadmap V3 R3-H5: a neighbour asks for help with a contract on his field (accept / decline; default off). */
+    NEIGHBOR_MISSION,
+    /** Roadmap V3 R3-M3: farm-shop order of a villager (deliver / decline; default off). */
+    FARM_SHOP
 }

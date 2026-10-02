@@ -51,10 +51,37 @@ public final class Views {
     public record ThreadView(MessageView message, List<MessageView> thread) {
     }
 
+    /**
+     * Roadmap V3 R3-K1: {@code collateralFarmlandIds} chosen by the player, {@code proposedFarmlandIds} named by the bank
+     * (counter offer "mit Grundschuld", {@code collateralRequired}); value, coverage and discount once decided.
+     */
     public record CreditApplicationView(Long id, long amount, String purpose, int termMonths, String status,
                                         long submittedAtGameTime, long decisionVisibleAtGameTime, String decision,
                                         String reasonCategory, Long offeredAmount, Integer offeredTermMonths,
-                                        Double offeredInterestRatePercent, Long loanId) {
+                                        Double offeredInterestRatePercent, Long loanId, List<Integer> collateralFarmlandIds,
+                                        List<Integer> proposedFarmlandIds, Long collateralValue, Double coveragePercent,
+                                        Double interestDiscountPercent, Boolean collateralRequired) {
+    }
+
+    /** Roadmap V3 R3-K1: a field pledged for a loan; {@code saleConsent} = the bank agreed to a sale. */
+    public record CollateralView(int farmlandId, long collateralValue, String status, boolean saleConsent, Long loanId,
+                                 String purpose, boolean leaseConsent) {
+    }
+
+    /**
+     * Roadmap V3 R3-L1: leasing out own fields - the term range of the form and the lease-out contracts (newest
+     * first). Amounts per ha and month are in the negotiations; the contracts carry the monthly rent.
+     */
+    public record LeaseOutView(int termYearsMin, int termYearsMax, List<ContractView> contracts) {
+    }
+
+    /** Roadmap V3 R3-K1: own fields for the credit form and the pledged fields. */
+    public record CollateralOverviewView(double loanToValuePercent, double requiredAboveSharePercent,
+                                         double maxInterestDiscountPercent, long requiredAboveAmount,
+                                         List<CollateralOptionView> eligible, List<CollateralView> pledged) {
+    }
+
+    public record CollateralOptionView(int farmlandId, double hectares, long price, long collateralValue) {
     }
 
     public record LoanPaymentView(long gameTime, long amount, String type) {
@@ -64,7 +91,8 @@ public final class Views {
                            long monthlyInstallment, String purpose, String status, boolean legacy, boolean blocksNewCredit,
                            long nextDueGameTime, boolean overdue, int escalationLevel, int missedInstallments,
                            int paidInstallments, Long deferredUntilGameTime, List<LoanPaymentView> history,
-                           int remainingInstallments, SpecialRepaymentTermsView specialRepayment) {
+                           int remainingInstallments, SpecialRepaymentTermsView specialRepayment,
+                           List<CollateralView> collateral, double rateCutTotalPercent) {
     }
 
     public record DeferralView(boolean granted, String reasonCategory) {
@@ -106,7 +134,7 @@ public final class Views {
     public record EmployeeView(Long id, CharacterRef character, String jobRole, int skill, long monthlySalary, String status,
                                NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
                                boolean onStrike, Double hoursThisMonth, Double hoursLastMonth, List<String> trainings,
-                               String trainingInProgress, Long trainingUntilGameTime) {
+                               String trainingInProgress, Long trainingUntilGameTime, Long apprenticeshipEndsAtGameTime) {
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */
@@ -116,7 +144,8 @@ public final class Views {
     /** Roadmap V2 R2-C: fruitType and phase (EMPTY, GROWING, HARVESTABLE, HARVESTED, WITHERED) of own fields only. */
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,
                                boolean inNegotiation, boolean tradeable, boolean leased, String fruitType, String phase,
-                               boolean familyField) {
+                               boolean familyField, String collateral, boolean saleConsent,
+                               boolean leasedOut, boolean leaseConsent, Long leaseOutGuideRate) {
     }
 
     /**
@@ -153,6 +182,14 @@ public final class Views {
     public record FieldSettingsView(boolean fieldHintsEnabled, boolean fieldsTracked) {
     }
 
+    /** Roadmap V3 R3-T2: optional farm name; {@code mapName} is the fallback shown when it is empty. */
+    public record FarmSettingsView(String farmName, String mapName) {
+    }
+
+    /** Roadmap V3 R3-T1: a reached milestone (title of its diary entry). */
+    public record MilestoneView(String key, String title, long gameTime, long gameDay) {
+    }
+
     public record OfferView(int round, String offeredBy, String characterName, long amount, String result, Long counterAmount,
                             long gameTime) {
     }
@@ -160,7 +197,8 @@ public final class Views {
     public record NegotiationView(Long id, String assetType, String assetId, String kind, String direction, String initiatedBy,
                                   String status, CharacterRef counterpart, CharacterRef announcer, long basePrice,
                                   Long askingPrice, int roundsUsed, int maxRounds, Long lastCounterOffer, Long finalPrice,
-                                  Long closesAtGameTime, CharacterRef winner, List<OfferView> offers) {
+                                  Long closesAtGameTime, CharacterRef winner, List<OfferView> offers,
+                                  Integer leaseTermMonths) {
     }
 
     public record OfferResultView(String result, Long counterAmount, int roundsLeft, NegotiationView negotiation) {

@@ -1,0 +1,6 @@
+Bezahlt: {{billTitle}}
+Hallo,
+
+heute war die Frist für „{{billTitle}}“. Ich habe die {{amount}} € pünktlich überwiesen, damit kein Säumniszuschlag anfällt.
+
+{{characterName}}

@@ -215,11 +215,13 @@ public class BridgeSyncService {
             ins.setStatus(status);
             ins.setAckedAtGameTime(ack.appliedAtGameTime());
             ins.setAckMessage(ack.message());
+            ins.setAckResultJson(outboxService.ackResultJson(ack.result())); // Roadmap V3 (R3-Q1)
             if (status != InstructionStatus.APPLIED) {
                 log.warn("Instruction {} was {} by the mod: {}", ins.getInstructionId(), status, ack.message());
             }
             events.publishEvent(new BridgeEvents.InstructionAcked(sg.get().getId(), ins.getInstructionId(), status.name(),
-                    ins.getRelatedEntityType(), ins.getRelatedEntityId()));
+                    ins.getRelatedEntityType(), ins.getRelatedEntityId(),
+                    ack.result() == null ? java.util.Map.of() : ack.result()));
             applied++;
         }
         if (doc.contractReports() != null) {

@@ -1,0 +1,7 @@
+Unser Jahresgespräch
+Guten Tag,
+
+vielen Dank für Ihre Zeit beim Jahresgespräch {{year}}. An Ihren laufenden Konditionen ändert sich nichts. Wenn sich etwas an Ihren Plänen ändert, melden Sie sich gern.
+
+Mit freundlichen Grüßen
+{{characterName}}

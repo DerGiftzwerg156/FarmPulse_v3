@@ -1,0 +1,6 @@
+Danke für die Übernahme
+Hallo,
+
+vielen Dank, dass ich bleiben darf! Ab jetzt fahre ich als Maschinenführer/in für {{salary}} € im Monat.
+
+{{characterName}}

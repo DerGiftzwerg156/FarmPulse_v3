@@ -11,6 +11,9 @@
 --   canShowPrompt(inVehicleAllowed) -> bool      (optional, R2-F2: no menu or dialog open, vehicle rule)
 --   showYesNo(text, title, callback(yes)) -> ok, err (optional, R2-F2)
 --   notify(text, level) -> ok, err                (optional)
+--   collectNpcFields() -> list | nil              (optional, R3-H1)
+--   transferStorage(fillType, amount, direction) -> ok, err          (optional, R3-H3/H4)
+--   createMission(missionType, farmlandId) -> ok, err, {missionId}   (optional, R3-H5)
 RPSimBridge = {}
 RPSimBridge.__index = RPSimBridge
 
@@ -91,6 +94,7 @@ function RPSimBridge:exportFarmFacts()
     local fields = self:sampleFields()
     if fields ~= nil then
         raw.fields, raw.fieldRules = fields.fields, fields.rules
+        raw.npcFields = fields.npcFields -- Roadmap V3 R3-H1 (nil when switched off)
     end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
 end
@@ -107,6 +111,11 @@ function RPSimBridge:sampleFields()
         end
         local okRules, rules = pcall(self.adapter.collectFieldRules, self.adapter)
         self.fieldCache = { fields = fields, rules = okRules and rules or nil }
+        -- Roadmap V3 R3-H1: fields of the game's NPCs, same sampling (mod switch npcFieldExport)
+        if self.cfg.npcFieldExport and self.adapter.collectNpcFields ~= nil then
+            local okNpc, npc = pcall(self.adapter.collectNpcFields, self.adapter)
+            self.fieldCache.npcFields = okNpc and npc or nil
+        end
     end
     return self.fieldCache
 end
@@ -178,6 +187,7 @@ function RPSimBridge:exportMarketContext(force)
         return false
     end
     raw.savegameId = self.state.savegameId
+    raw.storeVehicles = self.storeVehicles -- R3-V1: read once at the mission start
     if raw.detectedMods ~= nil and #raw.detectedMods > 0 and not self.conflictsLogged then
         self.conflictsLogged = true
         RPSimLog.warning("Mods with overlapping features detected: %s", table.concat(raw.detectedMods, ", "))
@@ -211,12 +221,40 @@ function RPSimBridge:onSavegameLoaded()
     if self.workforceEnabled and self.adapter.registerHelperLimitMessage ~= nil then
         self.adapter:registerHelperLimitMessage() -- R2-A3
     end
+    self:collectStoreCatalog()
     self:exportMarketContext(true)
     self:exportFarmFacts()
     self:writeAck()
     -- R2-F1: the file follows the loaded savegame (answers given after the last save are gone, the backend asks again)
     self:writeResponses()
     self:logFirstExport()
+end
+
+--- Roadmap V3 R3-V1: the vehicle catalog of the shop, read once per mission start (mod switch storeCatalogExport),
+-- sorted by xmlFilename and cut to storeCatalogMaxEntries.
+function RPSimBridge:collectStoreCatalog()
+    self.storeVehicles = nil
+    if not self.cfg.storeCatalogExport or self.adapter.collectStoreVehicles == nil then
+        return
+    end
+    local ok, raw = pcall(self.adapter.collectStoreVehicles, self.adapter)
+    if not ok or raw == nil then
+        RPSimLog.warning("Reading the shop catalog failed: %s", tostring(raw))
+        return
+    end
+    local list, dropped = RPSimMarketContext.capStoreVehicles(raw, self.cfg.storeCatalogMaxEntries)
+    if dropped > 0 then
+        RPSimLog.warning("Shop catalog: %d vehicles, %d left out (storeCatalogMaxEntries = %d)", #list + dropped,
+            dropped, self.cfg.storeCatalogMaxEntries)
+    end
+    self.storeVehicles = list
+end
+
+--- Roadmap V3 R3-V2: outcome of an asynchronous instruction (VEHICLE_SPAWN) - recorded and acknowledged at once.
+function RPSimBridge:completeInstruction(instructionId, ok, err, res)
+    if RPSimProcessor.complete(self.state, instructionId, self.adapter:getGameTime(), ok, err, res) then
+        self:writeAck()
+    end
 end
 
 --- Logs what the first export saw (manual test plan: verifies that the savegame was fully loaded).
@@ -267,6 +305,24 @@ function RPSimBridge:pollInstructions()
                     prompt = function(ins) return self:queuePrompt(ins, gameTime) end,
                     repairVehicle = adapter.repairVehicle ~= nil
                         and function(ins) return adapter:repairVehicle(ins.vehicleId, ins.targetDamage) end or nil,
+                    -- Roadmap V3 R3-H3/H4 and R3-H5
+                    storageTransfer = adapter.transferStorage ~= nil
+                        and function(ins) return adapter:transferStorage(ins.fillType, ins.amount, ins.direction) end or nil,
+                    missionCreate = adapter.createMission ~= nil
+                        and function(ins) return adapter:createMission(ins.missionType, ins.farmlandId) end or nil,
+                    -- Roadmap V3 R3-V2 (asynchronous: the loading callback books and acknowledges) and R3-V3
+                    vehicleSpawn = adapter.spawnVehicle ~= nil and function(ins)
+                        local id = ins.instructionId
+                        local started, why = adapter:spawnVehicle(ins, function(done, why2, res)
+                            self:completeInstruction(id, done, why2, res)
+                        end)
+                        if not started then
+                            return false, why
+                        end
+                        return true, RPSimProcessor.PENDING
+                    end or nil,
+                    vehicleRemove = adapter.removeVehicle ~= nil
+                        and function(ins) return adapter:removeVehicle(ins.vehicleId) end or nil,
                 },
             })
             -- R2-F1 / R2-F2: processed answers and questions decided in the browser

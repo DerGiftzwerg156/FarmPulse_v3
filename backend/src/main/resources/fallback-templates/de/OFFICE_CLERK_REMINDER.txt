@@ -1,0 +1,6 @@
+Frist: {{title}}
+Hallo,
+
+kurze Erinnerung aus dem Büro: „{{title}}“{{amountNote}} – die Frist läuft in {{daysLeft}} Tagen ab.
+
+{{characterName}}

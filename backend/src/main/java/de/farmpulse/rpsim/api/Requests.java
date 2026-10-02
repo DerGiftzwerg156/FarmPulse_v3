@@ -31,7 +31,8 @@ public final class Requests {
                                     @NotNull @PositiveOrZero Long startingCapitalTarget,
                                     @PositiveOrZero Long legacyLoanAmount, TonePreset tonePreset,
                                     @Size(max = 10) List<@NotNull JobRole> initialEmployees,
-                                    Boolean familyParents, Boolean familyPartner, Boolean familyChildren) {
+                                    Boolean familyParents, Boolean familyPartner, Boolean familyChildren,
+                                    @Size(max = 60) String farmName) {
     }
 
     public record RerollRequest(Long characterId) {
@@ -58,8 +59,10 @@ public final class Requests {
     public record ProactiveRequest(@NotBlank @Size(max = 4000) String text, Channel channel) {
     }
 
+    /** Roadmap V3 R3-K1: {@code farmlandIds} = own fields offered as collateral (optional). */
     public record CreditApplicationRequest(@NotNull @Positive Long amount, @NotBlank @Size(max = 200) String purpose,
-                                           @NotNull @Min(1) @Max(600) Integer termMonths) {
+                                           @NotNull @Min(1) @Max(600) Integer termMonths,
+                                           @Size(max = 50) List<Integer> farmlandIds) {
     }
 
     public record DeferralRequest(@Size(max = 4000) String message) {
@@ -88,6 +91,10 @@ public final class Requests {
     public record SellOfferRequest(@NotNull @Positive Long askingPrice) {
     }
 
+    /** Roadmap V3 R3-L1: lease-out form - term in FS25 years, desired rent in € per ha and month. */
+    public record LeaseOutRequest(@NotNull @Positive Integer termYears, @NotNull @Positive Long desiredRate) {
+    }
+
     public record OfferRequest(@NotNull @Positive Long amount) {
     }
 
@@ -114,6 +121,10 @@ public final class Requests {
 
     /** Roadmap V2 R2-C6: switch of the field work hints. */
     public record FieldSettingsRequest(boolean fieldHintsEnabled) {
+    }
+
+    /** Roadmap V3 R3-T2: empty = no farm name (the chronicle uses the map name). */
+    public record FarmSettingsRequest(@Size(max = 60) String farmName) {
     }
 
     /** Roadmap V2 R2-F2: occasions asked in the game (PromptKind names; empty = none). */

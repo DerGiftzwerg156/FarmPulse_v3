@@ -51,6 +51,8 @@ class SimulatorScenariosEndToEndTest {
     @Autowired FactsService facts;
     @Autowired SavegameController header;
     @Autowired TransactionTemplate tx;
+    @Autowired de.farmpulse.rpsim.repository.GrowingFieldMonthRepository growing;
+    @Autowired de.farmpulse.rpsim.time.GameTime gameTime;
 
     @BeforeEach
     void requireSimulator() {
@@ -131,6 +133,72 @@ class SimulatorScenariosEndToEndTest {
             assertThat(f.husbandries()).isNull();
             assertThat(f.fields()).isNull();
             assertThat(f.weather()).isNull();
+        });
+    }
+
+    /** Roadmap V3 (R3-Q2): npcFields, tradeStorage and the shop vehicle catalog of nachbarhandel reach the backend. */
+    @Test
+    void roadmapV3BlocksArriveFromNachbarhandel() {
+        Savegame trade = link("nachbarhandel", "sim_nachbar_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(trade.getId()).orElseThrow();
+            var f = facts.latest(sg).orElseThrow();
+            assertThat(f.npcFields()).extracting(fd -> fd.farmlandId()).containsExactly(3, 5, 6, 8);
+            assertThat(f.npcFields().get(2).fruitType()).isNull();
+            assertThat(f.tradeStorage()).extracting(t -> t.fillType()).containsExactly("BARLEY", "STRAW", "WHEAT");
+            assertThat(f.tradeStorage().get(1).freeCapacity()).isEqualTo(25_000.0);
+            var ctx = facts.marketContext(sg).orElseThrow();
+            assertThat(ctx.storeVehicles()).hasSize(5);
+            assertThat(ctx.storeVehicles()).filteredOn(v -> v.motorized() == null).hasSize(1);
+        });
+        Savegame old = link("wohlhabender-hof", "sim_alt3_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(old.getId()).orElseThrow();
+            var f = facts.latest(sg).orElseThrow();
+            assertThat(f.npcFields()).isNull();
+            assertThat(f.tradeStorage()).isNull();
+            assertThat(facts.marketContext(sg).orElseThrow().storeVehicles()).isNull();
+        });
+    }
+
+    /** Roadmap V3 (R3-W2): the growing own fields of duerre-sommer are recorded for the drought aid. */
+    @Test
+    void duerreSommerRecordsTheGrowingOwnFields() {
+        Savegame dry = link("duerre-sommer", "sim_duerre_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(dry.getId()).orElseThrow();
+            assertThat(facts.latest(sg).orElseThrow().weather().raining()).isFalse();
+            long month = gameTime.monthIndex(sg, sg.getCurrentGameTime());
+            assertThat(growing.findBySavegameAndMonthIndexBetweenOrderByFarmlandIdAsc(sg, month, month))
+                    .extracting(g -> g.getFarmlandId()).containsExactly(2, 4, 7);
+        });
+    }
+
+    /** Roadmap V3 (R3-Q1 / R3-Q2): a VEHICLE_SPAWN goes out, the simulator delivers and the vehicleId comes back. */
+    @Test
+    void vehicleSpawnReturnsTheVehicleIdInTheAck() {
+        String id = "sim_spawn_" + System.nanoTime();
+        Savegame sg = link("nachbarhandel", id);
+        String instructionId = tx.execute(s -> {
+            OutboxInstruction o = new OutboxInstruction();
+            o.setSavegame(savegames.findById(sg.getId()).orElseThrow());
+            o.setInstructionId(OutboxService.newInstructionId());
+            o.setType(de.farmpulse.rpsim.domain.InstructionType.VEHICLE_SPAWN);
+            o.setPayloadJson("""
+                    {"storeXmlFilename":"data/vehicles/deutzFahr/series5/series5.xml","ageMonths":36,
+                     "operatingHours":2400,"damage":0.2,"wear":0.3,"price":52000,"moneyReason":"VEHICLE_PURCHASE"}""");
+            o.setStatus(InstructionStatus.PENDING);
+            o.setCreatedAtGameTime(0);
+            o.setCreatedAt(java.time.Instant.now());
+            return outbox.save(o).getInstructionId();
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "nachbarhandel", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            OutboxInstruction done = outbox.findByInstructionId(instructionId).orElseThrow();
+            assertThat(done.getStatus()).isEqualTo(InstructionStatus.APPLIED);
+            assertThat(outboxService.ackResult(done)).containsEntry("vehicleId", "veh_00003");
         });
     }
 

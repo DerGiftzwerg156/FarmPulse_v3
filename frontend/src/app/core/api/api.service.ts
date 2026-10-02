@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -35,6 +35,10 @@ export class ApiService {
   }
   requestInsuranceOffer(level: string): Observable<M.ContractView> {
     return this.post('/insurance/offer', { level });
+  }
+  /** Roadmap V3 R3-W: drought status (rain of the last months, series, drought insurance quote, droughts). */
+  drought(): Observable<M.DroughtStatusView> {
+    return this.get('/drought');
   }
   contractAction(id: number, action: 'accept' | 'decline' | 'cancel' | string, body: unknown = {}): Observable<M.ContractView> {
     return this.post(`/contracts/${id}/${action}`, body);
@@ -108,8 +112,55 @@ export class ApiService {
   }
 
   // credit
-  applyForCredit(amount: number, purpose: string, termMonths: number): Observable<M.CreditApplicationView> {
-    return this.post('/credit-applications', { amount, purpose, termMonths });
+  /** Roadmap V3 R3-K1: {@code farmlandIds} = own fields offered as collateral (omitted when none). */
+  applyForCredit(amount: number, purpose: string, termMonths: number, farmlandIds: number[] = []): Observable<M.CreditApplicationView> {
+    return this.post('/credit-applications', farmlandIds.length ? { amount, purpose, termMonths, farmlandIds } : { amount, purpose, termMonths });
+  }
+  // Roadmap V3 R3-M: price alarms and forward contracts
+  priceAlarms(): Observable<M.PriceAlarmsView> {
+    return this.get('/price-alarms');
+  }
+  createPriceAlarm(fillType: string, sellPoint: string | null, threshold: number, direction: 'ABOVE' | 'BELOW'): Observable<M.PriceAlarmView> {
+    return this.post('/price-alarms', { fillType, sellPoint, threshold, direction });
+  }
+  reactivatePriceAlarm(id: number): Observable<M.PriceAlarmView> {
+    return this.post(`/price-alarms/${id}/reactivate`);
+  }
+  deletePriceAlarm(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/price-alarms/${id}`);
+  }
+  forwardContracts(): Observable<M.ForwardContractsView> {
+    return this.get('/forward-contracts');
+  }
+  forwardQuote(fillType: string, sellPoint: string, quantity: number, leadMonths: number): Observable<M.ForwardQuoteView> {
+    return this.post('/forward-contracts/quote', { fillType, sellPoint, quantity, leadMonths });
+  }
+  concludeForward(fillType: string, sellPoint: string, quantity: number, leadMonths: number): Observable<M.ForwardContractView> {
+    return this.post('/forward-contracts', { fillType, sellPoint, quantity, leadMonths });
+  }
+  // Roadmap V3 R3-K: collateral, liquidity plan, farm report
+  collateral(): Observable<M.CollateralOverviewView> {
+    return this.get('/credit/collateral');
+  }
+  requestSaleConsent(farmlandId: number): Observable<M.CollateralView> {
+    return this.post(`/credit/collateral/${farmlandId}/sale-consent`);
+  }
+  /** Roadmap V3 R3-L1: the bank's consent to lease out a pledged field. */
+  requestLeaseConsent(farmlandId: number): Observable<M.CollateralView> {
+    return this.post(`/credit/collateral/${farmlandId}/lease-consent`);
+  }
+  // Roadmap V3 R3-L1: leasing out own fields
+  leaseOut(): Observable<M.LeaseOutView> {
+    return this.get('/lease-out');
+  }
+  leaseOutOffer(farmlandId: number, termYears: number, desiredRate: number): Observable<M.NegotiationView[]> {
+    return this.post(`/farmlands/${farmlandId}/lease-out`, { termYears, desiredRate });
+  }
+  liquidityPlan(): Observable<M.LiquidityPlanView> {
+    return this.get('/liquidity-plan');
+  }
+  farmReports(): Observable<M.FarmReportView[]> {
+    return this.get('/farm-reports');
   }
   creditApplications(): Observable<M.CreditApplicationView[]> {
     return this.get('/credit-applications');
@@ -171,6 +222,13 @@ export class ApiService {
   }
   sellOffer(farmlandId: number, askingPrice: number): Observable<M.NegotiationView[]> {
     return this.post(`/farmlands/${farmlandId}/sell-offer`, { askingPrice });
+  }
+  /** Roadmap V3 R3-V: own machines and used-machine deals; offers go through offer / withdraw. */
+  vehicles(): Observable<M.VehiclesView> {
+    return this.get('/vehicles');
+  }
+  offerVehicleForSale(vehicleId: string, askingPrice: number): Observable<M.VehicleDealView> {
+    return this.post(`/vehicles/${encodeURIComponent(vehicleId)}/sale`, { askingPrice });
   }
   negotiations(): Observable<M.NegotiationView[]> {
     return this.get('/negotiations');
@@ -245,8 +303,57 @@ export class ApiService {
   addDiaryNote(title: string, text: string): Observable<M.DiaryView> {
     return this.post('/diary/entries', { title, text });
   }
+
+  // Roadmap V3 R3-T: milestones and the farm chronicle
+  milestones(): Observable<M.MilestoneView[]> {
+    return this.get('/milestones');
+  }
+  /** The chronicle as Markdown file; the file name comes from Content-Disposition. */
+  chronicleFile(): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.base}/diary/chronicle`, { responseType: 'blob', observe: 'response' });
+  }
+  chronicle(): Observable<M.ChronicleView> {
+    return this.get('/diary/chronicle/view');
+  }
+  farmSettings(): Observable<M.FarmSettingsView> {
+    return this.get('/settings/farm');
+  }
+  saveFarmSettings(r: { farmName: string | null }): Observable<M.FarmSettingsView> {
+    return this.http.put<M.FarmSettingsView>(`${this.base}/settings/farm`, r);
+  }
   reputation(): Observable<M.ReputationView> {
     return this.get('/village-reputation');
+  }
+
+  // Roadmap V3 R3-H: trade with the neighbours
+  trade(): Observable<M.TradeView> {
+    return this.get('/trade');
+  }
+  requestGoods(neighborId: number, fillType: string, amount: number): Observable<M.CaseView> {
+    return this.post(`/trade/neighbors/${neighborId}/request`, { fillType, amount });
+  }
+  askForWork(neighborId: number): Observable<M.CaseView> {
+    return this.post(`/trade/neighbors/${neighborId}/work`);
+  }
+
+  // Roadmap V3 R3-N: tablet in the home network
+  lanStatus(): Observable<M.LanStatusView> {
+    return this.get('/lan/status');
+  }
+  saveLanSettings(enabled: boolean): Observable<M.LanStatusView> {
+    return this.http.put<M.LanStatusView>(`${this.base}/lan/settings`, { enabled });
+  }
+  setLanPin(pin: string): Observable<M.LanStatusView> {
+    return this.http.put<M.LanStatusView>(`${this.base}/lan/pin`, { pin });
+  }
+  removeLanPin(): Observable<M.LanStatusView> {
+    return this.http.delete<M.LanStatusView>(`${this.base}/lan/pin`);
+  }
+  lanLogin(pin: string): Observable<M.LanLoginView> {
+    return this.post('/lan/login', { pin });
+  }
+  lanLogout(): Observable<void> {
+    return this.post('/lan/logout');
   }
 
   // settings

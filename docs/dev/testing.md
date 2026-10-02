@@ -115,6 +115,77 @@ Roadmap V2 (R2-Q2): the same test checks that the optional blocks of `helfer-hof
 (`husbandries`) and `ernte-herbst` (`fields`, `weather`) reach `FactsService`, and that a scenario without them
 (`voller-silobestand`) leaves every block `null` ("not present"). `BridgeValidatorTest` covers missing vs. empty vs.
 invalid blocks.
+Roadmap V3 (R3-Q2): `SimulatorScenariosEndToEndTest` checks that `npcFields`, `tradeStorage` and `storeVehicles` of
+`nachbarhandel` arrive (and stay `null` for `wohlhabender-hof`) and that the `vehicleId` of a `VEHICLE_SPAWN` comes back
+as ack `result`; `BridgeSyncIntegrationTest.ackResultIsStoredWithTheInstruction`, `BridgeValidatorTest` (the new
+blocks) and `FailedInstructionTest` (notice "Mod aktualisieren") cover the backend side. The mod covers normalisation,
+validation, `NOT_SUPPORTED` and `result` in `test_farm_facts.lua`, `test_market_context.lua`, `test_instructions.lua`
+and `test_persistence.lua`, the simulator the execution in `test/roadmap-v3.test.js`.
+Roadmap V3 R3-M (market and marketing): `MarketingTest` covers the price alarm (best price, hint, mail, once,
+re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_EVENT / FIXED` held back until the
+delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and
+the farm shop (order from the own silos at the farm-shop price, delivery batch, reputation, refusal factor, failed
+transfer). Frontend: `features/market/marketing.spec.ts`. In the game: manual test plan section 15.
+Roadmap V3 R3-P (staff): `StaffTest` covers the clerk's audit factor (with and without a tax advisor), the reminders
+once per deadline for tax bills, inspections, forward contracts and lease ends (none for a bill when an advisor runs),
+the payment on the deadline day (not overloaded, not without money), apprentice applicants (skill, fixed salary, at
+most two, roster role without trainings), the monthly skill gain and the takeover (accept, counter offer from 90 %,
+below, no answer). Mod `test_workforce.lua` and simulator `test/instructions.test.js`: apprentices drive after the
+operators and never with a training. Frontend: the takeover case in `features/contracts/service-cases.spec.ts`. In the
+game: manual test plan section 18.
+Roadmap V3 R3-L (leasing out own fields): `LeaseOutTest` covers the guide value, the neighbours' bids (capital,
+85–100 % of the desired rent, the land agent without interest), the fallback on the field phase (offer and demand),
+the bank's consent for a pledged field, the agreement (contract, `FARMLAND_TRANSFER FROM_PLAYER`, `LEASE_INCOME` also
+with an empty account), the reconciliation without sale or purchase, the asset value and collateral of a leased-out
+field, the family field (trust −5, stays the family field), the renewal offer and renewal, the delayed and the
+immediate return, the buy-back in the game menu and a failed transfer. `ApiIntegrationTest` covers `/api/lease-out`,
+the lease-out form and the lease consent. Frontend: the form and the bids in `features/farmland/farmland.spec.ts`, the
+renewal in `features/contracts/service-cases.spec.ts`, the consent in `features/bank/credit-planning.spec.ts`. In the
+game: manual test plan section 20.
+Roadmap V3 R3-T (chronicle): `ChronicleTest` covers the milestones from stored data (repaid loan also for an older
+savegame, area, record harvest, neighbour trade, a switched-off milestone), the payment-delay year (only a fully
+observed year, a delay breaks it, a delay still open at the year change counts for the new year, the salary hook),
+the crop-rotation streak of the authority, the file name (farm name, map name, default), the chronicle content and its
+Markdown, and that the finance-category labels match the frontend. `ApiIntegrationTest` covers `/api/milestones`,
+`/api/settings/farm` and the chronicle download and view. Frontend: `features/diary/diary.spec.ts` (milestone badge,
+download, error), `features/diary/chronicle-print.spec.ts`, the milestone widget in `features/home/home.spec.ts`, the
+farm name in `features/settings/settings.spec.ts` and the onboarding request. In the game: manual test plan section 19.
+Roadmap V3 R3-V (used machines): `VehicleTradeTest` covers the game's used-price formula (exponents, age cap, 3 %
+floor, hours for a target factor), the monthly offer within the ranges, workshop markup and neighbour discount, the
+agreement with `VEHICLE_SPAWN` (no batch, the mod books), `NO_SPACE` retries up to five and the failed deal, an
+unknown shop item, an offer that runs out, the sale to 1–3 neighbours within the 110 % cap with the
+`VEHICLE_REMOVE` + `VEHICLE_SALE` batch, gossip, and `VEHICLE_ATTACHED`; `RewindIntegrationTest` the re-sending of both
+instructions. The mod tests (`test_game_adapter.lua`, `test_persistence.lua`) cover the catalog export with switch
+and cap, vehicle names, the asynchronous spawn (no ack until the callback, used values, booking, failures, not
+saved while pending) and the removal checks; the simulator `test/roadmap-v3.test.js` the exported names and
+`VEHICLE_ATTACHED`. Frontend: `features/workshop/used-vehicles-card.spec.ts`. In the game: manual test plan section 17.
+Roadmap V3 R3-W (drought and weather risk): `DroughtTest` covers the month rating (dry, wet, unknown, outside the
+growth months), the series with the warning and the drought offer, the declaration with the regional
+`HARVEST_FAILURE` (3 largest crops, busy pairs skipped), gossip and aid case, the recording of growing own fields, the
+aid application and expiry, the index insurance (payout, too late, cover suspended, premium following the area,
+beside storm/hail) and the deduction on the aid. `SimulatorScenariosEndToEndTest` checks that `duerre-sommer` records
+the growing own fields. Frontend: `features/insurance/insurance.spec.ts` and the drought aid in
+`features/contracts/service-cases.spec.ts`. In the game: manual test plan section 16.
+Roadmap V3 R3-K (credit and financial planning): `CreditPlanningTest` (backend) covers coverage, discount and bonus,
+the required Grundschuld with the fields the bank names, sale consent with the repayment in the sale batch and its
+reversal, the claim after a menu sale (overdue, credit block, payment), the realisation in the harsh mode, the release
+on repayment, the liquidity plan (known postings, tax prepayment month, estimate without double counting, reserve) and
+the advisor's warning, the yield recording, the farm report with comparison and the annual review (offer, caps,
+serious talk, decline, expiry). Frontend: `features/bank/credit-planning.spec.ts`. In the game: manual test plan
+section 14.
+Roadmap V3 R3-H (neighbour trade and contracts): `NeighborTradeTest` (backend) covers the neighbour fields and the stock
+from a harvest, prices and roles, the purchase on request (H3) with its checks, a refused transfer, the spawner, decline
+and expiry, the sale (H4) with the reputation cap, the disappointed neighbour, the contracts (H5: matching field,
+`MISSION_CREATE`, evaluation from `farm_facts.missions`, lost after a rewind, refused) and the in-game question. The mod
+covers `npcFields`, `tradeStorage`, `STORAGE_TRANSFER` and `MISSION_CREATE` in `test_game_adapter.lua`, the simulator
+`missionLimitReached` and the control endpoints in `test/roadmap-v3.test.js`; the frontend `features/trade/trade.spec.ts`
+(app „Handel“). In the game: manual test plan section 11.
+Roadmap V3 R3-N (tablet in the home network): `NetworkAddressesTest` (loopback / private / public sender addresses),
+`LanAccessTest` (MockMvc with `setRemoteAddr`: switch off → 403, internet always 403, without PIN direct access, with
+PIN session cookie for API and live updates, game-PC-only settings, PIN format and hash, lock after five wrong PINs,
+session end after 30 days / new PIN / switch off); the test profile hashes with 1,000 PBKDF2 iterations to stay fast.
+Frontend: `app.spec.ts` (PIN login gate) and `features/lan/lan.spec.ts` (login, card, QR code, interceptor). Access from
+a real tablet: manual test plan section 12.
 Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
 (journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
 month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,

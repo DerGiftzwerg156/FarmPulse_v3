@@ -1,0 +1,7 @@
+Pacht für Feld {{farmlandId}} verlängert
+Hallo,
+
+schön, dass es weitergeht: weitere {{termMonths}} Monate für Feld {{farmlandId}}, {{monthlyRent}} € im Monat.
+
+Viele Grüße
+{{characterName}}

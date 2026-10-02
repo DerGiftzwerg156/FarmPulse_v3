@@ -68,7 +68,9 @@ export function startControlServer(sim, port, log = () => {}) {
       // Roadmap V2 (R2-Q2): change the optional farm_facts blocks of the scenario
       const patches = { '/book': (b) => sim.bookGame(b.moneyType, Number(b.amount)),
         '/weather': (b) => sim.setWeather(b), '/husbandry': (b) => sim.setHusbandry(b),
-        '/field': (b) => sim.setField(b), '/field-rules': (b) => sim.setFieldRules(b), '/jobs': (b) => sim.setActiveJobs(b.activeJobs ?? []) };
+        '/field': (b) => sim.setField(b), '/field-rules': (b) => sim.setFieldRules(b), '/jobs': (b) => sim.setActiveJobs(b.activeJobs ?? []),
+        // Roadmap V3 R3-H1 / R3-H5 (scenario nachbarhandel)
+        '/npc-field': (b) => sim.setNpcField(b), '/mission-limit': (b) => sim.setMissionLimit(b.reached) };
       if (req.method === 'POST' && patches[url.pathname]) {
         const result = patches[url.pathname](await body(req));
         sim.exportFarmFacts();
@@ -107,6 +109,6 @@ export function startControlServer(sim, port, log = () => {}) {
       return send(500, { error: e.message });
     }
   });
-  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving|/book|/weather|/husbandry|/field|/field-rules|/jobs|/vanilla-loan|/vanilla-farmland|/answer)`));
+  server.listen(port, () => log(`control API on http://localhost:${port} (GET /state, POST /advance|/tick|/sell|/balance|/mission|/days-per-period|/save|/reload-without-saving|/book|/weather|/husbandry|/field|/field-rules|/jobs|/npc-field|/mission-limit|/vanilla-loan|/vanilla-farmland|/answer)`));
   return server;
 }

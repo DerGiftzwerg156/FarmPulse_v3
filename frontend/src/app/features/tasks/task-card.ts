@@ -58,10 +58,10 @@ import { dueLabel, isUrgent } from './task-groups';
         @case ('LEASE_RENEWAL') {
           @let c = t.contract!;
           <div class="text-[15px] font-semibold text-text">{{ 'tasks.leaseEnds' | t: { id: c.farmlandId } }}</div>
-          <div class="text-[12px] text-[#8FA39A]">{{ c.character?.name }} · {{ 'tasks.leaseEndsHint' | t }}</div>
+          <div class="text-[12px] text-[#8FA39A]">{{ c.character?.name }} · {{ (c.kind === 'LEASE_OUT' ? 'tasks.leaseOutEndsHint' : 'tasks.leaseEndsHint') | t }}</div>
           <div class="mt-auto flex flex-wrap gap-1.5 pt-1">
             @if (c.renewalAmount) {
-              <app-button [disabled]="busy()" (pressed)="run(api.contractAction(c.id, 'renew'))" data-testid="task-renew">{{ 'contracts.renew' | t: { amount: (c.renewalAmount | money) } }}</app-button>
+              <app-button [disabled]="busy()" (pressed)="run(api.contractAction(c.id, 'renew'))" data-testid="task-renew">{{ (c.kind === 'LEASE_OUT' ? 'contracts.renewLeaseOut' : 'contracts.renew') | t: { amount: (c.renewalAmount | money) } }}</app-button>
             }
             @if (c.purchasePrice) {
               <app-button variant="secondary" [disabled]="busy()" (pressed)="run(api.contractAction(c.id, 'buy'))" data-testid="task-buy">{{ 'contracts.buy' | t: { amount: (c.purchasePrice | money) } }}</app-button>
@@ -88,7 +88,7 @@ import { dueLabel, isUrgent } from './task-groups';
         }
         @case ('NEGOTIATION') {
           @let n = t.negotiation!;
-          <div class="text-[15px] font-semibold text-text">{{ n.kind | label: 'negotiationKind' }} · {{ 'farmland.fieldLabel' | t: { id: n.assetId } }}</div>
+          <div class="text-[15px] font-semibold text-text">{{ n.kind | label: 'negotiationKind' }} · @if (n.assetType === 'VEHICLE') { {{ 'workshop.machine' | t }} } @else { {{ 'farmland.fieldLabel' | t: { id: n.assetId } }} }</div>
           <div class="text-[12px] text-[#8FA39A]">
             {{ n.counterpart?.name ?? n.announcer?.name }} · {{ 'tasks.round' | t: { used: n.roundsUsed, max: n.maxRounds } }}
             @if (n.lastCounterOffer) { · {{ 'tasks.lastCounter' | t: { amount: (n.lastCounterOffer | money) } }} }

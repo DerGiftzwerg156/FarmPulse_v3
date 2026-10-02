@@ -1,9 +1,10 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { CreditApplicationView, DeferralView, LoanView, SpecialRepaymentView } from '../../core/api/models';
+import { CollateralView, CreditApplicationView, DeferralView, LoanView, SpecialRepaymentView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -14,7 +15,11 @@ import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { Stat } from '../../shared/ui/stat';
+import { ServiceCases } from '../contracts/service-cases';
+import { CollateralPicker } from './collateral-picker';
+import { FarmReportCard } from './farm-report-card';
 import { FinanceCard } from './finance-card';
+import { LiquidityPlanCard } from './liquidity-plan-card';
 
 export type ApplicationState = 'processing' | 'approved' | 'counter' | 'rejected' | 'accepted' | 'declined';
 
@@ -44,7 +49,8 @@ export const STATE_BADGE: Record<ApplicationState, BadgeVariant> = {
  */
 @Component({
   selector: 'app-bank',
-  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard],
+  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard,
+    CollateralPicker, LiquidityPlanCard, FarmReportCard, ServiceCases],
   templateUrl: './bank.html',
 })
 export class Bank {
@@ -54,6 +60,13 @@ export class Bank {
 
   /** `?application=` highlights an application (link from the bank's mail). */
   readonly application = input<string>();
+  /** `?case=` highlights a claim, an invitation to the annual review or a rate-cut offer (R3-K). */
+  readonly case = input<string>();
+  readonly highlightedCase = computed(() => Number(this.case()) || null);
+  private readonly picker = viewChild(CollateralPicker);
+  /** Roadmap V3 R3-K1: own fields offered as collateral in the form. */
+  readonly collateralIds = signal<number[]>([]);
+  readonly consentBusy = signal<number | null>(null);
 
   readonly applications = signal<CreditApplicationView[] | null>(null);
   readonly loans = signal<LoanView[] | null>(null);
@@ -77,6 +90,7 @@ export class Bank {
     termMonths: [36, [Validators.required, Validators.min(1), Validators.max(600)]],
   });
 
+  readonly formAmount = toSignal(this.form.controls.amount.valueChanges, { initialValue: this.form.controls.amount.value });
   readonly highlighted = computed(() => Number(this.application()) || null);
   readonly activeLoans = computed(() => (this.loans() ?? []).filter((l) => l.status === 'ACTIVE'));
   readonly debt = computed(() => this.activeLoans().reduce((s, l) => s + l.remainingAmount, 0));
@@ -116,11 +130,12 @@ export class Bank {
     const v = this.form.getRawValue();
     this.submitting.set(true);
     this.formError.set(null);
-    this.api.applyForCredit(Number(v.amount), v.purpose.trim(), Number(v.termMonths)).subscribe({
+    this.api.applyForCredit(Number(v.amount), v.purpose.trim(), Number(v.termMonths), this.collateralIds()).subscribe({
       next: (a) => {
         this.submitting.set(false);
         this.applications.update((list) => [a, ...(list ?? [])]);
         this.form.reset();
+        this.picker()?.reset();
       },
       error: (e) => {
         this.submitting.set(false);
@@ -196,6 +211,40 @@ export class Bank {
         this.setActionError(l.id, e);
       },
     });
+  }
+
+  /** R3-K1: the bank's consent to sell a pledged field (the proceeds repay the collateral value). */
+  requestSaleConsent(l: LoanView, c: CollateralView): void {
+    this.consentBusy.set(c.farmlandId);
+    this.api.requestSaleConsent(c.farmlandId).subscribe({
+      next: () => {
+        this.consentBusy.set(null);
+        this.load();
+      },
+      error: (e) => {
+        this.consentBusy.set(null);
+        this.setActionError(l.id, e);
+      },
+    });
+  }
+
+  /** Roadmap V3 R3-L1: ask the bank to agree to lease the pledged field out. */
+  requestLeaseConsent(l: LoanView, c: CollateralView): void {
+    this.consentBusy.set(c.farmlandId);
+    this.api.requestLeaseConsent(c.farmlandId).subscribe({
+      next: () => {
+        this.consentBusy.set(null);
+        this.load();
+      },
+      error: (e) => {
+        this.consentBusy.set(null);
+        this.setActionError(l.id, e);
+      },
+    });
+  }
+
+  pledged(l: LoanView): CollateralView[] {
+    return (l.collateral ?? []).filter((c) => c.status === 'PLEDGED');
   }
 
   toggleHistory(id: number): void {

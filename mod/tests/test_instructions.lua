@@ -14,7 +14,8 @@ function T.TestInstructions:testAllMoneyReasonsAccepted()
     for _, r in ipairs({ "CREDIT_DISBURSEMENT", "CREDIT_INSTALLMENT", "CREDIT_PENALTY", "CREDIT_CALLBACK",
         "CREDIT_SPECIAL_REPAYMENT", "CREDIT_PREPAYMENT_FEE",
         "SALARY_PAYMENT", "EMPLOYEE_EFFECT", "SUBSIDY", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE",
-        "FARMLAND_SALE", "OTHER", "TAX_PAYMENT", "TAX_REFUND", "FINE", "FAMILY", "SPONSORING", "COMPENSATION" }) do
+        "FARMLAND_SALE", "OTHER", "TAX_PAYMENT", "TAX_REFUND", "FINE", "FAMILY", "SPONSORING", "COMPENSATION",
+        "LEASE_INCOME", "GOODS_PURCHASE", "GOODS_SALE", "VEHICLE_PURCHASE", "VEHICLE_SALE", "CONTRACT_PENALTY" }) do
         lu.assertTrue(RPSimInstructions.validate(money("i", 1, r)), r)
     end
     local ok, why = RPSimInstructions.validate(money("i", 1, "FREE_MONEY"))
@@ -305,6 +306,102 @@ function T.TestInstructions:testNewTypesUseTheirActionOnceAvailable()
     lu.assertEquals(res.applied, 0)
     lu.assertEquals(calls, {})
     lu.assertEquals(state.processed.ins_ro.message, "NOT_SUPPORTED")
+end
+
+-- Roadmap V3 (R3-Q1): the four new instruction types
+local function storage(extra)
+    local ins = { instructionId = "ins_st", type = "STORAGE_TRANSFER", direction = "IN", fillType = "WHEAT",
+        amount = 8000 }
+    for k, v in pairs(extra or {}) do ins[k] = v end
+    return ins
+end
+
+local function spawn(extra)
+    local ins = { instructionId = "ins_vs", type = "VEHICLE_SPAWN",
+        storeXmlFilename = "data/vehicles/fendt/vario700/vario700.xml", ageMonths = 36, operatingHours = 2400,
+        damage = 0.2, wear = 0.3, price = 98000, moneyReason = "VEHICLE_PURCHASE" }
+    for k, v in pairs(extra or {}) do ins[k] = v end
+    return ins
+end
+
+function T.TestInstructions:testStorageTransferValidation()
+    lu.assertTrue(RPSimInstructions.validate(storage()))
+    lu.assertTrue(RPSimInstructions.validate(storage({ direction = "OUT" })))
+    local cases = { { direction = "SIDEWAYS" }, { fillType = "" }, { amount = 0 }, { amount = -5 }, { amount = "8000" } }
+    for _, c in ipairs(cases) do
+        lu.assertFalse(RPSimInstructions.validate(storage(c)))
+    end
+end
+
+function T.TestInstructions:testMissionCreateValidation()
+    lu.assertTrue(RPSimInstructions.validate({ instructionId = "m", type = "MISSION_CREATE", missionType = "plow",
+        farmlandId = 7 }))
+    lu.assertFalse(RPSimInstructions.validate({ instructionId = "m", type = "MISSION_CREATE", farmlandId = 7 }))
+    lu.assertFalse(RPSimInstructions.validate({ instructionId = "m", type = "MISSION_CREATE", missionType = "plow",
+        farmlandId = "7" }))
+end
+
+function T.TestInstructions:testVehicleSpawnValidation()
+    lu.assertTrue(RPSimInstructions.validate(spawn()))
+    lu.assertTrue(RPSimInstructions.validate(spawn({ ageMonths = 0, operatingHours = 0, damage = 0, wear = 1 })))
+    local cases = { { storeXmlFilename = "" }, { ageMonths = -1 }, { operatingHours = -1 }, { damage = 1.2 },
+        { wear = -0.1 }, { price = 0 }, { price = -98000 }, { moneyReason = "FREE_MONEY" } }
+    for _, c in ipairs(cases) do
+        local ok, why = RPSimInstructions.validate(spawn(c))
+        lu.assertFalse(ok, why)
+    end
+end
+
+function T.TestInstructions:testVehicleRemoveValidation()
+    lu.assertTrue(RPSimInstructions.validate({ instructionId = "r", type = "VEHICLE_REMOVE", vehicleId = "veh_1" }))
+    lu.assertFalse(RPSimInstructions.validate({ instructionId = "r", type = "VEHICLE_REMOVE", vehicleId = "" }))
+end
+
+function T.TestInstructions:testRoadmapV3TypesAreNotSupportedWithoutTheirAction()
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    local res = RPSimProcessor.process(state, { savegameId = SG, instructions = {
+        storage(), spawn(),
+        { instructionId = "ins_mc", type = "MISSION_CREATE", missionType = "plow", farmlandId = 7 },
+        { instructionId = "ins_vr", type = "VEHICLE_REMOVE", vehicleId = "veh_1" } } },
+        { savegameId = SG, gameTime = 1000, actions = {} })
+    lu.assertEquals(res.applied, 0)
+    for _, id in ipairs({ "ins_st", "ins_vs", "ins_mc", "ins_vr" }) do
+        lu.assertEquals(state.processed[id].status, "FAILED", id)
+        lu.assertEquals(state.processed[id].message, "NOT_SUPPORTED", id)
+    end
+end
+
+function T.TestInstructions:testStorageTransferBatchIsAbortedWithoutSupport()
+    -- a goods purchase is a batch: STORAGE_TRANSFER first, then the MONEY_TRANSACTION - nothing is booked
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    local booked = 0
+    RPSimProcessor.process(state, { savegameId = SG, instructions = {
+        storage({ batchId = "b1" }),
+        { instructionId = "ins_m", batchId = "b1", type = "MONEY_TRANSACTION", amount = -1800,
+            reason = "GOODS_PURCHASE" } } },
+        { savegameId = SG, gameTime = 1000, actions = {
+            money = function() booked = booked + 1; return true end } })
+    lu.assertEquals(booked, 0)
+    lu.assertEquals(state.processed.ins_st.message, "NOT_SUPPORTED")
+    lu.assertEquals(state.processed.ins_m.status, "FAILED")
+    lu.assertStrContains(state.processed.ins_m.message, "BATCH_ABORTED")
+end
+
+function T.TestInstructions:testActionResultIsWrittenIntoTheAck()
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    state.savegameId = SG
+    RPSimProcessor.process(state, { savegameId = SG, instructions = { spawn(),
+        { instructionId = "ins_vr", type = "VEHICLE_REMOVE", vehicleId = "veh_1" } } },
+        { savegameId = SG, gameTime = 1000, actions = {
+            vehicleSpawn = function() return true, nil, { vehicleId = "veh_9", ignored = { 1 } } end,
+            vehicleRemove = function() return true, nil, {} end } })
+    local ack = RPSimProcessor.buildAckDocument(state)
+    local byId = {}
+    for _, a in ipairs(ack.acks) do byId[a.instructionId] = a end
+    lu.assertEquals(byId.ins_vs.status, "APPLIED")
+    lu.assertEquals(byId.ins_vs.result, { vehicleId = "veh_9" })
+    lu.assertNil(byId.ins_vr.result)
+    lu.assertStrContains(RPSimJson.encode(ack), '"result":{"vehicleId":"veh_9"}')
 end
 
 return T

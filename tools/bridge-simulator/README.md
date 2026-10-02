@@ -25,7 +25,7 @@ node src/cli.js --help
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--dir` | `./runtime/modSettings/FS25_RPSim` | Bridge folder (the backend `dev` profile points here) |
-| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods`, `helfer-hof`, `tierhof-krank`, `ernte-herbst` |
+| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods`, `helfer-hof`, `tierhof-krank`, `ernte-herbst`, `nachbarhandel`, `duerre-sommer` |
 | `--interval` | `5000` | Real-time ms between cycles |
 | `--game-minutes-per-tick` | `60` | Game time advanced per cycle |
 | `--savegame-id` | `map_erlengrund_sim_<scenario>` | Simulated savegame id |
@@ -54,14 +54,17 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | `konflikt-mods` | `FS25_UsedPlus` and `FS25_MarketDynamics` reported in `detectedMods` (TODO T-09) |
 | `helfer-hof` | Roadmap V2 (R2-A): `workforce` with one helper driven by employee 1 and one vanilla helper without employee, `finances`, `weather` |
 | `tierhof-krank` | Roadmap V2 (R2-A7): `husbandries` with low health, little food and water (pigs without `productivity`), `finances`, `weather` |
+| `nachbarhandel` | Roadmap V3 (R3-H, R3-V): `npcFields` on the farmlands without an owner (harvested barley, growing wheat, a stony empty field, ripe canola), `tradeStorage` of the own silos (wheat, barley, straw with free capacity only) and the shop catalog `storeVehicles` in `market_context.json` (one entry without `motorized`) |
+| `duerre-sommer` | Roadmap V3 (R3-W): starts in June; no rain for the whole run (`weather`), own crops still growing (`fields`, `fieldRules`) |
 | `ernte-herbst` | Roadmap V2 (R2-C): starts in September; `fields` with ready maize, growing potatoes, withered wheat and a weedy empty field (with the crop details `withered`, `cut`, `fillType`, `litersPerSqm`), `fieldRules` with every soil mechanic on, rain in `weather`, `finances` |
 
 All scenarios share the map "Erlengrund" with 16 farmlands; farmland 16 is the village area
 (`showOnFarmlandsScreen: false`, TODO T-11). The calendar starts at monotonic day 0 with period 1 (March) of year 1
-(`ernte-herbst`: period 7, September, on the first simulated day).
+(`ernte-herbst`: period 7, September; `duerre-sommer`: period 4, June; each on the first simulated day).
 
 **Roadmap V2 blocks** (`finances`, `workforce`, `husbandries`, `fields`, `fieldRules`, `weather`, see
-[`docs/dev/bridge-protocol.md`](../../docs/dev/bridge-protocol.md)): only the three Roadmap V2 scenarios export them.
+[`docs/dev/bridge-protocol.md`](../../docs/dev/bridge-protocol.md)): only `wohlhabender-hof`, the three Roadmap V2
+scenarios and `duerre-sommer` export them.
 All other scenarios leave them out and stand for a mod that does not deliver them yet, so the backend must treat a
 missing block as "not present". The values are simulated examples, not numbers read from FS25:
 
@@ -86,6 +89,23 @@ queued, answered or withdrawn `DUPLICATE`); answer it with `POST /answer` - like
 `export/player_responses.json` at once, removes answers listed in `ackedResponses` and drops questions listed in
 `withdrawnPrompts` (R2-F1). `REPAIR_VEHICLE` with `targetDamage` repairs down to that damage and never raises it.
 
+**Roadmap V3 blocks** (`npcFields`, `tradeStorage` in `farm_facts.json`, `storeVehicles` in `market_context.json`):
+only `nachbarhandel` exports them (plus `missionLimitReached: false`, R3-H5). `npcFields` lists only farmlands no farm owns (a `FARMLAND_TRANSFER` changes the
+list); `tradeStorage` = own silos per fill type with `freeCapacity = capacity - amount`. Silo contents and contracts
+created by `MISSION_CREATE` are part of the simulated savegame and go back on `/reload-without-saving`.
+
+**Roadmap V3 instructions** (executed like the planned mod actions, R3-Q2):
+
+- `STORAGE_TRANSFER` `IN` / `OUT` changes `tradeStorage` and `assets.storage`; `FAILED` with `NO_CAPACITY` (also for a
+  fill type no own silo accepts) or `INSUFFICIENT_STOCK`, the rest of the batch (its `MONEY_TRANSACTION`) is aborted.
+- `MISSION_CREATE` adds an `AVAILABLE` contract (`missions[]`, client = the farmland's NPC) on an exported neighbour
+  field, ack `result.missionId`; `NOT_AVAILABLE` when the farmland has an owner, no neighbour field or an open contract.
+  The "player" finishes it with `POST /mission` like a vanilla contract.
+- `VEHICLE_SPAWN` adds an own vehicle (value = price, damage from the instruction) and books `-price` under
+  `moneyReason` itself, ack `result.vehicleId`; `FAILED` with `UNKNOWN_STORE_ITEM` (not in `storeVehicles`) or
+  `INSUFFICIENT_FUNDS`. Free shop places are not simulated.
+- `VEHICLE_REMOVE` removes an own vehicle; `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` for a leased one.
+
 ## Control API (manual testing / E2E)
 
 | Request | Effect |
@@ -104,6 +124,8 @@ queued, answered or withdrawn `DUPLICATE`); answer it with `POST /answer` - like
 | `POST /husbandry {"husbandryUniqueId":"hus_00001","health":80,"food":0.6}` | Change the values of a husbandry (`tierhof-krank`) |
 | `POST /field {"farmlandId":7,"weedState":0}` | Change the state of a field (`ernte-herbst`), e.g. `{"farmlandId":2,"growthState":9,"cut":true}` = harvested |
 | `POST /field-rules {"limeRequired":false}` | The player changes the soil settings of the savegame (`ernte-herbst`) |
+| `POST /npc-field {"farmlandId":3,"growthState":10,"cut":true}` | Roadmap V3 R3-H1: change a neighbour field (`nachbarhandel`), e.g. harvest it (`HARVESTABLE` → `HARVESTED` fills the neighbour's stock) or `{"farmlandId":3,"stoneLevel":2}`; `null` removes a value |
+| `POST /mission-limit {"reached": true}` | Roadmap V3 R3-H5: the player farm reaches the game's contract limit (`missionLimitReached`) or not |
 | `POST /vanilla-loan {"change": 30000}` | Roadmap V2 R2-D1: the player takes (positive) or repays (negative) the vanilla loan in the finance menu; the balance moves by the same amount |
 | `POST /vanilla-farmland {"farmlandId": 13, "toPlayer": true}` | Roadmap V2 R2-D2: the player buys (`true`) or sells a farmland in the game's field menu at its price (booked as `FIELD_BUY` / `FIELD_SELL`), market context re-exported |
 | `POST /answer {"promptId":"prm_…","answer":"YES"}` | Roadmap V2 R2-F: the player answers a yes/no question in the game (`YES` / `NO`); 400 for an unknown question |

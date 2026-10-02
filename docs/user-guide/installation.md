@@ -66,6 +66,22 @@ ins Onboarding:
 
 Weiter geht es mit [Dein erster Spielstand](erster-spielstand.md).
 
+## Auf dem Tablet oder Handy öffnen
+
+FarmPulse läuft auch auf einem Tablet oder Handy im **selben WLAN** wie der Spiele-PC, z. B. neben dem Spiel. Aus dem
+Internet ist das Tool nie erreichbar, auch nicht über eine Portfreigabe am Router.
+
+1. Am Spiele-PC **Einstellungen → Tablet & Netzwerk** öffnen und **Im Heimnetz erreichbar** einschalten (Standard: aus).
+2. Optional eine **PIN** aus 4 bis 8 Ziffern setzen. Mit PIN meldet sich jedes Tablet einmal an und bleibt 30 Tage
+   angemeldet. Ohne PIN kommt jedes Gerät in deinem Heimnetz direkt hinein. Eine neue PIN meldet alle Tablets ab.
+3. Am Tablet die angezeigte Adresse öffnen (z. B. `http://192.168.178.20:8080`) oder den **QR-Code** mit der Kamera
+   abscannen. Die Adresse steht auch im Backend-Fenster: „Auf dem Tablet öffnen: …“.
+4. Tipp: Über das Browser-Menü **Zum Startbildschirm hinzufügen** bekommt das Tablet ein FarmPulse-Symbol, das die
+   App ohne Adressleiste öffnet.
+
+Schalter und PIN lassen sich nur am Spiele-PC ändern; das Tablet zeigt die Karte nur an. Nach fünf falschen PINs ist
+das Gerät fünf Minuten gesperrt. Klappt die Verbindung nicht, siehe [Fehlerbehebung](fehlerbehebung.md#das-tablet-erreicht-farmpulse-nicht).
+
 ## 5. KI-Anbieter einrichten (optional)
 
 Unter **Einstellungen** wählst du den Anbieter, optional ein Modell und trägst deinen API-Schlüssel ein.

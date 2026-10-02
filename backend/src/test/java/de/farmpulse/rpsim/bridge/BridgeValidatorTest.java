@@ -98,4 +98,59 @@ class BridgeValidatorTest {
         assertThat(BridgeValidator.validate(facts("\"fieldRules\": { \"plowingRequired\": true }")))
                 .singleElement().asString().startsWith("invalid fieldRules");
     }
+
+    // Roadmap V3 (R3-Q1): npcFields, tradeStorage and the shop vehicle catalog are optional like the V2 blocks
+
+    @Test
+    void roadmapV3BlocksAreNotPresentForAnOlderModAndEmptyWhenEmpty() {
+        FarmFacts old = facts("");
+        assertThat(old.npcFields()).isNull();
+        assertThat(old.tradeStorage()).isNull();
+        FarmFacts empty = facts("\"npcFields\": [], \"tradeStorage\": []");
+        assertThat(BridgeValidator.validate(empty)).isEmpty();
+        assertThat(empty.npcFields()).isEmpty();
+        assertThat(empty.tradeStorage()).isEmpty();
+    }
+
+    @Test
+    void roadmapV3BlocksAreParsedAndChecked() {
+        FarmFacts f = facts("""
+                "npcFields": [{ "farmlandId": 9, "name": "9", "hectares": 3.2, "fruitType": "BARLEY", "growthState": 10,
+                                "minHarvestingGrowthState": 9, "maxHarvestingGrowthState": 9, "weedState": 0,
+                                "stoneLevel": 1, "sprayLevel": 0, "limeLevel": 1, "plowLevel": 0, "cut": true,
+                                "fillType": "BARLEY", "litersPerSqm": 0.97 }],
+                "tradeStorage": [{ "fillType": "STRAW", "amount": 0, "freeCapacity": 25000 },
+                                 { "fillType": "WHEAT", "amount": 40000, "freeCapacity": 60000 }]""");
+        assertThat(BridgeValidator.validate(f)).isEmpty();
+        assertThat(f.npcFields().get(0).cut()).isTrue();
+        assertThat(f.tradeStorage().get(1).freeCapacity()).isEqualTo(60000.0);
+        assertThat(BridgeValidator.validate(facts(
+                "\"npcFields\": [{ \"farmlandId\": 9, \"name\": \"9\", \"hectares\": 2 }]")))
+                .singleElement().asString().startsWith("invalid npc field");
+        assertThat(BridgeValidator.validate(facts(
+                "\"tradeStorage\": [{ \"fillType\": \"WHEAT\", \"amount\": 5 }]")))
+                .singleElement().asString().startsWith("invalid tradeStorage");
+    }
+
+    @Test
+    void storeVehiclesAreOptionalInTheMarketContext() {
+        String base = """
+                "savegameId": "sg", "mapName": "Erlengrund", "sellPoints": [], "fillTypes": [], "farmlands": [],
+                "detectedMods": []""";
+        var old = JSON.readValue("{" + base + "}", BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(old)).isEmpty();
+        assertThat(old.storeVehicles()).isNull();
+        var ctx = JSON.readValue("{" + base + """
+                , "storeVehicles": [{ "xmlFilename": "data/vehicles/fendt/vario700/vario700.xml", "name": "700 Vario",
+                    "price": 245000, "lifetime": 600, "categoryName": "TRACTORSL", "isMod": false, "motorized": true },
+                  { "xmlFilename": "data/vehicles/amazone/catros/catros.xml", "name": "Catros", "price": 32000,
+                    "lifetime": 600, "categoryName": "CULTIVATORS", "isMod": false }]}""", BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(ctx)).isEmpty();
+        assertThat(ctx.storeVehicles()).hasSize(2);
+        assertThat(ctx.storeVehicles().get(0).motorized()).isTrue();
+        assertThat(ctx.storeVehicles().get(1).motorized()).isNull();
+        var broken = JSON.readValue("{" + base + ", \"storeVehicles\": [{ \"name\": \"x\", \"price\": 1 }]}",
+                BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(broken)).singleElement().asString().startsWith("invalid store vehicle");
+    }
 }

@@ -18,8 +18,9 @@ Homescreen.
   zurück zum Start. Die Temperatur braucht die aktuelle Mod-Version.
 - **Startbildschirm:** Uhrzeit und Datum im Spiel, darunter drei Kennzahlen – das **Monatsergebnis** (führt zur Bank),
   die **nächste Abbuchung** zum Monatsbeginn (führt zum Kalender) und dein **Ansehen im Dorf** (führt zu den
-  Kontakten). Daneben die Widgets **Zu erledigen** (die dringendsten Aufgaben), **Felder** (wie viele erntereif sind)
-  und **Stall** (Gesundheit und Futter des Stalls, der am schlechtesten dasteht).
+  Kontakten). Daneben die Widgets **Zu erledigen** (die dringendsten Aufgaben), **Meilensteine** (nur wenn du schon
+  einen erreicht hast, führt zum Tagebuch), **Felder** (wie viele erntereif sind) und **Stall** (Gesundheit und Futter
+  des Stalls, der am schlechtesten dasteht).
 - **Apps:** Eine Zahl am App-Symbol zählt, was dort auf dich wartet – ungelesene Mails, klingelnde Anrufe, offene
   Entscheidungen.
 - **Dock:** Post, Telefon, Aufgaben und Kalender liegen immer griffbereit – auf dem Start unten schwebend, in jeder
@@ -35,12 +36,13 @@ Homescreen.
 | **Kalender** | Die nächsten Tage, Abbuchungen zum Monatsbeginn, Dorffeste, Steuertermine, Familie, Einladungen |
 | **Bank** | Kredite, Anträge und Hofbuchhaltung |
 | **Ämter** | Finanzamt (Steuern, Bescheide, Steuerberatung) und Landwirtschaftsamt (Kontrollen) |
-| **Agrarbörse** | Silo, Preise, Marktgeschehen und Kontrakte |
+| **Agrarbörse** | Silo, Preise, Marktgeschehen, Kontrakte, Preisalarm und Vorkontrakte |
 | **Versicherung** | Sturm- und Hagelversicherung, Schäden melden, Wildschaden |
 | **Personal** | Team, Helferstunden, Helfer im Spiel und Stellenausschreibungen |
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen |
 | **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl |
 | **Werkstatt** | Wartung, Wartungsvertrag und Mechaniker |
+| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Hofladen |
 | **Tagebuch** | Die Chronik deines Hofs |
 | **Einstellungen** | KI, Fragen im Spiel, Hinweise und Reaktionen |
 
@@ -158,6 +160,29 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   ist, kosten neue Kredite der Bank einen Zinsaufschlag, bis der Kredit aus dem Spielmenü ganz getilgt ist – gilt
   gerade ein Aufschlag, steht er direkt über dem Antragsformular. Jede Rückzahlung nimmt sie wohlwollend zur
   Kenntnis.
+- **Grundschuld:** Im Antragsformular kannst du eigene Felder als Sicherheit anbieten. Der Beleihungswert ist 60 % des
+  Feldpreises. Je mehr er vom Kreditbetrag deckt, desto günstiger wird der Zins (bei voller Deckung um 1
+  Prozentpunkt), und die Bank sieht den Kredit nicht mehr als zu groß für deinen Betrieb an. Für einen sehr großen
+  Kredit (über die Hälfte deines Vermögens) verlangt die Bank eine Grundschuld für den Teil darüber. Reichen deine
+  Felder dafür, macht sie ein Gegenangebot „mit Grundschuld“ und nennt die Felder. Gepachtete Felder zählen nicht.
+  Ein belastetes Feld ist in der **Flurkarte** markiert. Verkaufen kannst du es dort erst, wenn die Bank zustimmt
+  (Knopf *Verkauf erlauben lassen* am Kredit). Der Erlös tilgt dann den Beleihungswert, ohne Gebühr. Verpachten
+  kannst du es nach *Zustimmung zur Verpachtung*; die Grundschuld bleibt, verpachtete Felder zählen weiter als Vermögen. Verkaufst du es
+  stattdessen im Spielmenü, ist die Bankberaterin verärgert und fordert die gleiche Sondertilgung binnen 10 Tagen.
+  Zahlst du nicht, zählt das wie eine verpasste Rate, und es gibt keine neuen Kredite, bis die Forderung bezahlt ist.
+  Ist der Kredit getilgt, ist die Grundschuld gelöscht. Im Ton *Hart* nimmt die Bank bei einer Fälligstellung die
+  belasteten Felder und rechnet sie gegen die Restschuld; einen Überschuss bekommst du.
+- **Liquiditätsplanung:** Die nächsten 12 Monate mit allem, was schon feststeht: Gehälter, Kreditraten, Verträge,
+  Pacht, Altenteil und Steuervorauszahlungen, dazu die erwartete Einnahme deiner Vorkontrakte im Liefermonat. Dazu
+  kommen die Einnahmen als **Schätzung** aus dem gleichen Monat des
+  Vorjahres. Fällt dein Kontostand in einem Monat unter null oder unter einen Monat Fixkosten, steht das oben. Ein Klick
+  auf einen Monat zeigt die einzelnen Posten. Droht in den nächsten drei Monaten ein Minus, meldet sich die
+  Bankberaterin vorab (einmal je Engpass).
+- **Hofbericht und Jahresgespräch:** Zum Jahreswechsel (Februar → März) schreibt die Bank den Hofbericht des Jahres:
+  Einnahmen und Ausgaben je Kategorie, Steuer, Kultur und Ertrag je Feld, Regen, Tiere, Personal, Vertrauen und
+  Ansehen im Dorf im Vergleich zum Vorjahr. Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
+  bietet sie eine Zinssenkung auf deine laufenden Kredite an (0,25 Prozentpunkte, die Rate sinkt). Lief es schlecht,
+  wird es ein ernstes Gespräch, an deinen Verträgen ändert sich aber nichts. Absagen hat keine Folgen.
 
 ## Ämter
 
@@ -197,6 +222,11 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
 
 Jede Kontrolle wird vorher angekündigt (unter **Kontrollen** mit Frist), du hast also immer Zeit zu reagieren. Das
 Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als zwei Kontrollen im Monat gibt es nicht.
+
+- **Dürrehilfe:** Wird eine Dürre ausgerufen (siehe **Versicherung**), bietet das Amt eine Hilfe von 150 € je Hektar
+  deiner eigenen Felder an, auf denen in den trockenen Monaten eine Kultur wuchs. Den Antrag stellst du unter
+  **Dürrehilfe** mit *Antrag stellen* innerhalb von 15 Tagen; das Geld kommt sofort als Förderung. Mit einer
+  Dürreversicherung ist die Hilfe um die Hälfte gekürzt. Ohne wachsende Felder gibt es keine Hilfe.
 
 ## Personal
 
@@ -243,6 +273,18 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
 - **Tierpfleger:in.** Kümmert sich um deine Ställe. Zu viele Tiere je Pfleger (ab etwa 80) belasten, kranke Tiere
   drücken auf die Arbeitsbedingungen. Fehlt es in einem Stall an Futter oder Wasser, meldet sich der Pfleger (siehe
   **Stall**).
+- **Bürokraft.** Bearbeitet Kreditanträge schneller und erinnert dich drei Tage vor Fristen per Mail: offene
+  Steuerbescheide (außer du hast einen Steuerberater, der erinnert schon), angekündigte Kontrollen des Amts, die
+  Antragsfrist der Dürrehilfe, das Ende des Liefermonats eines Vorkontrakts und das Pachtende. Betriebsprüfungen werden
+  seltener – je besser und zufriedener sie ist, desto mehr (mit Steuerberater zählt der stärkere Effekt). Am Fristtag
+  bezahlt sie einen offenen Steuerbescheid selbst, wenn das Geld reicht – so fallen keine Säumniszuschläge an. Ist sie
+  überlastet (Arbeitsbelastung sehr niedrig), bleibt das liegen.
+- **Azubi.** Schreibst du eine Stelle *Azubi* aus, bewerben sich junge Leute mit wenig Können für ein festes, niedriges
+  Gehalt (höchstens zwei Azubis gleichzeitig). Ein Azubi lernt jeden Monat dazu und fährt deine Helfer wie ein
+  Maschinenführer ohne Schulung – also nur kleine und mittlere Traktoren, und erst, wenn kein Maschinenführer frei ist.
+  Nach zwei Spieljahren ist die Ausbildung zu Ende: Einen Monat vorher fragt er, ob er als Maschinenführer bleiben
+  darf, und nennt sein Gehalt. Du kannst ihn übernehmen, ein Gegenangebot machen (ab 90 % seiner Forderung sagt er zu)
+  oder ablehnen – dann macht er die Ausbildung fertig und geht.
 - Die Stundenzählung braucht die aktuelle Mod-Version; mit einer älteren gilt die bisherige Arbeitsbelastung.
 
 ## Flurkarte
@@ -275,6 +317,18 @@ die Laufzeit (du kannst es ganz normal bewirtschaften), die Pacht wird zu jedem 
 vor dem Ende meldet sich der Besitzer mit einer Verlängerung zum neuen Pachtpreis und – wenn er verkaufen würde –
 einem Kaufangebot. Antwortest du nicht, geht das Feld zum Ende automatisch zurück. Bleibt die Pacht zweimal offen,
 nimmt er das Feld vorzeitig zurück.
+
+**Verpachten.** Ein eigenes Feld kannst du auch an einen Nachbarn verpachten: Detailansicht → **Verpachten** mit
+Laufzeit (1–3 FS25-Jahre) und Wunschpacht je Hektar und Monat; der Richtwert steht darunter (5 % des Feldpreises im
+Jahr). Das geht nur, wenn das Feld leer oder abgeerntet ist. Bis zu drei Nachbarn mit genug Geld melden sich mit
+einem Gebot, das du wie beim Verkauf in bis zu drei Runden verhandelst. Einigt ihr euch, gehört das Feld im Spiel
+für die Laufzeit niemandem – das Spiel bewirtschaftet es wie ein Nachbarfeld –, in FarmPulse bleibt es deins. Die
+Pacht kommt zu jedem Monatsbeginn als Einnahme (erstmals im Folgemonat) und zählt für Steuer und Bank. Einen Monat
+vor dem Ende bietet der Pächter eine Verlängerung an (Knopf *Verlängern* in der Karte **Verpachtete Felder**);
+sonst bekommst du das Feld zurück, sobald es dort leer oder abgeerntet ist (spätestens einen Monat später). Kaufst du
+es während der Pacht im Feldmenü des Spiels zurück, endet die Pacht sofort und der Pächter ist verärgert. Liegt eine
+Grundschuld auf dem Feld, brauchst du vorher die Zustimmung der Bank; das Familienfeld zu verpachten, nimmt dir die
+Familie weniger übel als einen Verkauf.
 
 **Feldmenü des Spiels:** Du kannst Felder weiter direkt im Feldmenü von FS25 kaufen und verkaufen – gesperrt wird
 nichts, aber das Dorf merkt es. Kaufst du das Feld einer Figur über ihren Kopf hinweg, ist sie verärgert (weniger
@@ -326,6 +380,17 @@ bevorzugt die Früchte, die du wirklich lagerst.
 - **Lieferverträge mit Produktionen.** Gibt es auf der Karte Produktionen, die Waren ankaufen (z. B. Bäckerei oder
   Molkerei), bietet die Genossenschaft gelegentlich einen Liefervertrag zum Festpreis an. Er erscheint wie ein
   Sonderkontrakt; du entscheidest, ob du mitmachst.
+- **Preisalarm:** Wähle Sorte, Verkaufsstelle (oder *beliebig*, dann zählt der beste Preis), Richtung und Preis je
+  1.000 Liter. Erreicht der Preis die Schwelle, blendet das Spiel einen Hinweis ein, und die Landhändlerin schreibt
+  dir, wie viel davon im Silo liegt und was es gerade wert ist. Ein Alarm meldet sich einmal; danach kannst du ihn
+  wieder aktivieren. Höchstens 10 Alarme sind gleichzeitig aktiv.
+- **Vorkontrakt:** Verkaufe deine Ernte im Voraus. Du wählst Sorte, Verkaufsstelle, Menge (1.000 bis 200.000 Liter)
+  und den Liefermonat (1 bis 12 Monate voraus). Die Landhändlerin nennt den Festpreis: der heutige Preis mit 2 %
+  Abschlag je Monat Vorlauf. Mit *Abschließen* gilt er, ein Rücktritt ist nicht möglich. Im Liefermonat zahlt die
+  Verkaufsstelle im Spiel den Festpreis bis zur vereinbarten Menge. Fehlt am Monatsende Ware, kostet die Fehlmenge
+  25 % ihres Werts als Vertragsstrafe, und die Landhändlerin ist enttäuscht. Volle Lieferung freut sie. Die
+  erwartete Einnahme steht in der Liquiditätsplanung der Bank. Je Verkaufsstelle und Sorte gibt es nur einen
+  Festpreis zur selben Zeit.
 
 ## Versicherung
 
@@ -343,6 +408,15 @@ stehen in der App, zu der sie gehören.
   Schaden kostet Geld). Der Jagdpächter bietet Ersatz an. Du kannst annehmen, mehr fordern (bis zu zwei Runden),
   eine **gemeinsame Maßnahme** vereinbaren (eigener Beitrag, danach für einige Monate seltener Schäden, besseres
   Ansehen im Dorf) oder ablehnen – ein Streit spricht sich herum. Antwortest du nicht, zahlt er sein letztes Angebot.
+- **Dürre und Dürreversicherung.** FarmPulse zählt, wie lange es in jedem Monat regnet. Ein Wachstumsmonat (Mai bis
+  Oktober) ist trocken, wenn es in weniger als 3 % der Zeit geregnet hat – dafür muss FarmPulse mindestens die Hälfte
+  des Monats mitgelaufen sein. Beim ersten trockenen Monat warnt die Genossenschaft, nach zwei trockenen Monaten in
+  Folge ist es eine **Dürre**: Die Preise der Kulturen, die im Dorf stehen, steigen in der Region, im Dorf wird geredet,
+  und das Amt bietet die **Dürrehilfe** an (App **Ämter**). Dein Ertrag im Spiel ändert sich nicht. Die
+  **Dürreversicherung** (Wetterindex) läuft neben der Sturm- und Hagelversicherung: 4 € je Hektar deiner eigenen
+  Felder (ohne Pachtflächen) und Monat, bei einer Dürre zahlt sie 200 € je Hektar ohne Schadensmeldung – aber nur, wenn
+  du sie vor dem ersten trockenen Monat abgeschlossen hast und die Prämie bezahlt ist. Die Karte zeigt den Regen der
+  letzten Monate, die laufende Trockenreihe und die bisherigen Dürren.
 
 ## Stall
 
@@ -373,6 +447,49 @@ Mod-Version.
   jedem Monatsbeginn die am stärksten abgenutzten Fahrzeuge instand – direkt im Spiel, ohne weitere Kosten. Ohne
   Vertrag meldet sie sich ab und zu mit einem Hinweis, wenn eine Maschine stark abgenutzt ist. Das Angebot forderst
   du in der Werkstatt an; kündigen kannst du jederzeit.
+- **Gebrauchtmaschinen kaufen.** Ab und zu bietet die Werkstatt (etwas teurer) oder ein Nachbar (etwas günstiger)
+  eine gebrauchte Maschine aus dem Shop des Spiels an – mit Alter, Betriebsstunden und Schaden. Der Preis folgt der
+  Gebrauchtpreis-Formel des Spiels. Du machst in bis zu drei Runden ein Angebot; nach der Einigung steht die Maschine
+  auf einem Shop-Platz und gehört dir, der Preis wird erst bei der Lieferung gebucht. Ist kein Platz frei, kommt ein
+  Hinweis im Spiel und eine Mail – räume den Platz frei, am nächsten Tag wird es noch einmal versucht (höchstens fünfmal).
+- **Eigene Maschinen verkaufen.** Unter **Eigene Maschinen** bietest du eine Maschine mit Wunschpreis an. Ein bis drei
+  Nachbarn melden sich mit einem Angebot über dem Händlerpreis des Spiels (höchstens 110 % davon); du nimmst an oder
+  forderst mehr. Nach der Einigung verschwindet die Maschine im Spiel und der Erlös wird gebucht. Sitzt jemand darin,
+  fährt ein Helfer oder hängt etwas an der Maschine, klappt es nicht – im Spiel erscheint dann „Bitte erst abkoppeln“.
+  Geleaste Maschinen kannst du nicht verkaufen.
+
+## Handel
+
+Die Nachbarn im Dorf sind Handelspartner. Gehandelt wird nur Ware, für die du ein **eigenes Silo** hast (Silo oder
+Silo-Erweiterung, die dir gehört); die Menge wird im Spiel wirklich in dein Silo gebucht oder aus ihm entnommen, das
+Geld im selben Moment. Die App zeigt:
+
+- **Deine Silos:** jede Sorte, die ein eigenes Silo annimmt, mit Füllstand und freiem Platz.
+- **Nachbarn:** Betrieb (Milchviehbetrieb, Ackerbau oder Gemischtbetrieb), Vertrauen, **Vorrat** mit Preis je
+  1.000 Liter, was er **braucht** und welche Felder er bewirtschaftet. Der Vorrat entsteht aus der Ernte seiner
+  Felder (bei Weizen, Gerste und Hafer auch Stroh) und wird jeden Monat kleiner. Seine Preise richten sich nach der
+  besten Verkaufsstelle – er verkauft etwas teurer und kauft etwas billiger, gutes Vertrauen macht es für dich
+  günstiger. Für Ware ohne Verkaufsstelle gilt ein Richtpreis.
+- **Ware anfragen:** Sorte aus seinem Vorrat und Menge wählen – höchstens so viel, wie er hat und in deine Silos
+  passt. Der Nachbar antwortet sofort mit seinem Angebot; es steht unten bei den Angeboten.
+- **Nach Arbeit fragen:** Hat der Nachbar ein abgeerntetes, noch nicht gepflügtes oder ein steiniges Feld, bittet er
+  dich ums **Pflügen** oder **Steine sammeln**.
+- **Angebote, Anfragen und Aufträge:** Von sich aus bietet ein Nachbar ab und zu Ware an oder fragt nach Ware aus
+  deinen Silos (höchstens zwei Nachrichten im Monat, fünf Tage Zeit zum Antworten). **Kaufen** bzw. **Verkaufen**
+  bucht Ware und Geld; ein Handel stärkt das Vertrauen, und wer Nachbarn mit seiner Ware aushilft, steigt im Ansehen
+  des Dorfs. Ablehnen kostet etwas Vertrauen, Ignorieren mehr. Liegt beim Buchen zu wenig im Silo, ist der Nachbar
+  enttäuscht.
+- **Aufträge der Nachbarn:** Nach deiner Zusage steht der Auftrag im **Auftragsmenü des Spiels**, mit dem Nachbarn als
+  Auftraggeber; die Vergütung zahlt das Spiel. Erledigst du ihn, bedankt sich der Nachbar mit einem kleinen Bonus
+  (250 €), sonst ist er enttäuscht. Hast du im Spiel schon die Höchstzahl an Aufträgen angenommen, fragt niemand.
+
+**Hofladen:** Leute aus dem Dorf bestellen ab und zu kleine Mengen aus deinen Silos (Kartoffeln, Weizen, Hafer,
+Zuckerrüben oder Raps, je nachdem, was bei dir liegt), zum Hofladenpreis von 130 % des besten Marktpreises. Mit
+*Liefern* wird die Ware aus dem Silo gebucht und das Geld gutgeschrieben. Das hebt dein Ansehen im Dorf (höchstens
+viermal im Jahr). Lehnst du ab oder antwortest nicht binnen 3 Tagen, kommen seltener Bestellungen; jede Lieferung
+macht das wieder besser.
+
+Die Nachbarfelder, deine Silos und die Aufträge brauchen die aktuelle Mod-Version; fehlen sie, sagt die App es oben.
 
 ## Kontakte
 
@@ -382,7 +499,8 @@ Alle Menschen im Dorf mit Rolle und Vertrauen (fünf Balken und ein Wort statt e
 stehen Charakterzüge, Sprachstil und Hintergrund. Mit **Nachricht verfassen** meldest du dich selbst – per Mail oder
 Anruf. Schreibst du jemandem mehrmals kurz hintereinander, antwortet er trotzdem; aufs Vertrauen wirkt nur der
 erste Kontakt des Tages. Dein **Ansehen im Dorf** (gut angesehen, neutral, umstritten) steht auch auf dem
-Startbildschirm. Gelegentlich ziehen Leute weg oder neu zu.
+Startbildschirm. Gelegentlich ziehen Leute weg oder neu zu. Bei einem Nachbarn führt **Handel & Arbeit mit diesem
+Nachbarn** in die App **Handel**.
 
 **Vereine:** Schützenverein, Freiwillige Feuerwehr und Sportverein haben je eine:n Vorsitzende:n. Zu den Dorffesten
 im FS25-Kalender (Maibaumaufstellen im Mai, Schützenfest im Juni, Feuerwehrfest im August, Erntedankfest im Oktober,
@@ -402,12 +520,35 @@ Jahresbeginn schreibt das Tagebuch die Geschichte der Hofnachfolge fort.
 Die Chronik deines Hofs – beginnend mit der Vorgeschichte. Wichtige Ereignisse trägt FarmPulse selbst ein. Eigene
 Notizen sind reine Erinnerung und haben keinerlei Auswirkung aufs Spiel.
 
+**Meilensteine:** Erreichst du einen Meilenstein, steht er mit dem Zeichen *Meilenstein* im Tagebuch und als
+Abzeichen auf dem Startbildschirm. Sie haben keine Wirkung aufs Spiel. Es gibt sechs, jeder zählt einmal:
+
+- **Erster Kredit getilgt** – der erste Bankkredit ist ganz zurückgezahlt (ein Kredit aus dem Spielmenü zählt nicht),
+- **Ein Jahr ohne Zahlungsverzug** – ein ganzes FS25-Jahr ohne verpasste Kreditrate, überfälligen Steuerbescheid,
+  verpasste Vertragszahlung, überfälliges Gehalt und ohne unbezahlte Forderung der Bank; das erste angebrochene Jahr
+  zählt nicht,
+- **100 ha bewirtschaftet** – alle Felder deines Betriebs im Spiel zusammen, gepachtete eingeschlossen,
+- **Rekordernte** – die Genossenschaft gratuliert dir zum ersten Mal zum Rekord-Ernteerlös,
+- **5 Jahre Fruchtfolge ohne Beanstandung** – fünf Erntejahre in Folge ohne Hinweis des Amts zur Fruchtfolge,
+- **Erster Handel mit einem Nachbarn** – Ware gekauft oder verkauft in der App **Handel**.
+
+**Chronik herunterladen** speichert die Chronik als Textdatei (`chronik-<Hofname>.md`): Vorgeschichte, Meilensteine,
+alle Einträge nach Spieltagen und die Kennzahlen jedes Hofberichts. **Chronik drucken** öffnet dieselbe Chronik als
+Druckansicht; im Druckdialog des Browsers kannst du sie auch *als PDF speichern*. Den **Hofnamen** legst du unter
+**Einstellungen** fest, ohne ihn steht dort der Name der Karte.
+
 ## Einstellungen
 
 ![Einstellungen](../screenshots/18-einstellungen.png)
 
 KI-Anbieter, Modell und API-Schlüssel (siehe [Installation](installation.md#5-ki-anbieter-einrichten-optional)) und
 der Ton deines Spielstands (nur Anzeige). Die Einstellungen für die Helfer im Spiel stehen im **Personal**.
+
+**Tablet & Netzwerk:** FarmPulse im Heimnetz erreichbar machen (Standard aus), optionale PIN für Tablets und Handys,
+Adresse und QR-Code (siehe [Auf dem Handy oder Tablet](#auf-dem-handy-oder-tablet)). Gilt für die ganze Installation,
+nicht nur für einen Spielstand, und lässt sich nur am Spiele-PC ändern.
+
+**Hof:** Der Hofname steht über der Chronik und im Dateinamen (optional, ohne ihn der Kartenname).
 
 **Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
 
@@ -424,7 +565,10 @@ Bedingungen, die auch im Browser stehen. Einzeln einschaltbar (Standard: nur Anr
 - Einladungen zu Festen zu- oder absagen,
 - eine Ausgleichsforderung für einen Feldkauf zahlen oder ablehnen,
 - einen Steuerbescheid bezahlen (*Nein* = später im Browser),
-- das Angebot der Steuerberatung annehmen oder ablehnen.
+- das Angebot der Steuerberatung annehmen oder ablehnen,
+- ein Angebot oder eine Anfrage eines Nachbarn im **Handel** annehmen oder ablehnen,
+- eine Bestellung für den **Hofladen** liefern oder ablehnen,
+- einem Nachbarn einen Auftrag zusagen oder absagen.
 
 Die Knöpfe des Fensters heißen *Ja* und *Nein*; was sie bewirken, steht im Text („Ja = Annehmen · Nein = Ablehnen“).
 Ist gerade ein Menü offen, wartet die Frage, bis es geschlossen ist. Die Taste **FarmPulse: offene Frage** (Standard
@@ -438,6 +582,10 @@ noch offene Fragen erneut.
 ![Mobil](../screenshots/21-mobil-start.png)
 
 Das Hof-Tablet füllt immer das ganze Browserfenster und passt sich an kleine Bildschirme an – z. B. ein echtes Tablet
-neben dem Spiel. Standardmäßig ist FarmPulse nur auf dem eigenen PC erreichbar (`localhost`), weil es keine Anmeldung
-gibt. Für ein Tablet im Heimnetz `server.address: 0.0.0.0` in `application-local.yml` eintragen und am Tablet
-`http://<IP-des-PCs>:8080` öffnen – dann kann allerdings jeder in deinem Netz mitspielen.
+neben dem Spiel. Standardmäßig ist FarmPulse nur auf dem eigenen PC erreichbar. Unter **Einstellungen → Tablet &
+Netzwerk** schaltest du am Spiele-PC den Zugriff aus dem Heimnetz frei, setzt auf Wunsch eine PIN und findest Adresse
+und QR-Code für das Tablet (Anleitung: [Auf dem Tablet oder Handy öffnen](installation.md#auf-dem-tablet-oder-handy-öffnen)).
+Live-Updates, Anrufe und alle Apps funktionieren auf dem Tablet wie am PC. Über **Zum Startbildschirm hinzufügen**
+bekommt das Tablet ein FarmPulse-Symbol. Aus dem Internet ist das Tool nie erreichbar. Benachrichtigungen im
+Hintergrund und ein Offline-Modus gibt es auf dem Tablet nicht: Beides verlangt eine verschlüsselte Verbindung
+(HTTPS), im Heimnetz läuft FarmPulse über `http://`.

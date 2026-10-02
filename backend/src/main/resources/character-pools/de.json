@@ -38,7 +38,8 @@
     "MACHINE_OPERATOR": "Maschinenführer/in",
     "MECHANIC": "Mechaniker/in",
     "ANIMAL_KEEPER": "Tierpfleger/in",
-    "OFFICE_CLERK": "Bürokraft"
+    "OFFICE_CLERK": "Bürokraft",
+    "APPRENTICE": "Auszubildende/r"
   },
   "affiliations": {
     "PARENT": "Elternteil auf dem Altenteil",

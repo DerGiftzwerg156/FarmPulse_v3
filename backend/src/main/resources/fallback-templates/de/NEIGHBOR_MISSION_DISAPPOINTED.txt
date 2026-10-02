@@ -1,0 +1,6 @@
+Schade um den Auftrag
+Moin,
+
+aus dem Auftrag auf meinem Feld {{field}} ({{missionType}}) ist leider nichts geworden. Ich hatte mich darauf verlassen.
+
+{{characterName}}

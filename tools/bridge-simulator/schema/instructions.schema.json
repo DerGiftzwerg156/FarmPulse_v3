@@ -16,7 +16,7 @@
         "batchId": { "type": "string" },
         "gameTimeEarliest": { "type": "number" },
         "type": { "enum": ["MONEY_TRANSACTION", "PRICE_EVENT", "FARMLAND_TRANSFER", "NOTIFICATION", "REPAIR_VEHICLE",
-          "EMPLOYEE_ROSTER", "PROMPT"] }
+          "EMPLOYEE_ROSTER", "PROMPT", "STORAGE_TRANSFER", "MISSION_CREATE", "VEHICLE_SPAWN", "VEHICLE_REMOVE"] }
       },
       "allOf": [
         { "if": { "properties": { "type": { "const": "MONEY_TRANSACTION" } } },
@@ -26,7 +26,8 @@
               "SALARY_PAYMENT", "EMPLOYEE_EFFECT", "SUBSIDY", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE",
               "FARMLAND_SALE", "OTHER", "INSURANCE_PREMIUM", "INSURANCE_PAYOUT", "DAMAGE", "WILDLIFE_COMPENSATION",
               "VET_INVOICE", "LIVESTOCK_PREMIUM", "LEASE_PAYMENT", "MAINTENANCE_FEE", "TAX_PAYMENT", "TAX_REFUND", "FINE",
-              "FAMILY", "SPONSORING", "COMPENSATION", "TRAINING"] }, "note": { "type": "string" } } } },
+              "FAMILY", "SPONSORING", "COMPENSATION", "TRAINING", "LEASE_INCOME", "GOODS_PURCHASE", "GOODS_SALE",
+              "VEHICLE_PURCHASE", "VEHICLE_SALE", "CONTRACT_PENALTY"] }, "note": { "type": "string" } } } },
         { "if": { "properties": { "type": { "const": "PRICE_EVENT" }, "priceMode": { "const": "MULTIPLIER" } } },
           "then": { "required": ["fillType", "sellPoint", "peakMultiplier", "rampUpHours", "holdHours", "decayHours"] } },
         { "if": { "properties": { "type": { "const": "PRICE_EVENT" }, "priceMode": { "const": "FIXED" } } },
@@ -54,6 +55,28 @@
             "promptId": { "type": "string", "minLength": 1 }, "title": { "type": "string", "minLength": 1 },
             "text": { "type": "string", "minLength": 1 }, "yesLabel": { "type": "string", "minLength": 1 },
             "noLabel": { "type": "string", "minLength": 1 }, "expiresGameTime": { "type": "number" } } } },
+        { "if": { "properties": { "type": { "const": "STORAGE_TRANSFER" } } },
+          "then": { "required": ["direction", "fillType", "amount"], "properties": {
+            "direction": { "enum": ["IN", "OUT"] }, "fillType": { "type": "string", "minLength": 1 },
+            "amount": { "type": "number", "exclusiveMinimum": 0 } } } },
+        { "if": { "properties": { "type": { "const": "MISSION_CREATE" } } },
+          "then": { "required": ["missionType", "farmlandId"], "properties": {
+            "missionType": { "type": "string", "minLength": 1 }, "farmlandId": { "type": "integer" } } } },
+        { "if": { "properties": { "type": { "const": "VEHICLE_SPAWN" } } },
+          "then": { "required": ["storeXmlFilename", "ageMonths", "operatingHours", "damage", "wear", "price", "moneyReason"],
+            "properties": { "storeXmlFilename": { "type": "string", "minLength": 1 },
+              "ageMonths": { "type": "number", "minimum": 0 }, "operatingHours": { "type": "number", "minimum": 0 },
+              "damage": { "type": "number", "minimum": 0, "maximum": 1 }, "wear": { "type": "number", "minimum": 0, "maximum": 1 },
+              "price": { "type": "number", "exclusiveMinimum": 0 },
+              "moneyReason": { "enum": ["CREDIT_DISBURSEMENT", "CREDIT_INSTALLMENT", "CREDIT_PENALTY", "CREDIT_CALLBACK",
+                "CREDIT_SPECIAL_REPAYMENT", "CREDIT_PREPAYMENT_FEE",
+                "SALARY_PAYMENT", "EMPLOYEE_EFFECT", "SUBSIDY", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE",
+                "FARMLAND_SALE", "OTHER", "INSURANCE_PREMIUM", "INSURANCE_PAYOUT", "DAMAGE", "WILDLIFE_COMPENSATION",
+                "VET_INVOICE", "LIVESTOCK_PREMIUM", "LEASE_PAYMENT", "MAINTENANCE_FEE", "TAX_PAYMENT", "TAX_REFUND", "FINE",
+                "FAMILY", "SPONSORING", "COMPENSATION", "TRAINING", "LEASE_INCOME", "GOODS_PURCHASE", "GOODS_SALE",
+              "VEHICLE_PURCHASE", "VEHICLE_SALE", "CONTRACT_PENALTY"] } } } },
+        { "if": { "properties": { "type": { "const": "VEHICLE_REMOVE" } } },
+          "then": { "required": ["vehicleId"], "properties": { "vehicleId": { "type": "string", "minLength": 1 } } } },
         { "if": { "properties": { "type": { "const": "NOTIFICATION" } } },
           "then": { "required": ["text"], "properties": { "text": { "type": "string", "minLength": 1 },
             "level": { "enum": ["INFO", "OK", "CRITICAL"] }, "expiresAtGameTime": { "type": "number" } } } }

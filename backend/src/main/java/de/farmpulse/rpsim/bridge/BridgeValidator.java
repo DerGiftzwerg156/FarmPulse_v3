@@ -71,7 +71,31 @@ public final class BridgeValidator {
             });
         }
         validateRoadmapV2(f, e);
+        validateRoadmapV3(f, e);
         return e;
+    }
+
+    /** Roadmap V3 (R3-Q1): like V2, the optional blocks are only checked when present. */
+    private static void validateRoadmapV3(FarmFacts f, List<String> e) {
+        if (f.npcFields() != null) {
+            f.npcFields().forEach(fd -> {
+                if (invalidField(fd)) e.add("invalid npc field " + fd);
+            });
+        }
+        if (f.tradeStorage() != null) {
+            f.tradeStorage().forEach(t -> {
+                if (t == null || blank(t.fillType()) || negativeOrNull(t.amount()) || negativeOrNull(t.freeCapacity())) {
+                    e.add("invalid tradeStorage " + t);
+                }
+            });
+        }
+    }
+
+    private static boolean invalidField(BridgeDtos.Field fd) {
+        return fd == null || fd.farmlandId() == null || fd.name() == null || negativeOrNull(fd.hectares())
+                || Stream.of(fd.growthState(), fd.weedState(), fd.stoneLevel(), fd.sprayLevel(), fd.limeLevel(),
+                fd.plowLevel()).anyMatch(v -> v == null || v < 0)
+                || (fd.litersPerSqm() != null && fd.litersPerSqm() < 0);
     }
 
     /** Roadmap V2 (R2-Q1): the optional blocks are only checked when present; a missing block is no error. */
@@ -112,12 +136,7 @@ public final class BridgeValidator {
         }
         if (f.fields() != null) {
             f.fields().forEach(fd -> {
-                if (fd == null || fd.farmlandId() == null || fd.name() == null || negativeOrNull(fd.hectares())
-                        || Stream.of(fd.growthState(), fd.weedState(), fd.stoneLevel(), fd.sprayLevel(), fd.limeLevel(),
-                        fd.plowLevel()).anyMatch(v -> v == null || v < 0)
-                        || (fd.litersPerSqm() != null && fd.litersPerSqm() < 0)) {
-                    e.add("invalid field " + fd);
-                }
+                if (invalidField(fd)) e.add("invalid field " + fd);
             });
         }
         if (f.fieldRules() != null) {
@@ -148,6 +167,14 @@ public final class BridgeValidator {
         } else {
             m.farmlands().forEach(f -> {
                 if (f == null || f.farmlandId() == null || f.ownerFarmId() == null) e.add("invalid farmland " + f);
+            });
+        }
+        if (m.storeVehicles() != null) { // Roadmap V3 (R3-Q1 / R3-V1)
+            m.storeVehicles().forEach(v -> {
+                if (v == null || blank(v.xmlFilename()) || negativeOrNull(v.price())
+                        || (v.lifetime() != null && v.lifetime() < 0)) {
+                    e.add("invalid store vehicle " + v);
+                }
             });
         }
         return e;

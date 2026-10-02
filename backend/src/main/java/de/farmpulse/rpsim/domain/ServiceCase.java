@@ -94,6 +94,10 @@ public class ServiceCase extends SavegameScoped {
     @Column(name = "resolution", length = 64)
     private String resolution;
 
+    /** Roadmap V3 R3-H5: uniqueId of the contract created in the game (MISSION_CREATE ack result). */
+    @Column(name = "external_id", length = 64)
+    private String externalId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }

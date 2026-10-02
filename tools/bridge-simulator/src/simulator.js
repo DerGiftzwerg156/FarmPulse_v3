@@ -18,7 +18,9 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   // Roadmap V2 (R2-Q1)
   'TAX_PAYMENT', 'TAX_REFUND', 'FINE', 'FAMILY', 'SPONSORING', 'COMPENSATION',
   // "Schulungen"
-  'TRAINING']);
+  'TRAINING',
+  // Roadmap V3 (R3-Q1)
+  'LEASE_INCOME', 'GOODS_PURCHASE', 'GOODS_SALE', 'VEHICLE_PURCHASE', 'VEHICLE_SALE', 'CONTRACT_PENALTY']);
 // Roadmap V2 R2-B1: number of FS25 periods kept in the booking journal (proposed mod config financeJournalPeriods)
 export const FINANCE_JOURNAL_PERIODS = 13;
 
@@ -115,6 +117,26 @@ export function validateInstruction(ins) {
       }
       if (!num(ins.expiresGameTime)) return 'expiresGameTime must be a number';
       return null;
+    // Roadmap V3 (R3-Q1): same checks as RPSimInstructions.validate
+    case 'STORAGE_TRANSFER':
+      if (!['IN', 'OUT'].includes(ins.direction)) return `unknown direction ${ins.direction}`;
+      if (typeof ins.fillType !== 'string' || !ins.fillType) return 'fillType is required';
+      if (!num(ins.amount) || ins.amount <= 0) return 'amount must be > 0';
+      return null;
+    case 'MISSION_CREATE':
+      if (typeof ins.missionType !== 'string' || !ins.missionType) return 'missionType is required';
+      if (!num(ins.farmlandId)) return 'farmlandId must be a number';
+      return null;
+    case 'VEHICLE_SPAWN':
+      if (typeof ins.storeXmlFilename !== 'string' || !ins.storeXmlFilename) return 'storeXmlFilename is required';
+      for (const f of ['ageMonths', 'operatingHours']) if (!num(ins[f]) || ins[f] < 0) return `${f} must be >= 0`;
+      for (const f of ['damage', 'wear']) if (!num(ins[f]) || ins[f] < 0 || ins[f] > 1) return `${f} must be between 0 and 1`;
+      if (!num(ins.price) || ins.price <= 0) return 'price must be > 0';
+      if (!MONEY_REASONS.has(ins.moneyReason)) return `unknown moneyReason ${ins.moneyReason}`;
+      return null;
+    case 'VEHICLE_REMOVE':
+      if (typeof ins.vehicleId !== 'string' || !ins.vehicleId) return 'vehicleId is required';
+      return null;
     default:
       return `unknown type ${ins.type}`;
   }
@@ -181,6 +203,13 @@ export class BridgeSimulator {
     this.fields = preset.fields ? structuredClone(preset.fields) : null;
     this.weather = preset.weather ? { ...preset.weather } : null;
     this.fieldRules = preset.fieldRules ? { ...preset.fieldRules } : null;
+    // Roadmap V3 (R3-Q2): optional blocks - null = not exported (like a mod without the block)
+    this.npcFields = preset.npcFields ? structuredClone(preset.npcFields) : null; // R3-H1
+    this.tradeStorage = preset.tradeStorage ? structuredClone(preset.tradeStorage) : null; // R3-H2: own silos
+    this.storeVehicles = preset.storeVehicles ? structuredClone(preset.storeVehicles) : null; // R3-V1
+    this.toolMissions = []; // R3-H5: contracts created by MISSION_CREATE (the vanilla ones stay in this.missions)
+    // R3-H5: the game's contract limit of the player farm (hasFarmReachedMissionLimit), only in scenarios that have it
+    this.missionLimitReached = preset.missionLimitReached ?? null;
     this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
     this.prompts = []; // R2-F2: yes/no questions shown to the "player" (waiting for an answer)
     this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
@@ -199,7 +228,14 @@ export class BridgeSimulator {
     return structuredClone({ gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, processed: this.processed, priceEvents: this.priceEvents,
-      contractReports: this.contractReports, calendar: this.calendar, ...this.roadmapV2State() });
+      contractReports: this.contractReports, calendar: this.calendar, ...this.roadmapV2State(),
+      ...this.roadmapV3State() });
+  }
+
+  /** Roadmap V3 state that changes through instructions (silo goods R3-H3/H4, contracts R3-H5). */
+  roadmapV3State() {
+    return { npcFields: this.npcFields, tradeStorage: this.tradeStorage, toolMissions: this.toolMissions,
+      missionLimitReached: this.missionLimitReached };
   }
 
   /** Roadmap V2 state the mod keeps in its savegame XML (journal R2-B1, worked time R2-A4, roster R2-A0). */
@@ -260,7 +296,7 @@ export class BridgeSimulator {
         contractReports: s.contractReports ?? [] });
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
         'storage', 'farmlands', 'calendar', 'finances', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
-        'prompts', 'responses', 'handledPrompts']) {
+        'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions', 'missionLimitReached']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -272,7 +308,8 @@ export class BridgeSimulator {
     const s = { savegameId: this.savegameId, processed: this.processed, priceEvents: this.priceEvents,
       contractReports: this.contractReports, gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
-      storage: this.storage, farmlands: this.farmlands, calendar: this.calendar, ...this.roadmapV2State() };
+      storage: this.storage, farmlands: this.farmlands, calendar: this.calendar, ...this.roadmapV2State(),
+      ...this.roadmapV3State() };
     this.writeJson(this.paths.savegame, s);
   }
 
@@ -416,6 +453,112 @@ export class BridgeSimulator {
     return blocks;
   }
 
+  // --------------------------------------------------------------- Roadmap V3 blocks (R3-Q2)
+  /** Adds the optional Roadmap V3 farm_facts blocks the scenario has; the others stay absent. */
+  roadmapV3Blocks() {
+    const blocks = {};
+    if (this.npcFields) {
+      // R3-H1: only fields without an owner (farmlands no farm owns)
+      const unowned = new Map(this.farmlands.filter((f) => f.ownerFarmId === 0).map((f) => [f.farmlandId, f]));
+      blocks.npcFields = this.npcFields.filter((f) => unowned.has(f.farmlandId))
+        .map((f) => ({ name: String(f.farmlandId), hectares: unowned.get(f.farmlandId).hectares, ...f }))
+        .sort((a, b) => a.farmlandId - b.farmlandId);
+    }
+    if (this.tradeStorage) {
+      // R3-H2: fill level and free capacity of the own silos per fill type (an own silo accepts it)
+      blocks.tradeStorage = Object.entries(this.tradeStorage)
+        .map(([fillType, s]) => ({ fillType, amount: Math.round(s.amount),
+          freeCapacity: Math.max(0, Math.round(s.capacity - s.amount)) }))
+        .filter((e) => e.amount + e.freeCapacity > 0)
+        .sort((a, b) => a.fillType.localeCompare(b.fillType));
+    }
+    if (typeof this.missionLimitReached === 'boolean') blocks.missionLimitReached = this.missionLimitReached;
+    return blocks;
+  }
+
+  /** Control API (R3-H1): the game changes a neighbour field (e.g. harvest: {"farmlandId":3,"cut":true}). */
+  setNpcField(patch) {
+    const f = this.npcFields?.find((x) => x.farmlandId === patch.farmlandId);
+    if (!f) throw new Error(`unknown neighbour field on farmland ${patch.farmlandId}`);
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === null) delete f[k]; else f[k] = v;
+    }
+    return f;
+  }
+
+  /** Control API (R3-H5): the contract limit of the player farm is reached or not. */
+  setMissionLimit(reached) {
+    this.missionLimitReached = Boolean(reached);
+    return { missionLimitReached: this.missionLimitReached };
+  }
+
+  /** R3-H3/H4 like the planned mod action: moves goods into / out of the own silos (also in assets.storage). */
+  storageTransfer(ins) {
+    const silo = this.tradeStorage?.[ins.fillType];
+    if (ins.direction === 'IN') {
+      if (!silo || silo.capacity - silo.amount < ins.amount) return 'NO_CAPACITY';
+      silo.amount += ins.amount;
+      const stock = this.storage[ins.fillType] ??= { amount: 0, capacity: silo.capacity };
+      stock.amount += ins.amount;
+    } else {
+      if (!silo || silo.amount < ins.amount) return 'INSUFFICIENT_STOCK';
+      silo.amount -= ins.amount;
+      const stock = this.storage[ins.fillType];
+      if (stock) stock.amount = Math.max(0, stock.amount - ins.amount);
+    }
+    this.log(`silo ${ins.direction === 'IN' ? '+' : '-'}${ins.amount} l ${ins.fillType}`);
+    return null;
+  }
+
+  /**
+   * R3-H5 like the planned mod action: a contract on the field of an NPC farmland; NOT_AVAILABLE when the farmland has
+   * an owner, no exported NPC field or already a running / available contract. The client is the farmland's NPC.
+   */
+  missionCreate(ins) {
+    const farmland = this.farmlands.find((f) => f.farmlandId === ins.farmlandId);
+    const field = this.npcFields?.find((f) => f.farmlandId === ins.farmlandId);
+    if (!farmland || farmland.ownerFarmId !== 0 || !field) return 'NOT_AVAILABLE';
+    const fieldName = String(ins.farmlandId);
+    if ([...this.missions, ...this.toolMissions].some((m) => m.field === fieldName && m.status !== 'FINISHED')) {
+      return 'NOT_AVAILABLE';
+    }
+    const uniqueId = `mission_sim_${String(this.toolMissions.length + 1).padStart(3, '0')}`;
+    this.toolMissions.push({ uniqueId, status: 'AVAILABLE', title: ins.missionType, typeName: ins.missionType,
+      field: fieldName, ...(farmland.npc ? { npcIndex: farmland.npc.index, npcTitle: farmland.npc.title } : {}) });
+    this.applyResult = { missionId: uniqueId };
+    this.log(`contract ${ins.missionType} on field ${fieldName} created`);
+    return null;
+  }
+
+  /** R3-V2 like the planned mod action: loads a shop vehicle as used machine and books the price itself. */
+  vehicleSpawn(ins) {
+    const item = this.storeVehicles?.find((v) => v.xmlFilename === ins.storeXmlFilename);
+    if (!item) return 'UNKNOWN_STORE_ITEM';
+    if (this.balance < ins.price) return 'INSUFFICIENT_FUNDS';
+    const next = Math.max(0, ...this.vehicles.map((v) => Number(v.uniqueId.replace(/\D/g, '')) || 0)) + 1;
+    const uniqueId = `veh_${String(next).padStart(5, '0')}`;
+    this.vehicles.push({ uniqueId, value: ins.price, damage: ins.damage, name: item.name,
+      xmlFilename: ins.storeXmlFilename, ageMonths: ins.ageMonths, operatingHours: ins.operatingHours, wear: ins.wear });
+    this.balance -= ins.price;
+    this.moneyLog.push({ id: ins.instructionId, amount: -ins.price, reason: ins.moneyReason, note: item.name });
+    this.book(`RPSIM_${ins.moneyReason}`, -ins.price);
+    this.applyResult = { vehicleId: uniqueId };
+    this.log(`used vehicle ${item.name} delivered as ${uniqueId}`);
+    return null;
+  }
+
+  /** R3-V3 like the planned mod action: removes an own vehicle (leased ones never). */
+  vehicleRemove(ins) {
+    if (this.leasedVehicles.some((v) => v.uniqueId === ins.vehicleId)) return 'NOT_OWN_VEHICLE';
+    const i = this.vehicles.findIndex((v) => v.uniqueId === ins.vehicleId);
+    if (i < 0) return 'VEHICLE_NOT_FOUND';
+    // R3-V3 fallback of the mod: only a root vehicle with nothing attached is removed
+    if (this.vehicles[i].attached) return 'VEHICLE_ATTACHED';
+    this.vehicles.splice(i, 1);
+    this.log(`vehicle ${ins.vehicleId} removed`);
+    return null;
+  }
+
   /**
    * Control API: a booking of the game (R2-B1), e.g. a vehicle purchase or leasing costs. It changes the balance and
    * lands in the journal under its FS25 money type, like Farm:changeBalance in the mod.
@@ -534,7 +677,8 @@ export class BridgeSimulator {
 
   /**
    * Free ACTIVE machine operator with the required trainings; the one with the fewest trainings first (specialists
-   * stay free), ties in list order - as RPSimWorkforce.assign.
+   * stay free), ties in list order - as RPSimWorkforce.assign. R3-P2: apprentices drive too, without trainings and only
+   * after the machine operators.
    */
   assignFreeOperators() {
     if (!this.roster || !this.workforce) return;
@@ -542,12 +686,15 @@ export class BridgeSimulator {
     for (const j of this.workforce.activeJobs) {
       if (j.employeeId !== undefined) continue;
       const required = this.requiredTrainings(j.categories);
+      const rank = { MACHINE_OPERATOR: 1, APPRENTICE: 2 };
+      const trainingsOf = (e) => (e.role === 'APPRENTICE' ? [] : e.trainings ?? []);
       let free;
       for (const e of this.roster.employees) {
-        const trainings = e.trainings ?? [];
-        if (e.role !== 'MACHINE_OPERATOR' || e.status !== 'ACTIVE' || busy.has(e.employeeId)
+        const trainings = trainingsOf(e);
+        if (!rank[e.role] || e.status !== 'ACTIVE' || busy.has(e.employeeId)
           || !required.every((t) => trainings.includes(t))) continue;
-        if (!free || trainings.length < (free.trainings ?? []).length) free = e;
+        if (!free || rank[e.role] < rank[free.role]
+          || (rank[e.role] === rank[free.role] && trainings.length < trainingsOf(free).length)) free = e;
       }
       if (!free) continue;
       j.employeeId = free.employeeId;
@@ -574,7 +721,9 @@ export class BridgeSimulator {
       liquidity: { balance: Math.round(this.balance) },
       assets: {
         vehicles: this.vehicles.map((v) => ({ uniqueId: v.uniqueId, value: v.value,
-          condition: Math.round((1 - Math.min(1, Math.max(0, v.damage))) * 100) })),
+          condition: Math.round((1 - Math.min(1, Math.max(0, v.damage))) * 100),
+          // R3-V3: optional name and shop XML (getFullName / configFileName)
+          ...(v.name ? { name: v.name } : {}), ...(v.xmlFilename ? { xmlFilename: v.xmlFilename } : {}) })),
         placeables: this.placeables.map((p) => ({ ...p })),
         farmland: this.farmlands.filter((f) => f.ownerFarmId === 1)
           .map((f) => ({ farmlandId: f.farmlandId, hectares: f.hectares, price: f.price })),
@@ -588,14 +737,16 @@ export class BridgeSimulator {
           .sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)) },
       prices,
       calendar: this.buildCalendar(),
-      missions: this.missions.map((m) => ({ ...m })).sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)),
+      missions: [...this.missions, ...this.toolMissions].map((m) => ({ ...m }))
+        .sort((a, b) => a.uniqueId.localeCompare(b.uniqueId)),
       ...this.roadmapV2Blocks(),
+      ...this.roadmapV3Blocks(),
     };
   }
 
   /** The "player" takes / finishes a vanilla contract in the game (TODO T-22). */
   setMission(uniqueId, status, success) {
-    const m = this.missions.find((x) => x.uniqueId === uniqueId);
+    const m = [...this.missions, ...this.toolMissions].find((x) => x.uniqueId === uniqueId);
     if (!m) throw new Error(`unknown mission ${uniqueId}`);
     m.status = status;
     if (status === 'FINISHED') {
@@ -621,6 +772,9 @@ export class BridgeSimulator {
       farmlands: this.farmlands.map((f) => ({ ...f, showOnFarmlandsScreen: f.showOnFarmlandsScreen !== false,
         defaultFarmProperty: f.defaultFarmProperty === true })),
       detectedMods: [...this.detectedMods].sort(),
+      // Roadmap V3 R3-V1: shop vehicle catalog, only in scenarios that have it
+      ...(this.storeVehicles ? { storeVehicles: this.storeVehicles.map((v) => ({ ...v }))
+        .sort((a, b) => a.xmlFilename.localeCompare(b.xmlFilename)) } : {}),
     };
   }
 
@@ -708,6 +862,15 @@ export class BridgeSimulator {
           yesLabel: ins.yesLabel, noLabel: ins.noLabel, expiresGameTime: ins.expiresGameTime, gameTime: this.gameTime });
         this.log(`in-game prompt: ${ins.title} - ${ins.text}`);
         return null;
+      // Roadmap V3 (R3-Q2): executed like the planned mod actions (R3-H3/H4/M3, R3-H5, R3-V2, R3-V3)
+      case 'STORAGE_TRANSFER':
+        return this.storageTransfer(ins);
+      case 'MISSION_CREATE':
+        return this.missionCreate(ins);
+      case 'VEHICLE_SPAWN':
+        return this.vehicleSpawn(ins);
+      case 'VEHICLE_REMOVE':
+        return this.vehicleRemove(ins);
       default:
         return 'unsupported type';
     }
@@ -777,11 +940,13 @@ export class BridgeSimulator {
             for (const ins of pending) {
               // like the mod: after a failed member the rest of the batch is not executed
               this.applyNote = null;
+              this.applyResult = null; // Roadmap V3 (R3-Q1): optional result for the ack
               const err = aborted ? `BATCH_ABORTED: ${aborted}` : this.applyOne(ins);
               if (err && !aborted && pending.length > 1) aborted = ins.instructionId;
               this.processed[ins.instructionId] = err
                 ? { gameTime: this.gameTime, status: 'FAILED', message: err }
-                : { gameTime: this.gameTime, status: 'APPLIED', ...(this.applyNote ? { message: this.applyNote } : {}) };
+                : { gameTime: this.gameTime, status: 'APPLIED', ...(this.applyNote ? { message: this.applyNote } : {}),
+                  ...(this.applyResult ? { result: this.applyResult } : {}) };
               if (err) res.rejected++; else res.applied++;
               if (!err && ins.type === 'FARMLAND_TRANSFER') res.marketContextDirty = true;
             }
@@ -809,7 +974,7 @@ export class BridgeSimulator {
       savegameId: this.savegameId,
       acks: Object.entries(this.processed).sort(([a], [b]) => a.localeCompare(b))
         .map(([instructionId, e]) => ({ instructionId, appliedAtGameTime: e.gameTime, status: e.status,
-          ...(e.message ? { message: e.message } : {}) })),
+          ...(e.message ? { message: e.message } : {}), ...(e.result ? { result: { ...e.result } } : {}) })),
       contractReports: this.contractReports.map(({ instructionId, deliveredQuantity, maxQuantity, endReason }) =>
         ({ instructionId, deliveredQuantity, maxQuantity, endReason })),
     };

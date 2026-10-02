@@ -33,7 +33,8 @@
     "authorities": "Ämter",
     "insurance": "Versicherung",
     "stable": "Stall",
-    "workshop": "Werkstatt"
+    "workshop": "Werkstatt",
+    "trade": "Handel"
   },
   "apps": {
     "mail": "Mails aus dem Dorf – antworten, wann du willst",
@@ -42,15 +43,16 @@
     "tasks": "Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert",
     "calendar": "Fristen, Abbuchungen, Dorffeste und Familientermine im FS25-Kalender",
     "bank": "Kredite, Anträge und Hofbuchhaltung",
-    "authorities": "Finanzamt und Landwirtschaftsamt – Steuern, Bescheide und Kontrollen",
+    "authorities": "Finanzamt und Landwirtschaftsamt – Steuern, Bescheide, Kontrollen und Dürrehilfe",
     "market": "Silo, Preise, Marktgeschehen und Kontrakte",
-    "insurance": "Sturm- und Hagelversicherung, Schäden melden, Wildschaden",
+    "insurance": "Sturm- und Hagelversicherung, Dürreversicherung, Schäden melden, Wildschaden",
     "staff": "Team, Helferstunden und Stellenausschreibungen",
     "fields": "Felder, Kulturen, Verhandlungen, Pacht und Forderungen",
     "stable": "Tiere, Tierarzt, Viehhandel und Tierwohl",
-    "workshop": "Wartungsvertrag, Reparaturen und Mechaniker",
+    "workshop": "Wartungsvertrag, Reparaturen, Mechaniker und Gebrauchtmaschinen",
     "diary": "Die Chronik deines Hofs",
-    "settings": "KI, Spielstand und Fragen im Spiel"
+    "settings": "KI, Spielstand und Fragen im Spiel",
+    "trade": "Ware und Arbeit mit den Nachbarn"
   },
   "tablet": {
     "apps": "Apps",
@@ -123,7 +125,8 @@
       "MACHINE_OPERATOR": "Maschinenführer:in",
       "MECHANIC": "Mechaniker:in",
       "ANIMAL_KEEPER": "Tierpfleger:in",
-      "OFFICE_CLERK": "Bürokraft"
+      "OFFICE_CLERK": "Bürokraft",
+      "APPRENTICE": "Azubi"
     },
     "characterRole": {
       "BANK_ADVISOR": "Bankberater:in",
@@ -176,7 +179,8 @@
       "HUNTING": "Jagd",
       "LIVESTOCK": "Tiere",
       "ENERGY": "Energie",
-      "CONTRACT": "Vertrag"
+      "CONTRACT": "Vertrag",
+      "TRADE": "Handel"
     },
     "callStatus": {
       "RINGING": "Klingelt",
@@ -239,7 +243,8 @@
     "negotiationKind": {
       "AUCTION": "Versteigerung",
       "DIRECT": "Direktverhandlung",
-      "SALE_OFFER": "Verkaufsangebot"
+      "SALE_OFFER": "Verkaufsangebot",
+      "LEASE_OFFER": "Verpachtung"
     },
     "negotiationStatus": {
       "OPEN": "Offen",
@@ -335,7 +340,10 @@
       "HONEY": "Honig",
       "WOODCHIPS": "Hackschnitzel",
       "FLOUR": "Mehl",
-      "BREAD": "Brot"
+      "BREAD": "Brot",
+      "SEEDS": "Saatgut",
+      "FERTILIZER": "Dünger",
+      "LIQUIDFERTILIZER": "Flüssigdünger"
     },
     "diaryCategory": {
       "BACKSTORY": "Vorgeschichte",
@@ -345,7 +353,17 @@
       "NEGOTIATION": "Felder",
       "ROTATION": "Dorf",
       "PLAYER_NOTE": "Eigene Notizen",
-      "OTHER": "Sonstiges"
+      "OTHER": "Sonstiges",
+      "TRADE": "Handel",
+      "MILESTONE": "Meilensteine"
+    },
+    "milestone": {
+      "LOAN_REPAID": "Erster Kredit getilgt",
+      "YEAR_WITHOUT_DELAY": "Ein Jahr ohne Zahlungsverzug",
+      "AREA": "100 ha bewirtschaftet",
+      "RECORD_HARVEST": "Rekordernte",
+      "CROP_ROTATION": "5 Jahre Fruchtfolge ohne Beanstandung",
+      "NEIGHBOR_TRADE": "Erster Handel mit einem Nachbarn"
     },
     "moneyReason": {
       "CREDIT_DISBURSEMENT": "Kreditauszahlung",
@@ -375,7 +393,13 @@
       "FAMILY": "Familie",
       "SPONSORING": "Sponsoring",
       "COMPENSATION": "Ausgleichszahlung",
-      "TRAINING": "Mitarbeiterschulung"
+      "TRAINING": "Mitarbeiterschulung",
+      "LEASE_INCOME": "Pachteinnahme",
+      "GOODS_PURCHASE": "Warenkauf",
+      "GOODS_SALE": "Warenverkauf",
+      "VEHICLE_PURCHASE": "Maschinenkauf (gebraucht)",
+      "VEHICLE_SALE": "Maschinenverkauf",
+      "CONTRACT_PENALTY": "Vertragsstrafe"
     },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
@@ -412,7 +436,8 @@
       "INSURANCE": "Sturm- und Hagelversicherung",
       "LEASE": "Pacht",
       "MAINTENANCE": "Wartungsvertrag",
-      "TAX_ADVISOR": "Steuerberatung"
+      "TAX_ADVISOR": "Steuerberatung",
+      "LEASE_OUT": "Verpachtung"
     },
     "contractStatus": {
       "OFFERED": "Angebot",
@@ -423,7 +448,8 @@
     },
     "insuranceLevel": {
       "BASIC": "Basis",
-      "COMFORT": "Komfort"
+      "COMFORT": "Komfort",
+      "DROUGHT_INDEX": "Dürre-Index"
     },
     "caseKind": {
       "STORM_DAMAGE": "Sturmschaden",
@@ -438,7 +464,16 @@
       "TAX_BILL": "Steuerbescheid",
       "AUTHORITY_INSPECTION": "Kontrolle des Amts",
       "SPONSORING_REQUEST": "Sponsoring-Anfrage",
-      "INVITATION": "Einladung"
+      "INVITATION": "Einladung",
+      "GOODS_OFFER": "Ware vom Nachbarn",
+      "GOODS_REQUEST": "Anfrage eines Nachbarn",
+      "NEIGHBOR_MISSION": "Arbeit beim Nachbarn",
+      "COLLATERAL_CLAIM": "Forderung nach Feldverkauf",
+      "ANNUAL_REVIEW": "Jahresgespräch",
+      "ANNUAL_REVIEW_OFFER": "Zinssenkung",
+      "FARM_SHOP_ORDER": "Hofladen-Bestellung",
+      "DROUGHT_AID": "Dürrehilfe",
+      "APPRENTICE_TAKEOVER": "Übernahme Azubi"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -463,6 +498,8 @@
       "PARTIAL": "Teilweise erfüllt",
       "LAPSED": "Nicht erfüllt",
       "NO_ANSWER": "Ohne Antwort verfallen",
+      "COUNTER_REJECTED": "Gegenangebot zu niedrig",
+      "EMPLOYEE_GONE": "Nicht mehr auf dem Hof",
       "PLAYER": "Von dir abgelehnt",
       "INCLUDED": "Im Wartungsvertrag repariert",
       "HINT": "Reparaturhinweis",
@@ -479,7 +516,16 @@
       "SPONSORED": "Gesponsert",
       "IGNORED": "Nicht beantwortet",
       "EXPIRED": "Frist abgelaufen",
-      "EMERGENCY": "Notfall-Einsatz"
+      "EMERGENCY": "Notfall-Einsatz",
+      "DONE": "erledigt",
+      "NO_STOCK": "zu wenig im Silo",
+      "NOT_AVAILABLE": "im Spiel nicht möglich",
+      "LOST": "durch Neuladen verloren",
+      "OVERDUE": "überfällig",
+      "OFFER": "Zinssenkung angeboten",
+      "NEUTRAL": "Gespräch geführt",
+      "SERIOUS": "Ernstes Gespräch",
+      "LOAN_CLOSED": "Kredit beendet"
     },
     "animalType": {
       "COW": "Rinder",
@@ -487,6 +533,24 @@
       "SHEEP": "Schafe",
       "CHICKEN": "Hühner",
       "HORSE": "Pferde"
+    },
+    "vehicleDealStatus": {
+      "OPEN": "Offen",
+      "AGREED": "Vereinbart",
+      "DONE": "Erledigt",
+      "FAILED": "Geplatzt",
+      "ENDED": "Ohne Einigung"
+    },
+    "vehicleFailure": {
+      "NO_SPACE": "kein Platz auf dem Hof",
+      "UNKNOWN_STORE_ITEM": "nicht im Shop",
+      "INSUFFICIENT_FUNDS": "Konto reichte nicht",
+      "LOAD_FAILED": "im Spiel nicht geladen",
+      "VEHICLE_ATTACHED": "erst abkoppeln",
+      "VEHICLE_IN_USE": "wurde benutzt",
+      "NOT_OWN_VEHICLE": "nicht eigene Maschine",
+      "VEHICLE_NOT_FOUND": "nicht mehr da",
+      "MOD_OUTDATED": "Mod zu alt"
     },
     "tradeDirection": {
       "SELL": "Verkaufen",
@@ -504,7 +568,8 @@
       "RENT_MISSED": "wegen unbezahlter Pacht",
       "TRANSFER_FAILED": "Übergabe im Spiel fehlgeschlagen",
       "TERMINATED_BY_PLAYER": "von dir gekündigt",
-      "FEE_MISSED": "wegen unbezahlter Gebühren"
+      "FEE_MISSED": "wegen unbezahlter Gebühren",
+      "RECLAIMED_IN_MENU": "im Spielmenü zurückgeholt"
     },
     "financeCategory": {
       "HARVEST_INCOME": "Ernteverkauf",
@@ -560,7 +625,13 @@
       "RPSIM_FAMILY": "Familie",
       "RPSIM_SPONSORING": "Sponsoring",
       "RPSIM_COMPENSATION": "Ausgleichszahlung",
-      "RPSIM_TRAINING": "Mitarbeiterschulung"
+      "RPSIM_TRAINING": "Mitarbeiterschulung",
+      "RPSIM_LEASE_INCOME": "Pachteinnahme",
+      "RPSIM_GOODS_PURCHASE": "Warenkauf",
+      "RPSIM_GOODS_SALE": "Warenverkauf",
+      "RPSIM_VEHICLE_PURCHASE": "Maschinenkauf (gebraucht)",
+      "RPSIM_VEHICLE_SALE": "Maschinenverkauf",
+      "RPSIM_CONTRACT_PENALTY": "Vertragsstrafe"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",
@@ -610,7 +681,27 @@
       "INVITATION": "Einladungen zu Festen zu- oder absagen",
       "COMPENSATION_CLAIM": "Ausgleichsforderung für einen Feldkauf zahlen oder ablehnen",
       "TAX_BILL": "Steuerbescheide bezahlen",
-      "TAX_ADVISOR": "Angebot der Steuerberatung annehmen oder ablehnen"
+      "TAX_ADVISOR": "Angebot der Steuerberatung annehmen oder ablehnen",
+      "NEIGHBOR_TRADE": "Handel mit Nachbarn",
+      "NEIGHBOR_MISSION": "Aufträge der Nachbarn",
+      "FARM_SHOP": "Bestellungen für den Hofladen"
+    },
+    "neighborRole": {
+      "DAIRY": "Milchviehbetrieb",
+      "ARABLE": "Ackerbau",
+      "MIXED": "Gemischtbetrieb"
+    },
+    "missionType": {
+      "PLOW": "Pflügen",
+      "STONE_PICK": "Steine sammeln"
+    },
+    "planPosting": {
+      "SALARIES": "Gehälter",
+      "LOAN": "Kreditrate",
+      "CONTRACT": "Vertrag",
+      "RETIREMENT": "Altenteil",
+      "TAX_PREPAYMENT": "Steuervorauszahlung",
+      "FORWARD_CONTRACT": "Vorkontrakt (erwartet)"
     }
   },
   "onboarding": {
@@ -659,7 +750,10 @@
     "familyIntro": "Wer gehört zur Familie? Jede Angabe ist einzeln wählbar – ohne Häkchen führst du den Hof alleine.",
     "familyParents": "Eltern (bei geerbtem Hof oder Rückkehr auf dem Altenteil)",
     "familyPartner": "Partner:in",
-    "familyChildren": "Kinder"
+    "familyChildren": "Kinder",
+    "farmName": "Hofname",
+    "farmNamePlaceholder": "z. B. Hof Lindenhain",
+    "farmNameHint": "Steht über der Hofchronik. Ohne Hofnamen gilt der Kartenname."
   },
   "mailbox": {
     "filter": "Filter",
@@ -870,7 +964,15 @@
     "dismissed": "{name} wurde gekündigt.",
     "dismissTitle": "Mitarbeiter kündigen",
     "dismissText": "Willst du {name} wirklich kündigen? Das lässt sich nicht rückgängig machen.",
-    "helperHint": "Deine Maschinenführer fahren die Helfer im Spiel. Helfer ohne freien Maschinenführer kosten den normalen Spiellohn.",
+    "helperHint": "Deine Maschinenführer fahren die Helfer im Spiel, Azubis erst, wenn kein Maschinenführer frei ist (nur ohne Schulung). Helfer ohne freien Fahrer kosten den normalen Spiellohn.",
+    "apprenticeUntil": "Ausbildung bis {at}",
+    "takeovers": "Übernahme nach der Ausbildung",
+    "takeoverText": "{name} möchte nach der Ausbildung als Maschinenführer/in bleiben – für {amount} im Monat (Können {skill}).",
+    "takeOver": "Übernehmen",
+    "counterSalary": "Gegenangebot (€/Monat)",
+    "counterOffer": "Gegenangebot",
+    "noTakeover": "Nicht übernehmen",
+    "takeoverHint": "Ein Gegenangebot ab 90 % der Forderung nimmt der Azubi an, sonst geht er am Ende der Ausbildung. Ohne Antwort geht er auch.",
     "strike": "Streikt",
     "hours": "Als Helfer gefahren: {hours} h in diesem Monat (Vormonat {last} h)",
     "trainings": "Schulungen",
@@ -920,7 +1022,8 @@
     "amount": {
       "AUCTION": "Dein Gebot (€)",
       "DIRECT": "Dein Angebot (€)",
-      "SALE_OFFER": "Deine Forderung (€)"
+      "SALE_OFFER": "Deine Forderung (€)",
+      "LEASE_OFFER": "Deine Pachtforderung (€ je ha und Monat)"
     },
     "submitOffer": "Abgeben",
     "acceptAmount": "{amount} annehmen",
@@ -972,6 +1075,20 @@
       "same": "Felder {fields}: dieselbe Kultur wie im Vorjahr – das Amt schickt einen Hinweis.",
       "cut": "Felder {fields}: dieselbe Kultur zum zweiten Mal – die Prämie des Jahres wird gekürzt.",
       "premiumNote": "Das Amt rechnet am Ende des FS25-Jahres mit der Hauptkultur jedes Feldes."
+    },
+    "leaseOut": {
+      "badge": "Verpachtet",
+      "leasedHint": "Das Feld ist an einen Nachbarn verpachtet. Im Spiel gehört es niemandem, im Tool bleibt es deins. Pacht und Ende stehen unter „Verpachtete Felder“.",
+      "term": "Laufzeit",
+      "years": "{n} FS25-Jahr(e)",
+      "rate": "Wunschpacht (€ je ha und Monat)",
+      "submit": "Verpachten",
+      "guide": "Richtwert: {rate} je ha und Monat · bei deiner Wunschpacht {monthly} im Monat. Nur wenn das Feld leer oder abgeerntet ist.",
+      "offered": "{n} Nachbar(n) haben ein Pachtgebot abgegeben.",
+      "noInterest": "Niemand hat sich gemeldet – der Berater schreibt dir.",
+      "terms": "Laufzeit {years} Jahr(e) · deine Wunschpacht {rate} je ha und Monat",
+      "title": "Verpachtete Felder",
+      "intro": "Die Pacht kommt jeden Monat als Einnahme. Einen Monat vor dem Ende bietet der Pächter eine Verlängerung an; ohne Antwort bekommst du das Feld zurück."
     }
   },
   "market": {
@@ -1004,7 +1121,43 @@
     "participate": "Kontrakt annehmen",
     "subsidy": "Förderbetrag: {amount}",
     "until": "Gilt bis {at}",
-    "past": "{n} vergangene Ereignisse"
+    "past": "{n} vergangene Ereignisse",
+    "alarm": {
+      "title": "Preisalarm",
+      "fillType": "Sorte",
+      "sellPoint": "Verkaufsstelle",
+      "any": "beliebig (bester Preis)",
+      "direction": "Richtung",
+      "ABOVE": "über",
+      "BELOW": "unter",
+      "threshold": "Preis je 1.000 l",
+      "create": "Alarm anlegen",
+      "fired": "ausgelöst: {price} am {at}",
+      "reactivate": "Wieder aktivieren",
+      "active": "aktiv",
+      "delete": "Löschen",
+      "none": "Noch kein Preisalarm.",
+      "hint": "Erreicht der Preis die Schwelle, erscheint ein Hinweis im Spiel und die Landhändlerin schreibt dir. Ein Alarm meldet sich einmal, danach kannst du ihn wieder aktivieren. Höchstens {max} aktive Alarme."
+    },
+    "forward": {
+      "title": "Vorkontrakt",
+      "quantity": "Menge (Liter)",
+      "lead": "Liefermonat",
+      "months": "in {n} Monat(en)",
+      "preview": "Festpreis anfragen",
+      "quote": "Festpreis {price} je 1.000 l (heute {base}) für {quantity} l, Lieferung im {month}. Erwartete Einnahme: {income}.",
+      "conclude": "Abschließen",
+      "window": "Lieferung von {from} bis {to}",
+      "result": "{delivered} von {quantity} l geliefert",
+      "penalty": "Vertragsstrafe {amount}",
+      "none": "Noch kein Vorkontrakt.",
+      "status": {
+        "OPEN": "offen",
+        "FULFILLED": "erfüllt",
+        "SHORTFALL": "Fehlmenge"
+      },
+      "hint": "Der Festpreis gilt den ganzen Liefermonat an dieser Verkaufsstelle ({factor} % je Monat Vorlauf). Fehlt am Ende Ware, kostet das {penalty} % der Fehlmenge zum Festpreis. Kein Rücktritt, höchstens {max} offene Vorkontrakte."
+    }
   },
   "village": {
     "reputation": "Ansehen im Dorf",
@@ -1043,7 +1196,47 @@
     "narrativeOnly": "Rein erzählerisch: Notizen haben keinerlei Auswirkung auf das Spiel, auf Charaktere oder Zahlen.",
     "noteTitle": "Titel",
     "noteText": "Text",
-    "titleRequired": "Bitte einen Titel eingeben."
+    "titleRequired": "Bitte einen Titel eingeben.",
+    "milestoneBadge": "Meilenstein",
+    "download": "Chronik herunterladen",
+    "print": "Chronik drucken",
+    "downloadError": "Die Chronik konnte nicht heruntergeladen werden.",
+    "printView": {
+      "title": "Hofchronik – {name}",
+      "asOf": "Stand: {time}",
+      "back": "Zurück zum Tagebuch",
+      "printAgain": "Drucken",
+      "backstory": "Vorgeschichte",
+      "noBackstory": "Keine Vorgeschichte erfasst.",
+      "milestones": "Meilensteine",
+      "noMilestones": "Noch keine Meilensteine erreicht.",
+      "entries": "Tagebuch",
+      "noEntries": "Noch keine Einträge.",
+      "note": "eigene Notiz",
+      "milestone": "Meilenstein",
+      "reports": "Jahresberichte",
+      "noReports": "Noch kein Jahresbericht.",
+      "year": "Jahr {year}",
+      "months": "Erfasste Monate: {months}",
+      "figure": "Kennzahl",
+      "amount": "Betrag",
+      "income": "Einnahmen",
+      "expense": "Ausgaben",
+      "result": "Betriebsergebnis",
+      "profit": "Gewinn (Steuer)",
+      "tax": "Steuer",
+      "open": "offen",
+      "categories": "Einnahmen und Ausgaben je Kategorie",
+      "category": "Kategorie",
+      "fields": "Felder",
+      "field": "Feld {id}",
+      "crop": "Kultur",
+      "area": "Fläche",
+      "yield": "Ertrag",
+      "notHarvested": "nicht geerntet",
+      "withered": "verdorrt",
+      "harvested": "geerntet"
+    }
   },
   "home": {
     "welcomeTitle": "Willkommen bei FarmPulse",
@@ -1060,7 +1253,9 @@
     "debitsOf": "Abbuchung 1. {month}",
     "stableHealth": "Gesundheit {animal}",
     "stableFood": "Futter {food} %",
-    "animals": "Tiere"
+    "animals": "Tiere",
+    "milestones": "Meilensteine",
+    "milestoneReached": "Erreicht: {time}"
   },
   "settings": {
     "ai": "KI-Anbieter",
@@ -1104,6 +1299,11 @@
       "hint": "Einfache Ja/Nein-Entscheidungen erscheinen als Dialog direkt im Spiel – immer zu den Bedingungen, die hier im Browser stehen. Gespräche, Gegenforderungen und Formulare mit Beträgen bleiben im Browser.",
       "off": "Fragen im Spiel sind in der Konfiguration abgeschaltet (rpsim.bridge.ingame-prompts).",
       "key": "Ist gerade ein Menü offen, wartet die Frage. Mit der Taste „FarmPulse: offene Frage“ (Steuerung im Spiel, Standard Alt+J) öffnest du sie jederzeit, auch im Fahrzeug."
+    },
+    "farm": {
+      "title": "Hof",
+      "name": "Hofname",
+      "hint": "Steht über der Hofchronik und im Dateinamen. Leer = Kartenname."
     }
   },
   "notices": {
@@ -1121,6 +1321,7 @@
       "text": "{what} {amount} wurde im Spiel nicht ausgeführt: {reason}."
     },
     "insufficientFunds": "zu wenig Geld auf dem Konto",
+    "modOutdated": "Mod aktualisieren – der installierte Mod FS25_RPSim kennt diese Anweisung noch nicht",
     "rewindHint": "Nur die Buchungen im Spiel werden wiederhergestellt – Mails, Vertrauen und Verhandlungen bleiben auf dem Stand des Tools.",
     "resend": "Nachbuchen",
     "keep": "Tool-Stand beibehalten",
@@ -1191,7 +1392,8 @@
     "rsvpDecline": "Absagen",
     "invitationHint": "Eine Zusage freut die Gastgeber. Absagen ist in Ordnung – nur gar nicht zu antworten kommt schlecht an.",
     "fine": "Bußgeld {amount}",
-    "paid": "Bezahlt {amount}"
+    "paid": "Bezahlt {amount}",
+    "renewLeaseOut": "Verlängern ({amount} / Monat)"
   },
   "tasks": {
     "filter": "Aufgaben filtern",
@@ -1229,7 +1431,8 @@
     "todayDiary": "Heute im Tagebuch",
     "nothingToday": "Heute ist noch nichts eingetragen.",
     "toDiary": "Zum Tagebuch",
-    "counterOfferShort": "Gegenangebot der Bank"
+    "counterOfferShort": "Gegenangebot der Bank",
+    "leaseOutEndsHint": "Der Pächter möchte verlängern – ohne Antwort bekommst du das Feld zum Ende zurück."
   },
   "calendar": {
     "nextDays": "Nächste Tage",
@@ -1275,6 +1478,34 @@
     "invitations": "Einladungen"
   },
   "insurance": {
+    "drought": "Dürreversicherung (Wetterindex)",
+    "droughtIntro": "Zahlt bei einer ausgerufenen Dürre ohne Schadensmeldung je Hektar deiner eigenen Felder (ohne Pachtflächen). Es zählt nur eine Dürre, deren erster trockener Monat nach dem Abschluss beginnt. Läuft neben der Sturm- und Hagelversicherung.",
+    "droughtTerms": "{premium} je ha und Monat · Auszahlung {payout} je ha",
+    "droughtQuote": "Für {hectares} ha: {premium} pro Monat, Auszahlung bei Dürre {payout}",
+    "noOwnFields": "Ohne eigene Felder gibt es keine Dürreversicherung.",
+    "rainTitle": "Regen der letzten Monate",
+    "rainRule": "Trocken ist ein Wachstumsmonat ({months}) mit Regen unter {rain} % der beobachteten Zeit; mindestens {observed} % des Monats müssen beobachtet sein. Nach {count} trockenen Monaten in Folge wird eine Dürre ausgerufen.",
+    "rainPercent": "{percent} % Regen",
+    "observed": "{percent} % beobachtet",
+    "rating": {
+      "DRY": "Trocken",
+      "WET": "Genug Regen",
+      "UNKNOWN": "Zu wenig Daten",
+      "OUTSIDE": "Kein Wachstumsmonat",
+      "RUNNING": "Läuft"
+    },
+    "series": "{count} trockene(r) Monat(e) in Folge seit {month}",
+    "seriesDeclared": "Dürre ausgerufen",
+    "droughts": "Ausgerufene Dürren",
+    "droughtEntry": "{first}–{last}: {months} trockene Monate · {events} Preisereignisse",
+    "droughtCrops": "Höhere Preise für {crops}",
+    "insuranceResult": {
+      "PAID": "Versicherung zahlte {amount}",
+      "NONE": "Keine Dürreversicherung",
+      "TOO_LATE": "Versicherung zu spät abgeschlossen – keine Auszahlung",
+      "COVER_SUSPENDED": "Prämie offen – keine Auszahlung"
+    },
+    "disabled": "Die Dürre-Erkennung ist ausgeschaltet.",
     "damages": "Schäden",
     "damagesIntro": "Hagel, Sturm und Wildschweine: Melde einen versicherten Schaden rechtzeitig, beim Wildschaden verhandelst du mit dem Jagdpächter."
   },
@@ -1284,7 +1515,33 @@
     "mechanics": "Mechaniker:innen",
     "noMechanic": "Keine Mechaniker:in eingestellt.",
     "toStaff": "Zum Personal",
-    "reports": "Werkstattberichte kommen jeden Monat per"
+    "reports": "Werkstattberichte kommen jeden Monat per",
+    "machine": "Maschine",
+    "usedVehicles": "Gebrauchtmaschinen",
+    "usedIntro": "Die Werkstatt und die Nachbarn bieten ab und zu gebrauchte Maschinen an. Du verhandelst in bis zu {rounds} Runden; nach der Einigung steht die Maschine auf dem Shop-Platz, der Preis wird bei der Lieferung gebucht.",
+    "offers": "Angebote",
+    "noOffers": "Gerade bietet niemand eine Maschine an.",
+    "seller": { "WORKSHOP": "Werkstatt", "NEIGHBOR": "Nachbar" },
+    "usedValues": "{years} Jahre · {hours} Betriebsstunden · {damage} % Schaden",
+    "price": "Preis {price}",
+    "yourOffer": "Dein Angebot (€)",
+    "makeOffer": "Angebot abgeben",
+    "delivering": "Einig für {price} – wird geliefert",
+    "noSpace": "Kein freier Shop-Platz (Versuch {attempt} von {max}) – nächster Versuch {time}. Bitte Platz freiräumen.",
+    "ownVehicles": "Eigene Maschinen",
+    "noVehicles": "Keine eigenen Maschinen im Export.",
+    "value": "Wert im Spiel {value}",
+    "condition": "Zustand {condition} %",
+    "onSale": "Zum Verkauf angeboten",
+    "sell": "Zum Verkauf anbieten",
+    "sales": "Verkäufe",
+    "asking": "Wunschpreis {price}",
+    "bid": "bietet {price}",
+    "acceptBid": "Annehmen",
+    "demand": "Fordern",
+    "withdrawSale": "Verkauf zurückziehen",
+    "sold": "Verkauft für {price} an {name} – wird übergeben",
+    "saleHint": "Nachbarn zahlen höchstens {cap} % des Werts im Spiel. Ist etwas angehängt, gilt im Spiel: erst abkoppeln."
   },
   "authorities": {
     "taxOffice": "Finanzamt",
@@ -1292,7 +1549,14 @@
     "taxBills": "Bescheide",
     "advisor": "Steuerberatung",
     "inspections": "Kontrollen",
-    "inspectionsIntro": "Jede Kontrolle wird mit Frist angekündigt. Behebe den Mangel im Spiel – dann bleibt es ohne Beanstandung."
+    "inspectionsIntro": "Jede Kontrolle wird mit Frist angekündigt. Behebe den Mangel im Spiel – dann bleibt es ohne Beanstandung.",
+    "droughtAid": "Dürrehilfe",
+    "droughtAidIntro": "Nach einer ausgerufenen Dürre zahlt das Amt eine Hilfe je Hektar eigener Felder, auf denen in den trockenen Monaten eine Kultur wuchs. Den Antrag stellst du hier per Knopf innerhalb der Frist.",
+    "aidText": "{hectares} ha mit wachsender Kultur – Hilfe {amount}",
+    "aidDeduction": "Abzug wegen Dürreversicherung: {amount}",
+    "apply": "Antrag stellen",
+    "aidHint": "Das Geld kommt sofort als Förderung aufs Konto.",
+    "aidHistory": "{hectares} ha · {amount}"
   },
   "stable": {
     "trade": "Viehhandel und Tierarzt",
@@ -1319,5 +1583,141 @@
       "moist": "Boden feucht",
       "wet": "Boden nass"
     }
+  },
+  "lan": {
+    "title": "Tablet & Netzwerk",
+    "intro": "Öffne FarmPulse auch auf einem Tablet oder Handy im selben WLAN. Aus dem Internet ist das Tool nie erreichbar.",
+    "enabled": "Im Heimnetz erreichbar",
+    "readOnly": "Nur am Spiele-PC änderbar.",
+    "pin": "PIN für Geräte im Heimnetz",
+    "pinSet": "PIN gesetzt – Tablets und Handys melden sich einmal mit der PIN an.",
+    "pinNone": "Keine PIN – jedes Gerät im Heimnetz kommt direkt hinein.",
+    "pinPlaceholder": "{min}–{max} Ziffern",
+    "pinSave": "PIN setzen",
+    "pinChange": "PIN ändern",
+    "pinRemove": "PIN entfernen",
+    "address": "Auf dem Tablet öffnen",
+    "off": "Der Heimnetz-Zugriff ist aus – erst einschalten, dann die Adresse auf dem Tablet öffnen.",
+    "noAddress": "Keine Adresse im Heimnetz gefunden. Ist der PC mit dem WLAN oder Netzwerk verbunden?",
+    "login": {
+      "title": "FarmPulse – Anmeldung",
+      "intro": "Dieses Gerät ist im Heimnetz. Bitte die PIN eingeben, die am Spiele-PC unter Einstellungen → Tablet & Netzwerk gesetzt wurde.",
+      "pin": "PIN",
+      "submit": "Anmelden",
+      "wrong": "PIN falsch.",
+      "locked": "Zu viele Fehlversuche – bitte in {minutes} Minuten erneut versuchen."
+    }
+  },
+  "trade": {
+    "intro": "Die Nachbarn verkaufen dir Ware aus ihrer Ernte und fragen nach Ware aus deinen Silos. Gehandelt wird nur, wofür du ein eigenes Silo hast; die Ware wird im Spiel echt ein- oder ausgebucht.",
+    "noSilos": "Der Mod meldet deine Silos nicht – bitte FS25_RPSim aktualisieren. Ohne diese Daten gibt es keinen Handel.",
+    "noFields": "Der Mod meldet die Felder der Nachbarn nicht (älterer Mod oder npcFieldExport aus). Ohne sie haben die Nachbarn keinen Vorrat aus der Ernte und keine Aufträge.",
+    "limitReached": "Du hast im Spiel die Höchstzahl an Aufträgen erreicht – solange bitten die Nachbarn um keine Hilfe.",
+    "silos": "Deine Silos",
+    "silo": "{fillType}: {amount} l, frei {free} l",
+    "noSiloGoods": "Keine eigenen Silos gemeldet.",
+    "neighbors": "Nachbarn",
+    "noNeighbors": "Noch keine Nachbarn im Dorf.",
+    "role": "Betrieb",
+    "stock": "Vorrat",
+    "noStock": "Kein Vorrat – der Vorrat entsteht aus der Ernte seiner Felder.",
+    "stockItem": "{fillType}: {amount} l · {price} je 1.000 l",
+    "stockItemNoPrice": "{fillType}: {amount} l · kein Preis",
+    "needs": "Braucht",
+    "fields": "Felder: {ids}",
+    "requestTitle": "Ware anfragen",
+    "fillTypeLabel": "Sorte",
+    "amountLabel": "Menge (Liter)",
+    "maxHint": "höchstens {max} l (Vorrat und Platz in deinen Silos)",
+    "request": "Anfragen",
+    "noRoom": "Für seine Ware hast du gerade keinen Platz in einem eigenen Silo.",
+    "askWork": "Nach Arbeit fragen",
+    "cases": "Angebote, Anfragen und Aufträge",
+    "offerText": "{name} verkauft dir {quantity} l {fillType} für {amount} ({unit} je 1.000 l).",
+    "requestText": "{name} möchte {quantity} l {fillType} aus deinem Silo für {amount} ({unit} je 1.000 l).",
+    "buy": "Kaufen",
+    "sell": "Verkaufen",
+    "inTransfer": "wird im Spiel gebucht",
+    "offerHint": "Die Ware kommt in deine eigenen Silos, das Geld wird im selben Moment abgebucht. Ablehnen kostet etwas Vertrauen, Ignorieren mehr.",
+    "requestHint": "Die Ware wird aus deinen Silos abgebucht, das Geld gutgeschrieben. Liegt beim Buchen zu wenig im Silo, ist der Nachbar enttäuscht.",
+    "missionText": "{name} bittet dich: {type} auf seinem Feld ({hectares} ha), Bonus bei Erfolg {bonus}.",
+    "acceptMission": "Zusagen",
+    "missionRunning": "im Auftragsmenü des Spiels",
+    "missionHint": "Nach der Zusage steht der Auftrag im Auftragsmenü des Spiels, mit dem Nachbarn als Auftraggeber. Die Vergütung zahlt das Spiel.",
+    "contactLink": "Handel & Arbeit mit diesem Nachbarn →",
+    "requested": "{name} hat geantwortet – sein Angebot steht unten bei den Angeboten.",
+    "workOffered": "{name} hat Arbeit für dich – seine Anfrage steht unten bei den Aufträgen.",
+    "farmShop": "Hofladen",
+    "farmShopIntro": "Leute aus dem Dorf bestellen kleine Mengen aus deinen Silos zum Hofladenpreis. Lieferst du, steigt dein Ansehen im Dorf; wer oft ablehnt, bekommt seltener Bestellungen.",
+    "shopText": "{name} bestellt {quantity} l {fillType} für {amount} ({unit} je 1.000 l).",
+    "deliver": "Liefern",
+    "shopHint": "Die Ware wird aus deinen Silos abgebucht, das Geld gutgeschrieben."
+  },
+  "credit": {
+    "collateral": "Sicherheit (Grundschuld)",
+    "collateralField": "Feld {id} · {ha} ha",
+    "noCollateral": "Kein eigenes Feld frei für eine Grundschuld.",
+    "coverage": "Beleihungswert {value} – deckt {percent} % des Betrags, Zins etwa {discount} Prozentpunkte günstiger.",
+    "collateralHint": "Beleihungswert = {ltv} % des Feldpreises, bis zu {discount} Prozentpunkte Zinsnachlass. Für den Teil über {amount} ({share} % deines Vermögens) verlangt die Bank eine Grundschuld.",
+    "withGrundschuld": "Nur mit Grundschuld auf Feld {fields} (Beleihungswert {value}). Mit der Annahme wird das Feld belastet.",
+    "applicationCollateral": "Grundschuld auf Feld {fields} · Zinsnachlass {discount} Prozentpunkte",
+    "pledged": "Grundschuld auf Feld {id} · Beleihungswert {value}",
+    "requestSaleConsent": "Verkauf erlauben lassen",
+    "saleConsentGiven": "Verkauf erlaubt – der Erlös tilgt",
+    "rateCutTotal": "Zins durch Jahresgespräche um {cut} Prozentpunkte gesenkt",
+    "badgePledged": "Grundschuld",
+    "badgeConsent": "Grundschuld · Verkauf erlaubt",
+    "badgeRequested": "als Sicherheit vorgesehen",
+    "cases": "Forderungen und Termine der Bank",
+    "claimText": "Sondertilgung von {amount} für den Kredit „{purpose}“ nach dem Verkauf von Feld {field} im Spielmenü.",
+    "claimOverdue": "überfällig – keine neuen Kredite, bis sie bezahlt ist",
+    "payClaim": "Bezahlen",
+    "claimHint": "Ohne Vorfälligkeitsentschädigung. Ist sie nach der Frist nicht bezahlt, zählt sie wie eine verpasste Rate.",
+    "reviewText": "Einladung zum Jahresgespräch über das Jahr {year}.",
+    "attend": "Termin wahrnehmen",
+    "rateCutText": "Zinssenkung um {cut} Prozentpunkte auf alle laufenden Kredite.",
+    "acceptCut": "Annehmen",
+    "rateCutHint": "Die Restlaufzeit bleibt, die Rate sinkt. Ablehnen hat keine Folgen.",
+    "plan": {
+      "title": "Liquiditätsplanung",
+      "unavailable": "Noch keine Daten aus dem Spiel.",
+      "belowZero": "Im {month} fällt dein Kontostand voraussichtlich unter null.",
+      "belowReserve": "Im {month} fällt dein Kontostand voraussichtlich unter die Reserve von einem Monat Fixkosten.",
+      "month": "Monat",
+      "known": "Bekannte Posten",
+      "income": "Einnahmen (Schätzung)",
+      "balance": "Kontostand Ende",
+      "estimate": "geschätzt",
+      "noPostings": "Keine bekannten Posten.",
+      "reserve": "Reserve: {amount}",
+      "hint": "Bekannte Posten werden zum Monatsanfang gebucht. Die Einnahmen sind geschätzt: Betriebsergebnis desselben Monats im Vorjahr (sonst der Schnitt der Monate), ohne die schon bekannten Posten.",
+      "hintNoJournal": "Bekannte Posten werden zum Monatsanfang gebucht. Ohne Buchungsjournal des Mods gibt es keine Schätzung der Einnahmen."
+    },
+    "report": {
+      "title": "Hofbericht",
+      "none": "Der erste Hofbericht kommt zum Jahreswechsel (Februar → März).",
+      "year": "Jahr {year}",
+      "income": "Einnahmen",
+      "expense": "Ausgaben",
+      "result": "Betriebsergebnis",
+      "tax": "Steuer",
+      "months": "{n} Monate im Journal · Investitionen {investment}",
+      "categories": "Einnahmen und Ausgaben",
+      "noJournal": "Kein Buchungsjournal für dieses Jahr.",
+      "fields": "Kultur und Ertrag",
+      "harvested": "geerntet",
+      "notHarvested": "nicht geerntet",
+      "noFields": "Keine Felddaten.",
+      "rain": "Regen im Jahr: {hours} Stunden",
+      "compare": "Im Vergleich",
+      "previous": "Vorjahr",
+      "staff": "Personal",
+      "wages": "Löhne je Monat",
+      "animals": "Tiere",
+      "reputation": "Ansehen im Dorf",
+      "inspections": "{n} Tierwohl-Kontrolle(n) im Jahr"
+    },
+    "leaseConsentGiven": "Verpachtung erlaubt",
+    "requestLeaseConsent": "Zustimmung zur Verpachtung"
   }
 }

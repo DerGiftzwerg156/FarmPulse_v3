@@ -90,7 +90,8 @@ public class TaskService {
                 items.add(task("contract-" + c.getId(), "CONTRACT_OFFER", c.getKind().name(), c.getOfferExpiresAtGameTime(),
                         c.getStartedAtGameTime() == null ? 0 : c.getStartedAtGameTime())
                         .contract(mapper.contract(c)).build());
-            } else if (c.getStatus() == ContractStatus.ACTIVE && c.getKind() == ContractKind.LEASE
+            } else if (c.getStatus() == ContractStatus.ACTIVE
+                    && (c.getKind() == ContractKind.LEASE || c.getKind() == ContractKind.LEASE_OUT) // R3-L1: renewal offer
                     && (c.getRenewalAmount() != null || c.getPurchasePrice() != null)) {
                 items.add(task("lease-" + c.getId(), "LEASE_RENEWAL", c.getKind().name(), c.getEndsAtGameTime(),
                         c.getStartedAtGameTime() == null ? 0 : c.getStartedAtGameTime())

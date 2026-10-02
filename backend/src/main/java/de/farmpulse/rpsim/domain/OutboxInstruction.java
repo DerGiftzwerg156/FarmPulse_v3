@@ -48,6 +48,10 @@ public class OutboxInstruction extends SavegameScoped {
     @Column(name = "ack_message", length = 1000)
     private String ackMessage;
 
+    /** Roadmap V3 (R3-Q1): optional result of the ack as JSON (e.g. vehicleId after VEHICLE_SPAWN). */
+    @Column(name = "ack_result_json", length = 1000)
+    private String ackResultJson;
+
     @Column(name = "related_entity_type", length = 64)
     private String relatedEntityType;
 

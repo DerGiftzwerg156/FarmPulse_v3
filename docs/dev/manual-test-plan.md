@@ -272,3 +272,162 @@ the result in the row's issue and, if the fallback is needed, switch the impleme
 | 10.20 | Temperature in the status bar (Hof-Tablet) | Compare the outside temperature shown in a vehicle (or the weather page of the in-game menu) with `farm_facts.json` → `weather.temperature` and the status bar of the web app | the value matches in °C (one decimal) and follows day and night | if the unit or the value differs, convert or drop `temperature` in `RPSimGameAdapter:collectWeather`; the status bar then only shows rain / dry |
 | 10.21 | Training categories ("Schulungen") | Buy or pick a large tractor, a combine, a truck and a medium tractor; start a helper on each with only untrained operators and the strict helper limit on; read `FS25_RPSim` log / `FS25_RPSim.workforce` | the combine / truck / large tractor helper is refused with *Kein geschulter Maschinenführer frei* and a notification naming the training; the medium tractor starts with an operator. Without the strict mode all start (vanilla helper for the machines) | if a machine is not refused, its shop category differs from the defaults: add the real name (upper case, `StoreItem.categoryName`) to `rpsim.formulas.training.categories`; if only the dialog text is missing, the notification still explains it |
 | 10.22 | Strict helper limit with Courseplay / AutoDrive (R2-A3) | Enable `strictHelperLimit` with one active machine operator; start one vanilla helper, then start a second one with Courseplay (HUD start button) and with AutoDrive (destination / hotkey) | the second helper is refused (*Kein freier Maschinenführer (strenger Modus)*) or stops right after its start with `%s hält an: kein freier Maschinenführer (strenger Modus)` and a notification; the first keeps running | if a mod's helper keeps running, its job does not run through `AIJob:start` / `getIsStartable`: note how the mod starts it (log, its source) and hook that path |
+
+## 11. Roadmap V3 in the real FS25
+
+Every point of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) marked 🟡 ("Im Spiel prüfen") has one row here. Check a row
+once the roadmap item named in the first column is built; until then the mod does not collect the value (the block is
+missing, see [bridge protocol](bridge-protocol.md#roadmap-v3-blocks-optional-r3-q1)) or acknowledges the instruction
+`FAILED` / `NOT_SUPPORTED`. Note the result in the row's issue and, if the fallback is needed, switch the
+implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 11.1 | Neighbour fields over the year (R3-H1) | Play one FS25 year and look at `farm_facts.json` → `npcFields[]` at the start of every month | note how often and in which months the game changes crop and growth state of the neighbour fields (the logic is not in the code dump; `FieldManager.lua` ends after `saveToXMLFile`) | the neighbour stock (R3-H2) uses the last crop seen and the harvest year, like the crop history of R2-C1 |
+| 11.2 | New silo fill level shown at once (R3-H4) | Sell straw to a neighbour and buy wheat from one (`STORAGE_TRANSFER` OUT / IN), then open the silo info and the price menu of the game | the new fill level is shown immediately (single player: the game is the server, the mod takes the `self.isServer` path of `PlaceableSilo:refillAmount`) | the level appears only after the next update - accepted; multiplayer stays excluded as in V1 |
+| 11.3 | Contract types beyond plowing and stone picking (R3-H5) | For sowing, harvesting, fertilising … look up the class with `g_missionManager:getMissionType(name)` and check whether it has `isAvailableForField`; create one with `MISSION_CREATE` on a matching neighbour field | the contract appears in the contract menu with the neighbour as client; note every type that works | offer only the evidenced types `PlowMission` and `StonePickMission`; add a type once this check confirms it |
+| 11.4 | Created contract survives saving and loading (R3-H5) | Create a contract with `MISSION_CREATE`, save, quit and load the savegame (`MissionManager:saveToXMLFile` / `loadFromXMLFile`) | the contract is still in the contract menu and in `farm_facts.json` → `missions[]` with the same `uniqueId` | the backend compares with `farm_facts.missions` after loading and offers a lost contract again |
+| 11.5 | Crop when a field is leased out and back (R3-L1) | Lease out an own field with a standing crop (`FARMLAND_TRANSFER FROM_PLAYER`), watch it during the lease, then take it back (`TO_PLAYER`) | note whether the field state stays when the owner changes (`FarmlandManager:setLandOwnership`) and whether the game creates contracts on the field during the lease | start and end only in phase `EMPTY` or `HARVESTED` (data of R2-C1) |
+| 11.6 | Time to read the shop catalog (R3-V1) | Load a savegame with many shop items (incl. mods) and compare the log timestamps before and after the `storeVehicles` export (`StoreItemUtil.loadSpecsFromXML` per item) | note the time; the mission start must not stall noticeably | leave `motorized` out; the backend then uses the factor for motorised vehicles |
+| 11.7 | Age and hours of a delivered used vehicle (R3-V2) | Buy a used machine (`VEHICLE_SPAWN`), open the game's vehicle manager / shop sell dialog | age (months) and operating hours match the instruction, the damage is shown | fail with `NO_SPACE` and a hint in the game; the workshop tries again on the next game day |
+| 11.8 | Shop place taken by the player (R3-V2) | Stand on the shop spawn place (on foot and with a vehicle) while a `VEHICLE_SPAWN` is executed | note whether `setLoadingPlace` treats the place as taken (`NO_SPACE`) or loads the vehicle elsewhere | fail with `NO_SPACE` and a hint in the game; the workshop tries again on the next game day |
+| 11.9 | Attached implements and loaded goods when a vehicle is removed (R3-V3) | Sell a tractor with an attached implement and a trailer with goods (`VEHICLE_REMOVE`) | note what happens to the implement, the trailer and the goods on `vehicle:delete()` | allow the sale only for a root vehicle (`getRootVehicle() == vehicle`) with nothing attached; otherwise `FAILED` with the hint "Bitte erst abkoppeln" |
+
+## 12. Tablet in the home network (Roadmap V3 R3-N)
+
+Needs the release (or backend + built frontend via `rpsim.web.static-dir`), a tablet or phone in the same WLAN and a
+device outside it (phone on mobile data). See [installation](../user-guide/installation.md#auf-dem-tablet-oder-handy-öffnen).
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 12.1 | Start the backend, look at its window | one line "Auf dem Tablet öffnen: http://<IP>:8080" per private IPv4 address, with the hint that the access is off |
+| 12.2 | Switch off (default): open the address on the tablet | 403 with "Zugriff nur vom Spiele-PC …"; the gaming PC works as before via `localhost` |
+| 12.3 | *Einstellungen → Tablet & Netzwerk* on the gaming PC: switch on, no PIN; scan the QR code with the tablet | the Hof-Tablet opens without login; the card on the tablet is read-only ("Nur am Spiele-PC änderbar") |
+| 12.4 | Set a PIN (4-8 digits) on the gaming PC, reload the tablet | the tablet shows the PIN login; a wrong PIN says "PIN falsch", the right one opens the Hof-Tablet; the gaming PC is never asked |
+| 12.5 | Enter a wrong PIN five times on the tablet | "Zu viele Fehlversuche – bitte in 5 Minuten erneut versuchen"; after five minutes the right PIN works; another device is not locked |
+| 12.6 | Live updates on the tablet: let a character write a mail and call (simulator `POST /advance`, or play) | the mail badge updates without reload, the call overlay rings on the tablet, answering and hanging up work by touch |
+| 12.7 | Operate every app by touch (start screen, dock, forms, dialogs, charts) | all buttons reachable, no hover-only actions, inputs open the right keyboard (numbers for the PIN) |
+| 12.8 | Restart the backend | the tablet stays logged in (session 30 days) |
+| 12.9 | Change the PIN, then switch the access off and on again | the tablet must log in again after each step |
+| 12.10 | Open the address from a device outside the home network (phone on mobile data via a port forwarding, if available) | always 403 |
+| 12.11 | Tablet browser menu *Zum Startbildschirm hinzufügen* | FarmPulse symbol on the home screen; it opens the app without the address bar (`display: standalone`) in the dark Hof-Tablet colours |
+| 12.12 | Tablet in the guest WLAN of the router | the address does not load (the router separates the networks) - as described in the troubleshooting |
+
+## 13. Trade and contracts with the neighbours (Roadmap V3 R3-H)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section H. Needs the current mod, an own silo (straw
+and wheat) and at least one neighbour in *Kontakte*. With the bridge simulator: scenario `nachbarhandel`, harvest a
+neighbour field with `POST /npc-field` and advance a month with `POST /advance`.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 13.1 | Open *Handel* | own silos with fill level and free space; every neighbour with role, trust, stock (price per 1000 l) and needs; no warning about the mod |
+| 13.2 | Let a neighbour field be harvested (game or `POST /npc-field`), open *Handel* again | the owner's stock shows the grain (30 % of the harvest) and, for wheat / barley / oat, straw |
+| 13.3 | A dairy neighbour asks for straw (wait for the monthly request or play a few months); answer *Verkaufen* | the amount is gone from the own silo, the money is booked as *Warenverkauf*, a diary entry and a thank-you appear, trust goes up |
+| 13.4 | *Ware anfragen* at a neighbour with wheat, then *Kaufen* | the offer names quantity and price; after buying the wheat is in the own silo, the money is booked as *Warenkauf*; his stock is smaller |
+| 13.5 | Empty the silo in the game before answering a request with *Verkaufen* | the transfer fails (`INSUFFICIENT_STOCK`), nothing is booked, the neighbour is disappointed |
+| 13.6 | Sell or give away the own straw silo, open *Handel* | straw is no longer listed for requests (no own silo) and no neighbour offers it |
+| 13.7 | A neighbour with a harvested, unplowed field asks for help (or *Nach Arbeit fragen*); answer *Zusagen* | the contract appears in the game's contract menu with this neighbour as client |
+| 13.8 | Finish the contract in the game | a thank-you with 250 € bonus, trust goes up; a failed or expired contract disappoints him |
+| 13.9 | Reach the game's contract limit, then *Nach Arbeit fragen* | the app says the limit is reached, no request comes |
+| 13.10 | *Einstellungen → Fragen im Spiel*: switch on the neighbour occasions, wait for an offer | the yes / no question appears in the game; *Ja* buys / sells or promises like the button |
+
+## 14. Credit and financial planning (Roadmap V3 R3-K)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section K. Needs own fields, an active bank advisor and
+the current mod (booking journal and calendar).
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 14.1 | *Bank*: apply for the same amount twice, once without and once with an own field as collateral | the application with Grundschuld gets a lower rate (coverage × 1 percentage point) |
+| 14.2 | Apply for more than half of the farm assets without collateral | counter offer "mit Grundschuld" naming the largest free own field(s); accepting pledges them, the field shows *Grundschuld* in the Flurkarte |
+| 14.3 | Flurkarte: offer the pledged field for sale | refused with "Bitte zuerst … Zustimmung"; after *Verkauf erlauben lassen* the offer works, and the sale books the repayment of the collateral value together with the sale |
+| 14.4 | Sell a pledged field in the game's field menu | mail of the bank advisor, claim in the Bank app (10 days), trust lower; unpaid after 10 days: overdue, new applications rejected (credit block) until paid |
+| 14.5 | Repay a loan with Grundschuld completely | diary "Grundschuld gelöscht", the field is free again |
+| 14.6 | Tone *Hart*: let a loan with Grundschuld be called in | the field goes to the bank (game field menu), its collateral value is credited against the debt |
+| 14.7 | *Bank* → *Liquiditätsplanung* | the next 12 months; the month of the next tax prepayment shows its amount; income marked as estimate; with a low balance the month below zero is named and the advisor writes once |
+| 14.8 | Play into March (year change) | *Hofbericht* of the finished year in the Bank app, diary entry, invitation to the annual review (also in *Aufgaben*) |
+| 14.9 | Attend the annual review after a good year with a running loan | offer of a rate cut; accepting lowers rate and installment, the term stays |
+
+## 15. Market and marketing (Roadmap V3 R3-M)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section M. Needs the current mod, grain in an own silo
+and an active land agent and villager.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 15.1 | *Agrarbörse* → *Preisalarm*: wheat, any sell point, "über", a price just below the current best price | at the next export a hint appears in the game, the land agent's mail names the stock and its value; the alarm shows "ausgelöst" and can be activated again |
+| 15.2 | *Vorkontrakt*: wheat at one sell point, 10,000 l, next month; *Festpreis anfragen*, then *Abschließen* | the fixed price is shown before; *Bank → Liquiditätsplanung* shows the expected income in that month |
+| 15.3 | In the delivery month sell wheat at that sell point (game price menu) | the sell point pays the fixed price up to 10,000 l |
+| 15.4 | Deliver less than agreed until the month ends | contract "Fehlmenge", the penalty is booked (*Vertragsstrafe*), mail of the land agent |
+| 15.5 | Wait for a farm-shop order (*Handel* → *Hofladen*), then *Liefern* | the amount is taken from the own silo and the money booked as *Warenverkauf*; diary entry |
+
+## 16. Drought and weather risk (Roadmap V3 R3-W)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section W. Needs own fields with a growing crop, an
+active cooperative, authority and insurance agent. In the game set the weather so that it does not rain (or use the
+simulator scenario `duerre-sommer`) and keep FarmPulse running for at least half of every month.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 16.1 | *Versicherung* → *Dürreversicherung*: *Angebot anfordern*, then accept | the quote names the own area without leased fields, 4 € per ha; the contract runs beside storm/hail |
+| 16.2 | Let a growth month (May–October) pass without rain | the month shows "Trocken" in the card, the cooperative warns |
+| 16.3 | Let the next month pass without rain | drought declared: mail of the cooperative, regional price rises for the largest crops (*Agrarbörse*), village gossip; the insurance pays 200 € per ha (*Versicherungsleistung*) |
+| 16.4 | *Ämter* → *Dürrehilfe* → *Antrag stellen* | 150 € per ha of the growing own fields, halved with the drought insurance, booked as *Förderung* |
+| 16.5 | Play a month with rain, or keep FarmPulse off for most of a month | the series ends (no drought from data gaps) |
+
+## 17. Used machines (Roadmap V3 R3-V)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section V. Needs the current mod and an active
+neighbour. Rows 11.6–11.9 check the game behaviour behind it.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 17.1 | Start the savegame and look at `market_context.json` | `storeVehicles` lists the shop's vehicles (with `motorized`), the log names the count; `farm_facts.json` → `assets.vehicles[]` carry `name` and `xmlFilename` |
+| 17.2 | Wait for a month start with an offer (*Werkstatt* → *Gebrauchtmaschinen*), offer the asked price | agreement mail; the machine stands on the shop place, belongs to you, the vehicle manager shows the agreed age and hours, the damage is set; the price is booked as *Maschinenkauf (gebraucht)* |
+| 17.3 | Block the shop places (park vehicles there) and agree on another offer | hint in the game and a mail "Stellen Sie erst Platz auf dem Hof frei", nothing booked; after clearing the place the machine comes the next day |
+| 17.4 | *Eigene Maschinen* → offer a tractor with an implement attached, agree with a neighbour | the sale fails with "Bitte erst abkoppeln", nothing booked; detach and offer again: the tractor disappears, the proceeds are booked as *Maschinenverkauf*, diary entry and gossip |
+| 17.5 | Agree on a sale, then load the last save without saving | the removal and the proceeds are sent again (rewind notice) |
+
+## 18. Staff (Roadmap V3 R3-P)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section P. Needs the current mod.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 18.1 | Hire an office clerk, wait until a tax prepayment is 3 days before its deadline | the clerk's reminder mail; with a tax advisor only the advisor writes |
+| 18.2 | Leave the bill open until the deadline day (enough money) | the clerk pays it (*Steuerzahlung*), mail and diary, no late fee |
+| 18.3 | Post a job *Azubi*, hire one, start a helper on a medium tractor while every machine operator is busy | the apprentice drives it (his name in the helper messages, no game wage in the employees mode) |
+| 18.4 | Start a helper on a combine with only the apprentice free | the vanilla helper drives (strict mode: the start is refused with the missing training) |
+| 18.5 | Wait until one month before the end of the training, make a counter offer below 90 % | he declines and leaves at the end of the training; a counter offer from 90 % makes him a machine operator |
+
+## 19. Chronicle (Roadmap V3 R3-T)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section T. No mod change.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 19.1 | Repay a bank loan completely (installments or Sondertilgung), wait one game day | diary entry *Erster Kredit getilgt* with the badge *Meilenstein*; the start screen shows the widget *Meilensteine* with the badge (game date on hover) |
+| 19.2 | Start screen of a savegame without a reached milestone | no widget *Meilensteine* |
+| 19.3 | Update a running savegame that already traded with a neighbour and repaid a loan | after the next game day both milestones are in the diary (current game date) |
+| 19.4 | Play a full FS25 year after the start without any payment delay | at the year change the milestone *Ein Jahr ohne Zahlungsverzug*; with a missed installment or an overdue salary in that year none |
+| 19.5 | Settings → *Hof*: enter a farm name and save; diary → *Chronik herunterladen* | the file `chronik-<farm name>.md` with farm name, backstory, milestones, all entries by day (notes marked) and the farm reports |
+| 19.6 | Diary → *Chronik drucken* | the print view opens the print dialog; the preview shows black text on white without status bar, app header and dock; *Als PDF speichern* works |
+
+## 20. Leasing out own fields (Roadmap V3 R3-L)
+
+Acceptance of [`ROADMAP_V3.md`](../architecture/ROADMAP_V3.md) section L. No mod change; check the 🟡 points (field
+state at the change of hands, base-game contracts on the field during the lease).
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 20.1 | Flurkarte → own field with a crop → *Verpachten* | refused: only an empty or harvested field |
+| 20.2 | Harvest the field, *Verpachten* for 1 year at the guide value | 1–3 neighbours send a bid by mail; the bids appear as *Verpachtung* among the negotiations |
+| 20.3 | Accept a bid (or demand and agree) | in the game the field has no owner any more and the base game farms it; no sale is reported, no diary entry "im Spielmenü verkauft"; the card *Verpachtete Felder* shows tenant, rent and end |
+| 20.4 | Wait for the next month start | the rent is booked in the game (`LEASE_INCOME`), the bank shows it as income; the liquidity plan lists it |
+| 20.5 | One month before the end | the tenant offers a renewal; *Verlängern* extends the term at the new rent |
+| 20.6 | Let the term end without renewal | the field comes back (`TO_PLAYER`) once the base game left it empty or harvested, at the latest one month later |
+| 20.7 | Lease out again and buy the field in the game's field menu | the lease ends at once, the tenant writes annoyed; no purchase is reported |
+| 20.8 | A pledged field: *Verpachten* | refused until *Zustimmung zur Verpachtung* in the bank; then possible, the Grundschuld stays |
+| 20.9 | Lease out the family field | the family is a little disappointed (mail), it stays the family field |
+

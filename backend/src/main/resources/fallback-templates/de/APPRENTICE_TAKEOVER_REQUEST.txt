@@ -1,0 +1,6 @@
+Nach meiner Ausbildung
+Hallo,
+
+in {{daysLeft}} Tagen ist meine Ausbildung zu Ende. Ich würde gern bleiben – als Maschinenführer/in für {{salary}} € im Monat. Sagen Sie mir in der App „Personal“ Bescheid?
+
+{{characterName}}

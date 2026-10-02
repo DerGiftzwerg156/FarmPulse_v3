@@ -35,6 +35,12 @@ public class DiaryService {
         return add(sg, DiaryEntryType.AUTO, category, title, text, relatedType, relatedId);
     }
 
+    /** Roadmap V3 R3-T1: a reached milestone. */
+    @Transactional
+    public DiaryEntry addMilestone(Savegame sg, String title, String text, Long milestoneId) {
+        return add(sg, DiaryEntryType.MILESTONE, "MILESTONE", title, text, "MILESTONE", milestoneId);
+    }
+
     /** Free player note - purely narrative, never read by any formula. */
     @Transactional
     public DiaryEntry addPlayerNote(Savegame sg, String title, String text) {

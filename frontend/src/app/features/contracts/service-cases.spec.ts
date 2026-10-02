@@ -29,8 +29,9 @@ const damage = (over: Partial<CaseView> = {}): CaseView => ({
 });
 
 const ALL_CASES = ['STORM_DAMAGE', 'HAIL_DAMAGE', 'WILDLIFE_DAMAGE', 'LIVESTOCK_OFFER', 'VET_VISIT', 'BREEDING_ADVICE', 'REPAIR',
-  'MISSION_REFERRAL', 'COMPENSATION_CLAIM', 'TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION'];
-const ALL_CONTRACTS = ['LEASE', 'MAINTENANCE', 'TAX_ADVISOR'];
+  'MISSION_REFERRAL', 'COMPENSATION_CLAIM', 'TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION', 'DROUGHT_AID',
+  'APPRENTICE_TAKEOVER'];
+const ALL_CONTRACTS = ['LEASE', 'MAINTENANCE', 'TAX_ADVISOR', 'LEASE_OUT'];
 
 /** The service cases and contracts section used by Versicherung, Werkstatt, Ämter, Stall, Flurkarte, Kontakte, Kalender. */
 describe('ServiceCases', () => {
@@ -133,6 +134,20 @@ describe('ServiceCases', () => {
     http.expectOne('/api/contracts/5/buy').flush({ ...lease, status: 'ENDED', endReason: 'PURCHASED' });
   });
 
+  // Roadmap V3 R3-L1
+  it('renews a leased-out field at the rent the tenant offers, without early termination', () => {
+    const out = contract({ id: 8, kind: 'LEASE_OUT', status: 'ACTIVE', level: null, farmlandId: 12, monthlyAmount: 225,
+      coveragePercent: null, deductible: null, termMonths: 12, endsAtGameTime: 40 * DAY, offerExpiresAtGameTime: null,
+      renewalAmount: 240, purchasePrice: null });
+    const { fixture, http, el } = setup([out], []);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="contract"][data-kind="LEASE_OUT"]')?.textContent).toContain('Verpachtung');
+    expect(el.querySelector('[data-testid="lease-cancel"]')).toBeNull();
+    expect(el.querySelector('[data-testid="lease-out-renew"]')?.textContent).toContain('240');
+    (el.querySelector('[data-testid="lease-out-renew"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/contracts/8/renew').flush({ ...out, renewalAmount: null, monthlyAmount: 240 });
+  });
+
   it('accepts a maintenance offer, repairs appear in the history', () => {
     const repair = damage({ id: 11, kind: 'REPAIR', status: 'SETTLED', farmlandId: null, damageAmount: null, reference: 'veh_a',
       quantity: 30, resolution: 'INCLUDED' });
@@ -156,6 +171,23 @@ describe('ServiceCases', () => {
   });
 
   // Roadmap V2 R2-E
+  it('answers the takeover request of an apprentice with a counter offer', () => {
+    const req = damage({ id: 23, kind: 'APPRENTICE_TAKEOVER', farmlandId: null, damageAmount: null, hectares: null,
+      offerAmount: 2400, quantity: 52, reference: '5',
+      character: { id: 11, name: 'Tim Lehrling', role: 'EMPLOYEE', status: 'ACTIVE' } });
+    const { fixture, http, el } = setup([], [req]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Übernahme Azubi');
+    expect(el.querySelector('[data-testid="apprentice-takeover"]')?.textContent).toContain('Tim Lehrling');
+    expect(el.querySelector('[data-testid="apprentice-takeover"]')?.textContent).toContain('2.400');
+    const input = el.querySelector('[data-testid="demand-input"]') as HTMLInputElement;
+    input.value = '2200';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="case-counter"] button') as HTMLButtonElement).click();
+    expect(http.expectOne('/api/cases/23/counter').request.body).toEqual({ amount: 2200 });
+  });
+
   it('pays a tax bill with its late fees by button', () => {
     const bill = damage({ id: 20, kind: 'TAX_BILL', farmlandId: null, damageAmount: null, offerAmount: 4000, costAmount: 40,
       reference: 'ASSESSMENT', title: 'Steuerbescheid Jahr 1', quantity: 1, roundsUsed: 1,
@@ -173,6 +205,28 @@ describe('ServiceCases', () => {
     const closed = el.querySelector('[data-testid="closed-case"]')?.textContent ?? '';
     expect(closed).toContain('Steuerbescheid Jahr 1');
     expect(closed).toContain('Bezahlt 4.040');
+    expect(closed).not.toContain('Rechnung');
+  });
+
+  it('applies for the drought aid by button; the deduction for a drought insurance is shown', () => {
+    const aid = damage({ id: 22, kind: 'DROUGHT_AID', farmlandId: null, damageAmount: null, hectares: 10.5, offerAmount: 788,
+      costAmount: 787, reference: '1', title: 'Dürrehilfe',
+      character: { id: 9, name: 'Herr Amtmann', role: 'AUTHORITY', status: 'ACTIVE' } });
+    const { fixture, http, el } = setup([], [aid]);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="case"]')?.textContent).toContain('Dürrehilfe');
+    expect(el.querySelector('[data-testid="drought-aid"]')?.textContent).toContain('10.5 ha');
+    expect(el.querySelector('[data-testid="drought-aid"]')?.textContent).toContain('788');
+    expect(el.querySelector('[data-testid="aid-deduction"]')?.textContent).toContain('787');
+    expect(el.querySelector('[data-testid="case-decline"]')).toBeNull();
+    (el.querySelector('[data-testid="case-accept"] button') as HTMLButtonElement).click();
+    const paid = { ...aid, status: 'SETTLED', resolution: 'PAID', payoutAmount: 788 };
+    http.expectOne('/api/cases/22/accept').flush(paid);
+    reload(http, [], [paid]);
+    fixture.detectChanges();
+    const closed = el.querySelector('[data-testid="closed-case"]')?.textContent ?? '';
+    expect(closed).toContain('10.5 ha');
+    expect(closed).toContain('Ausgezahlt');
     expect(closed).not.toContain('Rechnung');
   });
 

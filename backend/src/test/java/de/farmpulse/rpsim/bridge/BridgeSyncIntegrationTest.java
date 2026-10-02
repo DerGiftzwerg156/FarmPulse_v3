@@ -118,6 +118,27 @@ class BridgeSyncIntegrationTest {
         assertThat(res.instructionsWritten()).isZero();
     }
 
+    /** Roadmap V3 (R3-Q1): the optional result of an ack is kept with the instruction. */
+    @Test
+    void ackResultIsStoredWithTheInstruction() {
+        Savegame sg = savegames.save(TestData.activeSavegame("sg_res"));
+        TestBridge.write(files.farmFacts(), TestData.farmFacts("sg_res", 1000, 5000));
+        sync.runCycle();
+        OutboxInstruction withResult = outboxService.money(sg, -1, MoneyReason.OTHER, null, OutboxService.Related.none());
+        OutboxInstruction without = outboxService.money(sg, -2, MoneyReason.OTHER, null, OutboxService.Related.none());
+        TestBridge.write(files.ack(), """
+            {"savegameId":"sg_res","acks":[
+              {"instructionId":"%s","appliedAtGameTime":1500,"status":"APPLIED","result":{"vehicleId":"veh_9"}},
+              {"instructionId":"%s","appliedAtGameTime":1500,"status":"APPLIED"}]}"""
+                .formatted(withResult.getInstructionId(), without.getInstructionId()));
+        assertThat(sync.runCycle().acksApplied()).isEqualTo(2);
+        OutboxInstruction stored = outbox.findByInstructionId(withResult.getInstructionId()).orElseThrow();
+        assertThat(outboxService.ackResult(stored)).containsEntry("vehicleId", "veh_9");
+        OutboxInstruction plain = outbox.findByInstructionId(without.getInstructionId()).orElseThrow();
+        assertThat(plain.getAckResultJson()).isNull();
+        assertThat(outboxService.ackResult(plain)).isEmpty();
+    }
+
     @Test
     void ackOfForeignSavegameIsIgnored() {
         Savegame sg = savegames.save(TestData.activeSavegame("sg_a"));

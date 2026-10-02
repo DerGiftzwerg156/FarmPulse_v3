@@ -5,6 +5,11 @@
 -- via XMLFile, never in the bridge). The ack file is pure backend bookkeeping.
 RPSimProcessor = {}
 
+--- Roadmap V3 R3-V2: second return value of an action whose result follows later (VEHICLE_SPAWN loads
+-- asynchronously). The instruction stays PENDING - skipped as duplicate, left out of the ack and the savegame - until
+-- RPSimProcessor.complete records the outcome.
+RPSimProcessor.PENDING = "PENDING"
+
 --- Creates the mutable mod state that is persisted in the savegame.
 function RPSimProcessor.newState(cfg)
     return {
@@ -31,7 +36,7 @@ end
 --         checkBatch = optional fn(items) -> ok, err (e.g. INSUFFICIENT_FUNDS) } }
 -- Returns result { discarded, applied, rejected, deferred, marketContextDirty }.
 function RPSimProcessor.process(state, doc, ctx)
-    local result = { discarded = false, applied = 0, rejected = 0, deferred = 0, duplicates = 0,
+    local result = { discarded = false, applied = 0, rejected = 0, deferred = 0, duplicates = 0, pending = 0,
         marketContextDirty = false }
     if doc.savegameId ~= ctx.savegameId then
         RPSimLog.warning("Discarding instructions.json: savegameId '%s' does not match active savegame '%s'",
@@ -97,19 +102,26 @@ function RPSimProcessor.process(state, doc, ctx)
                 --    not executed (the backend always puts the FARMLAND_TRANSFER before its MONEY_TRANSACTION)
                 local aborted = nil
                 for _, ins in ipairs(pending) do
-                    local ok, err
+                    local ok, err, res
                     if aborted ~= nil then
                         ok, err = false, "BATCH_ABORTED: " .. aborted
                     else
-                        ok, err = RPSimProcessor.applyOne(state, ins, ctx)
+                        ok, err, res = RPSimProcessor.applyOne(state, ins, ctx)
                         if not ok and #pending > 1 then
                             aborted = tostring(ins.instructionId)
                         end
                     end
-                    if ok then
+                    if ok and err == RPSimProcessor.PENDING then
+                        -- R3-V2: completed later; the outcome may already be there when the callback ran at once
+                        if state.processed[ins.instructionId] == nil then
+                            state.processed[ins.instructionId] = { gameTime = ctx.gameTime, status = "PENDING" }
+                        end
+                        result.pending = result.pending + 1
+                    elseif ok then
                         -- err doubles as an optional note on success (e.g. NOTIFICATION "EXPIRED")
+                        -- Roadmap V3 (R3-Q1): optional result of the action (e.g. vehicleId, missionId) for the ack
                         state.processed[ins.instructionId] = { gameTime = ctx.gameTime, status = "APPLIED",
-                            message = err }
+                            message = err, result = RPSimProcessor.normalizeResult(res) }
                         result.applied = result.applied + 1
                         if ins.type == "FARMLAND_TRANSFER" then
                             result.marketContextDirty = true
@@ -176,8 +188,57 @@ function RPSimProcessor.applyOne(state, ins, ctx)
             return false, "NOT_SUPPORTED"
         end
         return action(ins)
+    elseif RPSimProcessor.V3_ACTIONS[ins.type] ~= nil then
+        -- Roadmap V3 (R3-Q1): executed once the feature brings its adapter action; until then NOT_SUPPORTED
+        local action = ctx.actions[RPSimProcessor.V3_ACTIONS[ins.type]]
+        if action == nil then
+            return false, "NOT_SUPPORTED"
+        end
+        return action(ins)
     end
     return false, "unsupported type"
+end
+
+--- Roadmap V3 (R3-Q1): instruction type -> adapter action (ctx.actions) that executes it. An action returns
+-- ok, err, result; result is an optional object for the ack (vehicleId after VEHICLE_SPAWN, missionId after
+-- MISSION_CREATE).
+RPSimProcessor.V3_ACTIONS = { STORAGE_TRANSFER = "storageTransfer", MISSION_CREATE = "missionCreate",
+    VEHICLE_SPAWN = "vehicleSpawn", VEHICLE_REMOVE = "vehicleRemove" }
+
+--- Roadmap V3 R3-V2: records the outcome of an asynchronous action (see PENDING). Ignored when the instruction already
+-- has a final status. Returns true when recorded.
+function RPSimProcessor.complete(state, instructionId, gameTime, ok, err, res)
+    local entry = state.processed[instructionId]
+    if entry ~= nil and entry.status ~= "PENDING" then
+        return false
+    end
+    if ok then
+        state.processed[instructionId] = { gameTime = gameTime, status = "APPLIED", message = err,
+            result = RPSimProcessor.normalizeResult(res) }
+    else
+        RPSimLog.warning("Instruction %s failed: %s", tostring(instructionId), tostring(err))
+        state.processed[instructionId] = { gameTime = gameTime, status = "FAILED", message = tostring(err) }
+    end
+    return true
+end
+
+--- Keeps only the plain values (string, number, boolean) of an action result; nil when nothing is left.
+function RPSimProcessor.normalizeResult(res)
+    if type(res) ~= "table" then
+        return nil
+    end
+    local out, any = {}, false
+    for k, v in pairs(res) do
+        local t = type(v)
+        if type(k) == "string" and (t == "string" or t == "boolean" or (t == "number" and v == v)) then
+            out[k] = v
+            any = true
+        end
+    end
+    if not any then
+        return nil
+    end
+    return out
 end
 
 --- Moves ended FIXED contracts into the report list (reverse channel for delivered quantities).
@@ -209,11 +270,17 @@ end
 function RPSimProcessor.buildAckDocument(state)
     local acks = RPSimJson.array({})
     for id, entry in pairs(state.processed) do
-        local a = { instructionId = id, appliedAtGameTime = entry.gameTime, status = entry.status }
-        if entry.message ~= nil then
-            a.message = entry.message
+        -- R3-V2: no ack until the loading callback reported
+        if entry.status ~= "PENDING" then
+            local a = { instructionId = id, appliedAtGameTime = entry.gameTime, status = entry.status }
+            if entry.message ~= nil then
+                a.message = entry.message
+            end
+            if entry.result ~= nil then
+                a.result = entry.result -- Roadmap V3 (R3-Q1)
+            end
+            acks[#acks + 1] = a
         end
-        acks[#acks + 1] = a
     end
     table.sort(acks, function(a, b) return a.instructionId < b.instructionId end)
     local reports = RPSimJson.array({})

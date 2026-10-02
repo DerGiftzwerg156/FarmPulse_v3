@@ -21,5 +21,19 @@ public enum InstructionType {
      * Roadmap V2 R2-F2: yes/no question shown in the game; the answer comes back in export/player_responses.json. Sent
      * again after a rewind while the question is still open; a refusal (older mod) creates no notice.
      */
-    PROMPT
+    PROMPT,
+    /**
+     * Roadmap V3 (R3-Q1): goods into (IN, purchase) or out of (OUT, sale) the own silos, always in a batch with its
+     * MONEY_TRANSACTION (R3-H3/H4/M3). A refusal (older mod) cancels the deal with the notice "Mod aktualisieren".
+     */
+    STORAGE_TRANSFER,
+    /** Roadmap V3 (R3-Q1): real contract of the game on the field of a neighbour (R3-H5); result.missionId in the ack. */
+    MISSION_CREATE,
+    /**
+     * Roadmap V3 (R3-Q1): used vehicle from the shop catalog; the mod books the price itself in the loading callback
+     * (R3-V2); result.vehicleId in the ack.
+     */
+    VEHICLE_SPAWN,
+    /** Roadmap V3 (R3-Q1): own vehicle removed after a sale, in a batch with its MONEY_TRANSACTION (R3-V3). */
+    VEHICLE_REMOVE
 }

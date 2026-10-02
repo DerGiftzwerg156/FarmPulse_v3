@@ -40,6 +40,14 @@ rpsim:
     prompt-max-age-hours: 48           # R2-F2: questions without their own deadline expire after this many game hours
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
+    lan:                          # Roadmap V3 R3-N2: PIN login of devices in the home network (owner decisions)
+      pin-min-length: 4           # PIN = 4..8 digits
+      pin-max-length: 8
+      max-failed-attempts: 5      # wrong PINs of one sender address before it is locked
+      lockout-minutes: 5          # lock after too many wrong PINs (real minutes)
+      session-days: 30            # validity of the session cookie (real days; survives a backend restart)
+      pbkdf2-iterations: 600000   # PBKDF2WithHmacSHA256 (OWASP Password Storage Cheat Sheet)
+      cookie-name: FP_LAN_SESSION
   ai:
     provider: NONE                # FAKE | OPENAI | ANTHROPIC | GEMINI | OLLAMA | NONE
     timeout-seconds: 30
@@ -127,6 +135,24 @@ rpsim:
       special-repayment-fee-rate: 0.01         # fee on the part above it (booked on top)
       special-repayment-trust-delta: 3         # trust bonus at the bank advisor ...
       special-repayment-trust-min-share: 0.05  # ... from this share of the remaining debt
+      collateral:                 # Roadmap V3 R3-K1: own fields as loan collateral (owner decisions, placeholders)
+        loan-to-value: 0.6        # collateral value = field price x 0.6
+        max-interest-discount: 0.01   # interest discount at full coverage, proportional below
+        farm-size-bonus: 20       # bonus points on "loan too large for the farm" x coverage
+        required-above-share: 0.5 # loans above 50 % of the farm assets need collateral for the part above
+        menu-sale-trust-delta: -10    # pledged field sold in the game menu ...
+        claim-days: 10            # ... claimed Sondertilgung, game days to pay
+        claim-overdue-trust-delta: -5 # unpaid claim: trust, a missed installment, no new credit until paid
+        realise-on-callback: false  # call-back realises the pledged fields (only in credit-hard)
+      annual-review:              # Roadmap V3 R3-K3: annual review at the year change (owner decisions, placeholders)
+        enabled: true
+        invitation-days: 10
+        offer-days: 10
+        good-score: 75            # credit score at the cut-off date: rate cut offered from here ...
+        bad-score: 45             # ... serious talk below here
+        rate-cut: 0.0025          # -0.25 percentage points per review on every running loan
+        max-cut-per-loan: 0.01    # at most -1.0 percentage points per loan over its term
+        min-rate: 0.01            # never below 1 %
     credit-hard:                  # "Ton-/Genre-Konfigurationsprofile": CreditConfig.HART
       weight-debt-service-coverage: 0.30
       weight-equity-ratio: 0.25
@@ -175,6 +201,24 @@ rpsim:
       special-repayment-fee-rate: 0.01         # fee on the part above it (booked on top)
       special-repayment-trust-delta: 3         # trust bonus at the bank advisor ...
       special-repayment-trust-min-share: 0.05  # ... from this share of the remaining debt
+      collateral:                 # Roadmap V3 R3-K1: own fields as loan collateral (owner decisions, placeholders)
+        loan-to-value: 0.6        # collateral value = field price x 0.6
+        max-interest-discount: 0.01   # interest discount at full coverage, proportional below
+        farm-size-bonus: 20       # bonus points on "loan too large for the farm" x coverage
+        required-above-share: 0.5 # loans above 50 % of the farm assets need collateral for the part above
+        menu-sale-trust-delta: -10    # pledged field sold in the game menu ...
+        claim-days: 10            # ... claimed Sondertilgung, game days to pay
+        claim-overdue-trust-delta: -5 # unpaid claim: trust, a missed installment, no new credit until paid
+        realise-on-callback: true  # call-back realises the pledged fields (harsh world mode only)
+      annual-review:              # Roadmap V3 R3-K3: annual review at the year change (owner decisions, placeholders)
+        enabled: true
+        invitation-days: 10
+        offer-days: 10
+        good-score: 75            # credit score at the cut-off date: rate cut offered from here ...
+        bad-score: 45             # ... serious talk below here
+        rate-cut: 0.0025          # -0.25 percentage points per review on every running loan
+        max-cut-per-loan: 0.01    # at most -1.0 percentage points per loan over its term
+        min-rate: 0.01            # never below 1 %
     market:                       # "Preis-Events & Sonderkontrakte"
       daily-spawn-probability: 0.15
       max-active-events: 3
@@ -358,6 +402,8 @@ rpsim:
       offer-valid-days: 7
       reoffer-cooldown-days: 30
       cancel-after-missed-payments: 2
+      drought-premium-per-hectare: 4    # Roadmap V3 R3-W3: weather-index drought insurance, per hectare and month
+      drought-payout-per-hectare: 200   # paid per hectare on a declared drought (no claim)
       levels:
         BASIC:
           coverage-rate: 0.6
@@ -440,10 +486,170 @@ rpsim:
       completed-trust-delta: 3
       client-trust-delta: 2
       failed-trust-delta: -3
+    neighbor-trade:               # Roadmap V3 R3-H2..H4: trade with the neighbours (owner decisions, placeholders)
+      roles:                      # role -> goods the neighbour needs (only goods an own silo accepts are traded)
+        DAIRY: [STRAW, SILAGE, DRYGRASS_WINDROW]
+        ARABLE: [SEEDS, FERTILIZER, LIQUIDFERTILIZER]
+        MIXED: [STRAW, SEEDS]
+      neighbor-sell-share: 1.05   # neighbour sells at 105 % of the best sell point price
+      neighbor-buy-share: 0.95    # neighbour buys at 95 %
+      trust-divisor: 20           # price bonus/malus = trust / 20, capped (like the negotiation engine)
+      trust-cap: 0.05
+      harvest-share: 0.3          # share of a neighbour's harvest that goes into his stock
+      by-products:                # fruit -> by-product of the harvest
+        WHEAT: STRAW
+        BARLEY: STRAW
+        OAT: STRAW
+      by-product-share: 0.5       # by-product litres = 50 % of the grain litres
+      monthly-decay: 0.2          # the stock sinks by 20 % per game month (sales, own use)
+      reference-prices:           # EUR per 1000 l for goods without a sell point on the map
+        STRAW: 120
+        SILAGE: 180
+        DRYGRASS_WINDROW: 250
+        SEEDS: 900
+        FERTILIZER: 1500
+        LIQUIDFERTILIZER: 1200
+      max-messages-per-month: 2
+      offer-probability-per-month: 0.3
+      request-probability-per-month: 0.3
+      amount-min: 2000            # litres, rounded to amount-step
+      amount-max: 10000
+      amount-step: 500
+      max-share: 0.5              # at most 50 % of the neighbour's stock / of the player's stock
+      answer-days: 5
+      trade-trust-delta: 2
+      decline-trust-delta: -1
+      ignore-trust-delta: -2
+      stock-missing-trust-delta: -1
+      reputation-delta: 1         # village reputation per fulfilled request of a neighbour ...
+      reputation-max-per-year: 3  # ... at most 3 times per FS25 year
+    price-alarm:                  # Roadmap V3 R3-M1: price alarms in the Agrarbörse (owner decisions, placeholders)
+      max-active: 10
+      notification-days: 1        # the in-game hint is valid 1 game day
+    forward-contract:             # Roadmap V3 R3-M2: harvest sold in advance at a fixed price (owner decisions, placeholders)
+      factor-per-month: -0.02     # fixed price = current price x (1 - 2 % per month of lead)
+      min-lead-months: 1
+      max-lead-months: 12
+      min-quantity: 1000
+      max-quantity: 200000
+      quantity-step: 1000
+      max-open: 5
+      penalty-share: 0.25         # shortfall x fixed price x 25 % as CONTRACT_PENALTY
+      shortfall-trust-delta: -5   # trust of the land agent
+      fulfilled-trust-delta: 3
+    farm-shop:                    # Roadmap V3 R3-M3: villagers order from the own silos (owner decisions, placeholders)
+      enabled: true
+      fill-types: [POTATO, WHEAT, OAT, SUGARBEET, CANOLA]
+      markup: 1.3                 # best market price x 1.3
+      amount-min: 200
+      amount-max: 2000
+      amount-step: 100
+      max-share: 0.2              # at most 20 % of the stock
+      max-orders-per-month: 2
+      probability: 0.4
+      answer-days: 3
+      refusal-factor: 0.75        # each refusal x 0.75, each delivered order / 0.75 (max 1)
+      min-factor: 0.1
+      reputation-delta: 1
+      reputation-max-per-year: 4
+    neighbor-missions:            # Roadmap V3 R3-H5: real contracts of the neighbours (owner decisions, placeholders)
+      types: [PLOW, STONE_PICK]
+      probability-per-month: 0.4
+      max-per-month: 1
+      answer-days: 5
+      success-bonus: 250          # EUR, booked as OTHER
+      success-trust-delta: 3
+      failure-trust-delta: -3
     mechanic:                     # Roadmap V2 R2-A6: employed mechanic repairs partially (placeholders)
       repair-points-per-month: 60
       repair-below-condition: 90
       overload-workload-per-vehicle: 2
+    office-clerk:                 # Roadmap V3 R3-P1: office clerk (owner decisions, placeholders)
+      reminder-days: 3            # reminder this many game days before a deadline
+      audit-reduction-max: 0.5    # audit factor 1 - 0.5 x effective skill / 100
+      overload-workload: 30       # below: overloaded, no payment on the deadline day
+    lease-out:                    # Roadmap V3 R3-L1: leasing out own fields (owner decisions)
+      annual-rent-share: 0.05     # guide rent per ha and month = field price x share / 12 / ha
+      term-years-min: 1           # term the player can choose (FS25 years)
+      term-years-max: 3
+      max-interested: 3           # neighbours with capital >= rent x ha x 12 x years
+      first-bid-min: 0.85         # first bid = desired rent x random(min, max), capped at the formula limit
+      first-bid-max: 1.0
+      offer-valid-days: 5         # bids open this many game days
+      warning-months: 1           # renewal offer of the tenant before the end
+      renewal-factor-min: 0.95    # renewal rent = current rent x random(min, max)
+      renewal-factor-max: 1.1
+      return-delay-max-months: 1  # fallback: the return waits for an empty / harvested field at most this long
+      family-trust-delta: -5      # family field leased out (a sale costs family.field-sold-trust-delta)
+      reclaim-trust-delta: -10    # tenant when the field is taken back in the game menu
+    milestones:                   # Roadmap V3 R3-T1: milestones (owner decisions), no mechanical effect
+      loan-repaid-enabled: true   # first bank loan fully repaid
+      year-without-delay-enabled: true  # a full FS25 year without a payment delay
+      area-enabled: true          # area of all fields of the farm reaches area-hectares
+      area-hectares: 100
+      record-harvest-enabled: true      # first congratulation of the cooperative on a record harvest revenue
+      crop-rotation-enabled: true # crop-rotation-years harvest years in a row without a rotation complaint
+      crop-rotation-years: 5
+      neighbor-trade-enabled: true      # first completed goods trade with a neighbour
+    apprentice:                   # Roadmap V3 R3-P2: apprentices (owner decisions, placeholders)
+      salary: 900                 # fixed, no skill premium
+      skill-min: 10
+      skill-max: 30
+      skill-per-month: 2
+      skill-cap: 70
+      training-years: 2           # FS25 years
+      max-apprentices: 2
+      takeover-notice-months: 1   # the takeover request comes one month before the end
+      counter-accept-share: 0.9   # a counter offer from 90 % of the demand is accepted
+    used-vehicle:                 # Roadmap V3 R3-V2 / R3-V3: used machines (owner decisions, placeholders)
+      enabled: true
+      offer-probability: 0.5      # one offer at a month start (at most one open)
+      workshop-share: 0.5         # workshop or an active neighbour sells
+      workshop-markup: 0.1        # game used price x 1.10
+      neighbor-discount: 0.05     # game used price x 0.95
+      min-list-price: 5000
+      max-list-price: 400000
+      age-months-min: 12
+      age-months-max: 120
+      hour-factor-min: 0.3        # operating hours so that the hour factor lies in 0.3..0.9
+      hour-factor-max: 0.9
+      damage-min: 0
+      damage-max: 0.3
+      wear-min: 0
+      wear-max: 0.5
+      motorized-exponent: 1.0     # Vehicle.calculateSellPrice: hours ^ 1.0 with an engine ...
+      unmotorized-exponent: 1.3   # ... hours ^ 1.3 without
+      min-price-share: 0.03       # at least 3 % of the list price
+      negotiation-days: 7
+      spawn-max-attempts: 5       # NO_SPACE: one new delivery per game day
+      notification-days: 1
+      sale-buyers-min: 1          # sale to neighbours: 1-3 interested buyers
+      sale-buyers-max: 3
+      sale-offer-min: 1.0         # first offer 100-110 % of the game value ...
+      sale-offer-max: 1.1
+      sale-cap: 1.1               # ... at most 110 %
+    drought:                      # Roadmap V3 R3-W1 / R3-W2: drought and drought aid (owner decisions, placeholders)
+      enabled: true
+      periods: [3, 4, 5, 6, 7, 8] # growth months (FS25 periods, 1 = March)
+      min-periods: 2              # dry growth months in a row
+      max-rain-share: 0.03        # dry = rain below 3 % of the observed time ...
+      min-observed-share: 0.5     # ... of a month observed at least half (else unknown)
+      max-crops: 3                # HARVEST_FAILURE for the 3 largest crops at every accepting sell point
+      aid-per-hectare: 150        # drought aid of the authority per hectare of growing own fields
+      aid-application-days: 15
+      aid-insurance-deduction: 0.5
+    liquidity-plan:               # Roadmap V3 R3-K2: 12-month liquidity plan in the Bank app (owner decisions, placeholders)
+      horizon-months: 12
+      reserve-factor: 1.0         # reserve = known fixed postings of the month x factor
+      known-posting-categories:   # journal categories added back to the income estimate (listed as known postings)
+        - RPSIM_SALARY_PAYMENT
+        - RPSIM_TAX_PAYMENT
+        - RPSIM_INSURANCE_PREMIUM
+        - RPSIM_MAINTENANCE_FEE
+        - RPSIM_LEASE_PAYMENT
+        - RPSIM_FAMILY
+      advisor-warning-enabled: true
+      advisor-warning-months: 3   # the advisor writes once when the balance falls below zero within 3 months
     finance:                      # Roadmap V2 R2-B: real farm finances from the booking journal (placeholders)
       categories:                 # FS25 money type or RPSIM_<REASON> -> class; unknown names: operating by sign
         HARVEST_INCOME: OPERATING_INCOME
@@ -455,6 +661,8 @@ rpsim:
         RPSIM_SUBSIDY: OPERATING_INCOME
         RPSIM_LIVESTOCK_PREMIUM: OPERATING_INCOME
         RPSIM_TAX_REFUND: OPERATING_INCOME
+        RPSIM_LEASE_INCOME: OPERATING_INCOME          # Roadmap V3 (R3-Q1): lease of own fields (R3-L1)
+        RPSIM_GOODS_SALE: OPERATING_INCOME            # Roadmap V3 (R3-Q1): goods to neighbours / farm shop (R3-H4, R3-M3)
         PURCHASE_FUEL: OPERATING_EXPENSE
         PURCHASE_SEEDS: OPERATING_EXPENSE
         PURCHASE_FERTILIZER: OPERATING_EXPENSE
@@ -479,15 +687,19 @@ rpsim:
         RPSIM_SPONSORING: OPERATING_EXPENSE
         RPSIM_COMPENSATION: OPERATING_EXPENSE
         RPSIM_TRAINING: OPERATING_EXPENSE
+        RPSIM_GOODS_PURCHASE: OPERATING_EXPENSE       # Roadmap V3 (R3-Q1): goods from neighbours (R3-H3)
+        RPSIM_CONTRACT_PENALTY: OPERATING_EXPENSE     # Roadmap V3 (R3-Q1): shortfall of a forward contract (R3-M2)
         RPSIM_OTHER: OPERATING_EXPENSE
         SHOP_PROPERTY_BUY: INVESTMENT
         SHOP_VEHICLE_BUY: INVESTMENT
         FIELD_BUY: INVESTMENT
         RPSIM_FARMLAND_PURCHASE: INVESTMENT
+        RPSIM_VEHICLE_PURCHASE: INVESTMENT            # Roadmap V3 (R3-Q1): used vehicle (R3-V2)
         SHOP_VEHICLE_SELL: DIVESTMENT
         SHOP_PROPERTY_SELL: DIVESTMENT
         FIELD_SELL: DIVESTMENT
         RPSIM_FARMLAND_SALE: DIVESTMENT
+        RPSIM_VEHICLE_SALE: DIVESTMENT                # Roadmap V3 (R3-Q1): own vehicle to a neighbour (R3-V3)
         RPSIM_CREDIT_DISBURSEMENT: FINANCING
         RPSIM_CREDIT_INSTALLMENT: FINANCING
         RPSIM_CREDIT_PENALTY: FINANCING

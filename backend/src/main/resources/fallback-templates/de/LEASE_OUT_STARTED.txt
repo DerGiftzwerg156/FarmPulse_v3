@@ -1,0 +1,7 @@
+Pacht für Feld {{farmlandId}} abgemacht
+Hallo,
+
+abgemacht: Ich pachte Feld {{farmlandId}} für {{termMonths}} Monate und zahle {{monthlyRent}} € im Monat ({{rate}} € je Hektar), zum ersten Mal zum nächsten Monatsbeginn.
+
+Viele Grüße
+{{characterName}}

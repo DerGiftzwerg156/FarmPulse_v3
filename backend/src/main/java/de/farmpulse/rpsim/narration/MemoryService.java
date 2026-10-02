@@ -82,6 +82,16 @@ public class MemoryService {
             case SPONSORING_DECLINED -> "Sponsoring abgelehnt";
             case INVITATION_ACCEPTED -> "Einladung angenommen";
             case INVITATION_IGNORED -> "Einladung unbeantwortet gelassen";
+            case NEIGHBOR_TRADE -> "Ware gehandelt";
+            case NEIGHBOR_TRADE_DECLINED -> "Handel abgelehnt";
+            case NEIGHBOR_TRADE_IGNORED -> "Handelsangebot unbeantwortet gelassen";
+            case NEIGHBOR_DISAPPOINTED -> "zugesagte Ware lag nicht im Silo";
+            case COLLATERAL_SOLD -> "Feld mit Grundschuld ohne Absprache verkauft";
+            case COLLATERAL_CLAIM_OVERDUE -> "geforderte Sondertilgung nicht gezahlt";
+            case FORWARD_CONTRACT_FULFILLED -> "Vorkontrakt voll geliefert";
+            case FORWARD_CONTRACT_SHORTFALL -> "Vorkontrakt nicht voll geliefert";
+            case LEASE_OUT_RECLAIMED -> "verpachtetes Feld im Spielmenü zurückgeholt";
+            case FAMILY_FIELD_LEASED -> "Familienfeld verpachtet";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();
         };

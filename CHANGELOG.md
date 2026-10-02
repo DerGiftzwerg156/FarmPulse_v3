@@ -11,7 +11,11 @@ versions or this changelog do not match.
 ## [Unreleased]
 
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training
-is cancelled again) and lets every machine operator drive every vehicle.
+is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
+types and booking reasons (the neighbour trade and contracts then fail); the notice then says "Mod aktualisieren".
+
+The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
+filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
 
 ### Added
 
@@ -27,6 +31,177 @@ is cancelled again) and lets every machine operator drive every vehicle.
   investment grant, fertiliser rules (closed period, slurry store), animal disease zones, agricultural social insurance
   with sick leave, village newspaper, village group chat, regulars' table, complaints about night work and crop damage,
   farm holidays and school visits, cooperative shares, diesel theft and a farm map with the real field shapes.
+- **Leasing out own fields (Roadmap V3, R3-L):**
+  - Flurkarte → own field → **Verpachten**: term 1–3 FS25 years and a desired rent per ha and month (guide value =
+    field price × 5 % / 12 per ha). Up to three active neighbours with enough capital answer with a first bid
+    (85–100 % of the desired rent); the player demands in up to three rounds (negotiation kind `LEASE_OFFER`).
+  - Start: `FARMLAND_TRANSFER FROM_PLAYER` - the game farms the field as NPC field, the tool keeps the player as owner
+    (`leasedFromPlayer`); the reconciliation reports neither a sale nor a purchase. Rent as `LEASE_INCOME` from the
+    next month on (the tenant always pays); operating income for the tax and the bank, known income in the liquidity
+    plan, no debit in the calendar.
+  - One month before the end the tenant offers a renewal (rent × 0.95–1.1, button *Verlängern*); otherwise the field
+    comes back with `FARMLAND_TRANSFER TO_PLAYER`. Fallback: leasing out only an empty or harvested field, the return
+    waits up to one month for an empty or harvested field. Taking the field back in the game menu ends the lease
+    (tenant trust −10).
+  - Bank: consent button *Zustimmung zur Verpachtung* for a pledged field (the Grundschuld stays); leased-out fields
+    keep counting as assets and collateral. Family field: trust −5 per family member, it stays the family field.
+    Authority: the cultivation duty no longer checks the leased-out field.
+  - New card *Verpachtete Felder* in the Flurkarte, tasks for bids and renewals. Config `rpsim.formulas.lease-out.*`;
+    migration V32; `GET /api/lease-out`, `POST /api/farmlands/{id}/lease-out`,
+    `POST /api/credit/collateral/{farmlandId}/lease-consent`; nine new narration types. No mod change.
+- **Chronicle (Roadmap V3, R3-T):**
+  - Milestones (`DiaryEntryType.MILESTONE`, no mechanical effect): first bank loan repaid, a full FS25 year without a
+    payment delay (missed installment, overdue tax bill, missed contract payment, overdue salary, unpaid claim after
+    the sale of a pledged field), 100 ha farmed, record harvest (the cooperative's congratulation), 5 harvest years in
+    a row without a crop-rotation complaint, first goods trade with a neighbour. Each reached once, written to the
+    diary and shown as a badge on the start screen (only reached ones). Running savegames get the loan, area, record
+    and trade milestones added; payment delays and crop rotation count from the update.
+  - Diary app: **Chronik herunterladen** (Markdown `chronik-<name>.md`: backstory, milestones, all entries by game day,
+    the key figures of every farm report) and **Chronik drucken** (print view with the same content, print
+    stylesheet, PDF via the browser).
+  - New optional **Hofname** in the settings and the onboarding (heads the chronicle; without it the map name).
+  - Config `rpsim.formulas.milestones.*`; migration V31; `GET /api/milestones`, `GET /api/diary/chronicle`,
+    `GET /api/diary/chronicle/view`, `GET/PUT /api/settings/farm`. No mod change.
+- **Staff (Roadmap V3, R3-P):**
+  - Office clerk with more effect: the best active clerk reminds by mail 3 game days before a deadline (open tax bills
+    unless a tax advisor runs, announced inspections, the drought-aid application, the end of the delivery month of an
+    open forward contract, the lease end; once per deadline). Audits get rarer: factor 1 − 0.5 × effective skill / 100
+    (with a tax advisor the smaller factor counts). On the deadline day she pays an open tax bill herself when the
+    balance covers it and she is not overloaded (workload below 30) - no late fee then.
+  - Apprentice (`JobRole.APPRENTICE`): job posting "Azubi" (skill 10–30, fixed 900 €, at most 2), skill +2 every month
+    up to 70, training 2 FS25 years, no trainings. He drives helpers like a machine operator without trainings, after
+    the operators (mod and simulator). One month before the end he asks to be taken over at the operator salary for his
+    skill: accept, counter offer (accepted from 90 %) or decline; without an agreement he leaves at the end. Diary.
+  - Config `rpsim.formulas.office-clerk.*`, `rpsim.formulas.apprentice.*`; migration V30. Update the mod for the
+    apprentice (an older mod ignores the role, then the vanilla helper drives).
+- **Used machines (Roadmap V3, R3-V):**
+  - The mod exports the vehicle catalog of the shop once at the mission start (`market_context.storeVehicles`, switch
+    `storeCatalogExport`, at most `storeCatalogMaxEntries` = 2000) and the name and shop XML of every own vehicle
+    (`assets.vehicles[].name`, `xmlFilename`).
+  - Purchase: at a month start (probability 0.5, at most one open offer) the workshop (+10 %) or an active neighbour
+    (−5 %) offers a catalog machine (list price 5,000–400,000 €) with rolled age, operating hours, damage and wear;
+    the price follows the game's used-price formula. The player negotiates up to 3 rounds in the new card
+    "Gebrauchtmaschinen" of the workshop app. After the agreement `VEHICLE_SPAWN` loads the machine onto a free shop
+    place; the mod sets the used values and books the price itself in the loading callback (`VEHICLE_PURCHASE`).
+    No free place: hint in the game and a mail, a new attempt every game day (at most 5), nothing booked.
+  - Sale: "Zum Verkauf anbieten" with an asking price; 1–3 active neighbours offer 100–110 % of the game value, at most
+    110 %. After the agreement `VEHICLE_REMOVE` + `VEHICLE_SALE` as one batch; the mod removes only own, unused
+    machines with nothing attached (`VEHICLE_ATTACHED` = "Bitte erst abkoppeln"). Diary entries, gossip after a sale.
+  - Both instructions are sent again after a reload without saving. New negotiation asset type `VEHICLE`, endpoints
+    `GET /api/vehicles` and `POST /api/vehicles/{vehicleId}/sale`, config `rpsim.formulas.used-vehicle.*`, migration
+    V29. Update the mod together with the backend (an older mod refuses the two instructions; the deal is cancelled).
+- **Drought and weather risk (Roadmap V3, R3-W):**
+  - Drought detection from the rain time per game month: a growth month (May to October) is dry when it rained less
+    than 3 % of its observed time and at least half of it was observed; unknown months end the series. After 2 dry
+    months in a row a drought is declared (once per series). The cooperative warns at the first dry month. The
+    declaration raises prices regionally (`HARVEST_FAILURE` for the 3 crops with the largest area in the village at
+    every sell point accepting them, skipping pairs with an open event or fixed price) and the village gossips. The
+    yield in the game does not change.
+  - Drought aid of the authority: 150 € per hectare of own fields growing in a drought month (recorded per month from
+    now on), applied for by button in the app "Ämter" within 15 days, paid at once as `SUBSIDY`; 50 % less with a
+    running drought insurance.
+  - Weather-index drought insurance (level `DROUGHT_INDEX` of the insurance contract, beside storm/hail): 4 € per
+    hectare of own fields (not leased) and month, the premium follows the area at every month start; on a declared
+    drought it pays 200 € per hectare without a claim (`INSURANCE_PAYOUT`), when paid up and concluded before the
+    first dry month. Offered on request and with the cooperative's warning. The insurance app shows the rain of the
+    last months, the current series and the declared droughts.
+  - Endpoint `GET /api/drought`; config `rpsim.formulas.drought.*`, `rpsim.formulas.insurance.drought-*`; migration
+    V28. No mod change.
+- **Market and marketing (Roadmap V3, R3-M):**
+  - Price alarm in the Agrarbörse: fill type, sell point (or any = best price), direction and price per 1,000 l. It is
+    checked on every price import; when it fires, the game shows a hint and the land agent writes with the stock and
+    its value. Each alarm fires once and can be activated again; at most 10 are active.
+  - Forward contract: fixed price = current price × (1 − 2 % per month of lead) for a delivery month 1–12 months
+    ahead, 1,000–200,000 l, at most 5 open. It runs as the existing `PRICE_EVENT / FIXED` instruction during the
+    delivery month; after the reported delivery a shortfall costs 25 % of its value at the fixed price
+    (`CONTRACT_PENALTY`). Trust of the land agent goes −5 after a shortfall and +3 after a full delivery. The expected
+    income appears in the liquidity plan. The event engine creates no special offer on a pair with an open forward
+    contract.
+  - Farm shop in the app "Handel": villagers order 200–2,000 l of potatoes, wheat, oat, sugar beet or canola from the
+    own silos at the best market price × 1.3 (at most 2 orders per month). Delivering books `STORAGE_TRANSFER OUT` +
+    `GOODS_SALE` and raises village reputation (`FARM_SHOP`, at most 4 per year). Refusals make orders rarer. A new
+    in-game question occasion is off by default.
+  - Endpoints `/api/price-alarms`, `/api/forward-contracts` (with `/quote`); config `rpsim.formulas.price-alarm.*`,
+    `forward-contract.*`, `farm-shop.*`; migration V27. No mod change.
+- **Credit and financial planning (Roadmap V3, R3-K):**
+  - Collateral (Grundschuld): own fields (not leased) can secure a credit application; collateral value = field price
+    × 0.6. The coverage lowers the rate (up to 1.0 percentage point) and eases the metric "loan too large for the
+    farm" (up to +20 points). Above 50 % of the farm assets the part above needs collateral: the bank names unpledged
+    own fields, largest first, in a counter offer "mit Grundschuld". A pledged field is sold in the Flurkarte only with
+    the bank's consent; the proceeds repay the collateral value in the sale batch without prepayment fee. Sold in the
+    game menu: trust −10 and a claim in the Bank app (10 days); unpaid it counts as a missed installment and blocks new
+    credits until paid. The pledge is released when the loan is repaid. In the harsh world mode the bank realises
+    pledged fields on a call-back (field by field, a surplus stays with the player). New table `loan_collateral`,
+    `rpsim.formulas.credit.collateral.*`, endpoints `GET /api/credit/collateral` and
+    `POST /api/credit/collateral/{farmlandId}/sale-consent`.
+  - Liquidity plan: the next 12 FS25 months with salaries, installments, contracts, retirement payment and tax
+    prepayments, the income as a marked estimate from the journal, and the month the balance falls below zero or below
+    one month of fixed costs; the bank advisor writes once ahead of a shortfall within 3 months
+    (`GET /api/liquidity-plan`, `rpsim.formulas.liquidity-plan.*`).
+  - Farm report and annual review: at the year change a report of the finished year (categories, tax, crop and yield
+    per field, rain, stables, staff, trust and reputation compared with the previous report; `GET /api/farm-reports`),
+    a diary entry and an invitation of the bank advisor. With a good credit score she offers −0.25 percentage points on
+    every running loan (capped at −1.0 per loan, never below 1 %; the installment sinks, the term stays); a weak year
+    only means a serious talk. The yield of a harvest is now recorded per field. `rpsim.formulas.credit.annual-review.*`.
+  - Migration V26; Bank app: collateral in the form, Grundschuld per loan, cards "Liquiditätsplanung" and "Hofbericht",
+    claims and annual review as cases (also in *Aufgaben*).
+- **Trade and contracts with the neighbours (Roadmap V3, R3-H):** the neighbours become trading partners.
+  - Mod: exports the fields the game's NPCs farm (`farm_facts.npcFields`, same entries and interval as `fields`,
+    switch `npcFieldExport`, default on), the own silo goods (`farm_facts.tradeStorage`: fill level and free capacity
+    per fill type, only silos and silo extensions of the own farm) and the game's contract limit
+    (`farm_facts.missionLimitReached`, new optional field). It now executes `STORAGE_TRANSFER` (fills or empties the
+    own silo storages via `setFillLevel`, without the game's own booking; `NO_CAPACITY`, `INSUFFICIENT_STOCK`,
+    `UNKNOWN_FILLTYPE`) and `MISSION_CREATE` (plowing and stone picking on a neighbour field like the game's
+    `tryGenerateMission`; the ack `result` carries the `missionId`; `NOT_AVAILABLE` when the field does not fit).
+  - Backend: the neighbour fields with their growth phase (`npc_field_record`, `npc_field_crop`); every neighbour gets
+    a role (dairy, arable, mixed) that decides what he needs; his stock grows from his harvests (30 %, straw from
+    grain) and sinks 20 % per game month (`neighbor_stock`, migration V25). Prices from the best sell point
+    (neighbour sells at 105 %, buys at 95 %, trust ± 5 %) or a reference price per 1000 l. Neighbours offer goods
+    and ask for goods from the own silos (at most two messages per month, 5 days to answer); the player asks for goods
+    himself. A deal is one batch `STORAGE_TRANSFER` + `MONEY_TRANSACTION` (`GOODS_PURCHASE` / `GOODS_SALE`), with
+    trust, diary entry and village reputation (`NEIGHBOR_HELP`, at most three per FS25 year). A neighbour with a
+    harvested, unplowed or stony field asks for help (at most one per month, never above the game's limit); after the
+    promise the contract appears in the game's contract menu with him as client; success pays a 250 € bonus and
+    trust, failure disappoints him; a contract lost after loading is offered again. All values under
+    `rpsim.formulas.neighbor-trade.*` / `neighbor-missions.*`; two new in-game question occasions (off by default).
+  - New Hof-Tablet app **„Handel“** (`/handel`, `GET /api/trade`, `POST /api/trade/neighbors/{id}/request`,
+    `POST /api/trade/neighbors/{id}/work`): own silos, neighbours with role, stock, price and needs, „Ware anfragen“,
+    „Nach Arbeit fragen“, the offers, requests and contracts; the contact page of a neighbour links to it.
+  - Bridge simulator: `missionLimitReached` in the scenario `nachbarhandel`, control endpoints `/npc-field` and
+    `/mission-limit`.
+- **Tablet in the home network (Roadmap V3, R3-N):** FarmPulse can be opened on a tablet or phone in the same WLAN.
+  - *Einstellungen → Tablet & Netzwerk*: switch **Im Heimnetz erreichbar** (default off), an optional PIN (4–8
+    digits) and the tablet address with a QR code (generated in the browser, new frontend dependency
+    `qrcode-generator`, MIT). Switch and PIN belong to the installation, not the savegame, and can only be changed on
+    the gaming PC; a tablet sees the card read-only.
+  - Backend: a filter decides every request (API, live updates, web app) by the sender address - the gaming PC
+    (loopback) always, private addresses only with the switch on, every other address always `403`. With a PIN, a
+    device logs in once (`POST /api/lan/login`) and gets a session cookie (`HttpOnly`, `SameSite=Strict`, 30 days,
+    only its SHA-256 is stored); the PIN is stored as `PBKDF2WithHmacSHA256` hash; five wrong PINs lock the sender
+    for five minutes (`rpsim.web.lan.*`). A new PIN, removing it or switching off ends every session. The backend logs
+    "Auf dem Tablet öffnen: http://<IP>:8080" at start.
+  - Web app manifest (`manifest.webmanifest`, icons 192 / 512 px from `tools/release/make-icons.py`) for a symbol on
+    the tablet's home screen; no service worker and no push (both need HTTPS). `start.bat` names the way to the
+    tablet address.
+- **Roadmap V3 groundwork (R3-Q):** the bridge contract for the next features, without game-visible changes yet.
+  - `farm_facts.json` knows two more optional blocks - `npcFields` (fields without an owner, same entries as `fields`,
+    R3-H1) and `tradeStorage` (fill level and free capacity of the own silos per fill type, R3-H2);
+    `market_context.json` knows `storeVehicles` (vehicle catalog of the shop, R3-V1). `schemaVersion` stays `1`; a
+    missing block means "not present". The mod normalises the blocks once a feature collects them; `BridgeDtos` /
+    `BridgeValidator` read and check them.
+  - New instruction types `STORAGE_TRANSFER`, `MISSION_CREATE`, `VEHICLE_SPAWN` and `VEHICLE_REMOVE` are validated by
+    the mod and acknowledged `FAILED` / `NOT_SUPPORTED` until R3-H3 / R3-H5 / R3-V2 / R3-V3 execute them. An ack may
+    carry an optional `result` (e.g. `vehicleId`, `missionId`); the mod keeps it in the savegame, the backend stores it
+    with the instruction. When a mod refuses one of the new types (unknown type or not supported), the dashboard notice
+    says "Mod aktualisieren".
+  - New booking reasons `LEASE_INCOME`, `GOODS_PURCHASE`, `GOODS_SALE`, `VEHICLE_PURCHASE`, `VEHICLE_SALE`,
+    `CONTRACT_PENALTY` in mod, backend, booking titles (`modDesc.xml`) and the German UI labels; journal classes in
+    `rpsim.formulas.finance.categories` (lease income and goods operating, vehicle purchase investment, vehicle sale
+    divestment, contract penalty operating expense).
+  - Bridge simulator: scenarios `nachbarhandel` (neighbour fields, own silos with free capacity, shop catalog) and
+    `duerre-sommer` (dry summer without rain); the simulator executes the new instructions like the planned mod.
+  - Docs: every new field and instruction with its source in the FS25 code (`docs/dev/bridge-protocol.md`) and
+    section 11 of the manual test plan with one check per "Im Spiel prüfen" point of the roadmap.
 - **Trainings for machine operators ("Schulungen"):** without a training a machine operator drives small and medium
   tractors as FS25 helper; large tractors, combines, forage harvesters, special harvesters, trucks and self-propelled
   machines / loaders need the matching training (FS25 shop category of the driven vehicle, configurable in

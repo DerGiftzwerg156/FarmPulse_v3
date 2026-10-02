@@ -1,0 +1,7 @@
+Offene Forderung zu Feld {{farmlandId}}
+Guten Tag,
+
+die geforderte Sondertilgung von {{claim}} € nach dem Verkauf von Feld {{farmlandId}} ist noch nicht bei uns eingegangen. Wir werten das wie eine verpasste Rate. Solange die Forderung offen ist, können wir Ihnen keine neuen Kredite gewähren. Sie können sie weiterhin in der App „Bank“ bezahlen.
+
+Mit freundlichen Grüßen
+{{characterName}}

@@ -65,50 +65,68 @@ können jederzeit dazwischen umgesetzt werden.
 
 Arbeiten, die mehrere Bereiche brauchen. Einmal sauber anlegen, dann bei jedem Punkt nur ergänzen (Muster aus R2-Q).
 
+**Stand 30.09.2026: umgesetzt.** Q legt wie R2-Q nur den Vertrag an (Schemas, DTOs, Validator, Normalisierung im Mod,
+Simulator, Doku). Das Auslesen im Mod folgt mit H1 (`npcFields`), H2 (`tradeStorage`) und V1 (`storeVehicles`), bis
+dahin fehlen die Blöcke. Die vier neuen Anweisungen quittiert der Mod bis H3/H5/V2/V3 mit `FAILED` / `NOT_SUPPORTED`.
+Entscheidungen (siehe `QUESTIONS.md`): Die Mod-Schalter `npcFieldExport` und `storeCatalogExport` kommen mit H1 bzw.
+V1. Der Hinweis „Mod aktualisieren“ ist ein Merkmal (`modOutdated`) des bestehenden Hinweises `INSTRUCTION_FAILED`.
+`result` wird an der Anweisung gespeichert. Die Buchungstitel folgen dem Vorschlag. Der Simulator führt die neuen
+Anweisungen aus wie der spätere Mod. Nur `nachbarhandel` liefert die neuen Blöcke. `VEHICLE_SPAWN.price` ist positiv.
+
 ### R3-Q1 Bridge-Schema erweitern, ohne alte Stände zu brechen
 
-- [ ] `farm_facts.json`, neue optionale Blöcke:
+- [x] `farm_facts.json`, neue optionale Blöcke:
   - `npcFields` (H1): Felder ohne Besitzer, gleiche Felder wie `fields`.
   - `tradeStorage` (H2): je Fruchtsorte Menge und freie Kapazität **nur** der eigenen Silos und Silo-Erweiterungen.
-- [ ] `market_context.json`, neuer optionaler Block `storeVehicles` (V1): Fahrzeug-Katalog des Shops.
-- [ ] Neue Anweisungstypen in Mod (`RPSimInstructions.TYPES`) und Backend (`domain/InstructionType.java`):
+- [x] `market_context.json`, neuer optionaler Block `storeVehicles` (V1): Fahrzeug-Katalog des Shops.
+- [x] Neue Anweisungstypen in Mod (`RPSimInstructions.TYPES`) und Backend (`domain/InstructionType.java`):
   `STORAGE_TRANSFER` (H3/H4/M3), `MISSION_CREATE` (H5), `VEHICLE_SPAWN` (V2), `VEHICLE_REMOVE` (V3). Ein älterer Mod
-  lehnt einen unbekannten Typ bei der Prüfung ab (`RPSimInstructions.validate`: „unknown type …“, Quittung `FAILED`).
+  lehnt einen unbekannten Typ bei der Prüfung ab (`RPSimInstructions.validate`: „unknown type …“, Quittung `REJECTED`;
+  ein Mod mit R3-Q, aber ohne das Feature quittiert `FAILED` / `NOT_SUPPORTED`).
   Das Backend storniert dann den Vorgang (Geld wird wegen des Batches nicht gebucht) und erklärt es per Hinweis:
-  „Mod aktualisieren“.
-- [ ] Die Quittung (`instructions_ack.json`) bekommt ein optionales Feld `result` (z. B. `vehicleId` nach
-  `VEHICLE_SPAWN`, `missionId` nach `MISSION_CREATE`).
-- [ ] Neue `MoneyReason`-Werte in Mod, Backend und `modDesc.xml` (`rpsim_money_<REASON>`):
+  „Mod aktualisieren“. Umgesetzt in Q: der Hinweis (`FailedInstructionService`, Merkmal `modOutdated`). Das
+  Stornieren des Vorgangs kommt mit dem jeweiligen Feature.
+- [x] Die Quittung (`instructions_ack.json`) bekommt ein optionales Feld `result` (z. B. `vehicleId` nach
+  `VEHICLE_SPAWN`, `missionId` nach `MISSION_CREATE`). Der Mod speichert es im Spielstand, das Backend an der
+  Anweisung (`outbox_instruction.ack_result_json`).
+- [x] Neue `MoneyReason`-Werte in Mod, Backend und `modDesc.xml` (`rpsim_money_<REASON>`):
   - `LEASE_INCOME` (L)
   - `GOODS_PURCHASE`, `GOODS_SALE` (H, M3)
   - `VEHICLE_PURCHASE`, `VEHICLE_SALE` (V)
   - `CONTRACT_PENALTY` (M2)
-- [ ] Die Klassen für `rpsim.formulas.finance.categories` festlegen:
+- [x] Die Klassen für `rpsim.formulas.finance.categories` festlegen:
   - `RPSIM_LEASE_INCOME`, `RPSIM_GOODS_*` → operativ
   - `RPSIM_VEHICLE_PURCHASE` → Investition, `RPSIM_VEHICLE_SALE` → Desinvestition
   - `RPSIM_CONTRACT_PENALTY` → operative Ausgabe
-- [ ] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code ergänzen.
+- [x] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code ergänzen.
 
 ### R3-Q2 Bridge-Simulator und Tests
 
-- [ ] `tools/bridge-simulator`: neue Szenarien, z. B. `nachbarhandel` (Nachbarfelder, Silos mit freier Kapazität,
+- [x] `tools/bridge-simulator`: neue Szenarien, z. B. `nachbarhandel` (Nachbarfelder, Silos mit freier Kapazität,
   Shop-Katalog) und `duerre-sommer` (Monate ohne Regen). Der Simulator versteht die neuen Anweisungen und
-  JSON-Schemas.
-- [ ] Mod-Tests (`mod/tests/`) für jede neue Adapter-Funktion mit gemockten FS25-Globals, wie in
-  `test_game_adapter.lua`.
-- [ ] Backend: Grenzwert-Tests für jede neue Formel (wie `CreditFormulaTest`), End-to-End-Test gegen den Simulator.
+  JSON-Schemas. Umgesetzt: `nachbarhandel` und `duerre-sommer` (Start im Juni, kein Regen). Der Simulator führt die
+  neuen Anweisungen aus wie der spätere Mod.
+- [x] Mod-Tests (`mod/tests/`) für jede neue Adapter-Funktion mit gemockten FS25-Globals, wie in
+  `test_game_adapter.lua`. In Q: Normalisierung der Blöcke, Prüfung der neuen Anweisungen, `NOT_SUPPORTED`, `result`
+  in Quittung und Spielstand. Gilt weiter für jede Adapter-Funktion der Features.
+- [x] Backend: Grenzwert-Tests für jede neue Formel (wie `CreditFormulaTest`), End-to-End-Test gegen den Simulator.
+  Q bringt keine Formel. `BridgeValidatorTest`, `FailedInstructionTest`, `BridgeSyncIntegrationTest` und
+  `SimulatorScenariosEndToEndTest` prüfen die neuen Blöcke, den Hinweis und `result`.
 
 ### R3-Q3 Konfiguration und Doku
 
-- [ ] Alle neuen Werte unter `rpsim.formulas.*` in `backend/src/main/resources/application.yml` und
+- [x] Alle neuen Werte unter `rpsim.formulas.*` in `backend/src/main/resources/application.yml` und
   `config/RpsimProperties.java`. **Achtung:** `ConfigurationReferenceDocTest` schlägt fehl, wenn ein Schlüssel in
-  `docs/dev/configuration-reference.md` fehlt.
-- [ ] Neue Mod-Schalter in `RPSimConfig.DEFAULTS` (z. B. `npcFieldExport`, `storeCatalogExport`).
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md` je Feature, Eintrag in `CHANGELOG.md`.
+  `docs/dev/configuration-reference.md` fehlt. Q bringt nur die Klassen der neuen Buchungsgründe unter
+  `rpsim.formulas.finance.categories`. Die Regel gilt für jedes Feature.
+- [x] Neue Mod-Schalter in `RPSimConfig.DEFAULTS` (z. B. `npcFieldExport`, `storeCatalogExport`). Q bringt keine
+  Schalter (`npcFieldExport` kommt mit H1, `storeCatalogExport` mit V1).
+- [x] Spieler-Doku `docs/user-guide/funktionen.md` je Feature, Eintrag in `CHANGELOG.md`. Q ist für Spieler nicht
+  sichtbar, daher nur der `CHANGELOG`-Eintrag.
 
 ### R3-Q4 Prüfliste für den Spieltest erweitern
 
-- [ ] In `docs/dev/manual-test-plan.md` einen neuen Abschnitt **„11. Roadmap V3 im echten FS25“** anlegen. Jeder
+- [x] In `docs/dev/manual-test-plan.md` einen neuen Abschnitt **„11. Roadmap V3 im echten FS25“** anlegen. Jeder
   🟡-Punkt dieser Roadmap bekommt dort eine Zeile mit „Wie prüfen“ und „Erwartet“.
 
 ---
@@ -127,56 +145,68 @@ Internet werden immer abgewiesen, Geräte im Heimnetz melden sich mit einer PIN 
 
 **Beleg:** – (kein Mod-Eingriff). Alles läuft im Backend (Spring Boot) und in der Angular-Oberfläche.
 
+**Stand 30.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Der Schalter ist standardmäßig aus. Die PIN
+ist **freiwillig**: Ohne PIN kommt jedes Gerät im Heimnetz bei eingeschaltetem Schalter direkt hinein. Die PIN hat 4–8
+Ziffern. Nach 5 Fehlversuchen ist eine Absenderadresse 5 Minuten gesperrt. Eine Sitzung gilt 30 Tage und übersteht
+einen Neustart, weil nur der Hash des Cookie-Werts gespeichert ist. Eine neue PIN, das Entfernen der PIN oder das
+Ausschalten beendet alle Sitzungen. Schalter und PIN lassen sich nur am Spiele-PC ändern. Den QR-Code erzeugt der
+Browser (`qrcode-generator`). Das Profil `prod` setzt `server.address` nicht mehr.
+
 ### R3-N1 Zugriff nur aus dem eigenen Netz
 
-- [ ] Neuer Filter im Backend (vor allen `/api/**`- und Oberflächen-Anfragen), entschieden nach der Absenderadresse:
+- [x] Neuer Filter im Backend (vor allen `/api/**`- und Oberflächen-Anfragen), entschieden nach der Absenderadresse:
   - Loopback (`127.0.0.1`, `::1`) ist immer erlaubt.
   - Private Adressen (`InetAddress.isSiteLocalAddress()` / `isLinkLocalAddress()`, dazu IPv6 ULA `fc00::/7`) sind nur
-    erlaubt, wenn der Schalter **„Im Heimnetz erreichbar“** an ist.
+    erlaubt, wenn der Schalter **„Im Heimnetz erreichbar“** an ist. Umgesetzt: `lan/LanAccessFilter`,
+    `lan/NetworkAddresses`.
   - Jede andere Adresse bekommt immer `403`. Eine Portfreigabe am Router öffnet das Tool also nicht fürs Internet.
-- [ ] Den Schalter speichert die Installation, nicht der Spielstand (neue Einstellungskarte „Tablet & Netzwerk“).
-  Er wirkt sofort, ohne Neustart. `server.address` bleibt ungesetzt.
-- [ ] Die CORS-Regel in `WebConfig` bleibt unverändert. Das Tablet lädt die Oberfläche vom Backend selbst, es gibt
+- [x] Den Schalter speichert die Installation, nicht der Spielstand (neue Einstellungskarte „Tablet & Netzwerk“).
+  Er wirkt sofort, ohne Neustart. `server.address` bleibt ungesetzt. Umgesetzt: Tabelle `lan_settings` (eine Zeile je
+  Installation). `application-prod.yml` setzt `server.address: 0.0.0.0` nicht mehr.
+- [x] Die CORS-Regel in `WebConfig` bleibt unverändert. Das Tablet lädt die Oberfläche vom Backend selbst, es gibt
   also keine fremde Herkunft.
-- [ ] Live-Updates (Server-Sent Events) laufen über dieselbe Adresse und denselben Filter.
+- [x] Live-Updates (Server-Sent Events) laufen über dieselbe Adresse und denselben Filter.
 
 ### R3-N2 PIN für Geräte im Heimnetz
 
-- [ ] Ist der Heimnetz-Zugriff an, müssen sich Geräte, die nicht der Spiele-PC selbst sind, einmal mit einer PIN
+- [x] Ist der Heimnetz-Zugriff an, müssen sich Geräte, die nicht der Spiele-PC selbst sind, einmal mit einer PIN
   anmelden. Danach gilt ein Sitzungs-Cookie (`HttpOnly`, `SameSite=Strict`), das auch `EventSource` automatisch
   mitschickt. Der Spiele-PC (Loopback) braucht nie eine PIN.
-- [ ] Die PIN liegt nur als Hash in der Datenbank (PBKDF2 aus dem JDK, `SecretKeyFactory`
+- [x] Die PIN liegt nur als Hash in der Datenbank (PBKDF2 aus dem JDK, `SecretKeyFactory`
   `PBKDF2WithHmacSHA256`, keine neue Bibliothek). Nach mehreren Fehlversuchen gibt es eine kurze Sperre
   (`rpsim.web.lan.*`).
-- [ ] Der API-Schlüssel der KI bleibt geschützt: `SettingsController` gibt ihn schon heute nie zurück (nur
+- [x] Der API-Schlüssel der KI bleibt geschützt: `SettingsController` gibt ihn schon heute nie zurück (nur
   `apiKeySet`).
-- [ ] Offene Entscheidung (`QUESTIONS.md`): Ist die PIN Pflicht, sobald der Heimnetz-Zugriff an ist? Vorschlag: ja.
+- [x] Offene Entscheidung (`QUESTIONS.md`): Ist die PIN Pflicht, sobald der Heimnetz-Zugriff an ist? Vorschlag: ja.
+  **Entschieden:** nein, die PIN ist freiwillig. Der Schalter ist standardmäßig aus.
 
 ### R3-N3 Adresse und QR-Code in den Einstellungen
 
-- [ ] Das Backend listet seine Adressen im Heimnetz (`java.net.NetworkInterface`, nur aktive, private IPv4-Adressen)
+- [x] Das Backend listet seine Adressen im Heimnetz (`java.net.NetworkInterface`, nur aktive, private IPv4-Adressen)
   und loggt sie beim Start: „Auf dem Tablet öffnen: http://192.168.x.y:8080“.
-- [ ] Die Einstellungskarte zeigt die Adresse(n) und dazu einen QR-Code zum Abscannen mit dem Tablet.
-- [ ] Offene Entscheidung (`QUESTIONS.md`): Wer erzeugt den QR-Code (kleine Frontend-Bibliothek oder das Backend)?
-  Die Wahl bringt eine neue Abhängigkeit.
+- [x] Die Einstellungskarte zeigt die Adresse(n) und dazu einen QR-Code zum Abscannen mit dem Tablet.
+- [x] Offene Entscheidung (`QUESTIONS.md`): Wer erzeugt den QR-Code (kleine Frontend-Bibliothek oder das Backend)?
+  Die Wahl bringt eine neue Abhängigkeit. **Entschieden:** das Frontend mit `qrcode-generator` (MIT).
 
 ### R3-N4 Symbol auf dem Startbildschirm des Tablets
 
-- [ ] Web-App-Manifest (`manifest.webmanifest`: Name „FarmPulse“, Symbole, `display: standalone`, Farben des
+- [x] Web-App-Manifest (`manifest.webmanifest`: Name „FarmPulse“, Symbole, `display: standalone`, Farben des
   Hof-Tablets) im Frontend verlinken. `apple-touch-icon.png` ist schon in `frontend/src/index.html` eingebunden.
-- [ ] **Kein** Service Worker und **keine** Push-Benachrichtigungen. Beides verlangt eine sichere Verbindung (HTTPS
+  Umgesetzt: Symbole `icon-192.png` / `icon-512.png` aus `tools/release/make-icons.py`, Farbe `#0B0F0D`.
+- [x] **Kein** Service Worker und **keine** Push-Benachrichtigungen. Beides verlangt eine sichere Verbindung (HTTPS
   oder `localhost`), das Tablet ruft das Tool im Heimnetz aber über `http://` auf. Siehe
   [Bewusst nicht aufgenommen](#bewusst-nicht-aufgenommen).
 
 ### R3-N5 Doku und Test
 
-- [ ] `docs/user-guide/installation.md`: neuer Abschnitt „Auf dem Tablet oder Handy öffnen“.
+- [x] `docs/user-guide/installation.md`: neuer Abschnitt „Auf dem Tablet oder Handy öffnen“.
   `docs/user-guide/fehlerbehebung.md`: Windows-Firewall (Java für private Netzwerke freigeben), Tablet im Gast-WLAN.
-- [ ] `tools/release/build-release.sh`: Der Text von `start.bat` nennt den Weg zur Tablet-Adresse (Einstellungen).
-- [ ] Manueller Testplan: Aufruf vom Tablet, Anmeldung mit PIN, Live-Updates, Anruf-Overlay und Bedienung per Touch.
+- [x] `tools/release/build-release.sh`: Der Text von `start.bat` nennt den Weg zur Tablet-Adresse (Einstellungen).
+- [x] Manueller Testplan: Aufruf vom Tablet, Anmeldung mit PIN, Live-Updates, Anruf-Overlay und Bedienung per Touch.
 
 **Akzeptanz N:** Mit eingeschaltetem Heimnetz-Zugriff öffnet ein Tablet im selben WLAN die angezeigte Adresse, meldet
-sich mit der PIN an und sieht Live-Updates. Mit ausgeschaltetem Schalter und aus jedem nicht privaten Netz kommt
+sich mit der PIN an (sofern eine gesetzt ist) und sieht Live-Updates. Prüfliste: `docs/dev/manual-test-plan.md`,
+Abschnitt 12. Mit ausgeschaltetem Schalter und aus jedem nicht privaten Netz kommt
 `403`.
 
 ---
@@ -192,6 +222,16 @@ zufällig (`g_missionManager`), und die Nachbarn haben mit ihnen nichts zu tun, 
 Jede Fruchtsorte und jedes Produkt ist möglich, **sofern du dafür ein eigenes Silo hast**. Der Handel bucht die Menge
 echt aus deinen Silos ab oder in sie ein. Braucht ein Nachbar Hilfe, erzeugt er einen **echten Auftrag im Spiel** auf
 seinem eigenen Feld.
+
+**Stand 30.09.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Rollen Milchviehbetrieb (Stroh, Silage, Heu),
+Ackerbau (Saatgut, Dünger, Flüssigdünger) und Gemischtbetrieb (Stroh, Saatgut). Ein Nachbar verkauft zu 105 % und
+kauft zu 95 % der besten Verkaufsstelle, Vertrauen wirkt mit höchstens ± 5 %. 30 % einer Nachbarernte gehen in seinen
+Vorrat, bei Weizen, Gerste und Hafer dazu 50 % davon als Stroh; der Vorrat sinkt um 20 % je Spielmonat. Höchstens
+zwei Handelsnachrichten und ein Auftrag je Monat, Antwortfrist 5 Tage. Aufträge nur Pflügen und Steine sammeln, 250 €
+Bonus bei Erfolg. Handel und Aufträge stehen in der eigenen App **„Handel“** (`/handel`), die Kontaktseite eines
+Nachbarn verlinkt dorthin. Die Ja/Nein-Fragen im Spiel sind zwei neue Anlässe, standardmäßig aus. Der Mod-Schalter
+`npcFieldExport` ist standardmäßig an. Die Auftragsgrenze des Spiels exportiert der Mod als optionales
+`farm_facts.missionLimitReached`.
 
 **Befund der Prüfung (30.09.2026):**
 
@@ -209,13 +249,17 @@ seinem eigenen Feld.
 
 ### R3-H1 Nachbarfelder exportieren
 
-- [ ] `RPSimGameAdapter:collectFields` liest zusätzlich die Felder, für die `field:getHasOwner()` `false` ist und
+- [x] `RPSimGameAdapter:collectFields` liest zusätzlich die Felder, für die `field:getHasOwner()` `false` ist und
   `field.isMissionAllowed` gilt. Export als `farm_facts.npcFields[]` mit denselben Feldern wie `fields[]`
   (`farmlandId`, `name`, `hectares`, `fruitType`, `growthState`, min/max, `withered`, `cut`, `fillType`,
-  `litersPerSqm`, `groundType`).
-- [ ] Gleiche Taktung wie `fields` (`fieldExportIntervalMs`), abschaltbar über den Mod-Schalter `npcFieldExport`.
-- [ ] Backend: `FieldService` führt die Nachbarfelder wie die eigenen (Phase, Kultur je Erntejahr). Wem ein Feld gehört,
-  sagt die vorhandene Zuordnung Farmland → Charakter (`FarmlandOwnership`, `use-game-npc-owners`, T-21).
+  `litersPerSqm`, `groundType`). Umgesetzt: `RPSimGameAdapter:collectNpcFields` (gemeinsame Sammlung
+  `collectFieldsWhere` mit den eigenen Feldern).
+- [x] Gleiche Taktung wie `fields` (`fieldExportIntervalMs`), abschaltbar über den Mod-Schalter `npcFieldExport`
+  (Standard an). Ohne Schalter fehlt der Block `npcFields` ganz.
+- [x] Backend: `FieldService` führt die Nachbarfelder wie die eigenen (Phase, Kultur je Erntejahr). Wem ein Feld gehört,
+  sagt die vorhandene Zuordnung Farmland → Charakter (`FarmlandOwnership`, `use-game-npc-owners`, T-21). Umgesetzt:
+  eigener `neighbor/NpcFieldService` mit denselben Phasen (Tabellen `npc_field_record`, `npc_field_crop`), damit die
+  eigenen Feld-Nachrichten und Fruchtfolge-Regeln die Nachbarfelder nicht erfassen.
 
 **Beleg:** ✅ `field/FieldManager.lua` (Dump): `field:getHasOwner()`, `field.isMissionAllowed`, Planung der NPC-Frucht
 über `FieldUpdateTask`. ✅ Die Feldwerte selbst wie in R2-C1 (`field/FieldState.lua`, `field:getFieldState()`).
@@ -226,22 +270,24 @@ gesehenen Kultur und dem Erntejahr, wie die Fruchtfolge-Historie aus C1.
 
 ### R3-H2 Vorrat und Bedarf der Nachbarn (Backend)
 
-- [ ] **Handelsfähige Ware des Spielers:** Der Mod exportiert `farm_facts.tradeStorage[]` =
+- [x] **Handelsfähige Ware des Spielers:** Der Mod exportiert `farm_facts.tradeStorage[]` =
   `{ fillType, amount, freeCapacity }`. Er summiert dafür **nur** eigene Silos (`spec_silo.storages`) und
   Silo-Erweiterungen (`spec_siloExtension.storage`) und nutzt `storage:getFillLevel` / `storage:getFreeCapacity` je
-  Fruchtsorte.
+  Fruchtsorte. Umgesetzt: `RPSimGameAdapter:collectTradeStorage` (nur Lager, die der eigenen Farm gehören).
   - „Du hast ein Silo dafür“ heißt: `freeCapacity + amount > 0`, das Silo nimmt diese Fruchtsorte also an.
   - Das gilt für **jede** Fruchtsorte und jedes Produkt, das ein eigenes Silo annimmt, nicht nur für Stroh.
-- [ ] **Vorrat eines Nachbarn:** entsteht aus seinen Feldern in H1. Eine Ernte (Phase `HARVESTED` nach `HARVESTABLE`)
+- [x] **Vorrat eines Nachbarn:** entsteht aus seinen Feldern in H1. Eine Ernte (Phase `HARVESTED` nach `HARVESTABLE`)
   bringt Fläche × `litersPerSqm` × Anteil (Konfig) in seinen Vorrat, bei Getreide auch Stroh (Konfig-Tabelle
-  Frucht → Nebenprodukt). Der Vorrat sinkt über die Zeit (Verkauf, Eigenbedarf).
-- [ ] **Bedarf eines Nachbarn:** feste Rollen je Nachbar (Konfig bzw. beim Anlegen des Charakters ausgewürfelt), z. B.
+  Frucht → Nebenprodukt). Der Vorrat sinkt über die Zeit (Verkauf, Eigenbedarf). Umgesetzt: Tabelle
+  `neighbor_stock`; eine Ernte zählt nicht, solange ein Rückspulen läuft.
+- [x] **Bedarf eines Nachbarn:** feste Rollen je Nachbar (Konfig bzw. beim Anlegen des Charakters ausgewürfelt), z. B.
   „Milchviehbetrieb“ braucht Stroh, Silage und Heu, „Ackerbau“ braucht Saatgut und Dünger, sofern es diese als
-  Silo-Ware gibt. Die Tiere sind Erzählung, keine Spielobjekte.
-- [ ] Preise: aktueller Preis der besten Verkaufsstelle (`prices`) × Spanne (Konfig, z. B. Nachbar verkauft zu 105 %,
+  Silo-Ware gibt. Die Tiere sind Erzählung, keine Spielobjekte. Umgesetzt: `game_character.neighbor_role`,
+  ausgewürfelt beim Anlegen eines Nachbarn (ältere Nachbarn beim ersten Bedarf).
+- [x] Preise: aktueller Preis der besten Verkaufsstelle (`prices`) × Spanne (Konfig, z. B. Nachbar verkauft zu 105 %,
   kauft zu 95 %), Vertrauen als gedeckelter Bonus/Malus wie in der Verhandlungs-Engine. Ohne Preis im Spiel (Ware
   ohne Verkaufsstelle) nennt die Konfig einen Richtpreis je 1000 l.
-- [ ] Alle Werte unter `rpsim.formulas.neighbor-trade.*`, Häufigkeit gedeckelt wie bei den anderen Spawnern.
+- [x] Alle Werte unter `rpsim.formulas.neighbor-trade.*`, Häufigkeit gedeckelt wie bei den anderen Spawnern.
 
 **Beleg:** ✅ `Specializations/PlaceableSilo.md` und `PlaceableSiloExtension.md` (LUADOC): beide legen ihr Lager mit
 `Storage.new(...)` an. `PlaceableSilo` nutzt `storage:getFillLevels()`, `getFillLevel`, `getFreeCapacity` und
@@ -249,18 +295,19 @@ gesehenen Kultur und dem Erntejahr, wie die Fruchtfolge-Historie aus C1.
 
 ### R3-H3 Ware beim Nachbarn kaufen
 
-- [ ] Auf der Kontaktseite eines Nachbarn: **„Ware anfragen“** mit Formular (Fruchtsorte aus dem Nachbarvorrat,
+- [x] Auf der Kontaktseite eines Nachbarn (Entscheidung: in der App „Handel“, verlinkt von der Kontaktseite): **„Ware anfragen“** mit Formular (Fruchtsorte aus dem Nachbarvorrat,
   Menge). Angeboten wird nur Ware, für die du laut `tradeStorage` Platz hast. Außerdem bietet ein Nachbar von sich aus
   an, was er übrig hat.
-- [ ] Das Backend prüft Vorrat, freie Kapazität und Kontostand und nennt den Preis (H2). Antwort per Mail oder Anruf,
+- [x] Das Backend prüft Vorrat, freie Kapazität und Kontostand und nennt den Preis (H2). Antwort per Mail oder Anruf,
   Annahme per Knopf (optional als Ja/Nein-Frage im Spiel, F2).
-- [ ] Ausführung als Batch: `STORAGE_TRANSFER { direction: "IN", fillType, amount }` + `MONEY_TRANSACTION`
+- [x] Ausführung als Batch: `STORAGE_TRANSFER { direction: "IN", fillType, amount }` + `MONEY_TRANSACTION`
   (`GOODS_PURCHASE`).
-- [ ] Mod: verteilt die Menge wie `PlaceableSilo:refillAmount` auf die eigenen Silo-Lager mit freier Kapazität
+- [x] Mod: verteilt die Menge wie `PlaceableSilo:refillAmount` auf die eigenen Silo-Lager mit freier Kapazität
   (`getFreeCapacity` → `setFillLevel(getFillLevel + moved)`), aber **ohne** die Spielbuchung `BOUGHT_MATERIALS`. Das
   Geld bucht die `MONEY_TRANSACTION`. Reicht die freie Kapazität nicht für die ganze Menge: `FAILED` mit
   `NO_CAPACITY`, der ganze Batch wird abgelehnt.
-- [ ] Vertrauen und Tagebucheintrag („Stroh von Otto Wendler gekauft“).
+- [x] Vertrauen und Tagebucheintrag („Stroh von Otto Wendler gekauft“). Die Ware des Nachbarn ist ab der Zusage
+  reserviert und geht bei einer abgelehnten Anweisung zurück in seinen Vorrat.
 
 **Beleg:** ✅ `PlaceableSilo:refillAmount(fillTypeIndex, amount, price)` (LUADOC): Schleife über `spec.storages`,
 `getFreeCapacity` → `setFillLevel(fillLevel + moved, fillTypeIndex)`, danach `addMoney(..., MoneyType.BOUGHT_MATERIALS)`.
@@ -268,15 +315,16 @@ Den Buchungsteil übernimmt das Tool.
 
 ### R3-H4 Nachbar fragt nach deiner Ware
 
-- [ ] Hat ein Nachbar Bedarf (H2) und du genug davon in deinen Silos (`tradeStorage.amount`), fragt er per Mail oder
+- [x] Hat ein Nachbar Bedarf (H2) und du genug davon in deinen Silos (`tradeStorage.amount`), fragt er per Mail oder
   Anruf: „Mir geht das Stroh aus, kannst du mir 8.000 Liter abgeben?“ Menge und Preis legt das Backend fest.
-- [ ] Zusage per Knopf (optional als Ja/Nein-Frage im Spiel, F2). Ausführung als Batch:
+- [x] Zusage per Knopf (optional als Ja/Nein-Frage im Spiel, F2). Ausführung als Batch:
   `STORAGE_TRANSFER { direction: "OUT", fillType, amount }` + `MONEY_TRANSACTION` (`GOODS_SALE`).
-- [ ] Mod: entnimmt die Menge aus den eigenen Silo-Lagern (`setFillLevel(getFillLevel - moved)`). Liegt inzwischen zu
+- [x] Mod: entnimmt die Menge aus den eigenen Silo-Lagern (`setFillLevel(getFillLevel - moved)`). Liegt inzwischen zu
   wenig im Silo: `FAILED` mit `INSUFFICIENT_STOCK`, keine Buchung. Der Nachbar bedankt sich trotzdem oder ist
   enttäuscht (Text und Vertrauen).
-- [ ] Absage kostet wenig Vertrauen, Ignorieren bis zur Frist etwas mehr. Häufige Hilfe stärkt das Dorf-Ansehen
-  (Formel des Dorf-Ansehens, `PublicActionType`).
+- [x] Absage kostet wenig Vertrauen, Ignorieren bis zur Frist etwas mehr. Häufige Hilfe stärkt das Dorf-Ansehen
+  (Formel des Dorf-Ansehens, `PublicActionType`). Umgesetzt: `PublicActionType.NEIGHBOR_HELP`, höchstens dreimal je
+  FS25-Jahr.
 
 **Beleg:** ✅ wie H3 (`storage:getFillLevel`, `storage:setFillLevel` in `PlaceableSilo`).
 
@@ -287,7 +335,7 @@ ruft `setFillLevel` nur auf dem Server-Pfad (`self.isServer`), ein Client schick
 
 ### R3-H5 Nachbarn vergeben echte Aufträge
 
-- [ ] Neue Anweisung `MISSION_CREATE { missionType, farmlandId }`. Der Mod sucht das Feld des Farmlands und prüft:
+- [x] Neue Anweisung `MISSION_CREATE { missionType, farmlandId }`. Der Mod sucht das Feld des Farmlands und prüft:
   - das Feld hat keinen Besitzer (`getHasOwner()` = `false`),
   - auf dem Feld läuft kein Auftrag (`field.currentMission == nil`),
   - der Auftragstyp passt zum Feldzustand (`<Klasse>.isAvailableForField(field, nil)`).
@@ -295,19 +343,21 @@ ruft `setFillLevel` nur auf dem Server-Pfad (`self.isServer`), ein Client schick
   Dann erzeugt er den Auftrag wie das Spiel selbst:
   `classObject.new(true, g_client ~= nil)` → `mission:init(field)` → `mission:setDefaultEndDate()` →
   `g_missionManager:registerMission(mission, missionType)`. Die Quittung trägt die `uniqueId` des Auftrags (`result`).
-  Passt etwas nicht: `FAILED` mit `NOT_AVAILABLE`.
-- [ ] Backend: Ein Nachbar mit passendem Feld (H1: z. B. abgeerntet und ungepflügt → Pflügen; Steine → Steine
+  Passt etwas nicht: `FAILED` mit `NOT_AVAILABLE`. Umgesetzt: `RPSimGameAdapter:createMission` mit den Klassen
+  `PlowMission` / `StonePickMission` und `g_missionManager:getMissionType(<Klasse>.NAME)`.
+- [x] Backend: Ein Nachbar mit passendem Feld (H1: z. B. abgeerntet und ungepflügt → Pflügen; Steine → Steine
   sammeln) bittet per Mail um Hilfe. Die Anweisung geht erst nach der Zusage raus. Der Auftrag erscheint dann im
   Auftragsmenü des Spiels.
-- [ ] Der Auftraggeber im Spiel ist automatisch der Nachbar, dem das Farmland gehört (`AbstractFieldMission:getNPC()` =
+- [x] Der Auftraggeber im Spiel ist automatisch der Nachbar, dem das Farmland gehört (`AbstractFieldMission:getNPC()` =
   `field.farmland:getNPC()`). Das Tool führt denselben NPC schon als Charakter (T-21).
-- [ ] Belohnung: Die Vergütung zahlt das Spiel nach seiner eigenen Formel. Das Tool bewertet den Abschluss über
+- [x] Belohnung: Die Vergütung zahlt das Spiel nach seiner eigenen Formel. Das Tool bewertet den Abschluss über
   `farm_facts.missions` (`FINISHED`, `success`): Vertrauen, Dank-Mail, bei Erfolg optional ein kleiner Bonus
   (Konfig, `MONEY_TRANSACTION` `OTHER`). Bei Misserfolg oder Ablauf ist der Nachbar enttäuscht.
-- [ ] Umgekehrt (optional): Der Spieler fragt einen Nachbarn auf dessen Kontaktseite nach Arbeit. Das Backend wählt
-  ein passendes Nachbarfeld.
-- [ ] Werte unter `rpsim.formulas.neighbor-missions.*` (Häufigkeit, Bonus, Vertrauen), Obergrenze je Monat. Die
-  Obergrenze des Spiels `g_missionManager:hasFarmReachedMissionLimit` wird vor dem Angebot geprüft.
+- [x] Umgekehrt (optional): Der Spieler fragt einen Nachbarn auf dessen Kontaktseite nach Arbeit. Das Backend wählt
+  ein passendes Nachbarfeld. Umgesetzt: Knopf „Nach Arbeit fragen“ in der App „Handel“.
+- [x] Werte unter `rpsim.formulas.neighbor-missions.*` (Häufigkeit, Bonus, Vertrauen), Obergrenze je Monat. Die
+  Obergrenze des Spiels `g_missionManager:hasFarmReachedMissionLimit` wird vor dem Angebot geprüft (Export als
+  `farm_facts.missionLimitReached`). Ein nach dem Laden verlorener Auftrag wird erneut angeboten.
 
 **Beleg:** ✅ `Field/PlowMission.md` und `Field/StonePickMission.md` (LUADOC): `tryGenerateMission` =
 `g_fieldManager:getFieldForMission()` → `field.currentMission`-Prüfung → `isAvailableForField(field, nil)` →
@@ -346,25 +396,37 @@ monatliche Pacht.
 **Beleg:** – (kein neuer Mod-Eingriff). `LeaseService` überträgt das Feld schon heute per `FARMLAND_TRANSFER`
 (`TO_PLAYER` bei Beginn, `FROM_PLAYER` am Ende). Die Verpachtung nutzt dieselbe Anweisung in umgekehrter Richtung.
 
+**Stand 02.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Laufzeit 1–3 FS25-Jahre, Wunschpacht in € je ha
+und Monat, Richtwert = Feldpreis × 5 % / 12 je ha. Interessenten sind bis zu drei aktive Nachbarn
+(`NEIGHBOR_FARMER`) mit Kapital ≥ Wunschpacht × ha × 12 × Jahre; erstes Gebot 85–100 % der Wunschpacht, gedeckelt
+durch die Verhandlungsformel, bis 3 Runden, 5 Spieltage offen; ohne Interessenten schreibt der Berater. Fallback
+(🟡): Verpachten nur bei leerem oder abgeerntetem Feld; die Rückgabe wartet, bis der Nachbarfeld-Export (H1) das Feld
+leer oder abgeerntet zeigt, höchstens einen Monat. Ein verpfändetes Feld braucht die Zustimmung der Bank (neuer Knopf
+in der Bank, die Grundschuld bleibt); verpachtete Felder zählen weiter als Vermögen und Sicherheit. Familienfeld:
+Vertrauen −5 je Familienmitglied (Verkauf −15). Ein Monat vor Ende bietet der Pächter die Verlängerung an (Pacht ×
+0,95–1,1), keine vorzeitige Kündigung. Die Pacht kommt ab dem Folgemonat, der Pächter zahlt immer; der
+Liquiditätsplan zeigt sie als Einnahme. Holst du das Feld im Spielmenü zurück, endet die Pacht sofort (Pächter −10
+Vertrauen). Neue Karte „Verpachtete Felder“ in der Flurkarte, Gebote wie Verkaufsverhandlungen.
+
 ### R3-L1 Verpachtung anbieten und abschließen
 
-- [ ] Flurkarte → eigenes Feld → **„Verpachten“**: Das Formular nennt Laufzeit (FS25-Jahre, Konfig) und Wunschpacht.
+- [x] Flurkarte → eigenes Feld → **„Verpachten“**: Das Formular nennt Laufzeit (FS25-Jahre, Konfig) und Wunschpacht.
   Nicht möglich bei gepachteten Feldern, bei laufender Verhandlung oder Versteigerung und bei einem als Sicherheit
   eingetragenen Feld ohne Zustimmung der Bank (K1).
-- [ ] Interessenten wie beim Feldverkauf (Verhandlungs-Engine): Nachbarn mit Interesse und Kapital geben ein Gebot je
+- [x] Interessenten wie beim Feldverkauf (Verhandlungs-Engine): Nachbarn mit Interesse und Kapital geben ein Gebot je
   Hektar und Monat ab, bis zu drei Runden. Richtwert: Feldpreis × Pachtrendite (Konfig) / 12.
-- [ ] Beginn: Batch `FARMLAND_TRANSFER FROM_PLAYER`. Das Feld gehört im Spiel keiner Farm mehr, und das Grundspiel
+- [x] Beginn: Batch `FARMLAND_TRANSFER FROM_PLAYER`. Das Feld gehört im Spiel keiner Farm mehr, und das Grundspiel
   bewirtschaftet es als NPC-Feld. Im Tool bleibt der Spieler Eigentümer mit dem neuen Merkmal `leasedFromPlayer`, als
   Gegenstück zu `isLeasedToPlayer` in `FarmlandOwnershipService.reconcile`. Der Abgleich wertet die Übertragung also
   nicht als Verkauf.
-- [ ] Monatliche Pacht als `MONEY_TRANSACTION` `LEASE_INCOME` über `ContractBillingService`.
-- [ ] Ende: `FARMLAND_TRANSFER TO_PLAYER`, Mail des Pächters, Verlängerung per Knopf (wie `/renew`).
-- [ ] Auswirkungen:
+- [x] Monatliche Pacht als `MONEY_TRANSACTION` `LEASE_INCOME` über `ContractBillingService`.
+- [x] Ende: `FARMLAND_TRANSFER TO_PLAYER`, Mail des Pächters, Verlängerung per Knopf (wie `/renew`).
+- [x] Auswirkungen:
   - Steuer: Die Pacht zählt als operative Einnahme (Journal, R2-B2).
   - Bank: laufende Einnahme im Cashflow.
   - Familie: Das Verpachten des Familienfelds kostet weniger Familien-Vertrauen als ein Verkauf (Konfig).
   - Amt: Die Bewirtschaftungspflicht (R2-E2) prüft nur eigene bewirtschaftete Felder, das verpachtete Feld fällt heraus.
-- [ ] Werte unter `rpsim.formulas.lease-out.*`.
+- [x] Werte unter `rpsim.formulas.lease-out.*`.
 
 **🟡 Im Spiel prüfen:** Was passiert mit dem Aufwuchs beim Übergang? Bleibt der Feldzustand beim Besitzerwechsel
 über `FarmlandManager:setLandOwnership` stehen, und bekommt das Feld während der Pacht Aufträge des Grundspiels?
@@ -377,26 +439,42 @@ nach Ablauf gehört das Feld wieder dir. Das Tool meldet dabei weder Verkauf noc
 
 ## K – Kredit und Finanzplanung
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Beleihungswert = Feldpreis × 0,6. Volle Deckung
+senkt den Zins um 1,0 Prozentpunkt (anteilig darunter), dazu bis zu +20 Punkte auf „Kredit zu groß für den Betrieb“.
+Über 50 % des Vermögens muss die Grundschuld den Teil darüber decken; sonst nennt die Bank im Gegenangebot weitere
+eigene Felder (größte zuerst). Verkauf in der Flurkarte nur mit Zustimmung: Der Erlös tilgt den Beleihungswert im selben
+Batch, ohne Vorfälligkeitsentschädigung. Verkauf im Spielmenü: Vertrauen −10, Forderung in der Bank-App (10 Tage),
+unbezahlt eine verpasste Rate, Vertrauen −5 und keine neuen Kredite bis zur Zahlung. Verwertung bei Fälligstellung nur
+im harten Weltmodus. Die Liquiditätsplanung zeigt 12 Monate, die Reserve ist ein Monat Fixkosten, die Bankberaterin
+warnt einmal je Engpass in den nächsten 3 Monaten. Jahresgespräch: Einladung 10 Tage, ab Score 75 −0,25
+Prozentpunkte auf jeden laufenden Kredit (höchstens −1,0 je Kredit, nie unter 1 %), die Rate sinkt, die Laufzeit bleibt.
+
 ### R3-K1 Kreditsicherheiten (Grundschuld)
 
 **Problem heute:** Das Fachkonzept hat Sicherheiten „als spätere Erweiterung vorgemerkt“. `CreditFormula` kennt nur
 Kapitaldienst, Eigenkapital, Liquidität, Größe und Zahlungshistorie.
 
-- [ ] Im Kreditantrag eigene Felder als Sicherheit wählen. Beleihungswert = Feldpreis (`assets.farmland[].price`) ×
-  Beleihungsquote (Konfig, Vorschlag 0,6).
-- [ ] Wirkung nach Formel, gedeckelt:
+- [x] Im Kreditantrag eigene Felder als Sicherheit wählen. Beleihungswert = Feldpreis (`assets.farmland[].price`) ×
+  Beleihungsquote (Konfig, Vorschlag 0,6). Umgesetzt: Auswahl im Kreditformular der Bank-App, Tabelle
+  `loan_collateral` (Migration V26), `credit/CollateralService`. Eigenes Feld = in der Flurkarte dem Spieler gehörend,
+  nicht gepachtet.
+- [x] Wirkung nach Formel, gedeckelt:
   - Zinsnachlass proportional zur Deckung (`credit.collateral.max-interest-discount`),
   - Bonus auf die Kennzahl „Kredit zu groß für den Betrieb“,
   - große Kredite über `credit.collateral.required-above-share` des Vermögens nur mit Sicherheit. Ohne Sicherheit
     wird der Antrag nicht abgelehnt, sondern die Bank macht ein Gegenangebot („mit Grundschuld“), wie im Fachkonzept
-    vorgesehen.
-- [ ] Belastete Felder: Verkauf oder Verpachtung (L) im Tool nur nach Zustimmung der Bank (Mail, Knopf). Ein Verkauf
+    vorgesehen. Umgesetzt: `CreditFormula.coverage` / `interestDiscount` / `requiredCollateral`,
+    `rpsim.formulas.credit.collateral.*`.
+- [x] Belastete Felder: Verkauf oder Verpachtung (L) im Tool nur nach Zustimmung der Bank (Mail, Knopf). Ein Verkauf
   über das Spielmenü (Erkennung aus R2-D2) löst eine Reaktion der Bank aus (Vertrauensverlust, Forderung einer
-  Sondertilgung in Höhe des Beleihungswerts).
-- [ ] Die Sicherheit wird frei, wenn der Kredit getilgt ist (auch durch Sondertilgung).
-- [ ] Offene Entscheidung (`QUESTIONS.md`): Soll die Bank bei Fälligstellung (bestehende Eskalation
+  Sondertilgung in Höhe des Beleihungswerts). Umgesetzt: Knopf „Verkauf erlauben lassen“ am Kredit; der Erlös tilgt
+  im Verkaufs-Batch. Der Verkauf im Spielmenü wird als Fall `COLLATERAL_CLAIM` gefordert. Die Verpachtung (L) folgt mit
+  Abschnitt L.
+- [x] Die Sicherheit wird frei, wenn der Kredit getilgt ist (auch durch Sondertilgung).
+- [x] Entschieden (`QUESTIONS.md`): Soll die Bank bei Fälligstellung (bestehende Eskalation
   `CREDIT_CALLBACK`) das Feld verwerten (`FARMLAND_TRANSFER FROM_PLAYER` + Gutschrift gegen die Restschuld)? Oder
-  bleibt es wie heute bei Text und Vertrauen? Vorschlag: Verwertung nur im harten Weltmodus.
+  bleibt es wie heute bei Text und Vertrauen? Entscheidung: Verwertung nur im harten Weltmodus
+  (`credit-hard.collateral.realise-on-callback: true`), Feld für Feld, bis die Restschuld gedeckt ist.
 
 **Beleg:** – (kein Mod-Eingriff; `FARMLAND_TRANSFER` gibt es seit V1).
 
@@ -405,30 +483,38 @@ Kapitaldienst, Eigenkapital, Liquidität, Größe und Zahlungshistorie.
 **Problem heute:** Der Kalender (`tablet/CalendarPlanService.java`) zeigt nur die Abbuchungen des nächsten
 Monatsanfangs und den voraussichtlichen Kontostand.
 
-- [ ] Neue Ansicht in der Bank-App: die nächsten 12 FS25-Monate mit allen **bekannten** Posten:
+- [x] Neue Ansicht in der Bank-App: die nächsten 12 FS25-Monate mit allen **bekannten** Posten:
   - Gehälter, Kreditraten (Restlaufzeit aus `LoanService`), Verträge, Pacht (L) und Altenteil,
   - Steuervorauszahlungen in den Perioden 1, 4, 7 und 10 (`CalendarPlanService.PREPAYMENT_PERIODS`),
-  - fällige Vorkontrakte (M2).
-- [ ] Einnahmen als klar gekennzeichnete **Schätzung**: Durchschnitt des operativen Ergebnisses je Kalendermonat aus
-  dem Journal (R2-B) des Vorjahres, sonst der Schnitt der vorhandenen Monate.
-- [ ] Warnung, in welchem Monat der Kontostand unter null oder unter die Liquiditätsreserve fällt. Optional meldet
-  sich die Bankberaterin vorab (wie die Frühwarnung aus R2-B5).
+  - fällige Vorkontrakte (M2). Seit Abschnitt M als erwartete Einnahme im Liefermonat; Pachteinnahmen (L) folgen mit
+    Abschnitt L.
+- [x] Einnahmen als klar gekennzeichnete **Schätzung**: Durchschnitt des operativen Ergebnisses je Kalendermonat aus
+  dem Journal (R2-B) des Vorjahres, sonst der Schnitt der vorhandenen Monate. Die schon bekannten Posten werden
+  herausgerechnet, damit nichts doppelt zählt.
+- [x] Warnung, in welchem Monat der Kontostand unter null oder unter die Liquiditätsreserve fällt. Optional meldet
+  sich die Bankberaterin vorab (wie die Frühwarnung aus R2-B5). Umgesetzt: `finance/LiquidityPlanService`,
+  `GET /api/liquidity-plan`, Karte „Liquiditätsplanung“, `rpsim.formulas.liquidity-plan.*`.
 
 **Beleg:** – (nur Backend und Oberfläche).
 
 ### R3-K3 Jahresabschluss und Jahresgespräch
 
-- [ ] Beim Jahreswechsel (Periode 12 → 1) erzeugt das Backend einen **Hofbericht** mit Einnahmen und Ausgaben je
+- [x] Beim Jahreswechsel (Periode 12 → 1) erzeugt das Backend einen **Hofbericht** mit Einnahmen und Ausgaben je
   Kategorie aus dem Journal. Der Mod hält `financeJournalPeriods` = 13 Monate, ein volles Jahr ist also da. Dazu:
   - Gewinn und Steuer (`TaxYear`),
   - Kultur und Ertrag je Feld (`FieldCropHistory`),
   - Regenstunden (`RainPeriod`),
   - Stallwerte (`HusbandryRecord`),
   - Personal, Vertrauen und Dorf-Ansehen im Vergleich zum Vorjahr.
-- [ ] Ansicht in der Bank-App, dazu ein kurzer Tagebucheintrag. Die KI kommentiert, die Zahlen kommen aus dem Backend.
-- [ ] **Jahresgespräch:** Die Bankberaterin lädt ein. Nach Formel (Bonitätsscore zum Stichtag) bietet sie bei gutem
+
+  Umgesetzt: `finance/FarmReportService` (Tabelle `farm_report`), `GET /api/farm-reports`. Der Ertrag je Feld wird ab
+  jetzt bei der Ernte gespeichert (Fläche × `litersPerSqm` der letzten Sichtung reif). Der Vergleich nutzt die
+  Kennzahlen des vorigen Berichts; der erste Bericht hat keine Vorjahresspalte.
+- [x] Ansicht in der Bank-App, dazu ein kurzer Tagebucheintrag. Die KI kommentiert, die Zahlen kommen aus dem Backend.
+- [x] **Jahresgespräch:** Die Bankberaterin lädt ein. Nach Formel (Bonitätsscore zum Stichtag) bietet sie bei gutem
   Ergebnis eine Zinssenkung für laufende Kredite an (`credit.annual-review.*`, gedeckelt). Bei schlechtem Ergebnis
-  gibt es nur einen ernsten Ton, keine automatische Verschärfung laufender Verträge.
+  gibt es nur einen ernsten Ton, keine automatische Verschärfung laufender Verträge. Umgesetzt:
+  `credit/AnnualReviewService`, Fälle `ANNUAL_REVIEW` / `ANNUAL_REVIEW_OFFER` in der Bank-App.
 
 **Beleg:** – (nur Backend und Oberfläche).
 
@@ -440,40 +526,53 @@ Einladung zum Jahresgespräch.
 
 ## M – Markt und Vermarktung
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): höchstens 10 aktive Preisalarme, „beliebig“
+= bester Preis aller Verkaufsstellen, Hinweis 1 Spieltag gültig. Vorkontrakt: Festpreis = aktueller Preis × (1 − 2 %
+je Monat Vorlauf), Liefermonat 1–12 Monate voraus, Lieferfenster der ganze Liefermonat, 1.000–200.000 l, höchstens 5
+offene, kein Rücktritt, Abschluss nur über das Formular (Preis anfragen, dann abschließen). Strafe 25 % der Fehlmenge
+zum Festpreis, Vertrauen der Landhändlerin −5 / +3. Hofladen: Kartoffeln, Weizen, Hafer, Zuckerrüben, Raps zum besten
+Marktpreis × 1,3, 200–2.000 l (höchstens 20 % des Bestands), höchstens 2 Bestellungen je Monat (Wahrscheinlichkeit
+0,4), 3 Tage Antwortfrist, Bestellungen in der App „Handel“. Ein neuer Anlass für Ja/Nein-Fragen im Spiel ist
+standardmäßig aus. Der Mod bleibt unverändert: `NOTIFICATION`, `PRICE_EVENT` / `FIXED` und `STORAGE_TRANSFER` gibt
+es schon.
+
 ### R3-M1 Preisalarm
 
-- [ ] In der Agrarbörse einen Alarm anlegen: Fruchtsorte, Verkaufsstelle (oder „beliebig“), Schwelle, Richtung
-  (über/unter).
-- [ ] Geprüft wird bei jedem Eingang von `farm_facts.prices`. Wird die Schwelle erreicht, blendet das Spiel einen
+- [x] In der Agrarbörse einen Alarm anlegen: Fruchtsorte, Verkaufsstelle (oder „beliebig“), Schwelle, Richtung
+  (über/unter). Umgesetzt: Karte „Preisalarm“, `market/PriceAlarmService`, Tabelle `price_alarm` (Migration V27).
+- [x] Geprüft wird bei jedem Eingang von `farm_facts.prices`. Wird die Schwelle erreicht, blendet das Spiel einen
   Hinweis ein (`NOTIFICATION`, Taste aus F3 nicht nötig). Dazu kommt eine kurze Mail der Landhändlerin
   (`LAND_AGENT`) mit Menge im Silo und aktuellem Wert.
-- [ ] Ein Alarm feuert einmal und schaltet sich dann ab (erneut aktivierbar). Höchstzahl je Spielstand in der Konfig.
+- [x] Ein Alarm feuert einmal und schaltet sich dann ab (erneut aktivierbar). Höchstzahl je Spielstand in der Konfig.
 
 **Beleg:** – (`NOTIFICATION` und `prices` gibt es seit V1).
 
 ### R3-M2 Vorkontrakt (Ernte vorab verkaufen)
 
-- [ ] Formular in der Agrarbörse: Fruchtsorte, Verkaufsstelle, Menge, Liefermonat. Das Backend nennt den Festpreis:
-  aktueller Preis × Terminfaktor (Konfig, je Monat Vorlauf ein Ab- oder Aufschlag).
-- [ ] Umsetzung mit der vorhandenen Anweisung `PRICE_EVENT` / `FIXED` (`fixedPrice`, `maxQuantity`,
+- [x] Formular in der Agrarbörse: Fruchtsorte, Verkaufsstelle, Menge, Liefermonat. Das Backend nennt den Festpreis:
+  aktueller Preis × Terminfaktor (Konfig, je Monat Vorlauf ein Ab- oder Aufschlag). Umgesetzt: Karte „Vorkontrakt“,
+  `market/ForwardContractService`, Tabelle `forward_contract`.
+- [x] Umsetzung mit der vorhandenen Anweisung `PRICE_EVENT` / `FIXED` (`fixedPrice`, `maxQuantity`,
   `deadlineGameTime`, Start über `gameTimeEarliest` = Beginn des Liefermonats). Die gelieferte Menge meldet der Mod
   schon heute in `contractReports` (`deliveredQuantity`).
-- [ ] Nach der Frist: Fehlmenge × Festpreis × Strafanteil (Konfig) als `MONEY_TRANSACTION` `CONTRACT_PENALTY`, Mail des
+- [x] Nach der Frist: Fehlmenge × Festpreis × Strafanteil (Konfig) als `MONEY_TRANSACTION` `CONTRACT_PENALTY`, Mail des
   Abnehmers, Vertrauensverlust. Volle Lieferung → Vertrauensbonus.
-- [ ] Je Verkaufsstelle und Fruchtsorte nur ein aktiver Festpreis, denn `FIXED` hat Vorrang vor `MULTIPLIER`.
+- [x] Je Verkaufsstelle und Fruchtsorte nur ein aktiver Festpreis, denn `FIXED` hat Vorrang vor `MULTIPLIER`.
   `MarketEventEngine` erzeugt dort in der Zeit kein `SPECIAL_OFFER`.
-- [ ] Die Liquiditätsplanung (K2) zeigt die erwartete Einnahme.
+- [x] Die Liquiditätsplanung (K2) zeigt die erwartete Einnahme als eigenen, als „erwartet“ markierten Posten im
+  Liefermonat.
 
 **Beleg:** – (`PRICE_EVENT` / `FIXED` und `contractReports` gibt es seit V1, `docs/dev/bridge-protocol.md`).
 
 ### R3-M3 Hofladen (Direktvermarktung ans Dorf)
 
-- [ ] Dorfbewohner (`VILLAGER`) bestellen in Abständen kleine Mengen aus deinem Silo-Bestand, zum Hofladenpreis:
+- [x] Dorfbewohner (`VILLAGER`) bestellen in Abständen kleine Mengen aus deinem Silo-Bestand, zum Hofladenpreis:
   bester Marktpreis × Aufschlag (Konfig). Welche Fruchtsorten gefragt sind, steht in einer Konfigliste. Angeboten
   wird nur, was laut `tradeStorage` in eigenen Silos liegt.
-- [ ] Annahme per Knopf, Ausführung wie H4: `STORAGE_TRANSFER OUT` + `MONEY_TRANSACTION` `GOODS_SALE`.
-- [ ] Wirkung auf das Dorf-Ansehen (`PublicActionType`, gedeckelt). Wer oft ablehnt, bekommt seltener Bestellungen.
-- [ ] Werte unter `rpsim.formulas.farm-shop.*`.
+- [x] Annahme per Knopf, Ausführung wie H4: `STORAGE_TRANSFER OUT` + `MONEY_TRANSACTION` `GOODS_SALE`.
+- [x] Wirkung auf das Dorf-Ansehen (`PublicActionType`, gedeckelt). Wer oft ablehnt, bekommt seltener Bestellungen.
+- [x] Werte unter `rpsim.formulas.farm-shop.*`. Umgesetzt: `neighbor/FarmShopService`, Fall `FARM_SHOP_ORDER`,
+  Bereich „Hofladen“ in der App „Handel“.
 
 **Beleg:** ✅ wie R3-H4 (Silo-Lager über `storage:getFillLevel` / `setFillLevel`).
 
@@ -489,34 +588,50 @@ Ware aus dem Silo ab.
 Hagelwahrscheinlichkeit (`insurance.hail-rain-factor`). Eine Wettervorhersage gibt es nicht (keine FS25-Funktion,
 siehe V2).
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Statt fester Regenstunden zählt der
+Regenanteil, weil die Regenstunden von „Tage je Periode“ abhängen und das Backend nur die beobachtete Zeit kennt:
+Ein Wachstumsmonat (Perioden 3–8, Mai bis Oktober) ist trocken bei Regen unter 3 % der beobachteten Zeit
+(`drought.max-rain-share`), wenn mindestens die Hälfte des Monats beobachtet wurde; sonst gilt er als unbekannt und
+beendet die Reihe. Dürre ab 2 trockenen Monaten in Folge, je Reihe höchstens eine. Die Genossenschaft warnt beim
+ersten trockenen Monat; läuft keine Dürreversicherung, schickt die Versicherung dazu ein Angebot. Bei der Dürre
+`HARVEST_FAILURE` für die 3 flächengrößten Kulturen im Dorf (eigene Felder im Wachstum oder erntereif, Nachbarfelder
+aus H1) an jeder Verkaufsstelle, die sie annimmt; Paare mit offenem Ereignis oder Festpreis werden übersprungen. Eine
+Klatschnachricht (`FIELD_GOSSIP`, Thema `DROUGHT`) über das größte eigene Feld mit Kultur. Dürrehilfe 150 € je Hektar
+eigener Felder, die in einem Dürremonat wuchsen (das Backend zeichnet die wachsenden eigenen Felder ab jetzt je Monat
+auf), Antrag per Knopf in der App „Ämter“, Frist 15 Tage, sofort als `SUBSIDY`, 50 % Abzug bei laufender
+Dürreversicherung, ohne wachsende Felder kein Antrag. Dürreversicherung (Tarif `DROUGHT_INDEX`): 4 € je Hektar und
+Monat (eigene Felder ohne Pachtflächen, die Prämie folgt zu jedem Monatsbeginn der aktuellen Fläche), 200 € je Hektar
+der Fläche bei Ausrufung, nur wenn bezahlt und vor dem ersten trockenen Monat der Reihe abgeschlossen; Angebot auf
+Anfrage (7 Tage gültig), jederzeit kündbar, endet nach 2 offenen Prämien.
+
 **Beleg:** – (kein Mod-Eingriff; `weather` und `RainPeriod` gibt es seit R2-C2).
 
 ### R3-W1 Dürre erkennen
 
-- [ ] Eine Dürre liegt vor, wenn in `drought.min-periods` aufeinanderfolgenden Wachstumsmonaten (Konfigliste
+- [x] Eine Dürre liegt vor, wenn in `drought.min-periods` aufeinanderfolgenden Wachstumsmonaten (Konfigliste
   `drought.periods`, FS25-Perioden, 1 = März) die Regenstunden unter `drought.max-rain-hours` liegen.
-- [ ] Folgen:
+- [x] Folgen:
   - Die Genossenschaft warnt beim ersten trockenen Monat.
   - Bei ausgerufener Dürre erzeugt `MarketEventEngine` ein regionales `HARVEST_FAILURE` für Kulturen, die im Dorf
     stehen (eigene Felder und Nachbarfelder aus H1).
   - Klatsch im Dorf.
-- [ ] Der Spielertrag ändert sich **nicht** (kein belegter Schreibzugriff auf die Fruchtdichte, siehe V2
+- [x] Der Spielertrag ändert sich **nicht** (kein belegter Schreibzugriff auf die Fruchtdichte, siehe V2
   „Bewusst nicht aufgenommen“). Die Dürre wirkt über Preise, Geld und Geschichten.
 
 ### R3-W2 Dürrehilfe
 
-- [ ] Das Amt (`AUTHORITY`) zahlt nach einer ausgerufenen Dürre eine Hilfe je Hektar eigener Felder, die in der Zeit
+- [x] Das Amt (`AUTHORITY`) zahlt nach einer ausgerufenen Dürre eine Hilfe je Hektar eigener Felder, die in der Zeit
   eine Kultur in Phase `GROWING` hatten (Daten aus R2-C1). Die Zahlung läuft als `SUBSIDY`, auf Antrag per Knopf und
   mit Frist.
-- [ ] Wer eine Dürreversicherung (W3) hat, bekommt einen Abzug auf die Hilfe (Konfig), wie bei echten Hilfsprogrammen.
+- [x] Wer eine Dürreversicherung (W3) hat, bekommt einen Abzug auf die Hilfe (Konfig), wie bei echten Hilfsprogrammen.
 
 ### R3-W3 Wetterindex-Versicherung
 
-- [ ] Neues Angebot der Versicherung (`INSURANCE_AGENT`): Beitrag je Hektar und Monat. Die Auszahlung je Hektar kommt,
+- [x] Neues Angebot der Versicherung (`INSURANCE_AGENT`): Beitrag je Hektar und Monat. Die Auszahlung je Hektar kommt,
   sobald W1 eine Dürre feststellt, ohne Schadensmeldung (Index statt Gutachten).
-- [ ] Umsetzung als weiterer Deckungstyp von `ContractKind.INSURANCE` neben Sturm und Hagel. Auszahlung als
+- [x] Umsetzung als weiterer Deckungstyp von `ContractKind.INSURANCE` neben Sturm und Hagel. Auszahlung als
   `INSURANCE_PAYOUT`.
-- [ ] Werte unter `rpsim.formulas.drought.*` und `rpsim.formulas.insurance.drought-*`.
+- [x] Werte unter `rpsim.formulas.drought.*` und `rpsim.formulas.insurance.drought-*`.
 
 **Akzeptanz W:** Nach mehreren trockenen Sommermonaten melden sich Genossenschaft und Amt. Die Preise der betroffenen
 Kulturen steigen regional, und die Versicherung zahlt ohne Schadensmeldung.
@@ -538,13 +653,25 @@ Fahrzeug ins Spiel bringt oder entfernt.
 - ✅ Gebrauchtwerte (Alter, Betriebsstunden, Schaden, Abnutzung) lassen sich setzen. Der Gebrauchtmarkt des
   Grundspiels macht dasselbe mit `saleItem.damage`, `saleItem.wear` und `saleItem.operatingTime`.
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Katalog-Export standardmäßig an, höchstens
+2000 Einträge (nach `xmlFilename` sortiert). `assets.vehicles[]` trägt zusätzlich `name` und `xmlFilename`. Zu jedem
+Monatsbeginn mit Wahrscheinlichkeit 0,5 ein Angebot, je zur Hälfte von der Werkstatt (+10 %) oder einem aktiven
+Nachbarn (−5 %), höchstens eins offen, 7 Tage, bis zu 3 Runden mit der bestehenden Verkäufer-Formel. Katalog-Einträge
+mit Listenpreis 5.000–400.000 € (auch Mods), Alter 12–120 Monate, Stunden so, dass der Stundenfaktor zwischen 0,3 und
+0,9 liegt, Schaden 0–0,3, Abnutzung 0–0,5. `NO_SPACE`: Hinweis im Spiel und Mail, täglich ein neuer Versuch, höchstens
+5, dann platzt das Geschäft; unbekanntes Shop-Item oder zu wenig Geld: sofort geplatzt. Verkauf mit Wunschpreis an
+1–3 aktive Nachbarn, Erstgebot 100–110 % des Spielwerts, höchstens 110 %, 3 Runden, 7 Tage. Angehängte Geräte: der
+Fallback gilt sofort (nur die Wurzel ohne Anhang, sonst `VEHICLE_ATTACHED` „Bitte erst abkoppeln“). `VEHICLE_SPAWN`
+und `VEHICLE_REMOVE` werden nach einem Neuladen wie `FARMLAND_TRANSFER` erneut gesendet. Tagebuch bei Kauf und
+Verkauf, Klatsch nach einem Verkauf. Alles in der App „Werkstatt“ (Karte „Gebrauchtmaschinen“), keine Frage im Spiel.
+
 ### R3-V1 Fahrzeug-Katalog exportieren
 
-- [ ] `market_context.storeVehicles[]` beim Missionsstart:
+- [x] `market_context.storeVehicles[]` beim Missionsstart:
   - Einträge aus `g_storeManager:getItems()` mit `species == StoreSpecies.VEHICLE` und `showInStore`,
   - Felder: `xmlFilename`, `name`, `price`, `lifetime`, `categoryName`, `isMod`,
   - die Gruppe `motorized`: Motor vorhanden (`storeItem.specs.power ~= nil`, nach `StoreItemUtil.loadSpecsFromXML`).
-- [ ] Abschaltbar über den Mod-Schalter `storeCatalogExport`, Obergrenze der Einträge in der Konfig.
+- [x] Abschaltbar über den Mod-Schalter `storeCatalogExport`, Obergrenze der Einträge in der Konfig.
 
 **Beleg:** ✅ `Shop/StoreManager.md` (LUADOC): `getItems()`, in `loadItem` die Felder `name`, `xmlFilename`, `species`,
 `showInStore`, `isMod`, `categoryName`, `price`, `lifetime`. ✅ `Vehicle.calculateSellPrice` (Dump `Vehicle.lua`) ruft
@@ -555,7 +682,7 @@ das Backend nutzt dann den Faktor für Motorfahrzeuge.
 
 ### R3-V2 Gebrauchte Maschine kaufen
 
-- [ ] Die Landmaschinenwerkstatt (`WORKSHOP`) oder ein Nachbar bietet in Abständen eine gebrauchte Maschine aus dem
+- [x] Die Landmaschinenwerkstatt (`WORKSHOP`) oder ein Nachbar bietet in Abständen eine gebrauchte Maschine aus dem
   Katalog an. Alter (Monate), Betriebsstunden und Schaden würfelt das Backend im Rahmen der Konfig. Den Preis
   berechnet das Backend mit der Formel des Spiels:
 
@@ -567,8 +694,8 @@ das Backend nutzt dann den Faktor für Motorfahrzeuge.
   ```
 
   Dazu kommt ein Händleraufschlag bzw. ein Nachbarrabatt (Konfig).
-- [ ] Verhandlung mit der Verhandlungs-Engine: neuer `AssetType.VEHICLE`, bis zu drei Runden wie bei Feldern.
-- [ ] Nach der Einigung: neue Anweisung `VEHICLE_SPAWN { storeXmlFilename, ageMonths, operatingHours, damage, wear,
+- [x] Verhandlung mit der Verhandlungs-Engine: neuer `AssetType.VEHICLE`, bis zu drei Runden wie bei Feldern.
+- [x] Nach der Einigung: neue Anweisung `VEHICLE_SPAWN { storeXmlFilename, ageMonths, operatingHours, damage, wear,
   price, moneyReason: VEHICLE_PURCHASE }`. Das Laden läuft **asynchron** (Callback), deshalb bucht der Mod den Preis
   selbst im Callback. Ein Batch mit getrennter `MONEY_TRANSACTION` wäre nicht mehr „im selben Zyklus“. Ablauf im Mod:
   1. Guthaben prüfen (wie `checkBatchFunds`).
@@ -578,9 +705,9 @@ das Backend nutzt dann den Faktor für Motorfahrzeuge.
   3. Im Callback Gebrauchtwerte setzen: `vehicle:setOperatingTime(ms, true)`, `vehicle.age = ageMonths`,
      `setDamageAmount(damage, true)` und `addWearAmount(wear, true)` (bei `Wearable`).
   4. Preis buchen (`VEHICLE_PURCHASE`) und mit `result.vehicleId` = `uniqueId` quittieren.
-- [ ] Fehlerfälle: kein Platz (Ladezustand `NO_SPACE`) oder unbekanntes Shop-Item → `FAILED`, keine Buchung, die
+- [x] Fehlerfälle: kein Platz (Ladezustand `NO_SPACE`) oder unbekanntes Shop-Item → `FAILED`, keine Buchung, die
   Werkstatt meldet sich („Stellen Sie erst Platz auf dem Hof frei“).
-- [ ] Nach einem Neuladen ohne Speichern schickt das Backend die Anweisung erneut, wie `FARMLAND_TRANSFER`. Die Liste
+- [x] Nach einem Neuladen ohne Speichern schickt das Backend die Anweisung erneut, wie `FARMLAND_TRANSFER`. Die Liste
   `processedInstructions` verhindert eine doppelte Ausführung.
 
 **Beleg:**
@@ -604,18 +731,18 @@ das Backend nutzt dann den Faktor für Motorfahrzeuge.
 
 ### R3-V3 Eigene Maschine an einen Nachbarn verkaufen
 
-- [ ] Auf der Werkstatt-App bzw. im Fahrzeug-Überblick: „Zum Verkauf anbieten“. Grundlage ist der Wert aus
+- [x] Auf der Werkstatt-App bzw. im Fahrzeug-Überblick: „Zum Verkauf anbieten“. Grundlage ist der Wert aus
   `assets.vehicles[].value` (`getSellPrice()`). Interessierte Nachbarn bieten mehr als der Händlerpreis des Spiels,
   gedeckelt (Konfig).
-- [ ] Nach der Einigung: Batch `VEHICLE_REMOVE { vehicleId }` + `MONEY_TRANSACTION` `VEHICLE_SALE`.
-- [ ] Mod: Fahrzeug über `g_currentMission.vehicleSystem:getVehicleByUniqueId(id)` holen und prüfen:
+- [x] Nach der Einigung: Batch `VEHICLE_REMOVE { vehicleId }` + `MONEY_TRANSACTION` `VEHICLE_SALE`.
+- [x] Mod: Fahrzeug über `g_currentMission.vehicleSystem:getVehicleByUniqueId(id)` holen und prüfen:
   - Besitzer ist die Spieler-Farm,
   - `propertyState == OWNED` (geleaste Fahrzeuge nie),
   - niemand sitzt drin (`getIsControlled()`, `Enterable`),
   - kein Helfer fährt (`getIsAIActive()`).
 
   Dann `vehicle:delete()`. Sonst `FAILED` mit `VEHICLE_IN_USE`, `NOT_OWN_VEHICLE` oder `VEHICLE_NOT_FOUND`.
-- [ ] Tagebuch, Klatsch („Der Nachbar fährt jetzt deinen alten Fendt“).
+- [x] Tagebuch, Klatsch („Der Nachbar fährt jetzt deinen alten Fendt“).
 
 **Beleg:**
 
@@ -637,28 +764,38 @@ ist gebucht. Ohne Platz wird nichts gebucht.
 
 ## P – Personal
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): Die beste aktive Bürokraft (Skill ×
+Zufriedenheits-Multiplikator) erinnert 3 Spieltage vor der Frist per Mail an offene Steuerbescheide (nicht, wenn ein
+Steuerberater läuft), angekündigte Kontrollen, die Antragsfrist der Dürrehilfe, das Ende des Liefermonats offener
+Vorkontrakte und das Pachtende – je Frist einmal. Prüfungsfaktor 1 − 0,5 × wirksamer Skill / 100; mit Steuerberater
+zählt der kleinere Faktor. Am Fristtag bezahlt sie einen offenen Steuerbescheid selbst, wenn das Konto reicht und sie
+nicht überlastet ist (Arbeitsbelastung unter 30). Azubi: Stellenausschreibung im Personal, Skill 10–30, 900 € fest,
+höchstens 2, Skill +2 je Monat (bis 70), Ausbildung 2 FS25-Jahre, keine Schulungen, sonst wie ein Maschinenführer.
+Einen Monat vor dem Ende bittet er um Übernahme zum Gehalt der Maschinenführer-Formel: annehmen, Gegenangebot (ab 90 %
+angenommen, sonst geht er) oder ablehnen; ohne Einigung geht er am Ende. Im Mod fährt er nach den Maschinenführern.
+
 ### R3-P1 Bürokraft mit mehr Wirkung
 
 **Problem heute:** Die Bürokraft (`JobRole.OFFICE_CLERK`) verkürzt nur die Bearbeitungszeit eines Kreditantrags
 (`credit/CreditApplicationService.java`).
 
-- [ ] Sie erinnert vor Fristen: Steuer, Rechnungen der Ämter, Vorkontrakte (M2), Pachtende. Das kann heute nur der
+- [x] Sie erinnert vor Fristen: Steuer, Rechnungen der Ämter, Vorkontrakte (M2), Pachtende. Das kann heute nur der
   Steuerberater.
-- [ ] Sie senkt die Wahrscheinlichkeit einer Betriebsprüfung (`TaxService`, Abschnitt „audit“) um einen Anteil, der
+- [x] Sie senkt die Wahrscheinlichkeit einer Betriebsprüfung (`TaxService`, Abschnitt „audit“) um einen Anteil, der
   mit Skill und Zufriedenheit wächst. Mit Steuerberater zählt nur der größere Effekt.
-- [ ] Sie senkt Säumniszuschläge: verpasste Fristen nur, wenn sie überlastet ist (Arbeitsbelastung aus der
+- [x] Sie senkt Säumniszuschläge: verpasste Fristen nur, wenn sie überlastet ist (Arbeitsbelastung aus der
   Zufriedenheit).
-- [ ] Werte unter `rpsim.formulas.office-clerk.*`.
+- [x] Werte unter `rpsim.formulas.office-clerk.*`.
 
 **Beleg:** – (nur Backend).
 
 ### R3-P2 Azubi
 
-- [ ] Neue Rolle `JobRole.APPRENTICE`: niedriges Gehalt (Konfig), Skill steigt monatlich, fährt Helfer wie ein
+- [x] Neue Rolle `JobRole.APPRENTICE`: niedriges Gehalt (Konfig), Skill steigt monatlich, fährt Helfer wie ein
   Maschinenführer **ohne** Schulung, also nur kleine und mittlere Traktoren (Schulungen, siehe CHANGELOG).
-- [ ] Nach der Ausbildungszeit (Konfig, FS25-Jahre): Übernahme als Maschinenführer mit Gehaltsverhandlung, oder er
+- [x] Nach der Ausbildungszeit (Konfig, FS25-Jahre): Übernahme als Maschinenführer mit Gehaltsverhandlung, oder er
   geht. Tagebucheintrag.
-- [ ] Mod: `EMPLOYEE_ROSTER` akzeptiert `APPRENTICE` wie `MACHINE_OPERATOR` ohne `trainings`. Ein älterer Mod ignoriert
+- [x] Mod: `EMPLOYEE_ROSTER` akzeptiert `APPRENTICE` wie `MACHINE_OPERATOR` ohne `trainings`. Ein älterer Mod ignoriert
   unbekannte Rollen, dann fährt der normale Helfer.
 
 **Beleg:** ✅ wie R2-A2 und „Schulungen“ (Zuordnung im Hook auf `AIJob.start`, Prüfung der Shop-Kategorie des Fahrzeugs).
@@ -671,23 +808,35 @@ Azubi fährt im Spiel einen mittleren Traktor als Helfer, aber keinen Mähdresch
 
 ## T – Chronik
 
+**Stand 01.10.2026: umgesetzt.** Entscheidungen (siehe `QUESTIONS.md`): genau die sechs Meilensteine unten, jeder in
+der Konfig abschaltbar (`rpsim.formulas.milestones.*`, Schwellen 100 ha und 5 Jahre). Zahlungsverzug = verpasste
+Kreditrate, überfälliger Steuerbescheid, verpasste Vertragszahlung, überfälliges Gehalt oder unbezahlte Forderung nach
+dem Verkauf eines verpfändeten Felds; es zählt nur ein volles FS25-Jahr ab Spielbeginn bzw. Update, ein noch offener
+Verzug zählt auch für das neue Jahr. Kredit = erster Bankkredit getilgt; Fläche = alle Felder des Betriebs im Spiel;
+Rekordernte = erster Glückwunsch der Genossenschaft; Fruchtfolge = 5 geprüfte Erntejahre in Folge ohne Beanstandung;
+Handel = erster abgeschlossener Warenhandel mit einem Nachbarn. Bei laufenden Spielständen werden Kredit, Fläche,
+Rekordernte und Handel nachgetragen. Auf dem Startbildschirm erscheinen nur erreichte Meilensteine. Die Chronik baut
+das Backend (`GET /api/diary/chronicle`, Datei `chronik-<Hofname>.md`); neues optionales Feld **Hofname** in den
+Einstellungen und im Onboarding (ohne: Kartenname). Die Druckansicht zeigt denselben Inhalt und öffnet den
+Druckdialog.
+
 ### R3-T1 Meilensteine
 
-- [ ] Feste Liste von Meilensteinen in der Konfig, jeder mit einer Bedingung aus vorhandenen Daten, z. B.:
+- [x] Feste Liste von Meilensteinen in der Konfig, jeder mit einer Bedingung aus vorhandenen Daten, z. B.:
   - erster Kredit getilgt,
   - erstes Jahr ohne Zahlungsverzug,
   - 100 ha bewirtschaftet,
   - Rekordernte (R2-B5),
   - fünf Jahre Fruchtfolge ohne Beanstandung (R2-E2),
   - erster Handel mit einem Nachbarn (H).
-- [ ] Erreichte Meilensteine landen im Tagebuch mit neuem Typ (`DiaryEntryType.MILESTONE`, heute nur `AUTO` /
+- [x] Erreichte Meilensteine landen im Tagebuch mit neuem Typ (`DiaryEntryType.MILESTONE`, heute nur `AUTO` /
   `PLAYER_NOTE`) und als Abzeichen auf dem Startbildschirm. Keine mechanische Wirkung.
 
 ### R3-T2 Hofchronik als Datei
 
-- [ ] Tagebuch-App → **„Chronik herunterladen“**: Markdown-Datei mit Vorgeschichte, allen Einträgen, Meilensteinen
+- [x] Tagebuch-App → **„Chronik herunterladen“**: Markdown-Datei mit Vorgeschichte, allen Einträgen, Meilensteinen
   und den Jahresberichten (K3).
-- [ ] Als PDF über die Druckfunktion des Browsers, mit eigenem Druck-Stylesheet. Keine neue Bibliothek.
+- [x] Als PDF über die Druckfunktion des Browsers, mit eigenem Druck-Stylesheet. Keine neue Bibliothek.
 
 **Beleg:** – (nur Backend und Oberfläche).
 

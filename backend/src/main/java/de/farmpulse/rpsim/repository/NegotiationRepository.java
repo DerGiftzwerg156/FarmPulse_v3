@@ -18,4 +18,8 @@ public interface NegotiationRepository extends JpaRepository<Negotiation, Long> 
     List<Negotiation> findBySavegameAndStatus(Savegame savegame, NegotiationStatus status);
 
     List<Negotiation> findBySaleGroupId(String saleGroupId);
+
+    List<Negotiation> findBySavegameAndAssetTypeAndAssetIdOrderByIdAsc(Savegame savegame,
+                                                                        de.farmpulse.rpsim.domain.AssetType assetType,
+                                                                        String assetId);
 }

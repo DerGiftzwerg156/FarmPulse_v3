@@ -18,8 +18,11 @@ end
 function RPSimPersistence.save(writer, state)
     writer:setString(ROOT .. "#savegameId", state.savegameId or "")
     local ids = {}
-    for id, _ in pairs(state.processed) do
-        ids[#ids + 1] = id
+    for id, e in pairs(state.processed) do
+        -- R3-V2: a vehicle still loading is not in the savegame either; after loading the backend sends it again
+        if e.status ~= "PENDING" then
+            ids[#ids + 1] = id
+        end
     end
     table.sort(ids)
     for i, id in ipairs(ids) do
@@ -30,6 +33,10 @@ function RPSimPersistence.save(writer, state)
         writer:setString(k .. "#status", e.status or "APPLIED")
         if e.message ~= nil then
             writer:setString(k .. "#message", e.message)
+        end
+        if e.result ~= nil then
+            -- Roadmap V3 (R3-Q1): result of the action (e.g. vehicleId) as JSON, so the ack still carries it after loading
+            writer:setString(k .. "#result", RPSimJson.encode(e.result))
         end
     end
     for i, ev in ipairs(state.priceEvents.events) do
@@ -166,6 +173,11 @@ function RPSimPersistence.load(reader, state)
         if id == nil then break end
         state.processed[id] = { gameTime = reader:getFloat(k .. "#gameTime") or 0,
             status = reader:getString(k .. "#status") or "APPLIED", message = reader:getString(k .. "#message") }
+        local resultJson = reader:getString(k .. "#result")
+        if resultJson ~= nil and resultJson ~= "" then
+            local res = RPSimJson.tryDecode(resultJson)
+            state.processed[id].result = RPSimProcessor.normalizeResult(res)
+        end
         i = i + 1
     end
     i = 0

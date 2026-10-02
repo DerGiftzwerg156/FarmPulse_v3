@@ -95,7 +95,9 @@ export class NoticesCard {
       const what = d['type'] === 'MONEY_TRANSACTION'
         ? this.label('moneyReason', String(d['reason'] ?? ''))
         : this.label('instructionType', String(d['type'] ?? ''));
-      const reason = d['message'] === 'INSUFFICIENT_FUNDS' ? this.i18n.t('notices.insufficientFunds') : String(d['message'] ?? '');
+      // Roadmap V3 (R3-Q1): an older mod does not know the instruction type
+      const reason = d['modOutdated'] === true ? this.i18n.t('notices.modOutdated')
+        : d['message'] === 'INSUFFICIENT_FUNDS' ? this.i18n.t('notices.insufficientFunds') : String(d['message'] ?? '');
       const amount = d['amount'] !== undefined ? formatMoney(Math.abs(num('amount'))) : d['price'] !== undefined ? formatMoney(num('price')) : '';
       return this.i18n.t('notices.INSTRUCTION_FAILED.text', { what, amount, reason });
     }

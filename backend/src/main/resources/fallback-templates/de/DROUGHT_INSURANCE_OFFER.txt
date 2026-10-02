@@ -1,0 +1,7 @@
+Ihr Angebot: Dürreversicherung
+Guten Tag,
+
+{{warningNote}}gerne biete ich Ihnen unsere Dürreversicherung nach Wetterindex an: {{premiumPerHectare}} € je Hektar und Monat, für Ihre {{hectares}} ha also derzeit {{monthlyPremium}} € Prämie pro Monat. Wird eine Dürre ausgerufen, zahlen wir {{payoutPerHectare}} € je Hektar – ohne Schadensmeldung, für Ihre Fläche heute {{payout}} €. Es zählt nur eine Dürre, deren erster trockener Monat nach dem Abschluss beginnt. Das Angebot gilt {{validDays}} Tage – Sie können es in der App „Versicherung“ annehmen.
+
+Mit freundlichen Grüßen
+{{characterName}}

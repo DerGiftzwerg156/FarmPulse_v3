@@ -19,5 +19,23 @@ public enum CaseKind {
     /** Roadmap V2 R2-E4: sponsoring request of a club with fixed tiers. */
     SPONSORING_REQUEST,
     /** Roadmap V2 R2-E4: invitation to a festival (accept / decline). */
-    INVITATION
+    INVITATION,
+    /** Roadmap V3 R3-H3: a neighbour offers goods of his stock (on his own or asked by the player) - the player buys. */
+    GOODS_OFFER,
+    /** Roadmap V3 R3-H4: a neighbour asks for goods of the player's silos - the player sells. */
+    GOODS_REQUEST,
+    /** Roadmap V3 R3-H5: a neighbour asks for help with a real contract of the game on his field. */
+    NEIGHBOR_MISSION,
+    /** Roadmap V3 R3-K1: a pledged field was sold in the game menu - the bank claims a Sondertilgung (pay by button). */
+    COLLATERAL_CLAIM,
+    /** Roadmap V3 R3-K3: invitation of the bank advisor to the annual review (attend / decline). */
+    ANNUAL_REVIEW,
+    /** Roadmap V3 R3-K3: rate cut offered in the annual review (accept / decline). */
+    ANNUAL_REVIEW_OFFER,
+    /** Roadmap V3 R3-M3: a villager orders goods of the own silos at the farm-shop price (deliver / decline). */
+    FARM_SHOP_ORDER,
+    /** Roadmap V3 R3-W2: drought aid of the authority after a declared drought (apply by button within the deadline). */
+    DROUGHT_AID,
+    /** Roadmap V3 R3-P2: the apprentice asks to be taken over as machine operator (accept / counter offer / decline). */
+    APPRENTICE_TAKEOVER
 }

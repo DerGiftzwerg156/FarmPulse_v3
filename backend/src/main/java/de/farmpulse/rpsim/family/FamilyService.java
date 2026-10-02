@@ -284,9 +284,34 @@ public class FamilyService {
             return;
         }
         boolean owned = f.assets().farmland().stream().map(BridgeDtos.OwnedFarmland::farmlandId).anyMatch(field::equals);
-        if (!owned) {
+        // R3-L1: a leased-out family field has no owner in the game but still belongs to the farm
+        boolean leasedOut = ownership.get(sg, field).map(FarmlandOwnership::isLeasedFromPlayer).orElse(false);
+        if (!owned && !leasedOut) {
             familyFieldSold(sg, field);
         }
+    }
+
+    /**
+     * Roadmap V3 R3-L1: the family field was leased out - once trust (lease-out.family-trust-delta, less than a sale)
+     * for every family member, a mail of a parent and a diary entry. It stays the family field.
+     */
+    @Transactional
+    public void familyFieldLeased(Savegame sg, int farmlandId) {
+        diary.addAuto(sg, "OTHER", "Familienfeld verpachtet", "Feld " + farmlandId + " war seit Generationen in der Familie "
+                + "– jetzt bewirtschaftet es ein Nachbar, bis die Pacht endet.", null, null);
+        List<Character> family = members(sg);
+        if (family.isEmpty() || !cfg().isEnabled()) {
+            return;
+        }
+        for (Character c : family) {
+            trust.recordEvent(c, props.getFormulas().getLeaseOut().getFamilyTrustDelta(), TrustReason.FAMILY_FIELD_LEASED,
+                    "Familienfeld verpachtet");
+        }
+        Character speaker = family.stream().filter(c -> c.getAffiliation() != null && c.getAffiliation().startsWith(PARENT))
+                .findFirst().orElse(family.getFirst());
+        narration.request(sg, NarrationEventType.FAMILY_FIELD_LEASED).from(speaker)
+                .facts(NarrationFacts.builder().put("farmlandId", farmlandId).put("relation", speaker.getAffiliation()).build())
+                .category(CommunicationCategory.VILLAGE_LIFE).related(RELATED, speaker.getId()).submit();
     }
 
     void familyFieldSold(Savegame sg, int farmlandId) {

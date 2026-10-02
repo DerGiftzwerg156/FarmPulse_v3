@@ -1,0 +1,7 @@
+Zustimmung zur Verpachtung von Feld {{farmlandId}}
+Hallo,
+
+wir sind einverstanden, dass Sie Feld {{farmlandId}} verpachten. Die Grundschuld für den Kredit „{{purpose}}“ bleibt eingetragen.
+
+Mit freundlichen Grüßen
+{{characterName}}

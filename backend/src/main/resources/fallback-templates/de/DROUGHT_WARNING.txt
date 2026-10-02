@@ -1,0 +1,7 @@
+Es bleibt zu trocken
+Moin,
+
+der {{month}} war viel zu trocken: Geregnet hat es nur in {{rainPercent}} % der Zeit. Wenn es so weitergeht, ist nach {{dryMonthsForDrought}} trockenen Monaten in Folge von einer Dürre die Rede – dann werden die Preise in der Region anziehen. Behalte deine Bestände im Blick.
+
+Viele Grüße
+{{characterName}}

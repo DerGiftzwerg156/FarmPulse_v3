@@ -29,6 +29,13 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | Key | Default | Meaning | Concept |
 | --- | --- | --- | --- |
 | `rpsim.web.static-dir` | `""` | Folder of the built Angular app. When set (release: `web/`) the backend serves it on `/` with an SPA fallback. Empty = API only. | – |
+| `rpsim.web.lan.pin-min-length` | `4` | Shortest PIN for devices in the home network (digits only). | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.pin-max-length` | `8` | Longest PIN (digits only). | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.max-failed-attempts` | `5` | Wrong PINs of one sender address before it is locked. | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.lockout-minutes` | `5` | Lock of a sender address after too many wrong PINs (real minutes). | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.session-days` | `30` | Validity of the session cookie of a device (real days). Only the SHA-256 of the cookie value is stored, so a session survives a restart of the backend; a new PIN, removing the PIN or switching the home-network access off ends every session. | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.pbkdf2-iterations` | `600000` | Iterations of the PIN hash (`PBKDF2WithHmacSHA256` from the JDK, OWASP Password Storage Cheat Sheet). A PIN keeps the count it was hashed with. | Roadmap V3 R3-N2 |
+| `rpsim.web.lan.cookie-name` | `FP_LAN_SESSION` | Name of the session cookie (`HttpOnly`, `SameSite=Strict`, sent by `EventSource` too). | Roadmap V3 R3-N2 |
 
 ## Game month = FS25 period
 
@@ -133,6 +140,22 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit.special-repayment-fee-rate` | `0.01` | Sondertilgung: fee (Vorfälligkeitsentschädigung) on the part above the free share, booked on top as `CREDIT_PREPAYMENT_FEE`. | Sondertilgung |
 | `rpsim.formulas.credit.special-repayment-trust-delta` | `3` | Sondertilgung: trust bonus at the bank advisor ... | Sondertilgung |
 | `rpsim.formulas.credit.special-repayment-trust-min-share` | `0.05` | ... when the Sondertilgung is at least this share of the remaining debt. | Sondertilgung |
+| `rpsim.formulas.credit.collateral.loan-to-value` | `0.6` | Collateral value of a pledged own field = its price (`assets.farmland[].price`) × this ratio. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.max-interest-discount` | `0.01` | Interest discount at full coverage (collateral value / loan amount ≥ 1), proportional below (owner decision: 1.0 percentage point). | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.farm-size-bonus` | `20` | Bonus points on the metric "loan too large for the farm" × coverage (the metric stays capped at 100). | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.required-above-share` | `0.5` | A loan above this share of the farm assets needs collateral covering the part above it; the bank names more unpledged own fields (largest first) in a counter offer "mit Grundschuld". | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.menu-sale-trust-delta` | `-10` | Trust of the bank advisor when a pledged field is sold in the game menu (R2-D2 detection); the bank always reacts. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.claim-days` | `10` | Game days to pay the claimed Sondertilgung (min(collateral value, remaining debt), no prepayment fee) after such a sale. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.claim-overdue-trust-delta` | `-5` | Claim unpaid after the deadline: trust, one missed installment in the payment history and no new credits until it is paid. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.collateral.realise-on-callback` | `false` | On a call-back the bank realises the pledged fields (field by field, highest collateral value first, while debt is open; `FARMLAND_TRANSFER FROM_PLAYER` + collateral value as `FARMLAND_SALE`). Owner decision: only in the harsh world mode, i.e. `true` in `credit-hard`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit.annual-review.enabled` | `true` | Annual review with the bank advisor after the farm report at the year change. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.invitation-days` | `10` | Game days to accept ("Termin wahrnehmen") or decline the invitation; then it lapses without consequence. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.offer-days` | `10` | Game days the offered rate cut can be accepted or declined. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.good-score` | `75` | Credit score at the cut-off date (the farm as it stands, no new loan) from which a rate cut is offered. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.bad-score` | `45` | Below this score the advisor only talks seriously; running loans are never tightened. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.rate-cut` | `0.0025` | Rate cut per review on every running loan (incl. the legacy loan); remaining term kept, installment recalculated. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.max-cut-per-loan` | `0.01` | Cap of all cuts of one loan over its term. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit.annual-review.min-rate` | `0.01` | A cut never takes a loan below this rate. | Roadmap V3 R3-K3 |
 
 ## `rpsim.formulas.credit-hard`
 
@@ -185,6 +208,22 @@ period is assumed (FS25 default).
 | `rpsim.formulas.credit-hard.special-repayment-fee-rate` | `0.01` | HART profile: same as `formulas.credit.special-repayment-fee-rate`. | Sondertilgung |
 | `rpsim.formulas.credit-hard.special-repayment-trust-delta` | `3` | HART profile: same as `formulas.credit.special-repayment-trust-delta`. | Sondertilgung |
 | `rpsim.formulas.credit-hard.special-repayment-trust-min-share` | `0.05` | HART profile: same as `formulas.credit.special-repayment-trust-min-share`. | Sondertilgung |
+| `rpsim.formulas.credit-hard.collateral.loan-to-value` | `0.6` | HART profile: same as `formulas.credit.collateral.loan-to-value`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.max-interest-discount` | `0.01` | HART profile: same as `formulas.credit.collateral.max-interest-discount`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.farm-size-bonus` | `20` | HART profile: same as `formulas.credit.collateral.farm-size-bonus`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.required-above-share` | `0.5` | HART profile: same as `formulas.credit.collateral.required-above-share`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.menu-sale-trust-delta` | `-10` | HART profile: same as `formulas.credit.collateral.menu-sale-trust-delta`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.claim-days` | `10` | HART profile: same as `formulas.credit.collateral.claim-days`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.claim-overdue-trust-delta` | `-5` | HART profile: same as `formulas.credit.collateral.claim-overdue-trust-delta`. | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.collateral.realise-on-callback` | `true` | HART profile: `true` - the bank realises pledged fields on a call-back (owner decision: harsh world mode only). | Roadmap V3 R3-K1 |
+| `rpsim.formulas.credit-hard.annual-review.enabled` | `true` | HART profile: same as `formulas.credit.annual-review.enabled`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.invitation-days` | `10` | HART profile: same as `formulas.credit.annual-review.invitation-days`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.offer-days` | `10` | HART profile: same as `formulas.credit.annual-review.offer-days`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.good-score` | `75` | HART profile: same as `formulas.credit.annual-review.good-score`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.bad-score` | `45` | HART profile: same as `formulas.credit.annual-review.bad-score`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.rate-cut` | `0.0025` | HART profile: same as `formulas.credit.annual-review.rate-cut`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.max-cut-per-loan` | `0.01` | HART profile: same as `formulas.credit.annual-review.max-cut-per-loan`. | Roadmap V3 R3-K3 |
+| `rpsim.formulas.credit-hard.annual-review.min-rate` | `0.01` | HART profile: same as `formulas.credit.annual-review.min-rate`. | Roadmap V3 R3-K3 |
 
 ## `rpsim.formulas.market`
 
@@ -430,6 +469,8 @@ reference prices of the own fields + value of the own buildings.
 | `rpsim.formulas.insurance.offer-valid-days` | `7` | Validity of an insurance offer (game days). | TODO T-20 |
 | `rpsim.formulas.insurance.reoffer-cooldown-days` | `30` | After an uninsured damage the agent offers again at most once per this many game days. | TODO T-20 |
 | `rpsim.formulas.insurance.cancel-after-missed-payments` | `2` | The insurance ends after this many unpaid premiums; while a premium is open the cover is suspended. | TODO T-20 |
+| `rpsim.formulas.insurance.drought-premium-per-hectare` | `4` | Weather-index drought insurance (level `DROUGHT_INDEX`): monthly premium per hectare of the own fields without leased ones; the premium follows the current area at every month start. | Roadmap V3 R3-W3 |
+| `rpsim.formulas.insurance.drought-payout-per-hectare` | `200` | Payout per hectare of that area on a declared drought, without a claim (`INSURANCE_PAYOUT`); only paid up and when concluded before the first dry month of the series. | Roadmap V3 R3-W3 |
 | `rpsim.formulas.insurance.levels.BASIC.coverage-rate` | `0.6` | Tariff *Basis*: reimbursed share of a damage. | TODO T-20 |
 | `rpsim.formulas.insurance.levels.BASIC.deductible` | `2000` | Tariff *Basis*: deductible per damage (€). | TODO T-20 |
 | `rpsim.formulas.insurance.levels.BASIC.premium-rate` | `0.00025` | Tariff *Basis*: monthly premium per € of insured value. | TODO T-20 |
@@ -569,6 +610,63 @@ player takes them in the game's contracts menu. Nothing is started by the tool, 
 | `rpsim.formulas.contractor.completed-trust-delta` | `3` | Trust of the contractor when a referred contract is completed. | TODO T-22 |
 | `rpsim.formulas.contractor.client-trust-delta` | `2` | Trust of the client (FS25 NPC as village character, T-21) for a completed referred contract. | TODO T-22 |
 | `rpsim.formulas.contractor.failed-trust-delta` | `-3` | Trust of the contractor when a referred contract fails. | TODO T-22 |
+
+## `rpsim.formulas.neighbor-trade` (Roadmap V3 R3-H2..H4)
+
+Trade with the neighbours (owner decisions, placeholders). Stock and needs of a neighbour are backend fiction derived from
+his real fields in the game (`farm_facts.npcFields`, R3-H1); the goods move for real in the own silos (`STORAGE_TRANSFER`
++ `MONEY_TRANSACTION` as one batch). Only goods an own silo accepts are traded (`farm_facts.tradeStorage`).
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.neighbor-trade.roles.DAIRY` | `[STRAW, SILAGE, DRYGRASS_WINDROW]` | Needs of a dairy farm (Milchviehbetrieb). A role is rolled when the neighbour is created (older neighbours: when first needed). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.roles.ARABLE` | `[SEEDS, FERTILIZER, LIQUIDFERTILIZER]` | Needs of an arable farm (Ackerbau). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.roles.MIXED` | `[STRAW, SEEDS]` | Needs of a mixed farm (Gemischtbetrieb). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.neighbor-sell-share` | `1.05` | The neighbour sells at this share of the price per 1000 l (best sell point price, else reference price). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.neighbor-buy-share` | `0.95` | The neighbour buys at this share of the price. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.trust-divisor` | `20` | Price bonus / malus from trust = trust / trust-divisor (in the player's favour) … | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.trust-cap` | `0.05` | … capped at ± this share (like the negotiation engine). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.harvest-share` | `0.3` | Share of a neighbour's harvest (hectares × 10,000 × litersPerSqm) that goes into his stock. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.by-products.WHEAT` | `STRAW` | By-product of a wheat harvest. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.by-products.BARLEY` | `STRAW` | By-product of a barley harvest. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.by-products.OAT` | `STRAW` | By-product of an oat harvest. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.by-product-share` | `0.5` | By-product litres = this share of the grain litres that went into the stock. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.monthly-decay` | `0.2` | The stock of every neighbour sinks by this share at the start of every game month (sales, own use). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.STRAW` | `120` | € per 1000 l for straw when no sell point of the map buys it. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.SILAGE` | `180` | € per 1000 l for silage without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.DRYGRASS_WINDROW` | `250` | € per 1000 l for hay without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.SEEDS` | `900` | € per 1000 l for seeds without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.FERTILIZER` | `1500` | € per 1000 l for fertiliser without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reference-prices.LIQUIDFERTILIZER` | `1200` | € per 1000 l for liquid fertiliser without a sell point. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.max-messages-per-month` | `2` | Offers and requests the neighbours send on their own per game month (the player's own requests do not count). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.offer-probability-per-month` | `0.3` | Chance per game month that a neighbour offers goods of his stock the player has room for (R3-H3). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.request-probability-per-month` | `0.3` | Chance per game month that a neighbour asks for goods of his needs the player has in his silos (R3-H4). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.amount-min` | `2000` | Smallest amount (litres) of an offer or request. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.amount-max` | `10000` | Largest amount (litres). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.amount-step` | `500` | Amounts are multiples of this (litres). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.max-share` | `0.5` | At most this share of the neighbour's stock (offer) or of the player's stock (request). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.answer-days` | `5` | Game days to answer; the price holds that long. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.trade-trust-delta` | `2` | Trust of the neighbour when a trade is done. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.decline-trust-delta` | `-1` | Trust when the player declines an offer or request. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.ignore-trust-delta` | `-2` | Trust when the player lets the deadline pass. | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.stock-missing-trust-delta` | `-1` | R3-H4: the goods were no longer in the silo when the sale was executed (`INSUFFICIENT_STOCK`). | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reputation-delta` | `1` | Village reputation (`NEIGHBOR_HELP`) per fulfilled request of a neighbour … | Roadmap V3 R3-H |
+| `rpsim.formulas.neighbor-trade.reputation-max-per-year` | `3` | … at most this many times per FS25 year. | Roadmap V3 R3-H |
+
+## `rpsim.formulas.neighbor-missions` (Roadmap V3 R3-H5)
+
+Neighbours ask for help with a real contract of the game on their own field (`MISSION_CREATE`); the contract appears in
+the game's contract menu with the neighbour as client.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.neighbor-missions.types` | `[PLOW, STONE_PICK]` | Contract types the neighbours offer (evidenced in the LUADOC; the mod maps them to `PlowMission` / `StonePickMission`). PLOW = harvested field with `plowLevel` 0, STONE_PICK = `stoneLevel` ≥ `fields.stone-high-level`. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.probability-per-month` | `0.4` | Chance per game month that a neighbour asks for help (only below the game's contract limit, `farm_facts.missionLimitReached`). | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.max-per-month` | `1` | Requests of the neighbours on their own per game month. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.answer-days` | `5` | Game days to answer a request. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.success-bonus` | `250` | Bonus of the neighbour (€, `MONEY_TRANSACTION` `OTHER`) when the contract finished successfully; the game pays its own reward. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.success-trust-delta` | `3` | Trust of the neighbour when the contract finished successfully. | Roadmap V3 R3-H5 |
+| `rpsim.formulas.neighbor-missions.failure-trust-delta` | `-3` | Trust when the contract failed or expired in the game. | Roadmap V3 R3-H5 |
 
 ## `rpsim.formulas.mechanic` (Roadmap V2 R2-A6)
 
@@ -719,6 +817,160 @@ placeholders.
 | `rpsim.formulas.fields.hints-enabled` | `true` | Field work hints of the cooperative (harvest ready, lime, plowing); the player can also switch them off per savegame in the settings. | Roadmap V2 R2-C6 |
 | `rpsim.formulas.fields.hint-cooldown-days` | `7` | At most one hint per this many game days. | Roadmap V2 R2-C6 |
 
+## `rpsim.formulas.price-alarm` / `forward-contract` / `farm-shop` (Roadmap V3 R3-M)
+
+Price alarms and forward contracts of the Agrarbörse, the farm shop in the app "Handel". Owner decisions in
+`QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.price-alarm.max-active` | `10` | Active price alarms per savegame. | Roadmap V3 R3-M1 |
+| `rpsim.formulas.price-alarm.notification-days` | `1` | Game days the in-game hint of a fired alarm stays valid (`NOTIFICATION.expiresAtGameTime`). | Roadmap V3 R3-M1 |
+| `rpsim.formulas.forward-contract.factor-per-month` | `-0.02` | Fixed price = current price of the sell point × (1 + factor × months of lead); negative = discount. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.min-lead-months` | `1` | Earliest delivery month (months ahead). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.max-lead-months` | `12` | Latest delivery month (months ahead). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.min-quantity` | `1000` | Smallest quantity (litres). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.max-quantity` | `200000` | Largest quantity (litres). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.quantity-step` | `1000` | Quantity steps (litres). | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.max-open` | `5` | Open forward contracts per savegame. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.penalty-share` | `0.25` | Penalty = shortfall × fixed price × share, booked as `CONTRACT_PENALTY`. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.shortfall-trust-delta` | `-5` | Trust of the land agent (else the cooperative) after a shortfall. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.forward-contract.fulfilled-trust-delta` | `3` | Trust of the land agent after a full delivery. | Roadmap V3 R3-M2 |
+| `rpsim.formulas.farm-shop.enabled` | `true` | Villagers order from the own silos. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.fill-types` | `POTATO`, `WHEAT`, `OAT`, `SUGARBEET`, `CANOLA` | Fill types the villagers ask for; only what lies in own silos (`tradeStorage`) is ordered. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.markup` | `1.3` | Farm-shop price = best market price × markup. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.amount-min` | `200` | Smallest order (litres). | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.amount-max` | `2000` | Largest order (litres). | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.amount-step` | `100` | Order steps (litres). | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.max-share` | `0.2` | An order takes at most this share of the stock of the fill type. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.max-orders-per-month` | `2` | Possible orders per game month. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.probability` | `0.4` | Chance per possible order, × the refusal factor of the savegame. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.answer-days` | `3` | Game days to deliver or decline; unanswered counts as a refusal. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.refusal-factor` | `0.75` | Each refused or ignored order multiplies the factor by this; a delivered order divides by it (max 1). | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.min-factor` | `0.1` | Lower bound of the factor. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.reputation-delta` | `1` | Village reputation per delivered order (`PublicActionType.FARM_SHOP`) ... | Roadmap V3 R3-M3 |
+| `rpsim.formulas.farm-shop.reputation-max-per-year` | `4` | ... at most this many times per FS25 year. | Roadmap V3 R3-M3 |
+
+## `rpsim.formulas.office-clerk` / `apprentice` (Roadmap V3 R3-P)
+
+Office clerk with more effect and apprentices. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.office-clerk.reminder-days` | `3` | The best active office clerk reminds this many game days before a deadline: open tax bills (not with a tax advisor), announced inspections, the drought-aid application, the end of the delivery month of an open forward contract, the lease end; once per deadline. | Roadmap V3 R3-P1 |
+| `rpsim.formulas.office-clerk.audit-reduction-max` | `0.5` | Audit factor = 1 − value × effective skill / 100 (skill × satisfaction multiplier, at most 100); with a tax advisor the smaller factor counts. | Roadmap V3 R3-P1 |
+| `rpsim.formulas.office-clerk.overload-workload` | `30` | Below this workload the clerk is overloaded: she does not pay a tax bill on the deadline day (otherwise she pays it when the balance covers it). | Roadmap V3 R3-P1 |
+| `rpsim.formulas.apprentice.salary` | `900` | Fixed monthly salary of an apprentice (no skill premium). | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.skill-min` | `10` | Skill of apprentice applicants, from … | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.skill-max` | `30` | … to. | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.skill-per-month` | `2` | Skill points at every month start … | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.skill-cap` | `70` | … up to this skill. | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.training-years` | `2` | Training time in FS25 years. | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.max-apprentices` | `2` | Apprentices at the same time (postings and hiring are refused above). | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.takeover-notice-months` | `1` | The apprentice asks to be taken over this many months before the end (salary = machine operator formula at his skill). | Roadmap V3 R3-P2 |
+| `rpsim.formulas.apprentice.counter-accept-share` | `0.9` | A counter offer from this share of his demand is accepted; below he leaves at the end of the training. | Roadmap V3 R3-P2 |
+
+## `rpsim.formulas.lease-out` (Roadmap V3 R3-L)
+
+Leasing out own fields to neighbours. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.lease-out.annual-rent-share` | `0.05` | Guide rent per ha and month = field price × value / 12 / ha (also the base of the neighbours' limit in the negotiation formula). | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.term-years-min` | `1` | Shortest term the player can choose (FS25 years). | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.term-years-max` | `3` | Longest term. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.max-interested` | `3` | Active neighbours (`NEIGHBOR_FARMER`) with capital ≥ desired rent × ha × 12 × years who answer with a bid, at most. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.first-bid-min` | `0.85` | First bid of a neighbour = desired rent × random(min, max) … | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.first-bid-max` | `1.0` | … capped at the limit of the negotiation formula. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.offer-valid-days` | `5` | Game days the bids stay open. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.warning-months` | `1` | The tenant offers a renewal this many game months before the end. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.renewal-factor-min` | `0.95` | Renewal rent = current rent × random(min, max) … | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.renewal-factor-max` | `1.1` | … | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.return-delay-max-months` | `1` | Fallback (field state at the return): the return waits for an empty or harvested field (neighbour-field export) at most this long. | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.family-trust-delta` | `-5` | Trust of every family member when the family field is leased out (a sale costs `family.field-sold-trust-delta`). | Roadmap V3 R3-L1 |
+| `rpsim.formulas.lease-out.reclaim-trust-delta` | `-10` | Trust of the tenant when the player takes the field back in the game menu. | Roadmap V3 R3-L1 |
+
+## `rpsim.formulas.milestones` (Roadmap V3 R3-T)
+
+Milestones of the chronicle, each reached once and without mechanical effect. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.milestones.loan-repaid-enabled` | `true` | Milestone: the first bank loan fully repaid (loans from the game menu do not count). | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.year-without-delay-enabled` | `true` | Milestone: a full FS25 year (observed from its start) without a missed installment, an overdue tax bill, a missed contract payment, an overdue salary or an unpaid claim after the sale of a pledged field. | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.area-enabled` | `true` | Milestone: the area of all fields of the farm in the game reaches `area-hectares`. | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.area-hectares` | `100` | Hectares of that milestone. | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.record-harvest-enabled` | `true` | Milestone: the first congratulation of the cooperative on a record harvest revenue (R2-B5). | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.crop-rotation-enabled` | `true` | Milestone: `crop-rotation-years` closed harvest years in a row with checked fields and no crop-rotation complaint (R2-E2). | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.crop-rotation-years` | `5` | Years of that milestone. | Roadmap V3 R3-T1 |
+| `rpsim.formulas.milestones.neighbor-trade-enabled` | `true` | Milestone: the first completed goods trade with a neighbour (R3-H3 / R3-H4). | Roadmap V3 R3-T1 |
+
+## `rpsim.formulas.used-vehicle` (Roadmap V3 R3-V)
+
+Used machines from the workshop or a neighbour (catalog of R3-V1, the game's used price formula) and own machines sold
+to neighbours. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.used-vehicle.enabled` | `true` | Monthly offers of used machines. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.offer-probability` | `0.5` | Chance of one offer at every month start; at most one open offer. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.workshop-share` | `0.5` | Share of offers made by the workshop; the rest by a random active neighbour (always the workshop without neighbours). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.workshop-markup` | `0.1` | Price of the workshop = used price of the game formula × (1 + markup). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.neighbor-discount` | `0.05` | Price of a neighbour = used price × (1 − discount). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.min-list-price` | `5000` | Catalog entries offered: list price from … | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.max-list-price` | `400000` | … to (entries without `lifetime` are left out). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.age-months-min` | `12` | Age of an offered machine in months (lower bound). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.age-months-max` | `120` | Upper bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.hour-factor-min` | `0.3` | Operating hours are chosen so that the hour factor of the formula lies between min … | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.hour-factor-max` | `0.9` | … and max. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.damage-min` | `0` | Damage (0..1) of an offered machine, lower bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.damage-max` | `0.3` | Upper bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.wear-min` | `0` | Wear (0..1), lower bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.wear-max` | `0.5` | Upper bound. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.motorized-exponent` | `1.0` | Game formula (`Vehicle.calculateSellPrice`): hour factor = 1 − hours ^ exponent / lifetime with an engine (also when `motorized` is missing) … | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.unmotorized-exponent` | `1.3` | … and without. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.min-price-share` | `0.03` | The used price is at least this share of the list price. | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.negotiation-days` | `7` | Game days an offer (purchase or sale) stays open; up to `negotiation.max-rounds` rounds. | Roadmap V3 R3-V2 / R3-V3 |
+| `rpsim.formulas.used-vehicle.spawn-max-attempts` | `5` | `NO_SPACE`: a new delivery every game day up to this many attempts, then the deal fails (nothing booked). | Roadmap V3 R3-V2 |
+| `rpsim.formulas.used-vehicle.notification-days` | `1` | Game days the in-game hint (no space, "Bitte erst abkoppeln") stays valid. | Roadmap V3 R3-V2 / R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-buyers-min` | `1` | Sale of an own machine: interested active neighbours, from … | Roadmap V3 R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-buyers-max` | `3` | … to. | Roadmap V3 R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-offer-min` | `1.0` | First offer of a neighbour = game value × a factor from min … | Roadmap V3 R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-offer-max` | `1.1` | … to max. | Roadmap V3 R3-V3 |
+| `rpsim.formulas.used-vehicle.sale-cap` | `1.1` | A neighbour pays at most game value × cap (and never more than the negotiation formula allows). | Roadmap V3 R3-V3 |
+
+## `rpsim.formulas.drought` (Roadmap V3 R3-W)
+
+Drought from the rain time per game month (R2-C2) and the drought aid of the authority. The yield in the game does not
+change. Owner decisions in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.drought.enabled` | `true` | Rate the months and declare droughts. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.periods` | `[3, 4, 5, 6, 7, 8]` | Growth months (FS25 periods, 1 = March): May to October. A month outside ends the series. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.min-periods` | `2` | Dry growth months in a row for a drought; one drought per series. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.max-rain-share` | `0.03` | A growth month is dry when it rained less than this share of its observed time. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.min-observed-share` | `0.5` | Below this observed share of the month it is unknown and ends the series (no drought from data gaps). | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.max-crops` | `3` | HARVEST_FAILURE for at most this many crops standing in the village (largest area first) at every sell point accepting them. | Roadmap V3 R3-W1 |
+| `rpsim.formulas.drought.aid-per-hectare` | `150` | Drought aid (€) per hectare of own fields that were growing in a drought month, paid as `SUBSIDY`. | Roadmap V3 R3-W2 |
+| `rpsim.formulas.drought.aid-application-days` | `15` | Game days to apply for the aid in the Ämter app. | Roadmap V3 R3-W2 |
+| `rpsim.formulas.drought.aid-insurance-deduction` | `0.5` | Share deducted from the aid while a drought insurance runs. | Roadmap V3 R3-W2 |
+
+## `rpsim.formulas.liquidity-plan` (Roadmap V3 R3-K2)
+
+Liquidity plan in the Bank app: the next FS25 months with the known postings at each month start (salaries, loan
+installments, contract payments, retirement payment, tax prepayments in periods 1, 4, 7, 10 - after the next year change
+estimated from the tax estimate of the running year) and the income as a marked estimate. Owner decisions in
+`QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.liquidity-plan.horizon-months` | `12` | FS25 months the plan shows. | Roadmap V3 R3-K2 |
+| `rpsim.formulas.liquidity-plan.reserve-factor` | `1.0` | Liquidity reserve of a month = its known fixed postings (salaries, installments, contracts, retirement) × factor; the plan warns when the balance falls below it. | Roadmap V3 R3-K2 |
+| `rpsim.formulas.liquidity-plan.known-posting-categories` | `RPSIM_SALARY_PAYMENT`, `RPSIM_TAX_PAYMENT`, `RPSIM_INSURANCE_PREMIUM`, `RPSIM_MAINTENANCE_FEE`, `RPSIM_LEASE_PAYMENT`, `RPSIM_FAMILY` | Journal categories the plan lists as known postings; the income estimate (operating result of the same month of the previous year, else the average of the complete months) adds them back so they do not count twice. The tax advisor fee is booked as `OTHER` and cannot be separated. | Roadmap V3 R3-K2 |
+| `rpsim.formulas.liquidity-plan.advisor-warning-enabled` | `true` | The bank advisor writes ahead of a shortfall. | Roadmap V3 R3-K2 |
+| `rpsim.formulas.liquidity-plan.advisor-warning-months` | `3` | Checked at every month start: the advisor writes once when the balance falls below zero within this many months (again only after that month has passed or the plan has recovered). | Roadmap V3 R3-K2 |
+
 ## `rpsim.formulas.finance` (Roadmap V2 R2-B)
 
 Real farm finances from the mod's booking journal (`farm_facts.finances`, sums per FS25 period and money type). Each
@@ -741,6 +993,8 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_SUBSIDY` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_LIVESTOCK_PREMIUM` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_TAX_REFUND` | `OPERATING_INCOME` | tool booking: operating income. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_LEASE_INCOME` | `OPERATING_INCOME` | tool booking: operating income (lease of an own field, R3-L1). | Roadmap V3 R3-Q1 |
+| `rpsim.formulas.finance.categories.RPSIM_GOODS_SALE` | `OPERATING_INCOME` | tool booking: operating income (goods to a neighbour or the farm shop, R3-H4 / R3-M3). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.PURCHASE_FUEL` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_SEEDS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_FERTILIZER` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
@@ -765,15 +1019,19 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_SPONSORING` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_COMPENSATION` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_TRAINING` | `OPERATING_EXPENSE` | tool booking: operating expense (training of a machine operator). | Schulungen |
+| `rpsim.formulas.finance.categories.RPSIM_GOODS_PURCHASE` | `OPERATING_EXPENSE` | tool booking: operating expense (goods from a neighbour, R3-H3). | Roadmap V3 R3-Q1 |
+| `rpsim.formulas.finance.categories.RPSIM_CONTRACT_PENALTY` | `OPERATING_EXPENSE` | tool booking: operating expense (shortfall of a forward contract, R3-M2). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_OTHER` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_PROPERTY_BUY` | `INVESTMENT` | FS25 money type: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_VEHICLE_BUY` | `INVESTMENT` | FS25 money type: vehicle purchase in the shop (seen in the game's journal), investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2, manual test 10.9 |
 | `rpsim.formulas.finance.categories.FIELD_BUY` | `INVESTMENT` | FS25 money type: field purchase in the farmland menu (seen in the game's journal), investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2, manual test 10.11 |
 | `rpsim.formulas.finance.categories.RPSIM_FARMLAND_PURCHASE` | `INVESTMENT` | tool booking: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_PURCHASE` | `INVESTMENT` | tool booking: investment (used vehicle, R3-V2). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.SHOP_VEHICLE_SELL` | `DIVESTMENT` | FS25 money type: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_PROPERTY_SELL` | `DIVESTMENT` | FS25 money type: sale of a building (counterpart of `SHOP_PROPERTY_BUY`), divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.FIELD_SELL` | `DIVESTMENT` | FS25 money type: field sale in the farmland menu (counterpart of `FIELD_BUY`), divestment (not part of the cash flow). | Roadmap V2 R2-B2, manual test 10.11 |
 | `rpsim.formulas.finance.categories.RPSIM_FARMLAND_SALE` | `DIVESTMENT` | tool booking: divestment (not part of the cash flow). | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_SALE` | `DIVESTMENT` | tool booking: divestment (own vehicle to a neighbour, R3-V3). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_DISBURSEMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_INSTALLMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_PENALTY` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
@@ -796,6 +1054,6 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | Profile | Purpose | Overrides |
 | --- | --- | --- |
 | `dev` (default) | local development against the bridge simulator | H2 file DB `backend/data/rpsim-dev`, bridge path = simulator runtime folder |
-| `prod` | playing with FS25 (release `start` scripts) | H2 file DB `~/.rpsim/rpsim`, bridge path = FS25 `modSettings/FS25_RPSim`, `server.address=127.0.0.1` |
+| `prod` | playing with FS25 (release `start` scripts) | H2 file DB `~/.rpsim/rpsim`, bridge path = FS25 `modSettings/FS25_RPSim`; `server.address` unset (Roadmap V3 R3-N1: the home-network filter decides by the sender address) |
 | `e2e` | Playwright tests and screenshot generator | in-memory H2, AI provider `FAKE`, fast polling, bridge folder under `frontend/e2e/.runtime` |
 | `test` (tests only) | unit/integration tests | bridge scheduler off, provider `NONE`, narration worker off |

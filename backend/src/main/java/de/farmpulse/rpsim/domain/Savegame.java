@@ -277,4 +277,36 @@ public class Savegame {
     /** Roadmap V2 R2-F2: occasions asked in the game (comma separated PromptKind names); null = configured default. */
     @Column(name = "ingame_prompt_kinds", length = 255)
     private String ingamePromptKinds;
+
+    /** Roadmap V3 R3-K2: month index of the shortfall the bank advisor last warned about (once per shortfall). */
+    @Column(name = "liquidity_warning_month")
+    private Long liquidityWarningMonth;
+
+    /** Roadmap V3 R3-M3: factor on the farm-shop order probability (refusals lower it, deliveries raise it). */
+    @Column(name = "farm_shop_factor", nullable = false)
+    private double farmShopFactor = 1.0;
+
+    /** Roadmap V3 R3-W1: dry growth months in a row of the current series (0 = no series). */
+    @Column(name = "drought_dry_months", nullable = false)
+    private int droughtDryMonths;
+
+    /** Roadmap V3 R3-W1: month index of the first dry month of the current series. */
+    @Column(name = "drought_series_start_month")
+    private Long droughtSeriesStartMonth;
+
+    /** Roadmap V3 R3-W1: the current series already declared its drought (one per series). */
+    @Column(name = "drought_series_declared", nullable = false)
+    private boolean droughtSeriesDeclared;
+
+    /** Roadmap V3 R3-T1: payment delays count from this game time on (set at the first check after the update). */
+    @Column(name = "milestone_watch_from")
+    private Long milestoneWatchFrom;
+
+    /** Roadmap V3 R3-T1: closed harvest years in a row with checked fields and no crop-rotation complaint. */
+    @Column(name = "rotation_clean_years", nullable = false)
+    private int rotationCleanYears;
+
+    /** Roadmap V3 R3-T2: optional farm name (settings, onboarding); heads the chronicle. */
+    @Column(name = "farm_name", length = 60)
+    private String farmName;
 }

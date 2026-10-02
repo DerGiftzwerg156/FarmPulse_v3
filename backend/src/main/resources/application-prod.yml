@@ -11,7 +11,6 @@ spring:
 rpsim:
   bridge:
     path: ${user.home}/Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim
-server:
-  # No login in V1: only reachable from this PC. To use a tablet in your home network set
-  # server.address: 0.0.0.0 in application-local.yml (at your own risk - anyone in the network can then play along).
-  address: 0.0.0.0
+# Roadmap V3 R3-N1: server.address stays unset (all interfaces). The LanAccessFilter decides by the sender address:
+# the gaming PC (loopback) always, devices in the home network only with "Im Heimnetz erreichbar" (settings, optional
+# PIN), every other address gets 403.

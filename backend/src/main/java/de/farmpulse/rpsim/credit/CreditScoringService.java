@@ -8,6 +8,7 @@ import de.farmpulse.rpsim.bridge.FactsService;
 import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.domain.FarmlandOwnership;
 import de.farmpulse.rpsim.field.FieldService;
 import de.farmpulse.rpsim.domain.FactsSnapshot;
 import de.farmpulse.rpsim.finance.FinanceJournalService;
@@ -16,6 +17,7 @@ import de.farmpulse.rpsim.domain.LoanPaymentType;
 import de.farmpulse.rpsim.domain.LoanStatus;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.repository.FactsSnapshotRepository;
+import de.farmpulse.rpsim.repository.FarmlandOwnershipRepository;
 import de.farmpulse.rpsim.repository.LoanPaymentRepository;
 import de.farmpulse.rpsim.repository.LoanRepository;
 import de.farmpulse.rpsim.time.GameTime;
@@ -40,11 +42,14 @@ public class CreditScoringService {
     private final GameTime gameTime;
     private final FinanceJournalService journal;
     private final FieldService fields;
+    private final FarmlandOwnershipRepository farmlands;
 
     public CreditScoringService(FactsService facts, FactsSnapshotRepository snapshots, LoanRepository loans,
                                 LoanPaymentRepository payments, LiquidityService liquidity, CharacterLookup lookup,
                                 TrustScoreService trust, CreditConfigResolver configs, GameTime gameTime,
-                                FinanceJournalService journal, FieldService fields) {
+                                FinanceJournalService journal, FieldService fields,
+                                FarmlandOwnershipRepository farmlands) {
+        this.farmlands = farmlands;
         this.facts = facts;
         this.snapshots = snapshots;
         this.loans = loans;
@@ -59,14 +64,38 @@ public class CreditScoringService {
     }
 
     public CreditFormula.Result score(Savegame sg, long amount, int termMonths, double interestRate) {
-        return CreditFormula.evaluate(inputs(sg, amount, termMonths, interestRate), configs.forSavegame(sg));
+        return score(sg, amount, termMonths, interestRate, 0);
+    }
+
+    /** Roadmap V3 R3-K1: score with the collateral value of the fields pledged for the loan. */
+    public CreditFormula.Result score(Savegame sg, long amount, int termMonths, double interestRate, double collateralValue) {
+        return CreditFormula.evaluate(inputs(sg, amount, termMonths, interestRate, collateralValue), configs.forSavegame(sg));
     }
 
     public CreditFormula.Inputs inputs(Savegame sg, long amount, int termMonths, double interestRate) {
+        return inputs(sg, amount, termMonths, interestRate, 0);
+    }
+
+    /** The asset value the credit check counts (incl. standing crops), 0 without facts. */
+    public double totalAssets(Savegame sg) {
+        FarmFacts f = facts.latest(sg).orElse(null);
+        return f == null ? 0 : facts.totalAssetValue(f) + standingCropValue(f, configs.forSavegame(sg)) + leasedOutValue(sg);
+    }
+
+    /**
+     * Roadmap V3 R3-L1: leased-out fields have no owner in the game (not in farm_facts) but still belong to the player -
+     * they keep counting with their field price (owner decision).
+     */
+    public double leasedOutValue(Savegame sg) {
+        return farmlands.findBySavegameOrderByFarmlandIdAsc(sg).stream().filter(FarmlandOwnership::isLeasedFromPlayer)
+                .mapToDouble(FarmlandOwnership::getReferencePrice).sum();
+    }
+
+    public CreditFormula.Inputs inputs(Savegame sg, long amount, int termMonths, double interestRate, double collateralValue) {
         RpsimProperties.Credit cfg = configs.forSavegame(sg);
         FarmFacts f = facts.latest(sg).orElse(null);
         // R2-C5: standing crops count as asset (harvest value x growth progress x standing-crop-discount)
-        double assets = f == null ? 0 : facts.totalAssetValue(f) + standingCropValue(f, cfg);
+        double assets = f == null ? 0 : facts.totalAssetValue(f) + standingCropValue(f, cfg) + leasedOutValue(sg);
         List<Loan> active = new java.util.ArrayList<>(loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE));
         // T-03: an uncollected call-back is still debt
         active.addAll(loans.findBySavegameAndStatus(sg, LoanStatus.DEFAULTED));
@@ -111,7 +140,7 @@ public class CreditScoringService {
                 payments.countBySavegameAndType(sg, LoanPaymentType.MISSED), cfg);
         double trustScore = lookup.bank(sg).map(trust::getCurrentTrust).orElse(0.0);
         return new CreditFormula.Inputs(monthlyCashflow, hasHistory, existingInstallments, newInstallment, assets,
-                loanDebt + vanilla, balance, amount, history, trustScore);
+                loanDebt + vanilla, balance, amount, history, trustScore, collateralValue);
     }
 
     /** Roadmap V2 R2-C5: value of the standing crops in the credit check (0 without field export). */
