@@ -10,4 +10,4 @@ spring:
     password:
 rpsim:
   bridge:
-    path: ../tools/bridge-simulator/runtime/modSettings/FS25_RPSim
+    path: ./tools/bridge-simulator/runtime/modSettings/FS25_RPSim
