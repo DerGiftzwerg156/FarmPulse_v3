@@ -25,5 +25,7 @@ public enum CharacterRole {
     TAX_OFFICE,
     TAX_ADVISOR,
     FAMILY,
-    CLUB
+    CLUB,
+    /** Roadmap V3.1 R31-B5: the agricultural social insurance (Berufsgenossenschaft). */
+    SOCIAL_INSURANCE
 }

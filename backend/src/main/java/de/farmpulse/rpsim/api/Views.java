@@ -136,7 +136,8 @@ public final class Views {
                                NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
                                boolean onStrike, Double hoursThisMonth, Double hoursLastMonth, List<String> trainings,
                                String trainingInProgress, Long trainingUntilGameTime, Long apprenticeshipEndsAtGameTime,
-                               Long contractEndsAtGameTime) {
+                               Long contractEndsAtGameTime, String absenceKind, Long absenceUntilGameTime,
+                               boolean getWellSent) {
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */
@@ -182,6 +183,14 @@ public final class Views {
 
     /** Roadmap V2 R2-C6: field work hints of the cooperative; fieldsTracked = the mod reports the fields. */
     public record FieldSettingsView(boolean fieldHintsEnabled, boolean fieldsTracked) {
+    }
+
+    /**
+     * Roadmap V3.1 R31-B: switches of the burdening events; tonePreset and idyllicFactor explain the world mode (in
+     * IDYLLIC the animal disease is off and the rest scaled).
+     */
+    public record BurdenSettingsView(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave,
+                                     String tonePreset, double idyllicFactor) {
     }
 
     /** Roadmap V3 R3-T2: optional farm name; {@code mapName} is the fallback shown when it is empty. */

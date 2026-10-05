@@ -171,6 +171,13 @@ public class RpsimProperties {
         private LivestockTrade livestockTrade = new LivestockTrade();
         private WinterService winterService = new WinterService();
         private SeasonalWorker seasonalWorker = new SeasonalWorker();
+        private BurdeningEvents burdeningEvents = new BurdeningEvents();
+        private DirectPayment directPayment = new DirectPayment();
+        private InvestmentGrant investmentGrant = new InvestmentGrant();
+        private FertilizerRules fertilizerRules = new FertilizerRules();
+        private AnimalDisease animalDisease = new AnimalDisease();
+        private SocialInsurance socialInsurance = new SocialInsurance();
+        private SickLeave sickLeave = new SickLeave();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
@@ -1279,6 +1286,151 @@ public class RpsimProperties {
         private int maxWorkers = 3;
         /** A worker who left with this satisfaction or more applies again the next year. */
         private double returnSatisfaction = 60;
+    }
+
+    /**
+     * Roadmap V3.1 R31-B: burdening events (on-site check B1, fertiliser checks B3, animal disease B4, sickness and
+     * accident B5) are switched per savegame; in the world mode IDYLLIC their probabilities, cuts and fines are scaled
+     * by idyllic-factor and the animal disease is off (owner decision 2026-10-05).
+     */
+    @Getter @Setter
+    public static class BurdeningEvents {
+        private double idyllicFactor = 0.5;
+    }
+
+    /**
+     * Roadmap V3.1 R31-B1: area payment application and premium (owner decisions 2026-10-05, placeholders). The rotation
+     * cut of a check uses authority.rotation-cut-share, the announcement authority.inspection-days.
+     */
+    @Getter @Setter
+    public static class DirectPayment {
+        private boolean enabled = true;
+        /** FS25 periods: mail and form from open-period, deadline = end of deadline-period, payment at payment-period. */
+        private int openPeriod = 1;
+        private int deadlinePeriod = 3;
+        private int paymentPeriod = 10;
+        /** A late application loses late-cut-per-day of the premium per started game day; after late-max-days none. */
+        private double lateCutPerDay = 0.01;
+        private int lateMaxDays = 25;
+        private double premiumPerHa = 250;
+        /** On-site check: chance per application, rolled at the first month start of check-periods. */
+        private double checkProbability = 0.1;
+        private List<Integer> checkPeriods = new ArrayList<>(List.of(4, 5, 6, 7, 8));
+        /** Cut = premium of the deviating area x cut-factor (x cut-factor-repeat when the savegame deviated before). */
+        private double cutFactor = 1.5;
+        private double cutFactorRepeat = 3.0;
+        /** Crops offered per field (plus the fruit types of the own fields and BRACHE = fallow). */
+        private List<String> crops = new ArrayList<>(List.of("WHEAT", "BARLEY", "OAT", "CANOLA", "MAIZE", "SUNFLOWER",
+                "SOYBEAN", "SORGHUM", "GRASS"));
+    }
+
+    /**
+     * Roadmap V3.1 R31-B2: investment grant (owner decisions 2026-10-05, placeholders). Bills of a repayment follow
+     * tax.payment-days / tax.late-fee-rate like a tax bill.
+     */
+    @Getter @Setter
+    public static class InvestmentGrant {
+        private boolean enabled = true;
+        private long minSum = 10000;
+        /** Processing time; with an office clerk x (1 - clerk-reduction-max x effective skill / 100). */
+        private double processingDays = 10;
+        private double clerkReductionMax = 0.5;
+        /** The purchase must follow within purchase-months game months after the approval. */
+        private int purchaseMonths = 6;
+        private int maxOpenPerKind = 1;
+        /** Grant = grant-share x min(recognised, planned sum), at most grant-max. */
+        private double grantShare = 0.3;
+        private long grantMax = 50000;
+        /** Funded machines sold within binding-months game months after the payment are repaid pro rata. */
+        private int bindingMonths = 24;
+    }
+
+    /** Roadmap V3.1 R31-B3: fertiliser rules (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class FertilizerRules {
+        private boolean enabled = true;
+        /** FS25 periods of the closed period for organic fertiliser on arable land (November-January). */
+        private List<Integer> closedPeriods = new ArrayList<>(List.of(9, 10, 11));
+        private List<String> organicSprayTypes = new ArrayList<>(List.of("LIQUID_MANURE", "MANURE"));
+        /** Fruit types that are grassland, not arable land. */
+        private List<String> excludedFruitTypes = new ArrayList<>(List.of("GRASS"));
+        /** False = fallback of the manual test plan: every rise of sprayLevel counts ("Düngung festgestellt"). */
+        private boolean requireSprayType = true;
+        /** Fine of a repeated finding (the first one is a warning) and the loss of village reputation. */
+        private long fine = 1000;
+        private double reputationDelta = -3;
+        /** Slurry store: condition titles of getConditionInfos (localised, like livestock.water-condition-titles). */
+        private List<String> slurryConditionTitles = new ArrayList<>(List.of("Gülle", "Slurry", "Liquid Manure"));
+        private double slurryWarningRatio = 0.85;
+        private double slurryWarningDays = 5;
+        private double slurryWarningCooldownDays = 10;
+        /** At the start of reminder-period every farm with a slurry store from reminder-min-ratio is reminded. */
+        private int reminderPeriod = 8;
+        private double reminderMinRatio = 0.5;
+    }
+
+    /** Roadmap V3.1 R31-B4: animal disease and restricted zone (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class AnimalDisease {
+        private boolean enabled = true;
+        private double probabilityPerMonth = 0.02;
+        /** Months after the lifting before the next disease can break out. */
+        private int cooldownMonths = 12;
+        private int zoneMonths = 3;
+        private List<Disease> diseases = new ArrayList<>(List.of(new Disease("ASP", new ArrayList<>(List.of("PIG"))),
+                new Disease("AVIAN_FLU", new ArrayList<>(List.of("CHICKEN"))),
+                new Disease("BLUETONGUE", new ArrayList<>(List.of("SHEEP", "COW")))));
+        /** Compulsory vet check per stable = (livestock.vet-base-fee + vet-fee-per-animal x animals) x vet-fee-factor. */
+        private double vetFeeFactor = 2.0;
+        /** Requirement per affected stable: health from requirement-health within requirement-days, else a fine. */
+        private double requirementHealth = 60;
+        private double requirementDays = 10;
+        private long requirementFine = 1000;
+        /** After the lifting the neighbour trade (A3) of the type starts at price-factor-after, back to 1 linearly. */
+        private double priceFactorAfter = 0.8;
+        private int priceRecoveryMonths = 3;
+    }
+
+    @Getter @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Disease {
+        private String key;
+        private List<String> animalTypes = new ArrayList<>();
+    }
+
+    /** Roadmap V3.1 R31-B5: annual fee of the agricultural social insurance (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class SocialInsurance {
+        private boolean enabled = true;
+        /** Fee = base-fee + fee-per-ha x hectares of own fields + fee-per-employee x active employees. */
+        private long baseFee = 300;
+        private double feePerHa = 12;
+        private long feePerEmployee = 180;
+        /** FS25 period of the bill (April). */
+        private int billPeriod = 2;
+    }
+
+    /** Roadmap V3.1 R31-B5: sickness and work accidents of employees (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class SickLeave {
+        private boolean enabled = true;
+        private double sicknessProbabilityPerDay = 0.005;
+        private double accidentProbabilityPerDay = 0.003;
+        private List<String> accidentRoles = new ArrayList<>(List.of("MACHINE_OPERATOR", "SEASONAL_WORKER", "APPRENTICE"));
+        /** Accident risk x risk-bad-factor for each of the needs workload / working conditions below risk-bad-threshold. */
+        private double riskBadThreshold = 40;
+        private double riskBadFactor = 1.5;
+        /** ... and x risk-good-factor when both are from risk-good-threshold. */
+        private double riskGoodThreshold = 70;
+        private double riskGoodFactor = 0.5;
+        private int sicknessDaysMin = 2;
+        private int sicknessDaysMax = 5;
+        private int accidentDaysMin = 3;
+        private int accidentDaysMax = 10;
+        /** Get-well wishes (once per absence). */
+        private double getWellAppreciation = 8;
+        private double getWellTrustDelta = 2;
     }
 
     /**

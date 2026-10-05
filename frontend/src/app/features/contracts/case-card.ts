@@ -78,6 +78,20 @@ import { Button } from '../../shared/ui/button';
         </div>
         <p class="mt-1 text-[11px] text-muted">{{ 'contracts.taxHint' | t }}</p>
       }
+      @if (c().kind === 'GRANT_REPAYMENT' || c().kind === 'SOCIAL_INSURANCE_BILL') {
+        <!-- Roadmap V3.1 R31-B2 / R31-B5: repayment of a grant, fee of the Berufsgenossenschaft - paid like a tax bill -->
+        <div class="mt-1 text-[12px] text-text" data-testid="authority-bill">{{ 'contracts.authorityBill' | t: { title: c().title ?? '–', amount: (c().offerAmount | money) } }}
+          @if (c().costAmount) { · <span class="text-danger">{{ 'contracts.lateFees' | t: { amount: (c().costAmount | money) } }}</span> }</div>
+        @if (c().kind === 'SOCIAL_INSURANCE_BILL') {
+          <div class="mt-1 text-[11px] text-muted" data-testid="social-insurance-basis">{{ 'authorities.socialInsurance.basis' | t: { hectares: c().hectares ?? 0, employees: c().baselineCount ?? 0 } }}</div>
+        }
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'contracts.payTax' | t: { amount: ((c().offerAmount ?? 0) + (c().costAmount ?? 0)) | money } }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'contracts.authorityBillHint' | t }}</p>
+      }
       @if (c().kind === 'AUTHORITY_INSPECTION') {
         <div class="mt-1 text-[12px] text-text" data-testid="inspection">{{ 'contracts.inspection' | t: { rule: (c().title | label: 'authorityRule') } }}</div>
         @if (c().roundsUsed > 0) {

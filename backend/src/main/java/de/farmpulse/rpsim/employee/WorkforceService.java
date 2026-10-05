@@ -85,6 +85,9 @@ public class WorkforceService {
         if (TrainingService.inTraining(e, now)) {
             return STATUS_ON_LEAVE; // at a training: no helper
         }
+        if (SickLeaveService.absent(e, now)) {
+            return STATUS_ON_LEAVE; // Roadmap V3.1 R31-B5: sick or after a work accident
+        }
         return STATUS_ACTIVE;
     }
 

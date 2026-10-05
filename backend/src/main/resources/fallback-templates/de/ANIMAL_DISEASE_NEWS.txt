@@ -1,0 +1,6 @@
+Seuchenalarm in der Region
+Hallo zusammen,
+
+das Amt hat wegen {{disease}} eine Sperrzone für {{animalTypes}} eingerichtet – für rund {{zoneMonths}} Monate kein Handel mit diesen Tieren. Haltet die Ställe sauber und die Tiere gesund.
+
+{{characterName}}

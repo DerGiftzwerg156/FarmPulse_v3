@@ -323,7 +323,7 @@ More **optional** values for [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md
 blocks: `schemaVersion` stays `1`, a missing field or block means "not present" (older mod, or the feature is not
 built yet), an empty block is a real answer of the game. R31-Q1 fixes the contract only (`BridgeDtos`,
 `BridgeValidator`, the simulator schemas, `RPSimFarmFacts.build` / `RPSimMarketContext.build`). The mod **reads the
-values in the game with the features** (A4 `snowHeight` and `category` - read since R31-A4 -, B3 `sprayType`, D4
+values in the game with the features** (A4 `snowHeight` and `category` - read since R31-A4 -, B3 `sprayType` - read since R31-B3 -, D4
 `dayTimeMs`, D5 `vehiclePositions`, D8 `fuel`, K1 `fieldShapes`); until then they are missing. The bridge simulator exports them only in
 the scenarios `winter-schnee`, `lohnunternehmer` and `viehhandel` (`fieldShapes` only in `lohnunternehmer`).
 

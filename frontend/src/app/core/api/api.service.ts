@@ -206,6 +206,10 @@ export class ApiService {
   timeOff(id: number, days: number): Observable<M.EmployeeView> {
     return this.post(`/employees/${id}/time-off`, { days });
   }
+  /** Roadmap V3.1 R31-B5: get-well wishes to a sick or injured employee. */
+  getWell(id: number): Observable<M.EmployeeView> {
+    return this.post(`/employees/${id}/get-well`, {});
+  }
   trainings(): Observable<M.TrainingOfferView[]> {
     return this.get('/trainings');
   }
@@ -420,6 +424,34 @@ export class ApiService {
   }
   saveFieldSettings(r: { fieldHintsEnabled: boolean }): Observable<M.FieldSettingsView> {
     return this.http.put<M.FieldSettingsView>(`${this.base}/settings/fields`, r);
+  }
+  /** Roadmap V3.1 R31-B: burdening events of the authorities. */
+  burdenSettings(): Observable<M.BurdenSettingsView> {
+    return this.get('/settings/burdening-events');
+  }
+  saveBurdenSettings(r: { areaCheck: boolean; fertilizer: boolean; disease: boolean; sickLeave: boolean }): Observable<M.BurdenSettingsView> {
+    return this.http.put<M.BurdenSettingsView>(`${this.base}/settings/burdening-events`, r);
+  }
+  /** Roadmap V3.1 R31-B1: area payment application. */
+  directPayment(): Observable<M.DirectPaymentStatusView> {
+    return this.get('/direct-payment');
+  }
+  submitDirectPayment(id: number, fields: { farmlandId: number; crop: string }[]): Observable<M.DirectPaymentView> {
+    return this.post(`/direct-payment/${id}/submit`, { fields });
+  }
+  /** Roadmap V3.1 R31-B2: investment grant. */
+  investmentGrants(): Observable<M.GrantStatusView> {
+    return this.get('/investment-grants');
+  }
+  applyGrant(kind: string, plannedSum: number): Observable<M.GrantView> {
+    return this.post('/investment-grants', { kind, plannedSum });
+  }
+  grantProof(id: number): Observable<M.GrantView> {
+    return this.post(`/investment-grants/${id}/proof`, {});
+  }
+  /** Roadmap V3.1 R31-B4: animal diseases and restricted zones. */
+  animalDiseases(): Observable<M.DiseaseStatusView> {
+    return this.get('/animal-diseases');
   }
   gameSettings(): Observable<M.GameSettingsView> {
     return this.get('/settings/game');

@@ -123,8 +123,8 @@ Entscheidungen in `QUESTIONS.md` (02.10.2026). Der Mod führt `FIELD_WORK` und `
 nimmt `VEHICLE_SPAWN` mit Preis 0 (Leih-/Vorführmaschine, ohne Buchung) an und kennt die Rolle `SEASONAL_WORKER`.
 Bei den 🟡-Punkten nutzt der Mod den Hauptweg und den Fallback (A1: `createFieldUpdateTask()` und zusätzlich die
 Setter der Task). Nach dem Laden eines älteren Spielstands (R2-G) werden `FIELD_WORK` und `ANIMAL_TRANSFER` mit
-ihrem ganzen Batch erneut gesendet. Offen bleibt nur die Sperre des Viehhandels während einer Tierseuche: sie kommt
-mit B4. Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitt 21.
+ihrem ganzen Batch erneut gesendet. Die Sperre des Viehhandels während einer Tierseuche ist seit B4 (05.10.2026)
+umgesetzt. Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitt 21.
 
 ### R31-A1 Lohnunternehmer bearbeitet dein Feld
 
@@ -275,27 +275,37 @@ steht auf dem Hof und verschwindet am Ende der Leihzeit. An einem Schneetag zahl
 Alle Punkte folgen dem V2-Muster der Ämter (R2-E): Mail mit Frist, Vorgang unter **Ämter**, Bezahlen oder Beantragen
 per Knopf, Säumnis und Kontrolle mit Vorankündigung. Werte unter `rpsim.formulas.authority.*` bzw. eigenen Blöcken.
 
+**Stand 05.10.2026: umgesetzt** (Backend, Mod, Hof-Tablet, Doku). Die Werte stehen unter
+`rpsim.formulas.burdening-events`, `direct-payment`, `investment-grant`, `fertilizer-rules`, `animal-disease`,
+`social-insurance` und `sick-leave`; Entscheidungen in `QUESTIONS.md` (05.10.2026), darunter die offene Frage
+R31-B / R31-D für B: jedes belastende Ereignis ist je Spielstand schaltbar (Einstellungen → *Belastende Ereignisse*),
+im Weltmodus „idyllisch“ gibt es keine Tierseuche und Kontrollen, Kürzungen, Bußgelder der Düngeverordnung und
+Ausfälle nur mit Faktor 0,5. Der Mod exportiert `fields[].sprayType` (B3); beim 🟡-Punkt wertet das Backend ohne
+`sprayType` bzw. mit `fertilizer-rules.require-spray-type: false` den Fallback (nur `sprayLevel`). Rückforderungen der
+Förderung und der Beitrag der Berufsgenossenschaft (neue Rolle `SOCIAL_INSURANCE`) laufen wie ein Steuerbescheid.
+Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitte 21 (21.5, 21.8) und 23.
+
 ### R31-B1 Sammelantrag und Flächenprämie
 
-- [ ] Einmal im FS25-Jahr ein **Sammelantrag** mit Stichtag (Konfig-Periode, Vorschlag Mai = Periode 3). Das Formular
+- [x] Einmal im FS25-Jahr ein **Sammelantrag** mit Stichtag (Konfig-Periode, Vorschlag Mai = Periode 3). Das Formular
   ist mit den eigenen Feldern und Kulturen vorbefüllt (R2-C1). Der Spieler bestätigt oder korrigiert die Kultur je Feld
   aus einer Liste. Verpachtete Felder (R3-L) gehören nicht dazu, gepachtete schon.
-- [ ] Auszahlung der **Flächenprämie** je Hektar (`DIRECT_PAYMENT`) zu einem festen Termin (Konfig-Periode).
-- [ ] **Vor-Ort-Kontrolle:** Ein Anteil der Anträge wird geprüft (Wahrscheinlichkeit aus der Konfig). Weicht die
+- [x] Auszahlung der **Flächenprämie** je Hektar (`DIRECT_PAYMENT`) zu einem festen Termin (Konfig-Periode).
+- [x] **Vor-Ort-Kontrolle:** Ein Anteil der Anträge wird geprüft (Wahrscheinlichkeit aus der Konfig). Weicht die
   angegebene Kultur von der exportierten ab, wird gekürzt, im Wiederholungsfall stärker. Die Fruchtfolge-Regeln
   (R2-E2) fließen als Auflagen ein.
-- [ ] Verspätet → Abzug je Tag, nicht gestellt → keine Prämie.
+- [x] Verspätet → Abzug je Tag, nicht gestellt → keine Prämie.
 
 **Beleg:** – (Daten aus R2-C1, Ablauf wie R2-E1/E2).
 
 ### R31-B2 Investitionsförderung
 
-- [ ] Vor einem Kauf stellt der Spieler beim Amt einen **Förderantrag**: Art (Stall/Gebäude oder Maschine), geplante
+- [x] Vor einem Kauf stellt der Spieler beim Amt einen **Förderantrag**: Art (Stall/Gebäude oder Maschine), geplante
   Summe, Frist. Nach der Bewilligung (Bearbeitungszeit, mit Bürokraft kürzer, R3-P1) muss er innerhalb der Frist
   wirklich kaufen.
-- [ ] Nachweis aus dem Buchungsjournal: `SHOP_PROPERTY_BUY` bzw. `SHOP_VEHICLE_BUY` (R2-B, im Spiel geprüft) summiert ab
+- [x] Nachweis aus dem Buchungsjournal: `SHOP_PROPERTY_BUY` bzw. `SHOP_VEHICLE_BUY` (R2-B, im Spiel geprüft) summiert ab
   der Bewilligung. Ein Kauf **vor** der Bewilligung zählt nicht (vorzeitiger Maßnahmenbeginn).
-- [ ] Zuschuss = Förderquote × anerkannte Summe, gedeckelt (Konfig), als `INVESTMENT_GRANT`. Wer das gekaufte Objekt
+- [x] Zuschuss = Förderquote × anerkannte Summe, gedeckelt (Konfig), als `INVESTMENT_GRANT`. Wer das gekaufte Objekt
   innerhalb einer Bindungsfrist verkauft (`SHOP_VEHICLE_SELL` im Journal), muss anteilig zurückzahlen (Rechnung wie
   `TAX_BILL`).
 
@@ -303,14 +313,14 @@ per Knopf, Säumnis und Kontrolle mit Vorankündigung. Werte unter `rpsim.formul
 
 ### R31-B3 Düngeverordnung
 
-- [ ] **Sperrfrist:** In den Konfig-Perioden des Winters ist organischer Dünger auf Ackerland verboten. Der Mod
+- [x] **Sperrfrist:** In den Konfig-Perioden des Winters ist organischer Dünger auf Ackerland verboten. Der Mod
   exportiert je eigenem Feld `sprayType` als Namen aus der Tabelle `FieldSprayType` (z. B. `LIQUID_MANURE`, `MANURE`,
   `LIME`). Wechselt ein Feld in der Sperrfrist auf `LIQUID_MANURE` oder `MANURE` und steigt `sprayLevel`, kündigt das
   Amt eine Kontrolle an. Im Wiederholungsfall folgt ein Bußgeld (`FINE`) und Ansehensverlust.
-- [ ] **Güllelager:** Steht der Füllgrad des Güllelagers eines Stalls (Bedingung aus `husbandries[].conditions`, R2-A7)
+- [x] **Güllelager:** Steht der Füllgrad des Güllelagers eines Stalls (Bedingung aus `husbandries[].conditions`, R2-A7)
   lange über der Schwelle, warnt der Tierpfleger bzw. die Genossenschaft. Kurz vor der Sperrfrist kommt eine Erinnerung
   („Jetzt noch Gülle fahren, ab November ist Schluss“).
-- [ ] Alle Schwellen und Perioden als Platzhalter in `rpsim.formulas.fertilizer-rules.*`.
+- [x] Alle Schwellen und Perioden als Platzhalter in `rpsim.formulas.fertilizer-rules.*`.
 
 **Beleg:** ✅ `field/FieldState.lua` (Dump): Feld `sprayType`. ✅ `field/FieldManager.lua`: Werte
 `FieldSprayType.NONE`, `LIQUID_MANURE`, `MANURE`, `LIME`. ✅ Güllelager als Eintrag von `getConditionInfos` (R2-A7,
@@ -322,14 +332,14 @@ zurück? **Fallback:** Nur `sprayLevel`-Anstieg in der Sperrfrist werten und die
 
 ### R31-B4 Tierseuche und Sperrzone
 
-- [ ] Seltenes Ereignis (Konfig, im idyllischen Weltmodus aus): Eine Seuche (z. B. Afrikanische Schweinepest,
+- [x] Seltenes Ereignis (Konfig, im idyllischen Weltmodus aus): Eine Seuche (z. B. Afrikanische Schweinepest,
   Geflügelpest) trifft eine Tierart in der Region. Das Amt richtet eine Sperrzone für eine Anzahl Perioden ein.
-- [ ] Folgen im Tool:
+- [x] Folgen im Tool:
   - Viehhandel (A3) und Angebote des Viehhändlers für diese Tierart sind gesperrt.
   - Tierarzt-Pflichtuntersuchung (`VET_INVOICE`).
   - Auflagen mit Frist (Stall mit guter Gesundheit, R2-A7).
   - Nachrichten und Klatsch.
-- [ ] Die Tierpreise des Spiels ändert das Tool **nicht** (nicht geprüft, siehe
+- [x] Die Tierpreise des Spiels ändert das Tool **nicht** (nicht geprüft, siehe
   [Bewusst nicht aufgenommen](#bewusst-nicht-aufgenommen)). Die Preise im Handel mit den Nachbarn (A3) sinken nach
   Formel.
 
@@ -337,12 +347,12 @@ zurück? **Fallback:** Nur `sprayLevel`-Anstieg in der Sperrfrist werten und die
 
 ### R31-B5 Berufsgenossenschaft, Arbeitsunfall und Krankheit
 
-- [ ] Jahresbeitrag der landwirtschaftlichen Berufsgenossenschaft (Konfig: Grundbetrag + je Hektar + je Mitarbeiter)
+- [x] Jahresbeitrag der landwirtschaftlichen Berufsgenossenschaft (Konfig: Grundbetrag + je Hektar + je Mitarbeiter)
   als `SOCIAL_INSURANCE`, Bescheid unter **Ämter**.
-- [ ] **Krankheit und Arbeitsunfall:** Selten (Konfig), ein Mitarbeiter fällt für einige Spieltage aus. Er ist in dieser
+- [x] **Krankheit und Arbeitsunfall:** Selten (Konfig), ein Mitarbeiter fällt für einige Spieltage aus. Er ist in dieser
   Zeit `ON_LEAVE` in `EMPLOYEE_ROSTER`, das Gehalt läuft weiter. Unfälle werden wahrscheinlicher bei hoher
   Arbeitsbelastung (Stunden aus R2-A4) und schlechtem Maschinenzustand (`condition`). Gute Bedingungen senken das Risiko.
-- [ ] Genesungswünsche als Wertschätzung, Tagebucheintrag.
+- [x] Genesungswünsche als Wertschätzung, Tagebucheintrag.
 
 **Beleg:** – (Backend; `ON_LEAVE` gibt es seit R2-A0).
 

@@ -444,6 +444,7 @@ function T.TestGameAdapter:testOnlyValidFieldsOfOwnedFarmlandsWithCropDetails()
     lu.assertTrue(f.withered)
     lu.assertFalse(f.cut)
     lu.assertEquals({ f.fillType, f.litersPerSqm, f.minHarvestingGrowthState }, { "WHEAT", 0.99, 8 })
+    lu.assertNil(f.sprayType) -- no FieldSprayType table
     g_fieldManager = nil
     lu.assertNil(RPSimGameAdapter.new():collectFields())
 end
@@ -981,6 +982,23 @@ function T.TestGameAdapter:testVehicleSaleRemovesTheVehicleAndBooksTheProceedsIn
     lu.assertEquals(bridge.state.processed.rm2.message, "VEHICLE_NOT_FOUND")
     lu.assertStrContains(bridge.state.processed.pay2.message, "BATCH_ABORTED")
     lu.assertEquals(bridge.adapter:getBalance(), before + 32000)
+end
+
+-- Roadmap V3.1 R31-B3: the spray type of a field as name of the FieldSprayType table
+function T.TestGameAdapter:testFieldsExportTheSprayTypeName()
+    local game = helpers.fakeGame()
+    fakeFields(game)
+    FieldSprayType = { NONE = 0, FERTILIZER = 1, LIQUID_MANURE = 3, MANURE = 4, LIME = 5 }
+    g_fieldManager.fields[1].getFieldState = function()
+        return { isValid = true, weedState = 0, stoneLevel = 0, sprayLevel = 2, limeLevel = 1, plowLevel = 1,
+            fruitTypeIndex = 3, growthState = 5, sprayType = 3 }
+    end
+    local f = RPSimGameAdapter.new():collectFields()[1]
+    lu.assertEquals({ f.sprayType, f.sprayLevel }, { "LIQUID_MANURE", 2 })
+    lu.assertEquals(RPSimGameAdapter.sprayTypeName(0), "NONE")
+    lu.assertNil(RPSimGameAdapter.sprayTypeName(99))
+    lu.assertNil(RPSimGameAdapter.sprayTypeName(nil))
+    FieldSprayType = nil
 end
 
 return T

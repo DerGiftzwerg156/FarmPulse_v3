@@ -43,6 +43,10 @@
               @if (e.salaryOverdue) { <app-badge variant="negative">{{ 'employees.salaryOverdue' | t }}</app-badge> }
               @if (e.timeOffUntilGameTime) { <app-badge>{{ 'employees.timeOffUntil' | t: { at: (e.timeOffUntilGameTime | gameTime) } }}</app-badge> }
               @if (e.onStrike) { <app-badge variant="negative" data-testid="strike">{{ 'employees.strike' | t }}</app-badge> }
+              @if (e.absenceKind && e.absenceUntilGameTime) {
+                <!-- Roadmap V3.1 R31-B5: sick or after a work accident -->
+                <app-badge variant="negative" data-testid="absence">{{ ('employees.absence.' + e.absenceKind) | t: { at: (e.absenceUntilGameTime | gameTime) } }}</app-badge>
+              }
               @if (e.contractEndsAtGameTime) {
                 <app-badge data-testid="seasonal-contract">{{ 'employees.seasonalUntil' | t: { at: (e.contractEndsAtGameTime | gameTime) } }}</app-badge>
               }
@@ -92,6 +96,9 @@
                 <app-button variant="secondary" (pressed)="openPanel(e, 'raise')" data-testid="raise-open">{{ 'employees.raise' | t }}</app-button>
               }
               <app-button variant="secondary" (pressed)="openPanel(e, 'timeOff')" data-testid="timeoff-open">{{ 'employees.timeOff' | t }}</app-button>
+              @if (e.absenceKind && !e.getWellSent) {
+                <app-button variant="secondary" (pressed)="getWell(e)" data-testid="get-well">{{ 'employees.absence.getWell' | t }}</app-button>
+              }
               @if (e.jobRole === 'MACHINE_OPERATOR' && !e.trainingInProgress) {
                 <app-button variant="secondary" (pressed)="openPanel(e, 'training')" data-testid="training-open">{{ 'employees.training' | t }}</app-button>
               }

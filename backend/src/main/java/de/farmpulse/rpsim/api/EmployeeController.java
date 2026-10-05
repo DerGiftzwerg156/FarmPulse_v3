@@ -38,9 +38,12 @@ public class EmployeeController {
     private final TrainingService training;
     private final EmployeeRepository employees;
     private final ApiMapper mapper;
+    private final de.farmpulse.rpsim.employee.SickLeaveService sickLeave;
 
     public EmployeeController(SavegameContext context, HiringService hiring, SatisfactionService satisfaction,
-                              TrainingService training, EmployeeRepository employees, ApiMapper mapper) {
+                              TrainingService training, EmployeeRepository employees, ApiMapper mapper,
+                              de.farmpulse.rpsim.employee.SickLeaveService sickLeave) {
+        this.sickLeave = sickLeave;
         this.training = training;
         this.context = context;
         this.hiring = hiring;
@@ -105,6 +108,14 @@ public class EmployeeController {
         Employee e = active(context.requireActive(), id);
         satisfaction.timeOff(e, r.days());
         return mapper.employee(e);
+    }
+
+    /** Roadmap V3.1 R31-B5: get-well wishes to a sick or injured employee (once per absence). */
+    @PostMapping("/api/employees/{id}/get-well")
+    @Transactional
+    public EmployeeView getWell(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return mapper.employee(sickLeave.getWell(sg, active(sg, id)));
     }
 
     /** "Schulungen": catalog of the trainings with price and unlocked FS25 shop categories. */

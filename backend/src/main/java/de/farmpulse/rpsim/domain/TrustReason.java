@@ -66,6 +66,10 @@ public enum TrustReason {
     MACHINE_LOAN_DAMAGE,
     MACHINE_LOAN_LOST,
     MACHINE_LOAN_RENT_MISSED,
+    /** Roadmap V3.1 R31-B2 / R31-B5: a bill of the authority / the social insurance paid late. */
+    AUTHORITY_BILL_OVERDUE,
+    /** Roadmap V3.1 R31-B5: get-well wishes to a sick or injured employee. */
+    GET_WELL_WISHES,
     INITIAL,
     OTHER
 }

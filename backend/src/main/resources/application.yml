@@ -709,6 +709,81 @@ rpsim:
       skill-max: 70
       max-workers: 3
       return-satisfaction: 60     # left with satisfaction >= 60: applies again next year
+    burdening-events:             # Roadmap V3.1 R31-B: switches per savegame (settings), world mode IDYLLIC (owner decision)
+      idyllic-factor: 0.5         # B1 check chance and cut, B3 fine, B5 sickness / accident chance x 0.5; B4 off
+    direct-payment:               # Roadmap V3.1 R31-B1: area payment application (owner decisions, placeholders)
+      enabled: true
+      open-period: 1              # mail and form from March (FS25 period 1)
+      deadline-period: 3          # deadline = end of May
+      payment-period: 10          # paid at the start of December
+      late-cut-per-day: 0.01      # late application: 1 % less per started game day ...
+      late-max-days: 25           # ... and none after 25 game days (= no premium)
+      premium-per-ha: 250
+      check-probability: 0.1      # on-site check per application (announced, authority.inspection-days)
+      check-periods: [4, 5, 6, 7, 8]
+      cut-factor: 1.5             # cut = premium of the deviating area x 1.5 ...
+      cut-factor-repeat: 3.0      # ... x 3 when the savegame deviated before (capped at the whole premium)
+      crops: [WHEAT, BARLEY, OAT, CANOLA, MAIZE, SUNFLOWER, SOYBEAN, SORGHUM, GRASS] # + own fruit types + BRACHE
+    investment-grant:             # Roadmap V3.1 R31-B2: investment grant (owner decisions, placeholders)
+      enabled: true
+      min-sum: 10000              # planned sum at least
+      processing-days: 10         # with an office clerk x (1 - 0.5 x effective skill / 100)
+      clerk-reduction-max: 0.5
+      purchase-months: 6          # buy within 6 game months after the approval
+      max-open-per-kind: 1
+      grant-share: 0.3            # grant = 30 % of min(recognised, planned sum) ...
+      grant-max: 50000            # ... at most 50,000 EUR
+      binding-months: 24          # funded machines sold within 24 months are repaid pro rata
+    fertilizer-rules:             # Roadmap V3.1 R31-B3: fertiliser rules (owner decisions, placeholders)
+      enabled: true
+      closed-periods: [9, 10, 11] # November-January: no organic fertiliser on arable land
+      organic-spray-types: [LIQUID_MANURE, MANURE]
+      excluded-fruit-types: [GRASS] # grassland
+      require-spray-type: true    # false = fallback: every sprayLevel rise counts ("Düngung festgestellt")
+      fine: 1000                  # repeated finding (the first one is a warning)
+      reputation-delta: -3
+      slurry-condition-titles: [Gülle, Slurry, Liquid Manure]
+      slurry-warning-ratio: 0.85  # slurry store from 85 % ...
+      slurry-warning-days: 5      # ... for 5 game days: warning of the keeper / cooperative
+      slurry-warning-cooldown-days: 10
+      reminder-period: 8          # October: "Jetzt noch Gülle fahren, ab November ist Schluss"
+      reminder-min-ratio: 0.5
+    animal-disease:               # Roadmap V3.1 R31-B4: animal disease and restricted zone (owner decisions, placeholders)
+      enabled: true
+      probability-per-month: 0.02 # at most one at a time, only animal types the player keeps
+      cooldown-months: 12         # pause after the lifting
+      zone-months: 3
+      diseases:
+        - { key: ASP, animal-types: [PIG] }
+        - { key: AVIAN_FLU, animal-types: [CHICKEN] }
+        - { key: BLUETONGUE, animal-types: [SHEEP, COW] }
+      vet-fee-factor: 2.0         # compulsory check = (vet-base-fee + vet-fee-per-animal x animals) x 2
+      requirement-health: 60      # requirement per stable: health >= 60 ...
+      requirement-days: 10        # ... within 10 game days ...
+      requirement-fine: 1000      # ... else a fine
+      price-factor-after: 0.8     # neighbour trade (A3) after the lifting: x 0.8 ...
+      price-recovery-months: 3    # ... back to x 1 within 3 months
+    social-insurance:             # Roadmap V3.1 R31-B5: agricultural social insurance (owner decisions, placeholders)
+      enabled: true
+      base-fee: 300               # fee = 300 + 12 per ha + 180 per active employee
+      fee-per-ha: 12
+      fee-per-employee: 180
+      bill-period: 2              # April
+    sick-leave:                   # Roadmap V3.1 R31-B5: sickness and work accident (owner decisions, placeholders)
+      enabled: true
+      sickness-probability-per-day: 0.005
+      accident-probability-per-day: 0.003
+      accident-roles: [MACHINE_OPERATOR, SEASONAL_WORKER, APPRENTICE]
+      risk-bad-threshold: 40      # need workload / working conditions below 40: accident risk x 1.5 each
+      risk-bad-factor: 1.5
+      risk-good-threshold: 70     # both from 70: x 0.5
+      risk-good-factor: 0.5
+      sickness-days-min: 2
+      sickness-days-max: 5
+      accident-days-min: 3
+      accident-days-max: 10
+      get-well-appreciation: 8    # get-well wishes: appreciation +8, trust +2
+      get-well-trust-delta: 2
     drought:                      # Roadmap V3 R3-W1 / R3-W2: drought and drought aid (owner decisions, placeholders)
       enabled: true
       periods: [3, 4, 5, 6, 7, 8] # growth months (FS25 periods, 1 = March)

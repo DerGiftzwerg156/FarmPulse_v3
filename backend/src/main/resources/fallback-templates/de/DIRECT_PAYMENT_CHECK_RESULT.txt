@@ -1,0 +1,7 @@
+Ergebnis der Vor-Ort-Kontrolle {{cropYear}}
+Guten Tag,
+
+wir haben Ihre Angaben im Sammelantrag {{cropYear}} vor Ort geprüft. Abweichende Kultur: {{deviatingHectares}} ha {{deviatingFields}} – Kürzung {{deviationCut}} €. Fruchtfolge-Auflage nicht eingehalten: {{repeatedFields}} – Kürzung {{rotationCut}} €. Die Kürzungen werden mit der Flächenprämie verrechnet.
+
+Mit freundlichen Grüßen
+{{characterName}}

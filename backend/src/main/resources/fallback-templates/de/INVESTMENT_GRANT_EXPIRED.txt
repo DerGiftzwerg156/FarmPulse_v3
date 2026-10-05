@@ -1,0 +1,7 @@
+Förderung verfallen
+Guten Tag,
+
+bis zum Ende der Frist haben wir keinen Kauf zu Ihrem Förderantrag ({{kind}}) feststellen können. Die Bewilligung ist damit erloschen. Sie können jederzeit einen neuen Antrag stellen.
+
+Mit freundlichen Grüßen
+{{characterName}}

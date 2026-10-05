@@ -35,6 +35,9 @@ const CASE_APP: Record<string, string> = {
   MACHINE_DEMO_OFFER: 'workshop',
   ANIMAL_OFFER: 'trade',
   ANIMAL_REQUEST: 'trade',
+  // Roadmap V3.1 R31-B
+  GRANT_REPAYMENT: 'authorities',
+  SOCIAL_INSURANCE_BILL: 'authorities',
 };
 
 const CONTRACT_APP: Record<string, string> = {

@@ -23,4 +23,11 @@ public class HusbandryRecord extends SavegameScoped {
 
     @Column(name = "violations", nullable = false)
     private int violations;
+
+    /** Roadmap V3.1 R31-B3: slurry store above the warning ratio since; last warning of the keeper / cooperative. */
+    @Column(name = "slurry_high_since")
+    private Long slurryHighSince;
+
+    @Column(name = "last_slurry_warning_game_time")
+    private Long lastSlurryWarningGameTime;
 }

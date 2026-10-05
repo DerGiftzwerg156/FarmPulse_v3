@@ -1069,6 +1069,8 @@ end
 -- (FieldState.lua), g_fruitTypeManager:getFruitTypeNameByIndex / getFruitTypeByIndex /
 -- getFillTypeNameByFruitTypeIndex (FruitTypeManager), FruitTypeDesc min/maxHarvestingGrowthState, literPerSqm,
 -- getIsWithered / getIsCut (FruitTypeDesc). Fields without a valid state are left out. nil = no field manager.
+-- Roadmap V3.1 R31-B3: sprayType = name of FieldState.sprayType in the FieldSprayType table (FieldState.lua,
+-- FieldManager.lua: NONE, FERTILIZER, LIQUID_MANURE, MANURE, LIME ...), left out when not readable.
 function RPSimGameAdapter:collectFields()
     local farmId = self:getFarmId()
     return self:collectFieldsWhere(function(field)
@@ -1106,7 +1108,8 @@ function RPSimGameAdapter:collectFieldsWhere(accept)
             local e = { farmlandId = farmland.id, name = field:getName(), hectares = field.areaHa,
                 growthState = state.growthState, weedState = state.weedState, stoneLevel = state.stoneLevel,
                 sprayLevel = state.sprayLevel, limeLevel = state.limeLevel, plowLevel = state.plowLevel,
-                groundType = RPSimGameAdapter.groundTypeName(state.groundType) }
+                groundType = RPSimGameAdapter.groundTypeName(state.groundType),
+                sprayType = RPSimGameAdapter.sprayTypeName(state.sprayType) }
             local index = state.fruitTypeIndex
             if index ~= nil and (FruitType == nil or index ~= FruitType.UNKNOWN) then
                 local desc = g_fruitTypeManager:getFruitTypeByIndex(index)
@@ -1300,6 +1303,20 @@ function RPSimGameAdapter.groundTypeName(value)
         return nil
     end
     for name, v in pairs(FieldGroundType) do
+        if v == value and type(name) == "string" and type(v) == "number" then
+            return name
+        end
+    end
+    return nil
+end
+
+--- Roadmap V3.1 R31-B3: name of a field spray type in the global FieldSprayType table (reverse lookup, numbers
+-- only), nil if unknown.
+function RPSimGameAdapter.sprayTypeName(value)
+    if value == nil or FieldSprayType == nil or type(FieldSprayType) ~= "table" then
+        return nil
+    end
+    for name, v in pairs(FieldSprayType) do
         if v == value and type(name) == "string" and type(v) == "number" then
             return name
         end

@@ -450,6 +450,7 @@ implementation to it.
 | 21.5 | Spray type after spreading (R31-B3) | Spread liquid manure on an own field, read `farm_facts.json` → `fields[].sprayType` and `sprayLevel` over the following days until the next work | `sprayType` stays `LIQUID_MANURE` until the next work changes it | value only a rising `sprayLevel` in the closed period and leave the kind open; the authority writes "Düngung festgestellt" instead of "Gülle" |
 | 21.6 | False alarms of the crop damage sample (R31-D5) | Drive on field paths that cross a neighbour's farmland and to an own contract field through neighbour land; read `farm_facts.json` → `vehiclePositions[]` (`farmlandId`, `onCrop`) | note how many samples in a row land on a neighbour's field with a crop without real damage | off by default, raise the threshold of samples in a row, a hint before the first complaint ("Pass auf, wo du langfährst") |
 | 21.7 | Orientation of the field outlines (R31-K1) | Compare the map view of the Flurkarte with the map of the game (`market_context.json` → `fieldShapes`) | north is up and the fields lie where the game's map shows them | mirror the axis in the frontend (switch in the code, set once in the playtest) |
+| 21.8 | Slurry condition title (R31-B3) | Own a stable with a slurry pit, play with the game language German and then English; look at `farm_facts.json` → `husbandries[].conditions[].title` | the slurry entry is titled `Gülle` / `Slurry` (default of `rpsim.formulas.fertilizer-rules.slurry-condition-titles`); note the exact titles of other languages | add the titles of the played language to `slurry-condition-titles`; until then the slurry warning and the October reminder stay silent |
 
 ## 22. Work on the farm (Roadmap V3.1 R31-A)
 
@@ -471,3 +472,27 @@ scenarios `lohnunternehmer` (A1, A2), `viehhandel` (A3) and `winter-schnee` (A4)
 | 22.9 | October with a medium or large tractor: accept the winter service in *Ämter* → *Gemeinde* | contract active; on a snow day the in-game hint "Schnee! Winterdienst ab 5 Uhr"; at the next month start base fee + 150 € per snow day as *Winterdienst* |
 | 22.10 | *Mitarbeiter* → *Erntehelfer:in* posting in June, hire one | outside June–October the posting is refused; at most 3; no raise and no training; he drives helpers like a machine operator; at the start of November he leaves with a farewell mail (last salary paid) |
 | 22.11 | Next June: post a seasonal job again after a worker left satisfied | the worker of last year applies again (same name, trust kept) |
+
+## 23. Authorities and grants (Roadmap V3.1 R31-B)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section B. Needs the current mod, own fields, an
+own stable with animals and at least one employee. Rows 21.5 and 21.8 check the game behaviour behind B3. To test the
+rare events, raise the chances in `application-local.yml` (e.g. `rpsim.formulas.direct-payment.check-probability: 1`,
+`animal-disease.probability-per-month: 1`, `sick-leave.sickness-probability-per-day: 1`).
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 23.1 | Start of March: *Ämter* → *Sammelantrag*; change one crop, *Antrag stellen* before the end of May | mail of the authority; the form lists the own fields with their crop (leased-out fields not); afterwards status *Gestellt* and a diary entry; the office clerk reminds a few days before the deadline while the application is open |
+| 23.2 | A year without application | 25 game days after the deadline mail "nicht gestellt", status *Versäumt*, no premium in December |
+| 23.3 | Start of December | *Flächenprämie* (250 € per declared ha, minus 1 % per late day) booked; mail of the authority |
+| 23.4 | On-site check (June–October): declare a crop other than the one in the field | announced inspection *Vor-Ort-Kontrolle Sammelantrag*; after the deadline the result mail with the cut; the December premium is lower by it |
+| 23.5 | *Ämter* → *Investitionsförderung*: machine, 100,000 €; buy a tractor in the shop **before** the approval | the purchase does not count (recognised 0) |
+| 23.6 | After the approval buy a tractor in the shop, *Nachweis einreichen* | grant 30 % of the price (max. 50,000 €) as *Investitionsförderung* |
+| 23.7 | Sell the funded tractor in the game within 24 months | bill *Rückforderung Investitionsförderung* under *Ämter* (pro rata), paid by button, late fees like a tax bill |
+| 23.8 | November: spread liquid manure on an own arable field | announced inspection *Düngeverordnung*; first time a warning, the second time a fine of 1,000 € and a loss of reputation |
+| 23.9 | Keep the slurry pit above 85 % for 5 game days; start of October | warning of the animal keeper (without one the cooperative); in October the reminder "Jetzt noch Gülle fahren, ab November ist Schluss" |
+| 23.10 | Animal disease breaks out | mails of the authority, the cooperative and the village; vet invoice per affected stable; *Handel* refuses animals of the type ("Sperrzone"); the trader offers none; requirement under *Kontrollen* (health ≥ 60 % within 10 days, otherwise 1,000 € fine) |
+| 23.11 | After 3 months | mail "Sperrzone aufgehoben"; animals of the type cost less at the neighbours for 3 months |
+| 23.12 | Start of April | bill of the *Berufsgenossenschaft* (300 € + 12 € per ha + 180 € per employee) under *Ämter*, paid by button |
+| 23.13 | An employee falls ill | mail (office clerk or the employee), badge *krank bis …* in *Mitarbeiter*, the employee drives no helper (`ON_LEAVE`); *Genesungswünsche* → thank-you mail; back after the days |
+| 23.14 | Settings → *Belastende Ereignisse*: switch everything off | no on-site check, fertiliser inspection, disease or sickness any more; application, premium, grant and the BG bill stay |

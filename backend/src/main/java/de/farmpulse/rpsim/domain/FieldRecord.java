@@ -83,4 +83,11 @@ public class FieldRecord extends SavegameScoped {
 
     @Column(name = "duty_violations", nullable = false)
     private int dutyViolations;
+
+    /** Roadmap V3.1 R31-B3: spray type and level of the last export (a rise in the closed period is a finding). */
+    @Column(name = "last_spray_type", length = 32)
+    private String lastSprayType;
+
+    @Column(name = "last_spray_level")
+    private Integer lastSprayLevel;
 }

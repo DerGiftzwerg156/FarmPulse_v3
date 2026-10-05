@@ -309,4 +309,21 @@ public class Savegame {
     /** Roadmap V3 R3-T2: optional farm name (settings, onboarding); heads the chronicle. */
     @Column(name = "farm_name", length = 60)
     private String farmName;
+
+    /** Roadmap V3.1 R31-B: burdening events switched per savegame (settings, default on). */
+    @Column(name = "burden_area_check", nullable = false)
+    private boolean burdenAreaCheck = true;
+
+    @Column(name = "burden_fertilizer", nullable = false)
+    private boolean burdenFertilizer = true;
+
+    @Column(name = "burden_disease", nullable = false)
+    private boolean burdenDisease = true;
+
+    @Column(name = "burden_sick_leave", nullable = false)
+    private boolean burdenSickLeave = true;
+
+    /** Roadmap V3.1 R31-B3: confirmed findings of the fertiliser rules (the first one is a warning, later ones a fine). */
+    @Column(name = "fertilizer_violations", nullable = false)
+    private int fertilizerViolations;
 }

@@ -56,5 +56,16 @@ public enum CaseKind {
      */
     ANIMAL_OFFER,
     /** Roadmap V3.1 R31-A3: a neighbour asks for animals of the player's stable (or the player offers) - the player sells. */
-    ANIMAL_REQUEST
+    ANIMAL_REQUEST,
+    /**
+     * Roadmap V3.1 R31-B2: repayment of an investment grant after a funded machine was sold within the binding period
+     * (pay by button like a tax bill). reference = grant id, title = bill title, offerAmount = repayment, costAmount =
+     * accumulated late fees.
+     */
+    GRANT_REPAYMENT,
+    /**
+     * Roadmap V3.1 R31-B5: annual bill of the agricultural social insurance (pay by button like a tax bill). quantity =
+     * FS25 year, hectares = own fields, baselineCount = employees, offerAmount = fee, costAmount = late fees.
+     */
+    SOCIAL_INSURANCE_BILL
 }

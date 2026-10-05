@@ -79,6 +79,32 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   - After loading an older save, `FIELD_WORK` and `ANIMAL_TRANSFER` are sent again together with their batch. Bridge
     simulator: stables export breeds and free places, `VEHICLE_SPAWN` at price 0, `lohnunternehmer` with the shop
     catalogue. Manual test plan section 22.
+- **Authorities and grants (Roadmap V3.1, R31-B):** owner decisions of 2026-10-05 in `QUESTIONS.md`.
+  - **Area payment application (B1):** every March the authority sends the form (*Ämter* → *Sammelantrag*): the own
+    fields with their crop, confirmed or corrected per field; deadline end of May, late 1 % less per game day, after 25
+    days no premium. In December 250 € per declared hectare as `DIRECT_PAYMENT`. On-site check of 10 % of the
+    applications (announced): a crop other than the main crop of the crop history costs 1.5 × the premium of the area
+    (3 × when it happened before), a field with the crop of the year before half its premium.
+  - **Investment grant (B2):** apply before buying (building or machine, planned sum from 10,000 €); approved after 10
+    game days (shorter with an office clerk); purchases in the game count from the approval for 6 months (rises of
+    `SHOP_PROPERTY_BUY` / `SHOP_VEHICLE_BUY` in the journal). Grant 30 %, at most 50,000 €, as `INVESTMENT_GRANT` by
+    *Nachweis einreichen* or at the end of the deadline. A funded machine sold within 24 months is repaid pro rata
+    (bill like a tax bill).
+  - **Fertiliser rules (B3):** the mod now exports `fields[].sprayType`. Organic fertiliser (liquid manure, manure) on
+    arable land in November–January leads to an announced inspection: a warning the first time, then a fine of 1,000 €
+    and a loss of reputation. The animal keeper (or the cooperative) warns of a full slurry store; in October a
+    reminder "Jetzt noch Gülle fahren, ab November ist Schluss".
+  - **Animal disease (B4):** rarely a disease (African swine fever, avian flu, bluetongue) hits an animal type of the
+    player; restricted zone for 3 months: livestock trade with neighbours and the trader blocked, compulsory vet check
+    per stable, requirement "health 60 % within 10 days". Afterwards the prices of the neighbour trade recover from
+    × 0.8 within 3 months. The game's animal prices stay untouched.
+  - **Berufsgenossenschaft and sick leave (B5):** new service character *Berufsgenossenschaft* with an annual bill in
+    April (300 € + 12 € per ha + 180 € per employee, `SOCIAL_INSURANCE`, paid by button). Employees fall ill or have a
+    work accident (more often with a high workload and worn machines): `ON_LEAVE` for some days, no helper, salary
+    continues; button *Genesungswünsche* in *Mitarbeiter*.
+  - Settings → *Belastende Ereignisse*: on-site check, fertiliser checks, animal disease and sickness can be switched
+    off per savegame; in the idyllic world mode there is no animal disease and the rest happens half as often / half as
+    hard. Manual test plan section 23.
 - **Leasing out own fields (Roadmap V3, R3-L):**
   - Flurkarte → own field → **Verpachten**: term 1–3 FS25 years and a desired rent per ha and month (guide value =
     field price × 5 % / 12 per ha). Up to three active neighbours with enough capital answer with a first bid

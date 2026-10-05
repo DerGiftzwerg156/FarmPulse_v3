@@ -37,7 +37,8 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   höchstens `fieldShapeMaxPoints` Punkte je Feld). Ausgelesen werden die Werte erst mit den Funktionen (A4, B3, D4,
   D5, D8, K1); bis dahin fehlen sie im Export. Seit **Arbeit auf dem Hof** (R31-A) liest der Mod die Schneehöhe und
   die Shop-Kategorie der eigenen Maschinen und exportiert je Stall die Rassen, die möglichen Rassen und die freien
-  Plätze (`husbandries[].subTypes`, `supportedSubTypes`, `freeSlots`).
+  Plätze (`husbandries[].subTypes`, `supportedSubTypes`, `freeSlots`). Seit **Behörden und Förderung** (R31-B3) liest
+  er die Düngungsart je Feld (`FieldState.sprayType` als Name aus `FieldSprayType`).
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben

@@ -150,7 +150,8 @@
       "TAX_OFFICE": "Finanzamt",
       "TAX_ADVISOR": "Steuerberater:in",
       "FAMILY": "Familie",
-      "CLUB": "Verein"
+      "CLUB": "Verein",
+      "SOCIAL_INSURANCE": "Berufsgenossenschaft"
     },
     "characterCategory": {
       "MANDATORY": "Pflichtrolle",
@@ -344,7 +345,9 @@
       "BREAD": "Brot",
       "SEEDS": "Saatgut",
       "FERTILIZER": "Dünger",
-      "LIQUIDFERTILIZER": "Flüssigdünger"
+      "LIQUIDFERTILIZER": "Flüssigdünger",
+      "GRASS": "Gras",
+      "BRACHE": "Brache"
     },
     "diaryCategory": {
       "BACKSTORY": "Vorgeschichte",
@@ -491,7 +494,9 @@
       "CONTRACTOR_WORK": "Lohnunternehmer",
       "MACHINE_DEMO_OFFER": "Vorführmaschine",
       "ANIMAL_OFFER": "Tierangebot",
-      "ANIMAL_REQUEST": "Tieranfrage"
+      "ANIMAL_REQUEST": "Tieranfrage",
+      "GRANT_REPAYMENT": "Rückforderung Förderung",
+      "SOCIAL_INSURANCE_BILL": "Beitrag Berufsgenossenschaft"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -550,7 +555,10 @@
       "NOT_OWN_FIELD": "Nicht mehr dein Feld",
       "MOD_OUTDATED": "Mod zu alt",
       "NO_ANIMAL_SPACE": "Kein Platz im Stall",
-      "NOT_ENOUGH_ANIMALS": "Zu wenige Tiere im Stall"
+      "NOT_ENOUGH_ANIMALS": "Zu wenige Tiere im Stall",
+      "WARNING": "Verwarnung",
+      "CUT": "Prämie gekürzt",
+      "DISEASE_CHECK": "Seuchen-Pflichtuntersuchung"
     },
     "animalType": {
       "COW": "Rinder",
@@ -699,7 +707,10 @@
     },
     "authorityRule": {
       "CULTIVATION_DUTY": "Bewirtschaftungspflicht",
-      "ANIMAL_WELFARE": "Tierwohl"
+      "ANIMAL_WELFARE": "Tierwohl",
+      "AREA_PAYMENT": "Vor-Ort-Kontrolle Sammelantrag",
+      "FERTILIZER_RULES": "Düngeverordnung (Sperrfrist)",
+      "ANIMAL_DISEASE": "Tierseuchen-Auflage"
     },
     "taxBill": {
       "PREPAYMENT": "Vorauszahlung",
@@ -780,6 +791,34 @@
       "UNKNOWN_STORE_ITEM": "nicht im Shop",
       "LOAD_FAILED": "im Spiel nicht geladen",
       "MOD_OUTDATED": "Mod zu alt"
+    },
+    "directPaymentStatus": {
+      "OPEN": "Offen",
+      "SUBMITTED": "Gestellt",
+      "LAPSED": "Versäumt",
+      "PAID": "Ausgezahlt"
+    },
+    "directPaymentCheck": {
+      "NONE": "Vor-Ort-Kontrolle noch offen",
+      "PENDING": "Zur Vor-Ort-Kontrolle ausgewählt",
+      "ANNOUNCED": "Vor-Ort-Kontrolle angekündigt",
+      "DONE": "Vor-Ort-Kontrolle erfolgt",
+      "NOT_SELECTED": "Keine Vor-Ort-Kontrolle"
+    },
+    "grantKind": {
+      "BUILDING": "Stall/Gebäude",
+      "MACHINE": "Maschine"
+    },
+    "grantStatus": {
+      "APPLIED": "Beantragt",
+      "APPROVED": "Bewilligt",
+      "PAID": "Ausgezahlt",
+      "EXPIRED": "Verfallen"
+    },
+    "disease": {
+      "ASP": "Afrikanische Schweinepest",
+      "AVIAN_FLU": "Geflügelpest",
+      "BLUETONGUE": "Blauzungenkrankheit"
     }
   },
   "onboarding": {
@@ -1066,7 +1105,13 @@
     "applicantTraining": "Bringt Schulung mit: {training}",
     "trainingInfo": "Ohne Schulung fahren Maschinenführer nur kleine und mittlere Traktoren. Große Traktoren, Mähdrescher, Feldhäcksler, Spezialernter, LKW sowie Selbstfahrer und Lader brauchen die passende Schulung. Im strengen Helferlimit startet so ein Helfer nur mit geschultem Fahrer.",
     "seasonalUntil": "befristet bis {at}",
-    "seasonalHint": "Saisonkräfte gibt es von Juni bis Oktober, befristet bis Ende Oktober: höheres Gehalt, keine Gehaltsverhandlung, keine Schulungen, höchstens 3 gleichzeitig."
+    "seasonalHint": "Saisonkräfte gibt es von Juni bis Oktober, befristet bis Ende Oktober: höheres Gehalt, keine Gehaltsverhandlung, keine Schulungen, höchstens 3 gleichzeitig.",
+    "absence": {
+      "SICKNESS": "krank bis {at}",
+      "ACCIDENT": "nach Arbeitsunfall bis {at}",
+      "getWell": "Genesungswünsche",
+      "getWellSent": "Genesungswünsche an {name} geschickt."
+    }
   },
   "farmland": {
     "map": "Feldübersicht",
@@ -1406,6 +1451,15 @@
       "title": "Hof",
       "name": "Hofname",
       "hint": "Steht über der Hofchronik und im Dateinamen. Leer = Kartenname."
+    },
+    "burden": {
+      "title": "Belastende Ereignisse",
+      "areaCheck": "Vor-Ort-Kontrolle des Sammelantrags",
+      "fertilizer": "Kontrollen der Düngeverordnung",
+      "disease": "Tierseuchen",
+      "sickLeave": "Krankheit und Arbeitsunfälle",
+      "hint": "Abgeschaltete Ereignisse kommen in diesem Spielstand nicht vor. Anträge, Prämien, Förderung und der Beitrag der Berufsgenossenschaft bleiben.",
+      "idyllic": "Weltmodus idyllisch: keine Tierseuchen, Kontrollen, Kürzungen, Bußgelder der Düngeverordnung und Ausfälle nur zu {percent} %."
     }
   },
   "notices": {
@@ -1495,7 +1549,9 @@
     "invitationHint": "Eine Zusage freut die Gastgeber. Absagen ist in Ordnung – nur gar nicht zu antworten kommt schlecht an.",
     "fine": "Bußgeld {amount}",
     "paid": "Bezahlt {amount}",
-    "renewLeaseOut": "Verlängern ({amount} / Monat)"
+    "renewLeaseOut": "Verlängern ({amount} / Monat)",
+    "authorityBill": "{title}: {amount}",
+    "authorityBillHint": "Der Betrag wird erst abgebucht, wenn du auf „Zahlen“ klickst. Nach der Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, später droht die Vollstreckung."
   },
   "tasks": {
     "filter": "Aufgaben filtern",
@@ -1687,6 +1743,54 @@
       "hint": "Bezahlt wird zu jedem Monatsbeginn für den vergangenen Wintermonat.",
       "days": "Schneetage diesen Monat: {month} · diesen Winter: {total}",
       "total": "{total} Schneetage in diesem Winter"
+    },
+    "directPayment": {
+      "title": "Sammelantrag",
+      "intro": "Einmal im Jahr stellst du den Sammelantrag: Bestätige oder korrigiere die Kultur je Feld. Die Flächenprämie beträgt {premium} je Hektar und kommt im Dezember. Verspätet kostet jeder angefangene Tag {late} % der Prämie, nach {days} Tagen gibt es keine Prämie mehr. Das Amt prüft manche Anträge vor Ort – dieselbe Kultur wie im Vorjahr kostet dann einen Teil der Prämie.",
+      "year": "Antragsjahr {year}",
+      "deadline": "Stichtag {time} · verspätet möglich bis {late}",
+      "submit": "Antrag stellen ({count} Felder)",
+      "submitted": "Sammelantrag gestellt.",
+      "noFields": "Der Mod meldet keine eigenen Felder.",
+      "found": "vor Ort: {crop}",
+      "rotation": "Fruchtfolge nicht eingehalten",
+      "lateDays": "{days} Tage verspätet gestellt",
+      "cut": "Kürzung {amount}",
+      "paid": "Ausgezahlt {amount} (Prämie {premium})",
+      "none": "Der Sammelantrag kommt jedes Jahr im März per Post."
+    },
+    "grant": {
+      "title": "Investitionsförderung",
+      "intro": "Beantrage die Förderung vor dem Kauf. Nach der Bewilligung zählen Käufe im Spiel ({months} Monate lang): {percent} % der Kosten, höchstens {max}. Wer eine geförderte Maschine innerhalb von {binding} Monaten verkauft, zahlt anteilig zurück.",
+      "kind": "Art",
+      "plannedSum": "Geplante Summe (ab {min})",
+      "apply": "Förderung beantragen",
+      "processing": "Bearbeitungszeit etwa {days} Tage (mit Bürokraft kürzer).",
+      "planned": "geplant {amount}",
+      "approvalDue": "Bewilligung bis {time}",
+      "recognised": "Seit der Bewilligung gekauft: {amount} · Frist bis {time}",
+      "proof": "Nachweis einreichen",
+      "paid": "Zuschuss {amount} auf {recognised}",
+      "binding": "Bindungsfrist bis {time} ({count} geförderte Maschinen)",
+      "repaid": "Zurückgefordert: {amount}",
+      "none": "Noch kein Förderantrag.",
+      "applied": "Förderantrag gestellt.",
+      "proofSent": "Nachweis eingereicht – der Zuschuss ist unterwegs.",
+      "repayments": "Rückforderungen"
+    },
+    "disease": {
+      "title": "Tierseuchen",
+      "active": "{disease}: Sperrzone für {types} bis voraussichtlich {time}.",
+      "activeHint": "Handel mit diesen Tieren ist gesperrt – bei den Nachbarn und beim Viehhändler. Die Auflagen je Stall stehen bei den Kontrollen.",
+      "none": "Derzeit keine Sperrzone in der Region.",
+      "off": "Tierseuchen sind für diesen Spielstand abgeschaltet.",
+      "past": "{disease} ({types}): {from} – {to}"
+    },
+    "socialInsurance": {
+      "title": "Berufsgenossenschaft",
+      "bills": "Beitragsbescheide",
+      "intro": "Jedes Jahr im April kommt der Beitrag der landwirtschaftlichen Berufsgenossenschaft: Grundbetrag plus je Hektar und je Mitarbeiter. Bezahlt wird per Knopf wie ein Steuerbescheid.",
+      "basis": "Berechnet für {hectares} ha und {employees} Beschäftigte"
     }
   },
   "stable": {

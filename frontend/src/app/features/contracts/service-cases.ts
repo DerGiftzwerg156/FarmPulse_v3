@@ -13,7 +13,7 @@ import { ContractCard } from './contract-card';
 
 /** Cases still shown as open: waiting for an answer, or accepted and running (trader offer, inspection). */
 export const OPEN_CASE = ['AWAITING_PLAYER', 'IN_PROGRESS'];
-const ROLEPLAY_CASES = ['TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION'];
+const ROLEPLAY_CASES = ['TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST', 'INVITATION', 'GRANT_REPAYMENT', 'SOCIAL_INSURANCE_BILL'];
 
 /**
  * The service cases and contracts of some kinds, as one section of an app (e.g. damages in "Versicherung", lease and
@@ -68,6 +68,7 @@ const ROLEPLAY_CASES = ['TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST'
                     · {{ c.title }}
                   } @else if (isRoleplayCase(c)) {
                     @if (c.kind === 'TAX_BILL') { · {{ c.title ?? (c.reference | label: 'taxBill') }} }
+                    @if (c.kind === 'GRANT_REPAYMENT' || c.kind === 'SOCIAL_INSURANCE_BILL') { · {{ c.title }} }
                     @if (c.kind === 'AUTHORITY_INSPECTION') { · {{ c.title | label: 'authorityRule' }} }
                     @if (c.kind === 'SPONSORING_REQUEST') { · {{ c.reference | label: 'club' }} }
                     @if (c.kind === 'INVITATION') { · {{ c.reference | label: 'festival' }} }

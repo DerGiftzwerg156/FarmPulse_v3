@@ -120,6 +120,10 @@ public final class Requests {
     }
 
     /** Roadmap V2 R2-C6: switch of the field work hints. */
+    /** Roadmap V3.1 R31-B: switches of the burdening events. */
+    public record BurdenSettingsRequest(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave) {
+    }
+
     public record FieldSettingsRequest(boolean fieldHintsEnabled) {
     }
 

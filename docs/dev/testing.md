@@ -154,6 +154,19 @@ spawn at price 0 in `test_roadmap_v31.lua`, the seasonal worker in `test_workfor
 export and the borrowed machine in `test/roadmap-v31.test.js`. Frontend: `contractor-work-card.spec.ts`,
 `machine-loans-card.spec.ts`, `borrow-machine.spec.ts`, `animal-trade.spec.ts`. In the game: manual test plan
 sections 21 and 22.
+Roadmap V3.1 R31-B (authorities and grants): `DirectPaymentTest` covers the form in March (deadline end of May, own
+fields, crops), the late cut per day, the lapse after the grace days, the on-site check (deviating crop × 1.5,
+rotation repeat × 0.5, announcement) and the payment in December, and the switch; `InvestmentGrantTest` the
+application rules, purchases only after the approval (journal rises within the month and across months), the funded
+machines, the grant with its cap, the pro-rata repayment after a sale in the binding period, the expiry and the late
+fee of an authority bill; `FertilizerRulesTest` the closed period (organic type and rising level, grassland and
+mineral fertiliser excluded), warning then fine, the fallback without `sprayType`, the switch, the slurry warning and
+the October reminder; `AnimalDiseaseTest` the outbreak (only own animal types, idyllic world mode and switch), the
+vet check, the requirement with fine, the trade block, the lifting, the price recovery and the cooldown;
+`SickLeaveTest` the BG bill (formula, once a year, paid by button), sickness reported by the office clerk with
+`ON_LEAVE`, get-well wishes, the return, accidents only in the driving roles and the risk factor.
+`RepositorySmokeTest` saves the new entities. The mod exports the spray type (`test_game_adapter.lua`). Frontend:
+`direct-payment-card.spec.ts`, `investment-grant-card.spec.ts`. In the game: manual test plan sections 21 and 23.
 Roadmap V3 R3-L (leasing out own fields): `LeaseOutTest` covers the guide value, the neighbours' bids (capital,
 85–100 % of the desired rent, the land agent without interest), the fallback on the field phase (offer and demand),
 the bank's consent for a pledged field, the agreement (contract, `FARMLAND_TRANSFER FROM_PLAYER`, `LEASE_INCOME` also

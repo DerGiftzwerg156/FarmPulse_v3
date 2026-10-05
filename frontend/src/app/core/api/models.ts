@@ -474,6 +474,10 @@ export interface EmployeeView {
   apprenticeshipEndsAtGameTime?: number | null;
   /** Roadmap V3.1 R31-A5: end of a seasonal worker's fixed-term contract. */
   contractEndsAtGameTime?: number | null;
+  /** Roadmap V3.1 R31-B5: SICKNESS / ACCIDENT while the employee is away (ON_LEAVE), its end, wishes sent. */
+  absenceKind?: string | null;
+  absenceUntilGameTime?: number | null;
+  getWellSent?: boolean;
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
@@ -1185,4 +1189,114 @@ export interface AnimalTradeView {
   stables: StableView[];
   neighbors: AnimalNeighborView[];
   cases: CaseView[];
+}
+
+/** R31-B: switches of the burdening events; world mode and its factor (IDYLLIC: animal disease off). */
+export interface BurdenSettingsView {
+  areaCheck: boolean;
+  fertilizer: boolean;
+  disease: boolean;
+  sickLeave: boolean;
+  tonePreset: string;
+  idyllicFactor: number;
+}
+
+/** R31-B1: one field of an area payment application. */
+export interface DirectPaymentFieldView {
+  farmlandId: number;
+  fieldName: string;
+  hectares: number;
+  declaredCrop: string;
+  actualCrop: string | null;
+  rotationRepeat: boolean;
+}
+
+export interface DirectPaymentFormFieldView {
+  farmlandId: number;
+  fieldName: string;
+  hectares: number;
+  suggestedCrop: string;
+}
+
+/** R31-B1: area payment application of an FS25 year (OPEN, SUBMITTED, LAPSED, PAID). */
+export interface DirectPaymentView {
+  id: number;
+  cropYear: number;
+  status: string;
+  openedGameTime: number;
+  deadlineGameTime: number;
+  lateLimitGameTime: number;
+  submittedGameTime: number | null;
+  lateDays: number;
+  checkStatus: string;
+  deviatingHectares: number | null;
+  deviationCut: number | null;
+  rotationCut: number | null;
+  lateCut: number | null;
+  premium: number | null;
+  paidAmount: number | null;
+  fields: DirectPaymentFieldView[];
+}
+
+export interface DirectPaymentStatusView {
+  enabled: boolean;
+  premiumPerHa: number;
+  lateCutPercentPerDay: number;
+  lateMaxDays: number;
+  crops: string[];
+  form: DirectPaymentFormFieldView[];
+  applications: DirectPaymentView[];
+}
+
+/** R31-B2: a machine bought with a grant (binding period). */
+export interface GrantObjectView {
+  vehicleUniqueId: string;
+  value: number;
+  soldGameTime: number | null;
+  repayment: number | null;
+}
+
+/** R31-B2: investment grant (APPLIED, APPROVED, PAID, EXPIRED). */
+export interface GrantView {
+  id: number;
+  kind: string;
+  status: string;
+  plannedSum: number;
+  appliedGameTime: number;
+  approvalDueGameTime: number;
+  approvedGameTime: number | null;
+  purchaseDeadlineGameTime: number | null;
+  recognisedSum: number;
+  grantAmount: number | null;
+  paidGameTime: number | null;
+  bindingEndsGameTime: number | null;
+  repaidAmount: number;
+  objects: GrantObjectView[];
+}
+
+export interface GrantStatusView {
+  enabled: boolean;
+  minSum: number;
+  grantPercent: number;
+  grantMax: number;
+  purchaseMonths: number;
+  bindingMonths: number;
+  processingDays: number;
+  grants: GrantView[];
+}
+
+/** R31-B4: an animal disease with its restricted zone. */
+export interface DiseaseView {
+  id: number;
+  diseaseKey: string;
+  animalTypes: string[];
+  status: string;
+  declaredGameTime: number;
+  endsGameTime: number;
+  liftedGameTime: number | null;
+}
+
+export interface DiseaseStatusView {
+  possible: boolean;
+  diseases: DiseaseView[];
 }

@@ -32,7 +32,10 @@ class RepositorySmokeTest {
                 // Roadmap V3 R3-H / R3-K / R3-M
                 NpcFieldRecord.class, NpcFieldCrop.class, NeighborStock.class, LoanCollateral.class, FarmReport.class,
                 PriceAlarm.class, ForwardContract.class, GrowingFieldMonth.class, Drought.class, VehicleDeal.class, OfficeReminder.class,
-                Milestone.class, PaymentDelay.class);
+                Milestone.class, PaymentDelay.class,
+                // Roadmap V3.1 R31-B
+                DirectPaymentApplication.class, DirectPaymentField.class, InvestmentGrant.class, InvestmentGrantObject.class,
+                AnimalDisease.class);
     }
 
     private int counter;

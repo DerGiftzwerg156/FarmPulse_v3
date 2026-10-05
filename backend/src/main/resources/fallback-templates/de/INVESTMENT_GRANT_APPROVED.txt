@@ -1,0 +1,7 @@
+Förderantrag bewilligt
+Guten Tag,
+
+Ihr Förderantrag ({{kind}}, geplant {{plannedSum}} €) ist bewilligt. Wir fördern {{grantPercent}} % der nachgewiesenen Kosten, höchstens {{grantMax}} €. Bitte kaufen Sie innerhalb von {{purchaseMonths}} Monaten – Käufe vor der Bewilligung können wir nicht anerkennen. Den Nachweis reichen Sie in der App „Ämter“ ein.
+
+Mit freundlichen Grüßen
+{{characterName}}

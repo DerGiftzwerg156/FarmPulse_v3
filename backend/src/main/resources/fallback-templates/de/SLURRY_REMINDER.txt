@@ -1,0 +1,6 @@
+Jetzt noch Gülle fahren
+Hallo,
+
+jetzt noch Gülle fahren, ab {{closedFrom}} ist Schluss: Die Sperrfrist der Düngeverordnung beginnt. Betroffen: {{stables}} (bis zu {{percent}} % voll).
+
+{{characterName}}

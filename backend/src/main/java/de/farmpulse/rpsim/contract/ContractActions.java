@@ -46,6 +46,7 @@ public class ContractActions {
     private final de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans;
     private final de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade;
     private final de.farmpulse.rpsim.farmwork.WinterServiceService winterService;
+    private final de.farmpulse.rpsim.authority.AuthorityBillService authorityBills;
 
     public ContractActions(ContractRepository contracts, ServiceCaseRepository cases, InsuranceService insurance,
                            HuntingService hunting, LivestockService livestock, LeaseService lease,
@@ -57,8 +58,10 @@ public class ContractActions {
                            de.farmpulse.rpsim.employee.ApprenticeService apprentices, LeaseOutService leaseOut,
                            de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans,
                            de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade,
-                           de.farmpulse.rpsim.farmwork.WinterServiceService winterService) {
+                           de.farmpulse.rpsim.farmwork.WinterServiceService winterService,
+                           de.farmpulse.rpsim.authority.AuthorityBillService authorityBills) {
         this.winterService = winterService;
+        this.authorityBills = authorityBills;
         this.machineLoans = machineLoans;
         this.livestockTrade = livestockTrade;
         this.apprentices = apprentices;
@@ -153,6 +156,7 @@ public class ContractActions {
             case APPRENTICE_TAKEOVER -> apprentices.accept(sg, id); // R3-P2: take over at the demanded salary
             case MACHINE_DEMO_OFFER -> machineLoans.acceptDemoOffer(sg, id); // R31-A2: "Vorführung annehmen"
             case ANIMAL_OFFER, ANIMAL_REQUEST -> livestockTrade.accept(sg, id); // R31-A3
+            case GRANT_REPAYMENT, SOCIAL_INSURANCE_BILL -> authorityBills.pay(sg, id); // R31-B2 / R31-B5: pay by button
             default -> throw unsupported();
         };
     }

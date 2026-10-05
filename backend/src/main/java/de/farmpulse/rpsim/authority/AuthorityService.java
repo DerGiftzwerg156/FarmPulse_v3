@@ -209,8 +209,17 @@ public class AuthorityService {
     }
 
     ServiceCase announce(Savegame sg, Character authority, String rule, String subject, Integer farmlandId, String label) {
-        long now = sg.getCurrentGameTime();
         sg.setAuthorityCount(sg.getAuthorityCount() + 1);
+        return announce(sg, authority, rule, subject, farmlandId, label, cfg().getInspectionDays());
+    }
+
+    /**
+     * An announced inspection decided after {@code days} game days (Roadmap V3.1 R31-B4: the requirements of an animal
+     * disease use their own deadline and do not count against max-inspections-per-month).
+     */
+    ServiceCase announce(Savegame sg, Character authority, String rule, String subject, Integer farmlandId, String label,
+                         double days) {
+        long now = sg.getCurrentGameTime();
         ServiceCase sc = new ServiceCase();
         sc.setSavegame(sg);
         sc.setKind(CaseKind.AUTHORITY_INSPECTION);
@@ -220,12 +229,12 @@ public class AuthorityService {
         sc.setReference(subject);
         sc.setFarmlandId(farmlandId);
         sc.setGameTime(now);
-        sc.setDeadlineGameTime(now + GameTime.days(cfg().getInspectionDays()));
+        sc.setDeadlineGameTime(now + GameTime.days(days));
         sc.setCreatedAt(Instant.now());
         cases.save(sc);
         narration.request(sg, NarrationEventType.AUTHORITY_INSPECTION_NOTICE).from(authority)
                 .facts(NarrationFacts.builder().put("rule", rule).put("subject", label)
-                        .put("inspectionDays", Math.round(cfg().getInspectionDays())).build())
+                        .put("inspectionDays", Math.round(days)).build())
                 .category(CommunicationCategory.CONTRACT).related(RELATED, sc.getId())
                 .formLink("/aemter?case=" + sc.getId()).submit();
         return sc;
@@ -351,14 +360,14 @@ public class AuthorityService {
                 ? "Tierwohl" : "Bewirtschaftungspflicht") + " (" + label + ").", RELATED, sc.getId());
     }
 
-    private void resolve(Savegame sg, ServiceCase sc, String result, long fine, String label) {
+    void resolve(Savegame sg, ServiceCase sc, String result, long fine, String label) {
         sc.setStatus(CaseStatus.SETTLED);
         sc.setResolution(result);
         sc.setClosedAtGameTime(sg.getCurrentGameTime());
         result(sg, sc, result, fine, label);
     }
 
-    private void result(Savegame sg, ServiceCase sc, String result, long fine, String label) {
+    void result(Savegame sg, ServiceCase sc, String result, long fine, String label) {
         narration.request(sg, NarrationEventType.AUTHORITY_INSPECTION_RESULT).from(sc.getCharacter())
                 .facts(NarrationFacts.builder().put("rule", sc.getTitle()).put("subject", label).put("result", result)
                         .put("fine", fine > 0 ? fine : null)

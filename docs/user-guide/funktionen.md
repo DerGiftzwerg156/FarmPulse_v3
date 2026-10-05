@@ -228,6 +228,39 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
   **Dürrehilfe** mit *Antrag stellen* innerhalb von 15 Tagen; das Geld kommt sofort als Förderung. Mit einer
   Dürreversicherung ist die Hilfe um die Hälfte gekürzt. Ohne wachsende Felder gibt es keine Hilfe.
 
+- **Sammelantrag:** Jedes Jahr im März schickt das Amt den Sammelantrag. Unter **Sammelantrag** stehen deine eigenen
+  Felder (auch gepachtete, verpachtete nicht) mit ihrer aktuellen Kultur; du bestätigst oder korrigierst die Kultur je
+  Feld (oder „Brache“) und stellst den Antrag bis Ende Mai. Jeder angefangene Tag Verspätung kostet 1 % der Prämie,
+  nach 25 Tagen gibt es keine Prämie mehr. Im Dezember kommt die **Flächenprämie** (250 € je Hektar). Bei manchen
+  Anträgen kündigt das Amt eine **Vor-Ort-Kontrolle** an: Stimmt die angegebene Kultur nicht mit der Hauptkultur des
+  Feldes überein, wird die Prämie dieser Fläche anderthalbfach abgezogen (im Wiederholungsfall dreifach); trägt ein
+  Feld dieselbe Kultur wie im Vorjahr, fällt die Hälfte seiner Prämie weg (Fruchtfolge-Auflage).
+- **Investitionsförderung:** *Vor* einem Kauf beantragst du die Förderung: Stall/Gebäude oder Maschine und die
+  geplante Summe (ab 10.000 €). Nach etwa 10 Tagen ist sie bewilligt (mit Bürokraft schneller). Erst dann kaufst du im
+  Spiel – was du vorher kaufst, zählt nicht. Innerhalb von 6 Monaten reichst du mit *Nachweis einreichen* ein (sonst
+  geschieht es zum Fristende von selbst): 30 % der Kosten, höchstens 50.000 €. Gebrauchtkäufe bei Nachbarn und
+  Leasing zählen nicht. Verkaufst du eine geförderte Maschine innerhalb von 24 Monaten, fordert das Amt anteilig
+  zurück – die **Rückforderung** bezahlst du wie einen Steuerbescheid.
+- **Düngeverordnung:** Von November bis Januar ist Gülle und Mist auf Ackerland verboten (Grünland ausgenommen).
+  Bringst du sie trotzdem aus, kündigt das Amt eine Kontrolle an: beim ersten Mal eine Verwarnung, danach 1.000 €
+  Bußgeld, und das Dorf redet. Ist das Güllelager eines Stalls lange fast voll, warnt dein Tierpfleger (ohne ihn die
+  Genossenschaft); im Oktober kommt die Erinnerung „Jetzt noch Gülle fahren, ab November ist Schluss“.
+- **Tierseuche:** Selten bricht in der Region eine Seuche aus (Afrikanische Schweinepest, Geflügelpest,
+  Blauzungenkrankheit) – nur bei Tierarten, die du hältst. Für 3 Monate gilt eine **Sperrzone**: kein Viehhandel mit
+  Nachbarn und keine Angebote des Viehhändlers für diese Tiere. Der Tierarzt untersucht jeden betroffenen Stall (auf
+  Rechnung), und unter **Kontrollen** steht die Auflage, die Tiergesundheit binnen 10 Tagen auf 60 % zu bringen –
+  sonst 1.000 € Bußgeld. Nach der Aufhebung sind die Tiere bei den Nachbarn noch ein paar Monate billiger. Die
+  Tierpreise im Spiel ändern sich nicht.
+
+**Berufsgenossenschaft.** Jedes Jahr im April schickt die Berufsgenossenschaft den Beitragsbescheid: 300 € plus 12 € je
+Hektar deiner Felder plus 180 € je Mitarbeiter (auch Erntehelfer). Du bezahlst ihn unter **Beitragsbescheide** mit
+*Zahlen*; danach gelten Säumniszuschlag und Mahnungen wie beim Finanzamt. Die Berufsgenossenschaft meldet sich auch
+nach einem Arbeitsunfall (siehe **Personal**).
+
+Vor-Ort-Kontrolle, Düngeverordnung, Tierseuchen sowie Krankheit und Unfälle schaltest du unter **Einstellungen →
+Belastende Ereignisse** einzeln ab. Im idyllischen Weltmodus gibt es keine Tierseuchen, der Rest kommt seltener bzw.
+milder.
+
 **Gemeinde – Winterdienst.** Hast du einen eigenen mittleren oder großen Traktor (geliehene zählen nicht), bietet die
 Gemeinde im Oktober den Winterdienst für November bis Februar an. Du bekommst 400 € je Wintermonat und 150 € für jeden
 Tag mit Schnee; an einem Schneetag erscheint im Spiel „Schnee! Winterdienst ab 5 Uhr“. Bezahlt wird zu jedem
@@ -256,6 +289,12 @@ eingestellt, kommt kein Angebot.
   Monat gefahren ist: Mehr als 8 Stunden je Spieltag drücken auf die Arbeitsbelastung, weniger erholt. Wer wenig
   fährt, bringt auch weniger zusätzlichen Nutzen. Ein Streikender stellt seinen Helfer sofort ab. Fahren ständig
   Helfer ohne eigenen Mitarbeiter, fragt die Genossenschaft einmal nach, ob du nicht jemanden fest einstellen willst.
+- **Krankheit und Arbeitsunfall.** Ab und zu wird jemand krank (2–5 Tage) oder hat einen Arbeitsunfall (3–10 Tage;
+  nur wer Maschinen fährt). Unfälle passieren öfter, wenn die Arbeitsbelastung hoch und die Maschinen verschlissen
+  sind, und seltener, wenn beides gut ist. Die Bürokraft (ohne sie die Person selbst) meldet den Ausfall, nach einem
+  Unfall schreibt auch die Berufsgenossenschaft. Auf der Karte steht *krank bis …* bzw. *nach Arbeitsunfall bis …*; in
+  der Zeit fährt die Person keinen Helfer, das Gehalt läuft weiter. Mit *Genesungswünsche* (einmal je Ausfall)
+  steigt die Wertschätzung, und du bekommst eine Dankesmail.
 - **Schulungen für Maschinenführer.** Ohne Schulung fährt ein Maschinenführer als Helfer nur kleine und mittlere
   Traktoren (und Fahrzeuge ohne Schulungspflicht wie PKW oder Stapler). Für **große Traktoren, Mähdrescher,
   Feldhäcksler, Spezialernter** (Rüben, Kartoffeln, Gemüse, Baumwolle, Zuckerrohr, Trauben, Oliven), **LKW** sowie
@@ -524,7 +563,8 @@ Verkauf, Vertrauen hilft). Wähle Geschäft (*Tiere kaufen* oder *Tiere verkaufe
 Tiere – beim Kauf höchstens so viele, wie Platz ist, beim Verkauf so viele, wie du von der Rasse hast. Der Nachbar
 antwortet sofort mit seinem Angebot; nach *Kaufen* bzw. *Verkaufen* wechseln die Tiere im Spiel den Stall und das
 Geld wird gebucht. Auch von sich aus bietet ein Nachbar ab und zu Tiere an oder fragt nach welchen. Das Dorf redet
-über deine Geschäfte. Der Viehhändler bleibt für alles außerhalb des Dorfs zuständig.
+über deine Geschäfte. Der Viehhändler bleibt für alles außerhalb des Dorfs zuständig. Während einer Tierseuche ist
+der Handel mit den betroffenen Tierarten gesperrt (siehe **Ämter**), danach sind sie eine Weile billiger.
 
 Die Nachbarfelder, deine Silos und die Aufträge brauchen die aktuelle Mod-Version; fehlen sie, sagt die App es oben.
 
@@ -594,6 +634,11 @@ nicht nur für einen Spielstand, und lässt sich nur am Spiele-PC ändern.
 **Hof:** Der Hofname steht über der Chronik und im Dateinamen (optional, ohne ihn der Kartenname).
 
 **Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
+
+**Belastende Ereignisse:** Vor-Ort-Kontrolle des Sammelantrags, Kontrollen der Düngeverordnung, Tierseuchen sowie
+Krankheit und Arbeitsunfälle einzeln ein- oder ausschalten (Standard an, siehe **Ämter** und **Personal**). Im
+idyllischen Weltmodus gibt es keine Tierseuchen, die übrigen Ereignisse kommen nur halb so oft bzw. kosten nur halb so
+viel.
 
 **Kredit und Felder im Spielmenü:** Die Reaktionen der Charaktere auf den Kredit oder Feldkauf im Spielmenü ein- oder
 ausschalten (Standard an). Ausgeschaltet bleibt nur der Tagebucheintrag.
