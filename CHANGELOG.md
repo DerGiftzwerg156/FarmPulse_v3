@@ -262,6 +262,9 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Fixed
 
+- **Finances: FS25 production chain costs** (`unknown category 'PRODUCTION_COSTS'`): the FS25 money type
+  `PRODUCTION_COSTS` is now classified as an operating expense (label "Produktionskosten"). Before, it counted as
+  operating only by its sign, and the tax audit treated it as a disputed expense under an unknown category.
 - **Mod: missing booking titles in the money popup** (`Missing 'rpsim_money_TRAINING' in l10n_de.xml`): FS25 loads
   the texts of `modDesc.xml` only into the i18n of the mod environment, while the HUD looks booking titles up in the
   global `g_i18n`. The mod now copies its texts into the global text table at load time (existing game texts are never

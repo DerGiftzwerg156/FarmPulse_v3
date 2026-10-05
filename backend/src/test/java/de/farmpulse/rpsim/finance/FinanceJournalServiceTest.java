@@ -40,6 +40,7 @@ class FinanceJournalServiceTest {
         assertThat(service.classify("FIELD_SELL", 5)).isEqualTo(FinanceClass.DIVESTMENT);
         assertThat(service.classify("RPSIM_CREDIT_DISBURSEMENT", 5)).isEqualTo(FinanceClass.FINANCING);
         assertThat(service.classify("RPSIM_DAMAGE", -5)).isEqualTo(FinanceClass.IGNORE);
+        assertThat(service.classify("PRODUCTION_COSTS", -5)).isEqualTo(FinanceClass.OPERATING_EXPENSE);
         assertThat(service.classify("SOME_MOD_TYPE", 5)).isEqualTo(FinanceClass.OPERATING_INCOME);
         assertThat(service.classify("UNKNOWN", -5)).isEqualTo(FinanceClass.OPERATING_EXPENSE);
     }
