@@ -17,13 +17,13 @@
 | Großer Knopf               | ---                 | Hupen               |
 | Pfeil links                | Vorheriges Fahrzeug | Vorheriges Fahrzeug |
 | Pfeil Rechts               | Nächstes Fahrzeug   | Nächstes Fahrzeug   |
-| Pfeil Oben                 | Nächstes Werkzeug   |                     |
-| Pfeil Unten                | Vorheriges Werkzeug |                     |
+| Pfeil Oben                 | ZoomIn              | ZoomIn              |
+| Pfeil Unten                | ZoomOut             | ZoomOut             |
 | Joystick Links             | Laufen              | Kamera Zoom         |
 | Joystick Links eindrücken  | Ducken              |                     |
 | Joystick Rechts            | Kamera              | Kamera              |
 | Joystick Rechts eindrücken | Kamera wechseln     | Kamera wechseln     |
-| T1                         |                     | Gerät wechseln      |
+| T1                         | Werkzeug Wechseln   | Gerät wechseln      |
 | T2                         | Springen            | Licht durchschalten |
 | T3                         | Ein/Aussteigen      | Ein/Aussteigen      |
 | T4                         | Mini-Karte Zoomen   | Mini Karte Zoomen   |
@@ -37,40 +37,40 @@
 | Bedienelement | zuFuß | ImFahrzeug              |
 |---------------|-------|-------------------------|
 | 1             |       | An/Abkuppeln            |
-| 2             |       | Auf/Zuklappen           |
-| 3             |       | Auftanken/Befüllen      |
+| 2             |       | Auftanken/Befüllen      |
+| 3             |       | Satgut wählen           |
 | 6             |       | Heben/Senken            |
 | 7             |       | Plane öffnen/schließen  |
 | 8             |       | Kippseite durchschalten |
 
 ## Tastengruppe 2:
 
-| Bedienelement | zuFuß     | ImFahrzeug |
-|---------------|-----------|------------|
-| 4             | Menü      | Menü       |
-| 5             | Pausieren | Pausieren  |
-| 9             | Händler   | Händler    |
-| 10            | Karte     | Karte      |
+| Bedienelement | zuFuß           | ImFahrzeug      |
+|---------------|-----------------|-----------------|
+| 4             | Steuerungshilfe | Steuerungshilfe |
+| 5             | Pausieren       | Pausieren       |
+| 9             | Händler         | Händler         |
+| 10            | Karte           | Karte           |
 
 ## Tastengruppe 3:
 
-| Bedienelement | zuFuß | ImFahrzeug        |
-|---------------|-------|-------------------|
-| 11            |       | Autodrive starten |
-| 13            |       | CP-Erster Punkt   |
-| 15            |       | CP-Letzter Punkt  |
-| 12            |       |                   |
-| 14            |       |                   |
-| 16            |       |                   |
+| Bedienelement | zuFuß | ImFahrzeug                 |
+|---------------|-------|----------------------------|
+| 11            |       | Autodrive starten          |
+| 13            |       | Autodrive Modus umschalten |
+| 15            |       | Autodrive Menü             |
+| 12            |       | CP-Erster Punkt            |
+| 14            |       | CP-Nahester Punkt          |
+| 16            |       | CP-Kursmenü                |
 
 ## Schaltergruppe 1:
 
-| Bedienelement | zuFuß | ImFahrzeug         |
-|---------------|-------|--------------------|
-| 17            |       | Gerät aktivieren 1 |
-| 18            |       | Gerät aktivieren 2 |
-| 19            |       | Gerät aktivieren 3 |
-| 20            |       | Gerät aktivieren 4 |
+| Bedienelement | zuFuß | ImFahrzeug                          |
+|---------------|-------|-------------------------------------|
+| 17            |       | Gerät aufklappen (Gerätefunktion 2) |
+| 18            |       | Gerät aktivieren (Gerätefunktion 1) |
+| 19            |       | Alle Geräte heben                   |
+| 20            |       | Alle Geräte senken                  |
 
 ## Schaltergruppe 2:
 
