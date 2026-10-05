@@ -886,10 +886,10 @@ rpsim:
       record-trust-delta: 2
     tax:                          # Roadmap V2 R2-E1: tax office and tax advisor (placeholders)
       enabled: true
-      rate: 0.25
-      allowance: 20000
-      hard-rate: 0.3
-      hard-allowance: 10000
+      rate: 0.19
+      allowance: 50000
+      hard-rate: 0.25
+      hard-allowance: 25000
       depreciation-rate: 0.1
       excluded-categories: [RPSIM_TAX_PAYMENT, RPSIM_TAX_REFUND, RPSIM_FINE]
       prepayment-share: 1.0

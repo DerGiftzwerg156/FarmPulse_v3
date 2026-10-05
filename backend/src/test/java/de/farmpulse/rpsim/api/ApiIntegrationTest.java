@@ -386,7 +386,7 @@ class ApiIntegrationTest {
         // E1: tax overview without a booking journal, advisor offer as a contract
         mvc.perform(get("/api/tax")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.journalAvailable").value(false))
-                .andExpect(jsonPath("$.ratePercent").value(25.0))
+                .andExpect(jsonPath("$.ratePercent").value(19.0))
                 .andExpect(jsonPath("$.lastAssessment").value(nullValue()))
                 .andExpect(jsonPath("$.openBills").value(0));
         mvc.perform(post("/api/tax/advisor/offer")).andExpect(status().isOk())

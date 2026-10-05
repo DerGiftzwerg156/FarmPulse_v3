@@ -715,10 +715,10 @@ difficulty `HARSH` uses the `hard-*` values. All values are placeholders, not a 
 | Key | Default | Meaning | Source |
 | --- | --- | --- | --- |
 | `rpsim.formulas.tax.enabled` | `true` | Master switch of the tax office (assessment, prepayments, audits). | Roadmap V2 R2-E1 |
-| `rpsim.formulas.tax.rate` | `0.25` | Flat tax rate on the taxable profit. | Roadmap V2 R2-E1 |
-| `rpsim.formulas.tax.allowance` | `20000` | Tax-free allowance per FS25 year (€). | Roadmap V2 R2-E1 |
-| `rpsim.formulas.tax.hard-rate` | `0.3` | Tax rate in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
-| `rpsim.formulas.tax.hard-allowance` | `10000` | Allowance in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.rate` | `0.19` | Flat tax rate on the taxable profit. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.allowance` | `50000` | Tax-free allowance per FS25 year (€). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.hard-rate` | `0.25` | Tax rate in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.hard-allowance` | `25000` | Allowance in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
 | `rpsim.formulas.tax.depreciation-rate` | `0.1` | Yearly depreciation as a share of the exported value of vehicles and placeables (`assets`) at the assessment. | Roadmap V2 R2-E1 |
 | `rpsim.formulas.tax.excluded-categories` | `[RPSIM_TAX_PAYMENT, RPSIM_TAX_REFUND, RPSIM_FINE]` | Journal categories that are not part of the tax base (owner decision: taxes and fines). | Roadmap V2 R2-E1 |
 | `rpsim.formulas.tax.prepayment-share` | `1.0` | Share of the last assessed tax billed as prepayments, split into four quarters (0 = no prepayments). | Roadmap V2 R2-E1 |
@@ -1158,6 +1158,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.PURCHASE_WATER` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_PALLETS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_CONSUMABLES` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PRODUCTION_COSTS` | `OPERATING_EXPENSE` | FS25 money type: running costs of own production chains. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.BOUGHT_MATERIALS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.VEHICLE_RUNNING_COSTS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.VEHICLE_REPAIR` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |

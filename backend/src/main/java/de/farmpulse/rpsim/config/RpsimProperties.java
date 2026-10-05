@@ -1565,6 +1565,7 @@ public class RpsimProperties {
             m.put("PURCHASE_WATER", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_PALLETS", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_CONSUMABLES", FinanceClass.OPERATING_EXPENSE);
+            m.put("PRODUCTION_COSTS", FinanceClass.OPERATING_EXPENSE);
             m.put("BOUGHT_MATERIALS", FinanceClass.OPERATING_EXPENSE);
             m.put("VEHICLE_RUNNING_COSTS", FinanceClass.OPERATING_EXPENSE);
             m.put("VEHICLE_REPAIR", FinanceClass.OPERATING_EXPENSE);
