@@ -1481,10 +1481,10 @@ public class RpsimProperties {
     public static class Tax {
         private boolean enabled = true;
         /** Tax on the taxable profit (profit - allowance); the harsh world mode uses the hard values. */
-        private double rate = 0.25;
-        private long allowance = 20000;
-        private double hardRate = 0.3;
-        private long hardAllowance = 10000;
+        private double rate = 0.19;
+        private long allowance = 50000;
+        private double hardRate = 0.25;
+        private long hardAllowance = 25000;
         /** Simplified depreciation per year as share of the vehicle and building values at the end of the year. */
         private double depreciationRate = 0.1;
         /** Journal categories that do not count for the taxable profit (owner decision: taxes and fines). */
