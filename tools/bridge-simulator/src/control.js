@@ -66,7 +66,7 @@ export function startControlServer(sim, port, log = () => {}) {
         return send(200, m);
       }
       // Roadmap V2 (R2-Q2): change the optional farm_facts blocks of the scenario
-      const patches = { '/book': (b) => sim.bookGame(b.moneyType, Number(b.amount)),
+      const patches = { '/book': (b) => sim.bookGame(b.moneyType, Number(b.amount), { vehicleName: b.vehicleName, vehicleId: b.vehicleId }),
         '/weather': (b) => sim.setWeather(b), '/husbandry': (b) => sim.setHusbandry(b),
         '/field': (b) => sim.setField(b), '/field-rules': (b) => sim.setFieldRules(b), '/jobs': (b) => sim.setActiveJobs(b.activeJobs ?? []),
         // Roadmap V3 R3-H1 / R3-H5 (scenario nachbarhandel)

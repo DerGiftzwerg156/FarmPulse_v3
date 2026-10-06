@@ -1316,6 +1316,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.record-categories` | `[HARVEST_INCOME, SOLD_PRODUCTS]` | Money types that count as harvest revenue for the record. | Roadmap V2 R2-B5 |
 | `rpsim.formulas.finance.record-min-months` | `3` | Complete months of history before a record counts. | Roadmap V2 R2-B5 |
 | `rpsim.formulas.finance.record-trust-delta` | `2` | Trust of the cooperative for a record month. | Roadmap V2 R2-B5 |
+| `rpsim.formulas.finance.statement-vehicle-match-exports` | `3` | Booking statement: a shop vehicle purchase / sale waits at most this many `farm_facts` exports (every 10 s) for its vehicle to appear / disappear in `assets.vehicles`; afterwards it stays without vehicle name. | Booking statement (owner decision 2026-10-06) |
 
 ## Profiles
 

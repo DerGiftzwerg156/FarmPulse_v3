@@ -15,6 +15,11 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Führt ein **Buchungsjournal** (Roadmap V2, R2-B1): Jede Buchung der Spieler-Farm (`Farm:changeBalance`) wird je
   FS25-Monat und Buchungsart summiert, die eigenen Buchungen unter `RPSIM_<GRUND>`. Die letzten
   `financeJournalPeriods` Monate stehen im Spielstand und in `farm_facts.json` (`finances`).
+- Führt dazu einen **Kontoauszug**: dieselben Buchungen einzeln mit Spieltag und Uhrzeit (`farm_facts.json` →
+  `bookings`). Laufende Buchungen werden je Spieltag und Buchungsart zusammengefasst, Verkäufe zusätzlich je Fruchtart
+  und Verkaufsstelle (mit Litern); Käufe und Verkäufe von Fahrzeugen, Gebäuden und Feldern sowie jede eigene Buchung
+  (mit Notiz) bleiben einzeln. Die letzten `bookingLogEntries` Einträge stehen im Spielstand, das Backend speichert
+  alles dauerhaft.
 - Lässt angestellte **Maschinenführer die FS25-Helfer fahren** (Roadmap V2, R2-A0..A5): Ein gestarteter Helfer der
   Spieler-Farm bekommt den ersten freien aktiven Maschinenführer der Mitarbeiterliste; die Spielmeldungen zeigen seinen
   Namen, im Lohnmodus `EMPLOYEES` bucht das Spiel für ihn keinen Helferlohn (`AIJob.getPricePerMs` = 0), im strengen
@@ -149,6 +154,8 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | `conflictMods` | `FS25_MarketDynamics`, `FS25_UsedPlus`, `FS25_EnhancedLoanSystem`, `FS25_BetterContracts` | Mods mit überlappenden Funktionen; erkannte werden in `market_context.json` gemeldet (nur Warnung) |
 | `moneyTypeTitles` | `true` | Buchungen bekommen eigene Bezeichnungen (`MoneyType.register(statistik, "rpsim_money_<GRUND>")`, Texte in `modDesc.xml`); `false` = alles als „Sonstiges“ (`MoneyType.OTHER`) |
 | `financeJournalPeriods` | `13` | Roadmap V2 R2-B1: so viele FS25-Monate behält das Buchungsjournal (`farm_facts.finances`) |
+| `bookingLogEntries` | `200` | Kontoauszug: so viele Einzelbuchungen behält der Mod im Spielstand (`farm_facts.bookings`); das Backend speichert sie dauerhaft |
+| `bookingLogSingleTypes` | `SHOP_VEHICLE_BUY`, `SHOP_VEHICLE_SELL`, `SHOP_PROPERTY_BUY`, `SHOP_PROPERTY_SELL`, `FIELD_BUY`, `FIELD_SELL` | Kontoauszug: Buchungsarten, die immer einzeln erscheinen statt in der Tagessumme (eigene Buchungen `RPSIM_*` sind immer einzeln) |
 | `fieldExportIntervalMs` | `10000` | Roadmap V2 R2-C1: so oft (Echtzeit, ms) werden die Felder neu gelesen; jeder Export dazwischen übernimmt den letzten Stand |
 | `npcFieldExport` | `true` | Roadmap V3 R3-H1: die Felder der Nachbarn (ohne Besitzer) mit exportieren (`npcFields`, gleiche Taktung wie die eigenen Felder); aus = keine Ernte-Vorräte und keine Aufträge der Nachbarn |
 | `storeCatalogExport` | `true` | Roadmap V3 R3-V1: den Fahrzeug-Katalog des Shops einmal beim Spielstart exportieren (`storeVehicles`); aus = keine Gebrauchtmaschinen-Angebote |
