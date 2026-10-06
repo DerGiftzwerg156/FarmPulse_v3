@@ -50,7 +50,9 @@ RPSimInstructions.HELPER_WAGE_MODES = { EMPLOYEES = true, VANILLA = true }
 -- Roadmap V3 R3-H3/H4: IN = into the own silos (purchase), OUT = out of the own silos (sale)
 RPSimInstructions.STORAGE_DIRECTIONS = { IN = true, OUT = true }
 -- Roadmap V3.1 R31-A1: the works of the contractor (plow, cultivate, lime, sow, harvest)
-RPSimInstructions.FIELD_WORKS = { PLOW = true, CULTIVATE = true, LIME = true, SOW = true, HARVEST = true }
+-- FERTILIZE since the owner decisions 2026-10-06 (several contractor works at once, e.g. cultivate, sow, fertilise)
+RPSimInstructions.FIELD_WORKS = { PLOW = true, CULTIVATE = true, LIME = true, SOW = true, FERTILIZE = true,
+    HARVEST = true }
 -- Roadmap V3.1 R31-A3: IN = into the own husbandry (purchase), OUT = out of it (sale)
 RPSimInstructions.ANIMAL_DIRECTIONS = { IN = true, OUT = true }
 

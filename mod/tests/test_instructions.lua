@@ -430,7 +430,7 @@ local function fuel(extra)
 end
 
 function T.TestInstructions:testFieldWorkValidation()
-    for _, w in ipairs({ "PLOW", "CULTIVATE", "LIME", "HARVEST" }) do
+    for _, w in ipairs({ "PLOW", "CULTIVATE", "LIME", "FERTILIZE", "HARVEST" }) do
         lu.assertTrue(RPSimInstructions.validate(fieldWork({ work = w })), w)
     end
     lu.assertTrue(RPSimInstructions.validate(fieldWork({ work = "SOW", fruitType = "WHEAT" })))

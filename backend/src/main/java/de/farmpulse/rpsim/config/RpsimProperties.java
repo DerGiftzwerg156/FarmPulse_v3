@@ -1152,15 +1152,12 @@ public class RpsimProperties {
         private boolean enabled = true;
         /** Price in EUR per hectare and work, material (lime, seed) included. */
         private Map<String, Double> pricePerHa = defaultWorkPrices();
-        /** The work is done after lead-days-min..lead-days-max game days. */
-        private int leadDaysMin = 1;
-        private int leadDaysMax = 3;
-        /** FS25 periods of the busy season (July-October): the work takes harvest-extra-days longer. */
-        private List<Integer> harvestPeriods = new ArrayList<>(List.of(5, 6, 7, 8));
-        private int harvestExtraDays = 2;
-        /** Trust to the contractor from trust-threshold shortens the wait by trust-days-less (at least 1 day). */
-        private double trustThreshold = 50;
-        private int trustDaysLess = 1;
+        /** The work is done at the end of the game day done-after-days days after the order day (1 = the next day). */
+        private int doneAfterDays = 1;
+        /** At most this many works of one field in one order, done on the same day. */
+        private int maxWorksPerOrder = 3;
+        /** Fertilising is offered below this spray level (FS25 sprayLevelMaxValue). */
+        private int maxSprayLevel = 2;
         private double doneTrustDelta = 2;
         /** Fruit types offered for sowing (FS25 fruit type names). */
         private List<String> sowFruitTypes = new ArrayList<>(List.of("WHEAT", "BARLEY", "OAT", "CANOLA", "MAIZE",
@@ -1186,6 +1183,7 @@ public class RpsimProperties {
             m.put("CULTIVATE", 80.0);
             m.put("LIME", 60.0);
             m.put("SOW", 100.0);
+            m.put("FERTILIZE", 70.0);
             m.put("HARVEST", 180.0);
             return m;
         }

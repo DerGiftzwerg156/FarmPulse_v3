@@ -91,7 +91,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     `missionId`); es wird mit im Spielstand gespeichert
   - `FIELD_WORK` (Roadmap V3.1, R31-A1) – der Lohnunternehmer bearbeitet ein eigenes Feld: Endzustand wie beim
     Abschluss eines Auftrags (`createFieldUpdateTask()`, zusätzlich die Setter der Task); Pflügen, Grubbern, Kalken,
-    Säen (Fruchtsorte) oder Ernten (Frucht auf Stoppel, die Ernte bucht der `STORAGE_TRANSFER` des Batches ins Silo).
+    Säen (Fruchtsorte), Düngen (Düngestufe +1 bis zum Maximum, `FieldSprayType.FERTILIZER`) oder Ernten (Frucht auf
+    Stoppel, die Ernte bucht der `STORAGE_TRANSFER` des Batches ins Silo). Mehrere Arbeiten eines Auftrags kommen als
+    ein Batch und bauen aufeinander auf (z. B. Grubbern, Säen, Düngen).
     `FAILED` mit `FIELD_NOT_FOUND`, `NOT_OWN_FIELD`, `MISSION_RUNNING` oder `UNKNOWN_FRUIT_TYPE`
   - `ANIMAL_TRANSFER` (Roadmap V3.1, R31-A3) – Tiere einer Rasse in einen eigenen Stall (`addAnimals`, freie Plätze
     und Tierart geprüft) oder heraus (`cluster:changeNumAnimals(-n)`); `FAILED` mit `NO_ANIMAL_SPACE`,

@@ -28,7 +28,7 @@ local function fieldGame(opts)
         { id = 5, areaInHa = 2, price = 20000 } } })
     FruitType = { UNKNOWN = 0 }
     FieldGroundType = { NONE = 0, PLOWED = 1, CULTIVATED = 2, SOWN = 5 }
-    FieldSprayType = { NONE = 0, LIQUID_MANURE = 1, MANURE = 2, LIME = 3 }
+    FieldSprayType = { NONE = 0, LIQUID_MANURE = 1, MANURE = 2, LIME = 3, FERTILIZER = 4 }
     local wheat = { index = 3, cutState = 9 }
     local barley = { index = 4, cutState = 8 }
     g_fruitTypeManager = {
@@ -46,11 +46,13 @@ local function fieldGame(opts)
             sprayLevel = 1, limeLevel = 0, plowLevel = 0 }
         function state.createFieldUpdateTask(s)
             local task = { values = { fruitTypeIndex = s.fruitTypeIndex, growthState = s.growthState,
-                groundType = s.groundType, sprayType = s.sprayType, limeLevel = s.limeLevel, plowLevel = s.plowLevel },
+                groundType = s.groundType, sprayType = s.sprayType, sprayLevel = s.sprayLevel, limeLevel = s.limeLevel,
+                plowLevel = s.plowLevel },
                 calls = {} }
             function task:setFruit(i, gs) self.calls[#self.calls + 1] = { "setFruit", i, gs } end
             function task:setGroundType(g) self.calls[#self.calls + 1] = { "setGroundType", g } end
             function task:setSprayType(t) self.calls[#self.calls + 1] = { "setSprayType", t } end
+            function task:setSprayLevel(l) self.calls[#self.calls + 1] = { "setSprayLevel", l } end
             function task:setLimeLevel(l) self.calls[#self.calls + 1] = { "setLimeLevel", l } end
             function task:setPlowLevel(l) self.calls[#self.calls + 1] = { "setPlowLevel", l } end
             function task:setField(f) self.field = f end
@@ -60,7 +62,7 @@ local function fieldGame(opts)
     end
     game.state = newState()
     game.field = newField(4, game.state)
-    g_fieldManager = { plowLevelMaxValue = 1, limeLevelMaxValue = 2,
+    g_fieldManager = { plowLevelMaxValue = 1, limeLevelMaxValue = 2, sprayLevelMaxValue = 2,
         fields = { game.field, newField(5, newState()) },
         addFieldUpdateTask = function(_, task) game.tasks[#game.tasks + 1] = task end }
     return game
@@ -98,6 +100,23 @@ function T.TestRoadmapV31:testCultivateLimeSowAndHarvest()
     lu.assertTrue(adapter:fieldWork(work("HARVEST")))
     lu.assertEquals({ game.tasks[4].values.fruitTypeIndex, game.tasks[4].values.growthState }, { 4, 8 },
         "barley on its cut state")
+end
+
+function T.TestRoadmapV31:testCultivateSowAndFertiliseOnOneDayBuildOnEachOther()
+    -- owner decisions 2026-10-06: several works of one order run one after the other on the same field state
+    local game = fieldGame()
+    local adapter = RPSimGameAdapter.new()
+    lu.assertTrue(adapter:fieldWork(work("CULTIVATE")))
+    lu.assertTrue(adapter:fieldWork(work("SOW", { fruitType = "WHEAT" })))
+    lu.assertTrue(adapter:fieldWork(work("FERTILIZE")))
+    local last = game.tasks[3].values
+    lu.assertEquals({ last.fruitTypeIndex, last.growthState, last.groundType }, { 3, 1, FieldGroundType.SOWN },
+        "the fertilising keeps the sown crop")
+    lu.assertEquals({ last.sprayLevel, last.sprayType }, { 2, FieldSprayType.FERTILIZER })
+    lu.assertEquals(game.tasks[3].calls, { { "setSprayLevel", 2 }, { "setSprayType", FieldSprayType.FERTILIZER } })
+    -- at most sprayLevelMaxValue
+    lu.assertTrue(adapter:fieldWork(work("FERTILIZE")))
+    lu.assertEquals(game.tasks[4].values.sprayLevel, 2)
 end
 
 function T.TestRoadmapV31:testFieldWorkRefusals()

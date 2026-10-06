@@ -249,7 +249,20 @@ public class OutboxService {
     public List<OutboxInstruction> fieldWorkDeal(Savegame sg, int farmlandId, String work, String fruitType,
                                                  String harvestFillType, long harvestLiters, long price, String note,
                                                  Related related) {
-        String batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        return fieldWorkDeal(sg, null, farmlandId, work, fruitType, harvestFillType, harvestLiters, price, note, related);
+    }
+
+    /**
+     * The same, appended to the batch {@code batchId} (null = a new batch): the works of one contractor order go to the
+     * mod as one batch in their order, so a refused work aborts the works after it (owner decisions 2026-10-06).
+     */
+    @Transactional
+    public List<OutboxInstruction> fieldWorkDeal(Savegame sg, String batchId, int farmlandId, String work,
+                                                 String fruitType, String harvestFillType, long harvestLiters, long price,
+                                                 String note, Related related) {
+        if (batchId == null) {
+            batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        }
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("farmlandId", farmlandId);
         p.put("work", work);

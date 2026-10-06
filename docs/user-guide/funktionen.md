@@ -456,14 +456,18 @@ weiteres Vertrauen. Ein freies Feld im Spielmenü zu kaufen, landet nur im Tageb
 dort, redet das Dorf darüber.
 
 **Lohnunternehmer beauftragen.** In der Detailansicht eines eigenen (oder gepachteten) Feldes bietet der
-Lohnunternehmer die Arbeiten an, die gerade zum Feld passen: **Pflügen** und **Grubbern** (leeres, abgeerntetes oder
-verdorrtes Feld), **Kalken** (wenn Kalk fehlt), **Säen** (leeres Feld, Fruchtsorte aus einer Liste) und **Ernten**
-(erntereifes Feld). Der Preis richtet sich nach der Fläche. Er kommt in 1–3 Spieltagen (in der Erntezeit später, mit
-gutem Vertrauen früher); am Arbeitstag ist das Feld im Spiel fertig, die Rechnung wird gebucht und er meldet sich per
-Mail. Die Ernte landet in deinen Silos – wie viel, hängt von Düngung, Kalk, Pflug und Unkraut ab. Passt sie nicht
-ganz in deine Silos, nimmt er den Auftrag gar nicht erst an. Reicht am Arbeitstag das Geld nicht oder passt das Feld
-nicht mehr zur Arbeit, fällt der Termin aus, ohne dass etwas berechnet wird. Die Aufträge stehen unter den Vorgängen
-der Flurkarte.
+Lohnunternehmer die Arbeiten an, die gerade zum Feld passen: **Ernten** (erntereifes Feld), **Pflügen** und
+**Grubbern** (leeres, abgeerntetes oder verdorrtes Feld), **Kalken** (wenn Kalk fehlt), **Säen** (leeres Feld,
+Fruchtsorte aus einer Liste) und **Düngen** (leeres, abgeerntetes oder wachsendes Feld, solange es nicht voll gedüngt
+ist). Der Preis richtet sich nach der Fläche. Du kannst bis zu **3 Arbeiten auf einmal** ankreuzen – z. B. Grubbern,
+Säen und Düngen. Er erledigt sie nacheinander am selben Tag in dieser Reihenfolge; jede Arbeit wird so geprüft, wie die
+Arbeiten davor das Feld hinterlassen (auf einer Stoppel kannst du also Säen ankreuzen, sobald Grubbern oder Pflügen
+dabei ist). Die Arbeit ist immer **am Ende des nächsten Spieltages** erledigt: Dann ist das Feld im Spiel fertig, die
+Rechnungen werden gebucht und er meldet sich per Mail. Solange ein Auftrag für das Feld offen ist, nimmt er keinen
+weiteren an. Die Ernte landet in deinen Silos – wie viel, hängt von Düngung, Kalk, Pflug und Unkraut ab. Passt sie
+nicht ganz in deine Silos, nimmt er den Auftrag gar nicht erst an. Reicht am Arbeitstag das Geld nicht oder passt das
+Feld nicht mehr zu einer Arbeit, fällt diese Arbeit aus, ohne dass etwas berechnet wird – die anderen macht er
+trotzdem, soweit sie noch passen. Die Aufträge stehen unter den Vorgängen der Flurkarte.
 
 **Lohnunternehmer – Aufträge aus dem Spiel.** Der Lohnunternehmer macht dich ab und zu per Mail auf einen Auftrag
 aufmerksam, der gerade im Auftragsmenü des Spiels verfügbar ist (Titel, Feld, Auftraggeber, Lohn). Annehmen und

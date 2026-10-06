@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -30,12 +31,24 @@ public class FarmWorkController {
     public record WorkOptionView(String work, long price, Long harvestLiters, String fillType, String reason) {
     }
 
+    /**
+     * {@code selected} = the ticked works the options were checked with; {@code doneByGameTime} = the work is done by
+     * then (end of the next game day); {@code openOrders} = the open order of the field, one case per work.
+     */
     public record ContractorQuoteView(int farmlandId, String fieldName, double hectares, String phase,
-                                      List<WorkOptionView> options, List<String> fruitTypes, int daysMin, int daysMax,
-                                      CaseView openOrder) {
+                                      List<WorkOptionView> options, List<String> selected, List<String> fruitTypes,
+                                      int maxWorks, long doneByGameTime, List<CaseView> openOrders) {
     }
 
-    public record ContractorOrderRequest(@NotNull Integer farmlandId, @NotBlank String work, String fruitType) {
+    /** {@code works} = 1 to maxWorks works of the field done on the same day; {@code work} = a single work (older UI). */
+    public record ContractorOrderRequest(@NotNull Integer farmlandId, String work, List<String> works,
+                                         String fruitType) {
+        List<String> all() {
+            if (works != null && !works.isEmpty()) {
+                return works;
+            }
+            return work == null || work.isBlank() ? List.of() : List.of(work);
+        }
     }
 
     /** R31-A2: a machine to choose from; {@code dailyRent} 0 for a demo. */
@@ -73,15 +86,20 @@ public class FarmWorkController {
         this.mapper = mapper;
     }
 
-    /** R31-A1: the works the contractor offers for an own field, with price and the range of the work day. */
+    /**
+     * R31-A1: the works the contractor offers for an own field, with price and when it is done; {@code works} = the
+     * ticked works, the other works are checked as an addition to them.
+     */
     @GetMapping("/api/contractor-work/fields/{farmlandId}")
     @Transactional
-    public ContractorQuoteView quote(@PathVariable int farmlandId) {
-        ContractorWorkService.Quote q = contractor.quote(context.requireActive(), farmlandId);
+    public ContractorQuoteView quote(@PathVariable int farmlandId,
+                                     @RequestParam(name = "works", required = false) List<String> works) {
+        ContractorWorkService.Quote q = contractor.quote(context.requireActive(), farmlandId,
+                works == null ? List.of() : works);
         return new ContractorQuoteView(q.farmlandId(), q.fieldName(), q.hectares(), q.phase().name(),
                 q.options().stream().map(o -> new WorkOptionView(o.work(), o.price(), o.harvestLiters(), o.fillType(),
-                        o.reason())).toList(), q.fruitTypes(), q.daysMin(), q.daysMax(),
-                q.openOrder() == null ? null : mapper.serviceCase(q.openOrder()));
+                        o.reason())).toList(), q.selected(), q.fruitTypes(), q.maxWorks(), q.doneByGameTime(),
+                q.openOrders().stream().map(mapper::serviceCase).toList());
     }
 
     /** R31-A1: all contractor jobs (open and closed), newest first. */
@@ -91,11 +109,12 @@ public class FarmWorkController {
         return contractor.orders(context.requireActive()).stream().map(mapper::serviceCase).toList();
     }
 
-    /** R31-A1: order a work; the contractor comes on the returned work day ({@code deadlineGameTime}). */
+    /** R31-A1: order 1 to 3 works at once; one case per work, all done by {@code deadlineGameTime}. */
     @PostMapping("/api/contractor-work")
     @Transactional
-    public CaseView order(@Valid @RequestBody ContractorOrderRequest r) {
-        return mapper.serviceCase(contractor.order(context.requireActive(), r.farmlandId(), r.work(), r.fruitType()));
+    public List<CaseView> order(@Valid @RequestBody ContractorOrderRequest r) {
+        return contractor.order(context.requireActive(), r.farmlandId(), r.all(), r.fruitType()).stream()
+                .map(mapper::serviceCase).toList();
     }
 
     // ------------------------------------------------------------------------------------------ R31-A2

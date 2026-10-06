@@ -10,7 +10,7 @@ export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiBase;
 
-  private get<T>(path: string, params?: Record<string, string | number>): Observable<T> {
+  private get<T>(path: string, params?: Record<string, string | number | readonly string[]>): Observable<T> {
     return this.http.get<T>(this.base + path, { params });
   }
 
@@ -358,11 +358,13 @@ export class ApiService {
   }
 
   // Roadmap V3.1 R31-A1 / R31-A2: contractor work, borrowed and demo machines
-  contractorQuote(farmlandId: number): Observable<M.ContractorQuoteView> {
-    return this.get(`/contractor-work/fields/${farmlandId}`);
+  /** `works` = the ticked works; the other options are checked as an addition to them. */
+  contractorQuote(farmlandId: number, works: readonly string[] = []): Observable<M.ContractorQuoteView> {
+    return this.get(`/contractor-work/fields/${farmlandId}`, works.length ? { works } : undefined);
   }
-  orderContractorWork(farmlandId: number, work: string, fruitType: string | null): Observable<M.CaseView> {
-    return this.post('/contractor-work', { farmlandId, work, fruitType });
+  /** 1 to `maxWorks` works of one field at once, done at the end of the next game day; one case per work. */
+  orderContractorWork(farmlandId: number, works: readonly string[], fruitType: string | null): Observable<M.CaseView[]> {
+    return this.post('/contractor-work', { farmlandId, works, fruitType });
   }
   machineLoans(): Observable<M.MachineLoanView[]> {
     return this.get('/machine-loans');

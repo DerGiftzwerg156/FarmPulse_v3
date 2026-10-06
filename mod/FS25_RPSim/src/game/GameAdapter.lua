@@ -959,12 +959,13 @@ end
 -- AbstractFieldMission:finishField / PlowMission:getFieldFinishTask (LUADOC Field/AbstractFieldMission.md,
 -- Field/PlowMission.md): the values of field:getFieldState() are changed, state:createFieldUpdateTask(),
 -- task:setField(field), g_fieldManager:addFieldUpdateTask(task). The changed values are also set with the setters of
--- the task (dump field/FieldManager.lua: setFruit, setGroundType, setSprayType, setLimeLevel, setPlowLevel) - the
--- fallback of manual test plan 21.1, harmless when the task already carries them.
+-- the task (dump field/FieldManager.lua: setFruit, setGroundType, setSprayType, setSprayLevel, setLimeLevel,
+-- setPlowLevel) - the fallback of manual test plan 21.1, harmless when the task already carries them.
 --   PLOW      no crop, groundType PLOWED, plow level full (g_fieldManager.plowLevelMaxValue)
 --   CULTIVATE no crop, groundType CULTIVATED
 --   LIME      lime level full (limeLevelMaxValue), sprayType LIME
 --   SOW       setFruit(fruitIndex, 1), groundType SOWN (g_fruitTypeManager:getFruitTypeByName)
+--   FERTILIZE spray level +1 up to sprayLevelMaxValue, sprayType FERTILIZER (mineral fertiliser)
 --   HARVEST   the crop on its cutState (Fruits/FruitTypeDesc.md); the yield goes into the silo with the batch's
 --             STORAGE_TRANSFER
 -- FAILED with FIELD_NOT_FOUND, NOT_OWN_FIELD, MISSION_RUNNING (field.currentMission) or UNKNOWN_FRUIT_TYPE.
@@ -1014,6 +1015,12 @@ function RPSimGameAdapter:fieldWork(ins)
             state.groundType = FieldGroundType.SOWN
             setters[#setters + 1] = function(task) task:setFruit(sowIndex, 1) end
             setters[#setters + 1] = function(task) task:setGroundType(FieldGroundType.SOWN) end
+        elseif ins.work == "FERTILIZE" then
+            local max = g_fieldManager.sprayLevelMaxValue or 2
+            state.sprayLevel = math.min(max, (state.sprayLevel or 0) + 1)
+            state.sprayType = FieldSprayType.FERTILIZER
+            setters[#setters + 1] = function(task) task:setSprayLevel(state.sprayLevel) end
+            setters[#setters + 1] = function(task) task:setSprayType(FieldSprayType.FERTILIZER) end
         else -- HARVEST
             local desc = g_fruitTypeManager:getFruitTypeByIndex(state.fruitTypeIndex)
             if desc == nil or desc.cutState == nil then
