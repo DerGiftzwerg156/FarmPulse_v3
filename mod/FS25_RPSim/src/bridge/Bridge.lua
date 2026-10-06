@@ -34,6 +34,9 @@ function RPSimBridge.new(cfg, paths, adapter, state)
     -- Roadmap V2 R2-C1: fields are sampled every fieldExportIntervalMs and carried into every farm_facts export
     self.fieldCache = nil
     self.fieldTimer = 0
+    -- AutoDrive drives (no AIJob): vehicle -> {jobId (own, negative), name, categories}; refused = stopped by the strict
+    -- mode and not yet seen inactive
+    self.autoDrive = { drives = {}, nextId = -1, refused = {}, timer = 0 }
     return self
 end
 
@@ -130,10 +133,7 @@ end
 -- strict mode is set again (in case the game reset it).
 function RPSimBridge:sampleWorkforce(gameTime)
     local wf = self.state.workforce
-    local ok, jobs = pcall(self.adapter.collectAIJobs, self.adapter)
-    if not ok or jobs == nil then
-        jobs = {}
-    end
+    local jobs = self:helperJobs()
     local ids = {}
     for _, j in ipairs(jobs) do
         RPSimWorkforce.assign(wf, j.jobId, RPSimWorkforce.requiredTrainings(wf, j.categories))
@@ -146,6 +146,109 @@ function RPSimBridge:sampleWorkforce(gameTime)
     return RPSimWorkforce.toRaw(wf, jobs)
 end
 
+--- Running helpers of the player farm: the AIJobs (game helper, Courseplay, ...; adapter.collectAIJobs) plus the
+-- AutoDrive drives under their own negative job ids, sorted by job id. { {jobId, title, categories} }.
+function RPSimBridge:helperJobs()
+    self:pruneAutoDrive()
+    local ok, jobs = pcall(self.adapter.collectAIJobs, self.adapter)
+    if not ok or jobs == nil then
+        jobs = {}
+    end
+    for _, d in pairs(self.autoDrive.drives) do
+        jobs[#jobs + 1] = { jobId = d.jobId, title = d.name, categories = d.categories }
+    end
+    table.sort(jobs, function(a, b) return a.jobId < b.jobId end)
+    return jobs
+end
+
+RPSimBridge.AUTODRIVE_CHECK_MS = 1000
+
+--- Frees the operators of AutoDrive drives that ended since the last check. AutoDrive:stopAutoDrive deactivates the
+-- vehicle before it hands it over to Courseplay or a game helper, so the follow-up job neither counts the ended drive
+-- against the strict limit nor finds its operator busy.
+function RPSimBridge:pruneAutoDrive()
+    local adapter = self.adapter
+    if adapter.isAutoDriveActive == nil then
+        return
+    end
+    for vehicle, d in pairs(self.autoDrive.drives) do
+        if not adapter:isAutoDriveActive(vehicle) then
+            RPSimWorkforce.release(self.state.workforce, d.jobId)
+            self.autoDrive.drives[vehicle] = nil
+        end
+    end
+end
+
+--- AutoDrive drives like a helper but without an AIJob, so no start hook sees it. Every AUTODRIVE_CHECK_MS the active
+-- AutoDrive vehicles of the player farm are compared with the known drives: a new drive gets its own negative job id
+-- and a free machine operator (same rules as a game helper, "Schulungen" included), an ended drive frees him again.
+-- Strict mode (R2-A3, owner decision): a new drive over the helper limit or without a free trained operator is stopped
+-- right away - AutoDrive has no documented hook before its start. The AutoDrive wage stays AutoDrive's own setting.
+function RPSimBridge:trackAutoDrive()
+    local adapter = self.adapter
+    if adapter.collectAutoDriveVehicles == nil then
+        return
+    end
+    local wf = self.state.workforce
+    local ad = self.autoDrive
+    local ok, list = pcall(adapter.collectAutoDriveVehicles, adapter)
+    if not ok or list == nil then
+        list = {}
+    end
+    local seen = {}
+    for _, v in ipairs(list) do
+        seen[v.vehicle] = true
+        if ad.drives[v.vehicle] == nil and not ad.refused[v.vehicle] then
+            local required = RPSimWorkforce.requiredTrainings(wf, v.categories)
+            local full = RPSimWorkforce.limitReached(wf, #self:helperJobs())
+            if adapter:isServer() and (full or RPSimWorkforce.startBlocked(wf, required)) then
+                ad.refused[v.vehicle] = true
+                adapter:stopAutoDrive(v.vehicle, self:autoDriveRefusal(v, full, required))
+            else
+                local jobId = ad.nextId
+                ad.nextId = jobId - 1
+                ad.drives[v.vehicle] = { jobId = jobId, name = v.name, categories = v.categories }
+                RPSimWorkforce.assign(wf, jobId, required)
+            end
+        end
+    end
+    for vehicle, d in pairs(ad.drives) do
+        if not seen[vehicle] then
+            RPSimWorkforce.release(wf, d.jobId)
+            ad.drives[vehicle] = nil
+        end
+    end
+    for vehicle, _ in pairs(ad.refused) do
+        if not seen[vehicle] then
+            ad.refused[vehicle] = nil
+        end
+    end
+end
+
+function RPSimBridge:autoDriveRefusal(v, full, required)
+    if full then
+        return string.format("FarmPulse: Kein freier Maschinenführer – im strengen Modus fahren höchstens %d Helfer. "
+            .. "AutoDrive (%s) wurde angehalten.", RPSimWorkforce.activeOperators(self.state.workforce),
+            tostring(v.name or "Fahrzeug"))
+    end
+    local titles = {}
+    for _, t in ipairs(required) do
+        titles[#titles + 1] = RPSimWorkforce.trainingTitle(t)
+    end
+    return string.format("FarmPulse: Für %s ist kein Maschinenführer mit der Schulung „%s“ frei. AutoDrive wurde "
+        .. "angehalten.", tostring(v.name or "dieses Fahrzeug"), table.concat(titles, "“, „"))
+end
+
+--- The AutoDrive vehicle of an own (negative) job id, nil when unknown.
+function RPSimBridge:autoDriveVehicle(jobId)
+    for vehicle, d in pairs(self.autoDrive.drives) do
+        if d.jobId == jobId then
+            return vehicle
+        end
+    end
+    return nil
+end
+
 --- Roadmap V2 R2-A0: the complete employee list from the backend. Helpers of striking employees are stopped (R2-A5),
 -- the helper limit follows the new list (R2-A3).
 function RPSimBridge:applyRoster(ins)
@@ -153,7 +256,13 @@ function RPSimBridge:applyRoster(ins)
     local strike = RPSimWorkforce.setRoster(wf, ins)
     for _, jobId in ipairs(strike) do
         local name = RPSimWorkforce.helperName(wf, jobId)
-        if self.adapter.stopStrikingJob ~= nil then
+        local adVehicle = self:autoDriveVehicle(jobId)
+        if adVehicle ~= nil then
+            if self.adapter.stopAutoDrive ~= nil then
+                self.adapter:stopAutoDrive(adVehicle,
+                    string.format("FarmPulse: %s streikt und hat die Arbeit niedergelegt.", tostring(name)))
+            end
+        elseif self.adapter.stopStrikingJob ~= nil then
             self.adapter:stopStrikingJob(jobId, name)
         end
         RPSimWorkforce.release(wf, jobId)
@@ -407,6 +516,13 @@ function RPSimBridge:update(dtMs)
         -- Owner decision 2026-10-06: rewritten every marketContextIntervalMs, changed or not.
         self.marketContextTimer = 0
         self:exportMarketContext(true)
+    end
+    if self.workforceEnabled then
+        self.autoDrive.timer = self.autoDrive.timer + dtMs
+        if self.autoDrive.timer >= RPSimBridge.AUTODRIVE_CHECK_MS then
+            self.autoDrive.timer = 0
+            self:trackAutoDrive()
+        end
     end
     self:updatePrompts(false)
 end

@@ -1183,15 +1183,12 @@ end
 -- AIJobGoTo, AIJobDeliver, AIJobLoadAndDeliver, AIJobConveyor; dump ai/jobs/*.lua) keeps it in
 -- job.vehicleParameter:getVehicle() (AIParameterVehicle); the store item of vehicle.configFileName
 -- (g_storeManager:getItemByXMLFilename, LUADOC script/Shop/StoreManager.md) carries categoryNames and categoryName (the
--- first entry, upper case). Returns { farmId, categories = { ... }, name } or nil without a vehicle.
-function RPSimGameAdapter:jobVehicleInfo(job)
+-- first entry, upper case). Returns { farmId, categories = { ... }, name } or nil without a vehicle (categories stay
+-- empty when the store item cannot be read).
+local function vehicleInfo(vehicle)
     return safe(function()
-        local vehicle = job.vehicleParameter ~= nil and job.vehicleParameter:getVehicle() or nil
-        if vehicle == nil then
-            return nil
-        end
         local categories = {}
-        local item = g_storeManager:getItemByXMLFilename(vehicle.configFileName)
+        local item = safe(function() return g_storeManager:getItemByXMLFilename(vehicle.configFileName) end, nil)
         if item ~= nil then
             for _, c in ipairs(item.categoryNames or {}) do
                 categories[#categories + 1] = string.upper(c)
@@ -1203,6 +1200,57 @@ function RPSimGameAdapter:jobVehicleInfo(job)
         return { farmId = safe(function() return vehicle:getOwnerFarmId() end, nil), categories = categories,
             name = safe(function() return vehicle:getFullName() end, nil) }
     end, nil)
+end
+
+function RPSimGameAdapter:jobVehicleInfo(job)
+    local vehicle = safe(function() return job.vehicleParameter:getVehicle() end, nil)
+    if vehicle == nil then
+        return nil
+    end
+    return vehicleInfo(vehicle)
+end
+
+--- AutoDrive (FS25_AutoDrive, scripts/Specialization.lua) drives without an AIJob: AutoDrive:startAutoDrive (server)
+-- sets vehicle.ad.stateModule:setActive(true), ADStateModule:isActive() reads it, the vehicle never shows up in
+-- AISystem:getActiveJobs(). Active AutoDrive vehicles of the player farm: { {vehicle, categories, name} }.
+function RPSimGameAdapter:collectAutoDriveVehicles()
+    local farmId = self:getFarmId()
+    local list = {}
+    for _, v in pairs(vehicleList()) do
+        if self:isAutoDriveActive(v) then
+            local info = vehicleInfo(v)
+            if info ~= nil and info.farmId == farmId then
+                list[#list + 1] = { vehicle = v, categories = info.categories, name = info.name }
+            end
+        end
+    end
+    return list
+end
+
+function RPSimGameAdapter:isAutoDriveActive(vehicle)
+    return safe(function() return vehicle.ad.stateModule:isActive() == true end, false)
+end
+
+--- Stops an AutoDrive vehicle the way AutoDrive's own start/stop key does (ADInputManager:input_start_stop):
+-- ad.isStoppingWithError = true keeps AutoDrive from handing the vehicle over to Courseplay or a game helper
+-- (AutoDrive:stopAutoDrive), then vehicle:stopAutoDrive() (server only). Returns true when stopped.
+function RPSimGameAdapter:stopAutoDrive(vehicle, text)
+    local ok, err = pcall(function()
+        if not vehicle.ad.stateModule:isActive() then
+            return
+        end
+        vehicle.ad.isStoppingWithError = true
+        vehicle.ad.stateModule:setLoopsDone(0)
+        vehicle:stopAutoDrive()
+    end)
+    if not ok then
+        RPSimLog.warning("Could not stop AutoDrive: %s", tostring(err))
+        return false
+    end
+    if text ~= nil then
+        self:notify(text, "CRITICAL")
+    end
+    return true
 end
 
 --- Running helper jobs of the player farm: AISystem:getActiveJobs() (FS25 ai/AISystem.lua), job.jobId (set by

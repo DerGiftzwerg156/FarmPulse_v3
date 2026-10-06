@@ -21,6 +21,16 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Machine operators drive Courseplay and AutoDrive helpers too** (owner decisions 2026-10-06 in `QUESTIONS.md`):
+  - **Courseplay:** its jobs are shallow copies of `AIJob` that replace `start` and `getIsStartable`, so the helper
+    hooks never reached them (no operator until the next export, game helper name, no strict limit, no training
+    check). Start and stop are now hooked on `AISystem.startJobInternal` / `stopJobInternal`, and every job class
+    registered with the AI job type manager (Courseplay's included) gets the start check, the name and the wage hook.
+  - **AutoDrive** drives without an AI job: the mod now tracks active AutoDrive vehicles every second. A drive gets a
+    free (trained) operator, counts against the strict helper limit together with all other helpers, is exported in
+    `workforce.activeJobs` with a negative `jobId` (worked hours, night work) and stops when its driver strikes. In the
+    strict mode a drive over the limit or without a free trained operator is stopped right after its start. The
+    AutoDrive wage stays AutoDrive's own setting (*driverWages*).
 - **Applications the next day, start with the next month, training the next day** (owner decisions 2026-10-06 in
   `QUESTIONS.md`):
   - Applications arrive the next game day at a random time between 8 and 17 o'clock (mail and list entry,

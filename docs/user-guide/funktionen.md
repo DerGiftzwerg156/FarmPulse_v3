@@ -355,9 +355,16 @@ eingestellt, kommt kein Angebot.
 - **Helfer im Spiel** (unter **Einstellungen → Im Spiel**): *Helferlohn über das Gehalt* (Standard an) – fährt ein Maschinenführer, bucht das Spiel keinen
   Helferlohn. Ausgeschaltet zahlst du zusätzlich den normalen Spiellohn. *Strenger Modus* (Standard aus) – höchstens
   so viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann keine Helfer, streikende oder
-  freigestellte zählen nicht. Das gilt auch für Helfer von Mods wie Courseplay oder AutoDrive: Ist das Limit erreicht,
-  startet der Helfer nicht oder hält direkt nach dem Start wieder an („kein freier Maschinenführer“). Maschinen mit Schulungspflicht starten im strengen Modus nur mit einem freien,
+  freigestellte zählen nicht. Maschinen mit Schulungspflicht starten im strengen Modus nur mit einem freien,
   geschulten Maschinenführer.
+- **Courseplay und AutoDrive.** Beide zählen wie normale Helfer: Ein freier Maschinenführer fährt (mit Namen,
+  Arbeitsstunden und Schulungsregeln), und im strengen Modus gilt dasselbe Limit für alle Helfer zusammen – du kannst
+  also nicht mehr Courseplay- oder AutoDrive-Helfer laufen lassen, als du aktive Maschinenführer hast. Courseplay
+  startet dann gar nicht erst (Meldung im Spiel). Bei AutoDrive merkt das Tool den Start erst danach: Innerhalb einer
+  Sekunde wird die Fahrt wieder angehalten, wenn kein (geschulter) Maschinenführer frei ist, und eine Meldung sagt
+  warum. Streikt der Fahrer, hält auch sein AutoDrive an. *Helferlohn über das Gehalt* gilt für den Spielhelfer und
+  Courseplay; AutoDrive bucht seinen Lohn selbst – stell ihn in den AutoDrive-Einstellungen (*Fahrerlohn*) auf 0, wenn
+  das Gehalt reichen soll.
 - **Mechaniker:in.** Setzt zu jedem Monatsbeginn deine am stärksten abgenutzten Maschinen instand – so weit ihre
   Zeit reicht (je besser das Können, desto mehr). Bleiben Maschinen liegen, steigt die Arbeitsbelastung. Über die
   Arbeit kommt jeden Monat ein kurzer Werkstattbericht (siehe **Werkstatt**).
