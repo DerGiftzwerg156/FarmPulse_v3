@@ -300,6 +300,18 @@ function RPSimGameAdapter:currentPeriod()
     return env.currentYear or 1, env.currentPeriod
 end
 
+--- Booking statement: game time, day in the period and continuous day of a booking (cheap - called for every
+-- booking). Fields are nil when the environment does not know them.
+function RPSimGameAdapter:currentBookingTime()
+    local env = safe(function() return g_currentMission.environment end, nil)
+    if env == nil then
+        return {}
+    end
+    local day = env.currentMonotonicDay or env.currentDay
+    return { gameTime = (day or 0) * RPSimConfig.MS_PER_GAME_DAY + (env.dayTime or 0),
+        day = env.currentDayInPeriod, monotonicDay = day }
+end
+
 function RPSimGameAdapter.seasonName(current)
     if current == nil or Season == nil or type(Season) ~= "table" then
         return nil
@@ -635,10 +647,12 @@ end
 -- RPSIM_<REASON> instead of the FS25 money type.
 function RPSimGameAdapter:addMoney(amount, reason, note)
     self.bookingReason = reason
+    self.bookingNote = note -- booking statement: the note of the tool booking
     local ok, err = pcall(function()
         g_currentMission:addMoney(amount, self:getFarmId(), self:moneyTypeFor(reason), true, true)
     end)
     self.bookingReason = nil
+    self.bookingNote = nil
     if not ok then
         return false, tostring(err)
     end

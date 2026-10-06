@@ -142,8 +142,25 @@ end
 -- so the delivery that fills the contract is still paid at the contract price. The quantity is the requested
 -- fillDelta, not the return value (unreliable in FS25, see FS25_MarketDynamics PriceHook.lua).
 -- FS25 signature: sellFillType(farmId, fillDelta, fillTypeIndex, fillPositionData, toolType, extraAttributes).
+-- Booking statement: while the game sells, bridge.saleContext names fill type, sell point and litres, so a booking
+-- the sale makes through Farm:changeBalance gets them (whether the game books inside sellFillType is checked in the
+-- manual test plan; without it the booking stays without fill type).
 function RPSim.sellFillTypeHook(station, superFunc, farmId, fillDelta, fillTypeIndex, ...)
-    local result = superFunc(station, farmId, fillDelta, fillTypeIndex, ...)
+    local bridge = RPSim.bridge
+    if bridge ~= nil and fillDelta ~= nil and fillDelta > 0 then
+        local okCtx, ctx = pcall(function()
+            return { fillType = g_fillTypeManager:getFillTypeNameByIndex(fillTypeIndex),
+                sellPoint = RPSimGameAdapter.sellPointId(station), liters = fillDelta }
+        end)
+        bridge.saleContext = okCtx and ctx or nil
+    end
+    local ok, result = pcall(superFunc, station, farmId, fillDelta, fillTypeIndex, ...)
+    if bridge ~= nil then
+        bridge.saleContext = nil
+    end
+    if not ok then
+        error(result, 0)
+    end
     if RPSim.bridge ~= nil and fillDelta ~= nil and fillDelta > 0 then
         local name = g_fillTypeManager:getFillTypeNameByIndex(fillTypeIndex)
         RPSim.bridge:recordSale(RPSimGameAdapter.sellPointId(station), name, fillDelta)
