@@ -1,0 +1,6 @@
+Nachtruhe
+Hallo,
+
+{{level}} – bei euch laufen nachts die Maschinen, in letzter Zeit rund {{nightHours}} Stunden. Das hört man im ganzen Dorf.
+
+{{characterName}}

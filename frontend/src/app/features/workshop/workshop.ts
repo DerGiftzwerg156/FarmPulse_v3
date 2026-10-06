@@ -11,16 +11,17 @@ import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { ServiceCases } from '../contracts/service-cases';
 import { MachineLoansCard } from './machine-loans-card';
+import { TankLockCard } from './tank-lock-card';
 import { UsedVehiclesCard } from './used-vehicles-card';
 
 /**
  * Hof-Tablet app "Werkstatt" (TODO T-22, Roadmap V2 R2-A6): the maintenance contract with the workshop, the repairs
  * it did in the game and the farm's own mechanics; Roadmap V3 R3-V: used machines bought and sold; Roadmap V3.1 R31-A2:
- * demo and borrowed machines.
+ * demo and borrowed machines; Roadmap V3.1 R31-D8: tank locks.
  */
 @Component({
   selector: 'app-workshop',
-  imports: [RouterLink, TranslatePipe, Button, Card, ServiceCases, UsedVehiclesCard, MachineLoansCard],
+  imports: [RouterLink, TranslatePipe, Button, Card, ServiceCases, UsedVehiclesCard, MachineLoansCard, TankLockCard],
   template: `
     <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <div class="flex flex-col gap-4">
@@ -52,6 +53,8 @@ import { UsedVehiclesCard } from './used-vehicles-card';
         <app-used-vehicles-card [highlightNegotiation]="highlightedNegotiation()" (changed)="tasks.reload()" />
         <!-- Roadmap V3.1 R31-A2: demo machines of the workshop and borrowed machines of the neighbours -->
         <app-machine-loans-card />
+        <!-- Roadmap V3.1 R31-D8: tank locks against diesel theft -->
+        <app-tank-lock-card />
         <app-service-cases [caseKinds]="['MACHINE_DEMO_OFFER']" openTitle="workshop.loans.demoOffers" [showEmpty]="false"
           [highlightCase]="highlightedCase()" testId="demo-offer-cases" />
         <app-service-cases [caseKinds]="['REPAIR']" [contractKinds]="['MAINTENANCE']" contractsTitle="workshop.contracts" [showEmpty]="false"

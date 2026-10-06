@@ -1,0 +1,6 @@
+Flurschaden auf Feld {{farmlandId}}
+Hallo,
+
+schon wieder Fahrspuren auf meinem Feld {{farmlandId}}. Für den Schaden verlange ich {{amount}} €. Bitte entscheide innerhalb von {{decisionDays}} Tagen in der App „Flurkarte“, ob du zahlst.
+
+{{characterName}}

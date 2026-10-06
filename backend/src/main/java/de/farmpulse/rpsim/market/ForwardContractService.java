@@ -90,6 +90,19 @@ public class ForwardContractService {
                         long deliveryStartGameTime, long deadlineGameTime, Integer deliveryPeriod, long expectedIncome) {
     }
 
+    /**
+     * Largest quantity of a forward contract; Roadmap V3.1 R31-D7: a board member of the cooperative may fix
+     * {@code coop-board.forward-contract-bonus} more (rounded down to the quantity step).
+     */
+    public long maxQuantity(Savegame sg) {
+        RpsimProperties.ForwardContract c = cfg();
+        if (!sg.isCoopBoard()) {
+            return c.getMaxQuantity();
+        }
+        long more = Math.round(c.getMaxQuantity() * (1 + props.getFormulas().getCoopBoard().getForwardContractBonus()));
+        return more - more % Math.max(1, c.getQuantityStep());
+    }
+
     @Transactional(readOnly = true)
     public Quote quote(Savegame sg, String fillType, String sellPoint, long quantity, int leadMonths) {
         RpsimProperties.ForwardContract c = cfg();
@@ -97,9 +110,10 @@ public class ForwardContractService {
             throw new BusinessRuleException("FORWARD_LEAD", "Der Liefermonat muss " + c.getMinLeadMonths() + " bis "
                     + c.getMaxLeadMonths() + " Monate voraus liegen.");
         }
-        if (quantity < c.getMinQuantity() || quantity > c.getMaxQuantity() || quantity % c.getQuantityStep() != 0) {
+        long max = maxQuantity(sg);
+        if (quantity < c.getMinQuantity() || quantity > max || quantity % c.getQuantityStep() != 0) {
             throw new BusinessRuleException("FORWARD_QUANTITY", "Die Menge muss zwischen " + c.getMinQuantity() + " und "
-                    + c.getMaxQuantity() + " Litern in " + c.getQuantityStep() + "er-Schritten liegen.");
+                    + max + " Litern in " + c.getQuantityStep() + "er-Schritten liegen.");
         }
         FarmFacts f = facts.latest(sg).orElse(null);
         double base = f == null || f.prices() == null ? 0 : f.prices().stream()

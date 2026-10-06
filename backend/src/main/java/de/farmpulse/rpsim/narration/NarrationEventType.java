@@ -236,6 +236,38 @@ public enum NarrationEventType {
     EMPLOYEE_SICK,
     WORK_ACCIDENT_REPORT,
     EMPLOYEE_GET_WELL_THANKS,
+    // Roadmap V3.1 R31-D1: village newspaper (target NEWSPAPER_ARTICLE)
+    NEWSPAPER_ARTICLE,
+    // Roadmap V3.1 R31-D2: village group chat (target CHAT_MESSAGE)
+    CHAT_ANNOUNCEMENT,
+    CHAT_GOSSIP,
+    CHAT_CONGRATULATION,
+    CHAT_HELP_REQUEST,
+    CHAT_REPLY,
+    // Roadmap V3.1 R31-D3: regulars' table
+    STAMMTISCH_INVITATION,
+    STAMMTISCH_TIP,
+    // Roadmap V3.1 R31-D4 / R31-D5: complaints about night work and crop damage
+    NIGHT_WORK_COMPLAINT,
+    CROP_DAMAGE_COMPLAINT,
+    CROP_DAMAGE_CLAIM,
+    // Roadmap V3.1 R31-D6: farm holidays and school visits
+    FARM_HOLIDAY_REVIEW,
+    SCHOOL_VISIT_REQUEST,
+    SCHOOL_VISIT_THANKS,
+    // Roadmap V3.1 R31-D7: cooperative shares, general assembly and board
+    COOP_SHARES_CONFIRMED,
+    COOP_SHARES_NOTICE,
+    COOP_SHARES_REPAID,
+    COOP_DIVIDEND,
+    COOP_ASSEMBLY_INVITATION,
+    COOP_ASSEMBLY_RESULT,
+    COOP_BOARD_ELECTED,
+    COOP_BOARD_MEETING,
+    COOP_BOARD_REMOVED,
+    // Roadmap V3.1 R31-D8: diesel theft
+    DIESEL_THEFT_REPORT,
+    DIESEL_THEFT_INSURANCE,
     // conversation
     REPLY,
     CALL_CONVERSATION

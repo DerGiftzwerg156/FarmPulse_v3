@@ -247,7 +247,7 @@
     </div>
   }
 
-  <app-service-cases [caseKinds]="['COMPENSATION_CLAIM', 'MISSION_REFERRAL', 'CONTRACTOR_WORK']" [contractKinds]="['LEASE']" openTitle="farmland.claims"
+  <app-service-cases [caseKinds]="['COMPENSATION_CLAIM', 'CROP_DAMAGE_CLAIM', 'MISSION_REFERRAL', 'CONTRACTOR_WORK']" [contractKinds]="['LEASE']" openTitle="farmland.claims"
     contractsTitle="farmland.leases" [showEmpty]="false" [highlightCase]="highlightedCase()" [highlightContract]="highlightedContract()" testId="field-cases">
     <p contracts-intro class="mb-3 text-[12px] text-muted">{{ 'contracts.leaseHint' | t }}</p>
   </app-service-cases>

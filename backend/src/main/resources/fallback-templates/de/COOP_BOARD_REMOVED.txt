@@ -1,0 +1,6 @@
+Abwahl aus dem Vorstand
+Guten Tag,
+
+nach {{missed}} verpassten Vorstandssitzungen wurden Sie aus dem Vorstand abgewählt. Ihre Anteile bleiben davon unberührt.
+
+{{characterName}}

@@ -167,6 +167,24 @@ vet check, the requirement with fine, the trade block, the lifting, the price re
 `ON_LEAVE`, get-well wishes, the return, accidents only in the driving roles and the risk factor.
 `RepositorySmokeTest` saves the new entities. The mod exports the spray type (`test_game_adapter.lua`). Frontend:
 `direct-payment-card.spec.ts`, `investment-grant-card.spec.ts`. In the game: manual test plan sections 21 and 23.
+Roadmap V3.1 R31-D (village life): `VillageNewspaperTest` covers the issue at the period start (sections in print
+order, empty ones left out, the price change of the window, no amounts), the narrated articles (template without AI),
+the headline in the diary, once per period and a next issue only with new facts; `VillageChatTest` the groups and
+their members, the help request with its link (once per request, the daily limit, the next day), the announcements,
+gossip and congratulations, and the player post (tone, capped trust of one member, pacing, the answer job);
+`StammtischTest` the interval, attending (trust, rumour bonus used up by one rumour), the loner cap and the tip;
+`NightWorkTest` the night window, the friendly and the annoyed complaint, harvest time, daytime and idle helpers, the
+switch and the idyllic factor; `CropDamageTest` the row of samples, the hint, the complaint, the growing claim, pay and
+refuse, stubble, a running order, a lease and fields without owner; `FarmHolidaySchoolTest` the setup, the factors,
+the noise / smell cuts with the review and the school request (holidays, healthy animals, allowance, reputation);
+`CooperativeTest` buying within the limit, the notice and repayment, the price index and the cap of the dividend,
+the assembly vote, the board election, the rumour and forward-contract perks, the calendar dates and the removal
+after two missed meetings; `DieselTheftTest` the target (diesel level, driven, tank lock), the night of
+`VEHICLE_FUEL`, the police report and gossip, the insurance module, the retries and the switches.
+`NarrationPipelineTest` checks the templates and prompt tasks of the new event types. The mod covers `dayTimeMs`, the
+diesel export, the position samples and `VEHICLE_FUEL` in `test_roadmap_v31.lua`; the simulator the new money reasons
+in `test/roadmap-v31.test.js`. Frontend: `newspaper.spec.ts`, `chat.spec.ts`, `village-economy-cards.spec.ts`,
+`tank-lock-card.spec.ts`, `village-life-cases.spec.ts`. In the game: manual test plan sections 21.6 and 24.
 Roadmap V3 R3-L (leasing out own fields): `LeaseOutTest` covers the guide value, the neighbours' bids (capital,
 85–100 % of the desired rent, the land agent without interest), the fallback on the field phase (offer and demand),
 the bank's consent for a pledged field, the agreement (contract, `FARMLAND_TRANSFER FROM_PLAYER`, `LEASE_INCOME` also

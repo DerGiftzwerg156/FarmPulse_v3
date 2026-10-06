@@ -429,7 +429,15 @@ export class ApiService {
   burdenSettings(): Observable<M.BurdenSettingsView> {
     return this.get('/settings/burdening-events');
   }
-  saveBurdenSettings(r: { areaCheck: boolean; fertilizer: boolean; disease: boolean; sickLeave: boolean }): Observable<M.BurdenSettingsView> {
+  saveBurdenSettings(r: {
+    areaCheck: boolean;
+    fertilizer: boolean;
+    disease: boolean;
+    sickLeave: boolean;
+    nightWork: boolean;
+    cropDamage: boolean;
+    dieselTheft: boolean;
+  }): Observable<M.BurdenSettingsView> {
     return this.http.put<M.BurdenSettingsView>(`${this.base}/settings/burdening-events`, r);
   }
   /** Roadmap V3.1 R31-B1: area payment application. */
@@ -452,6 +460,47 @@ export class ApiService {
   /** Roadmap V3.1 R31-B4: animal diseases and restricted zones. */
   animalDiseases(): Observable<M.DiseaseStatusView> {
     return this.get('/animal-diseases');
+  }
+  /** Roadmap V3.1 R31-D1: issues of the village newspaper. */
+  newspaper(): Observable<M.IssueView[]> {
+    return this.get('/newspaper');
+  }
+  /** Roadmap V3.1 R31-D2: village chat. */
+  chatGroups(): Observable<M.ChatGroupView[]> {
+    return this.get('/chat/groups');
+  }
+  chatMessages(groupId: number): Observable<M.ChatMessageView[]> {
+    return this.get(`/chat/groups/${groupId}/messages`);
+  }
+  postChat(groupId: number, text: string): Observable<M.ChatPostView> {
+    return this.post(`/chat/groups/${groupId}/messages`, { text });
+  }
+  /** Roadmap V3.1 R31-D6: farm holidays. */
+  farmHoliday(): Observable<M.FarmHolidayView> {
+    return this.get('/farm-holiday');
+  }
+  setupFarmHoliday(): Observable<M.FarmHolidayView> {
+    return this.post('/farm-holiday', {});
+  }
+  /** Roadmap V3.1 R31-D7: cooperative shares. */
+  cooperative(): Observable<M.CooperativeView> {
+    return this.get('/cooperative');
+  }
+  buyShares(count: number): Observable<M.CooperativeView> {
+    return this.post('/cooperative/shares', { count });
+  }
+  cancelShares(count: number): Observable<M.CooperativeView> {
+    return this.post('/cooperative/notices', { count });
+  }
+  /** Roadmap V3.1 R31-D8: diesel theft, tank lock and the theft module of the insurance. */
+  dieselTheft(): Observable<M.DieselTheftView> {
+    return this.get('/diesel-theft');
+  }
+  buyTankLock(vehicleId: string): Observable<M.DieselTheftView> {
+    return this.post('/tank-locks', { vehicleId });
+  }
+  theftCover(contractId: number, enabled: boolean): Observable<M.ContractView> {
+    return this.post(`/contracts/${contractId}/theft-cover`, { enabled });
   }
   gameSettings(): Observable<M.GameSettingsView> {
     return this.get('/settings/game');

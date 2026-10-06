@@ -8,6 +8,7 @@
 -- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
 -- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
 -- luacheck: globals StoreSpecies StoreItemUtil VehicleLoadingData VehicleLoadingState FieldSprayType
+-- luacheck: globals FillType ToolType FieldState getWorldTranslation
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -177,6 +178,8 @@ function RPSimGameAdapter:collectCalendar()
             year = env.currentYear or 1,
             monotonicDay = env.currentMonotonicDay or env.currentDay or 0,
             periodName = name,
+            -- Roadmap V3.1 R31-D4: time of day in ms since midnight (environment.dayTime, as in getGameTime)
+            dayTimeMs = env.dayTime,
         }
     end, nil)
 end
@@ -422,7 +425,9 @@ function RPSimGameAdapter:collectFarmFacts()
                         xmlFilename = v.configFileName, category = safe(function()
                             local item = g_storeManager:getItemByXMLFilename(v.configFileName)
                             return item ~= nil and item.categoryName or nil
-                        end, nil) }
+                        end, nil),
+                        -- Roadmap V3.1 R31-D8: diesel level and tank capacity
+                        fuel = safe(function() return RPSimGameAdapter.dieselFuel(v) end, nil) }
                 elseif state == "LEASED" then
                     -- Leasing costs per vehicle have no documented API yet (manual test plan) - list only.
                     raw.leasedVehicles[#raw.leasedVehicles + 1] = { uniqueId = v:getUniqueId() }
@@ -493,6 +498,8 @@ function RPSimGameAdapter:collectFarmFacts()
             return true
         end)
     end
+    -- Roadmap V3.1 R31-D5: positions of the own vehicles being driven
+    raw.vehiclePositions = self:collectVehiclePositions()
     -- Roadmap V3 R3-H2 / R3-H5
     raw.tradeStorage = self:collectTradeStorage()
     raw.missionLimitReached = self:missionLimitReached()
@@ -777,6 +784,114 @@ function RPSimGameAdapter:removeVehicle(vehicleId)
     end
     RPSimLog.info("Vehicle %s removed (sold to a neighbour)", tostring(vehicleId))
     return true
+end
+
+-- ---------------------------------------------------------------------------------------------- Roadmap V3.1 R31-D
+
+--- R31-D8: diesel of a vehicle with a diesel tank - the consumer fill unit of FillType.DIESEL (LUADOC
+-- Specializations/Motorized.md getConsumerFillUnitIndex, pattern of Vehicles/VehicleSystem.md) with its level and
+-- capacity (Specializations/FillUnit.md getFillUnitFillLevel / getFillUnitCapacity). nil without a diesel tank
+-- (electric and methane vehicles, implements).
+function RPSimGameAdapter.dieselFuel(v)
+    if v.getConsumerFillUnitIndex == nil or FillType == nil or FillType.DIESEL == nil then
+        return nil
+    end
+    local index = v:getConsumerFillUnitIndex(FillType.DIESEL)
+    if index == nil then
+        return nil
+    end
+    return { liters = v:getFillUnitFillLevel(index), capacity = v:getFillUnitCapacity(index) }
+end
+
+--- R31-D5 / R31-D8: driven right now - somebody sits in it (Enterable:getIsControlled) or a helper drives
+-- (Vehicle:getIsAIActive).
+function RPSimGameAdapter.isDriven(v)
+    local controlled = safe(function() return v.getIsControlled ~= nil and v:getIsControlled() end, false)
+    local ai = safe(function() return v.getIsAIActive ~= nil and v:getIsAIActive() end, false)
+    return controlled == true or ai == true
+end
+
+--- R31-D5: a crop stands at x / z - an own FieldState sampled at the position (FieldState.new() and
+-- fieldState:update(x, z), dump field/FieldState.lua, the R2-C1 fallback) with a fruit, a growth state above 0 and not
+-- cut (FruitTypeDesc:getIsCut). nil when it cannot be read.
+function RPSimGameAdapter.cropAt(x, z)
+    return safe(function()
+        local state = FieldState.new()
+        state:update(x, z)
+        if not state.isValid then
+            return false
+        end
+        local index = state.fruitTypeIndex
+        if index == nil or (FruitType ~= nil and index == FruitType.UNKNOWN) or (state.growthState or 0) <= 0 then
+            return false
+        end
+        local desc = g_fruitTypeManager:getFruitTypeByIndex(index)
+        if desc ~= nil and desc.getIsCut ~= nil and desc:getIsCut(state.growthState) then
+            return false
+        end
+        return true
+    end, nil)
+end
+
+--- R31-D5: the own vehicles being driven at export time with their position (getWorldTranslation(vehicle.rootNode),
+-- dump Vehicle.lua), the farmland there (g_farmlandManager:getFarmlandIdAtWorldPosition, LUADOC
+-- Economy/FarmlandManager.md) and the crop sample. Normalised by RPSimFarmFacts.buildVehiclePositions.
+function RPSimGameAdapter:collectVehiclePositions()
+    local farmId = self:getFarmId()
+    local out = {}
+    for _, v in pairs(vehicleList()) do
+        safe(function()
+            if v:getOwnerFarmId() ~= farmId or v.rootNode == nil or not RPSimGameAdapter.isDriven(v) then
+                return true
+            end
+            local x, _, z = getWorldTranslation(v.rootNode)
+            out[#out + 1] = { uniqueId = v:getUniqueId(), x = x, z = z,
+                farmlandId = safe(function() return g_farmlandManager:getFarmlandIdAtWorldPosition(x, z) end, nil),
+                onCrop = RPSimGameAdapter.cropAt(x, z) }
+            return true
+        end)
+    end
+    return out
+end
+
+--- R31-D8: VEHICLE_FUEL - diesel taken out of a parked vehicle of the player farm: nobody inside, no helper, a diesel
+-- tank; at most the level in the tank (addFillUnitFillLevel(farmId, fillUnitIndex, -amount, FillType.DIESEL,
+-- ToolType.UNDEFINED, nil), LUADOC Specializations/FillUnit.md). Result { liters } = diesel actually taken.
+function RPSimGameAdapter:vehicleFuel(ins)
+    local v = safe(function() return g_currentMission.vehicleSystem:getVehicleByUniqueId(ins.vehicleId) end, nil)
+    if v == nil then
+        return false, "VEHICLE_NOT_FOUND"
+    end
+    local farmId = self:getFarmId()
+    if safe(function() return v:getOwnerFarmId() end, nil) ~= farmId then
+        return false, "NOT_OWN_VEHICLE"
+    end
+    if RPSimGameAdapter.isDriven(v) then
+        return false, "VEHICLE_IN_USE"
+    end
+    local index = safe(function()
+        if v.getConsumerFillUnitIndex == nil or FillType == nil or FillType.DIESEL == nil then
+            return nil
+        end
+        return v:getConsumerFillUnitIndex(FillType.DIESEL)
+    end, nil)
+    if index == nil then
+        return false, "NO_DIESEL_TANK"
+    end
+    local level = safe(function() return v:getFillUnitFillLevel(index) end, 0) or 0
+    local amount = math.min(level, -ins.delta)
+    if amount > 0 then
+        local ok, err = pcall(function()
+            v:addFillUnitFillLevel(farmId, index, -amount, FillType.DIESEL, ToolType.UNDEFINED, nil)
+        end)
+        if not ok then
+            return false, tostring(err)
+        end
+    end
+    local after = safe(function() return v:getFillUnitFillLevel(index) end, nil) or (level - amount)
+    local taken = math.max(0, math.floor(level - after + 0.5))
+    RPSimLog.info("Diesel taken from %s: %d l", tostring(ins.vehicleId), taken)
+    return true, nil, { liters = taken }
 end
 
 -- ---------------------------------------------------------------------------------------------- Roadmap V3.1 R31-A

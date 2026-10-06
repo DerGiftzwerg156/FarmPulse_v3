@@ -33,7 +33,9 @@
     "TAX_ADVISOR": { "title": "Steuerberater/in", "description": "hilft bei der Steuer und behält die Fristen im Blick" },
     "FAMILY": { "title": "Familie", "description": "gehört zur Familie auf dem Hof" },
     "CLUB": { "title": "Vereinsvorsitz", "description": "führt einen Verein im Dorf" },
-    "SOCIAL_INSURANCE": { "title": "Sachbearbeiter/in der Berufsgenossenschaft", "description": "zieht die Beiträge der landwirtschaftlichen Unfallversicherung ein und kümmert sich um Arbeitsunfälle" }
+    "SOCIAL_INSURANCE": { "title": "Sachbearbeiter/in der Berufsgenossenschaft", "description": "zieht die Beiträge der landwirtschaftlichen Unfallversicherung ein und kümmert sich um Arbeitsunfälle" },
+    "POLICE": { "title": "Polizist/in der Polizeistation", "description": "nimmt Anzeigen auf, etwa nach einem Dieseldiebstahl auf den Höfen" },
+    "SCHOOL": { "title": "Lehrer/in der Dorfschule", "description": "organisiert Ausflüge der Schulklassen, gern auch auf einen Bauernhof" }
   },
   "jobRoles": {
     "MACHINE_OPERATOR": "Maschinenführer/in",

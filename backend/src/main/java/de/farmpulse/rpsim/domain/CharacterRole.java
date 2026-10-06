@@ -27,5 +27,9 @@ public enum CharacterRole {
     FAMILY,
     CLUB,
     /** Roadmap V3.1 R31-B5: the agricultural social insurance (Berufsgenossenschaft). */
-    SOCIAL_INSURANCE
+    SOCIAL_INSURANCE,
+    /** Roadmap V3.1 R31-D8: the village police (diesel theft). */
+    POLICE,
+    /** Roadmap V3.1 R31-D6: the teacher of the village school (school visits). */
+    SCHOOL
 }

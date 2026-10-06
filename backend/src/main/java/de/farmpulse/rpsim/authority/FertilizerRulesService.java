@@ -153,6 +153,11 @@ public class FertilizerRulesService {
                 finding(field.sprayType(), field.sprayLevel(), r.getLastSprayLevel(), cfg())
                         .ifPresent(kind -> detected(sg, r, kind));
             }
+            // Roadmap V3.1 R31-D6: slurry / manure spread in any period - the guests of the farm holidays smell it
+            if (field.sprayType() != null && cfg().getOrganicSprayTypes().contains(field.sprayType())
+                    && field.sprayLevel() != null && r.getLastSprayLevel() != null && field.sprayLevel() > r.getLastSprayLevel()) {
+                sg.setLastOrganicSpreadGameTime(e.gameTime());
+            }
             r.setLastSprayType(field.sprayType());
             r.setLastSprayLevel(field.sprayLevel());
         }

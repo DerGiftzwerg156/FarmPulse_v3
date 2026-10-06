@@ -17,7 +17,8 @@ function T.TestInstructions:testAllMoneyReasonsAccepted()
         "FARMLAND_SALE", "OTHER", "TAX_PAYMENT", "TAX_REFUND", "FINE", "FAMILY", "SPONSORING", "COMPENSATION",
         "LEASE_INCOME", "GOODS_PURCHASE", "GOODS_SALE", "VEHICLE_PURCHASE", "VEHICLE_SALE", "CONTRACT_PENALTY",
         "CONTRACTOR_FEE", "MACHINE_RENT", "LIVESTOCK_PURCHASE", "LIVESTOCK_SALE", "WINTER_SERVICE", "DIRECT_PAYMENT",
-        "INVESTMENT_GRANT", "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND" }) do
+        "INVESTMENT_GRANT", "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND", "FARM_HOLIDAY_SETUP",
+        "TANK_LOCK" }) do
         lu.assertTrue(RPSimInstructions.validate(money("i", 1, r)), r)
     end
     local ok, why = RPSimInstructions.validate(money("i", 1, "FREE_MONEY"))

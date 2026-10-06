@@ -70,6 +70,13 @@ public enum TrustReason {
     AUTHORITY_BILL_OVERDUE,
     /** Roadmap V3.1 R31-B5: get-well wishes to a sick or injured employee. */
     GET_WELL_WISHES,
+    /** Roadmap V3.1 R31-D: regulars' table, night work, crop damage, school visit, board meeting missed. */
+    STAMMTISCH,
+    NIGHT_WORK,
+    CROP_DAMAGE,
+    CROP_DAMAGE_CLAIM_DECLINED,
+    SCHOOL_VISIT,
+    COOP_BOARD_MISSED,
     INITIAL,
     OTHER
 }

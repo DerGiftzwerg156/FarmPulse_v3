@@ -22,6 +22,7 @@ import de.farmpulse.rpsim.neighbor.NeighborTradeService;
 import de.farmpulse.rpsim.payroll.PayrollScheduler;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
+import de.farmpulse.rpsim.theft.DieselTheftService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -79,6 +80,7 @@ public class FailedInstructionService {
     private final de.farmpulse.rpsim.farmwork.ContractorWorkService contractorWork;
     private final de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans;
     private final de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade;
+    private final DieselTheftService dieselThefts;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
@@ -90,7 +92,9 @@ public class FailedInstructionService {
                                     de.farmpulse.rpsim.contract.LeaseOutService leaseOut,
                                     de.farmpulse.rpsim.farmwork.ContractorWorkService contractorWork,
                                     de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans,
-                                    de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade) {
+                                    de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade,
+                                    DieselTheftService dieselThefts) {
+        this.dieselThefts = dieselThefts;
         this.machineLoans = machineLoans;
         this.livestockTrade = livestockTrade;
         this.leaseOut = leaseOut;
@@ -171,6 +175,9 @@ public class FailedInstructionService {
             handled = contractorWork.onInstructionFailed(relatedId, ins.getAckMessage()); // R31-A1
         } else if (de.farmpulse.rpsim.farmwork.MachineLoanService.RELATED.equals(related) && relatedId != null) {
             handled = machineLoans.onInstructionFailed(relatedId, ins.getType(), ins.getAckMessage()); // R31-A2
+        } else if (DieselTheftService.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.VEHICLE_FUEL) {
+            handled = dieselThefts.onInstructionFailed(relatedId, ins.getAckMessage()); // R31-D8: next night again
         } else if (de.farmpulse.rpsim.neighbor.LivestockTradeService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.ANIMAL_TRANSFER) {
             handled = livestockTrade.onInstructionFailed(relatedId, ins.getAckMessage()); // R31-A3
@@ -200,6 +207,9 @@ public class FailedInstructionService {
         } else if (LoanService.COLLATERAL_RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.FARMLAND_TRANSFER) {
             handled = loans.onRealisationFailed(sg, relatedId); // R3-K1: realisation refused, the field stays
+        }
+        if (handled && ins.getType() == InstructionType.VEHICLE_FUEL && !modOutdated(ins.getType(), ins.getAckMessage())) {
+            return; // R31-D8: a refused theft is tried again in the next night - the player does not learn of it
         }
         Map<String, Object> d = new LinkedHashMap<>();
         d.put("instructionId", ins.getInstructionId());

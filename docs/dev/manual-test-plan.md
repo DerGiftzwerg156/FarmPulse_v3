@@ -496,3 +496,28 @@ rare events, raise the chances in `application-local.yml` (e.g. `rpsim.formulas.
 | 23.12 | Start of April | bill of the *Berufsgenossenschaft* (300 € + 12 € per ha + 180 € per employee) under *Ämter*, paid by button |
 | 23.13 | An employee falls ill | mail (office clerk or the employee), badge *krank bis …* in *Mitarbeiter*, the employee drives no helper (`ON_LEAVE`); *Genesungswünsche* → thank-you mail; back after the days |
 | 23.14 | Settings → *Belastende Ereignisse*: switch everything off | no on-site check, fertiliser inspection, disease or sickness any more; application, premium, grant and the BG bill stay |
+
+## 24. Village life (Roadmap V3.1 R31-D)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section D. Needs the current mod, own fields and
+vehicles with a diesel tank, an own stable with healthy animals and some villagers and neighbours. Row 21.6 checks the
+false alarms of D5. To test the rare events, raise the chances in `application-local.yml` (e.g.
+`rpsim.formulas.diesel-theft.probability-per-month: 1`, `school-visit.probability-per-month: 1`,
+`stammtisch.interval-days: 1`) and switch *Flurschaden* on in the settings.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 24.1 | Wait for the start of a period | app *Dorfblatt*: a new issue with the sections of the past period (empty ones left out), e.g. new villagers, festivals, sponsoring, the three largest price changes, rumours "ohne Gewähr", deadlines and restricted zones; never a loan, balance or tax; the headline appears in the diary / chronicle; older issues stay selectable |
+| 24.2 | App *Dorfchat* | groups *Dorf*, *Nachbarn* and one per club with a chair; over some game days announcements and gossip (at most 3 character posts per game day); a new goods / animal / work request of a neighbour posts in *Nachbarn* with *Zur Anfrage* |
+| 24.3 | Write a friendly and then a second message in *Dorf* on the same game day | one member answers each time; the first message changes the trust of one member, the second shows the pacing note and changes nothing |
+| 24.4 | Invitation to the *Stammtisch* (every 14 game days) | case in *Kalender*; *Hingehen*: trust with three villagers, the next rumour is more often right; three invitations in a row declined or ignored: a small loss of reputation (at most −3) |
+| 24.5 | Let a helper work at night (22–6 h) for 3 game hours outside the harvest (no own field harvestable) | a villager complains politely (trust −1); again within 30 days: annoyed (−3) and a line in the next *Dorfblatt*; with a harvestable own field no complaint |
+| 24.6 | Drive across the sown field of a neighbour (3 exports in a row, *Flurschaden* on) | the first time only the in-game hint "Pass auf, wo du langfährst"; then a complaint of the owner; again within 60 days: claim of 150 € per sample in *Flurkarte*, pay or refuse (refusing costs trust) |
+| 24.7 | *Handel* → *Ferien auf dem Hof*: set up (20,000 €) | booking *Einrichtung Ferienwohnung*; at every month start *Ferien auf dem Hof* income (more in summer, with good reputation and healthy animals); night work or slurry in the summer months lower it and bring a review mail |
+| 24.8 | School request (month start outside June–August, a stable with health ≥ 70) | case in *Kalender*; *Zusagen*: 150 € *Ferien auf dem Hof*, reputation, a thank-you mail and a line in the *Dorfblatt* |
+| 24.9 | *Handel* → *Genossenschaftsanteile*: buy 40 shares, cancel 5 | booking *Genossenschaftsanteile* −20,000 €; the 5 are repaid at nominal after 12 months; at the start of March the *Genossenschaftsdividende* (4 % × price index, 0–8 %) |
+| 24.10 | Start of April with shares | invitation to the general assembly in *Kalender* (also as an in-game question when switched on); vote *Ja* / *Nein*; result mail and a line in the *Dorfblatt*; with 40 shares and trust ≥ 50 of the cooperative the farm joins the board (calendar shows the board meetings, forward contracts allow 10 % more) |
+| 24.11 | Board meeting (March, June, September, December): ignore two | trust −3 each; after the second the mail "aus dem Vorstand abgewählt" |
+| 24.12 | Diesel theft (month start, next night): park a vehicle with ≥ 100 l diesel | in the night 30–60 % (max. 300 l) of its diesel are gone in the game; mail of the police, a line in the *Dorfblatt*, gossip in *Dorfchat*; with the module *Diebstahl* of the storm / hail insurance (+8 € per month) a damage above 150 € is paid; a driven vehicle is not chosen (the mod refuses with `VEHICLE_IN_USE`, tried again the next night) |
+| 24.13 | *Werkstatt* → *Tankschloss* for the vehicle (250 €) | booking *Tankschloss*; this vehicle is chosen much more rarely |
+| 24.14 | Settings → *Belastende Ereignisse*: switch night work, crop damage and diesel theft off; world mode *idyllisch* | no complaints, claims or thefts any more; in the idyllic mode no diesel theft and half the trust losses of D4 / D5 |

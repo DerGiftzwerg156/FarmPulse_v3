@@ -1,0 +1,6 @@
+Danke für die Hofführung
+Guten Tag,
+
+vielen Dank für den schönen Besuch auf Ihrem Hof! Die Kinder erzählen noch heute von den Tieren. Die Aufwandsentschädigung von {{allowance}} € ist unterwegs.
+
+{{characterName}}

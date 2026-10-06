@@ -111,6 +111,11 @@ export class Insurance {
     this.run(this.api.requestInsuranceOffer(level));
   }
 
+  /** Roadmap V3.1 R31-D8: module "Diebstahl" of the storm / hail insurance on or off. */
+  theftCover(c: ContractView, enabled: boolean): void {
+    this.run(this.api.theftCover(c.id, enabled));
+  }
+
   contractAction(c: ContractView, action: string): void {
     this.run(this.api.contractAction(c.id, action));
   }

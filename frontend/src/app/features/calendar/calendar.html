@@ -71,7 +71,7 @@
       </div>
     </div>
 
-    <app-service-cases [caseKinds]="['INVITATION']" openTitle="calendar.invitations" [showEmpty]="false" [highlightCase]="highlightedCase()" testId="invitations" />
+    <app-service-cases [caseKinds]="['INVITATION', 'STAMMTISCH_INVITATION', 'SCHOOL_VISIT', 'COOP_ASSEMBLY', 'COOP_BOARD_MEETING']" openTitle="calendar.invitations" [showEmpty]="false" [highlightCase]="highlightedCase()" testId="invitations" />
 
     <!-- Jahresleiste -->
     @if (o.currentPeriod !== null) {

@@ -25,6 +25,9 @@ const pages: Routes = [
   /** Old address of "Verträge & Vorgänge" (links in stored mails): forwards to the app of the entry. */
   { path: 'contracts', loadComponent: () => import('./features/contracts/contracts-redirect').then((m) => m.ContractsRedirect) },
   { path: 'village', loadComponent: () => import('./features/village/village').then((m) => m.Village), title: 'nav.village' },
+  /** Roadmap V3.1 R31-D1 / R31-D2 */
+  { path: 'dorfblatt', loadComponent: () => import('./features/newspaper/newspaper').then((m) => m.Newspaper), title: 'nav.newspaper' },
+  { path: 'dorfchat', loadComponent: () => import('./features/chat/chat').then((m) => m.Chat), title: 'nav.chat' },
   /** Roadmap V3 R3-T2: print view of the farm chronicle (PDF via the browser's print function). */
   { path: 'diary/chronik', loadComponent: () => import('./features/diary/chronicle-print').then((m) => m.ChroniclePrint), title: 'diary.print' },
   { path: 'diary', loadComponent: () => import('./features/diary/diary').then((m) => m.Diary), title: 'nav.diary' },

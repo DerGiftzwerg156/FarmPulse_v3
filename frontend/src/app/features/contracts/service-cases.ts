@@ -66,6 +66,11 @@ const ROLEPLAY_CASES = ['TAX_BILL', 'AUTHORITY_INSPECTION', 'SPONSORING_REQUEST'
                     · {{ 'trade.animals.history' | t: { count: c.quantity, subType: c.reference ?? '–', amount: (c.offerAmount | money) } }}
                   } @else if (c.kind === 'MACHINE_DEMO_OFFER') {
                     · {{ c.title }}
+                  } @else if (c.kind === 'COOP_ASSEMBLY') {
+                    <!-- Roadmap V3.1 R31-D7: topic and share of yes votes -->
+                    · {{ c.reference | label: 'coopTopic' }} · {{ c.quantity }} %
+                  } @else if (c.kind === 'STAMMTISCH_INVITATION' || c.kind === 'COOP_BOARD_MEETING') {
+                    <!-- Roadmap V3.1 R31-D3 / R31-D7: only the answer -->
                   } @else if (isRoleplayCase(c)) {
                     @if (c.kind === 'TAX_BILL') { · {{ c.title ?? (c.reference | label: 'taxBill') }} }
                     @if (c.kind === 'GRANT_REPAYMENT' || c.kind === 'SOCIAL_INSURANCE_BILL') { · {{ c.title }} }

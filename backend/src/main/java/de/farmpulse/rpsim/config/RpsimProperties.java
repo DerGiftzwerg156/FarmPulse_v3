@@ -178,6 +178,17 @@ public class RpsimProperties {
         private AnimalDisease animalDisease = new AnimalDisease();
         private SocialInsurance socialInsurance = new SocialInsurance();
         private SickLeave sickLeave = new SickLeave();
+        private VillageNewspaper villageNewspaper = new VillageNewspaper();
+        private VillageChat villageChat = new VillageChat();
+        private Stammtisch stammtisch = new Stammtisch();
+        private NightWork nightWork = new NightWork();
+        private CropDamage cropDamage = new CropDamage();
+        private FarmHoliday farmHoliday = new FarmHoliday();
+        private SchoolVisit schoolVisit = new SchoolVisit();
+        private CoopShares coopShares = new CoopShares();
+        private CoopAssembly coopAssembly = new CoopAssembly();
+        private CoopBoard coopBoard = new CoopBoard();
+        private DieselTheft dieselTheft = new DieselTheft();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
@@ -1433,6 +1444,172 @@ public class RpsimProperties {
         private double getWellTrustDelta = 2;
     }
 
+    /** Roadmap V3.1 R31-D1: village newspaper "Dorfblatt" (owner decisions 2026-10-05). */
+    @Getter @Setter
+    public static class VillageNewspaper {
+        private boolean enabled = true;
+        /** An extra issue at the middle of the month (besides the one at every period start). */
+        private boolean midMonthIssue = false;
+        /** Market section: the fill types with the largest price change against the previous period. */
+        private int marketTopCount = 3;
+        /** At most this many entries per section (classifieds, deeds ...). */
+        private int maxItemsPerSection = 6;
+    }
+
+    /** Roadmap V3.1 R31-D2: village group chat "Dorfchat" (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class VillageChat {
+        private boolean enabled = true;
+        private double dailyPostProbability = 0.3;
+        private int maxPostsPerDay = 3;
+        private List<String> topics = new ArrayList<>(List.of("GREEN_WASTE", "FIRE_BRIGADE_DRILL", "LOST_DOG",
+                "CHURCH_BAZAAR", "ROAD_WORKS", "WEATHER_WARNING"));
+        /** Random villagers in a club group besides the chair. */
+        private int clubGroupVillagers = 3;
+        /** A player post changes trust only once per group within these game days. */
+        private double pacingDays = 1;
+    }
+
+    /** Roadmap V3.1 R31-D3: regulars' table in the village pub (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class Stammtisch {
+        private boolean enabled = true;
+        private double intervalDays = 14;
+        private double answerDays = 2;
+        private int attendees = 3;
+        private double attendTrustDelta = 2;
+        /** Added to market.rumor-accurate-probability for the next rumour after an evening. */
+        private double rumorAccuracyBonus = 0.15;
+        private double tipProbability = 0.3;
+        private int lonerAfterMissed = 3;
+        private double lonerReputationDelta = -1;
+        private double lonerReputationCap = -3;
+    }
+
+    /** Roadmap V3.1 R31-D4: complaints about night work (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class NightWork {
+        private boolean enabled = true;
+        private int nightStartHour = 22;
+        private int nightEndHour = 6;
+        private double thresholdHours = 3;
+        private double windowDays = 7;
+        private double annoyedWithinDays = 30;
+        private double friendlyTrustDelta = -1;
+        private double annoyedTrustDelta = -3;
+        /** Game time between two exports counts at most this long (a pause or a loaded save is no night work). */
+        private double maxSampleGapMinutes = 60;
+    }
+
+    /** Roadmap V3.1 R31-D5: crop damage on neighbour fields (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class CropDamage {
+        private boolean enabled = true;
+        private int minSamples = 3;
+        private double trustDelta = -3;
+        private double repeatDays = 60;
+        private long compensationPerSample = 150;
+        private double declineTrustDelta = -5;
+        private double decisionDays = 7;
+        private String hintText = "Pass auf, wo du langfährst – das ist ein bestelltes Feld eines Nachbarn.";
+    }
+
+    /** Roadmap V3.1 R31-D6: farm holidays (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class FarmHoliday {
+        private boolean enabled = true;
+        private long setupCost = 20000;
+        private double baseIncomePerMonth = 800;
+        /** Season factor per FS25 period of the month that ended; other periods other-season-factor. */
+        private Map<Integer, Double> seasonFactors = new LinkedHashMap<>(Map.of(4, 1.5, 5, 1.5, 6, 1.5, 10, 1.2));
+        private double otherSeasonFactor = 0.7;
+        private Map<String, Double> reputationFactors = new LinkedHashMap<>(Map.of("GOOD", 1.2, "NEUTRAL", 1.0,
+                "CONTROVERSIAL", 0.7));
+        private double goodHealth = 70;
+        private double goodHealthFactor = 1.2;
+        private double badHealth = 40;
+        private double badHealthFactor = 0.6;
+        private double noiseCut = 0.1;
+        private double smellCut = 0.1;
+        private List<Integer> smellPeriods = new ArrayList<>(List.of(4, 5, 6));
+    }
+
+    /** Roadmap V3.1 R31-D6: school visits (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class SchoolVisit {
+        private boolean enabled = true;
+        private double probabilityPerMonth = 0.25;
+        private List<Integer> excludedPeriods = new ArrayList<>(List.of(4, 5, 6));
+        private double minHealth = 70;
+        private double answerDays = 5;
+        private long allowance = 150;
+        private double reputationDelta = 2;
+        private double trustDelta = 2;
+    }
+
+    /** Roadmap V3.1 R31-D7: cooperative shares and dividend (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class CoopShares {
+        private boolean enabled = true;
+        private long sharePrice = 500;
+        private int maxShares = 200;
+        /** Rate = base-dividend-rate x price index of the year, capped to [min-rate, max-rate]. */
+        private double baseDividendRate = 0.04;
+        private double minRate = 0.0;
+        private double maxRate = 0.08;
+        private int dividendPeriod = 1;
+        private int noticeMonths = 12;
+    }
+
+    /** Roadmap V3.1 R31-D7: general assembly of the cooperative (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class CoopAssembly {
+        private int period = 2;
+        private double answerDays = 5;
+        private List<String> topics = new ArrayList<>(List.of("DIVIDEND_UP", "GRAIN_STORE", "FESTIVAL_SPONSORING"));
+        /** Votes per active character; a character votes yes with yes-base + trust / yes-trust-divisor. */
+        private int characterVotes = 10;
+        private double yesBase = 0.5;
+        private double yesTrustDivisor = 200;
+        /** Effects of an approved topic until the next assembly. */
+        private double dividendUpPoints = 0.01;
+        private double grainStoreRumorBonus = 0.05;
+        private double festivalSponsoringReputation = 1;
+    }
+
+    /** Roadmap V3.1 R31-D7: board of the cooperative (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class CoopBoard {
+        private int minShares = 40;
+        private double minTrust = 50;
+        private double rumorDaysEarlier = 2;
+        private double forwardContractBonus = 0.1;
+        private double reputationPerYear = 2;
+        /** FS25 periods of the quarterly board meetings (mandatory dates in the calendar). */
+        private List<Integer> meetingPeriods = new ArrayList<>(List.of(1, 4, 7, 10));
+        private double meetingAnswerDays = 5;
+        private double missedTrustDelta = -3;
+        private int removedAfterMissed = 2;
+    }
+
+    /** Roadmap V3.1 R31-D8: diesel theft (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class DieselTheft {
+        private boolean enabled = true;
+        private double probabilityPerMonth = 0.05;
+        private double minLiters = 100;
+        private double shareMin = 0.3;
+        private double shareMax = 0.6;
+        private double maxLiters = 300;
+        private double dieselPricePerLiter = 1.6;
+        /** Insurance module "Diebstahl" of the storm / hail contract. */
+        private long insurancePremiumPerMonth = 8;
+        private long insuranceMinDamage = 150;
+        private long tankLockPrice = 250;
+        private double tankLockFactor = 0.1;
+        private int maxAttempts = 3;
+    }
+
     /**
      * Roadmap V3 R3-V2 / R3-V3: used machines bought from the workshop or a neighbour and own machines sold to neighbours
      * (owner decisions, placeholders). The used price follows the game's formula (Vehicle.calculateSellPrice).
@@ -1559,6 +1736,8 @@ public class RpsimProperties {
             m.put("RPSIM_INVESTMENT_GRANT", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_GUEST_INCOME", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_COOP_DIVIDEND", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_FARM_HOLIDAY_SETUP", FinanceClass.INVESTMENT); // Roadmap V3.1 R31-D6
+            m.put("RPSIM_TANK_LOCK", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 R31-D8
             m.put("PURCHASE_FUEL", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_SEEDS", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_FERTILIZER", FinanceClass.OPERATING_EXPENSE);

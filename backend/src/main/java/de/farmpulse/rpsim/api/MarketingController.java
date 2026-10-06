@@ -112,7 +112,7 @@ public class MarketingController {
     public ForwardContractsView forwardContracts() {
         Savegame sg = context.requireActive();
         RpsimProperties.ForwardContract c = props.getFormulas().getForwardContract();
-        return new ForwardContractsView(c.getMinLeadMonths(), c.getMaxLeadMonths(), c.getMinQuantity(), c.getMaxQuantity(),
+        return new ForwardContractsView(c.getMinLeadMonths(), c.getMaxLeadMonths(), c.getMinQuantity(), forwards.maxQuantity(sg),
                 c.getQuantityStep(), c.getMaxOpen(), Math.round(c.getFactorPerMonth() * 1000) / 10.0,
                 Math.round(c.getPenaltyShare() * 1000) / 10.0,
                 forwards.list(sg).stream().map(MarketingController::view).toList());

@@ -364,56 +364,69 @@ Kontrollankündigung. Ein kranker Mitarbeiter fährt ein paar Tage keinen Helfer
 
 ## D – Dorfleben
 
+**Stand 06.10.2026: umgesetzt** (Backend, Mod, Simulator, Hof-Tablet, Doku). Die Werte stehen unter
+`rpsim.formulas.village-newspaper`, `village-chat`, `stammtisch`, `night-work`, `crop-damage`, `farm-holiday`,
+`school-visit`, `coop-shares`, `coop-assembly`, `coop-board` und `diesel-theft`; Entscheidungen in `QUESTIONS.md`
+(05.10.2026). Nachtarbeit (D4), Flurschaden (D5, anfangs aus) und Dieselklau (D8) sind wie B je Spielstand schaltbar;
+im Weltmodus „idyllisch“ gibt es keinen Dieselklau, Vertrauensverluste und Entschädigungen von D4/D5 zählen halb. Neue
+Apps **Dorfblatt** und **Dorfchat**; Stammtisch, Schulbesuch, Generalversammlung und Vorstandssitzung laufen als
+Vorgänge im **Kalender**, Ferien auf dem Hof und Genossenschaftsanteile als Karten im **Handel**, das Tankschloss in der
+**Werkstatt**, der Baustein „Diebstahl“ in der **Versicherung**, die Flurschaden-Forderung in der **Flurkarte**. Neue
+Rollen `POLICE` und `SCHOOL`, neue Buchungsgründe `FARM_HOLIDAY_SETUP` und `TANK_LOCK`. Der Mod exportiert
+`calendar.dayTimeMs`, `vehiclePositions` (mit `FieldState`-Stichprobe) und `assets.vehicles[].fuel` und führt
+`VEHICLE_FUEL` aus. Bei den 🟡-Punkten von D5 gilt der Fallback (standardmäßig aus, Hinweis vor der ersten Beschwerde).
+Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitte 21.6 und 24.
+
 ### R31-D1 Dorfzeitung
 
-- [ ] Neue App **„Dorfblatt“**: eine Ausgabe je FS25-Periode, optional zusätzlich zur Monatsmitte. Rubriken:
+- [x] Neue App **„Dorfblatt“**: eine Ausgabe je FS25-Periode, optional zusätzlich zur Monatsmitte. Rubriken:
   - Aus dem Dorf: Feste, Zu- und Wegzüge, Vereine.
   - Vom Hof: deine öffentlichen Taten, z. B. Sponsoring, Hofladen, Rekordernte, Winterdienst.
   - Markt: Preisentwicklung aus `prices`, Gerüchte ohne Gewähr.
   - Amtliches: Stichtage, Sperrzonen, Kontrollen.
   - Kleinanzeigen: offene Angebote von Nachbarn (R3-H, A2, A3).
-- [ ] **Fakten aus dem Backend, Text von der KI**, ohne KI mit Vorlagen. Die Zeitung nennt nur, was öffentlich ist
+- [x] **Fakten aus dem Backend, Text von der KI**, ohne KI mit Vorlagen. Die Zeitung nennt nur, was öffentlich ist
   (`PublicActionEvent`). Private Geldsachen erscheinen nie. Ausnahme: Öffentlich gewordene Zahlungsausfälle, wie beim
   Dorf-Ansehen.
-- [ ] Ältere Ausgaben bleiben lesbar. Die Chronik-Datei (R3-T2) kann die Titelzeilen übernehmen.
+- [x] Ältere Ausgaben bleiben lesbar. Die Chronik-Datei (R3-T2) kann die Titelzeilen übernehmen.
 
 **Beleg:** – (Backend und Oberfläche).
 
 ### R31-D2 Dorf-Gruppenchat
 
-- [ ] Neue App **„Dorfchat“** im Stil eines Messengers: Gruppe „Dorf“ plus Gruppen für Vereine (R2-E4) und Nachbarn.
-- [ ] Nachrichten der Charaktere:
+- [x] Neue App **„Dorfchat“** im Stil eines Messengers: Gruppe „Dorf“ plus Gruppen für Vereine (R2-E4) und Nachbarn.
+- [x] Nachrichten der Charaktere:
   - kurze Ankündigungen („Morgen Grünschnittabfuhr“),
   - Hilfegesuche (Links auf R3-H4, R3-H5 und A3),
   - Klatsch und Glückwünsche.
 
   Ton und Häufigkeit wie beim Dorfleben (`VillageLifeService`), Obergrenze je Tag.
-- [ ] Der Spieler kann in Gruppen schreiben. Es gelten die Regeln von „Nachricht verfassen“: Ton-Klassifikator,
+- [x] Der Spieler kann in Gruppen schreiben. Es gelten die Regeln von „Nachricht verfassen“: Ton-Klassifikator,
   Pacing-Limit, keine Mechanik über Freitext.
 
 **Beleg:** – (Backend und Oberfläche).
 
 ### R31-D3 Stammtisch
 
-- [ ] Wiederkehrende Einladung in die Dorfkneipe (feste Periode oder alle N Spieltage, Konfig). Zusage per Knopf oder
+- [x] Wiederkehrende Einladung in die Dorfkneipe (feste Periode oder alle N Spieltage, Konfig). Zusage per Knopf oder
   als Frage im Spiel (F2).
-- [ ] Wer hingeht:
+- [x] Wer hingeht:
   - Vertrauensbonus bei den Anwesenden,
   - das nächste Gerücht (`MarketEventType.RUMOR`) ist mit höherer Wahrscheinlichkeit richtig
     (Aufschlag auf `rpsim.formulas.market.rumor-accurate-probability`, heute 0,7),
   - ab und zu ein Tipp auf eine anstehende Versteigerung oder einen verkaufsbereiten Feldbesitzer.
-- [ ] Wer nie kommt, gilt irgendwann als „eigenbrötlerisch“: kleiner Abzug beim Dorf-Ansehen, gedeckelt.
+- [x] Wer nie kommt, gilt irgendwann als „eigenbrötlerisch“: kleiner Abzug beim Dorf-Ansehen, gedeckelt.
 
 **Beleg:** – (Backend; Gerüchte aus `MarketEventEngine`).
 
 ### R31-D4 Beschwerden über Nachtarbeit
 
-- [ ] Laufen Helfer der Spieler-Farm (`workforce.activeJobs`, R2-A4) in der Nacht (Tageszeit aus
+- [x] Laufen Helfer der Spieler-Farm (`workforce.activeJobs`, R2-A4) in der Nacht (Tageszeit aus
   `environment.dayTime`, Konfig z. B. 22–6 Uhr), sammelt das Backend Nachtstunden.
-- [ ] In der **Erntezeit** (eigene Felder `HARVESTABLE`) zeigt das Dorf Verständnis, und es gibt keine Beschwerde.
+- [x] In der **Erntezeit** (eigene Felder `HARVESTABLE`) zeigt das Dorf Verständnis, und es gibt keine Beschwerde.
   Sonst kommt nach einer Schwelle eine Beschwerde eines Dorfbewohners, erst freundlich, dann genervt. Folgen: kleiner
   Vertrauensverlust, Klatsch in der Dorfzeitung.
-- [ ] Abschaltbar, Werte in `rpsim.formulas.night-work.*`.
+- [x] Abschaltbar, Werte in `rpsim.formulas.night-work.*`.
 
 **Beleg:** ✅ `workforce.activeJobs` (R2-A4) und die Tageszeit (`environment.dayTime`, heute schon in
 `RPSimGameAdapter:getGameTime`) werden exportiert. Der Export muss die Tageszeit als eigenes Feld mitgeben
@@ -421,15 +434,15 @@ Kontrollankündigung. Ein kranker Mitarbeiter fährt ein paar Tage keinen Helfer
 
 ### R31-D5 Flurschaden
 
-- [ ] Der Mod exportiert alle 10 s eine Stichprobe der Positionen eigener Fahrzeuge, die gerade gefahren werden
+- [x] Der Mod exportiert alle 10 s eine Stichprobe der Positionen eigener Fahrzeuge, die gerade gefahren werden
   (`getIsControlled()` oder `getIsAIActive()`). Für jede Position bestimmt er:
   - `farmlandId` über `g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)`,
   - ob dort ein Feld mit Frucht steht, über eine Stichprobe mit `FieldState` an dieser Stelle (wie der V2-Fallback
     `fieldState:update(x, z)`).
-- [ ] Backend: Mehrere Stichproben in Folge auf dem **bestellten Feld eines Nachbarn**, ohne laufenden Auftrag auf
+- [x] Backend: Mehrere Stichproben in Folge auf dem **bestellten Feld eines Nachbarn**, ohne laufenden Auftrag auf
   diesem Feld, ergeben eine Beschwerde des Besitzers („Da sind ja Fahrspuren quer durch meinen Raps!“). Folgen:
   Vertrauensverlust, bei Wiederholung eine Entschädigungsforderung (Formular zahlen/ablehnen, wie R2-D2).
-- [ ] Mindestens N Stichproben in Folge (Konfig), damit kurzes Abkürzen am Feldrand nicht zählt. Abschaltbar.
+- [x] Mindestens N Stichproben in Folge (Konfig), damit kurzes Abkürzen am Feldrand nicht zählt. Abschaltbar.
 
 **Beleg:** ✅ `Economy/FarmlandManager.md` (LUADOC): `getFarmlandIdAtWorldPosition(worldPosX, worldPosZ)`. ✅
 Fahrzeugposition über `getWorldTranslation(self.rootNode)` (Dump `Vehicle.lua`). ✅ `FieldState:update(x, z)` als
@@ -441,49 +454,49 @@ Beschwerde („Pass auf, wo du langfährst“).
 
 ### R31-D6 Ferien auf dem Bauernhof und Hofführungen
 
-- [ ] **Ferien auf dem Bauernhof:** einmalige Einrichtung (Konfig-Betrag, Formular), danach monatliche Gäste. Die
+- [x] **Ferien auf dem Bauernhof:** einmalige Einrichtung (Konfig-Betrag, Formular), danach monatliche Gäste. Die
   Einnahmen (`GUEST_INCOME`) hängen ab von:
   - Saison: Sommer und Ferien höher,
   - Dorf-Ansehen,
   - Tieren auf dem Hof mit guter Gesundheit (R2-A7).
-- [ ] Die Gäste reagieren auf echte Werte:
+- [x] Die Gäste reagieren auf echte Werte:
   - schlechte Stallwerte → schlechte Bewertungen,
   - Nachtarbeit (D4) → Beschwerde über Lärm,
   - Güllefahren in der Hauptsaison (B3-Daten) → Beschwerde über den Geruch.
-- [ ] **Hofführungen für Schulklassen:** Anfragen der Schule, Zusage per Knopf. Stärkt das Dorf-Ansehen und bringt eine
+- [x] **Hofführungen für Schulklassen:** Anfragen der Schule, Zusage per Knopf. Stärkt das Dorf-Ansehen und bringt eine
   kleine Aufwandsentschädigung. Voraussetzung sind Tiere mit guter Gesundheit.
 
 **Beleg:** – (Backend; Daten aus R2-A7, D4, B3).
 
 ### R31-D7 Genossenschaftsanteile
 
-- [ ] Anteile an der Genossenschaft (`COOPERATIVE`) zeichnen (Formular, feste Stückelung). Jährliche Dividende nach
+- [x] Anteile an der Genossenschaft (`COOPERATIVE`) zeichnen (Formular, feste Stückelung). Jährliche Dividende nach
   dem Jahresabschluss (`COOP_DIVIDEND`), abhängig von der Marktlage (Durchschnitt der Preise im Jahr, Konfig).
-- [ ] **Generalversammlung** einmal im Jahr: Abstimmung über ein Thema (Ja/Nein, auch als Frage im Spiel, F2), z. B. ein
+- [x] **Generalversammlung** einmal im Jahr: Abstimmung über ein Thema (Ja/Nein, auch als Frage im Spiel, F2), z. B. ein
   neues Getreidelager oder eine höhere Dividende. Das Ergebnis bestimmt eine Formel aus den Stimmen der Charaktere und
   deiner.
-- [ ] Ab einer Anteilszahl und gutem Vertrauen: **Wahl in den Vorstand**. Das bringt Vorteile nach Formel, z. B. frühere
+- [x] Ab einer Anteilszahl und gutem Vertrauen: **Wahl in den Vorstand**. Das bringt Vorteile nach Formel, z. B. frühere
   Gerüchte, Vorrang bei Vorkontrakten (R3-M2) und etwas Ansehen, aber auch Pflichttermine im Kalender.
-- [ ] Kündigung der Anteile mit Frist (Konfig), Rückzahlung zum Nennwert.
+- [x] Kündigung der Anteile mit Frist (Konfig), Rückzahlung zum Nennwert.
 
 **Beleg:** – (Backend).
 
 ### R31-D8 Dieselklau
 
-- [ ] Seltenes Ereignis (Konfig, im idyllischen Weltmodus aus): Nachts fehlt Diesel in einer abgestellten eigenen
+- [x] Seltenes Ereignis (Konfig, im idyllischen Weltmodus aus): Nachts fehlt Diesel in einer abgestellten eigenen
   Maschine.
-- [ ] Neue Anweisung `VEHICLE_FUEL { vehicleId, delta }` (nur negativ). Der Mod prüft:
+- [x] Neue Anweisung `VEHICLE_FUEL { vehicleId, delta }` (nur negativ). Der Mod prüft:
   - das Fahrzeug gehört der Spieler-Farm, niemand sitzt drin, kein Helfer fährt,
   - es hat einen Diesel-Tank (`getConsumerFillUnitIndex(FillType.DIESEL)`).
 
   Dann zieht er höchstens den vorhandenen Stand ab (`getFillUnitFillLevel`,
   `addFillUnitFillLevel(farmId, fillUnitIndex, -menge, FillType.DIESEL, ToolType.UNDEFINED, nil)`). Elektrische und
   Methan-Fahrzeuge bleiben verschont.
-- [ ] Danach Mail der Polizei bzw. Klatsch („Bei Müllers haben sie auch schon abgezapft“). Ist der Schaden groß, zahlt
+- [x] Danach Mail der Polizei bzw. Klatsch („Bei Müllers haben sie auch schon abgezapft“). Ist der Schaden groß, zahlt
   die Versicherung (Sturm/Hagel-Vertrag, neuer Baustein „Diebstahl“, Konfig).
-- [ ] Gegenmaßnahme: **Tankschloss** bei der Werkstatt kaufen (Formular, einmalig je Fahrzeug). Es senkt die
+- [x] Gegenmaßnahme: **Tankschloss** bei der Werkstatt kaufen (Formular, einmalig je Fahrzeug). Es senkt die
   Wahrscheinlichkeit für dieses Fahrzeug stark.
-- [ ] `assets.vehicles[].fuel` (Dieselstand) wird exportiert, damit das Backend nur Fahrzeuge mit genug Diesel wählt.
+- [x] `assets.vehicles[].fuel` (Dieselstand) wird exportiert, damit das Backend nur Fahrzeuge mit genug Diesel wählt.
 
 **Beleg:**
 - ✅ `Specializations/FillUnit.md` (LUADOC): `addFillUnitFillLevel(farmId, fillUnitIndex, delta, fillType, toolType,

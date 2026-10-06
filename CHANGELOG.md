@@ -105,6 +105,38 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   - Settings → *Belastende Ereignisse*: on-site check, fertiliser checks, animal disease and sickness can be switched
     off per savegame; in the idyllic world mode there is no animal disease and the rest happens half as often / half as
     hard. Manual test plan section 23.
+- **Village life (Roadmap V3.1, R31-D):** owner decisions of 2026-10-05 in `QUESTIONS.md`.
+  - **Village newspaper (D1):** new app *Dorfblatt* - an issue at every period start (an extra mid-month issue by
+    config) with the public facts of the past period in the sections *Aus dem Dorf*, *Vom Hof*, *Markt* (the 3 largest
+    price changes, rumours "ohne Gewähr"), *Amtliches* and *Kleinanzeigen*; written by the AI per section (templates
+    without AI), empty sections left out, never private money matters; the headline goes into the diary / chronicle.
+  - **Village group chat (D2):** new app *Dorfchat* with the groups *Dorf*, *Nachbarn* and one per club; announcements,
+    gossip, congratulations (at most 3 character posts per game day) and a help request with a link for every request
+    of a neighbour; the player writes with the rules of *Nachricht verfassen* (tone, capped trust of one member, pacing
+    per group and game day), one member answers.
+  - **Regulars' table (D3):** invitation every 14 game days (case in *Kalender*, in-game question `STAMMTISCH`):
+    trust with 3 attendees, the next rumour accurate with 0.7 + 0.15, sometimes a tip on an auction or a sell-willing
+    field owner; 3 missed in a row cost reputation (at most −3).
+  - **Night work (D4):** helpers working at night (22–6 h, `calendar.dayTimeMs`) outside the harvest: from 3 hours in 7
+    days a complaint of a villager, friendly and then annoyed with a line in the newspaper.
+  - **Crop damage (D5):** samples of the driven vehicles (`vehiclePositions` with a `FieldState` sample): 3 in a row on a
+    neighbour's field with a crop - first a hint, then a complaint, repeated a compensation claim of 150 € per sample in
+    *Flurkarte* (pay / refuse like R2-D2). Off by default.
+  - **Farm holidays and school visits (D6):** setup 20,000 € (`FARM_HOLIDAY_SETUP`), monthly guests
+    (`GUEST_INCOME` = 800 € × season × reputation × animals, cuts for night work and slurry in the summer, review
+    mails); requests of the village school (new role `SCHOOL`) for a farm tour: 150 €, reputation.
+  - **Cooperative shares (D7):** shares of 500 € (at most 200, `COOP_SHARES`), dividend in March after the price index
+    (`COOP_DIVIDEND`, 0–8 %), cancellation with 12 months notice; general assembly in April with a vote; board from 40
+    shares and trust 50 (earlier rumours, +10 % forward-contract quantity, reputation; quarterly meetings, voted out
+    after two missed ones). Calendar dates for the assembly, the dividend and the board meetings.
+  - **Diesel theft (D8):** rarely at a month start, in the next night a parked own vehicle loses 30–60 % of its diesel
+    (max. 300 l, `VEHICLE_FUEL` now executed by the mod, retried at most 3 times); mail of the police (new role
+    `POLICE`), gossip; insurance module *Diebstahl* (+8 € per month) pays damages above 150 €; tank lock at the workshop
+    250 € per vehicle (`TANK_LOCK`).
+  - The mod exports `calendar.dayTimeMs`, `vehiclePositions` and `assets.vehicles[].fuel`. Settings → *Belastende
+    Ereignisse*: night work, crop damage and diesel theft switchable per savegame; idyllic world mode: no diesel theft,
+    half the trust losses and compensations of D4 / D5. New booking reasons `FARM_HOLIDAY_SETUP` and `TANK_LOCK` (an
+    older mod refuses them). Manual test plan section 24.
 - **Leasing out own fields (Roadmap V3, R3-L):**
   - Flurkarte → own field → **Verpachten**: term 1–3 FS25 years and a desired rent per ha and month (guide value =
     field price × 5 % / 12 per ha). Up to three active neighbours with enough capital answer with a first bid

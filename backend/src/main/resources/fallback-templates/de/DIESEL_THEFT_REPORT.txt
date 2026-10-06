@@ -1,0 +1,6 @@
+Anzeige wegen Dieseldiebstahl
+Guten Tag,
+
+wir haben den Diebstahl aufgenommen: Aus {{vehicleName}} wurden in der Nacht rund {{liters}} Liter Diesel abgezapft. Leider gibt es noch keine Spur. Ein Tankschloss aus der Werkstatt schützt vor weiteren Fällen.
+
+{{characterName}}

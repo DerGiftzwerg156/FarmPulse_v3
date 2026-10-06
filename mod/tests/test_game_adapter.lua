@@ -105,7 +105,7 @@ function T.TestGameAdapter:testCalendarFromEnvironment()
     helpers.fakeGame()
     g_i18n = { formatPeriod = function() return "Oktober" end }
     lu.assertEquals(RPSimGameAdapter.new():collectCalendar(), { period = 8, dayInPeriod = 2, daysPerPeriod = 3, year = 2,
-        monotonicDay = 3, periodName = "Oktober" })
+        monotonicDay = 3, periodName = "Oktober", dayTimeMs = 3600000 })
     g_i18n = nil
     lu.assertNil(RPSimGameAdapter.new():collectCalendar().periodName)
 end

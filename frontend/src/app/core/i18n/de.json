@@ -34,7 +34,9 @@
     "insurance": "Versicherung",
     "stable": "Stall",
     "workshop": "Werkstatt",
-    "trade": "Handel"
+    "trade": "Handel",
+    "newspaper": "Dorfblatt",
+    "chat": "Dorfchat"
   },
   "apps": {
     "mail": "Mails aus dem Dorf – antworten, wann du willst",
@@ -52,7 +54,9 @@
     "workshop": "Wartungsvertrag, Reparaturen, Mechaniker und Gebrauchtmaschinen",
     "diary": "Die Chronik deines Hofs",
     "settings": "KI, Spielstand und Fragen im Spiel",
-    "trade": "Ware und Arbeit mit den Nachbarn"
+    "trade": "Ware und Arbeit mit den Nachbarn",
+    "newspaper": "Die Dorfzeitung – jede Periode eine neue Ausgabe, ältere bleiben lesbar",
+    "chat": "Gruppen für das Dorf, die Nachbarn und die Vereine"
   },
   "tablet": {
     "apps": "Apps",
@@ -151,7 +155,9 @@
       "TAX_ADVISOR": "Steuerberater:in",
       "FAMILY": "Familie",
       "CLUB": "Verein",
-      "SOCIAL_INSURANCE": "Berufsgenossenschaft"
+      "SOCIAL_INSURANCE": "Berufsgenossenschaft",
+      "POLICE": "Polizei",
+      "SCHOOL": "Dorfschule"
     },
     "characterCategory": {
       "MANDATORY": "Pflichtrolle",
@@ -415,7 +421,9 @@
       "SOCIAL_INSURANCE": "Berufsgenossenschaft",
       "GUEST_INCOME": "Ferien auf dem Hof",
       "COOP_SHARES": "Genossenschaftsanteile",
-      "COOP_DIVIDEND": "Genossenschaftsdividende"
+      "COOP_DIVIDEND": "Genossenschaftsdividende",
+      "FARM_HOLIDAY_SETUP": "Einrichtung Ferienwohnung",
+      "TANK_LOCK": "Tankschloss"
     },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
@@ -496,7 +504,12 @@
       "ANIMAL_OFFER": "Tierangebot",
       "ANIMAL_REQUEST": "Tieranfrage",
       "GRANT_REPAYMENT": "Rückforderung Förderung",
-      "SOCIAL_INSURANCE_BILL": "Beitrag Berufsgenossenschaft"
+      "SOCIAL_INSURANCE_BILL": "Beitrag Berufsgenossenschaft",
+      "STAMMTISCH_INVITATION": "Stammtisch",
+      "CROP_DAMAGE_CLAIM": "Flurschaden",
+      "SCHOOL_VISIT": "Hofführung Schulklasse",
+      "COOP_ASSEMBLY": "Generalversammlung",
+      "COOP_BOARD_MEETING": "Vorstandssitzung"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -558,7 +571,11 @@
       "NOT_ENOUGH_ANIMALS": "Zu wenige Tiere im Stall",
       "WARNING": "Verwarnung",
       "CUT": "Prämie gekürzt",
-      "DISEASE_CHECK": "Seuchen-Pflichtuntersuchung"
+      "DISEASE_CHECK": "Seuchen-Pflichtuntersuchung",
+      "ATTENDED": "Teilgenommen",
+      "MISSED": "Verpasst",
+      "VISITED": "Besuch war da",
+      "REJECTED": "Abgelehnt"
     },
     "animalType": {
       "COW": "Rinder",
@@ -677,7 +694,9 @@
       "RPSIM_SOCIAL_INSURANCE": "Berufsgenossenschaft",
       "RPSIM_GUEST_INCOME": "Ferien auf dem Hof",
       "RPSIM_COOP_SHARES": "Genossenschaftsanteile",
-      "RPSIM_COOP_DIVIDEND": "Genossenschaftsdividende"
+      "RPSIM_COOP_DIVIDEND": "Genossenschaftsdividende",
+      "RPSIM_FARM_HOLIDAY_SETUP": "Einrichtung Ferienwohnung",
+      "RPSIM_TANK_LOCK": "Tankschloss"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",
@@ -733,7 +752,9 @@
       "TAX_ADVISOR": "Angebot der Steuerberatung annehmen oder ablehnen",
       "NEIGHBOR_TRADE": "Handel mit Nachbarn",
       "NEIGHBOR_MISSION": "Aufträge der Nachbarn",
-      "FARM_SHOP": "Bestellungen für den Hofladen"
+      "FARM_SHOP": "Bestellungen für den Hofladen",
+      "STAMMTISCH": "Einladungen zum Stammtisch",
+      "COOP_ASSEMBLY": "Abstimmungen der Generalversammlung"
     },
     "neighborRole": {
       "DAIRY": "Milchviehbetrieb",
@@ -820,6 +841,15 @@
       "ASP": "Afrikanische Schweinepest",
       "AVIAN_FLU": "Geflügelpest",
       "BLUETONGUE": "Blauzungenkrankheit"
+    },
+    "coopTopic": {
+      "DIVIDEND_UP": "eine höhere Dividende",
+      "GRAIN_STORE": "ein neues Getreidelager",
+      "FESTIVAL_SPONSORING": "Sponsoring der Dorffeste"
+    },
+    "coopResult": {
+      "ACCEPTED": "Angenommen",
+      "REJECTED": "Abgelehnt"
     }
   },
   "onboarding": {
@@ -1459,8 +1489,11 @@
       "fertilizer": "Kontrollen der Düngeverordnung",
       "disease": "Tierseuchen",
       "sickLeave": "Krankheit und Arbeitsunfälle",
-      "hint": "Abgeschaltete Ereignisse kommen in diesem Spielstand nicht vor. Anträge, Prämien, Förderung und der Beitrag der Berufsgenossenschaft bleiben.",
-      "idyllic": "Weltmodus idyllisch: keine Tierseuchen, Kontrollen, Kürzungen, Bußgelder der Düngeverordnung und Ausfälle nur zu {percent} %."
+      "hint": "Abgeschaltete Ereignisse kommen in diesem Spielstand nicht vor. Anträge, Prämien, Förderung und der Beitrag der Berufsgenossenschaft bleiben. Flurschaden ist anfangs aus.",
+      "idyllic": "Weltmodus idyllisch: keine Tierseuchen und kein Dieselklau; Kontrollen, Kürzungen, Bußgelder der Düngeverordnung, Ausfälle, Vertrauensverluste durch Nachtarbeit und Flurschaden sowie Entschädigungen nur zu {percent} %.",
+      "nightWork": "Beschwerden über Nachtarbeit",
+      "cropDamage": "Flurschaden auf Nachbarfeldern",
+      "dieselTheft": "Dieselklau"
     }
   },
   "notices": {
@@ -1552,7 +1585,22 @@
     "paid": "Bezahlt {amount}",
     "renewLeaseOut": "Verlängern ({amount} / Monat)",
     "authorityBill": "{title}: {amount}",
-    "authorityBillHint": "Der Betrag wird erst abgebucht, wenn du auf „Zahlen“ klickst. Nach der Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, später droht die Vollstreckung."
+    "authorityBillHint": "Der Betrag wird erst abgebucht, wenn du auf „Zahlen“ klickst. Nach der Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, später droht die Vollstreckung.",
+    "cropDamageClaim": "{name} verlangt {amount} für Fahrspuren durch die Frucht ({samples} Stichproben).",
+    "cropDamageHint": "Ablehnen kostet Vertrauen. Fahr am Feldrand oder auf Wegen, wenn das Feld eines Nachbarn bestellt ist.",
+    "stammtisch": "{name} lädt dich zum Stammtisch in die Dorfkneipe ein.",
+    "stammtischGo": "Hingehen",
+    "stammtischHint": "Am Stammtisch wächst das Vertrauen, und das nächste Gerücht ist verlässlicher. Wer nie kommt, gilt irgendwann als eigenbrötlerisch.",
+    "schoolVisit": "{name} fragt nach einer Hofführung für eine Schulklasse (Aufwandsentschädigung {amount}).",
+    "schoolVisitHint": "Eine Hofführung stärkt das Ansehen im Dorf. Voraussetzung ist ein Stall mit gesunden Tieren.",
+    "coopAssembly": "Generalversammlung der Genossenschaft: Abstimmung über {topic}.",
+    "coopBoardElection": "Du stehst zur Wahl in den Vorstand.",
+    "voteYes": "Ja",
+    "voteNo": "Nein",
+    "coopAssemblyHint": "Deine Anteile sind deine Stimmen. Ohne Antwort stimmen nur die anderen Mitglieder ab.",
+    "coopBoardMeeting": "Vorstandssitzung der Genossenschaft.",
+    "attend": "Teilnehmen",
+    "coopBoardMeetingHint": "Eine verpasste Sitzung kostet Vertrauen, nach zwei verpassten Sitzungen bist du aus dem Vorstand raus."
   },
   "tasks": {
     "filter": "Aufgaben filtern",
@@ -1619,7 +1667,10 @@
       "salaries": "Gehälter {amount}",
       "contract": "{kind} {amount}",
       "leaseEnd": "Pacht Feld {id} endet",
-      "deadline": "Frist: {what}"
+      "deadline": "Frist: {what}",
+      "stammtisch": "Nächster Stammtisch",
+      "coopAssembly": "Generalversammlung der Genossenschaft",
+      "coopBoardMeeting": "Vorstandssitzung"
     },
     "debits": {
       "salaries": "Gehälter ({n})",
@@ -1632,7 +1683,10 @@
       "ROTATION_CHECK": "Fruchtfolge-Prüfung",
       "birthday": "Geburtstag {name}",
       "weddingDay": "Hochzeitstag",
-      "schoolStart": "Einschulung {name}"
+      "schoolStart": "Einschulung {name}",
+      "COOP_ASSEMBLY": "Generalversammlung",
+      "COOP_DIVIDEND": "Dividende",
+      "COOP_BOARD_MEETING": "Vorstandssitzung"
     },
     "invitations": "Einladungen"
   },
@@ -1666,7 +1720,9 @@
     },
     "disabled": "Die Dürre-Erkennung ist ausgeschaltet.",
     "damages": "Schäden",
-    "damagesIntro": "Hagel, Sturm und Wildschweine: Melde einen versicherten Schaden rechtzeitig, beim Wildschaden verhandelst du mit dem Jagdpächter."
+    "damagesIntro": "Hagel, Sturm und Wildschweine: Melde einen versicherten Schaden rechtzeitig, beim Wildschaden verhandelst du mit dem Jagdpächter.",
+    "theftCover": "Baustein „Diebstahl“ (Dieselklau)",
+    "theftCoverHint": "Kostet zusätzlich im Monat und ersetzt einen Dieselklau ab dem Mindestschaden voll, ohne Selbstbehalt."
   },
   "workshop": {
     "maintenance": "Wartung",
@@ -1721,6 +1777,17 @@
       "demoOffers": "Vorführangebote",
       "demoOfferText": "{name} bietet den {vehicle} (Listenpreis {price}) kostenlos zur Probe an.",
       "demoAccept": "Vorführung annehmen"
+    },
+    "tankLock": {
+      "title": "Tankschloss",
+      "intro": "Ein Tankschloss für {price} je Maschine macht Dieselklau bei dieser Maschine deutlich unwahrscheinlicher.",
+      "fuel": "{liters} von {capacity} l Diesel",
+      "locked": "Tankschloss",
+      "buy": "Tankschloss kaufen ({price})",
+      "none": "Keine eigenen Maschinen im letzten Export.",
+      "thefts": "Dieselklau",
+      "theft": "{time}: {liters} l aus {vehicle} ({damage})",
+      "paid": "Versicherung zahlte {amount}"
     }
   },
   "authorities": {
@@ -1910,6 +1977,32 @@
       "requestText": "{name} kauft dir {count} {subType} ({type}) für {amount} ab ({unit} je Tier).",
       "caseHint": "Die Tiere wechseln nach der Zusage im Spiel den Stall; bezahlt wird im selben Schritt.",
       "history": "{count} {subType} für {amount}"
+    },
+    "holiday": {
+      "title": "Ferien auf dem Hof",
+      "intro": "Richte einmalig für {cost} eine Ferienwohnung ein. Danach zahlen Feriengäste jeden Monat ab {base} – mehr im Sommer, mit gutem Ansehen und gesunden Tieren.",
+      "setup": "Ferienwohnung einrichten ({cost})",
+      "preview": "Laufender Monat ({month}): voraussichtlich {amount}",
+      "factors": "Saison × {season} · Ansehen × {reputation} · Tiere × {animals}",
+      "noise": "Lärm",
+      "smell": "Güllegeruch",
+      "badReview": "Schlechte Bewertung",
+      "firstMonth": "Die ersten Gäste zahlen nach dem ersten vollen Monat.",
+      "hint": "Nachtarbeit der Helfer und Gülle im Sommer kosten je 10 %, ein Stall in schlechtem Zustand bringt eine schlechte Bewertung."
+    },
+    "coop": {
+      "title": "Genossenschaftsanteile",
+      "board": "Im Vorstand",
+      "intro": "Ein Anteil kostet {price}, höchstens {max} Anteile. Kündigung mit {months} Monaten Frist, Rückzahlung zum Nennwert.",
+      "holding": "{shares} Anteile ({value})",
+      "noticed": "{shares} gekündigt",
+      "dividend": "Erwartete Dividende zum Jahreswechsel: {rate} %",
+      "boardHint": "Ab {shares} Anteilen und gutem Vertrauen wählt dich die Generalversammlung in den Vorstand.",
+      "count": "Anteile",
+      "buy": "Zeichnen ({amount})",
+      "cancel": "Kündigen",
+      "noticeOpen": "{shares} Anteile gekündigt – Rückzahlung am {time}",
+      "noticePaid": "{shares} Anteile am {time} zurückgezahlt"
     }
   },
   "credit": {
@@ -1978,5 +2071,25 @@
     },
     "leaseConsentGiven": "Verpachtung erlaubt",
     "requestLeaseConsent": "Zustimmung zur Verpachtung"
+  },
+  "newspaper": {
+    "issues": "Ausgaben",
+    "number": "Nr. {n}",
+    "midMonth": "Monatsmitte",
+    "none": "Noch keine Ausgabe – das Dorfblatt erscheint zu Beginn jeder Periode.",
+    "masthead": "Dorfblatt Nr. {n} · {time}",
+    "writing": "Der Artikel wird noch geschrieben …"
+  },
+  "chat": {
+    "groups": "Gruppen",
+    "members": "{n} Mitglieder",
+    "none": "Noch keine Gruppen.",
+    "typing": "schreibt …",
+    "openRequest": "Zur Anfrage",
+    "empty": "Noch keine Nachrichten.",
+    "placeholder": "Nachricht an die Gruppe",
+    "send": "Senden",
+    "pacing": "Deine letzte Nachricht in dieser Gruppe ist noch keinen Spieltag her – der Ton zählt erst wieder ab morgen.",
+    "hint": "Wie bei „Nachricht verfassen“: Der Ton deiner Nachricht wirkt auf das Vertrauen eines Mitglieds, Absprachen über Geld oder Preise laufen über die Formulare der Apps."
   }
 }

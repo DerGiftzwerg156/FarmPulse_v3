@@ -143,12 +143,22 @@ public class SettingsController {
         sg.setBurdenFertilizer(r.fertilizer());
         sg.setBurdenDisease(r.disease());
         sg.setBurdenSickLeave(r.sickLeave());
+        if (r.nightWork() != null) { // Roadmap V3.1 R31-D (null = unchanged, older clients)
+            sg.setBurdenNightWork(r.nightWork());
+        }
+        if (r.cropDamage() != null) {
+            sg.setBurdenCropDamage(r.cropDamage());
+        }
+        if (r.dieselTheft() != null) {
+            sg.setBurdenDieselTheft(r.dieselTheft());
+        }
         return burdenView(sg);
     }
 
     private Views.BurdenSettingsView burdenView(Savegame sg) {
         return new Views.BurdenSettingsView(sg.isBurdenAreaCheck(), sg.isBurdenFertilizer(), sg.isBurdenDisease(),
-                sg.isBurdenSickLeave(), sg.getTonePreset().name(),
+                sg.isBurdenSickLeave(), sg.isBurdenNightWork(), sg.isBurdenCropDamage(), sg.isBurdenDieselTheft(),
+                sg.getTonePreset().name(),
                 props.getFormulas().getBurdeningEvents().getIdyllicFactor());
     }
 

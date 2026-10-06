@@ -37,7 +37,8 @@ export interface AgendaDay {
 export function yearTone(kind: string): EventTone {
   if (kind === 'FESTIVAL') return 'farm';
   if (kind.startsWith('TAX_') || kind === 'LOAN_INSTALLMENT' || kind === 'SALARIES' || kind === 'CONTRACT_PAYMENT' || kind === 'MONTH_START') return 'money';
-  if (kind.startsWith('FAMILY_') || kind === 'SCHOOL_START') return 'com';
+  if (kind.startsWith('FAMILY_') || kind === 'SCHOOL_START' || kind === 'STAMMTISCH') return 'com';
+  if (kind.startsWith('COOP_')) return 'money'; // Roadmap V3.1 R31-D7: cooperative
   return 'sys';
 }
 
@@ -106,12 +107,17 @@ export class CalendarApp {
       SALARIES: () => this.i18n.t('calendar.agenda.salaries', { amount }),
       CONTRACT_PAYMENT: () => this.i18n.t('calendar.agenda.contract', { kind: this.i18n.t('enums.contractKind.' + e.subKind), amount }),
       LEASE_END: () => this.i18n.t('calendar.agenda.leaseEnd', { id: e.reference ?? '' }),
+      // Roadmap V3.1 R31-D3 / R31-D7
+      STAMMTISCH: () => this.i18n.t('calendar.agenda.stammtisch'),
+      COOP_ASSEMBLY: () => this.i18n.t('calendar.agenda.coopAssembly'),
+      COOP_BOARD_MEETING: () => this.i18n.t('calendar.agenda.coopBoardMeeting'),
     };
     const contractApp = e.subKind ? APPS.find((a) => a.id === contractAppId(e.subKind!)) : undefined;
     const apps: Record<string, [string, string | null]> = {
       MONTH_START: ['nav.bank', '/bank'], FESTIVAL: ['calendar.clubs', null], TAX_ASSESSMENT: ['calendar.taxOffice', '/aemter'],
       TAX_PREPAYMENT: ['calendar.taxOffice', '/aemter'], LOAN_INSTALLMENT: ['nav.bank', '/bank'], SALARIES: ['nav.employees', '/employees'],
       CONTRACT_PAYMENT: [contractApp?.label ?? 'nav.bank', contractApp?.path ?? null], LEASE_END: ['nav.farmland', '/farmland'],
+      STAMMTISCH: ['nav.village', null], COOP_ASSEMBLY: ['nav.trade', '/handel'], COOP_BOARD_MEETING: ['nav.trade', '/handel'],
     };
     const [app, link] = apps[e.kind] ?? ['nav.calendar', null];
     return { gameTime: e.gameTime, text: (texts[e.kind] ?? (() => e.kind))(), app: this.i18n.t(app), tone: yearTone(e.kind), link, query: null };

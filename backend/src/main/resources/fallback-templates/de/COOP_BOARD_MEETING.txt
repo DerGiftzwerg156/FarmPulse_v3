@@ -1,0 +1,6 @@
+Vorstandssitzung
+Guten Tag,
+
+die nächste Vorstandssitzung steht an. Bitte bestätigen Sie Ihre Teilnahme in der App „Kalender“ innerhalb von {{answerDays}} Tagen.
+
+{{characterName}}
