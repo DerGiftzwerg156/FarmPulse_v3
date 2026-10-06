@@ -32,6 +32,10 @@ const CROP_KEYS = ['fruitType', 'minHarvestingGrowthState', 'maxHarvestingGrowth
   'litersPerSqm'];
 // Roadmap V2 R2-B1: number of FS25 periods kept in the booking journal (proposed mod config financeJournalPeriods)
 export const FINANCE_JOURNAL_PERIODS = 13;
+// Booking statement (owner decisions 2026-10-06): like the mod config bookingLogEntries / bookingLogSingleTypes
+export const BOOKING_LOG_ENTRIES = 200;
+export const BOOKING_LOG_SINGLE_TYPES = ['SHOP_VEHICLE_BUY', 'SHOP_VEHICLE_SELL', 'SHOP_PROPERTY_BUY',
+  'SHOP_PROPERTY_SELL', 'FIELD_BUY', 'FIELD_SELL'];
 
 /** Small deterministic PRNG (mulberry32) so scenario runs are reproducible. */
 export function rng(seed) {
@@ -227,6 +231,7 @@ export class BridgeSimulator {
     // Roadmap V2 (R2-Q2): optional farm_facts blocks - null = not exported (like a mod without the block)
     this.journal = preset.journal ?? null;
     this.finances = preset.journal ? { periods: [] } : null;
+    this.bookings = preset.journal ? { nextSeq: 1, entries: [] } : null; // booking statement, same hook as the journal
     this.workforce = preset.workforce ? structuredClone(preset.workforce) : null;
     this.husbandries = preset.husbandries ? structuredClone(preset.husbandries) : null;
     this.fields = preset.fields ? structuredClone(preset.fields) : null;
@@ -280,7 +285,7 @@ export class BridgeSimulator {
 
   /** Roadmap V2 state the mod keeps in its savegame XML (journal R2-B1, worked time R2-A4, roster R2-A0). */
   roadmapV2State() {
-    return { finances: this.finances, workforce: this.workforce, husbandries: this.husbandries, fields: this.fields,
+    return { finances: this.finances, bookings: this.bookings, workforce: this.workforce, husbandries: this.husbandries, fields: this.fields,
       weather: this.weather, roster: this.roster, prompts: this.prompts, responses: this.responses,
       handledPrompts: this.handledPrompts };
   }
@@ -335,7 +340,7 @@ export class BridgeSimulator {
       Object.assign(this, { processed: s.processed ?? {}, priceEvents: s.priceEvents ?? [],
         contractReports: s.contractReports ?? [] });
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
-        'storage', 'farmlands', 'calendar', 'finances', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
+        'storage', 'farmlands', 'calendar', 'finances', 'bookings', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
         'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions', 'missionLimitReached',
         'vehiclePositions', 'stables']) {
         if (s[k] !== undefined) this[k] = s[k];
@@ -397,7 +402,7 @@ export class BridgeSimulator {
     if (stock) stock.amount = Math.max(0, stock.amount - liters);
     const revenue = Math.round((price * liters) / 1000);
     this.balance += revenue;
-    if (this.journal) this.book(this.journal.income, revenue);
+    if (this.journal) this.book(this.journal.income, revenue, { fillType, sellPoint, liters });
     return price;
   }
 
@@ -452,9 +457,10 @@ export class BridgeSimulator {
 
   // --------------------------------------------------------------- Roadmap V2 blocks (R2-Q2)
   /** R2-B1: cumulative sum per FS25 period and money type; only the last FINANCE_JOURNAL_PERIODS periods are kept. */
-  book(moneyType, amount) {
+  book(moneyType, amount, detail = {}) {
     if (!this.finances || !moneyType || !amount) return;
-    const { year, period } = this.buildCalendar();
+    const { year, period, dayInPeriod } = this.buildCalendar();
+    this.recordSingleBooking(year, period, dayInPeriod, moneyType, amount, detail);
     let entry = this.finances.periods.find((p) => p.year === year && p.period === period);
     if (!entry) {
       entry = { year, period, byType: {} };
@@ -465,9 +471,45 @@ export class BridgeSimulator {
     entry.byType[moneyType] = (entry.byType[moneyType] ?? 0) + amount;
   }
 
+  /**
+   * Booking statement, like RPSimBookingLog.record: tool bookings and BOOKING_LOG_SINGLE_TYPES are single entries, the
+   * rest is summed per game day and money type (sales also per fill type and sell point, with litres).
+   */
+  recordSingleBooking(year, period, day, category, amount, detail) {
+    if (!this.bookings) return;
+    const monotonicDay = this.monotonicDay();
+    const single = category.startsWith('RPSIM_') || BOOKING_LOG_SINGLE_TYPES.includes(category);
+    const liters = detail.liters > 0 ? detail.liters : undefined;
+    if (!single) {
+      const e = [...this.bookings.entries].reverse().find((x) => !x.single && x.monotonicDay === monotonicDay
+        && x.category === category && x.fillType === detail.fillType && x.sellPoint === detail.sellPoint);
+      if (e) {
+        e.amount += amount;
+        e.count += 1;
+        if (liters !== undefined) e.liters = (e.liters ?? 0) + liters;
+        return;
+      }
+    }
+    this.bookings.entries.push({ seq: this.bookings.nextSeq++, gameTime: this.gameTime, year, period, day,
+      monotonicDay, category, amount, count: 1, single, liters, fillType: detail.fillType,
+      sellPoint: detail.sellPoint, note: detail.note });
+    this.bookings.entries = this.bookings.entries.slice(-BOOKING_LOG_ENTRIES);
+  }
+
   /** Adds the optional blocks the scenario has; the others stay absent. */
   roadmapV2Blocks() {
     const blocks = {};
+    if (this.bookings) {
+      blocks.bookings = { nextSeq: this.bookings.nextSeq, entries: this.bookings.entries.map((e) => {
+        const out = { seq: e.seq, gameTime: Math.round(e.gameTime), year: e.year, period: e.period, day: e.day,
+          category: e.category, amount: Math.round(e.amount), count: e.count, single: e.single };
+        if (e.liters !== undefined) out.liters = Math.round(e.liters);
+        if (e.fillType !== undefined) out.fillType = e.fillType;
+        if (e.sellPoint !== undefined) out.sellPoint = e.sellPoint;
+        if (e.note) out.note = e.note;
+        return out;
+      }) };
+    }
     if (this.finances) {
       blocks.finances = { periods: this.finances.periods.map((p) => ({ year: p.year, period: p.period,
         byType: Object.fromEntries(Object.entries(p.byType).map(([k, v]) => [k, Math.round(v)])) })) };
@@ -586,7 +628,7 @@ export class BridgeSimulator {
     if (ins.price > 0) {
       this.balance -= ins.price;
       this.moneyLog.push({ id: ins.instructionId, amount: -ins.price, reason: ins.moneyReason, note: item.name });
-      this.book(`RPSIM_${ins.moneyReason}`, -ins.price);
+      this.book(`RPSIM_${ins.moneyReason}`, -ins.price, { note: 'Gebrauchtmaschine' });
     }
     this.applyResult = { vehicleId: uniqueId };
     this.log(`${ins.price > 0 ? 'used vehicle' : 'borrowed vehicle'} ${item.name} delivered as ${uniqueId}`);
@@ -745,9 +787,18 @@ export class BridgeSimulator {
    * Control API: a booking of the game (R2-B1), e.g. a vehicle purchase or leasing costs. It changes the balance and
    * lands in the journal under its FS25 money type, like Farm:changeBalance in the mod.
    */
-  bookGame(moneyType, amount) {
+  bookGame(moneyType, amount, vehicle = {}) {
     if (typeof moneyType !== 'string' || !moneyType || typeof amount !== 'number' || !Number.isFinite(amount)) {
       throw new Error('moneyType (string) and amount (number) are required');
+    }
+    // booking statement: a shop purchase with vehicleName delivers that vehicle, a sale with vehicleId removes it
+    if (moneyType === 'SHOP_VEHICLE_BUY' && vehicle.vehicleName) {
+      const next = Math.max(0, ...this.vehicles.map((v) => Number(v.uniqueId.replace(/\D/g, '')) || 0)) + 1;
+      this.vehicles.push({ uniqueId: `veh_${String(next).padStart(5, '0')}`, value: Math.abs(amount), damage: 0,
+        name: vehicle.vehicleName });
+    }
+    if (moneyType === 'SHOP_VEHICLE_SELL' && vehicle.vehicleId) {
+      this.vehicles = this.vehicles.filter((v) => v.uniqueId !== vehicle.vehicleId);
     }
     this.balance += amount;
     this.book(moneyType, amount);
@@ -994,7 +1045,7 @@ export class BridgeSimulator {
         this.balance += ins.amount;
         this.moneyLog.push({ id: ins.instructionId, amount: ins.amount, reason: ins.reason, note: ins.note });
         // R2-B1: bookings of the tool are marked RPSIM_<REASON> instead of an FS25 money type
-        this.book(`RPSIM_${ins.reason}`, ins.amount);
+        this.book(`RPSIM_${ins.reason}`, ins.amount, { note: ins.note });
         return null;
       case 'FARMLAND_TRANSFER': {
         const f = this.farmlands.find((x) => x.farmlandId === ins.farmlandId);

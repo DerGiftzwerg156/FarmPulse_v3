@@ -36,7 +36,7 @@ Homescreen.
 | **Dorfchat** | Gruppen für das Dorf, die Nachbarn und die Vereine – mitlesen und mitschreiben |
 | **Aufgaben** | Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert |
 | **Kalender** | Die nächsten Tage, Abbuchungen zum Monatsbeginn, Dorffeste, Steuertermine, Familie, Einladungen, Stammtisch, Schulbesuch, Genossenschaft |
-| **Bank** | Kredite, Anträge und Hofbuchhaltung |
+| **Bank** | Kredite, Anträge, Hofbuchhaltung und Kontoauszug |
 | **Ämter** | Finanzamt (Steuern, Bescheide, Steuerberatung) und Landwirtschaftsamt (Kontrollen) |
 | **Agrarbörse** | Silo, Preise, Marktgeschehen, Kontrakte, Preisalarm und Vorkontrakte |
 | **Versicherung** | Sturm- und Hagelversicherung (auch mit Baustein „Diebstahl“), Schäden melden, Wildschaden |
@@ -152,6 +152,18 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
 - **Käufe und Verkäufe von Anlagen:** Fahrzeug-, Gebäude- und Feldkäufe zählen als Investition, ihre Verkäufe als
   Anlagenverkauf – beides senkt oder hebt dein Monatsergebnis nicht. Buchungen unter *Sonstiges* zählen je nach
   Vorzeichen als Einnahme oder Ausgabe des laufenden Betriebs.
+- **Kontoauszug:** Unter der Hofbuchhaltung siehst du, was du wann gekauft und verkauft hast und was es gekostet
+  oder eingebracht hat – Monat für Monat, filterbar nach Kategorie, mit Eingängen, Ausgängen und Saldo.
+  - **Einzeln mit Uhrzeit** stehen Käufe und Verkäufe von Fahrzeugen, Gebäuden und Feldern sowie jede Buchung von
+    FarmPulse (Kreditrate, Gehalt, Feldkauf …) mit ihrer Notiz, z. B. „Gehalt Anna Berger“.
+  - **Je Spieltag zusammengefasst** stehen laufende Kosten und Erlöse wie Kraftstoff, Helferlohn oder Saatgut – mit der
+    Zahl der Buchungen. Verkäufe stehen je Fruchtart und Verkaufsstelle mit den verkauften Litern, z. B. „Weizen ·
+    24.000 l · Mühle Nord“.
+  - **Fahrzeugname:** Kaufst oder verkaufst du ein Fahrzeug im Shop, steht sein Name an der Buchung – sobald das
+    Fahrzeug im Spiel auftaucht bzw. verschwindet. Kaufst du mehrere Fahrzeuge fast gleichzeitig, kann FarmPulse sie
+    nicht sicher zuordnen; dann stehen alle Namen mit dem Hinweis „nicht eindeutig zuordenbar“ an jedem dieser Käufe.
+  - Der Kontoauszug beginnt mit der Mod-Version, die ihn mitschreibt; ältere Buchungen gibt es nur als Monatssumme.
+    Lädst du einen älteren Spielstand ohne zu speichern, verschwinden die Buchungen, die es im Spiel nicht mehr gibt.
 - **Die Bank warnt:** Macht dein Betrieb zwei Monate in Folge Verlust, während ein Kredit läuft, meldet sich die
   Bank, bevor eine Rate platzt (einmal je Verlustphase).
 - **Rekordmonat:** Hast du den höchsten Ernteerlös eines Monats seit Beginn, gratuliert die Genossenschaft – das

@@ -58,6 +58,16 @@
       "periods": { "type": "array", "items": { "type": "object", "required": ["year", "period", "byType"],
         "properties": { "year": { "type": "integer" }, "period": { "type": "integer", "minimum": 1, "maximum": 12 },
           "byType": { "type": "object", "additionalProperties": { "type": "number" } } } } } } },
+    "bookings": { "type": "object", "required": ["nextSeq", "entries"], "properties": {
+      "nextSeq": { "type": "integer", "minimum": 1 },
+      "entries": { "type": "array", "items": { "type": "object",
+        "required": ["seq", "gameTime", "year", "period", "category", "amount", "count", "single"],
+        "properties": { "seq": { "type": "integer", "minimum": 1 }, "gameTime": { "type": "integer" },
+          "year": { "type": "integer" }, "period": { "type": "integer", "minimum": 1, "maximum": 12 },
+          "day": { "type": "integer", "minimum": 1 }, "category": { "type": "string", "minLength": 1 },
+          "amount": { "type": "number" }, "count": { "type": "integer", "minimum": 1 }, "single": { "type": "boolean" },
+          "liters": { "type": "number", "minimum": 0 }, "fillType": { "type": "string" }, "sellPoint": { "type": "string" },
+          "note": { "type": "string" } } } } } },
     "workforce": { "type": "object", "required": ["activeJobs", "workedGameMs"], "properties": {
       "activeJobs": { "type": "array", "items": { "type": "object", "required": ["jobId"],
         "properties": { "jobId": { "type": "integer" }, "employeeId": { "type": "integer" },

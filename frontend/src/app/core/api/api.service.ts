@@ -257,6 +257,10 @@ export class ApiService {
   finances(): Observable<M.FinanceOverview> {
     return this.get('/finances');
   }
+  /** Booking statement of a game month (default: the latest month with entries). */
+  statement(year?: number, period?: number): Observable<M.StatementView> {
+    return this.get('/finances/statement', year != null && period != null ? { year, period } : undefined);
+  }
 
   // Roadmap V2 R2-E1: tax office and tax advisor
   tax(): Observable<M.TaxOverviewView> {

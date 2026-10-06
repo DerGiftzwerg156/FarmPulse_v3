@@ -993,6 +993,7 @@ rpsim:
       record-categories: [HARVEST_INCOME, SOLD_PRODUCTS]
       record-min-months: 3
       record-trust-delta: 2
+      statement-vehicle-match-exports: 3   # booking statement: exports a shop vehicle purchase / sale waits for its vehicle
     tax:                          # Roadmap V2 R2-E1: tax office and tax advisor (placeholders)
       enabled: true
       rate: 0.19

@@ -357,6 +357,44 @@ position entries without `uniqueId`, `x` or `z`. The backend validator refuses a
 `fuel` with `liters > capacity` or `capacity ≤ 0`, a negative `snowHeight`, a `dayTimeMs` outside one day and a position
 without `x` / `z` or with `farmlandId < 1`.
 
+### Booking statement block (optional, owner decisions 2026-10-06)
+
+**`bookings`** ("Kontoauszug"): the single bookings behind `finances`. Filled by the same `Farm:changeBalance` hook, so
+it is exported - and missing - together with `finances`. Required: `nextSeq` (≥ 1) and `entries[]`.
+
+```json
+{ "bookings": { "nextSeq": 43, "entries": [
+    { "seq": 40, "gameTime": 3459600000, "year": 2, "period": 8, "day": 2, "category": "AI", "amount": -1250,
+      "count": 37, "single": false },
+    { "seq": 41, "gameTime": 3466800000, "year": 2, "period": 8, "day": 2, "category": "SOLD_PRODUCTS", "amount": 5200,
+      "count": 6, "single": false, "liters": 24000, "fillType": "WHEAT", "sellPoint": "MillNorth" },
+    { "seq": 42, "gameTime": 3470400000, "year": 2, "period": 8, "day": 2, "category": "RPSIM_SALARY_PAYMENT",
+      "amount": -2400, "count": 1, "single": true, "note": "Gehalt Anna Berger" } ] } }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `nextSeq` | Running number the next entry gets. Entries at or after it no longer exist in the game (reload without saving) | mod state, stored in the savegame |
+| `entries[].seq` | Running number of the entry (unique per savegame, < `nextSeq`). An entry that is still summed up keeps its `seq`, so the backend updates it in place | mod |
+| `entries[].gameTime` | Game time of the first booking of the entry (`currentMonotonicDay` × 86 400 000 + `dayTime`) | `g_currentMission.environment` (as `getGameTime`) |
+| `entries[].year` / `.period` | FS25 year and period, like `finances` | `environment.currentYear` / `currentPeriod` |
+| `entries[].day` | Day in the period (optional) | `environment.currentDayInPeriod` |
+| `entries[].category` | Money type name as in `finances.byType` (`RPSIM_<REASON>` for tool bookings, `UNKNOWN` when not found) | as `finances` |
+| `entries[].amount` / `.count` | Sum (signed, rounded) and number of the bookings in the entry | hook |
+| `entries[].single` | `true`: a single booking - every tool booking and the money types of the mod config `bookingLogSingleTypes` (default `SHOP_VEHICLE_BUY`, `SHOP_VEHICLE_SELL`, `SHOP_PROPERTY_BUY`, `SHOP_PROPERTY_SELL`, `FIELD_BUY`, `FIELD_SELL`). `false`: the sum of a game day per money type, sales also per `fillType` and `sellPoint` | mod config |
+| `entries[].fillType` / `.sellPoint` / `.liters` | Only for bookings made while the game sells at a selling station: fill type name, sell point id (as in `prices`) and the litres sold (sum of `fillDelta`). 🟡 that the game books the sale inside `SellingStation:sellFillType` (manual test plan 26.2) - otherwise the booking stays without these fields | hook on `SellingStation.sellFillType` (already used for the FIXED contracts, T-05) sets the context around the original call |
+| `entries[].note` | Note of a tool booking (the `note` of its `MONEY_TRANSACTION`) | `RPSimGameAdapter:addMoney` |
+
+**Built:** the mod keeps the last `bookingLogEntries` entries (mod config, default 200) in the savegame
+(`FS25_RPSim.bookingLog`); the backend stores them permanently (`booking_entry`), updates entries in place by `seq` and
+deletes stored entries at or after `nextSeq`. A shop vehicle purchase (`SHOP_VEHICLE_BUY`) or sale
+(`SHOP_VEHICLE_SELL`) gets the names (`assets.vehicles[].name`) of the own vehicles that appeared or disappeared since
+the previous export - the rule of the investment grant (R31-B2); borrowed machines (R31-A2) and used machines of the
+neighbours (R3-V) do not count. One waiting purchase (sale): assigned. Several waiting: the names are shown on each
+as not assignable. Nothing within `rpsim.formulas.finance.statement-vehicle-match-exports` exports: no name. 🟡 the
+order of booking and vehicle spawn (manual test plan 26.3). The backend validator refuses entries without `seq`,
+`year`, `period` (1..12), `category` or `amount`, a `seq` ≥ `nextSeq` and a missing `nextSeq` / `entries`.
+
 ## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, and on every `farm_facts` cycle when its content changed)
 
 ```json

@@ -5,6 +5,7 @@ local files = {
     "util/Json.lua", "util/Log.lua", "util/FileIO.lua",
     "bridge/Config.lua", "bridge/BridgePaths.lua",
     "export/Storage.lua", "export/FarmFacts.lua", "export/MarketContext.lua", "export/FinanceJournal.lua",
+        "export/BookingLog.lua",
     "import/Instructions.lua", "import/PriceEventMath.lua", "import/PriceEvents.lua",
     "game/Workforce.lua", "game/Prompts.lua", "import/Processor.lua", "import/Persistence.lua",
     "bridge/Bridge.lua", "game/GameAdapter.lua", "RPSim.lua",

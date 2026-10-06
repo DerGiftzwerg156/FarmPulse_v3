@@ -310,6 +310,28 @@ public final class Views {
     }
 
     /**
+     * Booking statement ("Kontoauszug"): the entries of one game month ({@code year}/{@code period}, null when there is
+     * none) and the months that have entries. {@code available} = the mod exports single bookings.
+     */
+    public record StatementView(boolean available, Integer year, Integer period, List<StatementMonthView> months,
+                                List<StatementEntryView> entries) {
+    }
+
+    public record StatementMonthView(int year, int period, long entries) {
+    }
+
+    /**
+     * One entry: a single booking or the daily sum of {@code count} bookings. {@code sellPointName} from the market
+     * context; {@code vehicleMatch} (PENDING / MATCHED / AMBIGUOUS / NONE) and {@code vehicleNames} only for shop
+     * vehicle purchases and sales.
+     */
+    public record StatementEntryView(long seq, long gameTime, int year, int period, Integer day, String category,
+                                     String financeClass, long amount, int count, boolean single, Long liters,
+                                     String fillType, String sellPoint, String sellPointName, String note,
+                                     String vehicleMatch, String vehicleNames) {
+    }
+
+    /**
      * Hof-Tablet "Aufgaben": one open decision (or announced deadline) of any area. {@code type} names the source and
      * which of the optional payloads is set: CASE, CONTRACT_OFFER, LEASE_RENEWAL, CREDIT_COUNTER, CALL, NEGOTIATION,
      * MARKET_OFFER, POSTING. {@code kind} is the case / contract / event kind where there is one.

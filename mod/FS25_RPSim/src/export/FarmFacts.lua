@@ -57,6 +57,27 @@ function RPSimFarmFacts.buildFinances(raw)
     return { periods = periods }
 end
 
+--- Booking statement: raw = { nextSeq, entries = { {seq, gameTime, year, period, day, category, amount, count, single,
+-- liters?, fillType?, sellPoint?, note?} } } -> amounts and litres rounded, entries sorted by seq, incomplete dropped.
+function RPSimFarmFacts.buildBookings(raw)
+    local entries = RPSimJson.array({})
+    for _, e in ipairs(raw.entries or {}) do
+        if type(e.seq) == "number" and type(e.year) == "number" and type(e.period) == "number"
+            and type(e.category) == "string" and type(e.amount) == "number" then
+            local out = { seq = e.seq, gameTime = round(e.gameTime or 0), year = e.year, period = e.period,
+                category = e.category, amount = round(e.amount), count = e.count or 1, single = e.single == true }
+            if type(e.day) == "number" then out.day = e.day end
+            if type(e.liters) == "number" then out.liters = round(e.liters) end
+            if type(e.fillType) == "string" then out.fillType = e.fillType end
+            if type(e.sellPoint) == "string" then out.sellPoint = e.sellPoint end
+            if type(e.note) == "string" and e.note ~= "" then out.note = e.note end
+            entries[#entries + 1] = out
+        end
+    end
+    table.sort(entries, function(a, b) return a.seq < b.seq end)
+    return { nextSeq = type(raw.nextSeq) == "number" and raw.nextSeq or 1, entries = entries }
+end
+
 --- R2-A4: raw = { activeJobs = { {jobId, employeeId?, title?} }, workedGameMs = { [employeeId] = ms } }
 function RPSimFarmFacts.buildWorkforce(raw)
     local jobs = RPSimJson.array({})
@@ -291,7 +312,8 @@ end
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
 --   prices = { {sellPoint, fillType, pricePerLiter, trend?} },
 --   calendar = { period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName?, season?, dayTimeMs? } | nil,
---   Roadmap V2, each optional (nil = not collected): finances, workforce, husbandries, fields, fieldRules, weather
+--   Roadmap V2, each optional (nil = not collected): finances, bookings (statement), workforce, husbandries, fields,
+--   fieldRules, weather
 --   (see the build* functions above),
 --   Roadmap V3 (R3-Q1), each optional: npcFields (R3-H1, same entries as fields), tradeStorage (R3-H2),
 --   Roadmap V3.1 (R31-Q1), optional: vehiclePositions (D5, see buildVehiclePositions) }
@@ -405,6 +427,9 @@ function RPSimFarmFacts.build(raw, cfg)
     end
     if type(raw.finances) == "table" then
         doc.finances = RPSimFarmFacts.buildFinances(raw.finances)
+    end
+    if type(raw.bookings) == "table" then
+        doc.bookings = RPSimFarmFacts.buildBookings(raw.bookings)
     end
     if type(raw.workforce) == "table" then
         doc.workforce = RPSimFarmFacts.buildWorkforce(raw.workforce)

@@ -144,7 +144,7 @@ savegame and go back on `/reload-without-saving`. The values, fruit types and an
 | `POST /save` | "Save the game" in FS25 (snapshot of the game state incl. the mod's processed list) |
 | `POST /reload-without-saving` | Quit without saving and load the last save: game time, money and processed instructions go back (TODO T-02) |
 | `POST /mission {"uniqueId":"mission_001","status":"FINISHED","success":true}` | The player takes / finishes a vanilla contract (TODO T-22) |
-| `POST /book {"moneyType":"SHOP_PROPERTY_BUY","amount":-90000}` | A booking of the game (R2-B1): changes the balance and lands in `finances` under that FS25 money type (scenarios with a journal only) |
+| `POST /book {"moneyType":"SHOP_PROPERTY_BUY","amount":-90000}` | A booking of the game (R2-B1): changes the balance and lands in `finances` under that FS25 money type (scenarios with a journal only) and in the booking statement `bookings`. With `"moneyType":"SHOP_VEHICLE_BUY"` and `"vehicleName":"Fendt 942 Vario"` the vehicle is delivered too; with `"moneyType":"SHOP_VEHICLE_SELL"` and `"vehicleId":"veh_00042"` it is removed (vehicle names in the statement) |
 | `POST /weather {"raining":true,"rainFallScale":0.8}` | Change the exported weather (Roadmap V2 scenarios only) |
 | `POST /husbandry {"husbandryUniqueId":"hus_00001","health":80,"food":0.6}` | Change the values of a husbandry (`tierhof-krank`) |
 | `POST /field {"farmlandId":7,"weedState":0}` | Change the state of a field (`ernte-herbst`), e.g. `{"farmlandId":2,"growthState":9,"cut":true}` = harvested |

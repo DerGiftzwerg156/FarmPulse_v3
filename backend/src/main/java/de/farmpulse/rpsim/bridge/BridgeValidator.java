@@ -142,6 +142,19 @@ public final class BridgeValidator {
                 });
             }
         }
+        if (f.bookings() != null) { // booking statement
+            if (f.bookings().nextSeq() == null || f.bookings().nextSeq() < 1 || f.bookings().entries() == null) {
+                e.add("bookings.{nextSeq,entries} required");
+            } else {
+                f.bookings().entries().forEach(b -> {
+                    if (b == null || b.seq() == null || b.seq() < 1 || b.seq() >= f.bookings().nextSeq()
+                            || b.year() == null || b.period() == null || b.period() < 1 || b.period() > 12
+                            || blank(b.category()) || b.amount() == null) {
+                        e.add("invalid booking " + b);
+                    }
+                });
+            }
+        }
         if (f.workforce() != null) {
             var w = f.workforce();
             if (w.activeJobs() == null || w.workedGameMs() == null) {

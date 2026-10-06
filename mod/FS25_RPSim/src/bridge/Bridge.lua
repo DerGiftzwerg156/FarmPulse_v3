@@ -88,6 +88,10 @@ function RPSimBridge:exportFarmFacts()
     if self.financeJournalEnabled and self.state.financeJournal ~= nil then
         raw.finances = RPSimFinanceJournal.toRaw(self.state.financeJournal)
     end
+    -- Booking statement: filled by the same hook, so it is exported (and missing) together with the journal
+    if self.financeJournalEnabled and self.state.bookingLog ~= nil then
+        raw.bookings = RPSimBookingLog.toRaw(self.state.bookingLog)
+    end
     if self.workforceEnabled then
         raw.workforce = self:sampleWorkforce(raw.gameTime)
     end
@@ -173,8 +177,27 @@ function RPSimBridge:recordBooking(farmId, amount, moneyType)
     end
     local name = RPSimFinanceJournal.nameOf(self.adapter.bookingReason, moneyType, RPSimGameAdapter ~= nil
         and RPSimGameAdapter.moneyTypeName or nil)
-    return RPSimFinanceJournal.record(self.state.financeJournal, year, period, name, amount,
+    local recorded = RPSimFinanceJournal.record(self.state.financeJournal, year, period, name, amount,
         self.cfg.financeJournalPeriods)
+    if recorded then
+        self:recordSingleBooking(year, period, name, amount)
+    end
+    return recorded
+end
+
+--- Booking statement: the same booking as a single entry with its game time, the note of a tool booking and - while
+-- the sellFillType hook runs (self.saleContext) - fill type, sell point and litres of the sale.
+function RPSimBridge:recordSingleBooking(year, period, name, amount)
+    if self.state.bookingLog == nil then
+        self.state.bookingLog = RPSimBookingLog.new()
+    end
+    local t = self.adapter.currentBookingTime ~= nil and self.adapter:currentBookingTime() or {}
+    local sale = self.saleContext or {}
+    return RPSimBookingLog.record(self.state.bookingLog, { gameTime = t.gameTime or self.adapter:getGameTime(),
+        year = year, period = period, day = t.day, monotonicDay = t.monotonicDay or 0, category = name,
+        amount = amount, note = self.adapter.bookingReason ~= nil and self.adapter.bookingNote or nil,
+        fillType = sale.fillType, sellPoint = sale.sellPoint, liters = sale.liters },
+        { maxEntries = self.cfg.bookingLogEntries, singleTypes = self.cfg.bookingLogSingleTypes })
 end
 
 --- Writes market_context.json, but only when its content changed since the last successful write (the

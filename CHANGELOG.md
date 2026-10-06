@@ -20,6 +20,21 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Booking statement ("Kontoauszug"):** the bank shows what was booked when and what it cost or brought - not only the
+  month sums of the farm bookkeeping (owner decisions 2026-10-06 in `QUESTIONS.md`).
+  - Mod: the `Farm:changeBalance` hook also writes single bookings (`farm_facts.json` → optional block `bookings`):
+    running bookings summed per game day and money type, sales additionally per fill type and sell point with the
+    litres (context of the `SellingStation.sellFillType` hook), purchases and sales of vehicles, buildings and fields and
+    every tool booking (with its note) as single entries with time of day. New mod settings `bookingLogEntries` (200)
+    and `bookingLogSingleTypes`; the buffer is stored in the savegame.
+  - Backend: entries are stored permanently (table `booking_entry`, migration V36) and updated in place by their running
+    number; after a reload without saving the entries the game no longer has are deleted. Shop vehicle purchases and
+    sales get the names of the vehicles that appeared / disappeared in `assets.vehicles` (several at once: shown as not
+    assignable; new setting `rpsim.formulas.finance.statement-vehicle-match-exports`). New endpoint
+    `GET /api/finances/statement?year=&period=`.
+  - Frontend: new card *Kontoauszug* on the bank page with month and category filter, incoming / outgoing / balance.
+  - Bridge simulator: exports `bookings`; `POST /book` takes `vehicleName` / `vehicleId` for shop vehicle purchases and
+    sales. Manual test plan rows 7.6a and section 26 (🟡 sale details and vehicle order in the real game).
 - **Roadmap V3 (`docs/architecture/ROADMAP_V3.md`):** plan for the next features, each checked against the FS25 code -
   tablet access inside the home network (PIN, address, home-screen icon), trade with neighbours from and into own silos
   for every fill type with a silo, real field contracts created by neighbours, leasing out own fields, loan collateral,
