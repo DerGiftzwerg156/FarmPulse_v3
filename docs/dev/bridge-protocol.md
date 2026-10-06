@@ -395,7 +395,11 @@ as not assignable. Nothing within `rpsim.formulas.finance.statement-vehicle-matc
 order of booking and vehicle spawn (manual test plan 26.3). The backend validator refuses entries without `seq`,
 `year`, `period` (1..12), `category` or `amount`, a `seq` ≥ `nextSeq` and a missing `nextSeq` / `entries`.
 
-## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, and on every `farm_facts` cycle when its content changed)
+## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, every 60 s, and on every `farm_facts` cycle when its content changed)
+
+The mod rewrites the file every `marketContextIntervalMs` (mod config, default 60 s real time) even when its content
+did not change; between two such writes it is written on every `farm_facts` cycle in which its content changed. The
+backend only processes a file whose text differs from the last one it read.
 
 ```json
 { "savegameId": "...", "mapName": "Erlengrund",

@@ -70,6 +70,28 @@ test('market_context is re-written on a regular tick only when it changed (TODO 
   assert.notEqual(sim.exportMarketContext(false), null);
 });
 
+test('market_context is re-written unchanged every marketContextIntervalMs of real time', () => {
+  let clock = 0;
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof', marketContextIntervalMs: 60000,
+    now: () => clock });
+  sim.start();
+  const write = sim.writeJson.bind(sim);
+  let writes = 0;
+  sim.writeJson = (path, doc) => { if (path === sim.paths.marketContext) writes += 1; write(path, doc); };
+  clock = 59999;
+  sim.tick(0);
+  assert.equal(writes, 0);
+  clock = 60000;
+  sim.tick(0);
+  assert.equal(writes, 1);
+  clock = 119999;
+  sim.tick(0);
+  assert.equal(writes, 1); // the interval starts again
+  clock = 120000;
+  sim.tick(0);
+  assert.equal(writes, 2);
+});
+
 test('the FS25 calendar is exported and follows a change of days per period (TODO T-08)', () => {
   const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof', daysPerPeriod: 3 });
   sim.gameTime = 40 * MS_PER_GAME_DAY + 1000; // day 40: period index 13 -> period 2 (April) of year 2, day 2

@@ -33,11 +33,13 @@ node src/cli.js --help
 | `--control-port` | `8099` | HTTP control API (`0` disables) |
 | `--once` | – | Export once, process instructions once, exit |
 | `--days-per-period` | `1` | FS25 "days per period" of the simulated calendar (exported as `calendar`) |
+| `--market-context-interval` | `60000` | Real-time ms after which `market_context.json` is rewritten even when unchanged (the mod's `marketContextIntervalMs`) |
 | `--reset` | – | Forget previous simulator state (processed instructions, balances) |
 
 Each cycle: game time advances, balance/prices/vehicle wear drift slightly, `instructions.json` is applied,
 `instructions_ack.json` and `farm_facts.json` are written. `market_context.json` is written on start, after
-every applied `FARMLAND_TRANSFER` and on every cycle in which its content changed. Like the mod, the simulator
+every applied `FARMLAND_TRANSFER`, on the first cycle after every `--market-context-interval` (real time, also when
+unchanged) and on every cycle in which its content changed. Like the mod, the simulator
 refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simulator state (the equivalent of the savegame XML) is kept in
 `simulator_savegame.json` inside the bridge folder.
 

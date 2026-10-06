@@ -7,8 +7,8 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Exportiert alle 10 s (konfigurierbar) `farm_facts.json`: Kontostand, Fahrzeuge (Wert + Zustand), Gebäude,
   eigene Felder, Tierbestand, **Warenbestand (Silos, Silo-Erweiterungen, Produktionen, Fahrsilos)**, Vanilla-Kredit, laufende
   Verkaufspreise je Verkaufsstelle/Fruchtart.
-- Exportiert beim Spielstart (und nach jeder Feldübertragung sowie bei jeder inhaltlichen Änderung im
-  `farm_facts`-Takt) `market_context.json`: Kartenname, Verkaufsstellen (Produktionen gekennzeichnet), Fruchtarten,
+- Exportiert beim Spielstart, jede Minute (`marketContextIntervalMs`, auch ohne Änderung), nach jeder Feldübertragung
+  sowie bei jeder inhaltlichen Änderung im `farm_facts`-Takt `market_context.json`: Kartenname, Verkaufsstellen (Produktionen gekennzeichnet), Fruchtarten,
   alle Farmlands inkl. Besitzer und FS25-NPC.
 - Exportiert außerdem Kalender inkl. Jahreszeit, Leasing-Fahrzeuge und die Aufträge des Spiels (verfügbare und
   eigene; nur lesend).
@@ -119,7 +119,7 @@ Dokumente/My Games/FarmingSimulator2025/modSettings/FS25_RPSim/
   rpsim_config.xml           (optional, eigene Einstellungen)
   export/
     farm_facts.json          (Mod schreibt, alle 10 s)
-    market_context.json      (Mod schreibt, beim Spielstart + nach FARMLAND_TRANSFER + bei Änderung)
+    market_context.json      (Mod schreibt, beim Spielstart + jede Minute + nach FARMLAND_TRANSFER + bei Änderung)
   import/
     instructions.json        (Backend schreibt, lesbare Fassung für Tools/Simulator)
     instructions.xml         (Backend schreibt, dieselben Daten - diese Datei liest der Mod)
@@ -146,6 +146,7 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | Schlüssel | Standard | Bedeutung |
 | --- | --- | --- |
 | `exportIntervalMs` | 10000 | Export-Intervall `farm_facts.json` (Echtzeit-ms) |
+| `marketContextIntervalMs` | 60000 | So oft (Echtzeit-ms) wird `market_context.json` neu geschrieben, auch wenn sich nichts geändert hat; dazwischen wird sie im `farm_facts`-Takt nur bei Änderung geschrieben |
 | `importIntervalMs` | 5000 | Abfrage-Intervall `instructions.xml` |
 | `processedRetentionGameDays` | 30 | Aufbewahrung erledigter Instruktionen (Spieltage) |
 | `startFallbackMs` | 30000 | Sicherheitsnetz: Start der Bridge nach so vielen ms, falls der Spielstart-Hook nicht feuert |
