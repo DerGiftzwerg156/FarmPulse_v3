@@ -75,6 +75,7 @@ class ApiIntegrationTest {
     @Autowired CommunicationService communications;
     @Autowired MarketEventEngine market;
     @Autowired RpsimProperties props;
+    @Autowired de.farmpulse.rpsim.employee.HiringService hiring;
 
     Savegame sg;
     Character bank;
@@ -244,16 +245,27 @@ class ApiIntegrationTest {
         JsonNode posting = read(postJson("/api/job-postings", java.util.Map.of("jobRole", "ANIMAL_KEEPER"))
                 .andExpect(status().isOk()));
         long pid = posting.get("id").asLong();
-        mvc.perform(get("/api/job-postings")).andExpect(status().isOk());
+        // owner decision 2026-10-06: the applications arrive the next game day
+        mvc.perform(get("/api/job-postings")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].applicationsAwaited").value(true));
+        mvc.perform(get("/api/job-postings/" + pid + "/applications")).andExpect(jsonPath("$", hasSize(0)));
+        sg.setCurrentGameTime(sg.getCurrentGameTime() + de.farmpulse.rpsim.time.GameTime.days(2));
+        mvc.perform(get("/api/job-postings")).andExpect(jsonPath("$[0].applicationsAwaited").value(false));
         JsonNode apps = read(mvc.perform(get("/api/job-postings/" + pid + "/applications")).andExpect(status().isOk()));
         long aid = apps.get(0).get("id").asLong();
         postJson("/api/job-postings/" + pid + "/applications/" + aid + "/interview-question",
                 java.util.Map.of("question", "Warum wir?", "channel", "CALL")).andExpect(status().isOk());
         JsonNode emp = read(mvc.perform(post("/api/job-postings/" + pid + "/applications/" + aid + "/hire"))
-                .andExpect(status().isOk()));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("PENDING_START"))
+                .andExpect(jsonPath("$.severance").isNumber()).andExpect(jsonPath("$.startsAtGameTime").isNumber()));
         long eid = emp.get("id").asLong();
         mvc.perform(get("/api/employees")).andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].needs.satisfaction").exists());
+        // no actions before the first working day (start of the next month)
+        postJson("/api/employees/" + eid + "/raise", java.util.Map.of("newSalary", 99999))
+                .andExpect(jsonPath("$.code").value("EMPLOYEE_NOT_STARTED"));
+        sg.setCurrentGameTime(emp.get("startsAtGameTime").asLong());
+        hiring.startDue(sg);
         postJson("/api/employees/" + eid + "/raise", java.util.Map.of("newSalary", 99999)).andExpect(status().isOk());
         postJson("/api/employees/" + eid + "/time-off", java.util.Map.of("days", 2)).andExpect(status().isOk());
         postJson("/api/employees/" + eid + "/time-off", java.util.Map.of("days", 0)).andExpect(status().isBadRequest());

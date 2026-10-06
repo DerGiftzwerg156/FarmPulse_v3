@@ -75,7 +75,9 @@ public class CalendarPlanService {
         Integer nextPeriod = calendar == null ? null : anchor.periodOf(monthIndex + 1);
         Integer year = calendar == null ? null : calendar.year();
 
-        List<Employee> staff = employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE);
+        // salaries: hired employees who start next month are paid on their first working day (owner decision 2026-10-06)
+        List<Employee> staff = employees.findBySavegameAndStatusIn(sg,
+                java.util.EnumSet.of(EmployeeStatus.ACTIVE, EmployeeStatus.PENDING_START));
         List<Loan> activeLoans = loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE);
         List<Contract> activeContracts = contracts.findBySavegameAndStatusOrderByIdAsc(sg, ContractStatus.ACTIVE);
         List<Character> members = props.getFormulas().getFamily().isEnabled() ? family.members(sg) : List.of();

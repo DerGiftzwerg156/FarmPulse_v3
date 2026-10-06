@@ -212,6 +212,11 @@
             <en>Tank lock</en>
             <de>Tankschloss</de>
         </text>
+        <!-- owner decision 2026-10-06: severance when a hiring is cancelled before the first working day -->
+        <text name="rpsim_money_SEVERANCE">
+            <en>Severance pay</en>
+            <de>Abfindung</de>
+        </text>
         <!-- Schulungen: start of a helper refused in the strict mode (no free machine operator with the training) -->
         <text name="rpsim_ai_noTraining">
             <en>No trained machine operator available</en>

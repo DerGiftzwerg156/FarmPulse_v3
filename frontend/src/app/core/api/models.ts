@@ -427,6 +427,8 @@ export interface JobPostingView {
   status: string;
   createdAtGameTime: number;
   filledEmployeeId: number | null;
+  /** Owner decision 2026-10-06: applications are still on their way (they arrive the next game day). */
+  applicationsAwaited?: boolean;
 }
 
 export interface ApplicationView {
@@ -484,6 +486,12 @@ export interface EmployeeView {
   absenceKind?: string | null;
   absenceUntilGameTime?: number | null;
   getWellSent?: boolean;
+  /** Owner decision 2026-10-06: start of the absence for the booked training (the whole next game day). */
+  trainingFromGameTime?: number | null;
+  /** Owner decision 2026-10-06: first working day of a PENDING_START employee and the severance to cancel him. */
+  startsAtGameTime?: number | null;
+  startsAtPeriod?: number | null;
+  severance?: number | null;
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */

@@ -107,11 +107,69 @@ describe('Employees', () => {
     btn('training-submit').click();
     const req = http.expectOne('/api/employees/1/training');
     expect(req.request.body).toEqual({ training: 'TRUCK' });
-    req.flush({ ...op, trainingInProgress: 'TRUCK', trainingUntilGameTime: 86_400_000 });
+    // owner decision 2026-10-06: the training is the whole next game day
+    req.flush({ ...op, trainingInProgress: 'TRUCK', trainingFromGameTime: 86_400_000, trainingUntilGameTime: 2 * 86_400_000 });
     fixture.detectChanges();
-    expect(el.querySelector('[data-testid="employees-message"]')?.textContent).toContain('LKW');
-    expect(el.querySelector('[data-testid="in-training"]')?.textContent).toContain('LKW');
+    expect(el.querySelector('[data-testid="employees-message"]')?.textContent).toContain('morgen');
+    expect(el.querySelector('[data-testid="training-scheduled"]')?.textContent).toContain('LKW');
+    expect(el.querySelector('[data-testid="training-scheduled"]')?.textContent).toContain('Tag 1');
+    expect(el.querySelector('[data-testid="in-training"]')).toBeNull();
     expect(el.querySelector('[data-testid="training-open"]')).toBeNull();
+  });
+
+  it('shows a running training until its end', () => {
+    const { el } = setup([emp({ jobRole: 'MACHINE_OPERATOR', trainingInProgress: 'TRUCK', trainingFromGameTime: 0,
+      trainingUntilGameTime: 86_400_000 })]);
+    expect(el.querySelector('[data-testid="in-training"]')?.textContent).toContain('LKW');
+    expect(el.querySelector('[data-testid="training-scheduled"]')).toBeNull();
+  });
+
+  // owner decision 2026-10-06: a hired employee starts with the next month
+  it('shows a hired employee who has not started yet without actions and cancels him with a severance', () => {
+    const pending = emp({ status: 'PENDING_START', startsAtGameTime: 12 * 86_400_000, startsAtPeriod: 2, severance: 4200 });
+    const { el, btn, fixture, http } = setup([pending, emp({ id: 2, status: 'TERMINATED' })]);
+    const card = el.querySelector('[data-testid="employee"]')!;
+    expect(card.querySelector('[data-testid="starts-at"]')?.textContent).toContain('1. April (Tag 12)');
+    expect(card.querySelector('[data-testid="pending-hint"]')?.textContent).toContain('kein Gehalt');
+    expect(card.querySelector('[data-testid="raise-open"]')).toBeNull();
+    expect(card.querySelector('[data-testid="timeoff-open"]')).toBeNull();
+    expect(card.querySelector('[data-testid="needs"]')).toBeNull();
+    expect(el.textContent?.replace(/\s/g, ' ')).toContain('Lohnkosten 0 €'); // not in the payroll yet
+    btn('dismiss-open').click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="dismiss-text"]')?.textContent?.replace(/\s/g, ' ')).toContain('4.200 €');
+    btn('dismiss-confirm').click();
+    http.expectOne((r) => r.method === 'DELETE' && r.url === '/api/employees/1').flush({ ...pending, status: 'TERMINATED' });
+    http.match('/api/savegame').forEach((r) => r.flush(null));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="employees-message"]')?.textContent).toContain('zurückgenommen');
+    expect(el.querySelectorAll('[data-testid="employee"]').length).toBe(0);
+  });
+
+  it('says that more applications arrive later today', () => {
+    const { el } = setup([], [{ ...posting, applicationsAwaited: true }], '3');
+    // the applications endpoint only lists arrived ones
+    expect(el.querySelector('[data-testid="applicant"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="more-applicants"]')?.textContent).toContain('im Laufe des Tages');
+  });
+
+  it('says that the applications arrive tomorrow', () => {
+    TestBed.configureTestingModule({
+      imports: [Employees],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(Employees);
+    fixture.componentRef.setInput('posting', '3');
+    fixture.componentRef.setInput('tab', 'stellen');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.match('/api/job-postings/3/applications').forEach((r) => r.flush([]));
+    http.expectOne('/api/employees').flush([]);
+    http.expectOne('/api/job-postings').flush([{ ...posting, applicationsAwaited: true }]);
+    http.match('/api/job-postings/3/applications').forEach((r) => r.flush([]));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="no-applicants"]')?.textContent).toContain('morgen');
   });
 
   it('shows the training an applicant brings along', () => {
@@ -203,6 +261,20 @@ describe('Employees', () => {
     fixture.componentRef.setInput('tab', 'team');
     fixture.detectChanges();
     expect(el.querySelectorAll('[data-testid="employee"]').length).toBe(1);
+  });
+
+  it('names the first working day after hiring', () => {
+    const { el, btn, fixture, http } = setup([], [posting], '3');
+    btn('hire').click();
+    http.expectOne('/api/job-postings/3/applications/8/hire').flush(emp({ id: 5, character: applicant.applicant,
+      status: 'PENDING_START', startsAtGameTime: 12 * 86_400_000, startsAtPeriod: 2, severance: 3750 }));
+    http.match('/api/employees').forEach((r) => r.flush([]));
+    http.match('/api/job-postings').forEach((r) => r.flush([posting]));
+    http.match('/api/job-postings/3/applications').forEach((r) => r.flush([]));
+    http.match('/api/savegame').forEach((r) => r.flush(null));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="employees-message"]')?.textContent)
+      .toContain('Lena Voss ist eingestellt und fängt am 1. April (Tag 12) an.');
   });
   // Roadmap V2 R2-A: machine operators drive the FS25 helpers
   it('shows the driven hours and a strike; the helper explanation is in the app hint', () => {

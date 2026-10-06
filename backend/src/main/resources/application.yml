@@ -317,8 +317,12 @@ rpsim:
         ANIMAL_KEEPER: 2200.0
         OFFICE_CLERK: 2300.0
       salary-skill-factor: 0.3
+      application-hour-min: 8     # owner decision 2026-10-06: applications arrive the next game day between 8 and 17 o'clock
+      application-hour-max: 17
+      severance-factor: 1.5       # cancelling before the first working day: 1.5 x monthly salary (SEVERANCE) ...
+      severance-factor-harsh: 3.0 # ... 3 x in the world mode HARSH
     training:                     # owner decision "Schulungen" (placeholders)
-      duration-days: 1
+      duration-days: 1            # owner decision 2026-10-06: away for whole game days, starting with the next day
       appreciation-points: 8
       cost:
         LARGE_TRACTOR: 4500
@@ -959,6 +963,7 @@ rpsim:
         RPSIM_SPONSORING: OPERATING_EXPENSE
         RPSIM_COMPENSATION: OPERATING_EXPENSE
         RPSIM_TRAINING: OPERATING_EXPENSE
+        RPSIM_SEVERANCE: OPERATING_EXPENSE            # owner decision 2026-10-06: severance before the first working day
         RPSIM_GOODS_PURCHASE: OPERATING_EXPENSE       # Roadmap V3 (R3-Q1): goods from neighbours (R3-H3)
         RPSIM_CONTRACT_PENALTY: OPERATING_EXPENSE     # Roadmap V3 (R3-Q1): shortfall of a forward contract (R3-M2)
         RPSIM_CONTRACTOR_FEE: OPERATING_EXPENSE       # Roadmap V3.1 (R31-Q1): contractor works an own field (R31-A1)

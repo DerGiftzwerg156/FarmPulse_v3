@@ -83,6 +83,8 @@ public enum NarrationEventType {
     INTERVIEW_ANSWER,
     APPLICATION_REJECTED,
     EMPLOYEE_WELCOME,
+    /** Owner decision 2026-10-06: the hiring was cancelled before the first working day (severance). */
+    HIRING_CANCELLED,
     EMPLOYEE_THANKS,
     EMPLOYEE_WARNING,
     EMPLOYEE_RESIGNATION,

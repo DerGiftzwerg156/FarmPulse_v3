@@ -69,6 +69,11 @@ class SeasonalWorkerTest {
         return hiring.createEmployee(sg, c, JobRole.SEASONAL_WORKER, skill, hiring.seasonalSalary(skill));
     }
 
+    /** Owner decision 2026-10-06: the applications arrive the next game day between 8 and 17 o'clock. */
+    private void applicationsArrived() {
+        sg.setCurrentGameTime((GameTime.dayIndex(sg.getCurrentGameTime()) + 1) * DAY + GameTime.hours(18));
+    }
+
     private List<String> narrations() {
         return jobs.findBySavegameOrderByIdAsc(sg).stream().map(j -> j.getEventType()).toList();
     }
@@ -91,6 +96,7 @@ class SeasonalWorkerTest {
                 .isInstanceOf(BusinessRuleException.class).hasMessageContaining("Erntezeit");
         sg.setCalPeriod(8);
         JobPosting p = hiring.createPosting(sg, JobRole.SEASONAL_WORKER);
+        applicationsArrived();
         sg.setCalPeriod(11); // the season is over before the player chose: no hire
         Long app = hiring.applications(sg, p.getId()).getFirst().getId();
         assertThatThrownBy(() -> hiring.hire(sg, p.getId(), app)).isInstanceOf(BusinessRuleException.class)
@@ -102,6 +108,7 @@ class SeasonalWorkerTest {
         assertThat(hiring.seasonalSalary(50)).isEqualTo(3000); // 2400 x 1.25
         assertThat(hiring.seasonalSalary(30)).isEqualTo(Math.round(2400 * (1 + 0.3 * -20 / 50.0) * 1.25 / 10.0) * 10);
         JobPosting p = hiring.createPosting(sg, JobRole.SEASONAL_WORKER);
+        applicationsArrived(); // day 11 = September
         List<JobApplication> apps = hiring.applications(sg, p.getId());
         assertThat(apps).isNotEmpty().allSatisfy(a -> {
             assertThat(a.getSkill()).isBetween(30, 70);
@@ -111,6 +118,9 @@ class SeasonalWorkerTest {
         });
         Employee w = hiring.hire(sg, p.getId(), apps.getFirst().getId());
         assertThat(w.getJobRole()).isEqualTo(JobRole.SEASONAL_WORKER);
+        assertThat(w.getStatus()).as("seasonal workers start at once (owner decision 2026-10-06)")
+                .isEqualTo(EmployeeStatus.ACTIVE);
+        assertThat(w.getStartsAtGameTime()).isNull();
         assertThat(w.getContractEndsAtGameTime()).isEqualTo(13 * DAY); // start of November = end of October
         // a driver without trainings in the roster, no salary negotiation, no trainings
         Map<String, Object> entry = workforce.roster(sg).stream().filter(m -> m.get("employeeId").equals(w.getId()))
@@ -129,6 +139,7 @@ class SeasonalWorkerTest {
         seasonalWorker(40, "Ben Saison");
         JobPosting p = hiring.createPosting(sg, JobRole.SEASONAL_WORKER);
         seasonalWorker(40, "Clara Saison");
+        applicationsArrived();
         Long app = hiring.applications(sg, p.getId()).getFirst().getId();
         assertThatThrownBy(() -> hiring.hire(sg, p.getId(), app)).isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("3 Saisonkräfte");
@@ -169,6 +180,7 @@ class SeasonalWorkerTest {
 
         sg.setCurrentGameTime(22 * DAY); // August of the next year
         JobPosting p = hiring.createPosting(sg, JobRole.SEASONAL_WORKER);
+        applicationsArrived(); // day 23 = September
         List<JobApplication> returning = hiring.applications(sg, p.getId()).stream()
                 .filter(a -> a.getReturningEmployeeId() != null).toList();
         assertThat(returning).hasSize(1);
@@ -184,10 +196,12 @@ class SeasonalWorkerTest {
         assertThat(back.getCharacter().getStatus()).isEqualTo(CharacterStatus.ACTIVE);
         assertThat(back.getCharacter().getTerminationReason()).isNull();
         assertThat(back.getContractEndsAtGameTime()).isEqualTo(25 * DAY);
-        assertThat(back.getNextSalaryDueGameTime()).isEqualTo(23 * DAY);
+        assertThat(back.getNextSalaryDueGameTime()).isEqualTo(24 * DAY);
 
         // he applied this year: a second posting brings no second application
         JobPosting second = hiring.createPosting(sg, JobRole.SEASONAL_WORKER);
+        applicationsArrived();
+        assertThat(hiring.applications(sg, second.getId())).isNotEmpty();
         assertThat(hiring.applications(sg, second.getId())).allSatisfy(x -> assertThat(x.getReturningEmployeeId()).isNull());
     }
 
@@ -199,6 +213,8 @@ class SeasonalWorkerTest {
         day();
         sg.setCurrentGameTime(34 * DAY); // August two years later
         JobPosting p = hiring.createPosting(sg, JobRole.SEASONAL_WORKER);
+        applicationsArrived();
+        assertThat(hiring.applications(sg, p.getId())).isNotEmpty();
         assertThat(hiring.applications(sg, p.getId())).allSatisfy(x -> assertThat(x.getReturningEmployeeId()).isNull());
     }
 }

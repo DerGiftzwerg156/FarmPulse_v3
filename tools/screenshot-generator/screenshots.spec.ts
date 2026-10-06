@@ -74,15 +74,17 @@ test.describe.serial('screenshots', () => {
     await press(page, 'credit-submit');
     await advance(request, 3);
 
-    // staff: a posting with applicants and one hire
+    // staff: a posting with applicants and one hire; the applications arrive the next game day (owner decision 2026-10-06)
     await page.goto('/employees/stellen');
     await page.getByTestId('posting-role').selectOption('MACHINE_OPERATOR');
     await press(page, 'posting-create');
-    await expect(page.getByTestId('applicant').first()).toBeVisible();
-    await press(page, 'hire', 0);
     await page.getByTestId('posting-role').selectOption('ANIMAL_KEEPER');
     await press(page, 'posting-create');
+    await advance(request, 2);
+    await page.goto('/employees/stellen');
+    await page.getByTestId('posting-toggle').nth(1).click(); // newest first: the machine operator posting is second
     await expect(page.getByTestId('applicant').first()).toBeVisible();
+    await press(page, 'hire', 0);
 
     // a direct land negotiation with one counter offer
     const fields = (await (await request.get(`${API}/farmlands`)).json()) as { farmlandId: number; ownerType: string; referencePrice: number; owner: { id: number } | null }[];

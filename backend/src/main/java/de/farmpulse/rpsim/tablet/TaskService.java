@@ -113,7 +113,8 @@ public class TaskService {
                         e.getDeadlineGameTime(), e.getStartGameTime()).marketEvent(mapper.marketEvent(e)).build()));
         postings.findBySavegameOrderByIdDesc(sg).stream().filter(p -> p.getStatus() == JobPostingStatus.OPEN).forEach(p -> {
             int pending = (int) jobApplications.findByPostingOrderByIdAsc(p).stream()
-                    .filter(a -> a.getStatus() == JobApplicationStatus.PENDING).count();
+                    .filter(a -> a.getStatus() == JobApplicationStatus.PENDING
+                            && de.farmpulse.rpsim.employee.HiringService.arrived(a, sg.getCurrentGameTime())).count();
             if (pending > 0) {
                 items.add(task("posting-" + p.getId(), "POSTING", p.getJobRole().name(), null, p.getCreatedAtGameTime())
                         .posting(mapper.posting(p)).pendingApplicants(pending).build());

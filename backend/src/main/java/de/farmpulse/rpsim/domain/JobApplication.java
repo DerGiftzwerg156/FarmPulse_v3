@@ -37,6 +37,10 @@ public class JobApplication extends SavegameScoped {
     @Column(name = "created_at_game_time", nullable = false)
     private long createdAtGameTime;
 
+    /** Owner decision 2026-10-06: the application arrives the next game day (null = already there). */
+    @Column(name = "arrives_at_game_time")
+    private Long arrivesAtGameTime;
+
     /** Roadmap V3.1 R31-A5: a former seasonal worker who applies again (his employee record is reactivated). */
     @Column(name = "returning_employee_id")
     private Long returningEmployeeId;

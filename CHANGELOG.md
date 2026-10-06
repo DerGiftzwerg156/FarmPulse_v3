@@ -13,13 +13,25 @@ versions or this changelog do not match.
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training
 is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
 types and booking reasons (the neighbour trade and contracts then fail); the notice then says "Mod aktualisieren".
-The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q).
+The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q) and for the booking reason
+`SEVERANCE` (severance before the first working day).
 
 The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
 filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
 
 ### Added
 
+- **Applications the next day, start with the next month, training the next day** (owner decisions 2026-10-06 in
+  `QUESTIONS.md`):
+  - Applications arrive the next game day at a random time between 8 and 17 o'clock (mail and list entry,
+    `rpsim.formulas.hiring.application-hour-min` / `-max`); the posting says when they come
+    (`JobPostingView.applicationsAwaited`).
+  - A hired employee starts on the first day of the next month (new status `PENDING_START`: no helper, no salary, no
+    actions; the first salary on the first working day); seasonal workers start at once. Cancelling before the first
+    working day costs a severance of 1.5 monthly salaries (world mode *Hart*: 3) with the new booking reason
+    `SEVERANCE` and a mail of the candidate (`HIRING_CANCELLED`). Migration V38.
+  - A training no longer starts at once: the employee works on the booking day and is away the whole next game day;
+    the training has precedence over days off and sickness.
 - **Post: "Alle als gelesen markieren"** (owner decisions 2026-10-06 in `QUESTIONS.md`): a button on the right of the
   filter bar marks the unread mails of the active filter as read after a confirmation; open decisions stay open. New
   endpoint `POST /api/mails/read` (`{ "ids": [...] }`, answers `{ "marked": n }`).

@@ -96,10 +96,15 @@ test.describe.serial('FarmPulse core flows', () => {
     }
   });
 
-  test('accept and decline incoming calls (interviews by phone)', async ({ page }) => {
+  test('accept and decline incoming calls (interviews by phone)', async ({ page, request }) => {
     await page.goto('/employees/stellen');
     await page.getByTestId('posting-role').selectOption('MACHINE_OPERATOR');
     await press(page, 'posting-create');
+    // owner decision 2026-10-06: the applications arrive the next game day
+    await expect(page.getByTestId('no-applicants')).toContainText('morgen');
+    await advanceDays(request, 2);
+    await page.goto('/employees/stellen');
+    await page.getByTestId('posting-toggle').first().click();
     await expect(page.getByTestId('applicant').first()).toBeVisible();
 
     // interview #1 by phone -> the applicant calls back -> accept
@@ -141,13 +146,16 @@ test.describe.serial('FarmPulse core flows', () => {
     await page.getByTestId('tab-stellen').click();
     await page.getByTestId('posting-toggle').first().click();
     await press(page, 'hire', 0);
-    await expect(page.getByTestId('employees-message')).toContainText('ist jetzt im Team');
+    // owner decision 2026-10-06: a new employee starts with the next month - before that only cancelling (severance)
+    await expect(page.getByTestId('employees-message')).toContainText('ist eingestellt und fängt am');
     await page.getByTestId('tab-team').click();
     await expect(page.getByTestId('employee')).toHaveCount(staffBefore + 1);
+    await expect(page.getByTestId('starts-at')).toHaveCount(1);
 
     await press(page, 'dismiss-open', staffBefore);
+    await expect(page.getByTestId('dismiss-text')).toContainText('Abfindung');
     await press(page, 'dismiss-confirm');
-    await expect(page.getByTestId('employees-message')).toContainText('wurde gekündigt');
+    await expect(page.getByTestId('employees-message')).toContainText('zurückgenommen');
     await expect(page.getByTestId('employee')).toHaveCount(staffBefore);
   });
 

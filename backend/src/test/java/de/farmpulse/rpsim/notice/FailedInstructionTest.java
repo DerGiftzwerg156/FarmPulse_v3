@@ -167,9 +167,11 @@ class FailedInstructionTest {
     void refusedSalaryStaysDueAndMarksTheEmployeeOverdue() {
         fx.snapshot(sg, 1_000_000);
         JobPosting p = hiring.createPosting(sg, JobRole.MECHANIC);
+        sg.setCurrentGameTime(sg.getCurrentGameTime() + GameTime.days(2)); // the applications arrive the next game day
         Employee e = hiring.hire(sg, p.getId(), hiring.applications(sg, p.getId()).get(0).getId());
-        long due = e.getNextSalaryDueGameTime();
+        long due = e.getNextSalaryDueGameTime(); // first working day
         sg.setCurrentGameTime(due);
+        hiring.startDue(sg);
         payroll.paySalaries(sg);
         assertThat(e.getNextSalaryDueGameTime()).isGreaterThan(due);
         double fairness = e.getPayFairness();

@@ -7,6 +7,7 @@ import { ApplicationView, EmployeeView, JobPostingView, NeedsView, TrainingOffer
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
+import { gameDay, formatMoney } from '../../shared/format/format';
 import { GameTimePipe, MoneyPipe } from '../../shared/format/format.pipes';
 import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge } from '../../shared/ui/badge';
@@ -33,8 +34,9 @@ type Panel = { employeeId: number; kind: PanelKind } | null;
  * Employees (AP-8.5): job postings with applicants (skill and salary expectation visible, fixed), interview
  * questions by mail or call (they never change skill/salary), hiring; staff list with aggregated and per-category
  * satisfaction, raise, time off and dismissal. "Schulungen": machine operators show their trainings and can be sent to a
- * paid training (one game day away); applicants show a training they bring along. Tabs (owner decision 2026-10-06):
- * Team, Stellen & Bewerber, Ehemalige.
+ * paid training (the whole next game day away); applicants show a training they bring along. Tabs (owner decision
+ * 2026-10-06): Team, Stellen & Bewerber, Ehemalige. Owner decisions 2026-10-06: applications arrive the next game day, a
+ * hired employee starts with the next month (shown in the team, no actions, cancelling costs a severance).
  */
 @Component({
   selector: 'app-employees',
@@ -75,9 +77,11 @@ export class Employees {
   readonly trainingCatalog = signal<TrainingOfferView[] | null>(null);
   readonly panelTraining = signal<string | null>(null);
 
-  readonly active = computed(() => (this.employees() ?? []).filter((e) => e.status === 'ACTIVE'));
-  readonly former = computed(() => (this.employees() ?? []).filter((e) => e.status !== 'ACTIVE'));
-  readonly payroll = computed(() => this.active().reduce((s, e) => s + e.monthlySalary, 0));
+  /** The team: working employees and hired ones who start next month. */
+  readonly active = computed(() => (this.employees() ?? []).filter((e) => e.status === 'ACTIVE' || e.status === 'PENDING_START'));
+  readonly former = computed(() => (this.employees() ?? []).filter((e) => e.status === 'TERMINATED'));
+  readonly payroll = computed(() => this.active().filter((e) => e.status === 'ACTIVE').reduce((s, e) => s + e.monthlySalary, 0));
+  readonly now = computed(() => this.store.savegame()?.gameTime ?? 0);
 
   constructor() {
     effect(() => {
@@ -159,10 +163,35 @@ export class Employees {
     });
   }
 
+  /** "1. April (Tag 12)": first working day of a hired employee who has not started yet. */
+  startLabel(e: EmployeeView): string {
+    if (e.startsAtGameTime === null || e.startsAtGameTime === undefined) return '';
+    const day = this.i18n.t('common.day', { day: gameDay(e.startsAtGameTime) });
+    return e.startsAtPeriod ? `1. ${this.i18n.t(`enums.period.${e.startsAtPeriod}`)} (${day})` : day;
+  }
+
+  pending(e: EmployeeView): boolean {
+    return e.status === 'PENDING_START';
+  }
+
+  /** The booked training lies ahead (the next game day). */
+  trainingScheduled(e: EmployeeView): boolean {
+    return !!e.trainingInProgress && !!e.trainingFromGameTime && e.trainingFromGameTime > this.now();
+  }
+
+  trainingDay(e: EmployeeView): string {
+    return e.trainingFromGameTime ? this.i18n.t('common.day', { day: gameDay(e.trainingFromGameTime) }) : '';
+  }
+
+  severance(e: EmployeeView | null): string {
+    return formatMoney(e?.severance ?? 0);
+  }
+
   hire(postingId: number, a: ApplicationView): void {
     this.api.hire(postingId, a.id).subscribe({
-      next: () => {
-        this.flash('employees.hired', { name: a.applicant.name });
+      next: (e) => {
+        if (e.status === 'PENDING_START') this.flash('employees.hiredFrom', { name: a.applicant.name, at: this.startLabel(e) });
+        else this.flash('employees.hired', { name: a.applicant.name });
         this.load();
         this.store.refresh();
       },
@@ -248,7 +277,8 @@ export class Employees {
       next: (updated) => {
         this.replace(updated);
         this.dismissTarget.set(null);
-        this.flash('employees.dismissed', { name: e.character.name });
+        this.flash(this.pending(e) ? 'employees.cancelled' : 'employees.dismissed', { name: e.character.name });
+        this.store.refresh();
       },
       error: (err) => {
         this.dismissTarget.set(null);

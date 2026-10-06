@@ -9,6 +9,7 @@ import de.farmpulse.rpsim.credit.CollateralService;
 import de.farmpulse.rpsim.credit.LoanService;
 import de.farmpulse.rpsim.domain.*;
 import de.farmpulse.rpsim.domain.Character;
+import de.farmpulse.rpsim.employee.HiringService;
 import de.farmpulse.rpsim.employee.SatisfactionService;
 import de.farmpulse.rpsim.employee.WorkforceService;
 import de.farmpulse.rpsim.negotiation.NegotiationEngine;
@@ -27,10 +28,13 @@ public class ApiMapper {
     private final RpsimProperties props;
 
     private final CollateralService collateral;
+    private final HiringService hiring;
 
     public ApiMapper(TrustScoreService trust, SatisfactionService satisfaction, LoanService loans,
-                     NegotiationEngine negotiations, RpsimProperties props, CollateralService collateral) {
+                     NegotiationEngine negotiations, RpsimProperties props, CollateralService collateral,
+                     HiringService hiring) {
         this.collateral = collateral;
+        this.hiring = hiring;
         this.trust = trust;
         this.satisfaction = satisfaction;
         this.loans = loans;
@@ -98,7 +102,7 @@ public class ApiMapper {
 
     public JobPostingView posting(JobPosting p) {
         return new JobPostingView(p.getId(), p.getJobRole().name(), p.getStatus().name(), p.getCreatedAtGameTime(),
-                p.getFilledEmployeeId());
+                p.getFilledEmployeeId(), p.getStatus() == JobPostingStatus.OPEN && hiring.applicationsAwaited(p));
     }
 
     public ApplicationView application(JobApplication a) {
@@ -120,7 +124,9 @@ public class ApiMapper {
                 e.getContractEndsAtGameTime(),
                 de.farmpulse.rpsim.employee.SickLeaveService.absent(e, e.getSavegame().getCurrentGameTime())
                         ? e.getAbsenceKind() : null,
-                e.getAbsenceUntilGameTime(), e.isGetWellSent());
+                e.getAbsenceUntilGameTime(), e.isGetWellSent(), e.getTrainingFromGameTime(), e.getStartsAtGameTime(),
+                e.getStatus() == EmployeeStatus.PENDING_START ? hiring.startPeriod(e) : null,
+                e.getStatus() == EmployeeStatus.PENDING_START ? hiring.severance(e) : null);
     }
 
     private static Double hours(Double h) {

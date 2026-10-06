@@ -1,5 +1,6 @@
 package de.farmpulse.rpsim.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +14,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     List<Employee> findBySavegameAndStatus(Savegame savegame, EmployeeStatus status);
+
+    List<Employee> findBySavegameAndStatusIn(Savegame savegame, Collection<EmployeeStatus> statuses);
 
     List<Employee> findBySavegameAndStatusAndJobRole(Savegame savegame, EmployeeStatus status, JobRole role);
 

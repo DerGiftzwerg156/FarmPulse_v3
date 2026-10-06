@@ -11,6 +11,7 @@ import de.farmpulse.rpsim.api.Views.ApplicationView;
 import de.farmpulse.rpsim.api.Views.EmployeeView;
 import de.farmpulse.rpsim.api.Views.JobPostingView;
 import de.farmpulse.rpsim.api.Views.TrainingOfferView;
+import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.domain.Employee;
 import de.farmpulse.rpsim.domain.EmployeeStatus;
@@ -90,8 +91,13 @@ public class EmployeeController {
     }
 
     private Employee active(Savegame sg, Long id) {
-        return employees.findById(id).filter(e -> e.getSavegame().getId().equals(sg.getId())
-                && e.getStatus() == EmployeeStatus.ACTIVE).orElseThrow(() -> new NotFoundException("employee " + id));
+        Employee e = employees.findById(id).filter(x -> x.getSavegame().getId().equals(sg.getId())
+                && x.getStatus() != EmployeeStatus.TERMINATED).orElseThrow(() -> new NotFoundException("employee " + id));
+        if (e.getStatus() == EmployeeStatus.PENDING_START) {
+            // owner decision 2026-10-06: no actions before the first working day
+            throw new BusinessRuleException("EMPLOYEE_NOT_STARTED", "Der Mitarbeiter hat noch nicht angefangen.");
+        }
+        return e;
     }
 
     @PostMapping("/api/employees/{id}/raise")
@@ -125,7 +131,7 @@ public class EmployeeController {
                 .map(o -> new TrainingOfferView(o.training().name(), o.cost(), o.categories())).toList();
     }
 
-    /** "Schulungen": books a training for a machine operator (money, one game day away, appreciation). */
+    /** "Schulungen": books a training for a machine operator (money, the whole next game day away, appreciation). */
     @PostMapping("/api/employees/{id}/training")
     @Transactional
     public EmployeeView train(@PathVariable Long id, @Valid @RequestBody TrainingRequest r) {

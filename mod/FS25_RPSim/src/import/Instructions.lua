@@ -36,6 +36,8 @@ RPSimInstructions.MONEY_REASONS = {
     GUEST_INCOME = true, COOP_SHARES = true, COOP_DIVIDEND = true,
     -- Roadmap V3.1 R31-D6 / R31-D8 (owner decision 2026-10-05)
     FARM_HOLIDAY_SETUP = true, TANK_LOCK = true,
+    -- owner decision 2026-10-06: severance when a hired employee is cancelled before the first working day
+    SEVERANCE = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
