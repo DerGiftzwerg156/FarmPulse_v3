@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { FarmlandView, MessageView, NegotiationView } from '../../core/api/models';
+import { FarmlandView, FieldMapView, MessageView, NegotiationView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -15,6 +15,7 @@ import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { ServiceCases } from '../contracts/service-cases';
 import { ContractorWorkCard } from './contractor-work-card';
+import { FieldMap } from './field-map';
 import { FieldTable } from './field-table';
 
 /** Amount the counterpart currently offers/demands and that the player can accept with one click. */
@@ -39,7 +40,8 @@ export function highestBid(n: NegotiationView): number | null {
  */
 @Component({
   selector: 'app-farmland',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases, FieldTable, ContractorWorkCard],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases, FieldTable, ContractorWorkCard,
+    FieldMap],
   templateUrl: './farmland.html',
 })
 export class Farmland {
@@ -74,6 +76,12 @@ export class Farmland {
   readonly leaseYears = signal<number | null>(null);
   readonly leaseRate = signal<number | null>(null);
 
+  /** Roadmap V3.1 R31-K1: the map and the switch Karte / Tabelle (Karte by default once outlines exist). */
+  readonly fieldMap = signal<FieldMapView | null>(null);
+  readonly chosenView = signal<'map' | 'table' | null>(null);
+  readonly hasMap = computed(() => (this.fieldMap()?.mapSize ?? null) !== null && (this.fieldMap()?.fields.length ?? 0) > 0);
+  readonly view = computed(() => (this.hasMap() ? (this.chosenView() ?? 'map') : 'table'));
+
   readonly field = computed(() => this.fields()?.find((f) => f.farmlandId === this.selectedField()) ?? null);
   readonly open = computed(() => (this.negotiations() ?? []).filter((n) => n.status === 'OPEN'));
   readonly closed = computed(() => (this.negotiations() ?? []).filter((n) => n.status !== 'OPEN'));
@@ -104,6 +112,8 @@ export class Farmland {
   }
 
   load(): void {
+    // Roadmap V3.1 R31-K1: the field outlines of the map (empty with an older mod)
+    this.api.fieldMap().subscribe({ next: (m) => this.fieldMap.set(m), error: () => this.fieldMap.set(null) });
     forkJoin({ fields: this.api.farmlands(), negotiations: this.api.negotiations(), mails: this.api.mails(),
       leaseOut: this.api.leaseOut() }).subscribe({
       next: ({ fields, negotiations, mails, leaseOut }) => {

@@ -1,0 +1,7 @@
+Sperrzone aufgehoben
+Guten Tag,
+
+die Sperrzone wegen {{disease}} ist aufgehoben. Der Handel mit {{animalTypes}} ist wieder erlaubt. Rechnen Sie in den nächsten {{recoveryMonths}} Monaten noch mit gedrückten Preisen.
+
+Mit freundlichen Grüßen
+{{characterName}}

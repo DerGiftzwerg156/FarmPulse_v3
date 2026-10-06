@@ -1,0 +1,7 @@
+Investitionsförderung ausgezahlt
+Guten Tag,
+
+auf Ihre nachgewiesenen Kosten von {{recognised}} € ({{kind}}) zahlen wir einen Zuschuss von {{grant}} € aus. {{bindingNote}}
+
+Mit freundlichen Grüßen
+{{characterName}}

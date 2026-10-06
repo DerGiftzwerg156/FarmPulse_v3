@@ -63,6 +63,8 @@ export interface ContractView {
   /** Roadmap V3.1 R31-A4: snow days of the running winter month and of the whole winter (winter service only). */
   snowDays?: number | null;
   snowDaysTotal?: number | null;
+  /** R31-D8: module "Diebstahl" of the storm / hail insurance (null for other contracts). */
+  theftCover?: boolean | null;
 }
 
 /** Simulated incident or one-off offer of a service character (TODO T-20 / T-22). */
@@ -474,6 +476,10 @@ export interface EmployeeView {
   apprenticeshipEndsAtGameTime?: number | null;
   /** Roadmap V3.1 R31-A5: end of a seasonal worker's fixed-term contract. */
   contractEndsAtGameTime?: number | null;
+  /** Roadmap V3.1 R31-B5: SICKNESS / ACCIDENT while the employee is away (ON_LEAVE), its end, wishes sent. */
+  absenceKind?: string | null;
+  absenceUntilGameTime?: number | null;
+  getWellSent?: boolean;
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
@@ -1185,4 +1191,290 @@ export interface AnimalTradeView {
   stables: StableView[];
   neighbors: AnimalNeighborView[];
   cases: CaseView[];
+}
+
+/** R31-B: switches of the burdening events; world mode and its factor (IDYLLIC: animal disease off). */
+export interface BurdenSettingsView {
+  areaCheck: boolean;
+  fertilizer: boolean;
+  disease: boolean;
+  sickLeave: boolean;
+  /** R31-D4 / D5 / D8 */
+  nightWork: boolean;
+  cropDamage: boolean;
+  dieselTheft: boolean;
+  tonePreset: string;
+  idyllicFactor: number;
+}
+
+/** R31-B1: one field of an area payment application. */
+export interface DirectPaymentFieldView {
+  farmlandId: number;
+  fieldName: string;
+  hectares: number;
+  declaredCrop: string;
+  actualCrop: string | null;
+  rotationRepeat: boolean;
+}
+
+export interface DirectPaymentFormFieldView {
+  farmlandId: number;
+  fieldName: string;
+  hectares: number;
+  suggestedCrop: string;
+}
+
+/** R31-B1: area payment application of an FS25 year (OPEN, SUBMITTED, LAPSED, PAID). */
+export interface DirectPaymentView {
+  id: number;
+  cropYear: number;
+  status: string;
+  openedGameTime: number;
+  deadlineGameTime: number;
+  lateLimitGameTime: number;
+  submittedGameTime: number | null;
+  lateDays: number;
+  checkStatus: string;
+  deviatingHectares: number | null;
+  deviationCut: number | null;
+  rotationCut: number | null;
+  lateCut: number | null;
+  premium: number | null;
+  paidAmount: number | null;
+  fields: DirectPaymentFieldView[];
+}
+
+export interface DirectPaymentStatusView {
+  enabled: boolean;
+  premiumPerHa: number;
+  lateCutPercentPerDay: number;
+  lateMaxDays: number;
+  crops: string[];
+  form: DirectPaymentFormFieldView[];
+  applications: DirectPaymentView[];
+}
+
+/** R31-B2: a machine bought with a grant (binding period). */
+export interface GrantObjectView {
+  vehicleUniqueId: string;
+  value: number;
+  soldGameTime: number | null;
+  repayment: number | null;
+}
+
+/** R31-B2: investment grant (APPLIED, APPROVED, PAID, EXPIRED). */
+export interface GrantView {
+  id: number;
+  kind: string;
+  status: string;
+  plannedSum: number;
+  appliedGameTime: number;
+  approvalDueGameTime: number;
+  approvedGameTime: number | null;
+  purchaseDeadlineGameTime: number | null;
+  recognisedSum: number;
+  grantAmount: number | null;
+  paidGameTime: number | null;
+  bindingEndsGameTime: number | null;
+  repaidAmount: number;
+  objects: GrantObjectView[];
+}
+
+export interface GrantStatusView {
+  enabled: boolean;
+  minSum: number;
+  grantPercent: number;
+  grantMax: number;
+  purchaseMonths: number;
+  bindingMonths: number;
+  processingDays: number;
+  grants: GrantView[];
+}
+
+/** R31-B4: an animal disease with its restricted zone. */
+export interface DiseaseView {
+  id: number;
+  diseaseKey: string;
+  animalTypes: string[];
+  status: string;
+  declaredGameTime: number;
+  endsGameTime: number;
+  liftedGameTime: number | null;
+}
+
+export interface DiseaseStatusView {
+  possible: boolean;
+  diseases: DiseaseView[];
+}
+
+// ------------------------------------------------------------------------------------------ Roadmap V3.1 R31-D
+
+/** R31-D1: an article of the village newspaper; `pending` while the text is being written. */
+export interface ArticleView {
+  id: number;
+  section: string;
+  sectionTitle: string;
+  position: number;
+  headline: string | null;
+  body: string | null;
+  fallback: boolean;
+  pending: boolean;
+}
+
+/** R31-D1: an issue of the "Dorfblatt" (newest first). */
+export interface IssueView {
+  id: number;
+  issueNumber: number;
+  midMonth: boolean;
+  period: number | null;
+  cropYear: number | null;
+  fromGameTime: number;
+  publishedGameTime: number;
+  headline: string | null;
+  articles: ArticleView[];
+}
+
+/** R31-D2: a message of the village chat; `character` null = the player, `pending` while written. */
+export interface ChatMessageView {
+  id: number;
+  groupId: number;
+  character: CharacterRef | null;
+  kind: string;
+  topic: string | null;
+  text: string | null;
+  tone: string | null;
+  link: string | null;
+  gameTime: number;
+  pending: boolean;
+}
+
+export interface ChatGroupView {
+  id: number;
+  key: string;
+  name: string;
+  members: CharacterRef[];
+  last: ChatMessageView | null;
+}
+
+export interface ChatPostView {
+  message: ChatMessageView;
+  pacingActive: boolean;
+}
+
+/** R31-D6: one month of the farm holidays. */
+export interface HolidayMonthView {
+  monthIndex: number;
+  period: number;
+  income: number;
+  seasonFactor: number;
+  reputationFactor: number;
+  animalFactor: number;
+  noise: boolean;
+  smell: boolean;
+  badReview: boolean;
+  gameTime: number;
+}
+
+export interface HolidayPreviewView {
+  period: number;
+  seasonFactor: number;
+  reputationFactor: number;
+  animalFactor: number;
+  noise: boolean;
+  smell: boolean;
+  badReview: boolean;
+  income: number;
+}
+
+export interface FarmHolidayView {
+  enabled: boolean;
+  setupCost: number;
+  baseIncomePerMonth: number;
+  /** Game time of the setup, null = not set up. */
+  since: number | null;
+  preview: HolidayPreviewView;
+  months: HolidayMonthView[];
+}
+
+/** R31-D7: a cancellation of cooperative shares. */
+export interface CoopNoticeView {
+  id: number;
+  shares: number;
+  noticedGameTime: number;
+  dueGameTime: number;
+  paidGameTime: number | null;
+}
+
+export interface CooperativeView {
+  enabled: boolean;
+  sharePrice: number;
+  maxShares: number;
+  shares: number;
+  noticedShares: number;
+  board: boolean;
+  boardMissed: number;
+  boardMinShares: number;
+  dividendRatePercent: number;
+  dividendBonusPercent: number;
+  grainStore: boolean;
+  noticeMonths: number;
+  notices: CoopNoticeView[];
+}
+
+/** R31-D8: an own vehicle with its diesel and tank lock. */
+export interface FuelVehicleView {
+  vehicleId: string;
+  name: string | null;
+  fuelLiters: number | null;
+  fuelCapacity: number | null;
+  tankLock: boolean;
+}
+
+export interface TheftView {
+  id: number;
+  vehicleId: string;
+  vehicleName: string | null;
+  status: string;
+  stolenLiters: number | null;
+  damage: number | null;
+  insurancePayout: number | null;
+  closedGameTime: number | null;
+}
+
+export interface DieselTheftView {
+  enabled: boolean;
+  tankLockPrice: number;
+  insurancePremiumPerMonth: number;
+  insuranceMinDamage: number;
+  vehicles: FuelVehicleView[];
+  thefts: TheftView[];
+}
+
+// ------------------------------------------------------------------------------------------ Roadmap V3.1 R31-K
+
+export interface ShapePoint {
+  x: number;
+  z: number;
+}
+
+/** R31-K1: one field outline of the map; `kind` OWN (also leased), NEIGHBOR or FREE; hints as codes. */
+export interface MapFieldView {
+  farmlandId: number;
+  name: string;
+  points: ShapePoint[];
+  kind: 'OWN' | 'NEIGHBOR' | 'FREE' | string;
+  ownerName: string | null;
+  leased: boolean;
+  leasedOut: boolean;
+  fruitType: string | null;
+  phase: string | null;
+  orders: string[];
+  auction: boolean;
+  hints: string[];
+}
+
+/** R31-K1: `mapSize` null = no outlines exported (older mod). */
+export interface FieldMapView {
+  mapSize: number | null;
+  fields: MapFieldView[];
 }

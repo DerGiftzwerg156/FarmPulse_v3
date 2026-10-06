@@ -138,6 +138,18 @@ public class CalendarPlanService {
             if (PREPAYMENT_PERIODS.contains(period)) {
                 out.add(new AgendaEntryView(start, period == 1 ? "TAX_ASSESSMENT" : "TAX_PREPAYMENT", null, null, null, null));
             }
+            // Roadmap V3.1 R31-D7: general assembly of the members, board meetings
+            if (sg.getCoopShares() > 0 && period == props.getFormulas().getCoopAssembly().getPeriod()) {
+                out.add(new AgendaEntryView(start, "COOP_ASSEMBLY", null, null, null, null));
+            }
+            if (sg.isCoopBoard() && props.getFormulas().getCoopBoard().getMeetingPeriods().contains(period)) {
+                out.add(new AgendaEntryView(start, "COOP_BOARD_MEETING", null, null, null, null));
+            }
+        }
+        // Roadmap V3.1 R31-D3: the next regulars' table invitation
+        Long stammtisch = sg.getStammtischNextGameTime();
+        if (props.getFormulas().getStammtisch().isEnabled() && stammtisch != null && stammtisch > now && stammtisch <= until) {
+            out.add(new AgendaEntryView(stammtisch, "STAMMTISCH", null, null, null, null));
         }
         for (Loan l : activeLoans) {
             if (l.getNextDueGameTime() > now && l.getNextDueGameTime() <= until) {
@@ -175,6 +187,15 @@ public class CalendarPlanService {
         }
         out.add(new YearEventView(1, "TAX_ASSESSMENT", null));
         out.add(new YearEventView(1, "ROTATION_CHECK", null));
+        // Roadmap V3.1 R31-D7: assembly and dividend of the cooperative for members, board meetings
+        if (sg.getCoopShares() > 0) {
+            out.add(new YearEventView(props.getFormulas().getCoopAssembly().getPeriod(), "COOP_ASSEMBLY", null));
+            out.add(new YearEventView(props.getFormulas().getCoopShares().getDividendPeriod(), "COOP_DIVIDEND", null));
+        }
+        if (sg.isCoopBoard()) {
+            props.getFormulas().getCoopBoard().getMeetingPeriods()
+                    .forEach(p -> out.add(new YearEventView(p, "COOP_BOARD_MEETING", null)));
+        }
         if (year != null && tax.quarterlyPrepayment(sg, year) > 0) {
             PREPAYMENT_PERIODS.forEach(p -> out.add(new YearEventView(p, "TAX_PREPAYMENT", null)));
         }

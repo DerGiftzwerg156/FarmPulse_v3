@@ -1,0 +1,7 @@
+Flächenprämie {{cropYear}} ausgezahlt
+Guten Tag,
+
+für {{hectares}} ha aus Ihrem Sammelantrag {{cropYear}} zahlen wir die Flächenprämie aus: {{premium}} €, abzüglich {{lateCut}} € wegen Verspätung und {{cuts}} € aus der Kontrolle. Überwiesen werden {{paid}} €.
+
+Mit freundlichen Grüßen
+{{characterName}}

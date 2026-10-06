@@ -715,10 +715,10 @@ difficulty `HARSH` uses the `hard-*` values. All values are placeholders, not a 
 | Key | Default | Meaning | Source |
 | --- | --- | --- | --- |
 | `rpsim.formulas.tax.enabled` | `true` | Master switch of the tax office (assessment, prepayments, audits). | Roadmap V2 R2-E1 |
-| `rpsim.formulas.tax.rate` | `0.25` | Flat tax rate on the taxable profit. | Roadmap V2 R2-E1 |
-| `rpsim.formulas.tax.allowance` | `20000` | Tax-free allowance per FS25 year (€). | Roadmap V2 R2-E1 |
-| `rpsim.formulas.tax.hard-rate` | `0.3` | Tax rate in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
-| `rpsim.formulas.tax.hard-allowance` | `10000` | Allowance in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.rate` | `0.19` | Flat tax rate on the taxable profit. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.allowance` | `50000` | Tax-free allowance per FS25 year (€). | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.hard-rate` | `0.25` | Tax rate in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
+| `rpsim.formulas.tax.hard-allowance` | `25000` | Allowance in the difficulty `HARSH`. | Roadmap V2 R2-E1 |
 | `rpsim.formulas.tax.depreciation-rate` | `0.1` | Yearly depreciation as a share of the exported value of vehicles and placeables (`assets`) at the assessment. | Roadmap V2 R2-E1 |
 | `rpsim.formulas.tax.excluded-categories` | `[RPSIM_TAX_PAYMENT, RPSIM_TAX_REFUND, RPSIM_FINE]` | Journal categories that are not part of the tax base (owner decision: taxes and fines). | Roadmap V2 R2-E1 |
 | `rpsim.formulas.tax.prepayment-share` | `1.0` | Share of the last assessed tax billed as prepayments, split into four quarters (0 = no prepayments). | Roadmap V2 R2-E1 |
@@ -1050,6 +1050,181 @@ Owner decisions of 2026-10-02 (`docs/architecture/QUESTIONS.md`); all values are
 | `rpsim.formulas.seasonal-worker.max-workers` | `3` | Seasonal workers at a time. | Roadmap V3.1 R31-A5 |
 | `rpsim.formulas.seasonal-worker.return-satisfaction` | `60` | A worker who left with this satisfaction or more applies again next year. | Roadmap V3.1 R31-A5 |
 
+## `rpsim.formulas.burdening-events` / `direct-payment` / `investment-grant` / `fertilizer-rules` / `animal-disease` / `social-insurance` / `sick-leave` (Roadmap V3.1 R31-B)
+
+Owner decisions of 2026-10-05 in `QUESTIONS.md`. Bills of a grant repayment and of the social insurance use `tax.payment-days` and `tax.late-fee-rate` like a tax bill; inspections use `authority.inspection-days` and `authority.max-inspections-per-month`.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.burdening-events.idyllic-factor` | `0.5` | World mode IDYLLIC: chance and cut of the on-site check (B1), fine of the fertiliser rules (B3) and chances of sickness / accident (B5) × factor; the animal disease (B4) is off. Each burdening event is also switched per savegame (settings). | Roadmap V3.1 R31-B |
+| `rpsim.formulas.direct-payment.enabled` | `true` | The authority sends the area payment application every FS25 year. | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.open-period` | `1` | FS25 period of the mail and the form (March). | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.deadline-period` | `3` | Deadline = end of this FS25 period (May). | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.payment-period` | `10` | The premium is paid at the start of this FS25 period (December) as `DIRECT_PAYMENT`. | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.late-cut-per-day` | `0.01` | A late application loses this share of the premium per started game day … | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.late-max-days` | `25` | … and lapses after this many game days (no premium). | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.premium-per-ha` | `250` | Area premium per declared hectare. | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.check-probability` | `0.1` | On-site check per application, rolled once at the first month start of the check periods (switch, idyllic factor). | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.check-periods` | `[4, 5, 6, 7, 8]` | FS25 periods of the on-site checks (announced, `authority.inspection-days`). | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.cut-factor` | `1.5` | Cut = premium of the deviating area × factor (capped at the premium) … | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.cut-factor-repeat` | `3.0` | … × this factor when the savegame deviated in an earlier check. Fields with the crop of the year before lose `authority.rotation-cut-share` of their premium. | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.direct-payment.crops` | `[WHEAT, BARLEY, OAT, CANOLA, MAIZE, SUNFLOWER, SOYBEAN, SORGHUM, GRASS]` | Crops of the form, plus the fruit types of the own fields and `BRACHE` (fallow). | Roadmap V3.1 R31-B1 |
+| `rpsim.formulas.investment-grant.enabled` | `true` | Grant applications under Ämter. | Roadmap V3.1 R31-B2 |
+| `rpsim.formulas.investment-grant.min-sum` | `10000` | Planned sum at least. | Roadmap V3.1 R31-B2 |
+| `rpsim.formulas.investment-grant.processing-days` | `10` | Processing time until the approval … | Roadmap V3.1 R31-B2 |
+| `rpsim.formulas.investment-grant.clerk-reduction-max` | `0.5` | … × (1 − factor × effective skill / 100) with the best office clerk. | Roadmap V3.1 R31-B2 |
+| `rpsim.formulas.investment-grant.purchase-months` | `6` | Purchases count from the approval up to this many game months (rises of `SHOP_PROPERTY_BUY` / `SHOP_VEHICLE_BUY` in the journal). | Roadmap V3.1 R31-B2 |
+| `rpsim.formulas.investment-grant.max-open-per-kind` | `1` | Open applications per kind (building / machine). | Roadmap V3.1 R31-B2 |
+| `rpsim.formulas.investment-grant.grant-share` | `0.3` | Grant = share × min(recognised, planned sum) … | Roadmap V3.1 R31-B2 |
+| `rpsim.formulas.investment-grant.grant-max` | `50000` | … at most this amount (`INVESTMENT_GRANT`). | Roadmap V3.1 R31-B2 |
+| `rpsim.formulas.investment-grant.binding-months` | `24` | A funded machine sold within this many game months after the payment is repaid pro rata (bill like a tax bill). | Roadmap V3.1 R31-B2 |
+| `rpsim.formulas.fertilizer-rules.enabled` | `true` | Fertiliser rules: closed period and slurry store. | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.closed-periods` | `[9, 10, 11]` | FS25 periods without organic fertiliser on arable land (November–January). | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.organic-spray-types` | `[LIQUID_MANURE, MANURE]` | `fields[].sprayType` values that count as organic fertiliser. | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.excluded-fruit-types` | `[GRASS]` | Fruit types that are grassland, not arable land. | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.require-spray-type` | `true` | `false` = fallback of the manual test plan: every rise of `sprayLevel` counts ("Düngung festgestellt"). | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.fine` | `1000` | Fine of a repeated finding (the first one is a warning), idyllic factor. | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.reputation-delta` | `-3` | Village reputation of a fine. | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.slurry-condition-titles` | `[Gülle, Slurry, Liquid Manure]` | Condition titles of the slurry store (`husbandries[].conditions`, localised). | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.slurry-warning-ratio` | `0.85` | Slurry store from this ratio … | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.slurry-warning-days` | `5` | … for this many game days: warning of the animal keeper (without one the cooperative). | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.slurry-warning-cooldown-days` | `10` | At most one warning per stable within these game days. | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.reminder-period` | `8` | FS25 period of the reminder before the closed period (October). | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.fertilizer-rules.reminder-min-ratio` | `0.5` | Only stables with a slurry store from this ratio are named. | Roadmap V3.1 R31-B3 |
+| `rpsim.formulas.animal-disease.enabled` | `true` | Animal diseases (switch per savegame, off in the idyllic world mode). | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.probability-per-month` | `0.02` | Chance of an outbreak at a month start (at most one at a time, only animal types the player keeps). | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.cooldown-months` | `12` | Months after a lifting before the next outbreak. | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.zone-months` | `3` | Duration of the restricted zone (trade with neighbours and the livestock trader blocked). | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.diseases` | `ASP → PIG, AVIAN_FLU → CHICKEN, BLUETONGUE → SHEEP, COW` | Diseases `{ key, animal-types }`. | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.vet-fee-factor` | `2.0` | Compulsory vet check per stable = (`livestock.vet-base-fee` + `vet-fee-per-animal` × animals) × factor (`VET_INVOICE`). | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.requirement-health` | `60` | Requirement per affected stable: health from this value … | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.requirement-days` | `10` | … within this many game days … | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.requirement-fine` | `1000` | … otherwise a fine. | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.price-factor-after` | `0.8` | Prices of the neighbour trade (A3) at the lifting … | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.animal-disease.price-recovery-months` | `3` | … back to × 1 linearly within these months. | Roadmap V3.1 R31-B4 |
+| `rpsim.formulas.social-insurance.enabled` | `true` | Annual bill of the Berufsgenossenschaft. | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.social-insurance.base-fee` | `300` | Fee = base fee … | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.social-insurance.fee-per-ha` | `12` | … + per hectare of the own fields (leased-in included) … | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.social-insurance.fee-per-employee` | `180` | … + per active employee (seasonal workers included); paid like a tax bill (`SOCIAL_INSURANCE`). | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.social-insurance.bill-period` | `2` | FS25 period of the bill (April). | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.enabled` | `true` | Sickness and work accidents of employees (switch per savegame, idyllic factor). | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.sickness-probability-per-day` | `0.005` | Chance per active employee and game day. | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.accident-probability-per-day` | `0.003` | Chance per employee of the accident roles and game day × risk factor. | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.accident-roles` | `[MACHINE_OPERATOR, SEASONAL_WORKER, APPRENTICE]` | Job roles that can have a work accident. | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.risk-bad-threshold` | `40` | Accident risk × `risk-bad-factor` for each of the needs workload / working conditions below this value … | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.risk-bad-factor` | `1.5` | … (multiplied). | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.risk-good-threshold` | `70` | Both needs from this value … | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.risk-good-factor` | `0.5` | … lower the accident risk by this factor. | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.sickness-days-min` | `2` | Game days away when sick, at least … | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.sickness-days-max` | `5` | … and at most (ON_LEAVE, salary continues). | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.accident-days-min` | `3` | Game days away after an accident, at least … | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.accident-days-max` | `10` | … and at most. | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.get-well-appreciation` | `8` | Get-well wishes (once per absence): appreciation points … | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.get-well-trust-delta` | `2` | … and trust of the employee. | Roadmap V3.1 R31-B5 |
+
+## `rpsim.formulas.village-newspaper` / `village-chat` / `stammtisch` / `night-work` / `crop-damage` / `farm-holiday` / `school-visit` / `coop-shares` / `coop-assembly` / `coop-board` / `diesel-theft` (Roadmap V3.1 R31-D)
+
+Owner decisions of 2026-10-05 in `QUESTIONS.md`. Night work (D4), crop damage (D5) and diesel theft (D8) are burdening events switched per savegame (settings; crop damage off by default); in the world mode IDYLLIC the diesel theft is off and the trust losses and compensations of D4 / D5 are × `burdening-events.idyllic-factor`.
+
+| Key | Default | Meaning | Source |
+| --- | --- | --- | --- |
+| `rpsim.formulas.village-newspaper.enabled` | `true` | An issue of the "Dorfblatt" at every FS25 period start with the public facts of the past period (AI text, templates without AI); empty sections are left out, the headline goes into the chronicle. | Roadmap V3.1 R31-D1 |
+| `rpsim.formulas.village-newspaper.mid-month-issue` | `false` | An extra issue at the middle of the month. | Roadmap V3.1 R31-D1 |
+| `rpsim.formulas.village-newspaper.market-top-count` | `3` | Section "Markt": fill types with the largest price change against the previous period. | Roadmap V3.1 R31-D1 |
+| `rpsim.formulas.village-newspaper.max-items-per-section` | `6` | At most this many news items per section and issue (the newest). | Roadmap V3.1 R31-D1 |
+| `rpsim.formulas.village-chat.enabled` | `true` | Village group chat "Dorfchat": groups "Dorf", "Nachbarn" and one per club. | Roadmap V3.1 R31-D2 |
+| `rpsim.formulas.village-chat.daily-post-probability` | `0.3` | Chance per game day for an announcement or gossip of a character. | Roadmap V3.1 R31-D2 |
+| `rpsim.formulas.village-chat.max-posts-per-day` | `3` | Character posts per game day (help requests and congratulations included). | Roadmap V3.1 R31-D2 |
+| `rpsim.formulas.village-chat.topics` | `[GREEN_WASTE, FIRE_BRIGADE_DRILL, LOST_DOG, CHURCH_BAZAAR, ROAD_WORKS, WEATHER_WARNING]` | Topics of the announcements. | Roadmap V3.1 R31-D2 |
+| `rpsim.formulas.village-chat.club-group-villagers` | `3` | Random villagers in a club group besides the chair. | Roadmap V3.1 R31-D2 |
+| `rpsim.formulas.village-chat.pacing-days` | `1` | A player post changes the trust of one random member at most once per group in this many game days (capped like "Nachricht verfassen"). | Roadmap V3.1 R31-D2 |
+| `rpsim.formulas.stammtisch.enabled` | `true` | Invitation to the regulars' table by a villager. | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.stammtisch.interval-days` | `14` | Game days between two invitations. | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.stammtisch.answer-days` | `2` | Accept by button or in-game question (`PromptKind.STAMMTISCH`) within these game days. | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.stammtisch.attendees` | `3` | Random villagers at the table … | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.stammtisch.attend-trust-delta` | `2` | … trust with each of them for attending. | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.stammtisch.rumor-accuracy-bonus` | `0.15` | The next rumour after an evening is accurate with `market.rumor-accurate-probability` + bonus. | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.stammtisch.tip-probability` | `0.3` | Chance of a tip on an open auction or a sell-willing field owner. | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.stammtisch.loner-after-missed` | `3` | Missed invitations in a row … | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.stammtisch.loner-reputation-delta` | `-1` | … cost reputation ("eigenbrötlerisch") … | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.stammtisch.loner-reputation-cap` | `-3` | … at most this much in total. | Roadmap V3.1 R31-D3 |
+| `rpsim.formulas.night-work.enabled` | `true` | Complaints about helpers working at night (`workforce.activeJobs`, `calendar.dayTimeMs`); none while an own field is `HARVESTABLE`. | Roadmap V3.1 R31-D4 |
+| `rpsim.formulas.night-work.night-start-hour` | `22` | Night from this hour … | Roadmap V3.1 R31-D4 |
+| `rpsim.formulas.night-work.night-end-hour` | `6` | … to this hour. | Roadmap V3.1 R31-D4 |
+| `rpsim.formulas.night-work.threshold-hours` | `3` | A villager complains from this many night hours of helpers … | Roadmap V3.1 R31-D4 |
+| `rpsim.formulas.night-work.window-days` | `7` | … within these game days (the counter restarts after a complaint). | Roadmap V3.1 R31-D4 |
+| `rpsim.formulas.night-work.annoyed-within-days` | `30` | A further complaint within these game days is annoyed (and gossip in the newspaper). | Roadmap V3.1 R31-D4 |
+| `rpsim.formulas.night-work.friendly-trust-delta` | `-1` | Trust of the villager at a friendly complaint … | Roadmap V3.1 R31-D4 |
+| `rpsim.formulas.night-work.annoyed-trust-delta` | `-3` | … and at an annoyed one. | Roadmap V3.1 R31-D4 |
+| `rpsim.formulas.night-work.max-sample-gap-minutes` | `60` | Game time between two exports counts at most this long (pause, load). | Roadmap V3.1 R31-D4 |
+| `rpsim.formulas.crop-damage.enabled` | `true` | Crop damage on neighbour fields from the vehicle samples (`vehiclePositions`); per savegame off by default. | Roadmap V3.1 R31-D5 |
+| `rpsim.formulas.crop-damage.min-samples` | `3` | Samples in a row of one vehicle on a neighbour field with a crop, without a running order there; before the first complaint only the hint. | Roadmap V3.1 R31-D5 |
+| `rpsim.formulas.crop-damage.trust-delta` | `-3` | Trust of the owner at a complaint (at most one per field and game day). | Roadmap V3.1 R31-D5 |
+| `rpsim.formulas.crop-damage.repeat-days` | `60` | A repetition at the same owner within these game days brings a compensation claim … | Roadmap V3.1 R31-D5 |
+| `rpsim.formulas.crop-damage.compensation-per-sample` | `150` | … of this amount per sample (`COMPENSATION`, pay / refuse like R2-D2) … | Roadmap V3.1 R31-D5 |
+| `rpsim.formulas.crop-damage.decline-trust-delta` | `-5` | … refusing costs this much trust … | Roadmap V3.1 R31-D5 |
+| `rpsim.formulas.crop-damage.decision-days` | `7` | … decided within these game days. | Roadmap V3.1 R31-D5 |
+| `rpsim.formulas.crop-damage.hint-text` | `Pass auf, wo du langfährst – …` | In-game hint before the first complaint. | Roadmap V3.1 R31-D5 |
+| `rpsim.formulas.farm-holiday.enabled` | `true` | Farm holidays ("Ferien auf dem Hof") in the app "Handel". | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.setup-cost` | `20000` | One-off setup (`FARM_HOLIDAY_SETUP`). | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.base-income-per-month` | `800` | Monthly guest income (`GUEST_INCOME`) = base × season × reputation × animals − cuts. | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.season-factors` | `{4: 1.5, 5: 1.5, 6: 1.5, 10: 1.2}` | Season factor by FS25 period of the month that ended … | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.other-season-factor` | `0.7` | … otherwise. | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.reputation-factors` | `{GOOD: 1.2, NEUTRAL: 1.0, CONTROVERSIAL: 0.7}` | Factor by village reputation level. | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.good-health` | `70` | A stable with at least this health … | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.good-health-factor` | `1.2` | … gives this factor (no animals: 1.0). | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.bad-health` | `40` | A stable below this health … | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.bad-health-factor` | `0.6` | … gives this factor and a bad review (wins over the good factor). | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.noise-cut` | `0.1` | Cut for night work of helpers in the month (complaint about noise). | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.smell-cut` | `0.1` | Cut for slurry / manure spread (fertiliser rules data, B3) in the smell periods … | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.farm-holiday.smell-periods` | `[4, 5, 6]` | … (FS25 periods of the main season). | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.school-visit.enabled` | `true` | Requests of the village school (role `SCHOOL`) for a farm tour. | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.school-visit.probability-per-month` | `0.25` | Chance per month start … | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.school-visit.excluded-periods` | `[4, 5, 6]` | … not in these FS25 periods (summer holidays) … | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.school-visit.min-health` | `70` | … and only with a stable of at least this health. | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.school-visit.answer-days` | `5` | Accept by button within these game days. | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.school-visit.allowance` | `150` | Allowance (`GUEST_INCOME`) … | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.school-visit.reputation-delta` | `2` | … village reputation … | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.school-visit.trust-delta` | `2` | … and trust of the teacher. | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.coop-shares.enabled` | `true` | Shares of the cooperative (`COOP_SHARES`) in the app "Handel". | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-shares.share-price` | `500` | Price (nominal value) per share. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-shares.max-shares` | `200` | At most this many shares per farm. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-shares.base-dividend-rate` | `0.04` | Dividend rate = base × price index (mean of the daily mean prices of the FS25 year ÷ that of the year before; base without a previous year) … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-shares.min-rate` | `0.0` | … capped from below … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-shares.max-rate` | `0.08` | … and from above (plus the points of an accepted assembly topic `DIVIDEND_UP`, within the cap). | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-shares.dividend-period` | `1` | Paid at the start of this FS25 period (`COOP_DIVIDEND`). | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-shares.notice-months` | `12` | Notice period of a cancellation; repaid at the nominal value. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-assembly.period` | `2` | General assembly at the start of this FS25 period (members only) … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-assembly.answer-days` | `5` | … vote by button or in-game question (`PromptKind.COOP_ASSEMBLY`) within these game days. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-assembly.topics` | `[DIVIDEND_UP, GRAIN_STORE, FESTIVAL_SPONSORING]` | A random topic per year. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-assembly.character-votes` | `10` | Votes per active character (the player votes with the shares) … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-assembly.yes-base` | `0.5` | … each character votes yes with base + trust / divisor … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-assembly.yes-trust-divisor` | `200` | … ; the topic passes with at least half of the votes. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-assembly.dividend-up-points` | `0.01` | Accepted `DIVIDEND_UP`: + this rate on the next dividend. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-assembly.grain-store-rumor-bonus` | `0.05` | Accepted `GRAIN_STORE`: rumours are more often accurate for members. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-assembly.festival-sponsoring-reputation` | `1` | Accepted `FESTIVAL_SPONSORING`: village reputation for members. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-board.min-shares` | `40` | Election to the board from this many shares … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-board.min-trust` | `50` | … and this trust of the cooperative (at the general assembly). | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-board.rumor-days-earlier` | `2` | Board: rumours this many game days earlier … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-board.forward-contract-bonus` | `0.1` | … forward contracts allow this much more quantity … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-board.reputation-per-year` | `2` | … and village reputation per year. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-board.meeting-periods` | `[1, 4, 7, 10]` | Board meetings at the start of these FS25 periods (calendar entry) … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-board.meeting-answer-days` | `5` | … to be confirmed within these game days … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-board.missed-trust-delta` | `-3` | … a missed meeting costs this much trust of the cooperative … | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.coop-board.removed-after-missed` | `2` | … and this many missed meetings remove the player from the board. | Roadmap V3.1 R31-D7 |
+| `rpsim.formulas.diesel-theft.enabled` | `true` | Diesel theft (switch per savegame, off in the world mode IDYLLIC). | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.probability-per-month` | `0.05` | Chance per month start; executed in the next night (`VEHICLE_FUEL`). | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.min-liters` | `100` | Target: an own, parked vehicle (no loan machine) with at least this much diesel. | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.share-min` | `0.3` | Stolen share of the diesel, at least … | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.share-max` | `0.6` | … at most … | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.max-liters` | `300` | … and at most this many litres. | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.diesel-price-per-liter` | `1.6` | Damage = stolen litres × this price. | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.insurance-premium-per-month` | `8` | Insurance module "Diebstahl" of the storm / hail contract: + this monthly premium … | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.insurance-min-damage` | `150` | … pays a damage above this amount in full (`INSURANCE_PAYOUT`, no deductible). | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.tank-lock-price` | `250` | Tank lock per vehicle at the workshop (`TANK_LOCK`) … | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.tank-lock-factor` | `0.1` | … multiplies the weight of that vehicle as a target by this factor. | Roadmap V3.1 R31-D8 |
+| `rpsim.formulas.diesel-theft.max-attempts` | `3` | Refused by the mod (driven, no diesel tank): retried in the next night, at most this many attempts. | Roadmap V3.1 R31-D8 |
+
 ## `rpsim.formulas.finance` (Roadmap V2 R2-B)
 
 Real farm finances from the mod's booking journal (`farm_facts.finances`, sums per FS25 period and money type). Each
@@ -1080,12 +1255,15 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_INVESTMENT_GRANT` | `OPERATING_INCOME` | tool booking: operating income (investment grant, R31-B2). | Roadmap V3.1 R31-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_GUEST_INCOME` | `OPERATING_INCOME` | tool booking: operating income (farm holiday guests, R31-D6). | Roadmap V3.1 R31-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_COOP_DIVIDEND` | `OPERATING_INCOME` | tool booking: operating income (dividend of the cooperative, R31-D7). | Roadmap V3.1 R31-Q1 |
+| `rpsim.formulas.finance.categories.RPSIM_FARM_HOLIDAY_SETUP` | `INVESTMENT` | tool booking: investment (setup of the holiday flat, R31-D6). | Roadmap V3.1 R31-D6 |
+| `rpsim.formulas.finance.categories.RPSIM_TANK_LOCK` | `OPERATING_EXPENSE` | tool booking: operating expense (tank lock, R31-D8). | Roadmap V3.1 R31-D8 |
 | `rpsim.formulas.finance.categories.PURCHASE_FUEL` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_SEEDS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_FERTILIZER` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_WATER` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_PALLETS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.PURCHASE_CONSUMABLES` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
+| `rpsim.formulas.finance.categories.PRODUCTION_COSTS` | `OPERATING_EXPENSE` | FS25 money type: running costs of own production chains. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.BOUGHT_MATERIALS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.VEHICLE_RUNNING_COSTS` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.VEHICLE_REPAIR` | `OPERATING_EXPENSE` | FS25 money type: operating expense. | Roadmap V2 R2-B2 |

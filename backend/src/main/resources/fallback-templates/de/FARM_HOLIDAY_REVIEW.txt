@@ -1,0 +1,7 @@
+Bewertung unserer Ferien auf dem Hof
+Hallo,
+
+wir waren als Feriengäste bei euch. Unsere Rückmeldung: {{complaints}}
+
+Viele Grüße
+Ihre Feriengäste

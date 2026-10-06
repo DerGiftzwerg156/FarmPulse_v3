@@ -1,0 +1,6 @@
+Dividende der Genossenschaft
+Guten Tag,
+
+für das vergangene Jahr schüttet die Genossenschaft eine Dividende von {{ratePercent}} % aus. Für Ihre {{shares}} Anteile sind das {{amount}} €.
+
+{{characterName}}

@@ -117,7 +117,10 @@ public class ApiMapper {
                 e.trainingSet().stream().map(Enum::name).toList(),
                 e.getTrainingInProgress() == null ? null : e.getTrainingInProgress().name(),
                 e.getTrainingUntilGameTime(), e.getApprenticeshipEndsAtGameTime(),
-                e.getContractEndsAtGameTime());
+                e.getContractEndsAtGameTime(),
+                de.farmpulse.rpsim.employee.SickLeaveService.absent(e, e.getSavegame().getCurrentGameTime())
+                        ? e.getAbsenceKind() : null,
+                e.getAbsenceUntilGameTime(), e.isGetWellSent());
     }
 
     private static Double hours(Double h) {
@@ -183,7 +186,10 @@ public class ApiMapper {
                 c.getRenewalAmount(), c.getPurchasePrice(),
                 // R31-A4: snow days of the running winter month and of the whole winter
                 c.getKind() == de.farmpulse.rpsim.domain.ContractKind.WINTER_SERVICE ? c.getSnowDays() : null,
-                c.getKind() == de.farmpulse.rpsim.domain.ContractKind.WINTER_SERVICE ? c.getSnowDaysTotal() : null);
+                c.getKind() == de.farmpulse.rpsim.domain.ContractKind.WINTER_SERVICE ? c.getSnowDaysTotal() : null,
+                // R31-D8: module "Diebstahl" of the storm / hail insurance
+                c.getKind() == de.farmpulse.rpsim.domain.ContractKind.INSURANCE
+                        && !de.farmpulse.rpsim.contract.InsuranceService.DROUGHT.equals(c.getLevel()) ? c.isTheftCover() : null);
     }
 
     public CaseView serviceCase(ServiceCase s) {

@@ -95,6 +95,14 @@ public class MemoryService {
             case MACHINE_LOAN_DAMAGE -> "geliehene Maschine beschädigt zurückgegeben"; // R31-A2
             case MACHINE_LOAN_LOST -> "geliehene Maschine nicht zurückgegeben";
             case MACHINE_LOAN_RENT_MISSED -> "Miete für die geliehene Maschine nicht bezahlt";
+            case AUTHORITY_BILL_OVERDUE -> "Bescheid nicht fristgerecht bezahlt"; // R31-B2 / R31-B5
+            case GET_WELL_WISHES -> "Genesungswünsche erhalten"; // R31-B5
+            case STAMMTISCH -> "gemeinsam am Stammtisch gesessen"; // R31-D3
+            case NIGHT_WORK -> "nachts von Maschinenlärm geweckt"; // R31-D4
+            case CROP_DAMAGE -> "Fahrspuren durchs bestellte Feld"; // R31-D5
+            case CROP_DAMAGE_CLAIM_DECLINED -> "Entschädigung für den Flurschaden verweigert";
+            case SCHOOL_VISIT -> "Schulklasse auf dem Hof empfangen"; // R31-D6
+            case COOP_BOARD_MISSED -> "Vorstandssitzung der Genossenschaft verpasst"; // R31-D7
             case FAMILY_FIELD_LEASED -> "Familienfeld verpachtet";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();

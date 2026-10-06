@@ -179,9 +179,9 @@ test('the three new types and money reasons are validated like the mod', () => {
   for (const a of Object.values(acks)) assert.equal(a.status, 'REJECTED');
   // all new money reasons pass the schema and the validation
   write(['CONTRACTOR_FEE', 'MACHINE_RENT', 'LIVESTOCK_PURCHASE', 'LIVESTOCK_SALE', 'WINTER_SERVICE', 'DIRECT_PAYMENT',
-    'INVESTMENT_GRANT', 'SOCIAL_INSURANCE', 'GUEST_INCOME', 'COOP_SHARES', 'COOP_DIVIDEND']
+    'INVESTMENT_GRANT', 'SOCIAL_INSURANCE', 'GUEST_INCOME', 'COOP_SHARES', 'COOP_DIVIDEND', 'FARM_HOLIDAY_SETUP', 'TANK_LOCK']
     .map((reason, i) => ({ instructionId: `m${i}`, type: 'MONEY_TRANSACTION', amount: 1, reason })));
-  assert.equal(sim.processInstructions().applied, 11);
+  assert.equal(sim.processInstructions().applied, 13);
 });
 
 test('vehicle positions and stables survive saving and reloading without saving', () => {

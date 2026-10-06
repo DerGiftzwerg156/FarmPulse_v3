@@ -78,6 +78,20 @@ import { Button } from '../../shared/ui/button';
         </div>
         <p class="mt-1 text-[11px] text-muted">{{ 'contracts.taxHint' | t }}</p>
       }
+      @if (c().kind === 'GRANT_REPAYMENT' || c().kind === 'SOCIAL_INSURANCE_BILL') {
+        <!-- Roadmap V3.1 R31-B2 / R31-B5: repayment of a grant, fee of the Berufsgenossenschaft - paid like a tax bill -->
+        <div class="mt-1 text-[12px] text-text" data-testid="authority-bill">{{ 'contracts.authorityBill' | t: { title: c().title ?? '–', amount: (c().offerAmount | money) } }}
+          @if (c().costAmount) { · <span class="text-danger">{{ 'contracts.lateFees' | t: { amount: (c().costAmount | money) } }}</span> }</div>
+        @if (c().kind === 'SOCIAL_INSURANCE_BILL') {
+          <div class="mt-1 text-[11px] text-muted" data-testid="social-insurance-basis">{{ 'authorities.socialInsurance.basis' | t: { hectares: c().hectares ?? 0, employees: c().baselineCount ?? 0 } }}</div>
+        }
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'contracts.payTax' | t: { amount: ((c().offerAmount ?? 0) + (c().costAmount ?? 0)) | money } }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'contracts.authorityBillHint' | t }}</p>
+      }
       @if (c().kind === 'AUTHORITY_INSPECTION') {
         <div class="mt-1 text-[12px] text-text" data-testid="inspection">{{ 'contracts.inspection' | t: { rule: (c().title | label: 'authorityRule') } }}</div>
         @if (c().roundsUsed > 0) {
@@ -228,6 +242,66 @@ import { Button } from '../../shared/ui/button';
           <app-badge variant="positive">{{ 'trade.inTransfer' | t }}</app-badge>
         }
         <p class="mt-1 text-[11px] text-muted">{{ 'trade.animals.caseHint' | t }}</p>
+      }
+      @if (c().kind === 'CROP_DAMAGE_CLAIM') {
+        <!-- Roadmap V3.1 R31-D5: compensation for tracks through a neighbour's crop, paid or refused like R2-D2 -->
+        <div class="mt-1 text-[12px] text-text" data-testid="crop-damage-claim">{{ 'contracts.cropDamageClaim' | t: { name: c().character?.name ?? '–', amount: (c().offerAmount | money), samples: c().quantity } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'contracts.payCompensation' | t }}</app-button>
+            <app-button variant="danger" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'contracts.cropDamageHint' | t }}</p>
+      }
+      @if (c().kind === 'STAMMTISCH_INVITATION') {
+        <!-- Roadmap V3.1 R31-D3: the regulars' table in the village pub -->
+        <div class="mt-1 text-[12px] text-text" data-testid="stammtisch">{{ 'contracts.stammtisch' | t: { name: c().character?.name ?? '–' } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'contracts.stammtischGo' | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.rsvpDecline' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'contracts.stammtischHint' | t }}</p>
+      }
+      @if (c().kind === 'SCHOOL_VISIT') {
+        <!-- Roadmap V3.1 R31-D6: a school class wants to visit the farm -->
+        <div class="mt-1 text-[12px] text-text" data-testid="school-visit">{{ 'contracts.schoolVisit' | t: { name: c().character?.name ?? '–', amount: (c().offerAmount | money) } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'contracts.rsvpAccept' | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.rsvpDecline' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'contracts.schoolVisitHint' | t }}</p>
+      }
+      @if (c().kind === 'COOP_ASSEMBLY') {
+        <!-- Roadmap V3.1 R31-D7: vote of the general assembly -->
+        <div class="mt-1 text-[12px] text-text" data-testid="coop-assembly">{{ 'contracts.coopAssembly' | t: { topic: (c().reference | label: 'coopTopic') } }}</div>
+        @if (c().direction === 'BOARD_ELECTION') {
+          <p class="mt-1 text-[12px] text-accent" data-testid="board-election">{{ 'contracts.coopBoardElection' | t }}</p>
+        }
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'contracts.voteYes' | t }}</app-button>
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.voteNo' | t }}</app-button>
+          </div>
+        } @else if (c().resolution) {
+          <app-badge [variant]="c().resolution === 'ACCEPTED' ? 'positive' : 'negative'" data-testid="assembly-result">{{ c().resolution | label: 'coopResult' }} · {{ c().quantity }} %</app-badge>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'contracts.coopAssemblyHint' | t }}</p>
+      }
+      @if (c().kind === 'COOP_BOARD_MEETING') {
+        <!-- Roadmap V3.1 R31-D7: mandatory meeting of the board -->
+        <div class="mt-1 text-[12px] text-text" data-testid="board-meeting">{{ 'contracts.coopBoardMeeting' | t }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'contracts.attend' | t }}</app-button>
+            <app-button variant="danger" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.rsvpDecline' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'contracts.coopBoardMeetingHint' | t }}</p>
       }
       @if (isInsuranceCase()) {
         <div class="mt-2 flex flex-wrap gap-2">

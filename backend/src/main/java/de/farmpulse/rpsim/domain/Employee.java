@@ -127,6 +127,17 @@ public class Employee extends SavegameScoped {
     @Column(name = "season_end_satisfaction")
     private Double seasonEndSatisfaction;
 
+    /** Roadmap V3.1 R31-B5: SICKNESS or ACCIDENT until the game time (ON_LEAVE for the mod, salary continues). */
+    @Column(name = "absence_kind", length = 32)
+    private String absenceKind;
+
+    @Column(name = "absence_until_game_time")
+    private Long absenceUntilGameTime;
+
+    /** Roadmap V3.1 R31-B5: get-well wishes sent for the running absence. */
+    @Column(name = "get_well_sent", nullable = false)
+    private boolean getWellSent;
+
     public Set<Training> trainingSet() {
         Set<Training> set = EnumSet.noneOf(Training.class);
         if (trainings != null && !trainings.isBlank()) {

@@ -53,5 +53,8 @@ public enum MoneyReason {
     GUEST_INCOME,
     COOP_SHARES,
     COOP_DIVIDEND,
+    /** Roadmap V3.1 R31-D6 / R31-D8 (owner decision 2026-10-05): holiday flat setup and tank lock. */
+    FARM_HOLIDAY_SETUP,
+    TANK_LOCK,
     OTHER
 }

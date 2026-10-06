@@ -35,6 +35,15 @@ const CASE_APP: Record<string, string> = {
   MACHINE_DEMO_OFFER: 'workshop',
   ANIMAL_OFFER: 'trade',
   ANIMAL_REQUEST: 'trade',
+  // Roadmap V3.1 R31-B
+  GRANT_REPAYMENT: 'authorities',
+  SOCIAL_INSURANCE_BILL: 'authorities',
+  // Roadmap V3.1 R31-D (owner decision: like the festivals in the calendar; the crop damage claim like R2-D2)
+  STAMMTISCH_INVITATION: 'calendar',
+  SCHOOL_VISIT: 'calendar',
+  COOP_ASSEMBLY: 'calendar',
+  COOP_BOARD_MEETING: 'calendar',
+  CROP_DAMAGE_CLAIM: 'fields',
 };
 
 const CONTRACT_APP: Record<string, string> = {

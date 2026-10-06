@@ -23,6 +23,7 @@ import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
 import de.farmpulse.rpsim.negotiation.FarmlandOwnershipService;
+import de.farmpulse.rpsim.newspaper.VillageNewsService;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
@@ -51,11 +52,14 @@ public class VillageRotationService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final VillageNewsService villageNews;
 
     public VillageRotationService(SavegameRepository savegames, CharacterLookup lookup, CharacterGeneratorService generator,
                                   VillageReputationService reputation, NarrationRequestService narration,
                                   FarmlandOwnershipService ownership, DiaryService diary, RandomSource random,
-                                  RpsimProperties props, GameTime gameTime) {
+                                  RpsimProperties props, GameTime gameTime,
+                                  VillageNewsService villageNews) {
+        this.villageNews = villageNews;
         this.savegames = savegames;
         this.lookup = lookup;
         this.generator = generator;
@@ -131,6 +135,8 @@ public class VillageRotationService {
         diary.addAuto(sg, "ROTATION", c.getName() + " verlässt das Dorf",
                 c.getTerminationReason() == TerminationReason.RETIREMENT ? c.getName() + " geht in den Ruhestand."
                         : c.getName() + " zieht weg.", RELATED, c.getId());
+        villageNews.add(sg, VillageNewsService.Section.VILLAGE, "DEPARTURE", c.getName()
+                + (c.getTerminationReason() == TerminationReason.RETIREMENT ? " geht in den Ruhestand." : " zieht aus dem Dorf weg."));
         return c;
     }
 
@@ -150,6 +156,8 @@ public class VillageRotationService {
                 .category(CommunicationCategory.ROTATION).related(RELATED, successor.getId()).submit();
         diary.addAuto(sg, "ROTATION", successor.getName() + " übernimmt", successor.getName() + " folgt auf "
                 + old.getName() + ".", RELATED, successor.getId());
+        villageNews.add(sg, VillageNewsService.Section.VILLAGE, "SUCCESSION", successor.getName() + " folgt auf "
+                + old.getName() + " (" + roleTitle(old.getRole()) + ").");
         return successor;
     }
 
@@ -164,6 +172,13 @@ public class VillageRotationService {
                 .facts(NarrationFacts.builder().put("role", role).build())
                 .category(CommunicationCategory.ROTATION).related(RELATED, c.getId()).submit();
         diary.addAuto(sg, "ROTATION", c.getName() + " zieht ins Dorf", c.getShortDescription(), RELATED, c.getId());
+        villageNews.add(sg, VillageNewsService.Section.VILLAGE, "ARRIVAL", c.getName() + " zieht neu ins Dorf ("
+                + roleTitle(role) + ").");
         return c;
+    }
+
+    private String roleTitle(CharacterRole role) {
+        var r = generator.pools().roles().get(role.name());
+        return r == null ? role.name() : r.get("title");
     }
 }

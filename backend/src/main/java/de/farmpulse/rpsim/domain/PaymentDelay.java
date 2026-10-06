@@ -21,6 +21,8 @@ public class PaymentDelay extends SavegameScoped {
     public static final String CONTRACT = "CONTRACT_PAYMENT";
     public static final String SALARY = "SALARY";
     public static final String COLLATERAL_CLAIM = "COLLATERAL_CLAIM";
+    /** Roadmap V3.1 R31-B2 / R31-B5: overdue repayment of a grant or fee of the social insurance. */
+    public static final String AUTHORITY_BILL = "AUTHORITY_BILL";
     /** A delay still open at the year change counts for the new year too. */
     public static final String OPEN_AT_YEAR_START = "OPEN_AT_YEAR_START";
 

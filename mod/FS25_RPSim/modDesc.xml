@@ -203,6 +203,15 @@
             <en>Cooperative dividend</en>
             <de>Genossenschaftsdividende</de>
         </text>
+        <!-- Roadmap V3.1 R31-D6 / R31-D8: holiday flat setup and tank lock -->
+        <text name="rpsim_money_FARM_HOLIDAY_SETUP">
+            <en>Holiday flat setup</en>
+            <de>Einrichtung Ferienwohnung</de>
+        </text>
+        <text name="rpsim_money_TANK_LOCK">
+            <en>Tank lock</en>
+            <de>Tankschloss</de>
+        </text>
         <!-- Schulungen: start of a helper refused in the strict mode (no free machine operator with the training) -->
         <text name="rpsim_ai_noTraining">
             <en>No trained machine operator available</en>

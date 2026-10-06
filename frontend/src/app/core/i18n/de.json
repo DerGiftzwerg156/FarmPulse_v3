@@ -34,7 +34,9 @@
     "insurance": "Versicherung",
     "stable": "Stall",
     "workshop": "Werkstatt",
-    "trade": "Handel"
+    "trade": "Handel",
+    "newspaper": "Dorfblatt",
+    "chat": "Dorfchat"
   },
   "apps": {
     "mail": "Mails aus dem Dorf – antworten, wann du willst",
@@ -52,7 +54,9 @@
     "workshop": "Wartungsvertrag, Reparaturen, Mechaniker und Gebrauchtmaschinen",
     "diary": "Die Chronik deines Hofs",
     "settings": "KI, Spielstand und Fragen im Spiel",
-    "trade": "Ware und Arbeit mit den Nachbarn"
+    "trade": "Ware und Arbeit mit den Nachbarn",
+    "newspaper": "Die Dorfzeitung – jede Periode eine neue Ausgabe, ältere bleiben lesbar",
+    "chat": "Gruppen für das Dorf, die Nachbarn und die Vereine"
   },
   "tablet": {
     "apps": "Apps",
@@ -150,7 +154,10 @@
       "TAX_OFFICE": "Finanzamt",
       "TAX_ADVISOR": "Steuerberater:in",
       "FAMILY": "Familie",
-      "CLUB": "Verein"
+      "CLUB": "Verein",
+      "SOCIAL_INSURANCE": "Berufsgenossenschaft",
+      "POLICE": "Polizei",
+      "SCHOOL": "Dorfschule"
     },
     "characterCategory": {
       "MANDATORY": "Pflichtrolle",
@@ -344,7 +351,9 @@
       "BREAD": "Brot",
       "SEEDS": "Saatgut",
       "FERTILIZER": "Dünger",
-      "LIQUIDFERTILIZER": "Flüssigdünger"
+      "LIQUIDFERTILIZER": "Flüssigdünger",
+      "GRASS": "Gras",
+      "BRACHE": "Brache"
     },
     "diaryCategory": {
       "BACKSTORY": "Vorgeschichte",
@@ -412,7 +421,9 @@
       "SOCIAL_INSURANCE": "Berufsgenossenschaft",
       "GUEST_INCOME": "Ferien auf dem Hof",
       "COOP_SHARES": "Genossenschaftsanteile",
-      "COOP_DIVIDEND": "Genossenschaftsdividende"
+      "COOP_DIVIDEND": "Genossenschaftsdividende",
+      "FARM_HOLIDAY_SETUP": "Einrichtung Ferienwohnung",
+      "TANK_LOCK": "Tankschloss"
     },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
@@ -491,7 +502,14 @@
       "CONTRACTOR_WORK": "Lohnunternehmer",
       "MACHINE_DEMO_OFFER": "Vorführmaschine",
       "ANIMAL_OFFER": "Tierangebot",
-      "ANIMAL_REQUEST": "Tieranfrage"
+      "ANIMAL_REQUEST": "Tieranfrage",
+      "GRANT_REPAYMENT": "Rückforderung Förderung",
+      "SOCIAL_INSURANCE_BILL": "Beitrag Berufsgenossenschaft",
+      "STAMMTISCH_INVITATION": "Stammtisch",
+      "CROP_DAMAGE_CLAIM": "Flurschaden",
+      "SCHOOL_VISIT": "Hofführung Schulklasse",
+      "COOP_ASSEMBLY": "Generalversammlung",
+      "COOP_BOARD_MEETING": "Vorstandssitzung"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -550,7 +568,14 @@
       "NOT_OWN_FIELD": "Nicht mehr dein Feld",
       "MOD_OUTDATED": "Mod zu alt",
       "NO_ANIMAL_SPACE": "Kein Platz im Stall",
-      "NOT_ENOUGH_ANIMALS": "Zu wenige Tiere im Stall"
+      "NOT_ENOUGH_ANIMALS": "Zu wenige Tiere im Stall",
+      "WARNING": "Verwarnung",
+      "CUT": "Prämie gekürzt",
+      "DISEASE_CHECK": "Seuchen-Pflichtuntersuchung",
+      "ATTENDED": "Teilgenommen",
+      "MISSED": "Verpasst",
+      "VISITED": "Besuch war da",
+      "REJECTED": "Abgelehnt"
     },
     "animalType": {
       "COW": "Rinder",
@@ -669,7 +694,9 @@
       "RPSIM_SOCIAL_INSURANCE": "Berufsgenossenschaft",
       "RPSIM_GUEST_INCOME": "Ferien auf dem Hof",
       "RPSIM_COOP_SHARES": "Genossenschaftsanteile",
-      "RPSIM_COOP_DIVIDEND": "Genossenschaftsdividende"
+      "RPSIM_COOP_DIVIDEND": "Genossenschaftsdividende",
+      "RPSIM_FARM_HOLIDAY_SETUP": "Einrichtung Ferienwohnung",
+      "RPSIM_TANK_LOCK": "Tankschloss"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",
@@ -700,7 +727,10 @@
     },
     "authorityRule": {
       "CULTIVATION_DUTY": "Bewirtschaftungspflicht",
-      "ANIMAL_WELFARE": "Tierwohl"
+      "ANIMAL_WELFARE": "Tierwohl",
+      "AREA_PAYMENT": "Vor-Ort-Kontrolle Sammelantrag",
+      "FERTILIZER_RULES": "Düngeverordnung (Sperrfrist)",
+      "ANIMAL_DISEASE": "Tierseuchen-Auflage"
     },
     "taxBill": {
       "PREPAYMENT": "Vorauszahlung",
@@ -722,7 +752,9 @@
       "TAX_ADVISOR": "Angebot der Steuerberatung annehmen oder ablehnen",
       "NEIGHBOR_TRADE": "Handel mit Nachbarn",
       "NEIGHBOR_MISSION": "Aufträge der Nachbarn",
-      "FARM_SHOP": "Bestellungen für den Hofladen"
+      "FARM_SHOP": "Bestellungen für den Hofladen",
+      "STAMMTISCH": "Einladungen zum Stammtisch",
+      "COOP_ASSEMBLY": "Abstimmungen der Generalversammlung"
     },
     "neighborRole": {
       "DAIRY": "Milchviehbetrieb",
@@ -781,6 +813,43 @@
       "UNKNOWN_STORE_ITEM": "nicht im Shop",
       "LOAD_FAILED": "im Spiel nicht geladen",
       "MOD_OUTDATED": "Mod zu alt"
+    },
+    "directPaymentStatus": {
+      "OPEN": "Offen",
+      "SUBMITTED": "Gestellt",
+      "LAPSED": "Versäumt",
+      "PAID": "Ausgezahlt"
+    },
+    "directPaymentCheck": {
+      "NONE": "Vor-Ort-Kontrolle noch offen",
+      "PENDING": "Zur Vor-Ort-Kontrolle ausgewählt",
+      "ANNOUNCED": "Vor-Ort-Kontrolle angekündigt",
+      "DONE": "Vor-Ort-Kontrolle erfolgt",
+      "NOT_SELECTED": "Keine Vor-Ort-Kontrolle"
+    },
+    "grantKind": {
+      "BUILDING": "Stall/Gebäude",
+      "MACHINE": "Maschine"
+    },
+    "grantStatus": {
+      "APPLIED": "Beantragt",
+      "APPROVED": "Bewilligt",
+      "PAID": "Ausgezahlt",
+      "EXPIRED": "Verfallen"
+    },
+    "disease": {
+      "ASP": "Afrikanische Schweinepest",
+      "AVIAN_FLU": "Geflügelpest",
+      "BLUETONGUE": "Blauzungenkrankheit"
+    },
+    "coopTopic": {
+      "DIVIDEND_UP": "eine höhere Dividende",
+      "GRAIN_STORE": "ein neues Getreidelager",
+      "FESTIVAL_SPONSORING": "Sponsoring der Dorffeste"
+    },
+    "coopResult": {
+      "ACCEPTED": "Angenommen",
+      "REJECTED": "Abgelehnt"
     }
   },
   "onboarding": {
@@ -1067,7 +1136,13 @@
     "applicantTraining": "Bringt Schulung mit: {training}",
     "trainingInfo": "Ohne Schulung fahren Maschinenführer nur kleine und mittlere Traktoren. Große Traktoren, Mähdrescher, Feldhäcksler, Spezialernter, LKW sowie Selbstfahrer und Lader brauchen die passende Schulung. Im strengen Helferlimit startet so ein Helfer nur mit geschultem Fahrer.",
     "seasonalUntil": "befristet bis {at}",
-    "seasonalHint": "Saisonkräfte gibt es von Juni bis Oktober, befristet bis Ende Oktober: höheres Gehalt, keine Gehaltsverhandlung, keine Schulungen, höchstens 3 gleichzeitig."
+    "seasonalHint": "Saisonkräfte gibt es von Juni bis Oktober, befristet bis Ende Oktober: höheres Gehalt, keine Gehaltsverhandlung, keine Schulungen, höchstens 3 gleichzeitig.",
+    "absence": {
+      "SICKNESS": "krank bis {at}",
+      "ACCIDENT": "nach Arbeitsunfall bis {at}",
+      "getWell": "Genesungswünsche",
+      "getWellSent": "Genesungswünsche an {name} geschickt."
+    }
   },
   "farmland": {
     "map": "Feldübersicht",
@@ -1180,6 +1255,27 @@
       "liters": "{liters} l {fillType} ins Silo",
       "caseText": "{work} für {price}",
       "caseHint": "Am Arbeitstag ist die Arbeit im Spiel erledigt und die Rechnung gebucht."
+    },
+    "fieldMap": {
+      "map": "Karte",
+      "table": "Tabelle",
+      "label": "Karte der Felder",
+      "missing": "Die Karte braucht die aktuelle Mod-Version: Sie exportiert beim Spielstart die Umrisse der Felder.",
+      "leased": "Gepachtet",
+      "leasedOut": "Verpachtet",
+      "neighbor": "Nachbarfeld",
+      "free": "Frei",
+      "order": "Auftrag",
+      "auction": "Versteigerung",
+      "auctionRunning": "Versteigerung läuft",
+      "hint": "Hinweis",
+      "hints": {
+        "HARVESTABLE": "Erntereif",
+        "WEEDS": "Viel Unkraut",
+        "STONES": "Viele Steine",
+        "LIME": "Braucht Kalk",
+        "PLOW": "Sollte gepflügt werden"
+      }
     }
   },
   "market": {
@@ -1407,6 +1503,18 @@
       "title": "Hof",
       "name": "Hofname",
       "hint": "Steht über der Hofchronik und im Dateinamen. Leer = Kartenname."
+    },
+    "burden": {
+      "title": "Belastende Ereignisse",
+      "areaCheck": "Vor-Ort-Kontrolle des Sammelantrags",
+      "fertilizer": "Kontrollen der Düngeverordnung",
+      "disease": "Tierseuchen",
+      "sickLeave": "Krankheit und Arbeitsunfälle",
+      "hint": "Abgeschaltete Ereignisse kommen in diesem Spielstand nicht vor. Anträge, Prämien, Förderung und der Beitrag der Berufsgenossenschaft bleiben. Flurschaden ist anfangs aus.",
+      "idyllic": "Weltmodus idyllisch: keine Tierseuchen und kein Dieselklau; Kontrollen, Kürzungen, Bußgelder der Düngeverordnung, Ausfälle, Vertrauensverluste durch Nachtarbeit und Flurschaden sowie Entschädigungen nur zu {percent} %.",
+      "nightWork": "Beschwerden über Nachtarbeit",
+      "cropDamage": "Flurschaden auf Nachbarfeldern",
+      "dieselTheft": "Dieselklau"
     }
   },
   "notices": {
@@ -1496,7 +1604,24 @@
     "invitationHint": "Eine Zusage freut die Gastgeber. Absagen ist in Ordnung – nur gar nicht zu antworten kommt schlecht an.",
     "fine": "Bußgeld {amount}",
     "paid": "Bezahlt {amount}",
-    "renewLeaseOut": "Verlängern ({amount} / Monat)"
+    "renewLeaseOut": "Verlängern ({amount} / Monat)",
+    "authorityBill": "{title}: {amount}",
+    "authorityBillHint": "Der Betrag wird erst abgebucht, wenn du auf „Zahlen“ klickst. Nach der Frist kommt je angefangenem Monat ein Säumniszuschlag dazu, später droht die Vollstreckung.",
+    "cropDamageClaim": "{name} verlangt {amount} für Fahrspuren durch die Frucht ({samples} Stichproben).",
+    "cropDamageHint": "Ablehnen kostet Vertrauen. Fahr am Feldrand oder auf Wegen, wenn das Feld eines Nachbarn bestellt ist.",
+    "stammtisch": "{name} lädt dich zum Stammtisch in die Dorfkneipe ein.",
+    "stammtischGo": "Hingehen",
+    "stammtischHint": "Am Stammtisch wächst das Vertrauen, und das nächste Gerücht ist verlässlicher. Wer nie kommt, gilt irgendwann als eigenbrötlerisch.",
+    "schoolVisit": "{name} fragt nach einer Hofführung für eine Schulklasse (Aufwandsentschädigung {amount}).",
+    "schoolVisitHint": "Eine Hofführung stärkt das Ansehen im Dorf. Voraussetzung ist ein Stall mit gesunden Tieren.",
+    "coopAssembly": "Generalversammlung der Genossenschaft: Abstimmung über {topic}.",
+    "coopBoardElection": "Du stehst zur Wahl in den Vorstand.",
+    "voteYes": "Ja",
+    "voteNo": "Nein",
+    "coopAssemblyHint": "Deine Anteile sind deine Stimmen. Ohne Antwort stimmen nur die anderen Mitglieder ab.",
+    "coopBoardMeeting": "Vorstandssitzung der Genossenschaft.",
+    "attend": "Teilnehmen",
+    "coopBoardMeetingHint": "Eine verpasste Sitzung kostet Vertrauen, nach zwei verpassten Sitzungen bist du aus dem Vorstand raus."
   },
   "tasks": {
     "filter": "Aufgaben filtern",
@@ -1563,7 +1688,10 @@
       "salaries": "Gehälter {amount}",
       "contract": "{kind} {amount}",
       "leaseEnd": "Pacht Feld {id} endet",
-      "deadline": "Frist: {what}"
+      "deadline": "Frist: {what}",
+      "stammtisch": "Nächster Stammtisch",
+      "coopAssembly": "Generalversammlung der Genossenschaft",
+      "coopBoardMeeting": "Vorstandssitzung"
     },
     "debits": {
       "salaries": "Gehälter ({n})",
@@ -1576,7 +1704,10 @@
       "ROTATION_CHECK": "Fruchtfolge-Prüfung",
       "birthday": "Geburtstag {name}",
       "weddingDay": "Hochzeitstag",
-      "schoolStart": "Einschulung {name}"
+      "schoolStart": "Einschulung {name}",
+      "COOP_ASSEMBLY": "Generalversammlung",
+      "COOP_DIVIDEND": "Dividende",
+      "COOP_BOARD_MEETING": "Vorstandssitzung"
     },
     "invitations": "Einladungen"
   },
@@ -1610,7 +1741,9 @@
     },
     "disabled": "Die Dürre-Erkennung ist ausgeschaltet.",
     "damages": "Schäden",
-    "damagesIntro": "Hagel, Sturm und Wildschweine: Melde einen versicherten Schaden rechtzeitig, beim Wildschaden verhandelst du mit dem Jagdpächter."
+    "damagesIntro": "Hagel, Sturm und Wildschweine: Melde einen versicherten Schaden rechtzeitig, beim Wildschaden verhandelst du mit dem Jagdpächter.",
+    "theftCover": "Baustein „Diebstahl“ (Dieselklau)",
+    "theftCoverHint": "Kostet zusätzlich im Monat und ersetzt einen Dieselklau ab dem Mindestschaden voll, ohne Selbstbehalt."
   },
   "workshop": {
     "maintenance": "Wartung",
@@ -1665,6 +1798,17 @@
       "demoOffers": "Vorführangebote",
       "demoOfferText": "{name} bietet den {vehicle} (Listenpreis {price}) kostenlos zur Probe an.",
       "demoAccept": "Vorführung annehmen"
+    },
+    "tankLock": {
+      "title": "Tankschloss",
+      "intro": "Ein Tankschloss für {price} je Maschine macht Dieselklau bei dieser Maschine deutlich unwahrscheinlicher.",
+      "fuel": "{liters} von {capacity} l Diesel",
+      "locked": "Tankschloss",
+      "buy": "Tankschloss kaufen ({price})",
+      "none": "Keine eigenen Maschinen im letzten Export.",
+      "thefts": "Dieselklau",
+      "theft": "{time}: {liters} l aus {vehicle} ({damage})",
+      "paid": "Versicherung zahlte {amount}"
     }
   },
   "authorities": {
@@ -1688,6 +1832,54 @@
       "hint": "Bezahlt wird zu jedem Monatsbeginn für den vergangenen Wintermonat.",
       "days": "Schneetage diesen Monat: {month} · diesen Winter: {total}",
       "total": "{total} Schneetage in diesem Winter"
+    },
+    "directPayment": {
+      "title": "Sammelantrag",
+      "intro": "Einmal im Jahr stellst du den Sammelantrag: Bestätige oder korrigiere die Kultur je Feld. Die Flächenprämie beträgt {premium} je Hektar und kommt im Dezember. Verspätet kostet jeder angefangene Tag {late} % der Prämie, nach {days} Tagen gibt es keine Prämie mehr. Das Amt prüft manche Anträge vor Ort – dieselbe Kultur wie im Vorjahr kostet dann einen Teil der Prämie.",
+      "year": "Antragsjahr {year}",
+      "deadline": "Stichtag {time} · verspätet möglich bis {late}",
+      "submit": "Antrag stellen ({count} Felder)",
+      "submitted": "Sammelantrag gestellt.",
+      "noFields": "Der Mod meldet keine eigenen Felder.",
+      "found": "vor Ort: {crop}",
+      "rotation": "Fruchtfolge nicht eingehalten",
+      "lateDays": "{days} Tage verspätet gestellt",
+      "cut": "Kürzung {amount}",
+      "paid": "Ausgezahlt {amount} (Prämie {premium})",
+      "none": "Der Sammelantrag kommt jedes Jahr im März per Post."
+    },
+    "grant": {
+      "title": "Investitionsförderung",
+      "intro": "Beantrage die Förderung vor dem Kauf. Nach der Bewilligung zählen Käufe im Spiel ({months} Monate lang): {percent} % der Kosten, höchstens {max}. Wer eine geförderte Maschine innerhalb von {binding} Monaten verkauft, zahlt anteilig zurück.",
+      "kind": "Art",
+      "plannedSum": "Geplante Summe (ab {min})",
+      "apply": "Förderung beantragen",
+      "processing": "Bearbeitungszeit etwa {days} Tage (mit Bürokraft kürzer).",
+      "planned": "geplant {amount}",
+      "approvalDue": "Bewilligung bis {time}",
+      "recognised": "Seit der Bewilligung gekauft: {amount} · Frist bis {time}",
+      "proof": "Nachweis einreichen",
+      "paid": "Zuschuss {amount} auf {recognised}",
+      "binding": "Bindungsfrist bis {time} ({count} geförderte Maschinen)",
+      "repaid": "Zurückgefordert: {amount}",
+      "none": "Noch kein Förderantrag.",
+      "applied": "Förderantrag gestellt.",
+      "proofSent": "Nachweis eingereicht – der Zuschuss ist unterwegs.",
+      "repayments": "Rückforderungen"
+    },
+    "disease": {
+      "title": "Tierseuchen",
+      "active": "{disease}: Sperrzone für {types} bis voraussichtlich {time}.",
+      "activeHint": "Handel mit diesen Tieren ist gesperrt – bei den Nachbarn und beim Viehhändler. Die Auflagen je Stall stehen bei den Kontrollen.",
+      "none": "Derzeit keine Sperrzone in der Region.",
+      "off": "Tierseuchen sind für diesen Spielstand abgeschaltet.",
+      "past": "{disease} ({types}): {from} – {to}"
+    },
+    "socialInsurance": {
+      "title": "Berufsgenossenschaft",
+      "bills": "Beitragsbescheide",
+      "intro": "Jedes Jahr im April kommt der Beitrag der landwirtschaftlichen Berufsgenossenschaft: Grundbetrag plus je Hektar und je Mitarbeiter. Bezahlt wird per Knopf wie ein Steuerbescheid.",
+      "basis": "Berechnet für {hectares} ha und {employees} Beschäftigte"
     }
   },
   "stable": {
@@ -1806,6 +1998,32 @@
       "requestText": "{name} kauft dir {count} {subType} ({type}) für {amount} ab ({unit} je Tier).",
       "caseHint": "Die Tiere wechseln nach der Zusage im Spiel den Stall; bezahlt wird im selben Schritt.",
       "history": "{count} {subType} für {amount}"
+    },
+    "holiday": {
+      "title": "Ferien auf dem Hof",
+      "intro": "Richte einmalig für {cost} eine Ferienwohnung ein. Danach zahlen Feriengäste jeden Monat ab {base} – mehr im Sommer, mit gutem Ansehen und gesunden Tieren.",
+      "setup": "Ferienwohnung einrichten ({cost})",
+      "preview": "Laufender Monat ({month}): voraussichtlich {amount}",
+      "factors": "Saison × {season} · Ansehen × {reputation} · Tiere × {animals}",
+      "noise": "Lärm",
+      "smell": "Güllegeruch",
+      "badReview": "Schlechte Bewertung",
+      "firstMonth": "Die ersten Gäste zahlen nach dem ersten vollen Monat.",
+      "hint": "Nachtarbeit der Helfer und Gülle im Sommer kosten je 10 %, ein Stall in schlechtem Zustand bringt eine schlechte Bewertung."
+    },
+    "coop": {
+      "title": "Genossenschaftsanteile",
+      "board": "Im Vorstand",
+      "intro": "Ein Anteil kostet {price}, höchstens {max} Anteile. Kündigung mit {months} Monaten Frist, Rückzahlung zum Nennwert.",
+      "holding": "{shares} Anteile ({value})",
+      "noticed": "{shares} gekündigt",
+      "dividend": "Erwartete Dividende zum Jahreswechsel: {rate} %",
+      "boardHint": "Ab {shares} Anteilen und gutem Vertrauen wählt dich die Generalversammlung in den Vorstand.",
+      "count": "Anteile",
+      "buy": "Zeichnen ({amount})",
+      "cancel": "Kündigen",
+      "noticeOpen": "{shares} Anteile gekündigt – Rückzahlung am {time}",
+      "noticePaid": "{shares} Anteile am {time} zurückgezahlt"
     }
   },
   "credit": {
@@ -1874,5 +2092,25 @@
     },
     "leaseConsentGiven": "Verpachtung erlaubt",
     "requestLeaseConsent": "Zustimmung zur Verpachtung"
+  },
+  "newspaper": {
+    "issues": "Ausgaben",
+    "number": "Nr. {n}",
+    "midMonth": "Monatsmitte",
+    "none": "Noch keine Ausgabe – das Dorfblatt erscheint zu Beginn jeder Periode.",
+    "masthead": "Dorfblatt Nr. {n} · {time}",
+    "writing": "Der Artikel wird noch geschrieben …"
+  },
+  "chat": {
+    "groups": "Gruppen",
+    "members": "{n} Mitglieder",
+    "none": "Noch keine Gruppen.",
+    "typing": "schreibt …",
+    "openRequest": "Zur Anfrage",
+    "empty": "Noch keine Nachrichten.",
+    "placeholder": "Nachricht an die Gruppe",
+    "send": "Senden",
+    "pacing": "Deine letzte Nachricht in dieser Gruppe ist noch keinen Spieltag her – der Ton zählt erst wieder ab morgen.",
+    "hint": "Wie bei „Nachricht verfassen“: Der Ton deiner Nachricht wirkt auf das Vertrauen eines Mitglieds, Absprachen über Geld oder Preise laufen über die Formulare der Apps."
   }
 }

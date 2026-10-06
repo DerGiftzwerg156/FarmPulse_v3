@@ -107,6 +107,28 @@
     }
   </app-card>
 
+  <!-- Roadmap V3.1 R31-B: burdening events of the authorities, switched per savegame -->
+  <app-card [title]="'settings.burden.title' | t" data-testid="burden-settings">
+    @if (burden(); as b) {
+      <ul class="space-y-1.5">
+        @for (k of burdenKeys; track k) {
+          <li>
+            <label class="flex items-start gap-2 text-[12px] text-text">
+              <input type="checkbox" [checked]="b[k]" (change)="saveBurden(k, $any($event.target).checked)" [attr.data-testid]="'burden-' + k" />
+              <span>{{ ('settings.burden.' + k) | t }}</span>
+            </label>
+          </li>
+        }
+      </ul>
+      <p class="mt-2 text-[11px] text-muted">{{ 'settings.burden.hint' | t }}</p>
+      @if (b.tonePreset === 'IDYLLIC') {
+        <p class="mt-1 text-[11px] text-warn" data-testid="burden-idyllic">{{ 'settings.burden.idyllic' | t: { percent: b.idyllicFactor * 100 } }}</p>
+      }
+    } @else {
+      <p class="text-[12px] text-muted">–</p>
+    }
+  </app-card>
+
   <app-card [title]="'settings.farm.title' | t" data-testid="farm-settings">
     @if (farm(); as f) {
       <form class="flex flex-wrap items-end gap-2" (submit)="$event.preventDefault(); saveFarm()">

@@ -37,6 +37,7 @@ import de.farmpulse.rpsim.repository.MarketEventRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
+import de.farmpulse.rpsim.villagelife.StammtischService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,11 +66,14 @@ public class MarketEventEngine {
     private final RandomSource random;
     private final RpsimProperties props;
     private final ForwardContractService forwardContracts;
+    private final StammtischService stammtisch;
 
     public MarketEventEngine(MarketEventRepository events, SavegameRepository savegames, FactsService facts,
                              OutboxService outbox, NarrationRequestService narration, CharacterLookup lookup,
                              DiaryService diary, RandomSource random, RpsimProperties props,
-                             ForwardContractService forwardContracts) {
+                             ForwardContractService forwardContracts,
+                             StammtischService stammtisch) {
+        this.stammtisch = stammtisch;
         this.forwardContracts = forwardContracts;
         this.events = events;
         this.savegames = savegames;
@@ -334,13 +338,15 @@ public class MarketEventEngine {
         MarketEvent rumor = base(sg, MarketEventType.RUMOR, now);
         rumor.setStatus(MarketEventStatus.RUMOR_ONLY);
         rumor.setCharacter(characterFor(sg, MarketEventType.RUMOR).orElse(null));
-        if (random.chance(cfg().getRumorAccurateProbability())) {
+        if (random.chance(rumorAccuracy(sg))) {
             Optional<MarketEvent> planned = events.findBySavegameAndStatusIn(sg, EnumSet.of(MarketEventStatus.PLANNED))
                     .stream().filter(ev -> PRICE_TYPES.contains(ev.getEventType())).findFirst();
             if (planned.isEmpty()) {
                 MarketEventType type = random.pick(List.copyOf(PRICE_TYPES));
+                // Roadmap V3.1 R31-D7: a board member of the cooperative hears the rumour earlier
                 long start = now + GameTime.days(random.intBetween(cfg().getAdvanceNoticeDaysMin(),
-                        cfg().getAdvanceNoticeDaysMax()));
+                        cfg().getAdvanceNoticeDaysMax()) + (sg.isCoopBoard()
+                        ? props.getFormulas().getCoopBoard().getRumorDaysEarlier() : 0));
                 planned = spawnPriceEvent(sg, type, ctx, f, start, false);
             }
             if (planned.isEmpty()) {
@@ -367,6 +373,19 @@ public class MarketEventEngine {
         events.save(rumor);
         announce(sg, rumor);
         return Optional.of(rumor);
+    }
+
+    /**
+     * Chance that a rumour is accurate: {@code rumor-accurate-probability}, + the bonus of the last regulars' table
+     * evening (R31-D3, used up by this rumour), + {@code coop-assembly.grain-store-rumor-bonus} for a member of the
+     * cooperative after an accepted GRAIN_STORE vote (R31-D7).
+     */
+    public double rumorAccuracy(Savegame sg) {
+        double p = cfg().getRumorAccurateProbability() + stammtisch.consumeRumorBonus(sg);
+        if (sg.isCoopGrainStore() && sg.getCoopShares() > 0) {
+            p += props.getFormulas().getCoopAssembly().getGrainStoreRumorBonus();
+        }
+        return Math.min(1, p);
     }
 
     private MarketEvent base(Savegame sg, MarketEventType type, long start) {

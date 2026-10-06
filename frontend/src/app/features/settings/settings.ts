@@ -3,7 +3,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import {
-  AiSettingsView, BypassSettingsView, FarmSettingsView, FieldSettingsView, GameSettingsView, PromptSettingsView,
+  AiSettingsView, BurdenSettingsView, BypassSettingsView, FarmSettingsView, FieldSettingsView, GameSettingsView,
+  PromptSettingsView,
 } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
@@ -39,6 +40,9 @@ export class Settings {
   readonly farmName = signal('');
   readonly farmSaved = signal(false);
   readonly bypass = signal<BypassSettingsView | null>(null);
+  /** Roadmap V3.1 R31-B: switches of the burdening events. */
+  readonly burden = signal<BurdenSettingsView | null>(null);
+  readonly burdenKeys = ['areaCheck', 'fertilizer', 'disease', 'sickLeave', 'nightWork', 'cropDamage', 'dieselTheft'] as const;
   readonly prompts = signal<PromptSettingsView | null>(null);
   readonly provider = signal('');
   readonly model = signal('');
@@ -62,6 +66,7 @@ export class Settings {
     this.api.fieldSettings().subscribe({ next: (f) => this.fields.set(f), error: () => this.fields.set(null) });
     this.api.farmSettings().subscribe({ next: (f) => this.applyFarm(f), error: () => this.farm.set(null) });
     this.api.bypassSettings().subscribe({ next: (b) => this.bypass.set(b), error: () => this.bypass.set(null) });
+    this.api.burdenSettings().subscribe({ next: (b) => this.burden.set(b), error: () => this.burden.set(null) });
     this.api.promptSettings().subscribe({ next: (p) => this.prompts.set(p), error: () => this.prompts.set(null) });
   }
 
@@ -79,6 +84,21 @@ export class Settings {
   saveBypass(reactionsEnabled: boolean): void {
     this.api.saveBypassSettings({ reactionsEnabled }).subscribe({
       next: (b) => this.bypass.set(b),
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
+  }
+
+  /**
+   * Roadmap V3.1 R31-B / R31-D: switches one burdening event (on-site check, fertiliser rules, animal disease, sickness,
+   * night work, crop damage, diesel theft).
+   */
+  saveBurden(key: (typeof this.burdenKeys)[number], on: boolean): void {
+    const b = this.burden();
+    if (!b) return;
+    const r = { areaCheck: b.areaCheck, fertilizer: b.fertilizer, disease: b.disease, sickLeave: b.sickLeave,
+      nightWork: b.nightWork, cropDamage: b.cropDamage, dieselTheft: b.dieselTheft, [key]: on };
+    this.api.saveBurdenSettings(r).subscribe({
+      next: (n) => this.burden.set(n),
       error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
     });
   }

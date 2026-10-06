@@ -37,7 +37,12 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   höchstens `fieldShapeMaxPoints` Punkte je Feld). Ausgelesen werden die Werte erst mit den Funktionen (A4, B3, D4,
   D5, D8, K1); bis dahin fehlen sie im Export. Seit **Arbeit auf dem Hof** (R31-A) liest der Mod die Schneehöhe und
   die Shop-Kategorie der eigenen Maschinen und exportiert je Stall die Rassen, die möglichen Rassen und die freien
-  Plätze (`husbandries[].subTypes`, `supportedSubTypes`, `freeSlots`).
+  Plätze (`husbandries[].subTypes`, `supportedSubTypes`, `freeSlots`). Seit **Behörden und Förderung** (R31-B3) liest
+  er die Düngungsart je Feld (`FieldState.sprayType` als Name aus `FieldSprayType`). Seit **Dorfleben** (R31-D) liest
+  er die Tageszeit (`environment.dayTime`), den Dieselstand je Maschine (`getConsumerFillUnitIndex(FillType.DIESEL)`)
+  und die Positionen der gerade gefahrenen eigenen Maschinen mit Farmland und einer `FieldState`-Stichprobe, ob dort
+  Frucht steht. Seit der **Hofkarte** (R31-K1) liest er einmal je Spielstart die Feldumrisse (`field.polygonPoints`
+  über `getWorldTranslation`) und die Kartengröße (`terrainSize`).
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -82,8 +87,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   - `ANIMAL_TRANSFER` (Roadmap V3.1, R31-A3) – Tiere einer Rasse in einen eigenen Stall (`addAnimals`, freie Plätze
     und Tierart geprüft) oder heraus (`cluster:changeNumAnimals(-n)`); `FAILED` mit `NO_ANIMAL_SPACE`,
     `NOT_ENOUGH_ANIMALS`, `HUSBANDRY_NOT_FOUND`, `WRONG_ANIMAL_TYPE` oder `UNKNOWN_SUB_TYPE`
-  - `VEHICLE_FUEL` (Roadmap V3.1, R31-Q1) – wird geprüft (Fahrzeug und negative Menge) und bis R31-D8 mit `FAILED` /
-    `NOT_SUPPORTED` quittiert
+  - `VEHICLE_FUEL` (Roadmap V3.1, R31-D8) – zieht Diesel aus einer abgestellten eigenen Maschine (niemand drin, kein
+    Helfer, mit Dieseltank), höchstens den Tankinhalt (`addFillUnitFillLevel` mit negativer Menge); Quittung mit
+    `result.liters`; `FAILED` mit `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE`, `VEHICLE_IN_USE` oder `NO_DIESEL_TANK`
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.

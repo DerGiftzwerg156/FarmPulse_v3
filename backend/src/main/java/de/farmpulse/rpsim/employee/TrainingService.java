@@ -119,6 +119,9 @@ public class TrainingService {
         if (e.getTimeOffUntilGameTime() != null && e.getTimeOffUntilGameTime() > now) {
             throw new BusinessRuleException("TRAINING_ON_LEAVE", "Der Mitarbeiter hat gerade frei.");
         }
+        if (SickLeaveService.absent(e, now)) { // R31-B5
+            throw new BusinessRuleException("TRAINING_SICK", "Der Mitarbeiter ist gerade krank.");
+        }
         long cost = cost(t);
         if (cost > 0) {
             outbox.money(sg, -cost, MoneyReason.TRAINING, "Schulung " + t.title() + " – " + e.getCharacter().getName(),

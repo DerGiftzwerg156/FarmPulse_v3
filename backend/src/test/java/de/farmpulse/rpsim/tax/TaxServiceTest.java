@@ -110,14 +110,14 @@ class TaxServiceTest {
         assertThat(y.getOperatingIncome()).isEqualTo(120_000);
         assertThat(y.getOperatingExpense()).isEqualTo(-24_000);
         assertThat(y.getDepreciation()).isEqualTo(40_500);
-        assertThat(y.getTax()).isEqualTo(8_875);
-        assertThat(bills(TaxService.ASSESSMENT)).singleElement().satisfies(b -> assertThat(b.getOfferAmount()).isEqualTo(8_875));
-        assertThat(bills(TaxService.PREPAYMENT)).as("quarter 1 of year 2 = 8,875 / 4")
-                .singleElement().satisfies(b -> assertThat(b.getOfferAmount()).isEqualTo(2_219));
+        assertThat(y.getTax()).isEqualTo(1_045); // (55,500 - 50,000 allowance) x 19 %
+        assertThat(bills(TaxService.ASSESSMENT)).singleElement().satisfies(b -> assertThat(b.getOfferAmount()).isEqualTo(1_045));
+        assertThat(bills(TaxService.PREPAYMENT)).as("quarter 1 of year 2 = 1,045 / 4")
+                .singleElement().satisfies(b -> assertThat(b.getOfferAmount()).isEqualTo(261));
         assertThat(messages()).contains("TAX_ASSESSMENT", "TAX_PREPAYMENT");
         assertThat(jobs.findBySavegameOrderByIdAsc(sg).stream().filter(j -> j.getEventType().equals("TAX_ASSESSMENT"))
-                .findFirst().orElseThrow().getFactsJson()).contains("\"profit\":55500", "\"taxable\":35500");
-        assertThat(tax.overview(sg).lastAssessment().getTax()).isEqualTo(8_875);
+                .findFirst().orElseThrow().getFactsJson()).contains("\"profit\":55500", "\"taxable\":5500");
+        assertThat(tax.overview(sg).lastAssessment().getTax()).isEqualTo(1_045);
     }
 
     @Test
@@ -129,18 +129,18 @@ class TaxServiceTest {
         tax.pay(sg, prepayment.getId());
         assertThat(prepayment.getStatus()).isEqualTo(CaseStatus.SETTLED);
         assertThat(outbox.findBySavegameOrderByIdAsc(sg)).filteredOn(o -> o.getType() == InstructionType.MONEY_TRANSACTION)
-                .anyMatch(o -> o.getPayloadJson().contains("\"amount\":-2219") && o.getPayloadJson().contains("TAX_PAYMENT"));
+                .anyMatch(o -> o.getPayloadJson().contains("\"amount\":-261") && o.getPayloadJson().contains("TAX_PAYMENT"));
         assertThatThrownBy(() -> tax.pay(sg, prepayment.getId())).isInstanceOf(BusinessRuleException.class);
         // 14 days to pay; one game month = one day here
         sg.setCurrentGameTime(assessment.getDeadlineGameTime() + GameTime.hours(1));
         tax.onDay(new GameDayPassedEvent(sg.getId(), 0, sg.getCurrentGameTime()));
-        assertThat(assessment.getCostAmount()).isEqualTo(89);
+        assertThat(assessment.getCostAmount()).isEqualTo(10); // 1 % of 1,045
         assertThat(messages()).last().isEqualTo("TAX_REMINDER");
         sg.setCurrentGameTime(assessment.getDeadlineGameTime() + GameTime.days(1) + GameTime.hours(1));
         tax.onDay(new GameDayPassedEvent(sg.getId(), 0, sg.getCurrentGameTime()));
         assertThat(messages()).last().isEqualTo("TAX_ENFORCEMENT");
         tax.pay(sg, assessment.getId());
-        assertThat(outbox.findBySavegameOrderByIdAsc(sg)).anyMatch(o -> o.getPayloadJson().contains("\"amount\":-178")
+        assertThat(outbox.findBySavegameOrderByIdAsc(sg)).anyMatch(o -> o.getPayloadJson().contains("\"amount\":-20")
                 && o.getPayloadJson().contains("FINE"));
     }
 
@@ -153,8 +153,8 @@ class TaxServiceTest {
         month(11, 1, 12);
         month(12, 2, 1);
         TaxYear y = years.findBySavegameAndTaxYear(sg, 1).orElseThrow();
-        assertThat(y.getAdvisorReduction()).isEqualTo(888);
-        assertThat(y.getTax()).isEqualTo(7_987);
+        assertThat(y.getAdvisorReduction()).isEqualTo(105);
+        assertThat(y.getTax()).isEqualTo(940);
         tax.cancelAdvisor(sg, offer.getId());
         assertThat(tax.advisor(sg)).isEmpty();
     }
@@ -162,8 +162,8 @@ class TaxServiceTest {
     @Test
     void theHarshModeIsStricter() {
         sg.setTonePreset(TonePreset.HARSH);
-        assertThat(tax.rate(sg)).isEqualTo(0.3);
-        assertThat(tax.allowance(sg)).isEqualTo(10_000);
+        assertThat(tax.rate(sg)).isEqualTo(0.25);
+        assertThat(tax.allowance(sg)).isEqualTo(25_000);
     }
 
     @Test

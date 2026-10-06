@@ -136,7 +136,8 @@ public final class Views {
                                NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
                                boolean onStrike, Double hoursThisMonth, Double hoursLastMonth, List<String> trainings,
                                String trainingInProgress, Long trainingUntilGameTime, Long apprenticeshipEndsAtGameTime,
-                               Long contractEndsAtGameTime) {
+                               Long contractEndsAtGameTime, String absenceKind, Long absenceUntilGameTime,
+                               boolean getWellSent) {
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */
@@ -182,6 +183,15 @@ public final class Views {
 
     /** Roadmap V2 R2-C6: field work hints of the cooperative; fieldsTracked = the mod reports the fields. */
     public record FieldSettingsView(boolean fieldHintsEnabled, boolean fieldsTracked) {
+    }
+
+    /**
+     * Roadmap V3.1 R31-B: switches of the burdening events; tonePreset and idyllicFactor explain the world mode (in
+     * IDYLLIC the animal disease is off and the rest scaled).
+     */
+    public record BurdenSettingsView(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave,
+                                     boolean nightWork, boolean cropDamage, boolean dieselTheft,
+                                     String tonePreset, double idyllicFactor) {
     }
 
     /** Roadmap V3 R3-T2: optional farm name; {@code mapName} is the fallback shown when it is empty. */
@@ -268,7 +278,7 @@ public final class Views {
                                long monthlyAmount, Integer coveragePercent, Long deductible, Integer termMonths,
                                Long startedAtGameTime, Long endsAtGameTime, Long nextDueGameTime, Long offerExpiresAtGameTime,
                                int missedPayments, boolean paymentOverdue, String endReason, Long renewalAmount,
-                               Long purchasePrice, Integer snowDays, Integer snowDaysTotal) {
+                               Long purchasePrice, Integer snowDays, Integer snowDaysTotal, Boolean theftCover) {
     }
 
     /** TODO T-20 / T-22: simulated incident or one-off offer of a service character. */
@@ -332,7 +342,8 @@ public final class Views {
     }
 
     /** One fixed date of the FS25 year: FESTIVAL, TAX_ASSESSMENT, TAX_PREPAYMENT, FAMILY_BIRTHDAY, FAMILY_WEDDING_DAY,
-     * SCHOOL_START, ROTATION_CHECK. {@code reference} = festival key or family member name. */
+     * SCHOOL_START, ROTATION_CHECK, Roadmap V3.1 R31-D7 COOP_ASSEMBLY, COOP_DIVIDEND, COOP_BOARD_MEETING. {@code reference} =
+     * festival key or family member name. */
     public record YearEventView(int period, String kind, String reference) {
     }
 

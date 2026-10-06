@@ -154,6 +154,43 @@ spawn at price 0 in `test_roadmap_v31.lua`, the seasonal worker in `test_workfor
 export and the borrowed machine in `test/roadmap-v31.test.js`. Frontend: `contractor-work-card.spec.ts`,
 `machine-loans-card.spec.ts`, `borrow-machine.spec.ts`, `animal-trade.spec.ts`. In the game: manual test plan
 sections 21 and 22.
+Roadmap V3.1 R31-B (authorities and grants): `DirectPaymentTest` covers the form in March (deadline end of May, own
+fields, crops), the late cut per day, the lapse after the grace days, the on-site check (deviating crop × 1.5,
+rotation repeat × 0.5, announcement) and the payment in December, and the switch; `InvestmentGrantTest` the
+application rules, purchases only after the approval (journal rises within the month and across months), the funded
+machines, the grant with its cap, the pro-rata repayment after a sale in the binding period, the expiry and the late
+fee of an authority bill; `FertilizerRulesTest` the closed period (organic type and rising level, grassland and
+mineral fertiliser excluded), warning then fine, the fallback without `sprayType`, the switch, the slurry warning and
+the October reminder; `AnimalDiseaseTest` the outbreak (only own animal types, idyllic world mode and switch), the
+vet check, the requirement with fine, the trade block, the lifting, the price recovery and the cooldown;
+`SickLeaveTest` the BG bill (formula, once a year, paid by button), sickness reported by the office clerk with
+`ON_LEAVE`, get-well wishes, the return, accidents only in the driving roles and the risk factor.
+`RepositorySmokeTest` saves the new entities. The mod exports the spray type (`test_game_adapter.lua`). Frontend:
+`direct-payment-card.spec.ts`, `investment-grant-card.spec.ts`. In the game: manual test plan sections 21 and 23.
+Roadmap V3.1 R31-D (village life): `VillageNewspaperTest` covers the issue at the period start (sections in print
+order, empty ones left out, the price change of the window, no amounts), the narrated articles (template without AI),
+the headline in the diary, once per period and a next issue only with new facts; `VillageChatTest` the groups and
+their members, the help request with its link (once per request, the daily limit, the next day), the announcements,
+gossip and congratulations, and the player post (tone, capped trust of one member, pacing, the answer job);
+`StammtischTest` the interval, attending (trust, rumour bonus used up by one rumour), the loner cap and the tip;
+`NightWorkTest` the night window, the friendly and the annoyed complaint, harvest time, daytime and idle helpers, the
+switch and the idyllic factor; `CropDamageTest` the row of samples, the hint, the complaint, the growing claim, pay and
+refuse, stubble, a running order, a lease and fields without owner; `FarmHolidaySchoolTest` the setup, the factors,
+the noise / smell cuts with the review and the school request (holidays, healthy animals, allowance, reputation);
+`CooperativeTest` buying within the limit, the notice and repayment, the price index and the cap of the dividend,
+the assembly vote, the board election, the rumour and forward-contract perks, the calendar dates and the removal
+after two missed meetings; `DieselTheftTest` the target (diesel level, driven, tank lock), the night of
+`VEHICLE_FUEL`, the police report and gossip, the insurance module, the retries and the switches.
+`NarrationPipelineTest` checks the templates and prompt tasks of the new event types. The mod covers `dayTimeMs`, the
+diesel export, the position samples and `VEHICLE_FUEL` in `test_roadmap_v31.lua`; the simulator the new money reasons
+in `test/roadmap-v31.test.js`. Frontend: `newspaper.spec.ts`, `chat.spec.ts`, `village-economy-cards.spec.ts`,
+`tank-lock-card.spec.ts`, `village-life-cases.spec.ts`. In the game: manual test plan sections 21.6 and 24.
+Roadmap V3.1 R31-K (field map): `FieldMapServiceTest` covers the outlines of `market_context.fieldShapes` with the
+kind (own, leased, leased out, neighbour with name, free), crop and phase of own fields and the symbols (order,
+auction, hints), and the empty map without outlines. The mod reads the outlines once per mission
+(`test_roadmap_v31.lua`). Frontend: `field-map.spec.ts` (coordinates, colours, hatching, border, labels, symbols,
+selection) and `farmland.spec.ts` (Karte / Tabelle, the field card on a click, the hint without outlines). In the game:
+manual test plan rows 21.7 and section 25.
 Roadmap V3 R3-L (leasing out own fields): `LeaseOutTest` covers the guide value, the neighbours' bids (capital,
 85–100 % of the desired rent, the land agent without interest), the fallback on the field phase (offer and demand),
 the bank's consent for a pledged field, the agreement (contract, `FARMLAND_TRANSFER FROM_PLAYER`, `LEASE_INCOME` also

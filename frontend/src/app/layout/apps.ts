@@ -17,6 +17,9 @@ export const APPS: AppDef[] = [
   { id: 'mail', label: 'nav.mailbox', path: '/mailbox', icon: 'mail', tone: 'com' },
   { id: 'phone', label: 'nav.calls', path: '/calls', icon: 'phone', tone: 'com' },
   { id: 'contacts', label: 'nav.village', path: '/village', icon: 'users', tone: 'com' },
+  // Roadmap V3.1 R31-D1 / R31-D2 (owner decision: own apps): village newspaper and village group chat
+  { id: 'newspaper', label: 'nav.newspaper', path: '/dorfblatt', icon: 'newspaper', tone: 'com' },
+  { id: 'chat', label: 'nav.chat', path: '/dorfchat', icon: 'messages', tone: 'com' },
   { id: 'tasks', label: 'nav.tasks', path: '/aufgaben', icon: 'tasks', tone: 'money' },
   { id: 'calendar', label: 'nav.calendar', path: '/kalender', icon: 'calendar', tone: 'sys' },
   { id: 'bank', label: 'nav.bank', path: '/bank', icon: 'bank', tone: 'money' },

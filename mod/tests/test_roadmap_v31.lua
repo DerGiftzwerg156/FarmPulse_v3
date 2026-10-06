@@ -1,5 +1,7 @@
 -- Roadmap V3.1 section A against the fake engine: FIELD_WORK (R31-A1), ANIMAL_TRANSFER and the subtype export of the
--- husbandries (R31-A3), snow height and vehicle category (R31-A4), borrowed machines with price 0 (R31-A2).
+-- husbandries (R31-A3), snow height and vehicle category (R31-A4), borrowed machines with price 0 (R31-A2); section D:
+-- time of day (R31-D4), positions of driven vehicles (R31-D5), diesel and VEHICLE_FUEL (R31-D8); section K: the field
+-- outlines (R31-K1).
 local lu = require("luaunit")
 local helpers = require("helpers")
 local T = {}
@@ -14,6 +16,7 @@ end
 function T.TestRoadmapV31:tearDown()
     g_fieldManager, g_fruitTypeManager, FruitType, FieldGroundType, FieldSprayType = nil, nil, nil, nil, nil
     g_storeManager = nil
+    FillType, ToolType, FieldState, getWorldTranslation = nil, nil, nil, nil
 end
 
 -- ------------------------------------------------------------------------------------------ R31-A1 FIELD_WORK
@@ -257,6 +260,134 @@ function T.TestRoadmapV31:testBorrowedMachineWithPriceZeroBooksNothing()
     lu.assertEquals(outcome, { true, nil, { vehicleId = "veh_loan" } })
     lu.assertEquals(#game.moneyLog, 0)
     StoreSpecies, VehicleLoadingState, VehicleLoadingData = nil, nil, nil
+end
+
+-- ------------------------------------------------------------------------------------------ R31-D
+
+--- An own tractor with a diesel tank (fill unit 1, 400 of 500 l) and a trailer without one; `opts` set the state.
+local function fuelGame(opts)
+    opts = opts or {}
+    FillType = { DIESEL = 32, ELECTRICCHARGE = 33 }
+    ToolType = { UNDEFINED = 0 }
+    local tractor = { uniqueId = "veh_1", propertyState = 1, sellPrice = 80000, damage = 0, rootNode = 11,
+        level = opts.level or 400, controlled = opts.controlled, ai = opts.ai, ownerFarmId = opts.ownerFarmId }
+    function tractor.getConsumerFillUnitIndex(_, fillType) return fillType == FillType.DIESEL and 1 or nil end
+    function tractor:getFillUnitFillLevel() return self.level end
+    function tractor.getFillUnitCapacity() return 500 end
+    function tractor:addFillUnitFillLevel(farmId, index, delta, fillType, toolType)
+        self.added = { farmId, index, delta, fillType, toolType }
+        self.level = math.max(0, self.level + delta)
+    end
+    function tractor:getIsControlled() return self.controlled == true end
+    function tractor:getIsAIActive() return self.ai == true end
+    local trailer = { uniqueId = "veh_2", propertyState = 1, sellPrice = 9000, damage = 0, rootNode = 12 }
+    local game = helpers.fakeGame({ vehicles = { tractor, trailer } })
+    g_currentMission.vehicleSystem.getVehicleByUniqueId = function(_, id)
+        for _, v in ipairs(game.vehicles) do
+            if v.uniqueId == id then return v end
+        end
+        return nil
+    end
+    game.tractor = game.vehicles[1]
+    return game
+end
+
+function T.TestRoadmapV31:testTimeOfDayAndDieselAreExported()
+    fuelGame()
+    local doc = RPSimFarmFacts.build(RPSimGameAdapter.new():collectFarmFacts())
+    lu.assertEquals(doc.calendar.dayTimeMs, 3600000)
+    lu.assertEquals(doc.assets.vehicles[1].fuel, { liters = 400, capacity = 500 })
+    lu.assertNil(doc.assets.vehicles[2].fuel) -- no diesel tank
+end
+
+function T.TestRoadmapV31:testOnlyDrivenVehiclesArePositionedWithFarmlandAndCrop()
+    fuelGame({ controlled = true })
+    getWorldTranslation = function(node) return node * 10.04, 0, -node * 3 end
+    g_farmlandManager.getFarmlandIdAtWorldPosition = function(_, x) return x > 100 and 7 or 0 end
+    FruitType = { UNKNOWN = 0 }
+    g_fruitTypeManager = { getFruitTypeByIndex = function()
+        return { getIsCut = function(_, growthState) return growthState >= 10 end }
+    end }
+    local growth = 4
+    FieldState = { new = function()
+        local st = {}
+        function st:update() self.isValid, self.fruitTypeIndex, self.growthState = true, 3, growth end
+        return st
+    end }
+    local doc = RPSimFarmFacts.build(RPSimGameAdapter.new():collectFarmFacts())
+    lu.assertEquals(doc.vehiclePositions, { { uniqueId = "veh_1", x = 110.4, z = -33, farmlandId = 7, onCrop = true } })
+    growth = 10 -- stubble after the harvest
+    doc = RPSimFarmFacts.build(RPSimGameAdapter.new():collectFarmFacts())
+    lu.assertFalse(doc.vehiclePositions[1].onCrop)
+    fuelGame() -- parked
+    getWorldTranslation = function() return 0, 0, 0 end
+    doc = RPSimFarmFacts.build(RPSimGameAdapter.new():collectFarmFacts())
+    lu.assertEquals(doc.vehiclePositions, {})
+end
+
+function T.TestRoadmapV31:testDieselIsTakenOnlyFromAParkedOwnVehicleWithATank()
+    local game = fuelGame()
+    local adapter = RPSimGameAdapter.new()
+    local ok, err, res = adapter:vehicleFuel({ vehicleId = "veh_1", delta = -150 })
+    lu.assertTrue(ok)
+    lu.assertNil(err)
+    lu.assertEquals(res, { liters = 150 })
+    lu.assertEquals(game.tractor.added, { 1, 1, -150, FillType.DIESEL, ToolType.UNDEFINED })
+    lu.assertEquals(game.tractor.level, 250)
+    -- at most the level in the tank
+    lu.assertEquals(select(3, adapter:vehicleFuel({ vehicleId = "veh_1", delta = -300 })), { liters = 250 })
+    lu.assertEquals(game.tractor.level, 0)
+    lu.assertEquals(select(2, adapter:vehicleFuel({ vehicleId = "veh_2", delta = -10 })), "NO_DIESEL_TANK")
+    lu.assertEquals(select(2, adapter:vehicleFuel({ vehicleId = "veh_9", delta = -10 })), "VEHICLE_NOT_FOUND")
+    fuelGame({ controlled = true })
+    lu.assertEquals(select(2, RPSimGameAdapter.new():vehicleFuel({ vehicleId = "veh_1", delta = -10 })), "VEHICLE_IN_USE")
+    fuelGame({ ai = true })
+    lu.assertEquals(select(2, RPSimGameAdapter.new():vehicleFuel({ vehicleId = "veh_1", delta = -10 })), "VEHICLE_IN_USE")
+    fuelGame({ ownerFarmId = 2 })
+    lu.assertEquals(select(2, RPSimGameAdapter.new():vehicleFuel({ vehicleId = "veh_1", delta = -10 })), "NOT_OWN_VEHICLE")
+end
+
+function T.TestRoadmapV31:testVehicleFuelRunsThroughTheBridgeAndReportsTheLitres()
+    local game = fuelGame()
+    local fs = helpers.fakeFs()
+    local paths = RPSimBridgePaths.new("/ms/")
+    local bridge = RPSimBridge.new(RPSimConfig.new(), paths, RPSimGameAdapter.new())
+    bridge.state.savegameId = SG
+    bridge:bootstrap()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        { instructionId = "vf1", type = "VEHICLE_FUEL", vehicleId = "veh_1", delta = -120 } } })
+    bridge:pollInstructions()
+    lu.assertEquals(game.tractor.level, 280)
+    lu.assertEquals(bridge.state.processed.vf1.status, "APPLIED")
+    lu.assertEquals(bridge.state.processed.vf1.result, { liters = 120 })
+end
+
+-- ------------------------------------------------------------------------------------------ R31-K1
+
+function T.TestRoadmapV31:testFieldOutlinesAreReadOnceWithTheMapSize()
+    helpers.fakeGame()
+    g_currentMission.terrainSize = 2048
+    local nodes = { [1] = { 10.04, 20 }, [2] = { 50, 20 }, [3] = { 50, 60.06 }, [4] = { 10, 60 } }
+    getWorldTranslation = function(node) return nodes[node][1], 0, nodes[node][2] end
+    local function field(id, name, points)
+        local f = { farmland = { id = id }, polygonPoints = points }
+        function f.getName() return name end
+        return f
+    end
+    g_fieldManager = { fields = { field(7, "7", { 1, 2, 3, 4 }), field(8, "8a", { 1, 2 }), { polygonPoints = { 1, 2, 3 } } } }
+    local adapter = RPSimGameAdapter.new()
+    local doc = RPSimMarketContext.build(adapter:collectMarketContext({}), RPSimConfig.new())
+    lu.assertEquals(doc.fieldShapes.mapSize, 2048)
+    -- field 8 has only two points, the last one no farmland: both left out
+    lu.assertEquals(doc.fieldShapes.fields, { { farmlandId = 7, name = "7", points = {
+        { x = 10, z = 20 }, { x = 50, z = 20 }, { x = 50, z = 60.1 }, { x = 10, z = 60 } } } })
+    -- read once per mission: a later export keeps the outlines without reading the nodes again
+    getWorldTranslation = function() error("not read again") end
+    doc = RPSimMarketContext.build(adapter:collectMarketContext({}), RPSimConfig.new())
+    lu.assertEquals(#doc.fieldShapes.fields, 1)
+    -- without a map size nothing is exported
+    g_currentMission.terrainSize = nil
+    lu.assertNil(RPSimMarketContext.build(RPSimGameAdapter.new():collectMarketContext({}), RPSimConfig.new()).fieldShapes)
 end
 
 return T

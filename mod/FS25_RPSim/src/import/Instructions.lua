@@ -9,8 +9,7 @@ RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLA
     -- Roadmap V3 (R3-Q1): validated now, executed with R3-H3/H4/M3 (STORAGE_TRANSFER), R3-H5 (MISSION_CREATE),
     -- R3-V2 (VEHICLE_SPAWN) and R3-V3 (VEHICLE_REMOVE); until then acknowledged FAILED / NOT_SUPPORTED
     STORAGE_TRANSFER = true, MISSION_CREATE = true, VEHICLE_SPAWN = true, VEHICLE_REMOVE = true,
-    -- Roadmap V3.1 (R31-Q1): validated now, executed with R31-A1 (FIELD_WORK), R31-A3 (ANIMAL_TRANSFER) and R31-D8
-    -- (VEHICLE_FUEL); until then acknowledged FAILED / NOT_SUPPORTED
+    -- Roadmap V3.1 (R31-Q1): executed with R31-A1 (FIELD_WORK), R31-A3 (ANIMAL_TRANSFER) and R31-D8 (VEHICLE_FUEL)
     FIELD_WORK = true, ANIMAL_TRANSFER = true, VEHICLE_FUEL = true }
 
 RPSimInstructions.MONEY_REASONS = {
@@ -35,6 +34,8 @@ RPSimInstructions.MONEY_REASONS = {
     CONTRACTOR_FEE = true, MACHINE_RENT = true, LIVESTOCK_PURCHASE = true, LIVESTOCK_SALE = true,
     WINTER_SERVICE = true, DIRECT_PAYMENT = true, INVESTMENT_GRANT = true, SOCIAL_INSURANCE = true,
     GUEST_INCOME = true, COOP_SHARES = true, COOP_DIVIDEND = true,
+    -- Roadmap V3.1 R31-D6 / R31-D8 (owner decision 2026-10-05)
+    FARM_HOLIDAY_SETUP = true, TANK_LOCK = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }

@@ -1,0 +1,7 @@
+Rückforderung Investitionsförderung
+Guten Tag,
+
+eine geförderte Maschine wurde innerhalb der Bindungsfrist von {{bindingMonths}} Monaten verkauft. Für die verbleibenden {{remainingMonths}} Monate fordern wir anteilig {{amount}} € zurück. Bitte zahlen Sie innerhalb von {{paymentDays}} Tagen in der App „Ämter“.
+
+Mit freundlichen Grüßen
+{{characterName}}

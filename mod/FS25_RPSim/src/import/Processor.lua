@@ -207,7 +207,7 @@ RPSimProcessor.V3_ACTIONS = { STORAGE_TRANSFER = "storageTransfer", MISSION_CREA
     VEHICLE_SPAWN = "vehicleSpawn", VEHICLE_REMOVE = "vehicleRemove" }
 
 --- Roadmap V3.1 (R31-Q1): the same for FIELD_WORK (R31-A1), ANIMAL_TRANSFER (R31-A3) and VEHICLE_FUEL (R31-D8, result
--- { liters } = diesel actually taken). No action yet: acknowledged FAILED / NOT_SUPPORTED.
+-- { liters } = diesel actually taken). Without an action: acknowledged FAILED / NOT_SUPPORTED.
 RPSimProcessor.V31_ACTIONS = { FIELD_WORK = "fieldWork", ANIMAL_TRANSFER = "animalTransfer",
     VEHICLE_FUEL = "vehicleFuel" }
 

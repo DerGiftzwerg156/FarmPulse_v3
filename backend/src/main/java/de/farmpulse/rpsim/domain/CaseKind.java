@@ -56,5 +56,29 @@ public enum CaseKind {
      */
     ANIMAL_OFFER,
     /** Roadmap V3.1 R31-A3: a neighbour asks for animals of the player's stable (or the player offers) - the player sells. */
-    ANIMAL_REQUEST
+    ANIMAL_REQUEST,
+    /**
+     * Roadmap V3.1 R31-B2: repayment of an investment grant after a funded machine was sold within the binding period
+     * (pay by button like a tax bill). reference = grant id, title = bill title, offerAmount = repayment, costAmount =
+     * accumulated late fees.
+     */
+    GRANT_REPAYMENT,
+    /**
+     * Roadmap V3.1 R31-B5: annual bill of the agricultural social insurance (pay by button like a tax bill). quantity =
+     * FS25 year, hectares = own fields, baselineCount = employees, offerAmount = fee, costAmount = late fees.
+     */
+    SOCIAL_INSURANCE_BILL,
+    /** Roadmap V3.1 R31-D3: invitation to the regulars' table (attend / decline). */
+    STAMMTISCH_INVITATION,
+    /**
+     * Roadmap V3.1 R31-D5: compensation claim of a field owner after repeated crop damage (pay / refuse like
+     * COMPENSATION_CLAIM). farmlandId = the field, quantity = samples, offerAmount = claim.
+     */
+    CROP_DAMAGE_CLAIM,
+    /** Roadmap V3.1 R31-D6: the school asks for a farm visit of a class (accept / decline). */
+    SCHOOL_VISIT,
+    /** Roadmap V3.1 R31-D7: general assembly of the cooperative - vote yes (accept) / no (decline). reference = topic. */
+    COOP_ASSEMBLY,
+    /** Roadmap V3.1 R31-D7: mandatory board meeting of the cooperative (attend before the deadline). */
+    COOP_BOARD_MEETING
 }

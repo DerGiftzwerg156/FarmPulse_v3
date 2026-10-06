@@ -4,6 +4,7 @@ import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.club.ClubService;
 import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
+import de.farmpulse.rpsim.cooperative.CooperativeService;
 import de.farmpulse.rpsim.credit.AnnualReviewService;
 import de.farmpulse.rpsim.credit.CollateralService;
 import de.farmpulse.rpsim.domain.Contract;
@@ -14,6 +15,9 @@ import de.farmpulse.rpsim.neighbor.NeighborTradeService;
 import de.farmpulse.rpsim.repository.ContractRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
 import de.farmpulse.rpsim.tax.TaxService;
+import de.farmpulse.rpsim.villagelife.CropDamageService;
+import de.farmpulse.rpsim.villagelife.SchoolVisitService;
+import de.farmpulse.rpsim.villagelife.StammtischService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +50,11 @@ public class ContractActions {
     private final de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans;
     private final de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade;
     private final de.farmpulse.rpsim.farmwork.WinterServiceService winterService;
+    private final de.farmpulse.rpsim.authority.AuthorityBillService authorityBills;
+    private final StammtischService stammtisch;
+    private final CropDamageService cropDamage;
+    private final SchoolVisitService schoolVisits;
+    private final CooperativeService cooperative;
 
     public ContractActions(ContractRepository contracts, ServiceCaseRepository cases, InsuranceService insurance,
                            HuntingService hunting, LivestockService livestock, LeaseService lease,
@@ -57,8 +66,18 @@ public class ContractActions {
                            de.farmpulse.rpsim.employee.ApprenticeService apprentices, LeaseOutService leaseOut,
                            de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans,
                            de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade,
-                           de.farmpulse.rpsim.farmwork.WinterServiceService winterService) {
+                           de.farmpulse.rpsim.farmwork.WinterServiceService winterService,
+                           de.farmpulse.rpsim.authority.AuthorityBillService authorityBills,
+                           StammtischService stammtisch,
+                           CropDamageService cropDamage,
+                           SchoolVisitService schoolVisits,
+                           CooperativeService cooperative) {
+        this.cooperative = cooperative;
+        this.schoolVisits = schoolVisits;
+        this.cropDamage = cropDamage;
+        this.stammtisch = stammtisch;
         this.winterService = winterService;
+        this.authorityBills = authorityBills;
         this.machineLoans = machineLoans;
         this.livestockTrade = livestockTrade;
         this.apprentices = apprentices;
@@ -153,6 +172,12 @@ public class ContractActions {
             case APPRENTICE_TAKEOVER -> apprentices.accept(sg, id); // R3-P2: take over at the demanded salary
             case MACHINE_DEMO_OFFER -> machineLoans.acceptDemoOffer(sg, id); // R31-A2: "Vorführung annehmen"
             case ANIMAL_OFFER, ANIMAL_REQUEST -> livestockTrade.accept(sg, id); // R31-A3
+            case GRANT_REPAYMENT, SOCIAL_INSURANCE_BILL -> authorityBills.pay(sg, id); // R31-B2 / R31-B5: pay by button
+            case STAMMTISCH_INVITATION -> stammtisch.attend(sg, id); // R31-D3: "Hingehen"
+            case CROP_DAMAGE_CLAIM -> cropDamage.pay(sg, id); // R31-D5: pay like R2-D2
+            case SCHOOL_VISIT -> schoolVisits.accept(sg, id); // R31-D6
+            case COOP_ASSEMBLY -> cooperative.vote(sg, id, true); // R31-D7: "Ja"
+            case COOP_BOARD_MEETING -> cooperative.attend(sg, id); // R31-D7: "Teilnehmen"
             default -> throw unsupported();
         };
     }
@@ -190,6 +215,11 @@ public class ContractActions {
             case APPRENTICE_TAKEOVER -> apprentices.decline(sg, id); // R3-P2
             case MACHINE_DEMO_OFFER -> machineLoans.declineDemoOffer(sg, id); // R31-A2
             case ANIMAL_OFFER, ANIMAL_REQUEST -> livestockTrade.decline(sg, id); // R31-A3
+            case STAMMTISCH_INVITATION -> stammtisch.decline(sg, id); // R31-D3
+            case CROP_DAMAGE_CLAIM -> cropDamage.decline(sg, id); // R31-D5
+            case SCHOOL_VISIT -> schoolVisits.decline(sg, id); // R31-D6
+            case COOP_ASSEMBLY -> cooperative.vote(sg, id, false); // R31-D7: "Nein"
+            case COOP_BOARD_MEETING -> cooperative.skip(sg, id); // R31-D7
             default -> throw unsupported();
         };
     }

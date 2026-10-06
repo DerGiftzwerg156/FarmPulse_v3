@@ -1,0 +1,6 @@
+Ergebnis der Generalversammlung
+Guten Tag,
+
+die Generalversammlung hat über {{topic}} abgestimmt: {{yesPercent}} % Ja-Stimmen – der Antrag ist {{result}}.
+
+{{characterName}}

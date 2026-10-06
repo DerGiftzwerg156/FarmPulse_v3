@@ -67,6 +67,13 @@ public class NarrationJob extends SavegameScoped {
     @Column(name = "used_fallback", nullable = false)
     private boolean usedFallback;
 
+    /** Roadmap V3.1 R31-D1 / R31-D2: the text goes into this target (newspaper article, chat message), not a mail. */
+    @Column(name = "target_type", length = 32)
+    private String targetType;
+
+    @Column(name = "target_id")
+    private Long targetId;
+
     @Column(name = "form_link", length = 255)
     private String formLink;
 

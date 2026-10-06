@@ -301,6 +301,17 @@ public class PromptService {
                 case FARM_SHOP_ORDER -> list.add(new Candidate(PromptKind.FARM_SHOP, "CASE:" + s.getId(), s.getId(),
                         "Hofladen", from + " bestellt " + s.getQuantity() + " l " + labels.label(s.getReference())
                         + " für " + money(s.getOfferAmount()) + ".", "Liefern", "Ablehnen", deadline));
+                // Roadmap V3.1 R31-D5: crop damage claim, paid or refused like the compensation claim of R2-D2
+                case CROP_DAMAGE_CLAIM -> list.add(new Candidate(PromptKind.COMPENSATION_CLAIM, "CASE:" + s.getId(),
+                        s.getId(), "Flurschaden", from + " verlangt " + money(s.getOfferAmount())
+                        + " Entschädigung für Fahrspuren auf Feld " + s.getFarmlandId() + ".", "Zahlen", "Ablehnen", deadline));
+                // Roadmap V3.1 R31-D3 / R31-D7 (owner decisions: own occasions, default off)
+                case STAMMTISCH_INVITATION -> list.add(new Candidate(PromptKind.STAMMTISCH, "CASE:" + s.getId(), s.getId(),
+                        "Stammtisch", from + " lädt dich zum Stammtisch in die Dorfkneipe ein.", "Hingehen", "Absagen",
+                        deadline));
+                case COOP_ASSEMBLY -> list.add(new Candidate(PromptKind.COOP_ASSEMBLY, "CASE:" + s.getId(), s.getId(),
+                        "Generalversammlung", "Abstimmung der Genossenschaft: " + labels.label(s.getReference()) + "?",
+                        "Ja", "Nein", deadline));
                 default -> {
                     // other cases are decided in the browser only
                 }
@@ -404,7 +415,7 @@ public class PromptService {
                 }
                 actions.acceptCase(sg, id);
             }
-            case COMPENSATION_CLAIM, INVITATION, NEIGHBOR_TRADE, NEIGHBOR_MISSION, FARM_SHOP -> {
+            case COMPENSATION_CLAIM, INVITATION, NEIGHBOR_TRADE, NEIGHBOR_MISSION, FARM_SHOP, STAMMTISCH, COOP_ASSEMBLY -> {
                 if (yes) {
                     actions.acceptCase(sg, id);
                 } else {

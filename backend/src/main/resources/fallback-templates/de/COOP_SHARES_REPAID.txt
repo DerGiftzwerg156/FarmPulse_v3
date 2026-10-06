@@ -1,0 +1,6 @@
+Rückzahlung Ihrer Anteile
+Guten Tag,
+
+die Kündigungsfrist ist abgelaufen: Für {{shares}} Anteile überweisen wir {{amount}} € zum Nennwert.
+
+{{characterName}}

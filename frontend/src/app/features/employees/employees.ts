@@ -234,6 +234,17 @@ export class Employees {
     });
   }
 
+  /** Roadmap V3.1 R31-B5: get-well wishes (once per absence). */
+  getWell(e: EmployeeView): void {
+    this.api.getWell(e.id).subscribe({
+      next: (updated) => {
+        this.replace(updated);
+        this.flash('employees.absence.getWellSent', { name: e.character.name });
+      },
+      error: (err) => this.fail(err),
+    });
+  }
+
   confirmDismiss(): void {
     const e = this.dismissTarget();
     if (!e) return;

@@ -1,0 +1,6 @@
+Seuchen-Pflichtuntersuchung
+Guten Tag,
+
+ich habe auf Anordnung des Amts Ihre {{animalCount}} Tiere ({{animalType}}) untersucht. Die Rechnung über {{invoice}} € geht Ihnen zu. Halten Sie die Tiere gut versorgt, damit sie die Auflage erfüllen.
+
+{{characterName}}

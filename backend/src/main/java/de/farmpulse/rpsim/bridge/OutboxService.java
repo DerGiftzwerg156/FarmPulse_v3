@@ -291,6 +291,18 @@ public class OutboxService {
         return List.of(transfer, money);
     }
 
+    /**
+     * Roadmap V3.1 R31-D8: takes diesel from a parked own vehicle ({@code delta} litres, negative) - not before
+     * {@code gameTimeEarliest}; the ack result carries the litres taken.
+     */
+    @Transactional
+    public OutboxInstruction vehicleFuel(Savegame sg, String vehicleId, long delta, Long gameTimeEarliest, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("vehicleId", vehicleId);
+        p.put("delta", delta);
+        return enqueue(sg, InstructionType.VEHICLE_FUEL, p, null, gameTimeEarliest, related);
+    }
+
     /** Roadmap V3 R3-H5: a real contract of the game on the field of an NPC farmland (result.missionId in the ack). */
     @Transactional
     public OutboxInstruction missionCreate(Savegame sg, String missionType, int farmlandId, Related related) {

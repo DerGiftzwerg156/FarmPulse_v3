@@ -20,6 +20,13 @@
           @if (c.nextDueGameTime !== null) {
             <div class="mt-1 fp-label">{{ 'contracts.nextDue' | t: { time: (c.nextDueGameTime | gameTime) } }}</div>
           }
+          <!-- Roadmap V3.1 R31-D8: module "Diebstahl" (diesel theft), switched on or off with the monthly premium -->
+          <label class="mt-2 flex items-center gap-2 text-[12px] text-text" data-testid="theft-cover">
+            <input type="checkbox" [checked]="!!c.theftCover" [disabled]="busy()" (change)="theftCover(c, $any($event.target).checked)"
+              data-testid="theft-cover-toggle" />
+            <span>{{ 'insurance.theftCover' | t }}</span>
+          </label>
+          <p class="mt-1 text-[11px] text-muted">{{ 'insurance.theftCoverHint' | t }}</p>
           <div class="mt-2"><app-button variant="secondary" [disabled]="busy()" (pressed)="contractAction(c, 'cancel')" data-testid="insurance-cancel">{{ 'contracts.cancel' | t }}</app-button></div>
         </div>
       } @else {

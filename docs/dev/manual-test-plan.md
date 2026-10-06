@@ -450,6 +450,7 @@ implementation to it.
 | 21.5 | Spray type after spreading (R31-B3) | Spread liquid manure on an own field, read `farm_facts.json` → `fields[].sprayType` and `sprayLevel` over the following days until the next work | `sprayType` stays `LIQUID_MANURE` until the next work changes it | value only a rising `sprayLevel` in the closed period and leave the kind open; the authority writes "Düngung festgestellt" instead of "Gülle" |
 | 21.6 | False alarms of the crop damage sample (R31-D5) | Drive on field paths that cross a neighbour's farmland and to an own contract field through neighbour land; read `farm_facts.json` → `vehiclePositions[]` (`farmlandId`, `onCrop`) | note how many samples in a row land on a neighbour's field with a crop without real damage | off by default, raise the threshold of samples in a row, a hint before the first complaint ("Pass auf, wo du langfährst") |
 | 21.7 | Orientation of the field outlines (R31-K1) | Compare the map view of the Flurkarte with the map of the game (`market_context.json` → `fieldShapes`) | north is up and the fields lie where the game's map shows them | mirror the axis in the frontend (switch in the code, set once in the playtest) |
+| 21.8 | Slurry condition title (R31-B3) | Own a stable with a slurry pit, play with the game language German and then English; look at `farm_facts.json` → `husbandries[].conditions[].title` | the slurry entry is titled `Gülle` / `Slurry` (default of `rpsim.formulas.fertilizer-rules.slurry-condition-titles`); note the exact titles of other languages | add the titles of the played language to `slurry-condition-titles`; until then the slurry warning and the October reminder stay silent |
 
 ## 22. Work on the farm (Roadmap V3.1 R31-A)
 
@@ -471,3 +472,66 @@ scenarios `lohnunternehmer` (A1, A2), `viehhandel` (A3) and `winter-schnee` (A4)
 | 22.9 | October with a medium or large tractor: accept the winter service in *Ämter* → *Gemeinde* | contract active; on a snow day the in-game hint "Schnee! Winterdienst ab 5 Uhr"; at the next month start base fee + 150 € per snow day as *Winterdienst* |
 | 22.10 | *Mitarbeiter* → *Erntehelfer:in* posting in June, hire one | outside June–October the posting is refused; at most 3; no raise and no training; he drives helpers like a machine operator; at the start of November he leaves with a farewell mail (last salary paid) |
 | 22.11 | Next June: post a seasonal job again after a worker left satisfied | the worker of last year applies again (same name, trust kept) |
+
+## 23. Authorities and grants (Roadmap V3.1 R31-B)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section B. Needs the current mod, own fields, an
+own stable with animals and at least one employee. Rows 21.5 and 21.8 check the game behaviour behind B3. To test the
+rare events, raise the chances in `application-local.yml` (e.g. `rpsim.formulas.direct-payment.check-probability: 1`,
+`animal-disease.probability-per-month: 1`, `sick-leave.sickness-probability-per-day: 1`).
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 23.1 | Start of March: *Ämter* → *Sammelantrag*; change one crop, *Antrag stellen* before the end of May | mail of the authority; the form lists the own fields with their crop (leased-out fields not); afterwards status *Gestellt* and a diary entry; the office clerk reminds a few days before the deadline while the application is open |
+| 23.2 | A year without application | 25 game days after the deadline mail "nicht gestellt", status *Versäumt*, no premium in December |
+| 23.3 | Start of December | *Flächenprämie* (250 € per declared ha, minus 1 % per late day) booked; mail of the authority |
+| 23.4 | On-site check (June–October): declare a crop other than the one in the field | announced inspection *Vor-Ort-Kontrolle Sammelantrag*; after the deadline the result mail with the cut; the December premium is lower by it |
+| 23.5 | *Ämter* → *Investitionsförderung*: machine, 100,000 €; buy a tractor in the shop **before** the approval | the purchase does not count (recognised 0) |
+| 23.6 | After the approval buy a tractor in the shop, *Nachweis einreichen* | grant 30 % of the price (max. 50,000 €) as *Investitionsförderung* |
+| 23.7 | Sell the funded tractor in the game within 24 months | bill *Rückforderung Investitionsförderung* under *Ämter* (pro rata), paid by button, late fees like a tax bill |
+| 23.8 | November: spread liquid manure on an own arable field | announced inspection *Düngeverordnung*; first time a warning, the second time a fine of 1,000 € and a loss of reputation |
+| 23.9 | Keep the slurry pit above 85 % for 5 game days; start of October | warning of the animal keeper (without one the cooperative); in October the reminder "Jetzt noch Gülle fahren, ab November ist Schluss" |
+| 23.10 | Animal disease breaks out | mails of the authority, the cooperative and the village; vet invoice per affected stable; *Handel* refuses animals of the type ("Sperrzone"); the trader offers none; requirement under *Kontrollen* (health ≥ 60 % within 10 days, otherwise 1,000 € fine) |
+| 23.11 | After 3 months | mail "Sperrzone aufgehoben"; animals of the type cost less at the neighbours for 3 months |
+| 23.12 | Start of April | bill of the *Berufsgenossenschaft* (300 € + 12 € per ha + 180 € per employee) under *Ämter*, paid by button |
+| 23.13 | An employee falls ill | mail (office clerk or the employee), badge *krank bis …* in *Mitarbeiter*, the employee drives no helper (`ON_LEAVE`); *Genesungswünsche* → thank-you mail; back after the days |
+| 23.14 | Settings → *Belastende Ereignisse*: switch everything off | no on-site check, fertiliser inspection, disease or sickness any more; application, premium, grant and the BG bill stay |
+
+## 24. Village life (Roadmap V3.1 R31-D)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section D. Needs the current mod, own fields and
+vehicles with a diesel tank, an own stable with healthy animals and some villagers and neighbours. Row 21.6 checks the
+false alarms of D5. To test the rare events, raise the chances in `application-local.yml` (e.g.
+`rpsim.formulas.diesel-theft.probability-per-month: 1`, `school-visit.probability-per-month: 1`,
+`stammtisch.interval-days: 1`) and switch *Flurschaden* on in the settings.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 24.1 | Wait for the start of a period | app *Dorfblatt*: a new issue with the sections of the past period (empty ones left out), e.g. new villagers, festivals, sponsoring, the three largest price changes, rumours "ohne Gewähr", deadlines and restricted zones; never a loan, balance or tax; the headline appears in the diary / chronicle; older issues stay selectable |
+| 24.2 | App *Dorfchat* | groups *Dorf*, *Nachbarn* and one per club with a chair; over some game days announcements and gossip (at most 3 character posts per game day); a new goods / animal / work request of a neighbour posts in *Nachbarn* with *Zur Anfrage* |
+| 24.3 | Write a friendly and then a second message in *Dorf* on the same game day | one member answers each time; the first message changes the trust of one member, the second shows the pacing note and changes nothing |
+| 24.4 | Invitation to the *Stammtisch* (every 14 game days) | case in *Kalender*; *Hingehen*: trust with three villagers, the next rumour is more often right; three invitations in a row declined or ignored: a small loss of reputation (at most −3) |
+| 24.5 | Let a helper work at night (22–6 h) for 3 game hours outside the harvest (no own field harvestable) | a villager complains politely (trust −1); again within 30 days: annoyed (−3) and a line in the next *Dorfblatt*; with a harvestable own field no complaint |
+| 24.6 | Drive across the sown field of a neighbour (3 exports in a row, *Flurschaden* on) | the first time only the in-game hint "Pass auf, wo du langfährst"; then a complaint of the owner; again within 60 days: claim of 150 € per sample in *Flurkarte*, pay or refuse (refusing costs trust) |
+| 24.7 | *Handel* → *Ferien auf dem Hof*: set up (20,000 €) | booking *Einrichtung Ferienwohnung*; at every month start *Ferien auf dem Hof* income (more in summer, with good reputation and healthy animals); night work or slurry in the summer months lower it and bring a review mail |
+| 24.8 | School request (month start outside June–August, a stable with health ≥ 70) | case in *Kalender*; *Zusagen*: 150 € *Ferien auf dem Hof*, reputation, a thank-you mail and a line in the *Dorfblatt* |
+| 24.9 | *Handel* → *Genossenschaftsanteile*: buy 40 shares, cancel 5 | booking *Genossenschaftsanteile* −20,000 €; the 5 are repaid at nominal after 12 months; at the start of March the *Genossenschaftsdividende* (4 % × price index, 0–8 %) |
+| 24.10 | Start of April with shares | invitation to the general assembly in *Kalender* (also as an in-game question when switched on); vote *Ja* / *Nein*; result mail and a line in the *Dorfblatt*; with 40 shares and trust ≥ 50 of the cooperative the farm joins the board (calendar shows the board meetings, forward contracts allow 10 % more) |
+| 24.11 | Board meeting (March, June, September, December): ignore two | trust −3 each; after the second the mail "aus dem Vorstand abgewählt" |
+| 24.12 | Diesel theft (month start, next night): park a vehicle with ≥ 100 l diesel | in the night 30–60 % (max. 300 l) of its diesel are gone in the game; mail of the police, a line in the *Dorfblatt*, gossip in *Dorfchat*; with the module *Diebstahl* of the storm / hail insurance (+8 € per month) a damage above 150 € is paid; a driven vehicle is not chosen (the mod refuses with `VEHICLE_IN_USE`, tried again the next night) |
+| 24.13 | *Werkstatt* → *Tankschloss* for the vehicle (250 €) | booking *Tankschloss*; this vehicle is chosen much more rarely |
+| 24.14 | Settings → *Belastende Ereignisse*: switch night work, crop damage and diesel theft off; world mode *idyllisch* | no complaints, claims or thefts any more; in the idyllic mode no diesel theft and half the trust losses of D4 / D5 |
+
+## 25. Field map (Roadmap V3.1 R31-K)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section K. Needs the current mod, own, leased and
+leased-out fields and neighbours with fields. Row 21.7 checks the orientation.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 25.1 | Load the savegame, open *Flurkarte* | `market_context.json` → `fieldShapes` with `mapSize` and the outlines (at most 64 points each); the card *Feldübersicht* opens in the view **Karte** with all fields of the map in their real shape; **Tabelle** switches to the tiles |
+| 25.2 | Compare the map with the map of the game | the fields lie where the game shows them, north up (otherwise set `MIRROR_Z` in `field-map.ts`, row 21.7) |
+| 25.3 | Look at the own fields during a season | coloured by phase (empty grey, growing green, harvestable gold, harvested brown, withered red) with their number; leased fields hatched, leased-out fields with a thick border; neighbour fields pale with the owner's name, free fields pale and dashed; legend below |
+| 25.4 | Start a contractor job, wait for an auction and let weeds grow on an own field | symbols *A* (order), *V* (auction) and *!* (hint) on the field; the tooltip names them |
+| 25.5 | Click a field on the map | the field card opens below with its actions (sell, lease out, contractor, family field) |
+| 25.6 | Older mod without outlines | only the tiles with the hint that the map needs the current mod |

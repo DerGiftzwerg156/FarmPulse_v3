@@ -78,11 +78,14 @@ public class LivestockService {
     private final RpsimProperties props;
     private final GameTime gameTime;
     private final EmployeeRepository employees;
+    /** Roadmap V3.1 R31-B4: restricted zones of an animal disease. */
+    private final de.farmpulse.rpsim.authority.DiseaseZones zones;
 
     public LivestockService(ServiceCaseRepository cases, SavegameRepository savegames, FactsService facts, OutboxService outbox,
                             ServiceRoleService roles, NarrationRequestService narration, DiaryService diary,
                             RandomSource random, RpsimProperties props, GameTime gameTime,
-                            EmployeeRepository employees) {
+                            EmployeeRepository employees, de.farmpulse.rpsim.authority.DiseaseZones zones) {
+        this.zones = zones;
         this.cases = cases;
         this.savegames = savegames;
         this.facts = facts;
@@ -142,8 +145,10 @@ public class LivestockService {
                 breedingAdvice(sg, h);
             }
         }
-        if (random.chance(cfg().getTraderProbabilityPerMonth())) {
-            traderOffer(sg, random.pick(new ArrayList<>(herds.values())));
+        // Roadmap V3.1 R31-B4: no trader offers for an animal type inside a restricted zone
+        List<Herd> open = herds.values().stream().filter(h -> !zones.blocked(sg, h.type())).toList();
+        if (random.chance(cfg().getTraderProbabilityPerMonth()) && !open.isEmpty()) {
+            traderOffer(sg, random.pick(new ArrayList<>(open)));
         }
     }
 
@@ -377,6 +382,7 @@ public class LivestockService {
     @Transactional
     public ServiceCase accept(Savegame sg, Long caseId) {
         ServiceCase sc = offer(sg, caseId);
+        zones.requireOpen(sg, sc.getReference()); // R31-B4
         Herd h = herds(sg).get(sc.getReference());
         sc.setBaselineCount(h == null ? 0 : h.count());
         sc.setStatus(CaseStatus.IN_PROGRESS);

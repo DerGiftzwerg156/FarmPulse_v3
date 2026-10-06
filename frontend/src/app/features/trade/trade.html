@@ -110,6 +110,12 @@
     <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
   }
 
+  <!-- Roadmap V3.1 R31-D6 / R31-D7: farm holidays and cooperative shares -->
+  <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <app-farm-holiday-card />
+    <app-coop-shares-card />
+  </div>
+
   <!-- Roadmap V3.1 R31-A3: livestock trade with the neighbours -->
   <app-animal-trade (changed)="casesView()?.load()" />
 

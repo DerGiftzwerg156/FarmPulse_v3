@@ -37,13 +37,23 @@ public class PromptBuilder {
     /** Everything the builder needs - facts are already validated by {@link NarrationFacts}. */
     public record Input(Character character, TonePreset tone, NarrationEventType type, Channel channel,
                         Map<String, Object> facts, List<String> memoryFacts, String playerMessage,
-                        boolean mechanicalRequest, String calendar) {
+                        boolean mechanicalRequest, String calendar, String target) {
 
         public Input(Character character, TonePreset tone, NarrationEventType type, Channel channel,
                      Map<String, Object> facts, List<String> memoryFacts, String playerMessage, boolean mechanicalRequest) {
-            this(character, tone, type, channel, facts, memoryFacts, playerMessage, mechanicalRequest, null);
+            this(character, tone, type, channel, facts, memoryFacts, playerMessage, mechanicalRequest, null, null);
+        }
+
+        public Input(Character character, TonePreset tone, NarrationEventType type, Channel channel,
+                     Map<String, Object> facts, List<String> memoryFacts, String playerMessage, boolean mechanicalRequest,
+                     String calendar) {
+            this(character, tone, type, channel, facts, memoryFacts, playerMessage, mechanicalRequest, calendar, null);
         }
     }
+
+    /** Roadmap V3.1 R31-D1 / R31-D2: target type of a newspaper article and of a chat message (see NarrationSink). */
+    public static final String TARGET_NEWSPAPER = "NEWSPAPER_ARTICLE";
+    public static final String TARGET_CHAT = "CHAT_MESSAGE";
 
     private final Properties tasks = new Properties();
     private final CharacterGeneratorService generator;
@@ -123,7 +133,13 @@ public class PromptBuilder {
                     + "(z. B. \"Ende Oktober\", \"nach der Ernte\"), aber keine Termine, die nicht in den Fakten stehen.\n");
         }
         user.append("Aufgabe: ").append(task(in.type())).append('\n');
-        if (in.channel() == Channel.CALL) {
+        if (TARGET_NEWSPAPER.equals(in.target())) {
+            user.append("Kanal: Dorfzeitung \"Dorfblatt\" - subject ist die Schlagzeile, body ein kurzer Zeitungsartikel "
+                    + "ohne Anrede und Gruß.\n");
+        } else if (TARGET_CHAT.equals(in.target())) {
+            user.append("Kanal: Dorf-Gruppenchat - subject ist ein Stichwort, body eine kurze Chatnachricht (ein bis zwei "
+                    + "Sätze, ohne Anrede und Gruß).\n");
+        } else if (in.channel() == Channel.CALL) {
             user.append("Kanal: Telefonanruf - formuliere gesprochene, kurze Sätze; subject ist ein kurzer Gesprächsanlass.\n");
         } else {
             user.append("Kanal: Mail - subject ist die Betreffzeile, body der Mailtext mit Anrede und Gruß.\n");

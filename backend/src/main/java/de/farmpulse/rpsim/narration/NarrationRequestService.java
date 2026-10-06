@@ -54,6 +54,8 @@ public class NarrationRequestService {
         private Long threadRootId;
         private String formLink;
         private long delayMs;
+        private String targetType;
+        private Long targetId;
 
         private Request(Savegame savegame, NarrationEventType type) {
             this.savegame = savegame;
@@ -69,6 +71,8 @@ public class NarrationRequestService {
         public Request thread(Long rootId) { this.threadRootId = rootId; return this; }
         public Request formLink(String link) { this.formLink = link; return this; }
         public Request delay(long ms) { this.delayMs = ms; return this; }
+        /** Roadmap V3.1 R31-D1 / R31-D2: the text goes into this target ({@link NarrationSink}), not a mail. */
+        public Request target(String type, Long id) { this.targetType = type; this.targetId = id; return this; }
 
         public NarrationJob submit() {
             return NarrationRequestService.this.submit(this);
@@ -113,6 +117,8 @@ public class NarrationRequestService {
         job.setRelatedEntityId(r.relatedId);
         job.setThreadRootId(r.threadRootId);
         job.setFormLink(r.formLink);
+        job.setTargetType(r.targetType);
+        job.setTargetId(r.targetId);
         job.setCreatedAt(Instant.now());
         return jobs.save(job);
     }

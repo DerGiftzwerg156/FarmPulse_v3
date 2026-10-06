@@ -12,6 +12,20 @@
 
     <app-card [title]="'farmland.map' | t" data-testid="field-map">
       <span card-actions class="fp-label">{{ 'farmland.owned' | t: { n: counts().player, total: counts().total } }}</span>
+      <!-- Roadmap V3.1 R31-K1: the fields as a map next to the tiles -->
+      @if (hasMap()) {
+        <div class="mb-3 inline-flex rounded-md border border-border p-0.5 text-[12px]" role="group" data-testid="map-switch">
+          <button type="button" class="rounded px-3 py-1" [class.bg-accent/20]="view() === 'map'" [class.text-text]="view() === 'map'"
+            [class.text-muted]="view() !== 'map'" (click)="chosenView.set('map')" data-testid="view-map">{{ 'farmland.fieldMap.map' | t }}</button>
+          <button type="button" class="rounded px-3 py-1" [class.bg-accent/20]="view() === 'table'" [class.text-text]="view() === 'table'"
+            [class.text-muted]="view() !== 'table'" (click)="chosenView.set('table')" data-testid="view-table">{{ 'farmland.fieldMap.table' | t }}</button>
+        </div>
+      } @else if (fieldMap() !== null) {
+        <p class="mb-3 text-[11px] text-muted" data-testid="map-missing">{{ 'farmland.fieldMap.missing' | t }}</p>
+      }
+      @if (view() === 'map' && fieldMap(); as m) {
+        <app-field-map [map]="m" [selected]="selectedField()" (fieldSelected)="selectField($event)" />
+      } @else {
       <div class="mb-3 flex flex-wrap gap-3 text-[11px] text-muted">
         <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm border border-accent bg-accent/30"></span>{{ 'PLAYER' | label: 'ownerType' }}</span>
         <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm border border-border bg-surface"></span>{{ 'CHARACTER' | label: 'ownerType' }}</span>
@@ -39,6 +53,7 @@
           </button>
         }
       </div>
+      }
 
       @if (field(); as f) {
         <div class="mt-4 rounded-md border border-border bg-bg p-3" data-testid="field-detail">
@@ -247,7 +262,7 @@
     </div>
   }
 
-  <app-service-cases [caseKinds]="['COMPENSATION_CLAIM', 'MISSION_REFERRAL', 'CONTRACTOR_WORK']" [contractKinds]="['LEASE']" openTitle="farmland.claims"
+  <app-service-cases [caseKinds]="['COMPENSATION_CLAIM', 'CROP_DAMAGE_CLAIM', 'MISSION_REFERRAL', 'CONTRACTOR_WORK']" [contractKinds]="['LEASE']" openTitle="farmland.claims"
     contractsTitle="farmland.leases" [showEmpty]="false" [highlightCase]="highlightedCase()" [highlightContract]="highlightedContract()" testId="field-cases">
     <p contracts-intro class="mb-3 text-[12px] text-muted">{{ 'contracts.leaseHint' | t }}</p>
   </app-service-cases>

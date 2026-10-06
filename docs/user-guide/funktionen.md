@@ -32,17 +32,19 @@ Homescreen.
 | **Post** | Mails aus dem Dorf, Entscheidungen direkt in der Mail |
 | **Telefon** | Anrufe annehmen, zurückrufen und nachlesen |
 | **Kontakte** | Dorf, Familie und Vereine, Vertrauen und Ansehen, Sponsoring |
+| **Dorfblatt** | Die Dorfzeitung: jede Periode eine neue Ausgabe mit dem, was im Dorf öffentlich ist |
+| **Dorfchat** | Gruppen für das Dorf, die Nachbarn und die Vereine – mitlesen und mitschreiben |
 | **Aufgaben** | Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert |
-| **Kalender** | Die nächsten Tage, Abbuchungen zum Monatsbeginn, Dorffeste, Steuertermine, Familie, Einladungen |
+| **Kalender** | Die nächsten Tage, Abbuchungen zum Monatsbeginn, Dorffeste, Steuertermine, Familie, Einladungen, Stammtisch, Schulbesuch, Genossenschaft |
 | **Bank** | Kredite, Anträge und Hofbuchhaltung |
 | **Ämter** | Finanzamt (Steuern, Bescheide, Steuerberatung) und Landwirtschaftsamt (Kontrollen) |
 | **Agrarbörse** | Silo, Preise, Marktgeschehen, Kontrakte, Preisalarm und Vorkontrakte |
-| **Versicherung** | Sturm- und Hagelversicherung, Schäden melden, Wildschaden |
+| **Versicherung** | Sturm- und Hagelversicherung (auch mit Baustein „Diebstahl“), Schäden melden, Wildschaden |
 | **Personal** | Team, Helferstunden, Helfer im Spiel und Stellenausschreibungen |
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen |
 | **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl |
-| **Werkstatt** | Wartung, Wartungsvertrag und Mechaniker |
-| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Hofladen |
+| **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker und Tankschloss |
+| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Hofladen, Ferien auf dem Hof, Genossenschaftsanteile |
 | **Tagebuch** | Die Chronik deines Hofs |
 | **Einstellungen** | KI, Fragen im Spiel, Hinweise und Reaktionen |
 
@@ -78,6 +80,17 @@ entscheidest du hier, verschwinden sie im Spiel. Daneben siehst du, was heute im
   Vorauszahlungen, die Fruchtfolge-Prüfung des Amts und Familientermine (Geburtstage, Hochzeitstag, Einschulung).
 - **Einladungen** zu den Dorffesten beantwortest du hier: **Zusagen** freut die Gastgeber, **Absagen** ist in
   Ordnung, gar nicht zu antworten kostet ein wenig Vertrauen.
+- **Stammtisch:** Alle 14 Spieltage lädt dich jemand aus dem Dorf in die Dorfkneipe ein (2 Tage Zeit). Wer
+  **hingeht**, gewinnt Vertrauen bei drei Leuten am Tisch, das nächste Gerücht an der Agrarbörse stimmt öfter, und ab
+  und zu gibt es einen Tipp – eine laufende Versteigerung oder jemanden, der ein Feld verkaufen würde. Wer dreimal
+  hintereinander fehlt, gilt als eigenbrötlerisch: ein kleiner Abzug beim Ansehen (insgesamt höchstens −3).
+- **Schulbesuch:** Außerhalb der Sommerferien (Juni bis August) fragt die Dorfschule ab und zu nach einer
+  **Hofführung** – nur wenn ein Stall gesunde Tiere hat (Gesundheit ab 70 %). Nach der Zusage gibt es 150 €
+  Aufwandsentschädigung, Ansehen im Dorf und einen Dank der Lehrkraft; Absagen bleibt ohne Folgen.
+- **Genossenschaft:** Mitglieder werden im April zur **Generalversammlung** eingeladen und stimmen mit *Ja* oder *Nein*
+  über ein Thema ab (höhere Dividende, neues Getreidelager oder Sponsoring der Dorffeste). Deine Anteile sind deine
+  Stimmen, dazu kommen die Stimmen des Dorfs. Wer im Vorstand sitzt, bestätigt hier die **Vorstandssitzungen** (März,
+  Juni, September, Dezember). Die Termine stehen im Jahresüberblick.
 
 Ein Spielmonat ist der Monat im FS25-Kalender; stellst du im Spiel die „Tage pro Monat“ um, verschieben sich alle
 Termine passend mit.
@@ -228,6 +241,39 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
   **Dürrehilfe** mit *Antrag stellen* innerhalb von 15 Tagen; das Geld kommt sofort als Förderung. Mit einer
   Dürreversicherung ist die Hilfe um die Hälfte gekürzt. Ohne wachsende Felder gibt es keine Hilfe.
 
+- **Sammelantrag:** Jedes Jahr im März schickt das Amt den Sammelantrag. Unter **Sammelantrag** stehen deine eigenen
+  Felder (auch gepachtete, verpachtete nicht) mit ihrer aktuellen Kultur; du bestätigst oder korrigierst die Kultur je
+  Feld (oder „Brache“) und stellst den Antrag bis Ende Mai. Jeder angefangene Tag Verspätung kostet 1 % der Prämie,
+  nach 25 Tagen gibt es keine Prämie mehr. Im Dezember kommt die **Flächenprämie** (250 € je Hektar). Bei manchen
+  Anträgen kündigt das Amt eine **Vor-Ort-Kontrolle** an: Stimmt die angegebene Kultur nicht mit der Hauptkultur des
+  Feldes überein, wird die Prämie dieser Fläche anderthalbfach abgezogen (im Wiederholungsfall dreifach); trägt ein
+  Feld dieselbe Kultur wie im Vorjahr, fällt die Hälfte seiner Prämie weg (Fruchtfolge-Auflage).
+- **Investitionsförderung:** *Vor* einem Kauf beantragst du die Förderung: Stall/Gebäude oder Maschine und die
+  geplante Summe (ab 10.000 €). Nach etwa 10 Tagen ist sie bewilligt (mit Bürokraft schneller). Erst dann kaufst du im
+  Spiel – was du vorher kaufst, zählt nicht. Innerhalb von 6 Monaten reichst du mit *Nachweis einreichen* ein (sonst
+  geschieht es zum Fristende von selbst): 30 % der Kosten, höchstens 50.000 €. Gebrauchtkäufe bei Nachbarn und
+  Leasing zählen nicht. Verkaufst du eine geförderte Maschine innerhalb von 24 Monaten, fordert das Amt anteilig
+  zurück – die **Rückforderung** bezahlst du wie einen Steuerbescheid.
+- **Düngeverordnung:** Von November bis Januar ist Gülle und Mist auf Ackerland verboten (Grünland ausgenommen).
+  Bringst du sie trotzdem aus, kündigt das Amt eine Kontrolle an: beim ersten Mal eine Verwarnung, danach 1.000 €
+  Bußgeld, und das Dorf redet. Ist das Güllelager eines Stalls lange fast voll, warnt dein Tierpfleger (ohne ihn die
+  Genossenschaft); im Oktober kommt die Erinnerung „Jetzt noch Gülle fahren, ab November ist Schluss“.
+- **Tierseuche:** Selten bricht in der Region eine Seuche aus (Afrikanische Schweinepest, Geflügelpest,
+  Blauzungenkrankheit) – nur bei Tierarten, die du hältst. Für 3 Monate gilt eine **Sperrzone**: kein Viehhandel mit
+  Nachbarn und keine Angebote des Viehhändlers für diese Tiere. Der Tierarzt untersucht jeden betroffenen Stall (auf
+  Rechnung), und unter **Kontrollen** steht die Auflage, die Tiergesundheit binnen 10 Tagen auf 60 % zu bringen –
+  sonst 1.000 € Bußgeld. Nach der Aufhebung sind die Tiere bei den Nachbarn noch ein paar Monate billiger. Die
+  Tierpreise im Spiel ändern sich nicht.
+
+**Berufsgenossenschaft.** Jedes Jahr im April schickt die Berufsgenossenschaft den Beitragsbescheid: 300 € plus 12 € je
+Hektar deiner Felder plus 180 € je Mitarbeiter (auch Erntehelfer). Du bezahlst ihn unter **Beitragsbescheide** mit
+*Zahlen*; danach gelten Säumniszuschlag und Mahnungen wie beim Finanzamt. Die Berufsgenossenschaft meldet sich auch
+nach einem Arbeitsunfall (siehe **Personal**).
+
+Vor-Ort-Kontrolle, Düngeverordnung, Tierseuchen sowie Krankheit und Unfälle schaltest du unter **Einstellungen →
+Belastende Ereignisse** einzeln ab. Im idyllischen Weltmodus gibt es keine Tierseuchen, der Rest kommt seltener bzw.
+milder.
+
 **Gemeinde – Winterdienst.** Hast du einen eigenen mittleren oder großen Traktor (geliehene zählen nicht), bietet die
 Gemeinde im Oktober den Winterdienst für November bis Februar an. Du bekommst 400 € je Wintermonat und 150 € für jeden
 Tag mit Schnee; an einem Schneetag erscheint im Spiel „Schnee! Winterdienst ab 5 Uhr“. Bezahlt wird zu jedem
@@ -256,6 +302,12 @@ eingestellt, kommt kein Angebot.
   Monat gefahren ist: Mehr als 8 Stunden je Spieltag drücken auf die Arbeitsbelastung, weniger erholt. Wer wenig
   fährt, bringt auch weniger zusätzlichen Nutzen. Ein Streikender stellt seinen Helfer sofort ab. Fahren ständig
   Helfer ohne eigenen Mitarbeiter, fragt die Genossenschaft einmal nach, ob du nicht jemanden fest einstellen willst.
+- **Krankheit und Arbeitsunfall.** Ab und zu wird jemand krank (2–5 Tage) oder hat einen Arbeitsunfall (3–10 Tage;
+  nur wer Maschinen fährt). Unfälle passieren öfter, wenn die Arbeitsbelastung hoch und die Maschinen verschlissen
+  sind, und seltener, wenn beides gut ist. Die Bürokraft (ohne sie die Person selbst) meldet den Ausfall, nach einem
+  Unfall schreibt auch die Berufsgenossenschaft. Auf der Karte steht *krank bis …* bzw. *nach Arbeitsunfall bis …*; in
+  der Zeit fährt die Person keinen Helfer, das Gehalt läuft weiter. Mit *Genesungswünsche* (einmal je Ausfall)
+  steigt die Wertschätzung, und du bekommst eine Dankesmail.
 - **Schulungen für Maschinenführer.** Ohne Schulung fährt ein Maschinenführer als Helfer nur kleine und mittlere
   Traktoren (und Fahrzeuge ohne Schulungspflicht wie PKW oder Stapler). Für **große Traktoren, Mähdrescher,
   Feldhäcksler, Spezialernter** (Rüben, Kartoffeln, Gemüse, Baumwolle, Zuckerrohr, Trauben, Oliven), **LKW** sowie
@@ -299,6 +351,10 @@ eingestellt, kommt kein Angebot.
   (das letzte Gehalt kommt noch), mit einer Abschiedsmail. Wer zufrieden ging, bewirbt sich im nächsten Jahr wieder –
   mit demselben Vertrauen.
 - Die Stundenzählung braucht die aktuelle Mod-Version; mit einer älteren gilt die bisherige Arbeitsbelastung.
+- **Nachtarbeit.** Laufen deine Helfer nachts (22 bis 6 Uhr) zusammen mindestens 3 Stunden innerhalb von 7 Spieltagen,
+  beschwert sich jemand aus dem Dorf – beim ersten Mal freundlich (wenig Vertrauen), beim nächsten Mal innerhalb von
+  30 Tagen genervt (mehr Vertrauen, und das Dorfblatt schreibt darüber). Steht eines deiner Felder erntereif, zeigt das
+  Dorf Verständnis. Abschaltbar unter **Einstellungen**.
 
 ## Flurkarte
 
@@ -307,6 +363,16 @@ eingestellt, kommt kein Angebot.
 Die Flurkarte zeigt alle Felder der Karte: deine eigenen, die der Dorfbewohner und freie. Felder, die
 jemandem gehören, gehören den Figuren, die das Spiel selbst dem Feld zuordnet – du triffst also dieselben Namen wie
 im Feld-Menü von FS25. Diese Figuren gehören zur Karte und ziehen nie weg.
+
+**Karte und Tabelle:** Oben in der *Feldübersicht* schaltest du zwischen **Karte** und **Tabelle** um. Die Karte zeigt
+alle Felder in ihrer echten Form, wie auf der Karte im Spiel (Norden oben): deine Felder in der Farbe ihrer Phase
+(leer grau, wächst grün, erntereif gold, abgeerntet braun, verdorrt rot) mit ihrer Nummer, gepachtete Felder
+schraffiert, verpachtete mit dickem Rand, die Felder der Nachbarn blass mit dem Namen des Besitzers und freie Felder
+blass gestrichelt. Kleine Symbole zeigen einen **Auftrag** (A – z. B. Lohnunternehmer, Arbeit beim Nachbarn oder eine
+Forderung), eine laufende **Versteigerung** (V) und einen **Hinweis** (! – erntereif, Unkraut, Steine, Kalk, Pflügen);
+fährst du mit der Maus darüber, steht alles im Text. Ein Klick auf ein Feld öffnet darunter die Feldkarte mit den
+Aktionen (verkaufen, verpachten, Lohnunternehmer, Familienfeld). Die Tabelle zeigt die Felder als Kacheln. Die Karte
+braucht die aktuelle Mod-Version, die beim Spielstart die Feldumrisse mitschickt; ohne sie gibt es nur die Kacheln.
 
 **Meine Felder:** Mit der aktuellen Mod-Version steht über der Karte eine Tabelle deiner eigenen und gepachteten
 Felder: Fläche, Kultur, Phase (leer, wächst, erntereif, abgeerntet, verdorrt), was zu tun ist (ernten, kalken,
@@ -383,6 +449,13 @@ Auftraggeber; das Tool selbst startet nie einen Auftrag.
 
 Mit einer älteren Mod-Version bleibt alles wie bisher: Hagel und Wildschaden treffen ein beliebiges eigenes Feld.
 
+**Flurschaden** (unter **Einstellungen** einschalten, Standard aus): Fährt eine deiner Maschinen mehrere Exporte
+hintereinander (etwa 30 Sekunden) über das bestellte Feld eines Nachbarn, ohne dass du dort einen Auftrag hast oder es
+gepachtet hast, kommt beim ersten Mal nur ein Hinweis im Spiel („Pass auf, wo du langfährst“). Danach beschwert sich
+der Besitzer und verliert Vertrauen (höchstens einmal je Feld und Tag). Passiert es beim selben Besitzer innerhalb von
+60 Tagen wieder, verlangt er 150 € je Stichprobe als Entschädigung – die Forderung steht hier, du zahlst oder lehnst ab
+(Ablehnen kostet mehr Vertrauen, 7 Tage Zeit).
+
 **Familienfeld:** Hast du im Onboarding eine Familie gewählt, kannst du in der Detailansicht eines eigenen Feldes
 **Als Familienfeld markieren** („Das Feld am Bach war schon beim Großvater in der Familie“). Verkaufst du es später –
 im Tool oder im Feldmenü des Spiels –, sinkt das Vertrauen der ganzen Familie deutlich.
@@ -440,6 +513,9 @@ stehen in der App, zu der sie gehören.
   Felder (ohne Pachtflächen) und Monat, bei einer Dürre zahlt sie 200 € je Hektar ohne Schadensmeldung – aber nur, wenn
   du sie vor dem ersten trockenen Monat abgeschlossen hast und die Prämie bezahlt ist. Die Karte zeigt den Regen der
   letzten Monate, die laufende Trockenreihe und die bisherigen Dürren.
+- **Baustein „Diebstahl“.** Zur laufenden Sturm- und Hagelversicherung kannst du für 8 € im Monat den Baustein
+  **Diebstahl** dazunehmen. Er ersetzt einen Dieselklau voll (Diesel zu 1,60 € je Liter, ohne Selbstbehalt), wenn der
+  Schaden über 150 € liegt.
 
 ## Stall
 
@@ -486,6 +562,11 @@ Mod-Version.
   wird sie abgeholt. Die Liste zeigt auch die Maschinen, die du dir bei Nachbarn geliehen hast (siehe **Kontakte**),
   mit Miete, Ende, Verspätung und Schadenersatz. Leih- und Vorführmaschinen gehören dir nicht: Sie zählen nicht zum
   Vermögen bei der Bank und nicht zur Abschreibung, werden nicht gewartet und lassen sich nicht verkaufen.
+- **Tankschloss.** Selten fehlt nach einer Nacht Diesel in einer abgestellten Maschine (30–60 % des Tanks, höchstens
+  300 Liter, nur Maschinen mit mindestens 100 Litern, die gerade niemand fährt). Danach schreibt die Polizei, und das
+  Dorf redet darüber. Ein **Tankschloss** für 250 € je Maschine macht das bei dieser Maschine deutlich unwahrscheinlicher;
+  die Liste zeigt den Dieselstand jeder Maschine und die bisherigen Diebstähle. Dieselklau ist unter **Einstellungen**
+  abschaltbar und kommt im idyllischen Weltmodus nicht vor.
 
 ## Handel
 
@@ -524,7 +605,21 @@ Verkauf, Vertrauen hilft). Wähle Geschäft (*Tiere kaufen* oder *Tiere verkaufe
 Tiere – beim Kauf höchstens so viele, wie Platz ist, beim Verkauf so viele, wie du von der Rasse hast. Der Nachbar
 antwortet sofort mit seinem Angebot; nach *Kaufen* bzw. *Verkaufen* wechseln die Tiere im Spiel den Stall und das
 Geld wird gebucht. Auch von sich aus bietet ein Nachbar ab und zu Tiere an oder fragt nach welchen. Das Dorf redet
-über deine Geschäfte. Der Viehhändler bleibt für alles außerhalb des Dorfs zuständig.
+über deine Geschäfte. Der Viehhändler bleibt für alles außerhalb des Dorfs zuständig. Während einer Tierseuche ist
+der Handel mit den betroffenen Tierarten gesperrt (siehe **Ämter**), danach sind sie eine Weile billiger.
+
+**Ferien auf dem Hof:** Einmal 20.000 € für die Ferienwohnung, danach zahlen Feriengäste zu jedem Monatsbeginn – 800 €
+als Grundbetrag, im Sommer (Juni bis August) mal 1,5, im Dezember mal 1,2, sonst mal 0,7; dazu dein Ansehen (gut 1,2,
+umstritten 0,7) und deine Tiere (ein gesunder Stall 1,2, ein Stall unter 40 % Gesundheit 0,6 und eine schlechte
+Bewertung). Laufen nachts Helfer, kostet der Lärm 10 %, Gülle im Sommer noch einmal 10 %; die Gäste schreiben dann.
+Die Karte zeigt die Faktoren des laufenden Monats und die vergangenen Monate.
+
+**Genossenschaftsanteile:** Ein Anteil kostet 500 €, höchstens 200. Zum Jahreswechsel (März) gibt es eine
+**Dividende**: 4 % mal der Preisentwicklung des Jahres (Durchschnitt aller Preise gegenüber dem Vorjahr), zwischen 0 und
+8 %. Gekündigte Anteile bekommst du nach 12 Monaten zum Nennwert zurück. Ab 40 Anteilen und gutem Vertrauen der
+Genossenschaft wählt dich die Generalversammlung in den **Vorstand**: Gerüchte kommen früher, Vorkontrakte dürfen 10 %
+größer sein, und dein Ansehen steigt jedes Jahr. Dafür stehen vier Vorstandssitzungen im **Kalender**; wer zweimal
+fehlt, wird abgewählt.
 
 Die Nachbarfelder, deine Silos und die Aufträge brauchen die aktuelle Mod-Version; fehlen sie, sagt die App es oben.
 
@@ -555,6 +650,32 @@ nur wenig. Die Anfrage steht in den Kontakten.
 Die Eltern auf dem Altenteil bekommen jeden Monat ihre Zahlung. Zu Geburtstagen, zum Hochzeitstag und zur Einschulung
 kommt eine Nachricht (die Termine stehen im **Kalender**), zur Erntezeit bietet manchmal jemand Hilfe an, und zu
 Jahresbeginn schreibt das Tagebuch die Geschichte der Hofnachfolge fort.
+
+## Dorfblatt
+
+Zu Beginn jeder FS25-Periode erscheint eine neue Ausgabe der Dorfzeitung. Sie berichtet nur, was im Dorf öffentlich
+ist – nie über deine Kredite, deinen Kontostand oder deine Steuern:
+
+- **Aus dem Dorf:** Feste und Einladungen, wer zu- oder weggezogen ist, Vereine mit neuem Sponsor, Klatsch.
+- **Vom Hof:** deine öffentlichen Taten – Sponsoring, Hofladen, Hilfe für Nachbarn, Bußgelder, offene Rechnungen,
+  Rekordernte, Winterdienst, Schulbesuche.
+- **Markt:** die drei Sorten, deren bester Preis sich am stärksten verändert hat, und Gerüchte „ohne Gewähr“.
+- **Amtliches:** Fristen (Sammelantrag, Winterdienst), Sperrzonen einer Tierseuche, laufende Kontrollen des Amts.
+- **Kleinanzeigen:** offene Angebote der Nachbarn (Ware, Tiere) und welche Maschinen sie verleihen.
+
+Leere Rubriken fehlen. Mit KI schreibt die Redaktion eigene Artikel, ohne KI stehen die Meldungen als Liste da.
+Ältere Ausgaben bleiben in der Liste links lesbar; die Schlagzeile jeder Ausgabe kommt ins Tagebuch und in die Chronik.
+
+## Dorfchat
+
+Der Gruppenchat des Dorfs: **Dorf** (alle aus dem Dorf, die Nachbarn und die Genossenschaft), **Nachbarn** und eine
+Gruppe je Verein. Die Leute posten Ankündigungen (Grünschnittabfuhr, Feuerwehrübung, entlaufener Hund …), Klatsch und
+Glückwünsche, höchstens drei Nachrichten am Tag. Bittet ein Nachbar um Ware, Tiere oder Hilfe auf dem Feld, steht das
+auch in *Nachbarn* – **Zur Anfrage** führt in den **Handel**.
+
+Du kannst selbst schreiben; ein Mitglied antwortet. Wie bei **Nachricht verfassen** wirkt dein Ton auf das Vertrauen
+eines Mitglieds, aber nur einmal je Gruppe und Spieltag. Geld, Preise und Abmachungen laufen weiter über die
+Formulare der Apps.
 
 ## Tagebuch
 
@@ -595,6 +716,12 @@ nicht nur für einen Spielstand, und lässt sich nur am Spiele-PC ändern.
 
 **Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
 
+**Belastende Ereignisse:** Vor-Ort-Kontrolle des Sammelantrags, Kontrollen der Düngeverordnung, Tierseuchen,
+Krankheit und Arbeitsunfälle, Beschwerden über Nachtarbeit, Flurschaden auf Nachbarfeldern und Dieselklau einzeln
+ein- oder ausschalten (Standard an, Flurschaden aus; siehe **Ämter**, **Personal**, **Flurkarte** und **Werkstatt**).
+Im idyllischen Weltmodus gibt es keine Tierseuchen und keinen Dieselklau, die übrigen Ereignisse kommen nur halb so
+oft bzw. kosten nur halb so viel.
+
 **Kredit und Felder im Spielmenü:** Die Reaktionen der Charaktere auf den Kredit oder Feldkauf im Spielmenü ein- oder
 ausschalten (Standard an). Ausgeschaltet bleibt nur der Tagebucheintrag.
 
@@ -611,7 +738,11 @@ Bedingungen, die auch im Browser stehen. Einzeln einschaltbar (Standard: nur Anr
 - das Angebot der Steuerberatung annehmen oder ablehnen,
 - ein Angebot oder eine Anfrage eines Nachbarn im **Handel** annehmen oder ablehnen,
 - eine Bestellung für den **Hofladen** liefern oder ablehnen,
-- einem Nachbarn einen Auftrag zusagen oder absagen.
+- einem Nachbarn einen Auftrag zusagen oder absagen,
+- zum Stammtisch hingehen oder absagen,
+- bei der Generalversammlung der Genossenschaft mit Ja oder Nein abstimmen.
+
+Eine Flurschaden-Forderung kommt zusammen mit der Ausgleichsforderung für einen Feldkauf.
 
 Die Knöpfe des Fensters heißen *Ja* und *Nein*; was sie bewirken, steht im Text („Ja = Annehmen · Nein = Ablehnen“).
 Ist gerade ein Menü offen, wartet die Frage, bis es geschlossen ist. Die Taste **FarmPulse: offene Frage** (Standard

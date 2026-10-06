@@ -1,0 +1,6 @@
+Ihre Genossenschaftsanteile
+Guten Tag,
+
+wir bestätigen {{shares}} neue Anteile für {{amount}} €. Sie halten jetzt {{totalShares}} Anteile an der Genossenschaft.
+
+{{characterName}}

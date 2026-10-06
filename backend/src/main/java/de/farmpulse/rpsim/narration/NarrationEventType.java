@@ -210,6 +210,64 @@ public enum NarrationEventType {
     // Roadmap V3.1 R31-A5: seasonal workers
     SEASONAL_WORKER_FAREWELL,
     SEASONAL_WORKER_RETURN,
+    // Roadmap V3.1 R31-B1: area payment application
+    DIRECT_PAYMENT_OPEN,
+    DIRECT_PAYMENT_LAPSED,
+    DIRECT_PAYMENT_CHECK_RESULT,
+    DIRECT_PAYMENT_PAID,
+    // Roadmap V3.1 R31-B2: investment grant; bills of the authority and the social insurance
+    INVESTMENT_GRANT_APPROVED,
+    INVESTMENT_GRANT_PAID,
+    INVESTMENT_GRANT_EXPIRED,
+    INVESTMENT_GRANT_REPAYMENT,
+    AUTHORITY_BILL_REMINDER,
+    AUTHORITY_BILL_ENFORCEMENT,
+    // Roadmap V3.1 R31-B3: fertiliser rules
+    SLURRY_WARNING,
+    SLURRY_REMINDER,
+    // Roadmap V3.1 R31-B4: animal disease
+    ANIMAL_DISEASE_DECLARED,
+    ANIMAL_DISEASE_NEWS,
+    ANIMAL_DISEASE_GOSSIP,
+    ANIMAL_DISEASE_VET_CHECK,
+    ANIMAL_DISEASE_LIFTED,
+    // Roadmap V3.1 R31-B5: social insurance, sickness and work accident
+    SOCIAL_INSURANCE_BILL,
+    EMPLOYEE_SICK,
+    WORK_ACCIDENT_REPORT,
+    EMPLOYEE_GET_WELL_THANKS,
+    // Roadmap V3.1 R31-D1: village newspaper (target NEWSPAPER_ARTICLE)
+    NEWSPAPER_ARTICLE,
+    // Roadmap V3.1 R31-D2: village group chat (target CHAT_MESSAGE)
+    CHAT_ANNOUNCEMENT,
+    CHAT_GOSSIP,
+    CHAT_CONGRATULATION,
+    CHAT_HELP_REQUEST,
+    CHAT_REPLY,
+    // Roadmap V3.1 R31-D3: regulars' table
+    STAMMTISCH_INVITATION,
+    STAMMTISCH_TIP,
+    // Roadmap V3.1 R31-D4 / R31-D5: complaints about night work and crop damage
+    NIGHT_WORK_COMPLAINT,
+    CROP_DAMAGE_COMPLAINT,
+    CROP_DAMAGE_CLAIM,
+    // Roadmap V3.1 R31-D6: farm holidays and school visits
+    FARM_HOLIDAY_REVIEW,
+    SCHOOL_VISIT_REQUEST,
+    SCHOOL_VISIT_THANKS,
+    // Roadmap V3.1 R31-D7: cooperative shares, general assembly and board
+    COOP_SHARES_CONFIRMED,
+    COOP_SHARES_NOTICE,
+    COOP_SHARES_REPAID,
+    COOP_DIVIDEND,
+    COOP_ASSEMBLY_INVITATION,
+    COOP_ASSEMBLY_RESULT,
+    COOP_BOARD_ELECTED,
+    COOP_BOARD_MEETING,
+    COOP_BOARD_REMOVED,
+    // Roadmap V3.1 R31-D8: diesel theft
+    DIESEL_THEFT_REPORT,
+    DIESEL_THEFT_INSURANCE,
     // conversation
     REPLY,
     CALL_CONVERSATION

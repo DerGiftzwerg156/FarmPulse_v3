@@ -37,9 +37,12 @@ public class SettingsController {
     private final WorkforceService workforce;
     private final VanillaBypassService bypass;
     private final PromptService prompts;
+    private final de.farmpulse.rpsim.config.RpsimProperties props;
 
     public SettingsController(AiSettingsService settings, AiProviderRegistry registry, SavegameContext context,
-                              WorkforceService workforce, VanillaBypassService bypass, PromptService prompts) {
+                              WorkforceService workforce, VanillaBypassService bypass, PromptService prompts,
+                              de.farmpulse.rpsim.config.RpsimProperties props) {
+        this.props = props;
         this.settings = settings;
         this.registry = registry;
         this.context = context;
@@ -123,6 +126,40 @@ public class SettingsController {
         Savegame sg = context.requireActive();
         sg.setFieldHintsEnabled(r.fieldHintsEnabled());
         return new Views.FieldSettingsView(sg.isFieldHintsEnabled(), sg.isFieldsTracked());
+    }
+
+    /** Roadmap V3.1 R31-B: burdening events of the authorities, switched per savegame. */
+    @GetMapping("/api/settings/burdening-events")
+    @Transactional(readOnly = true)
+    public Views.BurdenSettingsView burdeningEvents() {
+        return burdenView(context.requireActive());
+    }
+
+    @PutMapping("/api/settings/burdening-events")
+    @Transactional
+    public Views.BurdenSettingsView saveBurdeningEvents(@Valid @RequestBody Requests.BurdenSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setBurdenAreaCheck(r.areaCheck());
+        sg.setBurdenFertilizer(r.fertilizer());
+        sg.setBurdenDisease(r.disease());
+        sg.setBurdenSickLeave(r.sickLeave());
+        if (r.nightWork() != null) { // Roadmap V3.1 R31-D (null = unchanged, older clients)
+            sg.setBurdenNightWork(r.nightWork());
+        }
+        if (r.cropDamage() != null) {
+            sg.setBurdenCropDamage(r.cropDamage());
+        }
+        if (r.dieselTheft() != null) {
+            sg.setBurdenDieselTheft(r.dieselTheft());
+        }
+        return burdenView(sg);
+    }
+
+    private Views.BurdenSettingsView burdenView(Savegame sg) {
+        return new Views.BurdenSettingsView(sg.isBurdenAreaCheck(), sg.isBurdenFertilizer(), sg.isBurdenDisease(),
+                sg.isBurdenSickLeave(), sg.isBurdenNightWork(), sg.isBurdenCropDamage(), sg.isBurdenDieselTheft(),
+                sg.getTonePreset().name(),
+                props.getFormulas().getBurdeningEvents().getIdyllicFactor());
     }
 
     /** Roadmap V3 R3-T2: optional farm name, heads the chronicle (without it the map name). */

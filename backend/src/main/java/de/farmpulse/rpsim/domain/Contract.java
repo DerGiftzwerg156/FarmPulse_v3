@@ -37,6 +37,10 @@ public class Contract extends SavegameScoped {
     @Column(name = "level", length = 32)
     private String level;
 
+    /** Roadmap V3.1 R31-D8: theft module of the storm / hail insurance (premium included in monthlyAmount). */
+    @Column(name = "theft_cover", nullable = false)
+    private boolean theftCover;
+
     @Column(name = "farmland_id")
     private Integer farmlandId;
 

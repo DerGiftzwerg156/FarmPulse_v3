@@ -1,0 +1,7 @@
+Unfallmeldung
+Guten Tag,
+
+uns wurde ein Arbeitsunfall Ihres Mitarbeiters {{employeeName}} gemeldet. Die Arbeitsunfähigkeit dauert voraussichtlich {{days}} Tage. Bitte achten Sie auf sichere Maschinen und vernünftige Arbeitszeiten – das senkt das Unfallrisiko.
+
+Mit freundlichen Grüßen
+{{characterName}}

@@ -55,6 +55,9 @@ public class OfficeClerkService {
     public static final String DROUGHT_AID = "DROUGHT_AID";
     public static final String FORWARD_CONTRACT = "FORWARD_CONTRACT";
     public static final String LEASE_END = "LEASE_END";
+    /** Roadmap V3.1 R31-B1 / R31-B2 / R31-B5: area payment deadline, bills of the authority and the social insurance. */
+    public static final String DIRECT_PAYMENT = "DIRECT_PAYMENT";
+    public static final String AUTHORITY_BILL = "AUTHORITY_BILL";
 
     private final EmployeeRepository employees;
     private final SatisfactionService satisfaction;
@@ -63,6 +66,7 @@ public class OfficeClerkService {
     private final ForwardContractRepository forwards;
     private final ContractRepository contracts;
     private final OfficeReminderRepository reminders;
+    private final de.farmpulse.rpsim.repository.DirectPaymentApplicationRepository directPayments;
     private final NarrationRequestService narration;
     private final FallbackTemplates labels;
     private final RpsimProperties props;
@@ -70,7 +74,9 @@ public class OfficeClerkService {
     public OfficeClerkService(EmployeeRepository employees, SatisfactionService satisfaction, SavegameRepository savegames,
                               ServiceCaseRepository cases, ForwardContractRepository forwards, ContractRepository contracts,
                               OfficeReminderRepository reminders, NarrationRequestService narration,
-                              FallbackTemplates labels, RpsimProperties props) {
+                              FallbackTemplates labels, RpsimProperties props,
+                              de.farmpulse.rpsim.repository.DirectPaymentApplicationRepository directPayments) {
+        this.directPayments = directPayments;
         this.employees = employees;
         this.satisfaction = satisfaction;
         this.savegames = savegames;
@@ -137,6 +143,17 @@ public class OfficeClerkService {
             } else if (sc.getKind() == CaseKind.DROUGHT_AID && sc.getStatus() == CaseStatus.AWAITING_PLAYER) {
                 remind(sg, clerk.get(), DROUGHT_AID, sc.getId(), sc.getDeadlineGameTime(), "Antrag Dürrehilfe",
                         sc.getOfferAmount(), "/aemter?case=" + sc.getId(), now);
+            } else if ((sc.getKind() == CaseKind.GRANT_REPAYMENT || sc.getKind() == CaseKind.SOCIAL_INSURANCE_BILL)
+                    && sc.getStatus() == CaseStatus.AWAITING_PLAYER) {
+                long amount = sc.getOfferAmount() + (sc.getCostAmount() == null ? 0 : sc.getCostAmount());
+                remind(sg, clerk.get(), AUTHORITY_BILL, sc.getId(), sc.getDeadlineGameTime(), sc.getTitle(), amount,
+                        "/aemter?case=" + sc.getId(), now); // R31-B2 / R31-B5
+            }
+        }
+        for (var a : directPayments.findBySavegameOrderByIdDesc(sg)) { // R31-B1: deadline of the area payment
+            if (de.farmpulse.rpsim.domain.DirectPaymentApplication.OPEN.equals(a.getStatus())) {
+                remind(sg, clerk.get(), DIRECT_PAYMENT, a.getId(), a.getDeadlineGameTime(), "Sammelantrag "
+                        + a.getCropYear(), null, "/aemter?directPayment=" + a.getId(), now);
             }
         }
         for (ForwardContract c : forwards.findBySavegameAndStatus(sg, ForwardContract.OPEN)) {
