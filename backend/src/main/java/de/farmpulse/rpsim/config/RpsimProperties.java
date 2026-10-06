@@ -1716,6 +1716,11 @@ public class RpsimProperties {
         private List<String> recordCategories = new ArrayList<>(List.of("HARVEST_INCOME", "SOLD_PRODUCTS"));
         private int recordMinMonths = 3;
         private double recordTrustDelta = 2;
+        /**
+         * Booking statement: a shop vehicle purchase / sale waits at most this many farm_facts exports (every 10 s) for
+         * its vehicle to appear / disappear in assets.vehicles; afterwards it stays without vehicle name.
+         */
+        private int statementVehicleMatchExports = 3;
 
         private static Map<String, FinanceClass> defaultCategories() {
             Map<String, FinanceClass> m = new LinkedHashMap<>();

@@ -759,6 +759,43 @@ export interface FinanceOverview {
   months: FinanceMonthView[];
 }
 
+/** Booking statement ("Kontoauszug"): one entry - a single booking or the daily sum of `count` bookings. */
+export interface StatementEntryView {
+  seq: number;
+  gameTime: number;
+  year: number;
+  period: number;
+  day: number | null;
+  category: string;
+  financeClass: FinanceClass;
+  amount: number;
+  count: number;
+  single: boolean;
+  liters: number | null;
+  fillType: string | null;
+  sellPoint: string | null;
+  sellPointName: string | null;
+  note: string | null;
+  /** Shop vehicle purchases / sales only. */
+  vehicleMatch: 'PENDING' | 'MATCHED' | 'AMBIGUOUS' | 'NONE' | null;
+  vehicleNames: string | null;
+}
+
+export interface StatementMonthView {
+  year: number;
+  period: number;
+  entries: number;
+}
+
+export interface StatementView {
+  /** false: the latest export has no single bookings (older mod version). */
+  available: boolean;
+  year: number | null;
+  period: number | null;
+  months: StatementMonthView[];
+  entries: StatementEntryView[];
+}
+
 export interface StorageOverview {
   gameTime: number;
   totalValue: number;

@@ -26,7 +26,19 @@ public final class BridgeDtos {
                             Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
                             Weather weather, FieldRules fieldRules, List<Field> npcFields,
                             List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached,
-                            List<VehiclePosition> vehiclePositions) {
+                            List<VehiclePosition> vehiclePositions, Bookings bookings) {
+
+        /** Roadmap V3.1 contract without the booking statement (older mod). */
+        public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
+                         Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
+                         Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
+                         Weather weather, FieldRules fieldRules, List<Field> npcFields,
+                         List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached,
+                         List<VehiclePosition> vehiclePositions) {
+            this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, missions, finances,
+                    workforce, husbandries, fields, weather, fieldRules, npcFields, tradeStorage, missionLimitReached,
+                    vehiclePositions, null);
+        }
 
         /** Roadmap V3 contract without the blocks of Roadmap V3.1 (older mod). */
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
@@ -93,6 +105,24 @@ public final class BridgeDtos {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FinancePeriod(Integer year, Integer period, Map<String, Double> byType) {
+    }
+
+    /**
+     * Booking statement (owner decisions 2026-10-06): the last single bookings of the mod. {@code nextSeq} = the running
+     * number the next booking gets; entries at or after it no longer exist in the game (reload without saving).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Bookings(Long nextSeq, List<BookingLine> entries) {
+    }
+
+    /**
+     * One entry: a single booking ({@code single}) or the sum of {@code count} bookings of a game day and money type
+     * (sales also per fill type and sell point, with the litres of the sale). {@code note} = note of a tool booking.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record BookingLine(Long seq, Long gameTime, Integer year, Integer period, Integer day, String category,
+                              Double amount, Integer count, Boolean single, Double liters, String fillType,
+                              String sellPoint, String note) {
     }
 
     /**

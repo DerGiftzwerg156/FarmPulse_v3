@@ -16,4 +16,7 @@ public interface FactsSnapshotRepository extends JpaRepository<FactsSnapshot, Lo
     Optional<FactsSnapshot> findFirstBySavegameAndGameTimeLessThanEqualOrderByGameTimeDescIdDesc(Savegame savegame, long gameTime);
 
     long countBySavegame(Savegame savegame);
+
+    /** Booking statement: the export stored before the given one (vehicles that appeared / disappeared since). */
+    Optional<FactsSnapshot> findFirstBySavegameAndIdLessThanOrderByIdDesc(Savegame savegame, long id);
 }

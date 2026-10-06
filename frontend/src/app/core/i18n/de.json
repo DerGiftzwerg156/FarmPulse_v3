@@ -1034,6 +1034,25 @@
       "chartLabel": "Einnahmen und Ausgaben des laufenden Betriebs je Monat, gestapelt nach Kategorie, mit Monatsergebnis",
       "note": "Nur der laufende Betrieb. Investitionen, Anlagenverkäufe und Kredite stehen in der Tabelle. * = Monat läuft noch."
     },
+    "statement": {
+      "title": "Kontoauszug",
+      "unavailable": "Der Kontoauszug braucht die aktuelle Version des Mods FS25_RPSim. Bis dahin siehst du nur die Monatssummen der Hofbuchhaltung.",
+      "empty": "Noch keine Buchungen erfasst. Sobald im Spiel Geld fließt, erscheint hier jede Buchung mit Datum.",
+      "category": "Kategorie",
+      "allCategories": "Alle Kategorien",
+      "incoming": "Eingänge",
+      "outgoing": "Ausgänge",
+      "balance": "Saldo",
+      "date": "Datum",
+      "booking": "Buchung",
+      "class": "Art",
+      "amount": "Betrag",
+      "count": "{n} Buchungen an diesem Tag",
+      "none": "Keine Buchungen in dieser Kategorie.",
+      "pending": "Fahrzeug wird zugeordnet …",
+      "ambiguous": "Fahrzeuge: {names} (nicht eindeutig zuordenbar – mehrere Käufe/Verkäufe zur gleichen Zeit)",
+      "note": "Käufe und Verkäufe von Fahrzeugen, Gebäuden und Feldern sowie jede FarmPulse-Buchung stehen einzeln mit Uhrzeit. Laufende Kosten und Erlöse (Kraftstoff, Helferlohn, Verkäufe …) sind je Tag zusammengefasst, Verkäufe je Fruchtart und Verkaufsstelle."
+    },
     "tax": {
       "title": "Steuern",
       "unavailable": "Die Steuer rechnet mit der Hofbuchhaltung und braucht die aktuelle Version des Mods FS25_RPSim. Ohne Buchungsjournal gibt es keinen Bescheid.",

@@ -19,6 +19,7 @@ import { ServiceCases } from '../contracts/service-cases';
 import { CollateralPicker } from './collateral-picker';
 import { FarmReportCard } from './farm-report-card';
 import { FinanceCard } from './finance-card';
+import { StatementCard } from './statement-card';
 import { LiquidityPlanCard } from './liquidity-plan-card';
 
 export type ApplicationState = 'processing' | 'approved' | 'counter' | 'rejected' | 'accepted' | 'declined';
@@ -49,7 +50,7 @@ export const STATE_BADGE: Record<ApplicationState, BadgeVariant> = {
  */
 @Component({
   selector: 'app-bank',
-  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard,
+  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard, StatementCard,
     CollateralPicker, LiquidityPlanCard, FarmReportCard, ServiceCases],
   templateUrl: './bank.html',
 })

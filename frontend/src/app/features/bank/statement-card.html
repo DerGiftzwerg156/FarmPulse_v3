@@ -1,0 +1,79 @@
+<app-card [title]="'bank.statement.title' | t" data-testid="statement-card">
+  @if (failed()) {
+    <p class="text-[12px] text-danger">{{ 'common.error' | t }}</p>
+  } @else if (view() && months().length === 0) {
+    <p class="text-[12px] text-muted" data-testid="statement-empty">
+      {{ (view()!.available ? 'bank.statement.empty' : 'bank.statement.unavailable') | t }}
+    </p>
+  } @else if (view()) {
+    <div class="mb-3 flex flex-wrap items-end gap-3">
+      <label class="block space-y-1">
+        <span class="fp-label">{{ 'bank.finance.month' | t }}</span>
+        <select class="fp-input w-48" [value]="currentKey()" (change)="selectMonth($any($event.target).value)"
+          data-testid="statement-month">
+          @for (m of months(); track monthKey(m)) {
+            <option [value]="monthKey(m)" [selected]="monthKey(m) === currentKey()">{{ monthLabel(m) }} ({{ m.entries }})</option>
+          }
+        </select>
+      </label>
+      <label class="block space-y-1">
+        <span class="fp-label">{{ 'bank.statement.category' | t }}</span>
+        <select class="fp-input w-56" [value]="category()" (change)="category.set($any($event.target).value)"
+          data-testid="statement-category">
+          <option value="" [selected]="category() === ''">{{ 'bank.statement.allCategories' | t }}</option>
+          @for (c of categories(); track c) {
+            <option [value]="c" [selected]="category() === c">{{ categoryLabel(c) }}</option>
+          }
+        </select>
+      </label>
+    </div>
+    <div class="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <app-stat [label]="'bank.statement.incoming' | t" [value]="incoming() | money" [compact]="true" data-testid="statement-in" />
+      <app-stat [label]="'bank.statement.outgoing' | t" [value]="outgoing() | money" [compact]="true" data-testid="statement-out" />
+      <app-stat [label]="'bank.statement.balance' | t" [value]="balance() | money" [compact]="true"
+        [tone]="balance() < 0 ? 'negative' : 'positive'" data-testid="statement-balance" />
+    </div>
+    <div class="max-h-96 overflow-auto">
+      <table class="w-full text-left text-[11px]" data-testid="statement-table">
+        <thead>
+          <tr class="fp-label">
+            <th class="py-1 pr-2">{{ 'bank.statement.date' | t }}</th>
+            <th class="py-1 pr-2">{{ 'bank.statement.booking' | t }}</th>
+            <th class="hidden py-1 pr-2 sm:table-cell">{{ 'bank.statement.class' | t }}</th>
+            <th class="py-1 text-right">{{ 'bank.statement.amount' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of shown(); track e.seq) {
+            <tr class="border-t border-border align-top" data-testid="statement-row">
+              <td class="whitespace-nowrap py-1 pr-2 font-mono text-muted">{{ dateLabel(e) }}</td>
+              <td class="py-1 pr-2 text-text">
+                <div>{{ categoryLabel(e.category) }}</div>
+                @if (e.fillType) {
+                  <div class="text-muted" data-testid="statement-sale">
+                    {{ e.fillType | label: 'fillType' }}@if (e.liters) { · {{ e.liters | num }} l }@if (e.sellPoint) { · {{ e.sellPointName ?? e.sellPoint }} }
+                  </div>
+                }
+                @if (vehicleLine(e); as v) {
+                  <div class="text-muted" data-testid="statement-vehicle">{{ v }}</div>
+                }
+                @if (e.note) {
+                  <div class="text-muted" data-testid="statement-note">{{ e.note }}</div>
+                }
+                @if (e.count > 1) {
+                  <div class="text-muted">{{ 'bank.statement.count' | t: { n: e.count } }}</div>
+                }
+              </td>
+              <td class="hidden py-1 pr-2 text-muted sm:table-cell">{{ e.financeClass | label: 'financeClass' }}</td>
+              <td class="whitespace-nowrap py-1 text-right font-mono" [class.text-accent]="e.amount > 0"
+                [class.text-danger]="e.amount < 0">{{ e.amount | money }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4" class="py-2 text-muted">{{ 'bank.statement.none' | t }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-2 text-[11px] text-muted">{{ 'bank.statement.note' | t }}</p>
+  }
+</app-card>
