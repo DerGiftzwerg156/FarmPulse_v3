@@ -555,7 +555,42 @@ function RPSimGameAdapter:collectMarketContext(conflictMods)
         end
         return true
     end)
+    -- Roadmap V3.1 R31-K1: field outlines for the map of the Flurkarte (read once per mission start)
+    raw.fieldShapes = self:collectFieldShapes()
     return raw
+end
+
+--- Roadmap V3.1 R31-K1: the outline of every field of the map - the nodes of field.polygonPoints (dump field/Field.lua)
+-- as world x / z via getWorldTranslation, the farmland (field.farmland) and the field name, plus the map size
+-- g_currentMission.terrainSize (LUADOC Economy/FarmlandManager.md). The outlines do not change during a game: they are
+-- read once and kept for the following exports. nil without a field manager or map size (normalised by
+-- RPSimMarketContext.buildFieldShapes, which also thins the points out).
+function RPSimGameAdapter:collectFieldShapes()
+    if self.fieldShapeCache ~= nil then
+        return self.fieldShapeCache
+    end
+    local mapSize = safe(function() return g_currentMission.terrainSize end, nil)
+    local fields = safe(function() return g_fieldManager.fields end, nil)
+    if type(mapSize) ~= "number" or mapSize <= 0 or fields == nil then
+        return nil
+    end
+    local list = {}
+    for _, field in pairs(fields) do
+        safe(function()
+            if field.farmland == nil or type(field.polygonPoints) ~= "table" then
+                return true
+            end
+            local points = {}
+            for _, node in ipairs(field.polygonPoints) do
+                local x, _, z = getWorldTranslation(node)
+                points[#points + 1] = { x = x, z = z }
+            end
+            list[#list + 1] = { farmlandId = field.farmland.id, name = field:getName(), points = points }
+            return true
+        end)
+    end
+    self.fieldShapeCache = { mapSize = mapSize, fields = list }
+    return self.fieldShapeCache
 end
 
 --- Current balance of the player farm (farm.money, as read in collectFarmFacts and by FS25_UsedPlus).

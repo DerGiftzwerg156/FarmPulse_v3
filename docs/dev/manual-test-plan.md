@@ -521,3 +521,17 @@ false alarms of D5. To test the rare events, raise the chances in `application-l
 | 24.12 | Diesel theft (month start, next night): park a vehicle with ≥ 100 l diesel | in the night 30–60 % (max. 300 l) of its diesel are gone in the game; mail of the police, a line in the *Dorfblatt*, gossip in *Dorfchat*; with the module *Diebstahl* of the storm / hail insurance (+8 € per month) a damage above 150 € is paid; a driven vehicle is not chosen (the mod refuses with `VEHICLE_IN_USE`, tried again the next night) |
 | 24.13 | *Werkstatt* → *Tankschloss* for the vehicle (250 €) | booking *Tankschloss*; this vehicle is chosen much more rarely |
 | 24.14 | Settings → *Belastende Ereignisse*: switch night work, crop damage and diesel theft off; world mode *idyllisch* | no complaints, claims or thefts any more; in the idyllic mode no diesel theft and half the trust losses of D4 / D5 |
+
+## 25. Field map (Roadmap V3.1 R31-K)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section K. Needs the current mod, own, leased and
+leased-out fields and neighbours with fields. Row 21.7 checks the orientation.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 25.1 | Load the savegame, open *Flurkarte* | `market_context.json` → `fieldShapes` with `mapSize` and the outlines (at most 64 points each); the card *Feldübersicht* opens in the view **Karte** with all fields of the map in their real shape; **Tabelle** switches to the tiles |
+| 25.2 | Compare the map with the map of the game | the fields lie where the game shows them, north up (otherwise set `MIRROR_Z` in `field-map.ts`, row 21.7) |
+| 25.3 | Look at the own fields during a season | coloured by phase (empty grey, growing green, harvestable gold, harvested brown, withered red) with their number; leased fields hatched, leased-out fields with a thick border; neighbour fields pale with the owner's name, free fields pale and dashed; legend below |
+| 25.4 | Start a contractor job, wait for an auction and let weeds grow on an own field | symbols *A* (order), *V* (auction) and *!* (hint) on the field; the tooltip names them |
+| 25.5 | Click a field on the map | the field card opens below with its actions (sell, lease out, contractor, family field) |
+| 25.6 | Older mod without outlines | only the tiles with the hint that the map needs the current mod |

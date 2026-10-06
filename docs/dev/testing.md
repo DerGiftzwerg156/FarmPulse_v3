@@ -185,6 +185,12 @@ after two missed meetings; `DieselTheftTest` the target (diesel level, driven, t
 diesel export, the position samples and `VEHICLE_FUEL` in `test_roadmap_v31.lua`; the simulator the new money reasons
 in `test/roadmap-v31.test.js`. Frontend: `newspaper.spec.ts`, `chat.spec.ts`, `village-economy-cards.spec.ts`,
 `tank-lock-card.spec.ts`, `village-life-cases.spec.ts`. In the game: manual test plan sections 21.6 and 24.
+Roadmap V3.1 R31-K (field map): `FieldMapServiceTest` covers the outlines of `market_context.fieldShapes` with the
+kind (own, leased, leased out, neighbour with name, free), crop and phase of own fields and the symbols (order,
+auction, hints), and the empty map without outlines. The mod reads the outlines once per mission
+(`test_roadmap_v31.lua`). Frontend: `field-map.spec.ts` (coordinates, colours, hatching, border, labels, symbols,
+selection) and `farmland.spec.ts` (Karte / Tabelle, the field card on a click, the hint without outlines). In the game:
+manual test plan rows 21.7 and section 25.
 Roadmap V3 R3-L (leasing out own fields): `LeaseOutTest` covers the guide value, the neighbours' bids (capital,
 85–100 % of the desired rent, the land agent without interest), the fallback on the field phase (offer and demand),
 the bank's consent for a pledged field, the agreement (contract, `FARMLAND_TRANSFER FROM_PLAYER`, `LEASE_INCOME` also

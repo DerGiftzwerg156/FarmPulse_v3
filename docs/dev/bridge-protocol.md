@@ -324,7 +324,7 @@ blocks: `schemaVersion` stays `1`, a missing field or block means "not present" 
 built yet), an empty block is a real answer of the game. R31-Q1 fixes the contract only (`BridgeDtos`,
 `BridgeValidator`, the simulator schemas, `RPSimFarmFacts.build` / `RPSimMarketContext.build`). The mod **reads the
 values in the game with the features** (A4 `snowHeight` and `category` - read since R31-A4 -, B3 `sprayType` - read since R31-B3 -, D4
-`dayTimeMs`, D5 `vehiclePositions` and D8 `fuel` - read since R31-D -, K1 `fieldShapes`); until then they are missing. The bridge simulator exports them only in
+`dayTimeMs`, D5 `vehiclePositions` and D8 `fuel` - read since R31-D -, K1 `fieldShapes` - read since R31-K1 -); until then they are missing. The bridge simulator exports them only in
 the scenarios `winter-schnee`, `lohnunternehmer` and `viehhandel` (`fieldShapes` only in `lohnunternehmer`).
 
 ```json
@@ -407,8 +407,11 @@ an older mod or the switch off (the simulator exports it only in `nachbarhandel`
 | `motorized` | Engine present (optional; 🟡 missing when the specs could not be read - the backend then uses the factor for motorised vehicles) | `storeItem.specs.power ~= nil` after `StoreItemUtil.loadSpecsFromXML(storeItem)` (dump `Vehicle.lua`, `Vehicle.calculateSellPrice`) |
 
 **`fieldShapes`** (optional, Roadmap V3.1 R31-K1, contract R31-Q1). Outline of every field of the map and the map
-size, read once at the mission start with K1 (the outlines never change); until then and with an older mod missing (the
-simulator exports it only in `lohnunternehmer`). `RPSimMarketContext.buildFieldShapes` rounds `x` / `z` to 0.1, keeps
+size, read once per mission since K1 (the outlines never change; later exports reuse them): the nodes of
+`field.polygonPoints` (dump `field/Field.lua`) as world x / z via `getWorldTranslation`, `field.farmland.id`,
+`field:getName()` and `mapSize` = `g_currentMission.terrainSize` (LUADOC `Economy/FarmlandManager.md`); with an older
+mod missing (the simulator exports it only in `lohnunternehmer`). The backend serves it with owner, phase and symbols
+at `GET /api/field-map` for the map of the Flurkarte. `RPSimMarketContext.buildFieldShapes` rounds `x` / `z` to 0.1, keeps
 at most `fieldShapeMaxPoints` (mod config, default 64) points per field - picked evenly along the outline, the first
 point stays -, drops fields with fewer than 3 points and sorts by `farmlandId`, then `name`; without a `mapSize > 0`
 the block is left out.

@@ -105,6 +105,13 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   - Settings → *Belastende Ereignisse*: on-site check, fertiliser checks, animal disease and sickness can be switched
     off per savegame; in the idyllic world mode there is no animal disease and the rest happens half as often / half as
     hard. Manual test plan section 23.
+- **Field map (Roadmap V3.1, R31-K1):** owner decisions of 2026-10-06 in `QUESTIONS.md`. The mod reads the field
+  outlines (`field.polygonPoints`) and the map size once per mission into `market_context.fieldShapes`; the backend
+  serves them with owner, crop, phase and symbols at `GET /api/field-map`. Flurkarte → *Feldübersicht*: switch
+  **Karte / Tabelle** - an SVG map of all fields in their real shape (own fields by phase with their number, leased
+  hatched, leased-out with a thick border, neighbours pale with the owner's name, free fields dashed; symbols for an
+  order, an auction and a hint); a click opens the field card with its actions. Without outlines (older mod) only the
+  tiles. Manual test plan row 21.7 and section 25.
 - **Village life (Roadmap V3.1, R31-D):** owner decisions of 2026-10-05 in `QUESTIONS.md`.
   - **Village newspaper (D1):** new app *Dorfblatt* - an issue at every period start (an extra mid-month issue by
     config) with the public facts of the past period in the sections *Aus dem Dorf*, *Vom Hof*, *Markt* (the 3 largest

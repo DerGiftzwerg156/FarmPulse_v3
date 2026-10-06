@@ -8,6 +8,7 @@ import de.farmpulse.rpsim.api.Views.StablesView;
 import de.farmpulse.rpsim.api.Views.TasksView;
 import de.farmpulse.rpsim.savegame.SavegameContext;
 import de.farmpulse.rpsim.tablet.CalendarPlanService;
+import de.farmpulse.rpsim.tablet.FieldMapService;
 import de.farmpulse.rpsim.tablet.FieldOverviewService;
 import de.farmpulse.rpsim.tablet.StableService;
 import de.farmpulse.rpsim.tablet.TaskService;
@@ -23,9 +24,12 @@ public class TabletController {
     private final CalendarPlanService calendar;
     private final StableService stables;
     private final FieldOverviewService fields;
+    private final FieldMapService fieldMap;
 
     public TabletController(SavegameContext context, TaskService tasks, CalendarPlanService calendar, StableService stables,
-                            FieldOverviewService fields) {
+                            FieldOverviewService fields,
+                            FieldMapService fieldMap) {
+        this.fieldMap = fieldMap;
         this.context = context;
         this.tasks = tasks;
         this.calendar = calendar;
@@ -54,5 +58,11 @@ public class TabletController {
     @GetMapping("/api/field-overview")
     public FieldOverviewView fieldOverview() {
         return fields.overview(context.requireActive());
+    }
+
+    /** Roadmap V3.1 R31-K1: the field outlines with owner, phase and symbols for the map of the Flurkarte. */
+    @GetMapping("/api/field-map")
+    public FieldMapService.FieldMap fieldMap() {
+        return fieldMap.map(context.requireActive());
     }
 }

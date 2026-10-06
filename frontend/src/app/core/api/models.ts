@@ -1449,3 +1449,32 @@ export interface DieselTheftView {
   vehicles: FuelVehicleView[];
   thefts: TheftView[];
 }
+
+// ------------------------------------------------------------------------------------------ Roadmap V3.1 R31-K
+
+export interface ShapePoint {
+  x: number;
+  z: number;
+}
+
+/** R31-K1: one field outline of the map; `kind` OWN (also leased), NEIGHBOR or FREE; hints as codes. */
+export interface MapFieldView {
+  farmlandId: number;
+  name: string;
+  points: ShapePoint[];
+  kind: 'OWN' | 'NEIGHBOR' | 'FREE' | string;
+  ownerName: string | null;
+  leased: boolean;
+  leasedOut: boolean;
+  fruitType: string | null;
+  phase: string | null;
+  orders: string[];
+  auction: boolean;
+  hints: string[];
+}
+
+/** R31-K1: `mapSize` null = no outlines exported (older mod). */
+export interface FieldMapView {
+  mapSize: number | null;
+  fields: MapFieldView[];
+}

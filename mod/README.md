@@ -41,7 +41,8 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   er die Düngungsart je Feld (`FieldState.sprayType` als Name aus `FieldSprayType`). Seit **Dorfleben** (R31-D) liest
   er die Tageszeit (`environment.dayTime`), den Dieselstand je Maschine (`getConsumerFillUnitIndex(FillType.DIESEL)`)
   und die Positionen der gerade gefahrenen eigenen Maschinen mit Farmland und einer `FieldState`-Stichprobe, ob dort
-  Frucht steht.
+  Frucht steht. Seit der **Hofkarte** (R31-K1) liest er einmal je Spielstart die Feldumrisse (`field.polygonPoints`
+  über `getWorldTranslation`) und die Kartengröße (`terrainSize`).
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben

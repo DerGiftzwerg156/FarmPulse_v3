@@ -1,6 +1,7 @@
 -- Roadmap V3.1 section A against the fake engine: FIELD_WORK (R31-A1), ANIMAL_TRANSFER and the subtype export of the
 -- husbandries (R31-A3), snow height and vehicle category (R31-A4), borrowed machines with price 0 (R31-A2); section D:
--- time of day (R31-D4), positions of driven vehicles (R31-D5), diesel and VEHICLE_FUEL (R31-D8).
+-- time of day (R31-D4), positions of driven vehicles (R31-D5), diesel and VEHICLE_FUEL (R31-D8); section K: the field
+-- outlines (R31-K1).
 local lu = require("luaunit")
 local helpers = require("helpers")
 local T = {}
@@ -359,6 +360,34 @@ function T.TestRoadmapV31:testVehicleFuelRunsThroughTheBridgeAndReportsTheLitres
     lu.assertEquals(game.tractor.level, 280)
     lu.assertEquals(bridge.state.processed.vf1.status, "APPLIED")
     lu.assertEquals(bridge.state.processed.vf1.result, { liters = 120 })
+end
+
+-- ------------------------------------------------------------------------------------------ R31-K1
+
+function T.TestRoadmapV31:testFieldOutlinesAreReadOnceWithTheMapSize()
+    helpers.fakeGame()
+    g_currentMission.terrainSize = 2048
+    local nodes = { [1] = { 10.04, 20 }, [2] = { 50, 20 }, [3] = { 50, 60.06 }, [4] = { 10, 60 } }
+    getWorldTranslation = function(node) return nodes[node][1], 0, nodes[node][2] end
+    local function field(id, name, points)
+        local f = { farmland = { id = id }, polygonPoints = points }
+        function f.getName() return name end
+        return f
+    end
+    g_fieldManager = { fields = { field(7, "7", { 1, 2, 3, 4 }), field(8, "8a", { 1, 2 }), { polygonPoints = { 1, 2, 3 } } } }
+    local adapter = RPSimGameAdapter.new()
+    local doc = RPSimMarketContext.build(adapter:collectMarketContext({}), RPSimConfig.new())
+    lu.assertEquals(doc.fieldShapes.mapSize, 2048)
+    -- field 8 has only two points, the last one no farmland: both left out
+    lu.assertEquals(doc.fieldShapes.fields, { { farmlandId = 7, name = "7", points = {
+        { x = 10, z = 20 }, { x = 50, z = 20 }, { x = 50, z = 60.1 }, { x = 10, z = 60 } } } })
+    -- read once per mission: a later export keeps the outlines without reading the nodes again
+    getWorldTranslation = function() error("not read again") end
+    doc = RPSimMarketContext.build(adapter:collectMarketContext({}), RPSimConfig.new())
+    lu.assertEquals(#doc.fieldShapes.fields, 1)
+    -- without a map size nothing is exported
+    g_currentMission.terrainSize = nil
+    lu.assertNil(RPSimMarketContext.build(RPSimGameAdapter.new():collectMarketContext({}), RPSimConfig.new()).fieldShapes)
 end
 
 return T

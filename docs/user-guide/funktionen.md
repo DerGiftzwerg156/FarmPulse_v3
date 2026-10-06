@@ -364,6 +364,16 @@ Die Flurkarte zeigt alle Felder der Karte: deine eigenen, die der Dorfbewohner u
 jemandem gehören, gehören den Figuren, die das Spiel selbst dem Feld zuordnet – du triffst also dieselben Namen wie
 im Feld-Menü von FS25. Diese Figuren gehören zur Karte und ziehen nie weg.
 
+**Karte und Tabelle:** Oben in der *Feldübersicht* schaltest du zwischen **Karte** und **Tabelle** um. Die Karte zeigt
+alle Felder in ihrer echten Form, wie auf der Karte im Spiel (Norden oben): deine Felder in der Farbe ihrer Phase
+(leer grau, wächst grün, erntereif gold, abgeerntet braun, verdorrt rot) mit ihrer Nummer, gepachtete Felder
+schraffiert, verpachtete mit dickem Rand, die Felder der Nachbarn blass mit dem Namen des Besitzers und freie Felder
+blass gestrichelt. Kleine Symbole zeigen einen **Auftrag** (A – z. B. Lohnunternehmer, Arbeit beim Nachbarn oder eine
+Forderung), eine laufende **Versteigerung** (V) und einen **Hinweis** (! – erntereif, Unkraut, Steine, Kalk, Pflügen);
+fährst du mit der Maus darüber, steht alles im Text. Ein Klick auf ein Feld öffnet darunter die Feldkarte mit den
+Aktionen (verkaufen, verpachten, Lohnunternehmer, Familienfeld). Die Tabelle zeigt die Felder als Kacheln. Die Karte
+braucht die aktuelle Mod-Version, die beim Spielstart die Feldumrisse mitschickt; ohne sie gibt es nur die Kacheln.
+
 **Meine Felder:** Mit der aktuellen Mod-Version steht über der Karte eine Tabelle deiner eigenen und gepachteten
 Felder: Fläche, Kultur, Phase (leer, wächst, erntereif, abgeerntet, verdorrt), was zu tun ist (ernten, kalken,
 pflügen, Unkraut, Steine) und die **Fruchtfolge** gegenüber dem Vorjahr. Darunter die voraussichtliche

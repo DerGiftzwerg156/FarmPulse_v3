@@ -211,7 +211,7 @@ Maschine zur Probe hin.
   - Nicht genug Platz oder Tiere: `FAILED` mit `NO_ANIMAL_SPACE` / `NOT_ENOUGH_ANIMALS`.
 - [x] Der Viehhändler (`LIVESTOCK_TRADER`) bleibt für Geschäfte außerhalb des Dorfs. Die Nachbarn sind persönlicher,
   und es gibt Klatsch.
-- [ ] Während einer Tierseuche (B4) ist der Handel mit der betroffenen Tierart gesperrt. *(folgt mit B4)*
+- [x] Während einer Tierseuche (B4) ist der Handel mit der betroffenen Tierart gesperrt. *(seit B4)*
 - [x] Offene Entscheidung (`QUESTIONS.md`): Bieten Nachbarn von sich aus an, oder nur auf Anfrage?
 
 **Beleg:**
@@ -512,22 +512,30 @@ Beschwerde. Nach einem Dieselklau fehlt der Diesel im Tank der Maschine.
 
 ## K – Hofkarte
 
+**Stand 06.10.2026: umgesetzt** (Mod, Backend, Hof-Tablet, Doku). Entscheidungen in `QUESTIONS.md` (06.10.2026): In der
+Karte *Feldübersicht* der Flurkarte schaltet **Karte / Tabelle** zwischen der neuen SVG-Karte und den bisherigen
+Kacheln um (Karte als Standard, sobald Umrisse da sind; ein älterer Mod zeigt nur die Kacheln mit Hinweis). Der Mod
+liest die Umrisse einmal je Spielstart, das Backend liefert sie unter `GET /api/field-map` mit Besitzer, Phase und den
+Symbolen (Auftrag, Versteigerung, Hinweis). Beim 🟡-Punkt startet der Schalter `MIRROR_Z` mit `false` (wie die
+Ingame-Karte: x nach rechts, z nach unten). Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Zeile 21.7 und
+Abschnitt 25.
+
 ### R31-K1 Felder als Karte
 
-- [ ] Der Mod exportiert beim Missionsstart `market_context.fieldShapes[]`:
+- [x] Der Mod exportiert beim Missionsstart `market_context.fieldShapes[]`:
   - je Feld die Eckpunkte des Umrisses (`field.polygonPoints`, Weltkoordinaten x/z über `getWorldTranslation`,
     vereinfacht auf höchstens N Punkte),
   - `farmlandId` und `name`,
   - dazu `mapSize` = `g_currentMission.terrainSize`.
 
   Die Umrisse ändern sich nicht, ein Export je Missionsstart genügt.
-- [ ] Neue Ansicht in der Flurkarte: **Karte** neben **Tabelle** (SVG, keine Kartenbibliothek). Farben:
+- [x] Neue Ansicht in der Flurkarte: **Karte** neben **Tabelle** (SVG, keine Kartenbibliothek). Farben:
   - eigene Felder nach Phase (`EMPTY` / `GROWING` / `HARVESTABLE` / `HARVESTED` / `WITHERED`),
   - gepachtete Felder schraffiert,
   - verpachtete Felder (R3-L) umrandet,
   - Nachbarfelder (R3-H1) blass mit Namen des Besitzers,
   - Aufträge, Versteigerungen und Hinweise als Symbole.
-- [ ] Klick auf ein Feld öffnet die bekannte Feldkarte mit den Aktionen: Verkaufen, Verpachten, Lohnunternehmer (A1),
+- [x] Klick auf ein Feld öffnet die bekannte Feldkarte mit den Aktionen: Verkaufen, Verpachten, Lohnunternehmer (A1),
   Familienfeld.
 
 **Beleg:** ✅ `field/Field.lua` (Dump): `self.polygonPoints` (Knoten des Feldumrisses), `self.posX`/`posZ` über

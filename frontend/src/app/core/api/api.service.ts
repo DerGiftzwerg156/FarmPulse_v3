@@ -514,6 +514,10 @@ export class ApiService {
   stables(): Observable<M.StablesView> {
     return this.get('/stables');
   }
+  /** Roadmap V3.1 R31-K1: field outlines for the map of the Flurkarte. */
+  fieldMap(): Observable<M.FieldMapView> {
+    return this.get('/field-map');
+  }
   fieldOverview(): Observable<M.FieldOverviewView> {
     return this.get('/field-overview');
   }

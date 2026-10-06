@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { FarmlandView, MessageView, NegotiationView } from '../../core/api/models';
+import { FarmlandView, FieldMapView, MessageView, NegotiationView } from '../../core/api/models';
 import { character, message } from '../../../testing/fixtures';
 import { Farmland, acceptableAmount, highestBid } from './farmland';
 
@@ -32,7 +32,8 @@ describe('negotiation helpers', () => {
 });
 
 describe('Farmland', () => {
-  function setup(negotiations: NegotiationView[] = [], mails: MessageView[] = [], negotiationParam?: string) {
+  function setup(negotiations: NegotiationView[] = [], mails: MessageView[] = [], negotiationParam?: string,
+                 fieldMap?: FieldMapView) {
     TestBed.configureTestingModule({
       imports: [Farmland],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -41,6 +42,7 @@ describe('Farmland', () => {
     if (negotiationParam) fixture.componentRef.setInput('negotiation', negotiationParam);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/field-map').flush(fieldMap ?? { mapSize: null, fields: [] });
     http.expectOne('/api/farmlands').flush(fields);
     http.expectOne('/api/negotiations').flush(negotiations);
     http.expectOne('/api/mails').flush(mails);
@@ -243,5 +245,29 @@ describe('Farmland', () => {
       fields[0].leasedOut = false;
     }
   });
-});
 
+  it('R31-K1: shows the map by default once outlines exist and opens the field card on a click', () => {
+    const square = [{ x: 0, z: 0 }, { x: 100, z: 0 }, { x: 100, z: 100 }];
+    const map: FieldMapView = { mapSize: 2048, fields: [
+      { farmlandId: 1, name: '1', points: square, kind: 'OWN', ownerName: null, leased: false, leasedOut: false,
+        fruitType: 'WHEAT', phase: 'HARVESTABLE', orders: [], auction: false, hints: ['HARVESTABLE'] },
+    ] };
+    const { el, fixture } = setup([], [], undefined, map);
+    expect(el.querySelector('[data-testid="field-map-svg"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="field-tile"]')).toBeNull();
+    (el.querySelector('[data-testid="map-field"]') as SVGGElement).dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="field-detail"]')).not.toBeNull();
+    (el.querySelector('[data-testid="view-table"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="field-tile"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="field-map-svg"]')).toBeNull();
+  });
+
+  it('R31-K1: without outlines only the tiles and a hint', () => {
+    const { el } = setup();
+    expect(el.querySelector('[data-testid="map-switch"]')).toBeNull();
+    expect(el.querySelector('[data-testid="map-missing"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="field-tile"]')).not.toBeNull();
+  });
+});

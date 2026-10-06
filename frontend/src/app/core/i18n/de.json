@@ -1255,6 +1255,27 @@
       "liters": "{liters} l {fillType} ins Silo",
       "caseText": "{work} für {price}",
       "caseHint": "Am Arbeitstag ist die Arbeit im Spiel erledigt und die Rechnung gebucht."
+    },
+    "fieldMap": {
+      "map": "Karte",
+      "table": "Tabelle",
+      "label": "Karte der Felder",
+      "missing": "Die Karte braucht die aktuelle Mod-Version: Sie exportiert beim Spielstart die Umrisse der Felder.",
+      "leased": "Gepachtet",
+      "leasedOut": "Verpachtet",
+      "neighbor": "Nachbarfeld",
+      "free": "Frei",
+      "order": "Auftrag",
+      "auction": "Versteigerung",
+      "auctionRunning": "Versteigerung läuft",
+      "hint": "Hinweis",
+      "hints": {
+        "HARVESTABLE": "Erntereif",
+        "WEEDS": "Viel Unkraut",
+        "STONES": "Viele Steine",
+        "LIME": "Braucht Kalk",
+        "PLOW": "Sollte gepflügt werden"
+      }
     }
   },
   "market": {
