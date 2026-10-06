@@ -51,6 +51,10 @@ public final class Views {
     public record ThreadView(MessageView message, List<MessageView> thread) {
     }
 
+    /** Result of marking mails as read: how many were unread before. */
+    public record MarkReadView(int marked) {
+    }
+
     /**
      * Roadmap V3 R3-K1: {@code collateralFarmlandIds} chosen by the player, {@code proposedFarmlandIds} named by the bank
      * (counter offer "mit Grundschuld", {@code collateralRequired}); value, coverage and discount once decided.

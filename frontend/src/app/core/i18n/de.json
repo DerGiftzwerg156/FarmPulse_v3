@@ -919,7 +919,10 @@
     "noReply": "Auf diese Nachricht kann nicht geantwortet werden.",
     "decision": "Deine Entscheidung",
     "decided": "Diese Entscheidung ist schon getroffen oder abgelaufen.",
-    "openInApp": "In der App öffnen"
+    "openInApp": "In der App öffnen",
+    "markAllRead": "Alle als gelesen markieren",
+    "markAllReadTitle": "Alle als gelesen markieren?",
+    "markAllReadText": "Ungelesene Mails in diesem Filter: {n}. Sie werden als gelesen markiert, offene Entscheidungen bleiben offen."
   },
   "calls": {
     "incoming": "Eingehender Anruf",

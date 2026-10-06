@@ -163,6 +163,26 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void markMailsRead() throws Exception {
+        Communication first = mailFrom(bank, Channel.MAIL);
+        Communication second = mailFrom(bank, Channel.MAIL);
+        Communication other = mailFrom(bank, Channel.MAIL);
+        Communication call = mailFrom(bank, Channel.CALL);
+        // only the sent mails; a call id, an unknown id and an already read mail are not counted
+        postJson("/api/mails/read", java.util.Map.of("ids", List.of(first.getId(), second.getId(), call.getId(), 987654321L)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.marked").value(2));
+        postJson("/api/mails/read", java.util.Map.of("ids", List.of(first.getId())))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.marked").value(0));
+        mvc.perform(get("/api/mails")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + first.getId() + ")].read", hasItem(true)))
+                .andExpect(jsonPath("$[?(@.id == " + second.getId() + ")].read", hasItem(true)))
+                .andExpect(jsonPath("$[?(@.id == " + other.getId() + ")].read", hasItem(false)));
+        mvc.perform(get("/api/calls")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + call.getId() + ")].read", hasItem(false)));
+        postJson("/api/mails/read", java.util.Map.of("ids", List.of())).andExpect(status().isBadRequest());
+    }
+
+    @Test
     void callEndpoints() throws Exception {
         Communication ring = mailFrom(bank, Channel.CALL);
         mvc.perform(get("/api/calls/pending")).andExpect(status().isOk())

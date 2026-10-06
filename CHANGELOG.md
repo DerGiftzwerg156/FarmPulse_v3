@@ -20,6 +20,9 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Post: "Alle als gelesen markieren"** (owner decisions 2026-10-06 in `QUESTIONS.md`): a button on the right of the
+  filter bar marks the unread mails of the active filter as read after a confirmation; open decisions stay open. New
+  endpoint `POST /api/mails/read` (`{ "ids": [...] }`, answers `{ "marked": n }`).
 - **Tabs and first-open hints in the apps** (owner decisions 2026-10-06 in `QUESTIONS.md`):
   - Larger apps are split into tabs with their own address (`/bank/kontoauszug`): Bank, Ämter, Flurkarte, Personal,
     Agrarbörse, Werkstatt, Handel, Kontakte (with the profile sub tabs Profil / Nachricht), Versicherung, Stall,

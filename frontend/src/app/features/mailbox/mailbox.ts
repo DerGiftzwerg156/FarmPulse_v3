@@ -16,6 +16,7 @@ import { PageErrorView } from '../../shared/ui/page-error';
 import { MailDecision } from './mail-decision';
 import { Icon } from '../../shared/ui/icon';
 import { ListItem } from '../../shared/ui/list-item';
+import { Modal } from '../../shared/ui/modal';
 import { MailThread, groupThreads } from './mail-threads';
 
 /**
@@ -24,7 +25,7 @@ import { MailThread, groupThreads } from './mail-threads';
  */
 @Component({
   selector: 'app-mailbox',
-  imports: [FormsModule, TranslatePipe, LabelPipe, GameTimePipe, Card, ListItem, Badge, Button, Icon, PageErrorView, MailDecision],
+  imports: [FormsModule, TranslatePipe, LabelPipe, GameTimePipe, Card, ListItem, Badge, Button, Icon, PageErrorView, MailDecision, Modal],
   templateUrl: './mailbox.html',
 })
 export class Mailbox {
@@ -43,6 +44,9 @@ export class Mailbox {
   readonly replyText = signal('');
   readonly sending = signal(false);
   readonly replyError = signal<string | null>(null);
+  readonly confirmMarkAll = signal(false);
+  readonly markingAll = signal(false);
+  readonly markAllError = signal<string | null>(null);
 
   readonly threads = computed(() => groupThreads(this.mails() ?? []));
   readonly visibleThreads = computed(() =>
@@ -55,6 +59,8 @@ export class Mailbox {
       }
     }),
   );
+  /** Unread mails of the active filter - "Alle als gelesen markieren" marks only these (owner decision 2026-10-06). */
+  readonly visibleUnreadIds = computed(() => this.visibleThreads().flatMap((t) => t.unreadIds));
   readonly current = computed(() => this.threads().find((t) => t.rootId === this.openRoot()) ?? null);
   readonly formLink = computed(() => {
     const link = this.current()?.formLink ?? this.thread()?.thread.find((m) => m.formLink)?.formLink ?? null;
@@ -131,6 +137,29 @@ export class Mailbox {
         if (t && t.unreadIds.length > 0) this.markRead(t.unreadIds);
       },
       error: (e) => this.error.set(toPageError(e, this.i18n.t('common.error'))),
+    });
+  }
+
+  openMarkAll(): void {
+    this.markAllError.set(null);
+    this.confirmMarkAll.set(true);
+  }
+
+  markAllRead(): void {
+    const ids = this.visibleUnreadIds();
+    if (ids.length === 0) return;
+    this.markingAll.set(true);
+    this.markAllError.set(null);
+    this.api.markMailsRead(ids).subscribe({
+      next: () => {
+        this.markingAll.set(false);
+        this.confirmMarkAll.set(false);
+        this.markRead(ids);
+      },
+      error: (e) => {
+        this.markingAll.set(false);
+        this.markAllError.set(apiErrorMessage(e, this.i18n.t('common.error')));
+      },
     });
   }
 
