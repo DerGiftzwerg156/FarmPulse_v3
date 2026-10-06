@@ -116,7 +116,9 @@ Ausgleichsforderungen …), tragen das Badge **Entscheidung**. Statt einer freie
 Entscheidung** mit den Bedingungen und den Knöpfen – du entscheidest also direkt in der Mail. **In der App öffnen**
 führt zum Eintrag in seiner App (z. B. für eine Bewerbung ins Personal). Ist die Entscheidung schon gefallen oder
 abgelaufen, steht das dort. Glückwünsche, Einladungen und Klatsch erkennst du am Badge **Dorfleben**. Oben filterst
-du nach *Ungelesen*, *Entscheidung* und *Dorfleben*.
+du nach *Ungelesen*, *Entscheidung* und *Dorfleben*. **Alle als gelesen markieren** rechts daneben markiert nach einer
+Rückfrage alle ungelesenen Mails des gewählten Filters als gelesen – offene Entscheidungen bleiben offen. Zurück auf
+„ungelesen“ lässt sich eine Mail nicht setzen.
 
 Während du spielst, blendet FS25 neue Mails und eingehende Anrufe kurz ein („FarmPulse: Neue Mail von …“), damit du
 nicht ständig in den Browser schauen musst. Abschalten lässt sich das mit `rpsim.bridge.ingame-notifications: false`.

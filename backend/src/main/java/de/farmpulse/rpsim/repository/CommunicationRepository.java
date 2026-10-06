@@ -1,5 +1,6 @@
 package de.farmpulse.rpsim.repository;
 
+import java.util.Collection;
 import java.util.List;
 
 import de.farmpulse.rpsim.domain.CallStatus;
@@ -22,4 +23,6 @@ public interface CommunicationRepository extends JpaRepository<Communication, Lo
     List<Communication> findBySavegameAndCharacterOrderByIdDesc(Savegame savegame, Character character);
 
     long countBySavegameAndChannelAndReadFlagFalse(Savegame savegame, Channel channel);
+
+    List<Communication> findBySavegameAndChannelAndIdIn(Savegame savegame, Channel channel, Collection<Long> ids);
 }

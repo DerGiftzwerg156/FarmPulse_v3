@@ -87,6 +87,9 @@ export class ApiService {
   mail(id: number): Observable<M.ThreadView> {
     return this.get(`/mails/${id}`);
   }
+  markMailsRead(ids: number[]): Observable<M.MarkReadView> {
+    return this.post('/mails/read', { ids });
+  }
   reply(id: number, text: string): Observable<M.MessageView> {
     return this.post(`/mails/${id}/reply`, { text });
   }

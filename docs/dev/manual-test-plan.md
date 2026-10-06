@@ -52,6 +52,7 @@ curl -s localhost:8099/state
 | 1.2.4 | Filter *Ungelesen* | only unread threads |
 | 1.2.5 | Advance a few days until a *Dorfleben* mail arrives (invitation/gossip/congratulation) | it carries the grey *Dorfleben* badge |
 | 1.2.6 | Tagebuch | first entry *Vorgeschichte* on day 0; later automatic entries below |
+| 1.2.7 | With unread mails of several kinds: filter *Dorfleben*, *Alle als gelesen markieren*, confirm | the dialog names the number of unread mails in the filter; afterwards only the *Dorfleben* threads lose the unread dot, the *Post* badge decreases by that number, other unread mails stay unread; an open decision stays open (filter *Entscheidung*, *Aufgaben*); without unread mails in the filter the button is greyed out |
 
 ### 1.3 Bank
 

@@ -238,6 +238,10 @@ export interface ThreadView {
   thread: MessageView[];
 }
 
+export interface MarkReadView {
+  marked: number;
+}
+
 export interface CreditApplicationView {
   id: number;
   amount: number;
