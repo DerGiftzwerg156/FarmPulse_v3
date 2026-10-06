@@ -24,7 +24,11 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   Spieler-Farm bekommt den ersten freien aktiven Maschinenführer der Mitarbeiterliste; die Spielmeldungen zeigen seinen
   Namen, im Lohnmodus `EMPLOYEES` bucht das Spiel für ihn keinen Helferlohn (`AIJob.getPricePerMs` = 0), im strengen
   Modus begrenzt der Mod `maxNumHirables` auf die Zahl der aktiven Maschinenführer. Die gefahrene Zeit je Mitarbeiter
-  steht im Spielstand und in `farm_facts.json` (`workforce`).
+  steht im Spielstand und in `farm_facts.json` (`workforce`). Das gilt auch für **Courseplay** (Hooks auf
+  `AISystem.startJobInternal` / `stopJobInternal` und auf allen beim AI-Job-Typ-Manager registrierten Job-Klassen) und
+  **AutoDrive** (fährt ohne AI-Job: aktive AutoDrive-Fahrzeuge werden jede Sekunde erkannt, belegen einen
+  Maschinenführer, zählen fürs strenge Limit und werden dort bei Überschreitung direkt wieder angehalten; den
+  AutoDrive-Lohn regelt AutoDrive selbst).
 - Exportiert den **Zustand der Ställe** (R2-A7, `husbandries`): Gesundheit, Produktivität, Futter und die
   Bedingungen (Wasser, Stroh …) je Stall.
 - Exportiert **Felder und Wetter** (R2-C, `fields`, `fieldRules`, `weather`): Kultur, Wachstum, Unkraut, Steine,

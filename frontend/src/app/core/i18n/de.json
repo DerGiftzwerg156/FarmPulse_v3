@@ -1518,9 +1518,9 @@
     "helpers": {
       "title": "Helfer im Spiel",
       "intro": "Angestellte Maschinenführer fahren die FS25-Helfer: Im Spiel steht ihr Name, und ihre gefahrene Zeit bestimmt die Arbeitsbelastung.",
-      "wage": "Helferlohn über das Gehalt: Fährt ein Maschinenführer, bucht das Spiel keinen Helferlohn.",
+      "wage": "Helferlohn über das Gehalt: Fährt ein Maschinenführer, bucht das Spiel keinen Helferlohn (Spielhelfer und Courseplay; den AutoDrive-Lohn stellst du in AutoDrive ein).",
       "strict": "Strenger Modus: höchstens so viele Helfer wie aktive Maschinenführer",
-      "strictHint": "Ohne Maschinenführer gibt es im strengen Modus keine Helfer. Streikende oder freigestellte Mitarbeiter zählen nicht.",
+      "strictHint": "Ohne Maschinenführer gibt es im strengen Modus keine Helfer. Streikende oder freigestellte Mitarbeiter zählen nicht. Das Limit gilt für alle Helfer zusammen, auch für Courseplay und AutoDrive.",
       "untracked": "Der Mod meldet noch keine Helfer – die Einstellungen wirken erst mit der aktuellen Mod-Version."
     },
     "fields": {

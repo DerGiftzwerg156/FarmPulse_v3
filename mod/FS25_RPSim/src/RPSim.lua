@@ -5,7 +5,7 @@
 -- (appended) and the savegame XML loaded in loadMap.
 -- luacheck: globals g_currentMission g_modSettingsDirectory addModEventListener Utils getUserProfileAppPath
 -- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00 Farm AIJob AIJobFieldWork AIJobConveyor
--- luacheck: globals AIJobGoTo AIJobDeliver AIJobLoadAndDeliver
+-- luacheck: globals AIJobGoTo AIJobDeliver AIJobLoadAndDeliver AISystem
 -- luacheck: globals PlayerInputComponent InputAction g_inputBinding g_i18n
 RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil, financeHook = false,
     helperHooks = false, promptKeyHook = false }
@@ -91,6 +91,7 @@ end
 
 --- Mission00.onStartMission (appended): the savegame is completely loaded, run the first export.
 function RPSim.onStartMission(_)
+    RPSim.hookRegisteredJobTypes()
     if RPSim.bridge ~= nil and not RPSim.bridge.started then
         RPSim.bridge:onSavegameLoaded()
     end
@@ -205,10 +206,11 @@ function RPSim.pricePerMsHook(job, superFunc, ...)
     return superFunc(job, ...)
 end
 
---- R2-A3: running helpers of the player farm without the given job (not yet or just started).
-local function otherRunningJobs(adapter, job)
+--- R2-A3: running helpers of the player farm (AIJobs and AutoDrive drives) without the given job (not yet or just
+-- started).
+local function otherRunningJobs(job)
     local n = 0
-    for _, j in ipairs(adapter:collectAIJobs()) do
+    for _, j in ipairs(RPSim.bridge:helperJobs()) do
         if job.jobId == nil or j.jobId ~= job.jobId then
             n = n + 1
         end
@@ -216,8 +218,8 @@ local function otherRunningJobs(adapter, job)
     return n
 end
 
---- R2-A3: helpers started over the strict limit, stopped in the next update (AISystem:startJob still runs while
--- AIJob:start is called, a stop in between would leave its bookkeeping half done).
+--- R2-A3: helpers started over the strict limit, stopped in the next update (the start hook runs inside
+-- AISystem:startJob / AIJobStartRequestEvent:run, a stop in between would leave their bookkeeping half done).
 RPSim.limitStops = {}
 
 function RPSim.stopHelpersOverTheLimit()
@@ -236,12 +238,14 @@ function RPSim.stopHelpersOverTheLimit()
     end
 end
 
---- R2-A2: AIJob:start(farmId) picks a random FS25 helper; for the player farm a free active machine operator is
--- assigned to the job as well - "Schulungen": one with the trainings the vehicle needs.
+--- R2-A2: every helper job starts in AISystem:startJobInternal(job, startFarmId) (FS25 ai/AISystem.lua: job:start, then
+-- addJob; AISystem:startJob sets job.jobId first). For the player farm a free active machine operator is assigned -
+-- "Schulungen": one with the trainings the vehicle needs. The hook sits on AISystem and not on AIJob:start because
+-- Courseplay's jobs (CpAIJob:start, Courseplay_FS25 scripts/ai/jobs/CpAIJob.lua) replace AIJob:start without calling it.
 -- R2-A3: a helper of the player farm started over the strict limit is stopped again. The map menu and the key in the
--- vehicle already refuse it (maxNumHirables, startableHook); this catches mods that start helpers their own way
--- (Courseplay, AutoDrive), as long as their jobs run through AIJob:start.
-function RPSim.jobStartHook(job, farmId)
+-- vehicle already refuse it (maxNumHirables, startableHook); this catches starts that never ask getIsStartable
+-- (AutoDrive hands a vehicle over with AISystem:startJob).
+function RPSim.jobStartHook(_, job, farmId)
     local wf = workforce()
     if wf == nil or RPSim.bridge.adapter == nil then
         return
@@ -249,7 +253,8 @@ function RPSim.jobStartHook(job, farmId)
     pcall(function()
         local adapter = RPSim.bridge.adapter
         if farmId == adapter:getFarmId() then
-            if adapter:isServer() and RPSimWorkforce.limitReached(wf, otherRunningJobs(adapter, job)) then
+            RPSim.bridge:pruneAutoDrive()
+            if adapter:isServer() and RPSimWorkforce.limitReached(wf, otherRunningJobs(job)) then
                 RPSim.limitStops[#RPSim.limitStops + 1] = job
                 return
             end
@@ -280,7 +285,7 @@ function RPSim.startableHook(job, superFunc, connection)
     pcall(function()
         info = adapter:jobVehicleInfo(job)
         if info ~= nil and info.farmId == adapter:getFarmId() then
-            full = RPSimWorkforce.limitReached(wf, otherRunningJobs(adapter, job))
+            full = RPSimWorkforce.limitReached(wf, otherRunningJobs(job))
             required = RPSimWorkforce.requiredTrainings(wf, info.categories)
             blocked = RPSimWorkforce.startBlocked(wf, required)
         end
@@ -328,33 +333,81 @@ function RPSim.helperNameHook(job, superFunc, ...)
     return superFunc(job, ...)
 end
 
---- R2-A2: AIJob:stop shows the stop message first, then the employee is free again.
-function RPSim.jobStopHook(job, _)
+--- R2-A2: AISystem:stopJobInternal(job, aiMessage) calls job:stop, which shows the stop message (with the employee's
+-- name); then the employee is free again. Like the start hook on AISystem, so it holds for every job class.
+function RPSim.jobStopHook(_, job, _)
     local wf = workforce()
     if wf ~= nil then
         RPSimWorkforce.release(wf, job.jobId)
     end
 end
 
+--- Methods of a job class that get the hooks above. Only methods the class defines itself (rawget): game subclasses
+-- inherit the rest from AIJob (Class() looks them up in the parent), which is hooked itself.
+RPSim.JOB_CLASS_HOOKS = {
+    { name = "getPricePerMs", hook = function(...) return RPSim.pricePerMsHook(...) end },
+    { name = "getIsStartable", hook = function(...) return RPSim.startableHook(...) end },
+    { name = "getIsStartErrorText", hook = function(...) return RPSim.startErrorTextHook(...) end },
+    { name = "getHelperName", hook = function(...) return RPSim.helperNameHook(...) end },
+}
+--- Functions this mod put on a job class: a class copied from a hooked one (Courseplay's CpObject makes a shallow copy
+-- of its base class, scripts/CpObject.lua) already carries them and must not be hooked twice.
+RPSim.ownJobFunctions = setmetatable({}, { __mode = "k" })
+
+--- Hooks one job class. Returns true when the class is hooked (now or before).
+function RPSim.hookJobClass(cls)
+    if type(cls) ~= "table" or Utils == nil then
+        return false
+    end
+    for _, h in ipairs(RPSim.JOB_CLASS_HOOKS) do
+        local fn = rawget(cls, h.name)
+        if type(fn) == "function" and not RPSim.ownJobFunctions[fn] then
+            local wrapped = Utils.overwrittenFunction(fn, h.hook)
+            RPSim.ownJobFunctions[wrapped] = true
+            cls[h.name] = wrapped
+        end
+    end
+    return true
+end
+
+--- Hooks every job type registered with g_currentMission.aiJobTypeManager (FS25 ai/AIJobTypeManager.lua: jobTypes[i].
+-- classObject). Courseplay registers its jobs in its loadMap (CpAIJob.registerJob), each a shallow copy of AIJob and
+-- CpAIJob (CpObject) - the hooks on AIJob never reach them, whatever the load order of the mods. Runs once the mission
+-- has started, when every mod has registered its job types.
+function RPSim.hookRegisteredJobTypes()
+    if not RPSim.helperHooks then
+        return 0
+    end
+    local n = 0
+    local ok, err = pcall(function()
+        for _, jobType in ipairs(g_currentMission.aiJobTypeManager.jobTypes or {}) do
+            if RPSim.hookJobClass(jobType.classObject) then
+                n = n + 1
+            end
+        end
+    end)
+    if not ok then
+        RPSimLog.warning("Helper hooks for the job types of other mods failed: %s", tostring(err))
+    end
+    return n
+end
+
 if AIJob ~= nil and Utils ~= nil and AIJob.getPricePerMs ~= nil and AIJob.start ~= nil then
-    -- AIJobFieldWork and AIJobConveyor define getPricePerMs themselves, the other job types inherit it from AIJob
-    for _, cls in ipairs({ AIJob, AIJobFieldWork, AIJobConveyor }) do
-        if cls ~= nil and rawget(cls, "getPricePerMs") ~= nil then
-            cls.getPricePerMs = Utils.overwrittenFunction(cls.getPricePerMs, RPSim.pricePerMsHook)
-        end
-    end
-    -- "Schulungen": every job type with its own getIsStartable / getIsStartErrorText (the others inherit AIJob's)
+    -- the game's job classes; AIJobFieldWork and AIJobConveyor define getPricePerMs themselves, every class but AIJob
+    -- inherits getHelperName
     for _, cls in ipairs({ AIJob, AIJobFieldWork, AIJobGoTo, AIJobDeliver, AIJobLoadAndDeliver, AIJobConveyor }) do
-        if cls ~= nil and rawget(cls, "getIsStartable") ~= nil then
-            cls.getIsStartable = Utils.overwrittenFunction(cls.getIsStartable, RPSim.startableHook)
-        end
-        if cls ~= nil and rawget(cls, "getIsStartErrorText") ~= nil then
-            cls.getIsStartErrorText = Utils.overwrittenFunction(cls.getIsStartErrorText, RPSim.startErrorTextHook)
-        end
+        RPSim.hookJobClass(cls)
     end
-    AIJob.start = Utils.appendedFunction(AIJob.start, RPSim.jobStartHook)
-    AIJob.getHelperName = Utils.overwrittenFunction(AIJob.getHelperName, RPSim.helperNameHook)
-    AIJob.stop = Utils.appendedFunction(AIJob.stop, RPSim.jobStopHook)
+    if AISystem ~= nil and AISystem.startJobInternal ~= nil and AISystem.stopJobInternal ~= nil then
+        AISystem.startJobInternal = Utils.appendedFunction(AISystem.startJobInternal, RPSim.jobStartHook)
+        AISystem.stopJobInternal = Utils.appendedFunction(AISystem.stopJobInternal, RPSim.jobStopHook)
+        RPSim.jobHooksOnAISystem = true
+    else
+        -- fallback: the game's own job classes only (they call AIJob:start / AIJob:stop as their superclass)
+        AIJob.start = Utils.appendedFunction(AIJob.start, function(job, farmId) RPSim.jobStartHook(nil, job, farmId) end)
+        AIJob.stop = Utils.appendedFunction(AIJob.stop, function(job, msg) RPSim.jobStopHook(nil, job, msg) end)
+        RPSimLog.warning("AISystem.startJobInternal not found - helpers of Courseplay get no machine operator")
+    end
     RPSim.helperHooks = true
 end
 

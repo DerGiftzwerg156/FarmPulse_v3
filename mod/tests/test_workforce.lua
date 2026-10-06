@@ -168,11 +168,22 @@ local function fakeAIGame()
         overwrittenFunction = function(orig, fn) return function(self, ...) return fn(self, orig, ...) end end,
     }
     g_currentMission.maxNumHirables = 10
-    g_currentMission.aiSystem = {
+    -- FS25 ai/AISystem.lua: startJobInternal = job:start, then addJob; stopJobInternal = job:stop, then removeJob
+    AISystem = {
+        startJobInternal = function(_, job, farmId)
+            job:start(farmId)
+            for _, j in ipairs(jobs) do if j == job then return end end
+            jobs[#jobs + 1] = job
+        end,
+        stopJobInternal = function(_, job, msg)
+            job:stop(msg)
+            for i, j in ipairs(jobs) do if j == job then table.remove(jobs, i) return end end
+        end,
         getActiveJobs = function() return jobs end,
         getJobById = function(_, id) for _, j in ipairs(jobs) do if j.jobId == id then return j end end end,
-        stopJob = function(_, job, msg) job:stop(msg) end,
+        stopJob = function(self, job, msg) self:stopJobInternal(job, msg) end,
     }
+    g_currentMission.aiSystem = setmetatable({}, { __index = AISystem })
     helpers.loadGameModules()
     local adapter = RPSimGameAdapter.new()
     adapter.config = RPSimConfig.new()
@@ -190,7 +201,17 @@ end
 
 local function cleanup()
     RPSim.bridge, RPSim.limitStops = nil, {}
-    AIJob, AIJobFieldWork, AIJobConveyor, Utils, g_storeManager = nil, nil, nil, nil, nil
+    AIJob, AIJobFieldWork, AIJobConveyor, AISystem, Utils, g_storeManager = nil, nil, nil, nil, nil, nil
+end
+
+--- A helper start / stop the way the game runs it (AISystem:startJob -> startJobInternal, AISystem:stopJob).
+local function start(job, farmId)
+    g_currentMission.aiSystem:startJobInternal(job, farmId)
+    return job
+end
+
+local function stop(job, msg)
+    g_currentMission.aiSystem:stopJob(job, msg)
 end
 
 function T.TestWorkforce:testHooksDropTheWageAndNameTheHelper()
@@ -198,17 +219,17 @@ function T.TestWorkforce:testHooksDropTheWageAndNameTheHelper()
     lu.assertTrue(RPSim.helperHooks)
     bridge:applyRoster(roster({ KLAUS }))
     local field = newJob(AIJobFieldWork, 1)
-    field:start(1)
+    start(field, 1)
     local conveyor = newJob(AIJobConveyor, 2)
-    conveyor:start(1)
+    start(conveyor, 1)
     local foreign = newJob(AIJob, 3)
-    foreign:start(2)
+    start(foreign, 2)
     lu.assertEquals(field:getPricePerMs(), 0, "an employee drives: no game wage")
     lu.assertEquals(field:getHelperName(), "Klaus Berger")
     lu.assertEquals(conveyor:getPricePerMs(), 0.00005, "no free operator: normal wage")
     lu.assertEquals(conveyor:getHelperName(), "Helfer Paul")
     lu.assertEquals(foreign:getPricePerMs(), 0.0004, "other farms are never assigned")
-    field:stop(nil)
+    stop(field, nil)
     lu.assertNil(bridge.state.workforce.assignments[1], "released when the job stops")
     cleanup()
 end
@@ -217,7 +238,7 @@ function T.TestWorkforce:testVanillaWageModeKeepsTheGameWage()
     local _, bridge, _, newJob = fakeAIGame()
     bridge:applyRoster(roster({ KLAUS }, { helperWageMode = "VANILLA" }))
     local job = newJob(AIJobFieldWork, 1)
-    job:start(1)
+    start(job, 1)
     lu.assertEquals(job:getPricePerMs(), 0.0005)
     lu.assertEquals(job:getHelperName(), "Klaus Berger")
     cleanup()
@@ -228,7 +249,7 @@ function T.TestWorkforce:testStrictLimitAndStrikeInTheGame()
     bridge:applyRoster(roster({ KLAUS, ANNA }, { strictHelperLimit = true }))
     lu.assertEquals(g_currentMission.maxNumHirables, 2)
     local job = newJob(AIJobFieldWork, 1)
-    job:start(1)
+    start(job, 1)
     -- without a registered strike message the job stops with the generic message and a notification
     AIMessageErrorUnknown = { new = function() return { generic = true } end }
     FSBaseMission = { INGAME_NOTIFICATION_CRITICAL = 3, INGAME_NOTIFICATION_INFO = 1 }
@@ -262,7 +283,7 @@ function T.TestWorkforce:testOwnStrikeMessageIsRegisteredAndUsed()
     lu.assertEquals(registered, { "RPSIM_STRIKE" })
     bridge:applyRoster(roster({ KLAUS }))
     local job = newJob(AIJobFieldWork, 1)
-    job:start(1)
+    start(job, 1)
     bridge:applyRoster(roster({ { employeeId = 12, name = "Klaus Berger", role = "MACHINE_OPERATOR", status = "STRIKE" } }))
     lu.assertEquals(string.format(job.stoppedWith:getI18NText(), "Klaus Berger"), "Klaus Berger legt die Arbeit nieder")
     AIMessage, Class, g_i18n = nil, nil, nil
@@ -277,9 +298,9 @@ function T.TestWorkforce:testAHelperStartedOverTheLimitIsStoppedInTheNextUpdate(
     FSBaseMission = { INGAME_NOTIFICATION_CRITICAL = 3, INGAME_NOTIFICATION_INFO = 1 }
     bridge:applyRoster(roster({ KLAUS, MIA }, { strictHelperLimit = true }))
     local first = newJob(AIJobFieldWork, 1)
-    first:start(1)
+    start(first, 1)
     local second = newJob(AIJobFieldWork, 2)
-    second:start(1)
+    start(second, 1)
     lu.assertEquals(first:getHelperName(), "Klaus Berger")
     lu.assertNil(second.stoppedWith, "not stopped inside AISystem:startJob")
     lu.assertNil(bridge.state.workforce.assignments[2])
@@ -291,13 +312,13 @@ function T.TestWorkforce:testAHelperStartedOverTheLimitIsStoppedInTheNextUpdate(
     -- only the server stops helpers; the normal mode has no own limit
     g_currentMission.getIsServer = function() return false end
     local third = newJob(AIJobFieldWork, 3)
-    third:start(1)
+    start(third, 1)
     RPSim:update(0)
     lu.assertNil(third.stoppedWith, "client")
     g_currentMission.getIsServer = function() return true end
     bridge:applyRoster(roster({ KLAUS, MIA }))
     local fourth = newJob(AIJobFieldWork, 4)
-    fourth:start(1)
+    start(fourth, 1)
     RPSim:update(0)
     lu.assertNil(fourth.stoppedWith, "normal mode")
     lu.assertEquals(adapter:collectAIJobs()[1].jobId, 1)
@@ -324,7 +345,7 @@ function T.TestWorkforce:testOwnHelperLimitMessageIsRegisteredAndUsed()
     lu.assertTrue(adapter.helperLimitMessageRegistered)
     bridge:applyRoster(roster({ MIA }, { strictHelperLimit = true }))
     local job = newJob(AIJobFieldWork, 1)
-    job:start(1)
+    start(job, 1)
     RPSim:update(0)
     lu.assertEquals(string.format(job.stoppedWith:getI18NText(), "Helfer Paul"),
         "Helfer Paul hält an: kein freier Maschinenführer (strenger Modus)")
@@ -336,9 +357,9 @@ end
 function T.TestWorkforce:testCollectAIJobsOfThePlayerFarm()
     local _, _, adapter, newJob = fakeAIGame()
     local mine = newJob(AIJobFieldWork, 5)
-    mine:start(1)
+    start(mine, 1)
     function mine.getTitle() return "Fendt 942 Vario" end
-    newJob(AIJob, 6):start(2)
+    start(newJob(AIJob, 6), 2)
     lu.assertEquals(adapter:collectAIJobs(), { { jobId = 5, title = "Fendt 942 Vario", categories = {} } })
     cleanup()
 end
@@ -453,11 +474,11 @@ function T.TestWorkforce:testTheStartHookAssignsATrainedOperator()
     lu.assertEquals(adapter:jobVehicleInfo(withVehicle(newJob(AIJobFieldWork, 1), "harvesters")).categories,
         { "HARVESTERS" })
     local combine = withVehicle(newJob(AIJobFieldWork, 1), "harvesters")
-    combine:start(1)
+    start(combine, 1)
     lu.assertEquals(combine:getHelperName(), "Peter Mahler")
     local truck = withVehicle(newJob(AIJobFieldWork, 2), "trucks")
     lu.assertEquals({ truck:getIsStartable(nil) }, { true, 0 }, "normal mode: never blocked")
-    truck:start(1)
+    start(truck, 1)
     lu.assertEquals(truck:getHelperName(), "Helfer Paul", "no trained operator free: vanilla helper")
     cleanup()
 end
@@ -486,10 +507,10 @@ function T.TestWorkforce:testTheStrictModeRefusesAStartOverTheLimit()
     local game, bridge, _, newJob = fakeAIGame()
     storeManager()
     bridge:applyRoster(roster({ KLAUS }, { strictHelperLimit = true }))
-    newJob(AIJob, 7):start(2) -- other farms do not count
+    start(newJob(AIJob, 7), 2) -- other farms do not count
     local first = withVehicle(newJob(AIJobFieldWork, 1), "tractorsM")
     lu.assertEquals({ first:getIsStartable(nil) }, { true, 0 })
-    first:start(1)
+    start(first, 1)
     local second = withVehicle(newJob(AIJobFieldWork, nil), "tractorsM")
     local ok, state = second:getIsStartable(nil)
     lu.assertFalse(ok)
@@ -498,6 +519,204 @@ function T.TestWorkforce:testTheStrictModeRefusesAStartOverTheLimit()
     lu.assertEquals(AIJobFieldWork.getIsStartErrorText(state), "Kein freier Maschinenführer (strenger Modus)")
     bridge:applyRoster(roster({ KLAUS }))
     lu.assertEquals({ second:getIsStartable(nil) }, { true, 0 }, "normal mode: no own limit")
+    cleanup()
+end
+
+-- ------------------------------------------------------------------ Courseplay (Courseplay_FS25, scripts/ai/jobs)
+--- CpObject(base): a shallow copy of the base class (scripts/CpObject.lua). CpAIJob replaces start / getIsStartable
+-- without calling AIJob's and applies its wage modifier on AIJob.getPricePerMs (CpAIJob.lua).
+local function cpObject(base)
+    local c = {}
+    for k, v in pairs(base) do c[k] = v end
+    return c
+end
+
+local function courseplayJobClasses()
+    local CpAIJob = cpObject(AIJob)
+    function CpAIJob.start(job, farmId)
+        job.startedFarmId = farmId
+        job.cpStarted = true
+    end
+    function CpAIJob.getIsStartable() return true, 0 end
+    function CpAIJob.getIsStartErrorText(state) return "cp " .. tostring(state) end
+    function CpAIJob.getPricePerMs(job) return AIJob.getPricePerMs(job) * 0.5 end
+    local CpAIJobFieldWork = cpObject(CpAIJob)
+    g_currentMission.aiJobTypeManager = { jobTypes = {
+        { name = "FIELDWORK", classObject = AIJobFieldWork },
+        { name = "FIELDWORK_CP", classObject = CpAIJobFieldWork },
+    } }
+    return CpAIJobFieldWork
+end
+
+local function cpJob(cls, id, category)
+    local job = setmetatable({ jobId = id }, { __index = cls })
+    return withVehicle(job, category or "tractorsM")
+end
+
+function T.TestWorkforce:testCourseplayHelpersGetAnOperatorNameAndNoWage()
+    local _, bridge = fakeAIGame()
+    lu.assertTrue(RPSim.jobHooksOnAISystem, "start / stop hooks sit on AISystem")
+    storeManager()
+    local cls = courseplayJobClasses()
+    RPSim.onStartMission()
+    bridge:applyRoster(roster({ KLAUS }))
+    local job = start(cpJob(cls, 1), 1)
+    lu.assertTrue(job.cpStarted, "CpAIJob:start never calls AIJob:start")
+    lu.assertEquals(bridge.state.workforce.assignments[1], 12)
+    lu.assertEquals(job:getHelperName(), "Klaus Berger")
+    lu.assertEquals(job:getPricePerMs(), 0, "an employee drives: no game wage")
+    stop(job, nil)
+    lu.assertNil(bridge.state.workforce.assignments[1], "released when the job stops")
+    lu.assertEquals(job:getPricePerMs(), 0.0002, "Courseplay's wage modifier stays for helpers without operator")
+    lu.assertEquals(job:getHelperName(), "Helfer Paul")
+    cleanup()
+end
+
+function T.TestWorkforce:testTheStrictModeRefusesCourseplayStarts()
+    local game, bridge = fakeAIGame()
+    storeManager()
+    local cls = courseplayJobClasses()
+    RPSim.onStartMission()
+    RPSim.hookRegisteredJobTypes() -- twice: no double hooks
+    bridge:applyRoster(roster({ KLAUS }, { trainingCategories = CATEGORIES, strictHelperLimit = true }))
+    local combine = cpJob(cls, 1, "harvesters")
+    local ok, state = combine:getIsStartable(nil)
+    lu.assertFalse(ok)
+    lu.assertEquals(state, RPSim.START_ERROR_NO_TRAINING)
+    lu.assertEquals(#game.notifications, 1)
+    -- Courseplay's frame asks the class statically (CpCourseGeneratorFrame: classObject.getIsStartErrorText(state))
+    lu.assertEquals(cls.getIsStartErrorText(state), "Kein geschulter Maschinenführer frei")
+    lu.assertEquals(cls.getIsStartErrorText(1), "cp 1")
+    start(cpJob(cls, 2), 1)
+    local second = cpJob(cls, nil)
+    ok, state = second:getIsStartable(nil)
+    lu.assertFalse(ok)
+    lu.assertEquals(state, RPSim.START_ERROR_HELPER_LIMIT)
+    cleanup()
+end
+
+function T.TestWorkforce:testAClassCopiedFromHookedAIJobIsNotHookedTwice()
+    fakeAIGame()
+    local copied = cpObject(AIJob) -- Courseplay loaded after FarmPulse: the copy already carries the hooked methods
+    local name = copied.getHelperName
+    lu.assertTrue(RPSim.hookJobClass(copied))
+    lu.assertIs(copied.getHelperName, name)
+    cleanup()
+end
+
+-- ------------------------------------------------------------------ AutoDrive (FS25_AutoDrive, no AIJob)
+--- Fake AutoDrive vehicle: vehicle.ad.stateModule:isActive() (ADStateModule), vehicle:stopAutoDrive() (registered
+-- function of the AutoDrive specialization).
+local function adVehicle(game, category, farmId)
+    local v = { configFileName = "data/vehicles/" .. category .. ".xml", stops = 0,
+        getOwnerFarmId = function() return farmId or 1 end, getFullName = function() return "AD " .. category end }
+    v.ad = { isStoppingWithError = false, stateModule = { active = false } }
+    function v.ad.stateModule.isActive(sm) return sm.active end
+    function v.ad.stateModule.setLoopsDone(sm, n) sm.loopsDone = n end
+    function v.stopAutoDrive(self)
+        self.stops = self.stops + 1
+        self.ad.stateModule.active = false
+    end
+    game.vehicles[#game.vehicles + 1] = v
+    return v
+end
+
+function T.TestWorkforce:testAutoDriveDrivesAreHelpersWithAnOperatorAndWorkedTime()
+    local game, bridge = fakeAIGame()
+    storeManager()
+    bridge:applyRoster(roster({ KLAUS }))
+    local v = adVehicle(game, "tractorsM")
+    local foreign = adVehicle(game, "tractorsM", 2)
+    v.ad.stateModule.active, foreign.ad.stateModule.active = true, true
+    for k in pairs({ exportIntervalMs = 1, importIntervalMs = 1, marketContextIntervalMs = 1, fieldExportIntervalMs = 1 }) do
+        bridge.cfg[k] = 1e12
+    end
+    bridge.exportTimer, bridge.importTimer, bridge.fieldTimer, bridge.marketContextTimer = 0, 0, 0, 0
+    bridge:update(999)
+    lu.assertNil(bridge.state.workforce.assignments[-1], "checked every second")
+    bridge:update(1)
+    lu.assertEquals(bridge.state.workforce.assignments[-1], 12)
+    lu.assertEquals(v.stops, 0)
+    local raw = bridge:sampleWorkforce(1000)
+    lu.assertEquals(raw.activeJobs, { { jobId = -1, employeeId = 12, title = "AD tractorsM" } },
+        "other farms are not tracked")
+    bridge:sampleWorkforce(1000 + 3600000)
+    lu.assertEquals(bridge.state.workforce.workedGameMs["12"], 3600000)
+    lu.assertEquals(RPSimFarmFacts.buildWorkforce(raw).activeJobs[1].jobId, -1)
+    v.ad.stateModule.active = false
+    bridge:trackAutoDrive()
+    lu.assertNil(bridge.state.workforce.assignments[-1], "released when AutoDrive stops")
+    v.ad.stateModule.active = true
+    bridge:trackAutoDrive()
+    lu.assertEquals(bridge.state.workforce.assignments[-2], 12, "a new drive gets a new id")
+    cleanup()
+end
+
+function T.TestWorkforce:testTheStrictModeStopsAutoDriveOverTheLimitOrWithoutTraining()
+    local game, bridge, _, newJob = fakeAIGame()
+    storeManager()
+    FSBaseMission = { INGAME_NOTIFICATION_CRITICAL = 3, INGAME_NOTIFICATION_INFO = 1 }
+    bridge:applyRoster(roster({ KLAUS, ANNA }, { trainingCategories = CATEGORIES, strictHelperLimit = true }))
+    local combine = adVehicle(game, "harvesters")
+    combine.ad.stateModule.active = true
+    bridge:trackAutoDrive()
+    lu.assertEquals(combine.stops, 1, "no operator with the combine training")
+    lu.assertTrue(combine.ad.isStoppingWithError, "no hand-over to Courseplay or a game helper")
+    lu.assertStrContains(game.notifications[1].text, "Mähdrescher")
+    lu.assertNil(bridge.state.workforce.assignments[-1])
+    start(withVehicle(newJob(AIJobFieldWork, 1), "tractorsM"), 1)
+    local first = adVehicle(game, "tractorsM")
+    first.ad.stateModule.active = true
+    bridge:trackAutoDrive()
+    lu.assertEquals(first.stops, 0, "second helper of two operators")
+    local third = adVehicle(game, "tractorsM")
+    third.stopAutoDrive = function(veh) veh.stops = veh.stops + 1 end -- AutoDrive does not stop
+    third.ad.stateModule.active = true
+    bridge:trackAutoDrive()
+    bridge:trackAutoDrive()
+    lu.assertEquals(third.stops, 1, "stopped once, not again every second")
+    lu.assertStrContains(game.notifications[#game.notifications].text, "höchstens 2 Helfer")
+    -- a running AutoDrive drive counts against the limit of the game helper and Courseplay starts too
+    local ok, state = withVehicle(newJob(AIJobFieldWork, nil), "tractorsM"):getIsStartable(nil)
+    lu.assertFalse(ok)
+    lu.assertEquals(state, RPSim.START_ERROR_HELPER_LIMIT)
+    FSBaseMission = nil
+    cleanup()
+end
+
+function T.TestWorkforce:testAutoDriveHandsItsOperatorOverToTheFollowUpJob()
+    local game, bridge, _, newJob = fakeAIGame()
+    storeManager()
+    bridge:applyRoster(roster({ KLAUS }, { strictHelperLimit = true }))
+    local v = adVehicle(game, "tractorsM")
+    v.ad.stateModule.active = true
+    bridge:trackAutoDrive()
+    lu.assertEquals(bridge.state.workforce.assignments[-1], 12)
+    -- AutoDrive:stopAutoDrive deactivates, then hands over (AutoDrive.passToExternalMod_AI: AISystem:startJob) before
+    -- the next AutoDrive check
+    v.ad.stateModule.active = false
+    local job = withVehicle(newJob(AIJobFieldWork, 5), "tractorsM")
+    lu.assertEquals({ job:getIsStartable(nil) }, { true, 0 })
+    start(job, 1)
+    RPSim:update(0)
+    lu.assertNil(job.stoppedWith)
+    lu.assertEquals(job:getHelperName(), "Klaus Berger")
+    cleanup()
+end
+
+function T.TestWorkforce:testAStrikeStopsTheAutoDriveOfTheEmployee()
+    local game, bridge = fakeAIGame()
+    storeManager()
+    FSBaseMission = { INGAME_NOTIFICATION_CRITICAL = 3, INGAME_NOTIFICATION_INFO = 1 }
+    bridge:applyRoster(roster({ KLAUS }))
+    local v = adVehicle(game, "tractorsM")
+    v.ad.stateModule.active = true
+    bridge:trackAutoDrive()
+    bridge:applyRoster(roster({ { employeeId = 12, name = "Klaus Berger", role = "MACHINE_OPERATOR", status = "STRIKE" } }))
+    lu.assertEquals(v.stops, 1)
+    lu.assertStrContains(game.notifications[1].text, "Klaus Berger streikt")
+    lu.assertNil(bridge.state.workforce.assignments[-1])
+    FSBaseMission = nil
     cleanup()
 end
 

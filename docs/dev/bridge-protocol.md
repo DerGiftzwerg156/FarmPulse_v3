@@ -139,15 +139,30 @@ investment, divestment, financing, ignore; unknown names count as operating by t
 
 | Field | Meaning | Source |
 | --- | --- | --- |
-| `activeJobs[].jobId` | Id of the running FS25 helper job | `AIJob.jobId` (`AIJob:setId`, dump `ai/jobs/AIJob.lua`); jobs from `g_currentMission.aiSystem:getActiveJobs()` (LUADOC `script/AI/AISystem.md`) |
+| `activeJobs[].jobId` | Id of the running FS25 helper job; **negative** = an AutoDrive drive (own id of the mod, new for every drive, not saved) | `AIJob.jobId` (`AIJob:setId`, dump `ai/jobs/AIJob.lua`); jobs from `g_currentMission.aiSystem:getActiveJobs()` (LUADOC `script/AI/AISystem.md`); AutoDrive vehicles: `vehicle.ad.stateModule:isActive()` (FS25_AutoDrive `scripts/Modules/StateModule.lua`) |
 | `activeJobs[].employeeId` | Tool employee assigned to the job (R2-A2); missing = helper without employee (R2-D3) | mod state |
 | `activeJobs[].title` | Title of the job; missing when the game returns an empty title | `job:getTitle()`: vehicle name for field work (`AIJobFieldWork:getTitle` → `vehicle:getName()`), helper name otherwise (`AIJob:getTitle` → `helper.title`) |
 | `workedGameMs` | Cumulative game time (ms) each employee drove a helper; key = `employeeId` as text | game time between two exports (`RPSimGameAdapter:getGameTime()`), stored in the savegame |
 
 **Built (R2-A0..A5):** the mod keeps the last `EMPLOYEE_ROSTER` (stored in the savegame, `FS25_RPSim.workforce`) and
-hooks `AIJob` with `Utils`:
+hooks the helper jobs with `Utils`. Three kinds of helpers are covered:
 
-- `AIJob.start` (appended): a job started by the player farm gets a free `ACTIVE` `MACHINE_OPERATOR` of the list
+- **Game helper** (`AIJobFieldWork`, `AIJobGoTo`, `AIJobDeliver`, `AIJobLoadAndDeliver`, `AIJobConveyor`): the methods
+  below are hooked on these classes when the mod's sources run.
+- **Courseplay** (`Courseplay_FS25`): its jobs (`CpAIJobFieldWork`, `CpAIJobBaleFinder`, `CpAIJobCombineUnloader`,
+  `CpAIJobSiloLoader`, `CpAIJobBunkerSilo`) are built with `CpObject(AIJob)` - a *shallow copy* of `AIJob`
+  (`scripts/CpObject.lua`) - and `CpAIJob` replaces `start` and `getIsStartable` without calling `AIJob`'s
+  (`scripts/ai/jobs/CpAIJob.lua`). Hooks on `AIJob` therefore never reached them (before this fix a Courseplay helper
+  got its operator only with the next export, no name, no strict limit, no training check). Now `RPSim.onStartMission`
+  hooks every class registered in `g_currentMission.aiJobTypeManager.jobTypes[i].classObject` (dump
+  `ai/AIJobTypeManager.lua`; Courseplay registers its jobs in its `loadMap`), and start / stop are hooked on `AISystem`
+  (below), which every job class passes. Methods copied from an already hooked class are not hooked twice.
+- **AutoDrive** (`FS25_AutoDrive`): drives **without an `AIJob`** (`AutoDrive:startAutoDrive` →
+  `vehicle.ad.stateModule:setActive(true)`, `scripts/Specialization.lua`), so no job hook sees it, and it books its own
+  wage in `AutoDrive:onUpdateTick` (setting *driverWages*). See *AutoDrive* below.
+
+- `AISystem.startJobInternal` (appended; dump `ai/AISystem.lua`: `job:start(startFarmId)`, then `addJob`;
+  `AISystem:startJob` sets `job.jobId` before): a job started by the player farm gets a free `ACTIVE` `MACHINE_OPERATOR` of the list
   (the backend sends the list sorted by skill, descending). "Schulungen": the operator must have every training the
   vehicle needs (see below); among the qualified ones the one with the fewest trainings drives (specialists stay free
   for their machines), ties in list order. No free (qualified) operator = vanilla helper. Job ids are new after
@@ -165,26 +180,43 @@ hooks `AIJob` with `Utils`:
   `CRITICAL` in-game notification naming the vehicle and the training. `getIsStartErrorText` returns
   `rpsim_ai_noTraining` for that state (🟡 the calling menu is not in the dump; the hook accepts a static and an
   instance call). Without the strict mode the vanilla helper drives as before.
-- `AIJob.getHelperName` (overwritten): returns the employee's name; the game messages (`AIMessage:getMessage`) use it.
+- `AIJob.getHelperName` (overwritten, also on the Courseplay classes): returns the employee's name; the game messages (`AIMessage:getMessage`) use it.
   🟡 whether HUD and map show the same name ([manual test plan 10.3](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)).
-- `AIJob.getPricePerMs` (overwritten, also on `AIJobFieldWork` / `AIJobConveyor`, which define their own): `0` for a
+- `AIJob.getPricePerMs` (overwritten, also on `AIJobFieldWork` / `AIJobConveyor`, which define their own, and on the
+  Courseplay classes, whose wage modifier multiplies `AIJob.getPricePerMs`): `0` for a
   job driven by an employee while `helperWageMode` is `EMPLOYEES`, so `AIJob:updateCost` books no game wage (the salary
   runs through the tool). `VANILLA` keeps the game wage.
-- `AIJob.stop` (appended): the employee is free again after the stop message.
+- `AISystem.stopJobInternal` (appended; calls `job:stop(aiMessage)`, which shows the stop message): the employee is free
+  again after the stop message. Without `AISystem` the mod falls back to `AIJob.start` / `AIJob.stop` (game helpers
+  only) and logs a warning. 🟡 that the hooks on the class `AISystem` reach `g_currentMission.aiSystem` (an instance of
+  `Class(AISystem)`; Courseplay hooks `AIJobTypeManager.getJobTypeIndex` the same way) - [manual test plan 10.22](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25).
+- **AutoDrive** (owner decisions 2026-10-06): every second (`RPSimBridge.AUTODRIVE_CHECK_MS`) the mod compares the active
+  AutoDrive vehicles of the player farm with the known drives. A new drive gets its own negative `jobId` and a free
+  operator by the same rules as a game helper ("Schulungen" included); it counts as a running helper for the strict
+  limit (also when a game helper or Courseplay asks `getIsStartable`), is exported in `activeJobs` (worked time, night
+  work, helpers without employee) and is stopped when its employee strikes. With `strictHelperLimit` a new drive over
+  the limit or without a free trained operator is stopped right away (AutoDrive has no documented hook before its
+  start): `vehicle.ad.isStoppingWithError = true`, `vehicle.ad.stateModule:setLoopsDone(0)`, `vehicle:stopAutoDrive()` -
+  the same calls as AutoDrive's own start/stop key (`ADInputManager:input_start_stop`), so AutoDrive does not hand the
+  vehicle over to Courseplay or a game helper - plus a `CRITICAL` notification; a vehicle is stopped once per drive. An
+  ended drive frees its operator before the next job starts (`AutoDrive:stopAutoDrive` deactivates the vehicle before
+  it hands it over). The AutoDrive **wage is not touched** - set *driverWages* in AutoDrive's settings (0 = no wage).
 - `strictHelperLimit`: `g_currentMission.maxNumHirables` = min(original value, active machine operators); the original
   value is remembered and written back when the switch is off or the map is unloaded. 🟡 whether the game resets it.
   The game only reads `maxNumHirables` in `AISystem:getAILimitedReached()`, which the map menu and the key in the
   vehicle ask before a start; mods like Courseplay or AutoDrive start helpers their own way. So the mod enforces the
   limit itself as well: `getIsStartable` refuses a job of the player farm with the own state `202`
   (`rpsim_ai_helperLimitStart`, plus a `CRITICAL` notification) while the farm already runs as many helpers as it has
-  active operators; and `AIJob.start` (appended) queues a job of the player farm started over that limit on the server,
+  active operators; and the start hook (`AISystem.startJobInternal`) queues a job of the player farm started over that limit on the server,
   which `RPSim:update` stops in the next frame (not inside `AISystem:startJob`) with the own AI message
   `RPSIM_HELPER_LIMIT` ("%s hält an: kein freier Maschinenführer (strenger Modus)"; fallback: the unknown-error message)
-  plus a notification. That job gets no operator. 🟡 whether the Courseplay / AutoDrive jobs run through `AIJob:start`
-  ([manual test plan 10.22](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)).
+  plus a notification. That job gets no operator. Courseplay starts through `AIJobStartRequestEvent` (its HUD and key,
+  `scripts/specializations/CpAIWorker.lua`), so its own `getIsStartable` (hooked via the job type manager) already
+  refuses; the stop after the start catches `AISystem:startJob` calls that skip it (AutoDrive's hand-over to a game
+  helper, `AutoDrive.passToExternalMod_AI`).
 - Worked time: at every export the game time since the last export is credited to the employees driving a running job
-  of the player farm (`aiSystem:getActiveJobs()`, `job.startedFarmId`). A rewound game time only resets the sample
-  point.
+  of the player farm (`aiSystem:getActiveJobs()`, `job.startedFarmId`) or an AutoDrive drive. A rewound game time only
+  resets the sample point.
 
 The backend counts the worked hours per game day (`WorkforceService`, R2-A4): above `workload.target-hours-per-day` the
 WORKLOAD need drops per extra hour, below it recovers; the positive monthly effect of an operator scales with the
