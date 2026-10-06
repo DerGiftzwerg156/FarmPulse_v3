@@ -88,7 +88,7 @@ class BookingStatementTest {
         export(4, line(1, "AI", -25, "\"count\": 2") + "," + line(2, "SOLD_PRODUCTS", 300,
                 "\"fillType\": \"WHEAT\", \"sellPoint\": \"MillNorth\", \"liters\": 1400") + ","
                 + line(3, "RPSIM_SALARY_PAYMENT", -2400, "\"single\": true, \"note\": \"Gehalt Anna\""));
-        assertThat(entries.findAll()).hasSize(3);
+        assertThat(entries.findBySavegameAndSeqGreaterThanEqual(sg, 0)).hasSize(3); // only this savegame (E2E tests leave others)
         assertThat(entry(1).getAmount()).isEqualTo(-25);
         assertThat(entry(2).getLiters()).isEqualTo(1400);
         assertThat(entry(3).getNote()).isEqualTo("Gehalt Anna");
