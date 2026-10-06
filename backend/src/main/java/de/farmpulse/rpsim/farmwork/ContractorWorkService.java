@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.OptionalDouble;
 
 import de.farmpulse.rpsim.bridge.BridgeDtos;
@@ -16,7 +15,6 @@ import de.farmpulse.rpsim.bridge.OutboxService;
 import de.farmpulse.rpsim.bridge.OutboxService.Related;
 import de.farmpulse.rpsim.character.ServiceRoleService;
 import de.farmpulse.rpsim.common.BusinessRuleException;
-import de.farmpulse.rpsim.common.RandomSource;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.diary.DiaryService;
 import de.farmpulse.rpsim.domain.CaseKind;
@@ -52,12 +50,16 @@ import org.springframework.transaction.annotation.Transactional;
  * Roadmap V3.1 R31-A1: the contractor ({@code CONTRACTOR}) works an own field (owner decisions in QUESTIONS.md).
  * <ul>
  *   <li>Offer: only works that fit the field state (R2-C1): plow / cultivate in EMPTY, HARVESTED or WITHERED, lime in
- *   EMPTY or HARVESTED with lime level 0, sow in EMPTY, harvest in HARVESTABLE - and a harvest only when the own silos
- *   take the whole yield. Price = hectares x price per hectare (material included).</li>
- *   <li>Order: the work day is 1-3 game days ahead (busy season +2, trust from the threshold -1, at least 1). Money,
- *   field and silo are only checked; nothing is booked.</li>
- *   <li>Work day: checked again, then one batch FIELD_WORK (+ STORAGE_TRANSFER IN of the harvest) + CONTRACTOR_FEE.
- *   No money, a field that no longer fits or a refusal of the mod cancel the job with a mail; nothing is booked.</li>
+ *   EMPTY or HARVESTED with lime level 0, sow in EMPTY, fertilise in EMPTY, HARVESTED or GROWING below the highest
+ *   spray level, harvest in HARVESTABLE - and a harvest only when the own silos take the whole yield. Price = hectares
+ *   x price per hectare (material included).</li>
+ *   <li>Order (owner decisions 2026-10-06): 1 to {@code max-works-per-order} works of one field at once, done in the
+ *   order of {@link #WORKS} on the same day; every work is checked on the field as the works before leave it (e.g.
+ *   cultivate the stubble, then sow, then fertilise). Each work is its own case. The work is done at the end of the game
+ *   day after the order. Money, field and silo are only checked; nothing is booked.</li>
+ *   <li>Work day: checked again work by work, then one batch with FIELD_WORK (+ STORAGE_TRANSFER IN of the harvest) +
+ *   CONTRACTOR_FEE per work. No money, a field that no longer fits or a refusal of the mod cancel the job with a mail;
+ *   nothing of it is booked.</li>
  *   <li>Done (ack of FIELD_WORK, for a harvest of the STORAGE_TRANSFER): trust, mail, diary.</li>
  * </ul>
  * The harvest = area x litersPerSqm x yield factor (fertilisation, lime, plow, weeds; {@link #yieldFactor}) - not the
@@ -67,9 +69,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class ContractorWorkService {
 
     public static final String RELATED = "CONTRACTOR_WORK";
-    public static final List<String> WORKS = List.of("PLOW", "CULTIVATE", "LIME", "SOW", "HARVEST");
+    /** The works in the order the contractor does them on one day (harvest first, fertilising after sowing). */
+    public static final List<String> WORKS = List.of("HARVEST", "PLOW", "CULTIVATE", "LIME", "SOW", "FERTILIZE");
     static final Map<String, String> WORK_TITLES = Map.of("PLOW", "Pflügen", "CULTIVATE", "Grubbern", "LIME", "Kalken",
-            "SOW", "Säen", "HARVEST", "Ernten");
+            "SOW", "Säen", "FERTILIZE", "Düngen", "HARVEST", "Ernten");
 
     /** One work for the form; {@code reason} names why it is not possible (null = possible). */
     public record Option(String work, long price, Long harvestLiters, String fillType, String reason) {
@@ -78,9 +81,13 @@ public class ContractorWorkService {
         }
     }
 
-    /** The form of one own field: works, fruit types for sowing and the range of the work day. */
+    /**
+     * The form of one own field: works (checked together with the {@code selected} ones), fruit types for sowing, the
+     * most works per order, the game time the work is done by and the open order (one case per work).
+     */
     public record Quote(int farmlandId, String fieldName, double hectares, FieldPhase phase, List<Option> options,
-                        List<String> fruitTypes, int daysMin, int daysMax, ServiceCase openOrder) {
+                        List<String> selected, List<String> fruitTypes, int maxWorks, long doneByGameTime,
+                        List<ServiceCase> openOrders) {
     }
 
     private final ServiceCaseRepository cases;
@@ -97,16 +104,14 @@ public class ContractorWorkService {
     private final NarrationRequestService narration;
     private final DiaryService diary;
     private final FallbackTemplates labels;
-    private final RandomSource random;
     private final RpsimProperties props;
-    private final GameTime gameTime;
 
     public ContractorWorkService(ServiceCaseRepository cases, SavegameRepository savegames,
                                  OutboxInstructionRepository instructions, FactsService facts, FieldService fields,
                                  NeighborService neighbors, NeighborTradeService trade, LiquidityService liquidity,
                                  OutboxService outbox, ServiceRoleService roles, TrustScoreService trust,
                                  NarrationRequestService narration, DiaryService diary, FallbackTemplates labels,
-                                 RandomSource random, RpsimProperties props, GameTime gameTime) {
+                                 RpsimProperties props) {
         this.cases = cases;
         this.savegames = savegames;
         this.instructions = instructions;
@@ -121,9 +126,7 @@ public class ContractorWorkService {
         this.narration = narration;
         this.diary = diary;
         this.labels = labels;
-        this.random = random;
         this.props = props;
-        this.gameTime = gameTime;
     }
 
     private RpsimProperties.ContractorWork cfg() {
@@ -174,136 +177,273 @@ public class ContractorWorkService {
         return Math.round(hectares * cfg().getPricePerHa().getOrDefault(work, 0.0));
     }
 
-    /** Range of the work day in game days: busy season +harvest-extra-days, trust from the threshold -days (min 1). */
-    public int[] leadDays(Savegame sg, Character contractor) {
-        int min = cfg().getLeadDaysMin();
-        int max = Math.max(min, cfg().getLeadDaysMax());
-        if (cfg().getHarvestPeriods().contains(gameTime.periodOfYear(sg, sg.getCurrentGameTime()))) {
-            min += cfg().getHarvestExtraDays();
-            max += cfg().getHarvestExtraDays();
+    /**
+     * Work day (owner decision 2026-10-06): the work is done at the end of the game day {@code done-after-days} days
+     * after the order day - the batch goes to the mod when that day ends (start of the following game day).
+     */
+    public long doneBy(long orderGameTime) {
+        return (GameTime.dayIndex(orderGameTime) + 1 + Math.max(0, cfg().getDoneAfterDays())) * GameTime.MS_PER_DAY;
+    }
+
+    public int maxWorks() {
+        return Math.max(1, cfg().getMaxWorksPerOrder());
+    }
+
+    /**
+     * The field as the work leaves it (the end state the mod sets, {@code RPSimGameAdapter:fieldWork}), to check the
+     * next work of the same order: plow / cultivate clear the crop, lime sets the lime level, sowing starts the crop,
+     * fertilising raises the spray level by one, the harvest cuts the crop.
+     */
+    static BridgeDtos.Field after(BridgeDtos.Field f, String work, String fruitType) {
+        String fruit = f.fruitType();
+        Integer growth = f.growthState();
+        Integer minHarvest = f.minHarvestingGrowthState();
+        Integer maxHarvest = f.maxHarvestingGrowthState();
+        Boolean withered = f.withered();
+        Boolean cut = f.cut();
+        String fillType = f.fillType();
+        Double litersPerSqm = f.litersPerSqm();
+        Integer spray = f.sprayLevel();
+        Integer lime = f.limeLevel();
+        Integer plow = f.plowLevel();
+        String ground = f.groundType();
+        String sprayType = f.sprayType();
+        switch (work) {
+            case "PLOW", "CULTIVATE", "SOW" -> {
+                boolean sow = "SOW".equals(work);
+                fruit = sow ? fruitType : null;
+                fillType = sow ? fruitType : null;
+                growth = sow ? 1 : 0;
+                minHarvest = null;
+                maxHarvest = null;
+                withered = sow ? false : null;
+                cut = sow ? false : null;
+                litersPerSqm = null;
+                ground = sow ? "SOWN" : "PLOW".equals(work) ? "PLOWED" : "CULTIVATED";
+                if ("PLOW".equals(work)) {
+                    plow = Math.max(1, plow == null ? 0 : plow);
+                }
+            }
+            case "LIME" -> {
+                lime = Math.max(1, lime == null ? 0 : lime);
+                sprayType = "LIME";
+            }
+            case "FERTILIZE" -> {
+                spray = (spray == null ? 0 : spray) + 1;
+                sprayType = "FERTILIZER";
+            }
+            default -> cut = true; // HARVEST
         }
-        if (contractor != null && trust.getCurrentTrust(contractor) >= cfg().getTrustThreshold()) {
-            min = Math.max(1, min - cfg().getTrustDaysLess());
-            max = Math.max(1, max - cfg().getTrustDaysLess());
-        }
-        return new int[] { Math.max(1, min), Math.max(1, max) };
+        return new BridgeDtos.Field(f.farmlandId(), f.name(), f.hectares(), fruit, growth, minHarvest, maxHarvest,
+                f.weedState(), f.stoneLevel(), spray, lime, plow, ground, withered, cut, fillType, litersPerSqm, sprayType);
     }
 
     // ------------------------------------------------------------------------------------------ offer
 
-    /** The works for the field; {@code ownLiters} = litres this field's open harvest already reserves in the silos. */
-    List<Option> options(Savegame sg, FarmFacts f, BridgeDtos.Field field, long ownLiters) {
+    /** One work on the field as it is; {@code ownLiters} = litres this field's open harvest already reserves. */
+    Option option(Savegame sg, FarmFacts f, BridgeDtos.Field field, String work, long ownLiters) {
         FieldPhase phase = FieldService.phase(field);
         double ha = field.hectares() == null ? 0 : field.hectares();
-        List<Option> list = new ArrayList<>();
-        for (String work : WORKS) {
-            long price = price(work, ha);
-            String reason = switch (work) {
-                case "PLOW", "CULTIVATE" -> phase == FieldPhase.EMPTY || phase == FieldPhase.HARVESTED
-                        || phase == FieldPhase.WITHERED ? null : "PHASE";
-                case "LIME" -> !(phase == FieldPhase.EMPTY || phase == FieldPhase.HARVESTED) ? "PHASE"
-                        : field.limeLevel() == null || field.limeLevel() != 0 ? "LIMED" : null;
-                case "SOW" -> phase == FieldPhase.EMPTY ? null : "PHASE";
-                default -> phase == FieldPhase.HARVESTABLE ? null : "PHASE";
-            };
-            Long liters = null;
-            String fillType = null;
-            if ("HARVEST".equals(work) && reason == null) {
-                fillType = field.fillType() != null ? field.fillType() : field.fruitType();
-                OptionalDouble l = harvestLiters(field, f.fieldRules());
-                if (l.isEmpty() || fillType == null) {
-                    reason = "NO_YIELD";
-                } else {
-                    liters = Math.round(l.getAsDouble());
-                    if (f.tradeStorage() == null) {
-                        reason = "NO_SILOS";
-                    } else if (trade.freeCapacity(sg, neighbors.tradeStorage(f), fillType) + ownLiters < liters) {
-                        reason = "NO_CAPACITY";
-                    }
+        long price = price(work, ha);
+        String reason = switch (work) {
+            case "PLOW", "CULTIVATE" -> phase == FieldPhase.EMPTY || phase == FieldPhase.HARVESTED
+                    || phase == FieldPhase.WITHERED ? null : "PHASE";
+            case "LIME" -> !(phase == FieldPhase.EMPTY || phase == FieldPhase.HARVESTED) ? "PHASE"
+                    : field.limeLevel() == null || field.limeLevel() != 0 ? "LIMED" : null;
+            case "SOW" -> phase == FieldPhase.EMPTY ? null : "PHASE";
+            case "FERTILIZE" -> !(phase == FieldPhase.EMPTY || phase == FieldPhase.HARVESTED
+                    || phase == FieldPhase.GROWING) ? "PHASE"
+                    : field.sprayLevel() != null && field.sprayLevel() >= cfg().getMaxSprayLevel() ? "FERTILIZED" : null;
+            default -> phase == FieldPhase.HARVESTABLE ? null : "PHASE";
+        };
+        Long liters = null;
+        String fillType = null;
+        if ("HARVEST".equals(work) && reason == null) {
+            fillType = field.fillType() != null ? field.fillType() : field.fruitType();
+            OptionalDouble l = harvestLiters(field, f.fieldRules());
+            if (l.isEmpty() || fillType == null) {
+                reason = "NO_YIELD";
+            } else {
+                liters = Math.round(l.getAsDouble());
+                if (f.tradeStorage() == null) {
+                    reason = "NO_SILOS";
+                } else if (trade.freeCapacity(sg, neighbors.tradeStorage(f), fillType) + ownLiters < liters) {
+                    reason = "NO_CAPACITY";
                 }
             }
-            list.add(new Option(work, price, liters, fillType, reason));
+        }
+        return new Option(work, price, liters, fillType, reason);
+    }
+
+    /** The works for the field as it is (each on its own). */
+    List<Option> options(Savegame sg, FarmFacts f, BridgeDtos.Field field, long ownLiters) {
+        return WORKS.stream().map(w -> option(sg, f, field, w, ownLiters)).toList();
+    }
+
+    /** Known works without duplicates in the order the contractor does them ({@link #WORKS}). */
+    static List<String> sequence(java.util.Collection<String> works) {
+        return WORKS.stream().filter(works::contains).toList();
+    }
+
+    /**
+     * The works of one order in {@link #WORKS} order, each checked on the field as the possible works before leave it
+     * (a work that is not possible leaves the field unchanged).
+     */
+    List<Option> plan(Savegame sg, FarmFacts f, BridgeDtos.Field field, List<String> works, String fruitType) {
+        List<Option> list = new ArrayList<>();
+        BridgeDtos.Field state = field;
+        for (String work : sequence(works)) {
+            Option o = option(sg, f, state, work, 0);
+            list.add(o);
+            if (o.possible()) {
+                state = after(state, work, fruitType);
+            }
         }
         return list;
     }
 
-    /** Form "Lohnunternehmer beauftragen" for an own field. */
+    /** Form "Lohnunternehmer beauftragen" for an own field without a selection. */
     @Transactional
     public Quote quote(Savegame sg, int farmlandId) {
-        FarmFacts f = requireFields(sg);
-        BridgeDtos.Field field = ownField(f, farmlandId);
-        Character contractor = roles.ensure(sg, CharacterRole.CONTRACTOR);
-        int[] days = leadDays(sg, contractor);
-        Optional<ServiceCase> open = openOrder(sg, farmlandId);
-        List<Option> options = options(sg, f, field, 0);
-        if (open.isPresent()) {
-            options = options.stream().map(o -> new Option(o.work(), o.price(), o.harvestLiters(), o.fillType(),
-                    "OPEN_ORDER")).toList();
-        }
-        return new Quote(farmlandId, field.name(), field.hectares() == null ? 0 : field.hectares(),
-                FieldService.phase(field), options, cfg().getSowFruitTypes(), days[0], days[1], open.orElse(null));
+        return quote(sg, farmlandId, List.of());
     }
 
-    /** The player orders a work: checked, the work day is rolled; nothing is booked until that day. */
+    /**
+     * Form "Lohnunternehmer beauftragen" for an own field. {@code selected} = the works the player has ticked: those are
+     * checked as one order; every other work as if it were ticked too ({@code MAX_WORKS} when the order is full,
+     * {@code SEQUENCE} when it would break a ticked work, e.g. harvesting a field that is to be sown).
+     */
+    @Transactional
+    public Quote quote(Savegame sg, int farmlandId, java.util.Collection<String> selected) {
+        FarmFacts f = requireFields(sg);
+        BridgeDtos.Field field = ownField(f, farmlandId);
+        roles.ensure(sg, CharacterRole.CONTRACTOR);
+        List<ServiceCase> open = openOrders(sg, farmlandId);
+        List<String> sel = sequence(selected == null ? List.of() : selected);
+        if (sel.size() > maxWorks()) {
+            sel = sel.subList(0, maxWorks());
+        }
+        String fruit = cfg().getSowFruitTypes().isEmpty() ? null : cfg().getSowFruitTypes().get(0);
+        Map<String, Option> planned = byWork(plan(sg, f, field, sel, fruit));
+        List<Option> options = new ArrayList<>();
+        for (String work : WORKS) {
+            Option o;
+            if (!open.isEmpty()) {
+                o = withReason(option(sg, f, field, work, 0), "OPEN_ORDER");
+            } else if (sel.contains(work)) {
+                o = planned.get(work);
+            } else if (sel.size() >= maxWorks()) {
+                o = withReason(option(sg, f, field, work, 0), "MAX_WORKS");
+            } else {
+                List<String> with = new ArrayList<>(sel);
+                with.add(work);
+                Map<String, Option> p = byWork(plan(sg, f, field, with, fruit));
+                o = p.get(work);
+                boolean breaks = sel.stream().anyMatch(w -> planned.get(w).possible() && !p.get(w).possible());
+                if (o.possible() && breaks) {
+                    o = withReason(o, "SEQUENCE");
+                }
+            }
+            options.add(o);
+        }
+        return new Quote(farmlandId, field.name(), field.hectares() == null ? 0 : field.hectares(),
+                FieldService.phase(field), options, sel, cfg().getSowFruitTypes(), maxWorks(),
+                doneBy(sg.getCurrentGameTime()), open);
+    }
+
+    private static Option withReason(Option o, String reason) {
+        return new Option(o.work(), o.price(), o.harvestLiters(), o.fillType(), reason);
+    }
+
+    private static Map<String, Option> byWork(List<Option> options) {
+        Map<String, Option> m = new LinkedHashMap<>();
+        options.forEach(o -> m.put(o.work(), o));
+        return m;
+    }
+
+    /** The player orders one work (see {@link #order(Savegame, int, List, String)}). */
     @Transactional
     public ServiceCase order(Savegame sg, int farmlandId, String work, String fruitType) {
+        return order(sg, farmlandId, List.of(work), fruitType).get(0);
+    }
+
+    /**
+     * The player orders 1 to {@code max-works-per-order} works of one field at once: checked one after the other on the
+     * field as the works before leave it; one case per work, all done at the end of the next game day. Nothing is booked
+     * until then. {@code fruitType} only for SOW.
+     */
+    @Transactional
+    public List<ServiceCase> order(Savegame sg, int farmlandId, List<String> works, String fruitType) {
         if (!cfg().isEnabled()) {
             throw new BusinessRuleException("CONTRACTOR_OFF", "Der Lohnunternehmer nimmt gerade keine Aufträge an.");
         }
-        if (!WORKS.contains(work)) {
-            throw new BusinessRuleException("CONTRACTOR_WORK", "Unbekannte Arbeit: " + work);
+        if (works == null || works.isEmpty()) {
+            throw new BusinessRuleException("CONTRACTOR_WORK", "Bitte mindestens eine Arbeit wählen.");
+        }
+        for (String work : works) {
+            if (!WORKS.contains(work)) {
+                throw new BusinessRuleException("CONTRACTOR_WORK", "Unbekannte Arbeit: " + work);
+            }
+        }
+        List<String> sequence = sequence(works);
+        if (sequence.size() > maxWorks()) {
+            throw new BusinessRuleException("CONTRACTOR_MAX_WORKS", "Höchstens " + maxWorks()
+                    + " Arbeiten je Feld auf einmal.");
         }
         FarmFacts f = requireFields(sg);
         BridgeDtos.Field field = ownField(f, farmlandId);
-        if (openOrder(sg, farmlandId).isPresent()) {
+        if (!openOrders(sg, farmlandId).isEmpty()) {
             throw new BusinessRuleException("CONTRACTOR_OPEN", "Für dieses Feld ist schon ein Auftrag offen.");
         }
-        Option option = options(sg, f, field, 0).stream().filter(o -> o.work().equals(work)).findFirst().orElseThrow();
-        if (!option.possible()) {
-            throw new BusinessRuleException("CONTRACTOR_" + option.reason(), refusal(option, field));
+        if (sequence.contains("SOW") && (fruitType == null || !cfg().getSowFruitTypes().contains(fruitType))) {
+            throw new BusinessRuleException("CONTRACTOR_FRUIT", "Bitte eine Fruchtsorte aus der Liste wählen.");
         }
-        String title = null;
-        if ("SOW".equals(work)) {
-            if (fruitType == null || !cfg().getSowFruitTypes().contains(fruitType)) {
-                throw new BusinessRuleException("CONTRACTOR_FRUIT", "Bitte eine Fruchtsorte aus der Liste wählen.");
+        List<Option> plan = plan(sg, f, field, sequence, fruitType);
+        for (int i = 0; i < plan.size(); i++) {
+            Option option = plan.get(i);
+            if (!option.possible()) {
+                throw new BusinessRuleException("CONTRACTOR_" + option.reason(), refusal(option, field,
+                        sequence.subList(0, i)));
             }
-            title = fruitType;
-        } else if ("HARVEST".equals(work)) {
-            title = option.fillType();
         }
-        if (liquidity.available(sg) < option.price()) {
-            throw new BusinessRuleException("CONTRACTOR_FUNDS", "Dafür reicht dein Kontostand nicht (" + option.price()
-                    + " €).");
+        long total = plan.stream().mapToLong(Option::price).sum();
+        if (liquidity.available(sg) < total) {
+            throw new BusinessRuleException("CONTRACTOR_FUNDS", "Dafür reicht dein Kontostand nicht (" + total + " €).");
         }
         Character contractor = roles.ensure(sg, CharacterRole.CONTRACTOR);
-        int[] range = leadDays(sg, contractor);
-        int days = random.intBetween(range[0], range[1]);
         long now = sg.getCurrentGameTime();
-        ServiceCase sc = new ServiceCase();
-        sc.setSavegame(sg);
-        sc.setKind(CaseKind.CONTRACTOR_WORK);
-        sc.setStatus(CaseStatus.IN_PROGRESS);
-        sc.setCharacter(contractor);
-        sc.setFarmlandId(farmlandId);
-        sc.setHectares(field.hectares());
-        sc.setReference(work);
-        sc.setTitle(title);
-        sc.setQuantity(option.harvestLiters() == null ? null : option.harvestLiters().intValue());
-        sc.setOfferAmount(option.price());
-        sc.setGameTime(now);
-        sc.setDeadlineGameTime(now + GameTime.days(days));
-        sc.setCreatedAt(java.time.Instant.now());
-        return cases.save(sc);
+        long doneBy = doneBy(now);
+        List<ServiceCase> list = new ArrayList<>();
+        for (Option option : plan) {
+            ServiceCase sc = new ServiceCase();
+            sc.setSavegame(sg);
+            sc.setKind(CaseKind.CONTRACTOR_WORK);
+            sc.setStatus(CaseStatus.IN_PROGRESS);
+            sc.setCharacter(contractor);
+            sc.setFarmlandId(farmlandId);
+            sc.setHectares(field.hectares());
+            sc.setReference(option.work());
+            sc.setTitle("SOW".equals(option.work()) ? fruitType : "HARVEST".equals(option.work()) ? option.fillType() : null);
+            sc.setQuantity(option.harvestLiters() == null ? null : option.harvestLiters().intValue());
+            sc.setOfferAmount(option.price());
+            sc.setGameTime(now);
+            sc.setDeadlineGameTime(doneBy);
+            sc.setCreatedAt(java.time.Instant.now());
+            list.add(cases.save(sc));
+        }
+        return list;
     }
 
-    private String refusal(Option o, BridgeDtos.Field field) {
+    private String refusal(Option o, BridgeDtos.Field field, List<String> before) {
+        String after = before.isEmpty() ? "" : " nach " + String.join(", ", before.stream().map(WORK_TITLES::get).toList());
         return switch (o.reason()) {
             case "NO_CAPACITY" -> "Wohin mit dem " + labels.label(o.fillType()) + "? In deinen Silos ist nicht genug Platz für "
                     + o.harvestLiters() + " Liter.";
             case "NO_SILOS" -> "Der Mod meldet deine Silos nicht – bitte den Mod FS25_RPSim aktualisieren.";
             case "NO_YIELD" -> "Für dieses Feld ist kein Ertrag bekannt.";
             case "LIMED" -> "Feld " + field.name() + " ist schon gekalkt.";
-            default -> WORK_TITLES.get(o.work()) + " passt gerade nicht zum Zustand von Feld " + field.name() + ".";
+            case "FERTILIZED" -> "Feld " + field.name() + " ist schon voll gedüngt.";
+            default -> WORK_TITLES.get(o.work()) + " passt" + after + " nicht zum Zustand von Feld " + field.name() + ".";
         };
     }
 
@@ -315,46 +455,62 @@ public class ContractorWorkService {
     public void onDay(GameDayPassedEvent e) {
         Savegame sg = savegames.findById(e.savegameId()).orElseThrow();
         long now = sg.getCurrentGameTime();
+        Map<Integer, List<ServiceCase>> due = new LinkedHashMap<>();
         for (ServiceCase sc : cases.findBySavegameAndStatusOrderByIdAsc(sg, CaseStatus.IN_PROGRESS)) {
             if (sc.getKind() == CaseKind.CONTRACTOR_WORK && sc.getExternalId() == null && sc.getDeadlineGameTime() != null
                     && sc.getDeadlineGameTime() <= now) {
-                execute(sg, sc);
+                due.computeIfAbsent(sc.getFarmlandId(), k -> new ArrayList<>()).add(sc);
             }
         }
+        due.values().forEach(group -> execute(sg, group));
     }
 
-    /** The work day: field, silo and money are checked again, then the batch goes to the mod. */
-    void execute(Savegame sg, ServiceCase sc) {
+    /**
+     * The work day of one field: field, silo and money are checked again work by work (in {@link #WORKS} order, each
+     * on the field as the works before leave it), then the works go to the mod as one batch - a refused work aborts the
+     * works after it.
+     */
+    void execute(Savegame sg, List<ServiceCase> group) {
+        List<ServiceCase> ordered = new ArrayList<>(group);
+        ordered.sort(java.util.Comparator.comparingInt((ServiceCase c) -> WORKS.indexOf(c.getReference()))
+                .thenComparing(ServiceCase::getId));
         FarmFacts f = facts.latest(sg).orElse(null);
+        int farmlandId = ordered.get(0).getFarmlandId();
         BridgeDtos.Field field = f == null || f.fields() == null ? null : f.fields().stream()
-                .filter(x -> x != null && Integer.valueOf(sc.getFarmlandId()).equals(x.farmlandId())).findFirst()
+                .filter(x -> x != null && Integer.valueOf(farmlandId).equals(x.farmlandId())).findFirst()
                 .orElse(null);
         if (field == null) {
-            cancel(sc, "NOT_OWN_FIELD");
+            ordered.forEach(sc -> cancel(sc, "NOT_OWN_FIELD"));
             return;
         }
-        long reserved = sc.getQuantity() == null ? 0 : sc.getQuantity();
-        Option option = options(sg, f, field, "HARVEST".equals(sc.getReference()) ? reserved : 0).stream()
-                .filter(o -> o.work().equals(sc.getReference())).findFirst().orElseThrow();
-        if (!option.possible()) {
-            cancel(sc, "NO_CAPACITY".equals(option.reason()) ? "NO_CAPACITY" : "NOT_NEEDED");
-            return;
+        long available = liquidity.available(sg);
+        String batchId = null;
+        for (ServiceCase sc : ordered) {
+            long reserved = sc.getQuantity() == null ? 0 : sc.getQuantity();
+            boolean harvest = "HARVEST".equals(sc.getReference());
+            Option option = option(sg, f, field, sc.getReference(), harvest ? reserved : 0);
+            if (!option.possible()) {
+                cancel(sc, "NO_CAPACITY".equals(option.reason()) ? "NO_CAPACITY" : "NOT_NEEDED");
+                continue;
+            }
+            if (available < sc.getOfferAmount()) {
+                cancel(sc, "NO_FUNDS");
+                continue;
+            }
+            available -= sc.getOfferAmount();
+            long liters = harvest ? option.harvestLiters() : 0;
+            if (harvest) {
+                sc.setQuantity((int) liters);
+                sc.setTitle(option.fillType());
+            }
+            String note = WORK_TITLES.get(sc.getReference()) + " Feld " + field.name();
+            List<OutboxInstruction> batch = outbox.fieldWorkDeal(sg, batchId, sc.getFarmlandId(), sc.getReference(),
+                    "SOW".equals(sc.getReference()) ? sc.getTitle() : null, harvest ? option.fillType() : null, liters,
+                    sc.getOfferAmount(), note, new Related(RELATED, sc.getId()));
+            batchId = batch.get(0).getBatchId();
+            sc.setExternalId(batchId);
+            field = after(field, sc.getReference(), sc.getTitle());
         }
-        if (liquidity.available(sg) < sc.getOfferAmount()) {
-            cancel(sc, "NO_FUNDS");
-            return;
-        }
-        boolean harvest = "HARVEST".equals(sc.getReference());
-        long liters = harvest ? option.harvestLiters() : 0;
-        if (harvest) {
-            sc.setQuantity((int) liters);
-            sc.setTitle(option.fillType());
-        }
-        String note = WORK_TITLES.get(sc.getReference()) + " Feld " + field.name();
-        List<OutboxInstruction> batch = outbox.fieldWorkDeal(sg, sc.getFarmlandId(), sc.getReference(),
-                "SOW".equals(sc.getReference()) ? sc.getTitle() : null, harvest ? option.fillType() : null, liters,
-                sc.getOfferAmount(), note, new Related(RELATED, sc.getId()));
-        sc.setExternalId(batch.get(0).getBatchId());
     }
 
     /** Sentence of the cancellation mail per reason (the numbers come from the facts, never from the AI). */
@@ -435,7 +591,8 @@ public class ContractorWorkService {
         if (sc == null || sc.getKind() != CaseKind.CONTRACTOR_WORK || sc.getStatus() != CaseStatus.IN_PROGRESS) {
             return false;
         }
-        cancel(sc, message != null && message.contains("NOT_SUPPORTED") ? "MOD_OUTDATED" : "FAILED");
+        boolean outdated = message != null && (message.contains("NOT_SUPPORTED") || message.contains("unknown work"));
+        cancel(sc, outdated ? "MOD_OUTDATED" : "FAILED");
         return true;
     }
 
@@ -445,10 +602,12 @@ public class ContractorWorkService {
         return cases.findBySavegameAndKindInOrderByIdDesc(sg, List.of(CaseKind.CONTRACTOR_WORK));
     }
 
-    Optional<ServiceCase> openOrder(Savegame sg, int farmlandId) {
+    /** The open works of the field (one order, in the order the contractor does them). */
+    List<ServiceCase> openOrders(Savegame sg, int farmlandId) {
         return cases.findBySavegameAndStatusOrderByIdAsc(sg, CaseStatus.IN_PROGRESS).stream()
                 .filter(c -> c.getKind() == CaseKind.CONTRACTOR_WORK && Integer.valueOf(farmlandId).equals(c.getFarmlandId()))
-                .findFirst();
+                .sorted(java.util.Comparator.comparingInt((ServiceCase c) -> WORKS.indexOf(c.getReference())))
+                .toList();
     }
 
     /** Open order per farmland (Flurkarte badge). */

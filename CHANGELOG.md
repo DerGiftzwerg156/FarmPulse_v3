@@ -13,14 +13,28 @@ versions or this changelog do not match.
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training
 is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
 types and booking reasons (the neighbour trade and contracts then fail); the notice then says "Mod aktualisieren".
-The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q) and for the booking reason
-`SEVERANCE` (severance before the first working day).
+The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q), for the booking reason
+`SEVERANCE` (severance before the first working day) and for the contractor work `FERTILIZE` (*Düngen*).
 
 The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
 filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
 
 ### Added
 
+- **Lohnunternehmer: done the next day, up to 3 works at once, new work "Düngen"** (owner decisions 2026-10-06 in
+  `QUESTIONS.md`):
+  - A contractor job is always done at the end of the game day after the order day
+    (`rpsim.formulas.contractor-work.done-after-days`); the random 1–3 days, the busy season and the trust no longer
+    change it (keys `lead-days-min` / `-max`, `harvest-periods`, `harvest-extra-days`, `trust-threshold`,
+    `trust-days-less` removed).
+  - Up to 3 works of one field are ordered at once (`max-works-per-order`), e.g. *Grubbern*, *Säen* and *Düngen*. The
+    form has check boxes; each work is checked on the field as the works before leave it. On the work day the works go
+    to the mod as one batch in a fixed order (harvest, plow, cultivate, lime, sow, fertilise). Each work stays its own
+    case. `GET /api/contractor-work/fields/{id}?works=…` checks the other works together with the ticked ones
+    (`selected`, `maxWorks`, `doneByGameTime`, `openOrders` instead of `daysMin` / `daysMax` / `openOrder`);
+    `POST /api/contractor-work` takes `works` and answers the list of cases.
+  - New work `FERTILIZE` (*Düngen*, 70 € per hectare): spray level +1, `sprayType` `FERTILIZER`, in mod, bridge
+    simulator and schema. An older mod rejects it; the job is then cancelled with "Mod aktualisieren".
 - **Machine operators drive Courseplay and AutoDrive helpers too** (owner decisions 2026-10-06 in `QUESTIONS.md`):
   - **Courseplay:** its jobs are shallow copies of `AIJob` that replace `start` and `getIsStartable`, so the helper
     hooks never reached them (no operator until the next export, game helper name, no strict limit, no training

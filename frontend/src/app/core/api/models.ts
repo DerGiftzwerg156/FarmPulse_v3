@@ -1155,24 +1155,29 @@ export interface RotationPreviewView {
 
 /** R31-A1: one work of the contractor form; `reason` = why it is not possible (null = possible). */
 export interface WorkOptionView {
-  work: 'PLOW' | 'CULTIVATE' | 'LIME' | 'SOW' | 'HARVEST' | string;
+  work: 'HARVEST' | 'PLOW' | 'CULTIVATE' | 'LIME' | 'SOW' | 'FERTILIZE' | string;
   price: number;
   harvestLiters: number | null;
   fillType: string | null;
   reason: string | null;
 }
 
-/** R31-A1: "Lohnunternehmer beauftragen" for an own field. */
+/**
+ * R31-A1: "Lohnunternehmer beauftragen" for an own field. The options are checked together with `selected` (up to
+ * `maxWorks` works done on the same day); the work is done by `doneByGameTime` (end of the next game day).
+ * `openOrders` = the open order of the field, one case per work.
+ */
 export interface ContractorQuoteView {
   farmlandId: number;
   fieldName: string | null;
   hectares: number;
   phase: string;
   options: WorkOptionView[];
+  selected: string[];
   fruitTypes: string[];
-  daysMin: number;
-  daysMax: number;
-  openOrder: CaseView | null;
+  maxWorks: number;
+  doneByGameTime: number;
+  openOrders: CaseView[];
 }
 
 /** R31-A2: a machine to choose from; `dailyRent` 0 for a demo. */

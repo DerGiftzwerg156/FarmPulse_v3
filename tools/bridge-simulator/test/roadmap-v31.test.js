@@ -122,6 +122,23 @@ test('lohnunternehmer: spray types, field outlines and the contractor works', ()
   assert.equal(sim.moneyLog.at(-1).reason, 'CONTRACTOR_FEE');
 });
 
+test('several contractor works of one order run as one batch and build on each other', () => {
+  const { sim, run } = setup('lohnunternehmer');
+  const acks = run([
+    { instructionId: 'c1', batchId: 'b_order', type: 'FIELD_WORK', farmlandId: 4, work: 'CULTIVATE' },
+    { instructionId: 'c2', batchId: 'b_order', type: 'MONEY_TRANSACTION', amount: -240, reason: 'CONTRACTOR_FEE' },
+    { instructionId: 's1', batchId: 'b_order', type: 'FIELD_WORK', farmlandId: 4, work: 'SOW', fruitType: 'WHEAT' },
+    { instructionId: 's2', batchId: 'b_order', type: 'MONEY_TRANSACTION', amount: -300, reason: 'CONTRACTOR_FEE' },
+    { instructionId: 'f1', batchId: 'b_order', type: 'FIELD_WORK', farmlandId: 4, work: 'FERTILIZE' },
+    { instructionId: 'f2', batchId: 'b_order', type: 'MONEY_TRANSACTION', amount: -210, reason: 'CONTRACTOR_FEE' }]);
+  for (const a of Object.values(acks)) assert.equal(a.status, 'APPLIED', a.instructionId);
+  const field = sim.buildFarmFacts().fields.find((f) => f.farmlandId === 4);
+  assert.equal(field.fruitType, 'WHEAT');
+  assert.equal(field.groundType, 'SOWN');
+  assert.equal(field.sprayType, 'FERTILIZER');
+  assert.equal(field.sprayLevel, 2);
+});
+
 test('FIELD_WORK refuses a field that is not the player\'s or has a running contract', () => {
   const { sim, run } = setup('lohnunternehmer');
   sim.farmlands.find((f) => f.farmlandId === 7).ownerFarmId = 0;

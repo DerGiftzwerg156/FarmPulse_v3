@@ -781,11 +781,15 @@
       "CULTIVATE": "Grubbern",
       "LIME": "Kalken",
       "SOW": "Säen",
+      "FERTILIZE": "Düngen",
       "HARVEST": "Ernten"
     },
     "contractorReason": {
       "PHASE": "passt nicht zum Feldzustand",
       "LIMED": "Feld ist schon gekalkt",
+      "FERTILIZED": "Feld ist schon voll gedüngt",
+      "MAX_WORKS": "Auftrag ist schon voll",
+      "SEQUENCE": "passt nicht zu den gewählten Arbeiten",
       "NO_YIELD": "Ertrag unbekannt",
       "NO_SILOS": "Mod meldet keine Silos",
       "NO_CAPACITY": "zu wenig Platz im Silo",
@@ -1285,10 +1289,12 @@
     },
     "contractor": {
       "title": "Lohnunternehmer beauftragen",
-      "intro": "Der Lohnunternehmer kommt in {min} bis {max} Spieltagen. Die Rechnung wird am Arbeitstag gebucht.",
+      "intro": "Wähle bis zu {max} Arbeiten – der Lohnunternehmer erledigt sie nacheinander am selben Tag und ist bis {time} (Ende des nächsten Spieltages) fertig. Die Rechnung wird am Arbeitstag gebucht.",
       "order": "Beauftragen",
+      "total": "{count} Arbeiten · zusammen {price}",
+      "totalOne": "1 Arbeit · {price}",
       "ordered": "Auftrag erteilt – der Termin steht unter „Offene Vorgänge“.",
-      "open": "Beauftragt: {work} am {time} für {price}.",
+      "open": "Beauftragt: {works} – fertig bis {time}, zusammen {price}.",
       "liters": "{liters} l {fillType} ins Silo",
       "caseText": "{work} für {price}",
       "caseHint": "Am Arbeitstag ist die Arbeit im Spiel erledigt und die Rechnung gebucht."

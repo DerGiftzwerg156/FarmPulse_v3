@@ -987,13 +987,11 @@ Owner decisions of 2026-10-02 (`docs/architecture/QUESTIONS.md`); all values are
 | `rpsim.formulas.contractor-work.price-per-ha.CULTIVATE` | `80` | Price per hectare for cultivating. | Roadmap V3.1 R31-A1 |
 | `rpsim.formulas.contractor-work.price-per-ha.LIME` | `60` | Price per hectare for liming, lime included. | Roadmap V3.1 R31-A1 |
 | `rpsim.formulas.contractor-work.price-per-ha.SOW` | `100` | Price per hectare for sowing, seed included. | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.price-per-ha.FERTILIZE` | `70` | Price per hectare for fertilising (one spray level, mineral fertiliser included). | Owner decisions 2026-10-06 |
 | `rpsim.formulas.contractor-work.price-per-ha.HARVEST` | `180` | Price per hectare for harvesting. | Roadmap V3.1 R31-A1 |
-| `rpsim.formulas.contractor-work.lead-days-min` | `1` | The work is done this many game days after the order at the earliest … | Roadmap V3.1 R31-A1 |
-| `rpsim.formulas.contractor-work.lead-days-max` | `3` | … and at the latest (random). | Roadmap V3.1 R31-A1 |
-| `rpsim.formulas.contractor-work.harvest-periods` | `[5, 6, 7, 8]` | FS25 periods of the busy season (July–October). | Roadmap V3.1 R31-A1 |
-| `rpsim.formulas.contractor-work.harvest-extra-days` | `2` | Extra game days in the busy season. | Roadmap V3.1 R31-A1 |
-| `rpsim.formulas.contractor-work.trust-threshold` | `50` | Trust to the contractor from which the wait is shorter … | Roadmap V3.1 R31-A1 |
-| `rpsim.formulas.contractor-work.trust-days-less` | `1` | … by this many days (at least 1 day remains). | Roadmap V3.1 R31-A1 |
+| `rpsim.formulas.contractor-work.done-after-days` | `1` | The work is done at the end of the game day this many days after the order day (1 = the next day); the batch goes to the mod when that day ends. | Owner decisions 2026-10-06 |
+| `rpsim.formulas.contractor-work.max-works-per-order` | `3` | At most this many works of one field in one order, done one after the other on the same day. | Owner decisions 2026-10-06 |
+| `rpsim.formulas.contractor-work.max-spray-level` | `2` | Fertilising is offered below this spray level (FS25 `sprayLevelMaxValue`). | Owner decisions 2026-10-06 |
 | `rpsim.formulas.contractor-work.done-trust-delta` | `2` | Trust of the contractor after a finished job. | Roadmap V3.1 R31-A1 |
 | `rpsim.formulas.contractor-work.sow-fruit-types` | `[WHEAT, BARLEY, OAT, CANOLA, MAIZE, SUNFLOWER, SOYBEAN, SORGHUM]` | FS25 fruit types offered for sowing. | Roadmap V3.1 R31-A1 |
 | `rpsim.formulas.contractor-work.yield.spray-factors` | `[0.85, 0.95, 1.0]` | Yield factor by `sprayLevel` 0, 1, 2 and more. | Roadmap V3.1 R31-A1 |

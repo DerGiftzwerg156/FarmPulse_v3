@@ -639,13 +639,11 @@ rpsim:
         CULTIVATE: 80
         LIME: 60
         SOW: 100
+        FERTILIZE: 70
         HARVEST: 180
-      lead-days-min: 1            # done after 1-3 game days ...
-      lead-days-max: 3
-      harvest-periods: [5, 6, 7, 8] # ... in the busy season (July-October) ...
-      harvest-extra-days: 2       # ... 2 days later
-      trust-threshold: 50         # trust to the contractor from 50 ...
-      trust-days-less: 1          # ... shortens the wait by 1 day (at least 1 day)
+      done-after-days: 1          # done at the end of the game day after the order day
+      max-works-per-order: 3      # up to 3 works of one field at once, done on the same day
+      max-spray-level: 2          # fertilising is offered below this spray level (FS25 sprayLevelMaxValue)
       done-trust-delta: 2
       sow-fruit-types: [WHEAT, BARLEY, OAT, CANOLA, MAIZE, SUNFLOWER, SOYBEAN, SORGHUM]
       yield:                      # harvest = area x litersPerSqm x factor (product of the parts below)

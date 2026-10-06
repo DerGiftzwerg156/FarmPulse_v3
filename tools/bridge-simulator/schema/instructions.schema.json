@@ -84,7 +84,7 @@
           "then": { "required": ["vehicleId"], "properties": { "vehicleId": { "type": "string", "minLength": 1 } } } },
         { "if": { "properties": { "type": { "const": "FIELD_WORK" } } },
           "then": { "required": ["farmlandId", "work"], "properties": { "farmlandId": { "type": "integer" },
-            "work": { "enum": ["PLOW", "CULTIVATE", "LIME", "SOW", "HARVEST"] },
+            "work": { "enum": ["PLOW", "CULTIVATE", "LIME", "SOW", "FERTILIZE", "HARVEST"] },
             "fruitType": { "type": "string", "minLength": 1 } },
             "if": { "properties": { "work": { "const": "SOW" } } },
             "then": { "required": ["fruitType"] }, "else": { "not": { "required": ["fruitType"] } } } },

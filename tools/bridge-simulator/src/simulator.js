@@ -28,7 +28,7 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   // owner decision 2026-10-06: severance before the first working day
   'SEVERANCE']);
 // Roadmap V3.1 R31-A1: works of the contractor
-const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'HARVEST'];
+const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'FERTILIZE', 'HARVEST'];
 // crop details a field loses when the contractor plows, cultivates or sows (R2-C1 fields of a standing crop)
 const CROP_KEYS = ['fruitType', 'minHarvestingGrowthState', 'maxHarvestingGrowthState', 'withered', 'cut', 'fillType',
   'litersPerSqm'];
@@ -709,7 +709,8 @@ export class BridgeSimulator {
   /**
    * R31-A1 like the planned mod action: end state of the work on an own field (AbstractFieldMission:finishField). The
    * values are simulated: plowing / cultivating remove the crop, liming sets the lime level and sprayType LIME, sowing
-   * starts the crop, harvesting cuts it (HARVESTED). The harvest goes into the silo by the STORAGE_TRANSFER of the batch.
+   * starts the crop, fertilising raises the spray level by one (at most 2, sprayType FERTILIZER), harvesting cuts it
+   * (HARVESTED). The harvest goes into the silo by the STORAGE_TRANSFER of the batch.
    */
   fieldWork(ins) {
     const field = this.fields?.find((f) => f.farmlandId === ins.farmlandId);
@@ -735,6 +736,9 @@ export class BridgeSimulator {
         break;
       case 'LIME':
         Object.assign(field, { limeLevel: 1, sprayType: 'LIME' });
+        break;
+      case 'FERTILIZE':
+        Object.assign(field, { sprayLevel: Math.min(2, (field.sprayLevel ?? 0) + 1), sprayType: 'FERTILIZER' });
         break;
       case 'SOW':
         clearCrop();
