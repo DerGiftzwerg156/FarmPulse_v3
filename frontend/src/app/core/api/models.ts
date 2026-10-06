@@ -970,6 +970,11 @@ export interface TradeView {
 }
 
 /** Roadmap V3 R3-N1..N3: home-network access (card "Tablet & Netzwerk", PIN login). */
+/** First-open hints of the apps that were confirmed (once per installation, owner decision 2026-10-06). */
+export interface AppHintsView {
+  seen: string[];
+}
+
 export interface LanStatusView {
   enabled: boolean;
   pinSet: boolean;

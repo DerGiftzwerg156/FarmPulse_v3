@@ -79,6 +79,10 @@ describe('Village', () => {
     const { el, fixture, http, btn } = setup('1');
     http.expectOne('/api/characters/1').flush(detail(heike, { pacingActive: true, openTopic: true }));
     fixture.detectChanges();
+    // writing is the sub tab "Nachricht" of the profile (owner decision 2026-10-06)
+    expect(el.querySelector('[data-testid="compose-text"]')).toBeNull();
+    (el.querySelector('[data-testid="profile-tab-message"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
     expect(el.querySelector('[data-testid="pacing-hint"]')).not.toBeNull();
     expect(el.querySelector('[data-testid="open-topic"]')).not.toBeNull();
     const ta = el.querySelector('[data-testid="compose-text"]') as HTMLTextAreaElement;

@@ -397,6 +397,14 @@ export class ApiService {
     return this.post('/lan/logout');
   }
 
+  // first-open hints of the apps (owner decision 2026-10-06)
+  appHints(): Observable<M.AppHintsView> {
+    return this.get('/app-hints');
+  }
+  markAppHintSeen(appId: string): Observable<M.AppHintsView> {
+    return this.http.put<M.AppHintsView>(`${this.base}/app-hints/${appId}`, {});
+  }
+
   // settings
   aiSettings(): Observable<M.AiSettingsView> {
     return this.get('/settings/ai');

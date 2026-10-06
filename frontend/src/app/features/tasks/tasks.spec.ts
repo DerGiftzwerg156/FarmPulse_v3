@@ -47,7 +47,10 @@ describe('task helpers', () => {
     expect(taskAppId(task({ type: 'CALL' }))).toBe('phone');
     expect(taskAppId(task({ type: 'CASE', kind: 'INVITATION' }))).toBe('calendar');
     expect(taskCategory(task({ type: 'CREDIT_COUNTER' }))).toBe('money');
-    expect(taskLink(task({ type: 'NEGOTIATION', negotiation: { id: 4 } as never }))).toEqual({ path: '/farmland', query: { negotiation: 4 } });
+    // the link opens the tab of the entry (owner decision 2026-10-06)
+    expect(taskLink(task({ type: 'NEGOTIATION', negotiation: { id: 4 } as never }))).toEqual({ path: '/farmland/verhandlungen', query: { negotiation: 4 } });
+    expect(taskLink(task({ type: 'CASE', kind: 'TAX_BILL', serviceCase: { id: 7 } as never }))).toEqual({ path: '/aemter/finanzamt', query: { case: 7 } });
+    expect(taskLink(task({ type: 'CALL', call: { id: 2 } as never }))).toEqual({ path: '/calls', query: { id: 2 } });
   });
 });
 
@@ -84,6 +87,11 @@ describe('Tasks', () => {
     expect(el.querySelectorAll('[data-testid="task-group-today"] [data-testid="task"]').length).toBe(1);
     expect(el.querySelectorAll('[data-testid="task-group-week"] [data-testid="task"]').length).toBe(1);
     expect(el.querySelector('[data-testid="task-group-week"] [data-testid="task-app"]')?.textContent).toContain('Kalender');
+    expect(el.querySelector('[data-testid="waiting-prompts"]')).toBeNull();
+    // the questions in the game and today's diary are in the tab "Meldungen" (owner decision 2026-10-06)
+    fixture.componentRef.setInput('tab', 'meldungen');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="task"]')).toBeNull();
     expect(el.querySelector('[data-testid="waiting-prompts"]')?.textContent).toContain('2 Frage(n)');
     expect(el.querySelector('[data-testid="today-diary"]')?.textContent).toContain('Kredit angenommen');
   });

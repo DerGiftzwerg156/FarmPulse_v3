@@ -34,7 +34,12 @@ describe('Settings', () => {
       i.dispatchEvent(new Event(i.tagName === 'SELECT' ? 'change' : 'input'));
       fixture.detectChanges();
     };
-    return { fixture, http, el, input };
+    /** Tabs (owner decision 2026-10-06): KI, Hof, Ereignisse, Im Spiel, Tablet & Netzwerk. */
+    const toTab = (tab: string) => {
+      fixture.componentRef.setInput('tab', tab);
+      fixture.detectChanges();
+    };
+    return { fixture, http, el, input, toTab };
   }
 
   it('shows the active provider and a stored key without ever showing it', () => {
@@ -82,18 +87,21 @@ describe('Settings', () => {
   });
 
   it('shows the tone preset read-only', () => {
-    const { el } = setup();
+    const { toTab, el } = setup();
+    toTab('hof');
     expect(el.querySelector('[data-testid="tone"]')?.textContent).toContain('Realistisch');
     expect(el.querySelector('[data-testid="game-settings"] select, [data-testid="game-settings"] input')).toBeNull();
   });
 
   it('works without an active savegame', () => {
-    const { el } = setup(null);
+    const { toTab, el } = setup(null);
+    toTab('hof');
     expect(el.querySelector('[data-testid="tone"]')?.textContent).toContain('–');
   });
   // Roadmap V2 R2-C6
   it('switches the field work hints off', () => {
-    const { el, http, fixture } = setup();
+    const { toTab, el, http, fixture } = setup();
+    toTab('ereignisse');
     const box = el.querySelector('[data-testid="field-hints"]') as HTMLInputElement;
     expect(box.checked).toBe(true);
     box.checked = false;
@@ -107,7 +115,8 @@ describe('Settings', () => {
 
   // Roadmap V2 R2-D
   it('switches the reactions to the game menus off', () => {
-    const { el, http, fixture } = setup(undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });
+    const { toTab, el, http, fixture } = setup(undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });
+    toTab('ereignisse');
     const box = el.querySelector('[data-testid="bypass-reactions"]') as HTMLInputElement;
     box.checked = false;
     box.dispatchEvent(new Event('change'));
@@ -120,7 +129,8 @@ describe('Settings', () => {
 
   // Roadmap V2 R2-F2
   it('switches the occasions asked in the game one by one', () => {
-    const { el, http, fixture } = setup();
+    const { toTab, el, http, fixture } = setup();
+    toTab('spiel');
     const boxes = () => Array.from(el.querySelectorAll('[data-testid="prompt-kind"]')) as HTMLInputElement[];
     expect(boxes().map((b) => b.checked)).toEqual([true, false, false]);
     expect(el.querySelector('[data-testid="prompt-settings"]')?.textContent).toContain('Steuerbescheide bezahlen');
@@ -137,15 +147,17 @@ describe('Settings', () => {
   });
 
   it('says when the questions in the game are switched off in the configuration', () => {
-    const { el } = setup(undefined, undefined, undefined,
+    const { toTab, el } = setup(undefined, undefined, undefined,
       { available: false, kinds: ['CALL'], allKinds: ['CALL'] });
+    toTab('spiel');
     expect(el.querySelector('[data-testid="prompts-off"]')).not.toBeNull();
     expect((el.querySelector('[data-testid="prompt-kind"]') as HTMLInputElement).disabled).toBe(true);
   });
 
   // Roadmap V3 R3-T2
   it('saves the farm name, the map name is the placeholder', () => {
-    const { el, http, input } = setup();
+    const { toTab, el, http, input } = setup();
+    toTab('hof');
     expect((el.querySelector('[data-testid="farm-name"]') as HTMLInputElement).placeholder).toBe('Erlengrund');
     input('farm-name', '  Hof Lindenhain ');
     (el.querySelector('[data-testid="farm-save"] button') as HTMLButtonElement).click();

@@ -1,8 +1,17 @@
+<!-- Tabs (owner decision 2026-10-06): Nächste Tage (with the month start) | Einladungen | Jahr -->
 <section class="flex flex-col gap-5">
+  @if (tab() === 'einladungen') {
+    <app-service-cases [caseKinds]="['INVITATION', 'STAMMTISCH_INVITATION', 'SCHOOL_VISIT', 'COOP_ASSEMBLY', 'COOP_BOARD_MEETING']" openTitle="calendar.invitations" [highlightCase]="highlightedCase()" testId="invitations" />
+  } @else {
   @if (failed()) {
     <p class="text-sm text-danger">{{ 'common.error' | t }}</p>
   }
   @if (overview(); as o) {
+    @if (tab() === 'jahr') {
+      @if (o.currentPeriod === null) {
+        <p class="text-sm text-muted">{{ 'common.empty' | t }}</p>
+      }
+    } @else {
     <div class="flex flex-col gap-5 lg:flex-row lg:gap-6">
       <!-- Nächste Tage -->
       <div class="min-w-0 flex-1 rounded-[18px] border border-border bg-surface px-5 py-4" data-testid="agenda">
@@ -71,10 +80,11 @@
       </div>
     </div>
 
-    <app-service-cases [caseKinds]="['INVITATION', 'STAMMTISCH_INVITATION', 'SCHOOL_VISIT', 'COOP_ASSEMBLY', 'COOP_BOARD_MEETING']" openTitle="calendar.invitations" [showEmpty]="false" [highlightCase]="highlightedCase()" testId="invitations" />
+
+    }
 
     <!-- Jahresleiste -->
-    @if (o.currentPeriod !== null) {
+    @if (tab() === 'jahr' && o.currentPeriod !== null) {
       <div class="rounded-[18px] border border-border bg-surface px-5 py-4" data-testid="year">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <span class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-[#8FA39A]">{{ 'calendar.yearOverview' | t: { year: o.year } }}</span>
@@ -103,5 +113,6 @@
     }
   } @else if (!failed()) {
     <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
+  }
   }
 </section>

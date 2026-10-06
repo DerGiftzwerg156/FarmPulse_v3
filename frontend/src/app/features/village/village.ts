@@ -22,6 +22,7 @@ export const CATEGORY_ORDER = ['MANDATORY', 'SUBSTITUTE', 'DYNAMIC', 'EMPLOYEE']
 /**
  * Characters & village (AP-8.8): character list with abstract trust, detail with personality, proactive messages
  * with a visible pacing hint (never blocking), village reputation as tier only, direct negotiation for land owners.
+ * Tabs (owner decision 2026-10-06): Kontakte, Vereine & Sponsoring; the profile has the sub tabs Profil and Nachricht.
  */
 @Component({
   selector: 'app-village',
@@ -39,6 +40,10 @@ export class Village {
   /** `?case=` highlights a sponsoring request (links from mails and "Aufgaben"). */
   readonly case = input<string>();
   readonly highlightedCase = computed(() => Number(this.case()) || null);
+  /** Tab of the route `/village/:tab`. */
+  readonly tab = input<string>('kontakte');
+  readonly profileTabs = ['profile', 'message'] as const;
+  readonly profileTab = signal<'profile' | 'message'>('profile');
 
   readonly characters = signal<CharacterView[] | null>(null);
   readonly reputation = signal<ReputationView | null>(null);

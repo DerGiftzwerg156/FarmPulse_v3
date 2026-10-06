@@ -1,5 +1,5 @@
 import { GameStateStore } from '../../core/state/game-state.store';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import {
@@ -12,6 +12,7 @@ import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
+import { HelperSettingsCard } from './helper-settings-card';
 import { LanSettingsCard } from '../lan/lan-settings-card';
 
 /** Providers that need an API key / that talk to a configurable local endpoint. */
@@ -21,17 +22,20 @@ export const URL_PROVIDERS = ['OLLAMA'];
 /**
  * Settings (AP-8.11): local AI provider, model and API key. The key is only held in this form until it is sent to
  * the backend, which writes it to its git-ignored local config; it is never read back or stored in the browser.
- * The tone preset is shown read-only (fixed since the onboarding).
+ * The tone preset is shown read-only (fixed since the onboarding). Tabs (owner decision 2026-10-06): KI, Hof,
+ * Ereignisse, Im Spiel (with the helper switches from "Personal"), Tablet & Netzwerk.
  */
 @Component({
   selector: 'app-settings',
-  imports: [TranslatePipe, LabelPipe, Card, Badge, Button, LanSettingsCard],
+  imports: [TranslatePipe, LabelPipe, Card, Badge, Button, LanSettingsCard, HelperSettingsCard],
   templateUrl: './settings.html',
 })
 export class Settings {
   private readonly api = inject(ApiService);
   private readonly i18n = inject(TranslationService);
   readonly store = inject(GameStateStore);
+  /** Tab of the route `/settings/:tab`. */
+  readonly tab = input<string>('ki');
 
   readonly ai = signal<AiSettingsView | null>(null);
   readonly game = signal<GameSettingsView | null>(null);

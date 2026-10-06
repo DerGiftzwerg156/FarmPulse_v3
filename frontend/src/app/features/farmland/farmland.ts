@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
@@ -36,7 +36,8 @@ export function highestBid(n: NegotiationView): number | null {
 
 /**
  * Farmland & negotiation (AP-8.6): overview of all fields with owner, auctions/direct negotiations/sale offers with
- * a bid form (max. rounds visible), result and the AI narration (the related mails), selling own fields.
+ * a bid form (max. rounds visible), result and the AI narration (the related mails), selling own fields. Tabs (owner
+ * decision 2026-10-06): Karte, Meine Felder, Verhandlungen, Pacht, Vorgänge.
  */
 @Component({
   selector: 'app-farmland',
@@ -48,8 +49,12 @@ export class Farmland {
   private readonly api = inject(ApiService);
   private readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
-  /** The first case list (claims, referrals, contractor jobs): reloaded after a contractor order. */
+  private readonly router = inject(Router);
+  /** The case list of the open tab: reloaded after a contractor order. */
   readonly casesView = viewChild(ServiceCases);
+
+  /** Tab of the route `/farmland/:tab`. */
+  readonly tab = input<string>('karte');
 
   /** `?negotiation=` selects a negotiation (link from mails / village). */
   readonly negotiation = input<string>();
@@ -149,6 +154,12 @@ export class Farmland {
     this.clearMessages();
   }
 
+  /** Selects a negotiation and shows it in the tab "Verhandlungen". */
+  openNegotiation(id: number): void {
+    this.selectNegotiation(id);
+    if (this.tab() !== 'verhandlungen') this.router.navigate(['/farmland', 'verhandlungen']);
+  }
+
   negotiationFor(f: FarmlandView): NegotiationView | undefined {
     return this.open().find((n) => n.assetId === String(f.farmlandId));
   }
@@ -173,7 +184,7 @@ export class Farmland {
     if (!f.owner) return;
     this.run(this.api.startDirectNegotiation(f.owner.id, f.farmlandId), (n) => {
       this.upsert(n);
-      this.selectNegotiation(n.id);
+      this.openNegotiation(n.id);
       this.info.set(this.i18n.t('farmland.directStarted', { name: f.owner!.name }));
     });
   }
@@ -208,7 +219,7 @@ export class Farmland {
     }
     this.run(this.api.sellOffer(f.farmlandId, Math.round(price)), (list) => {
       list.forEach((n) => this.upsert(n));
-      if (list[0]) this.selectNegotiation(list[0].id);
+      if (list[0]) this.openNegotiation(list[0].id);
       this.info.set(this.i18n.t('farmland.saleOffered', { n: list.length }));
     });
   }
@@ -223,7 +234,7 @@ export class Farmland {
     }
     this.run(this.api.leaseOutOffer(f.farmlandId, years, Math.round(rate)), (list) => {
       list.forEach((n) => this.upsert(n));
-      if (list[0]) this.selectNegotiation(list[0].id);
+      if (list[0]) this.openNegotiation(list[0].id);
       this.info.set(this.i18n.t(list.length ? 'farmland.leaseOut.offered' : 'farmland.leaseOut.noInterest', { n: list.length }));
     });
   }

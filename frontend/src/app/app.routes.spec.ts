@@ -6,7 +6,8 @@ describe('routes', () => {
     const children = routes[0].children ?? [];
     const paths = children.filter((r) => r.loadComponent).map((r) => r.path);
     expect(paths).toContain('');
-    APPS.forEach((app) => expect(paths).toContain(app.path.substring(1)));
+    // apps with tabs (owner decision 2026-10-06) load their page at <path>/:tab
+    APPS.forEach((app) => expect(paths.some((p) => p === app.path.substring(1) || p === app.path.substring(1) + '/:tab')).toBe(true));
     expect(paths).toContain('onboarding');
   });
 

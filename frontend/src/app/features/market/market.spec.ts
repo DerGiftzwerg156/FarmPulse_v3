@@ -37,12 +37,14 @@ describe('toChartSeries', () => {
 });
 
 describe('Market', () => {
-  function setup(events: MarketEventView[] = [], stock: StorageOverview = storage) {
+  /** Tabs (owner decision 2026-10-06): Lager & Preise, Preisverlauf, Ereignisse, Preisalarme, Vorkontrakte. */
+  function setup(events: MarketEventView[] = [], stock: StorageOverview = storage, tab = 'lager') {
     TestBed.configureTestingModule({
       imports: [Market],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     const fixture = TestBed.createComponent(Market);
+    fixture.componentRef.setInput('tab', tab);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
     http.expectOne('/api/storage').flush(stock);
@@ -54,14 +56,13 @@ describe('Market', () => {
     return { fixture, http, el, hist };
   }
 
-  it('shows silo stock with value and the credit/event hint', () => {
+  it('shows silo stock with value; the credit/event explanation is in the app hint', () => {
     const { el, hist } = setup();
     hist.flush(history);
     expect(el.querySelectorAll('[data-testid="storage-item"]').length).toBe(2);
     expect(el.querySelector('[data-testid="storage-item"]')?.textContent).toContain('Weizen');
     expect(el.querySelector('[data-testid="storage-value"]')?.textContent?.replace(/\s/g, ' ')).toContain('51.600 €');
-    expect(el.querySelector('[data-testid="storage-hint"]')?.textContent).toContain('Bonität');
-    expect(el.querySelector('[data-testid="storage-hint"]')?.textContent).toContain('Marktereignisse');
+    expect(el.querySelector('[data-testid="storage-hint"]')).toBeNull();
   });
 
   it('shows no capacity for stock without one (bunker silo)', () => {
@@ -95,7 +96,7 @@ describe('Market', () => {
   });
 
   it('renders the price history chart with sample data and reloads for another period and sell point', () => {
-    const { el, hist, fixture, http } = setup();
+    const { el, hist, fixture, http } = setup([], storage, 'verlauf');
     hist.flush(history);
     fixture.detectChanges();
     expect(el.querySelectorAll('[data-testid="history"] [data-testid="chart-line"]').length).toBe(2);
@@ -117,7 +118,7 @@ describe('Market', () => {
   });
 
   it('accepts a special contract via participation (no price haggling)', () => {
-    const { el, hist, fixture, http } = setup([offer]);
+    const { el, hist, fixture, http } = setup([offer], storage, 'ereignisse');
     hist.flush(history);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="contract-terms"]')?.textContent?.replace(/\s/g, ' ')).toContain('Festpreis 260 € je 1000 l für bis zu 50.000 l');

@@ -35,12 +35,14 @@ describe('applicationState', () => {
 });
 
 describe('Bank', () => {
-  function setup(apps: CreditApplicationView[], loans: LoanView[] = [], surcharge = 0) {
+  /** Applications are in the tab "Kreditantrag", loans in "Kredite" (owner decision 2026-10-06). */
+  function setup(apps: CreditApplicationView[], loans: LoanView[] = [], surcharge = 0, tab = 'antrag') {
     TestBed.configureTestingModule({
       imports: [Bank],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     const fixture = TestBed.createComponent(Bank);
+    fixture.componentRef.setInput('tab', tab);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
     http.expectOne('/api/credit-applications').flush(apps);
@@ -99,8 +101,10 @@ describe('Bank', () => {
     http.expectOne('/api/credit-applications').flush([{ ...counter, status: 'ACCEPTED', loanId: 4 }]);
     http.expectOne('/api/loans').flush([loan()]);
     fixture.detectChanges();
-    expect(el.querySelectorAll('[data-testid="loan"]').length).toBe(1);
     expect(el.querySelector('[data-testid="application"]')?.getAttribute('data-state')).toBe('accepted');
+    fixture.componentRef.setInput('tab', 'kredite');
+    fixture.detectChanges();
+    expect(el.querySelectorAll('[data-testid="loan"]').length).toBe(1);
   });
 
   it('declines a counter offer', () => {
@@ -113,7 +117,7 @@ describe('Bank', () => {
   });
 
   it('lists loans with plan, overdue state and payment history', () => {
-    const { el, btn, fixture } = setup([], [loan({ overdue: true, escalationLevel: 2 })]);
+    const { el, btn, fixture } = setup([], [loan({ overdue: true, escalationLevel: 2 })], 0, 'kredite');
     expect(el.querySelector('[data-testid="loan-remaining"]')?.textContent?.replace(/\s/g, ' ')).toContain('45.000 €');
     expect(el.querySelector('[data-testid="loan-plan"]')?.textContent).toContain('8 bezahlt · 28 offen');
     expect(el.querySelector('[data-testid="loan-overdue"]')).not.toBeNull();
@@ -126,7 +130,7 @@ describe('Bank', () => {
   });
 
   it('requests a deferral and shows the result', () => {
-    const { el, http, btn, fixture } = setup([], [loan()]);
+    const { el, http, btn, fixture } = setup([], [loan()], 0, 'kredite');
     const ta = el.querySelector('[data-testid="deferral-text"]') as HTMLTextAreaElement;
     ta.value = 'Die Ernte kommt erst im Herbst.';
     ta.dispatchEvent(new Event('input'));
@@ -142,7 +146,7 @@ describe('Bank', () => {
   });
 
   it('makes a Sondertilgung with fee preview and shows the shortened plan', () => {
-    const { el, http, btn, fixture } = setup([], [loan()]);
+    const { el, http, btn, fixture } = setup([], [loan()], 0, 'kredite');
     expect(el.querySelector('[data-testid="special-terms"]')?.textContent?.replace(/\s/g, ' ')).toContain('gebührenfrei: 6.000 €, darüber 1 %');
     expect(btn('special-submit').disabled).toBe(true);
     const input = el.querySelector('[data-testid="special-amount"]') as HTMLInputElement;
@@ -166,7 +170,7 @@ describe('Bank', () => {
   });
 
   it('adds the pro-rata interest when the whole remaining debt is repaid', () => {
-    const { el, btn, fixture } = setup([], [loan()]);
+    const { el, btn, fixture } = setup([], [loan()], 0, 'kredite');
     btn('special-payoff').click();
     fixture.detectChanges();
     const preview = el.querySelector('[data-testid="special-preview"]')?.textContent?.replace(/\s+/g, ' ');
@@ -176,7 +180,7 @@ describe('Bank', () => {
   });
 
   it('rejects amounts above the remaining debt and explains why a Sondertilgung is not possible', () => {
-    const { el, btn, fixture } = setup([], [loan()]);
+    const { el, btn, fixture } = setup([], [loan()], 0, 'kredite');
     const input = el.querySelector('[data-testid="special-amount"]') as HTMLInputElement;
     input.value = '45001';
     input.dispatchEvent(new Event('input'));
@@ -184,13 +188,13 @@ describe('Bank', () => {
     expect(el.querySelector('[data-testid="special-invalid"]')).not.toBeNull();
     expect(btn('special-submit').disabled).toBe(true);
     TestBed.resetTestingModule();
-    const overdue = setup([], [loan({ overdue: true, specialRepayment: { allowed: false, refusal: 'LOAN_OVERDUE', freeAmountLeft: 6000, feeRatePercent: 1, payoffInterest: 0 } })]);
+    const overdue = setup([], [loan({ overdue: true, specialRepayment: { allowed: false, refusal: 'LOAN_OVERDUE', freeAmountLeft: 6000, feeRatePercent: 1, payoffInterest: 0 } })], 0, 'kredite');
     expect(overdue.el.querySelector('[data-testid="special-amount"]')).toBeNull();
     expect(overdue.el.querySelector('[data-testid="special-refusal"]')?.textContent).toContain('überfällig');
   });
 
   it('shows the backend message when the Sondertilgung is refused', () => {
-    const { el, http, btn, fixture } = setup([], [loan()]);
+    const { el, http, btn, fixture } = setup([], [loan()], 0, 'kredite');
     btn('special-payoff').click();
     fixture.detectChanges();
     btn('special-submit').click();

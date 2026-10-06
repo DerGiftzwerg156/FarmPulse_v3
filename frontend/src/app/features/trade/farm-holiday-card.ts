@@ -47,7 +47,6 @@ import { Card } from '../../shared/ui/card';
             }
           </ul>
         }
-        <p class="mt-2 text-[11px] text-muted">{{ 'trade.holiday.hint' | t }}</p>
       } @else {
         <p class="text-[12px] text-muted">{{ 'common.loading' | t }}</p>
       }

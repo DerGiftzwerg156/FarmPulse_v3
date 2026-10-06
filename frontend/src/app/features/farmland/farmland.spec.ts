@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -31,15 +32,20 @@ describe('negotiation helpers', () => {
   });
 });
 
+@Component({ template: '' })
+class Blank {}
+
 describe('Farmland', () => {
+  /** Tabs (owner decision 2026-10-06): a negotiation link opens "Verhandlungen", otherwise "Karte". */
   function setup(negotiations: NegotiationView[] = [], mails: MessageView[] = [], negotiationParam?: string,
                  fieldMap?: FieldMapView) {
     TestBed.configureTestingModule({
       imports: [Farmland],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([{ path: 'farmland/:tab', component: Blank }]), provideHttpClient(), provideHttpClientTesting()],
     });
     const fixture = TestBed.createComponent(Farmland);
     if (negotiationParam) fixture.componentRef.setInput('negotiation', negotiationParam);
+    fixture.componentRef.setInput('tab', negotiationParam ? 'verhandlungen' : 'karte');
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
     http.expectOne('/api/field-map').flush(fieldMap ?? { mapSize: null, fields: [] });
@@ -59,7 +65,12 @@ describe('Farmland', () => {
       input.value = v;
       input.dispatchEvent(new Event('input'));
     };
-    return { fixture, http, el, btn, tile, setAmount };
+    /** The page opens the tab "Verhandlungen" after starting one; here the router does not bind the input. */
+    const toTab = (tab: string) => {
+      fixture.componentRef.setInput('tab', tab);
+      fixture.detectChanges();
+    };
+    return { fixture, http, el, btn, tile, setAmount, toTab };
   }
 
   it('renders all fields with owner state', () => {
@@ -115,7 +126,7 @@ describe('Farmland', () => {
   });
 
   it('offers an own field for sale with a price form', () => {
-    const { el, tile, btn, http, fixture, setAmount } = setup();
+    const { el, tile, btn, http, fixture, setAmount, toTab } = setup();
     tile(0);
     setAmount('asking-price', '110000');
     btn('sell-submit').click();
@@ -126,18 +137,20 @@ describe('Farmland', () => {
     ] })]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="farmland-info"]')?.textContent).toContain('1 Interessent');
+    toTab('verhandlungen');
     expect(el.querySelector('[data-testid="negotiation-detail"]')?.textContent).toContain('Verkaufsangebot');
     expect(el.querySelector('[data-testid="accept-counter"]')?.textContent?.replace(/\s/g, ' ')).toContain('98.000 € annehmen');
   });
 
   it('starts a direct negotiation with the owner', () => {
-    const { el, tile, btn, http, fixture } = setup();
+    const { el, tile, btn, http, fixture, toTab } = setup();
     tile(1);
     btn('start-direct').click();
     const req = http.expectOne('/api/negotiations/direct');
     expect(req.request.body).toEqual({ characterId: 4, farmlandId: 2 });
     req.flush(neg());
     fixture.detectChanges();
+    toTab('verhandlungen');
     expect(el.querySelector('[data-testid="rounds"]')?.textContent).toContain('0 / 3');
   });
 
@@ -207,7 +220,7 @@ describe('Farmland', () => {
 
   // Roadmap V3 R3-L1
   it('offers an own field for lease with term and desired rent per ha and month', () => {
-    const { el, tile, btn, http, fixture, setAmount } = setup();
+    const { el, tile, btn, http, fixture, setAmount, toTab } = setup();
     tile(0);
     const term = el.querySelector('[data-testid="lease-out-term"]') as HTMLSelectElement;
     expect([...term.options].map((o) => o.value)).toEqual(['1', '2', '3']);
@@ -227,6 +240,7 @@ describe('Farmland', () => {
       ] })]);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="farmland-info"]')?.textContent).toContain('1 Nachbar(n)');
+    toTab('verhandlungen');
     expect(el.querySelector('[data-testid="negotiation-detail"]')?.textContent).toContain('Verpachtung');
     expect(el.querySelector('[data-testid="lease-out-terms"]')?.textContent).toContain('Laufzeit 2 Jahr(e)');
     expect(el.querySelector('[data-testid="accept-counter"]')?.textContent?.replace(/\s/g, ' ')).toContain('118 € annehmen');
