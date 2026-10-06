@@ -55,6 +55,21 @@ function T.TestStartup:testMarketContextIsRefreshedWithFarmFactsWhenChanged()
     lu.assertEquals(#doc.farmlands, 3)
 end
 
+function T.TestStartup:testMarketContextIsRewrittenEveryIntervalEvenWhenUnchanged()
+    local bridge, fs, _, paths = helpers.newBridge({ config = { exportIntervalMs = 10, importIntervalMs = 999999,
+        marketContextIntervalMs = 100 } })
+    bridge:onSavegameLoaded()
+    local written = fs.files[paths.marketContext]
+    fs.files[paths.marketContext] = "SENTINEL"
+    bridge:update(60)
+    lu.assertEquals(fs.files[paths.marketContext], "SENTINEL") -- interval not reached, content unchanged
+    bridge:update(60)
+    lu.assertEquals(fs.files[paths.marketContext], written) -- interval reached: same content written again
+    fs.files[paths.marketContext] = "SENTINEL"
+    bridge:update(60)
+    lu.assertEquals(fs.files[paths.marketContext], "SENTINEL") -- the interval starts again
+end
+
 function T.TestStartup:testSaleIsCountedAfterPricingSoTheLastDeliveryGetsTheContractPrice()
     helpers.fakeGame()
     helpers.loadGameModules()

@@ -6,6 +6,9 @@ RPSimConfig.DEFAULTS = {
     -- Technical concept "Datei-Bridge": farm_facts.json is overwritten every 10 s (real time), so the backend is at
     -- most ~10 s behind the game.
     exportIntervalMs = 10000,
+    -- market_context.json is rewritten every marketContextIntervalMs (real time, ms) even when its content did not
+    -- change (owner decision 2026-10-06); in between, every farm_facts export still writes it as soon as it changed.
+    marketContextIntervalMs = 60000,
     -- Safety net for T-01: if Mission00.onStartMission never reaches the bridge, it starts after this many ms
     -- of frame updates (Farm Dashboard uses the same "ready after a delay" pattern).
     startFallbackMs = 30000,

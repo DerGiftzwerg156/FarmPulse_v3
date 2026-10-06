@@ -25,6 +25,7 @@ function RPSimBridge.new(cfg, paths, adapter, state)
     self.state = state or RPSimProcessor.newState(cfg)
     self.exportTimer = 0
     self.importTimer = 0
+    self.marketContextTimer = 0
     self.bootstrapped = false
     -- The bridge only starts exporting/importing once the mission has started (T-01): during loadMap the
     -- farms, vehicles, placeables and selling stations of the savegame are not loaded yet.
@@ -201,7 +202,8 @@ function RPSimBridge:recordSingleBooking(year, period, name, amount)
 end
 
 --- Writes market_context.json, but only when its content changed since the last successful write (the
--- context is re-checked on every farm_facts export, T-01). force = true writes unconditionally.
+-- context is re-checked on every farm_facts export, T-01). force = true writes unconditionally (mission start,
+-- FARMLAND_TRANSFER and every marketContextIntervalMs).
 -- Returns true when the file was written, false when unchanged or on error.
 function RPSimBridge:exportMarketContext(force)
     local ok, raw = pcall(self.adapter.collectMarketContext, self.adapter, self.cfg.conflictMods)
@@ -238,6 +240,7 @@ function RPSimBridge:onSavegameLoaded()
     self.started = true
     self.exportTimer = 0
     self.importTimer = 0
+    self.marketContextTimer = 0
     if self.workforceEnabled and self.adapter.registerStrikeMessage ~= nil then
         self.adapter:registerStrikeMessage() -- R2-A5: the AI message manager exists once the mission runs
     end
@@ -386,15 +389,24 @@ function RPSimBridge:update(dtMs)
     self.exportTimer = self.exportTimer + dtMs
     self.importTimer = self.importTimer + dtMs
     self.fieldTimer = self.fieldTimer + dtMs
+    self.marketContextTimer = self.marketContextTimer + dtMs
     if self.importTimer >= self.cfg.importIntervalMs then
         self.importTimer = 0
         self:pollInstructions()
     end
+    local marketContextDue = self.marketContextTimer >= self.cfg.marketContextIntervalMs
     if self.exportTimer >= self.cfg.exportIntervalMs then
         self.exportTimer = 0
         self:exportFarmFacts()
         -- Keeps sell points/farmlands current (e.g. placeables bought later); written only when changed.
-        self:exportMarketContext()
+        if not marketContextDue then
+            self:exportMarketContext()
+        end
+    end
+    if marketContextDue then
+        -- Owner decision 2026-10-06: rewritten every marketContextIntervalMs, changed or not.
+        self.marketContextTimer = 0
+        self:exportMarketContext(true)
     end
     self:updatePrompts(false)
 end

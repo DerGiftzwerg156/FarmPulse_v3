@@ -184,7 +184,8 @@ export function fundsCover(balance, items) {
 
 export class BridgeSimulator {
   constructor({ dir, scenario = 'wohlhabender-hof', savegameId, seed = 42, startGameTime = MS_PER_GAME_DAY,
-    retentionGameDays = 30, daysPerPeriod = 1, reset = false, log = () => {} } = {}) {
+    retentionGameDays = 30, daysPerPeriod = 1, marketContextIntervalMs = 60000, now = () => Date.now(), reset = false,
+    log = () => {} } = {}) {
     const preset = SCENARIOS[scenario];
     if (!preset) throw new Error(`unknown scenario '${scenario}' (${Object.keys(SCENARIOS).join(', ')})`);
     this.dir = dir;
@@ -255,6 +256,10 @@ export class BridgeSimulator {
     this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
     this.handledPrompts = {}; // R2-F1: answered / withdrawn questions (promptId -> expiresGameTime)
     this.lastMarketContextJson = null;
+    // Like the mod's marketContextIntervalMs: market_context.json is rewritten every interval (real time), changed or not
+    this.marketContextIntervalMs = marketContextIntervalMs;
+    this.now = now;
+    this.marketContextRefreshedAt = now();
     // --reset: forget the previous run before loading, otherwise its state (e.g. without the blocks of a newer
     // scenario) would survive in memory
     if (reset) this.reset();
@@ -1026,7 +1031,10 @@ export class BridgeSimulator {
     return doc;
   }
 
-  /** Like the mod: written on start / after FARMLAND_TRANSFER (force) and otherwise only when its content changed. */
+  /**
+   * Like the mod: written on start / after FARMLAND_TRANSFER / every marketContextIntervalMs (force) and otherwise only
+   * when its content changed.
+   */
   exportMarketContext(force = true) {
     const doc = this.buildMarketContext();
     const err = validate('marketContext', doc);
@@ -1284,6 +1292,7 @@ export class BridgeSimulator {
   start() {
     this.bootstrap();
     this.exportMarketContext();
+    this.marketContextRefreshedAt = this.now();
     this.exportFarmFacts();
     this.writeAck();
     this.writeResponses(); // R2-F1: the file follows the loaded savegame
@@ -1294,7 +1303,9 @@ export class BridgeSimulator {
     this.advance(gameMs);
     const res = this.processInstructions();
     this.exportFarmFacts();
-    this.exportMarketContext(false);
+    const due = this.now() - this.marketContextRefreshedAt >= this.marketContextIntervalMs;
+    if (due) this.marketContextRefreshedAt = this.now();
+    this.exportMarketContext(due);
     return res;
   }
 

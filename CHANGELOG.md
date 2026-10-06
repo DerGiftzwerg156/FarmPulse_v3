@@ -354,6 +354,10 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Changed
 
+- **`market_context.json` every minute** (owner decision 2026-10-06 in `QUESTIONS.md`): the mod rewrites the file every
+  60 s real time even when its content did not change (new mod setting `marketContextIntervalMs` = 60000). It is still
+  written on the mission start, after every `FARMLAND_TRANSFER` and on every `farm_facts` cycle in which it changed. The
+  bridge simulator does the same (`--market-context-interval`). The backend needs no change: it ignores an unchanged file.
 - Settings only in the app "Einstellungen": the card "Helfer im Spiel" moved from "Personal" to *Einstellungen → Im
   Spiel*; the settings are split into the tabs KI, Hof, Ereignisse, Im Spiel and Tablet & Netzwerk.
 
