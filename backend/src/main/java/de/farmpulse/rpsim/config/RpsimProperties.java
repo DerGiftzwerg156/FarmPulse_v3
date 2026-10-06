@@ -525,6 +525,18 @@ public class RpsimProperties {
                 "MACHINE_OPERATOR", 2400.0, "MECHANIC", 2700.0, "ANIMAL_KEEPER", 2200.0, "OFFICE_CLERK", 2300.0));
         /** Expected salary = baseSalary * (1 + salarySkillFactor * (skill - 50) / 50). */
         private double salarySkillFactor = 0.3;
+        /**
+         * Owner decision 2026-10-06: the applications arrive the next game day, each at a random time between
+         * application-hour-min and application-hour-max o'clock.
+         */
+        private int applicationHourMin = 8;
+        private int applicationHourMax = 17;
+        /**
+         * Owner decision 2026-10-06: cancelling a hired employee before the first working day costs severance-factor x
+         * the agreed monthly salary (SEVERANCE), in the world mode HARSH severance-factor-harsh x.
+         */
+        private double severanceFactor = 1.5;
+        private double severanceFactorHarsh = 3.0;
     }
 
     /**
@@ -1768,6 +1780,7 @@ public class RpsimProperties {
             m.put("RPSIM_SPONSORING", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_COMPENSATION", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_TRAINING", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_SEVERANCE", FinanceClass.OPERATING_EXPENSE); // owner decision 2026-10-06
             m.put("RPSIM_GOODS_PURCHASE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_CONTRACT_PENALTY", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_CONTRACTOR_FEE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)

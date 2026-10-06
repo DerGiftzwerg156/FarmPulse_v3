@@ -114,7 +114,9 @@ public final class Views {
                                        int remainingInstallments, boolean paidOff) {
     }
 
-    public record JobPostingView(Long id, String jobRole, String status, long createdAtGameTime, Long filledEmployeeId) {
+    /** applicationsAwaited = applications still on their way (they arrive the next game day, owner decision 2026-10-06). */
+    public record JobPostingView(Long id, String jobRole, String status, long createdAtGameTime, Long filledEmployeeId,
+                                 boolean applicationsAwaited) {
     }
 
     /** training = the training a machine operator applicant brings along ("Schulungen"), null = none. */
@@ -134,14 +136,17 @@ public final class Views {
      * Roadmap V2 R2-A: onStrike (A5); hoursThisMonth / hoursLastMonth = hours driven as FS25 helper (A4), null when the mod
      * reports no worked time or the employee is no machine operator. "Schulungen": finished trainings, the running one
      * and its end (the employee is away until then). Roadmap V3.1 R31-A5: contractEndsAtGameTime = end of a seasonal
-     * worker's fixed-term contract.
+     * worker's fixed-term contract. Owner decisions 2026-10-06: trainingFromGameTime = start of the absence for the booked
+     * training (the next game day); startsAtGameTime / startsAtPeriod = first working day (FS25 period, 1 = March) of a
+     * PENDING_START employee and severance = what cancelling him costs (null otherwise).
      */
     public record EmployeeView(Long id, CharacterRef character, String jobRole, int skill, long monthlySalary, String status,
                                NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
                                boolean onStrike, Double hoursThisMonth, Double hoursLastMonth, List<String> trainings,
                                String trainingInProgress, Long trainingUntilGameTime, Long apprenticeshipEndsAtGameTime,
                                Long contractEndsAtGameTime, String absenceKind, Long absenceUntilGameTime,
-                               boolean getWellSent) {
+                               boolean getWellSent, Long trainingFromGameTime, Long startsAtGameTime, Integer startsAtPeriod,
+                               Long severance) {
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */

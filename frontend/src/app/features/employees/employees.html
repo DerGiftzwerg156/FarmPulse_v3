@@ -43,7 +43,9 @@
                       @if (applications() === null) {
                         <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
                       } @else if (applications()!.length === 0) {
-                        <p class="text-sm text-muted">{{ 'employees.noApplicants' | t }}</p>
+                        <p class="text-sm text-muted" data-testid="no-applicants">{{ (p.applicationsAwaited ? 'employees.applicationsAwaited' : 'employees.noApplicants') | t }}</p>
+                      } @else if (p.applicationsAwaited) {
+                        <p class="mb-2 text-[12px] text-muted" data-testid="more-applicants">{{ 'employees.moreApplicationsAwaited' | t }}</p>
                       }
                       <ul class="space-y-2">
                         @for (a of applications() ?? []; track a.id) {
@@ -126,6 +128,19 @@
                     <div class="fp-label">{{ 'employees.perMonth' | t }}</div>
                   </div>
                 </div>
+                @if (pending(e)) {
+                  <!-- owner decision 2026-10-06: hired, the work starts with the next month -->
+                  <div class="mt-2 flex flex-wrap gap-1.5">
+                    <app-badge variant="warning" data-testid="starts-at">{{ 'employees.startsAt' | t: { at: startLabel(e) } }}</app-badge>
+                    @for (t of e.trainings; track t) {
+                      <app-badge variant="positive">{{ t | label: 'training' }}</app-badge>
+                    }
+                  </div>
+                  <p class="mt-2 text-[11px] text-muted" data-testid="pending-hint">{{ 'employees.pendingHint' | t: { name: e.character.name } }}</p>
+                  <div class="mt-3 flex flex-wrap gap-2">
+                    <app-button variant="danger" (pressed)="dismissTarget.set(e)" data-testid="dismiss-open">{{ 'employees.cancel' | t }}</app-button>
+                  </div>
+                } @else {
                 <div class="mt-2 flex flex-wrap gap-1.5">
                   <app-badge [variant]="band(e.needs.satisfaction) === 'high' ? 'positive' : band(e.needs.satisfaction) === 'ok' ? 'neutral' : 'negative'" data-testid="satisfaction">
                     {{ 'employees.band.' + band(e.needs.satisfaction) | t }}
@@ -145,9 +160,15 @@
                     <app-badge data-testid="apprenticeship">{{ 'employees.apprenticeUntil' | t: { at: (e.apprenticeshipEndsAtGameTime | gameTime) } }}</app-badge>
                   }
                   @if (e.trainingInProgress && e.trainingUntilGameTime) {
-                    <app-badge variant="warning" data-testid="in-training">
-                      {{ 'employees.inTraining' | t: { training: (e.trainingInProgress | label: 'training'), at: (e.trainingUntilGameTime | gameTime) } }}
-                    </app-badge>
+                    @if (trainingScheduled(e)) {
+                      <app-badge variant="warning" data-testid="training-scheduled">
+                        {{ 'employees.trainingScheduled' | t: { training: (e.trainingInProgress | label: 'training'), at: trainingDay(e) } }}
+                      </app-badge>
+                    } @else {
+                      <app-badge variant="warning" data-testid="in-training">
+                        {{ 'employees.inTraining' | t: { training: (e.trainingInProgress | label: 'training'), at: (e.trainingUntilGameTime | gameTime) } }}
+                      </app-badge>
+                    }
                   }
                 </div>
                 @if (e.jobRole === 'MACHINE_OPERATOR') {
@@ -224,6 +245,7 @@
                     <app-button type="submit" data-testid="panel-submit">{{ 'common.save' | t }}</app-button>
                   </form>
                 }
+                }
               </article>
             }
           </div>
@@ -232,11 +254,16 @@
     }
   }
 
-  <app-modal [open]="dismissTarget() !== null" [title]="'employees.dismissTitle' | t" (closed)="dismissTarget.set(null)">
-    <p class="font-body text-sm text-text" data-testid="dismiss-text">{{ 'employees.dismissText' | t: { name: dismissTarget()?.character?.name } }}</p>
+  @let cancelling = dismissTarget()?.status === 'PENDING_START';
+  <app-modal [open]="dismissTarget() !== null" [title]="(cancelling ? 'employees.cancelTitle' : 'employees.dismissTitle') | t" (closed)="dismissTarget.set(null)">
+    @if (cancelling) {
+      <p class="font-body text-sm text-text" data-testid="dismiss-text">{{ 'employees.cancelText' | t: { name: dismissTarget()?.character?.name, amount: severance(dismissTarget()) } }}</p>
+    } @else {
+      <p class="font-body text-sm text-text" data-testid="dismiss-text">{{ 'employees.dismissText' | t: { name: dismissTarget()?.character?.name } }}</p>
+    }
     <div class="mt-4 flex justify-end gap-2">
       <app-button variant="secondary" (pressed)="dismissTarget.set(null)">{{ 'common.cancel' | t }}</app-button>
-      <app-button variant="danger" (pressed)="confirmDismiss()" data-testid="dismiss-confirm">{{ 'employees.dismiss' | t }}</app-button>
+      <app-button variant="danger" (pressed)="confirmDismiss()" data-testid="dismiss-confirm">{{ (cancelling ? 'employees.cancel' : 'employees.dismiss') | t }}</app-button>
     </div>
   </app-modal>
 </section>

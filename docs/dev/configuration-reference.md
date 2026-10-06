@@ -333,12 +333,16 @@ period is assumed (FS25 default).
 | `rpsim.formulas.hiring.base-salary.ANIMAL_KEEPER` | `2200.0` | Monthly base salary (€) of job role `ANIMAL_KEEPER`. | Kündigung & Bewerbung |
 | `rpsim.formulas.hiring.base-salary.OFFICE_CLERK` | `2300.0` | Monthly base salary (€) of job role `OFFICE_CLERK`. | Kündigung & Bewerbung |
 | `rpsim.formulas.hiring.salary-skill-factor` | `0.3` | Salary expectation = base × (1 + factor × (skill − 50) / 50), rounded to 10 €. | Kündigung & Bewerbung |
+| `rpsim.formulas.hiring.application-hour-min` | `8` | Applications arrive the next game day (mail and list entry), each at a random minute from this hour … | Owner decision 2026-10-06 |
+| `rpsim.formulas.hiring.application-hour-max` | `17` | … until this hour (exclusive). | Owner decision 2026-10-06 |
+| `rpsim.formulas.hiring.severance-factor` | `1.5` | A hired employee starts with the next month (seasonal workers at once); cancelling him before the first working day costs factor × the agreed monthly salary (`SEVERANCE`, whole €). | Owner decision 2026-10-06 |
+| `rpsim.formulas.hiring.severance-factor-harsh` | `3.0` | The same factor in the world mode „Hart“ (`HARSH`). | Owner decision 2026-10-06 |
 
 ## `rpsim.formulas.training`
 
 | Key | Default | Meaning | Concept |
 | --- | --- | --- | --- |
-| `rpsim.formulas.training.duration-days` | `1` | Game days a machine operator is away at a training (ON_LEAVE for the mod, no helper); the qualification counts afterwards. | Schulungen |
+| `rpsim.formulas.training.duration-days` | `1` | Game days a machine operator is away at a training (ON_LEAVE for the mod, no helper); the qualification counts afterwards. Owner decision 2026-10-06: the absence starts with the next game day (0:00) - on the booking day he still works; days off overlapping it are refused and no sickness is rolled while it is booked. | Schulungen |
 | `rpsim.formulas.training.appreciation-points` | `8` | Appreciation points a booked training brings. | Schulungen |
 | `rpsim.formulas.training.cost.LARGE_TRACTOR` | `4500` | Price (€) of the training `LARGE_TRACTOR`, booked as `TRAINING`. | Schulungen |
 | `rpsim.formulas.training.cost.SELF_PROPELLED` | `6000` | Price (€) of the training `SELF_PROPELLED`, booked as `TRAINING`. | Schulungen |
@@ -1282,6 +1286,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_SPONSORING` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_COMPENSATION` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_TRAINING` | `OPERATING_EXPENSE` | tool booking: operating expense (training of a machine operator). | Schulungen |
+| `rpsim.formulas.finance.categories.RPSIM_SEVERANCE` | `OPERATING_EXPENSE` | tool booking: operating expense (severance before the first working day). | Owner decision 2026-10-06 |
 | `rpsim.formulas.finance.categories.RPSIM_GOODS_PURCHASE` | `OPERATING_EXPENSE` | tool booking: operating expense (goods from a neighbour, R3-H3). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_CONTRACT_PENALTY` | `OPERATING_EXPENSE` | tool booking: operating expense (shortfall of a forward contract, R3-M2). | Roadmap V3 R3-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_CONTRACTOR_FEE` | `OPERATING_EXPENSE` | tool booking: operating expense (contractor works an own field, R31-A1). | Roadmap V3.1 R31-Q1 |

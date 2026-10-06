@@ -127,7 +127,9 @@ public class LiquidityPlanService {
         Integer year = hasCalendar ? f.calendar().year() : null;
 
         List<Month> journalMonths = journal.months(f).stream().filter(Month::complete).toList();
-        List<Employee> staff = employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE);
+        // salaries: hired employees who start next month are paid on their first working day (owner decision 2026-10-06)
+        List<Employee> staff = employees.findBySavegameAndStatusIn(sg,
+                java.util.EnumSet.of(EmployeeStatus.ACTIVE, EmployeeStatus.PENDING_START));
         List<Contract> active = contracts.findBySavegameAndStatusOrderByIdAsc(sg, ContractStatus.ACTIVE);
         boolean parents = props.getFormulas().getFamily().isEnabled() && family.members(sg).stream()
                 .anyMatch(c -> FamilyService.PARENT.equals(c.getAffiliation()));

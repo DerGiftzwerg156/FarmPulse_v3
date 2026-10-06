@@ -1,0 +1,6 @@
+Ihre Absage
+Hallo,
+
+schade, dass es mit der Stelle als {{jobRole}} nun doch nichts wird – ich hatte mich schon auf den Hof gefreut. Die Abfindung über {{severance}} € habe ich zur Kenntnis genommen.
+
+{{characterName}}

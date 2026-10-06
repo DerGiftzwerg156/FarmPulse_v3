@@ -127,7 +127,8 @@ public class SickLeaveService {
     }
 
     boolean roll(Savegame sg, Employee e, long now) {
-        if (!cfg().isEnabled() || !burden.on(sg, Burden.SICK_LEAVE) || TrainingService.inTraining(e, now)
+        // owner decision 2026-10-06: a booked training (also the one of tomorrow) has precedence over sickness
+        if (!cfg().isEnabled() || !burden.on(sg, Burden.SICK_LEAVE) || TrainingService.trainingBooked(e, now)
                 || (e.getTimeOffUntilGameTime() != null && e.getTimeOffUntilGameTime() > now)) {
             return false;
         }

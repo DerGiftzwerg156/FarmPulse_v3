@@ -308,7 +308,14 @@ eingestellt, kommt kein Angebot.
 
 ![Personal](../screenshots/13-personal.png)
 
-- **Stelle ausschreiben:** Nach kurzer Zeit bewerben sich 3–5 Leute, mit Können und Gehaltsvorstellung.
+- **Stelle ausschreiben:** Am nächsten Spieltag zwischen 8 und 17 Uhr bewerben sich 3–5 Leute, mit Können und
+  Gehaltsvorstellung – jede Bewerbung kommt als Mail und erscheint unter *Stellen & Bewerber*. Bis dahin steht bei der
+  Stelle „Die Bewerbungen treffen morgen im Laufe des Tages ein“.
+- **Einstellen:** Neue Leute fangen erst am **1. des nächsten Monats** an (Saisonkräfte sofort). Bis dahin stehen sie
+  im Team mit *Fängt am … an*: Sie fahren noch keinen Helfer, bekommen noch kein Gehalt und du kannst ihnen weder
+  eine Gehaltserhöhung noch frei noch eine Schulung geben. Das erste Gehalt kommt am ersten Arbeitstag.
+- **Einstellung zurücknehmen:** Vor dem ersten Arbeitstag kannst du die Einstellung zurücknehmen. Dann zahlst du eine
+  **Abfindung** von 1,5 Monatsgehältern (im Ton der Welt *Hart* 3 Monatsgehälter), und die Person antwortet per Mail.
 - **Vorstellungsgespräch:** Frag per Mail oder Anruf – Können und Gehalt ändern sich dadurch nicht, du lernst die
   Person nur kennen.
 - **Team:** Zufriedenheit gesamt und je Bereich (Bezahlung, Arbeitsbelastung, Wertschätzung,
@@ -337,8 +344,10 @@ eingestellt, kommt kein Angebot.
   **Selbstfahrer & Lader** (Selbstfahrspritzen, Selbstfahrmäher, Radlader, Teleskoplader, Hoflader) braucht er die
   passende Schulung. Es zählt das Fahrzeug, das der Helfer fährt – ein Traktor mit gezogenem Roder braucht also nur
   die Traktor-Stufe. Auf der Personal-Karte buchst du mit *Schulung* eine Weiterbildung: Sie kostet Geld (von 4.500 €
-  für große Traktoren bis 12.000 € für den LKW-Führerschein), dauert **einen Spieltag** – so lange fährt die Person
-  keinen Helfer – und steigert die Wertschätzung. Danach steht die Schulung auf der Karte. Bewerber für die Stelle
+  für große Traktoren bis 12.000 € für den LKW-Führerschein) und steigert die Wertschätzung. Am Buchungstag arbeitet
+  die Person noch normal, am **ganzen nächsten Spieltag** (0 bis 24 Uhr) ist sie auf der Schulung und fährt keinen
+  Helfer. Die Schulung hat Vorrang: Für diesen Tag gibt es keinen freien Tag, und krank wird in der Zeit niemand. Danach
+  steht die Schulung auf der Karte. Bewerber für die Stelle
   Maschinenführer bringen manchmal schon eine Schulung mit (sichtbar in der Bewerbung) und möchten dafür etwas mehr
   Gehalt. Wer schon vor diesem Update angestellt war, hat noch keine Schulung. Findet sich kein geschulter
   Maschinenführer, fährt wie bisher ein normaler Helfer zum Spiellohn – im *strengen Modus* startet der Helfer dann

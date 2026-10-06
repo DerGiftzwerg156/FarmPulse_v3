@@ -24,7 +24,9 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   // Roadmap V3.1 (R31-Q1)
   'CONTRACTOR_FEE', 'MACHINE_RENT', 'LIVESTOCK_PURCHASE', 'LIVESTOCK_SALE', 'WINTER_SERVICE', 'DIRECT_PAYMENT',
   'INVESTMENT_GRANT', 'SOCIAL_INSURANCE', 'GUEST_INCOME', 'COOP_SHARES', 'COOP_DIVIDEND',
-  'FARM_HOLIDAY_SETUP', 'TANK_LOCK']);
+  'FARM_HOLIDAY_SETUP', 'TANK_LOCK',
+  // owner decision 2026-10-06: severance before the first working day
+  'SEVERANCE']);
 // Roadmap V3.1 R31-A1: works of the contractor
 const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'HARVEST'];
 // crop details a field loses when the contractor plows, cultivates or sows (R2-C1 fields of a standing crop)

@@ -1,6 +1,7 @@
 package de.farmpulse.rpsim.employee;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
@@ -14,9 +15,12 @@ import de.farmpulse.rpsim.domain.JobPosting;
 import de.farmpulse.rpsim.domain.JobRole;
 import de.farmpulse.rpsim.domain.NarrationJob;
 import de.farmpulse.rpsim.domain.OutboxInstruction;
+import de.farmpulse.rpsim.common.NotFoundException;
+import de.farmpulse.rpsim.domain.CharacterRole;
 import de.farmpulse.rpsim.domain.SatisfactionCategory;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.TerminationReason;
+import de.farmpulse.rpsim.domain.TonePreset;
 import de.farmpulse.rpsim.payroll.PayrollScheduler;
 import de.farmpulse.rpsim.repository.NarrationJobRepository;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
@@ -56,10 +60,24 @@ class EmployeeSystemTest {
         return jobs.findBySavegameOrderByIdAsc(sg).stream().map(NarrationJob::getEventType).toList();
     }
 
+    /** Owner decision 2026-10-06: the applications arrive the next game day between 8 and 17 o'clock. */
+    private void applicationsArrived() {
+        sg.setCurrentGameTime((GameTime.dayIndex(sg.getCurrentGameTime()) + 1) * GameTime.MS_PER_DAY + GameTime.hours(18));
+    }
+
+    /** Calendar with three days per month: month m starts at day 3m. */
+    private void threeDaysPerMonth() {
+        sg.setCalMonthIndex(0L);
+        sg.setCalMonthStartGameTime(0L);
+        sg.setCalDaysPerPeriod(3);
+        sg.setCalPeriod(1);
+    }
+
     @Test
     void postingGeneratesThreeToFiveCandidatesWithApplications() {
         for (int i = 0; i < 10; i++) {
             JobPosting p = hiring.createPosting(sg, JobRole.MECHANIC);
+            sg.setCurrentGameTime(sg.getCurrentGameTime() + GameTime.days(2));
             List<JobApplication> apps = hiring.applications(sg, p.getId());
             assertThat(apps).hasSizeBetween(3, 5);
             apps.forEach(a -> {
@@ -79,8 +97,42 @@ class EmployeeSystemTest {
     }
 
     @Test
+    void applicationsArriveTheNextDayBetweenEightAndSeventeen() {
+        long posted = sg.getCurrentGameTime();
+        long nextDay = (GameTime.dayIndex(posted) + 1) * GameTime.MS_PER_DAY;
+        JobPosting p = hiring.createPosting(sg, JobRole.MECHANIC);
+
+        assertThat(hiring.applications(sg, p.getId())).as("nothing arrived on the posting day").isEmpty();
+        assertThat(hiring.applicationsAwaited(p)).isTrue();
+        List<NarrationJob> mails = jobs.findBySavegameOrderByIdAsc(sg).stream()
+                .filter(j -> "JOB_APPLICATION".equals(j.getEventType())).toList();
+        assertThat(mails).hasSizeBetween(3, 5).allSatisfy(j -> assertThat(j.getNotBeforeGameTime())
+                .isBetween(nextDay + GameTime.hours(8), nextDay + GameTime.hours(17) - 1));
+
+        sg.setCurrentGameTime(nextDay + GameTime.hours(8) - 1);
+        assertThat(hiring.applications(sg, p.getId())).isEmpty();
+        sg.setCurrentGameTime(nextDay + GameTime.hours(17));
+        List<JobApplication> apps = hiring.applications(sg, p.getId());
+        assertThat(apps).hasSizeBetween(3, 5).allSatisfy(a -> assertThat(a.getArrivesAtGameTime())
+                .isBetween(nextDay + GameTime.hours(8), nextDay + GameTime.hours(17) - 1));
+        assertThat(hiring.applicationsAwaited(p)).isFalse();
+    }
+
+    @Test
+    void anApplicationOnItsWayCannotBeAnsweredYet() {
+        JobPosting p = hiring.createPosting(sg, JobRole.MECHANIC);
+        sg.setCurrentGameTime(sg.getCurrentGameTime() + GameTime.days(2));
+        Long id = hiring.applications(sg, p.getId()).get(0).getId();
+        sg.setCurrentGameTime(sg.getCurrentGameTime() - GameTime.days(2));
+        assertThatThrownBy(() -> hiring.hire(sg, p.getId(), id)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> hiring.interviewQuestion(sg, p.getId(), id, "Hallo?", Channel.MAIL))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
     void interviewKeepsSkillAndSalaryFixed() {
         JobPosting p = hiring.createPosting(sg, JobRole.ANIMAL_KEEPER);
+        applicationsArrived();
         JobApplication a = hiring.applications(sg, p.getId()).get(0);
         int skill = a.getSkill();
         long salary = a.getExpectedSalary();
@@ -94,6 +146,7 @@ class EmployeeSystemTest {
     @Test
     void hiringRejectsOthersAndStartsWithNeutralSatisfaction() {
         JobPosting p = hiring.createPosting(sg, JobRole.MACHINE_OPERATOR);
+        applicationsArrived();
         List<JobApplication> apps = hiring.applications(sg, p.getId());
         Employee e = hiring.hire(sg, p.getId(), apps.get(0).getId());
         assertThat(e.getPayFairness()).isEqualTo(70);
@@ -105,9 +158,77 @@ class EmployeeSystemTest {
         assertThat(jobTypes()).contains("EMPLOYEE_WELCOME", "APPLICATION_REJECTED");
     }
 
+    /** A hired mechanic on his first working day. */
     private Employee employee() {
         JobPosting p = hiring.createPosting(sg, JobRole.MECHANIC);
-        return hiring.hire(sg, p.getId(), hiring.applications(sg, p.getId()).get(0).getId());
+        applicationsArrived();
+        Employee e = hiring.hire(sg, p.getId(), hiring.applications(sg, p.getId()).get(0).getId());
+        sg.setCurrentGameTime(e.getStartsAtGameTime());
+        hiring.startDue(sg);
+        return e;
+    }
+
+    @Test
+    void aHiredEmployeeStartsWithTheNextMonthAndIsPaidOnHisFirstDay() {
+        threeDaysPerMonth();
+        sg.setCurrentGameTime(GameTime.hours(1)); // day 0, month 0 = March
+        JobPosting p = hiring.createPosting(sg, JobRole.MECHANIC);
+        applicationsArrived(); // day 1, 18:00 - still month 0
+        Employee e = hiring.hire(sg, p.getId(), hiring.applications(sg, p.getId()).get(0).getId());
+
+        assertThat(e.getStatus()).isEqualTo(EmployeeStatus.PENDING_START);
+        assertThat(e.getStartsAtGameTime()).as("first day of the next month").isEqualTo(GameTime.days(3));
+        assertThat(e.getNextSalaryDueGameTime()).isEqualTo(GameTime.days(3));
+        assertThat(jobs.findBySavegameOrderByIdAsc(sg)).filteredOn(j -> "EMPLOYEE_WELCOME".equals(j.getEventType()))
+                .singleElement().satisfies(j -> assertThat(j.getFactsJson()).contains("1. April"));
+        sg.setCurrentGameTime(GameTime.days(3) - 1);
+        assertThat(hiring.startDue(sg)).isFalse();
+        payroll.paySalaries(sg);
+        assertThat(outbox.findBySavegameOrderByIdAsc(sg)).noneMatch(o -> o.getPayloadJson().contains("SALARY_PAYMENT"));
+
+        sg.setCurrentGameTime(GameTime.days(3));
+        assertThat(hiring.startDue(sg)).isTrue();
+        assertThat(e.getStatus()).isEqualTo(EmployeeStatus.ACTIVE);
+        assertThat(e.getNeedsUpdatedAtGameTime()).as("needs frozen until the start").isEqualTo(GameTime.days(3));
+        payroll.paySalaries(sg);
+        assertThat(outbox.findBySavegameOrderByIdAsc(sg)).filteredOn(o -> o.getPayloadJson().contains("SALARY_PAYMENT"))
+                .hasSize(1);
+        assertThat(e.getNextSalaryDueGameTime()).isEqualTo(GameTime.days(6));
+    }
+
+    @Test
+    void cancellingBeforeTheFirstDayCostsOneAndAHalfMonthlySalaries() {
+        JobPosting p = hiring.createPosting(sg, JobRole.MECHANIC);
+        applicationsArrived();
+        Employee e = hiring.hire(sg, p.getId(), hiring.applications(sg, p.getId()).get(0).getId());
+        long expected = Math.round(e.getMonthlySalary() * 1.5);
+
+        hiring.dismiss(sg, e.getId());
+
+        assertThat(e.getStatus()).isEqualTo(EmployeeStatus.TERMINATED);
+        assertThat(e.getCharacter().getStatus()).isEqualTo(CharacterStatus.TERMINATED);
+        assertThat(outbox.findBySavegameOrderByIdAsc(sg)).filteredOn(o -> o.getPayloadJson().contains("SEVERANCE"))
+                .singleElement().satisfies(o -> assertThat(o.getPayloadJson()).contains("-" + expected));
+        assertThat(jobTypes()).contains("HIRING_CANCELLED");
+        sg.setCurrentGameTime(e.getStartsAtGameTime());
+        assertThat(hiring.startDue(sg)).as("a cancelled employee never starts").isFalse();
+    }
+
+    @Test
+    void inTheHarshWorldCancellingCostsThreeMonthlySalaries() {
+        sg.setTonePreset(TonePreset.HARSH);
+        JobPosting p = hiring.createPosting(sg, JobRole.MECHANIC);
+        applicationsArrived();
+        Employee e = hiring.hire(sg, p.getId(), hiring.applications(sg, p.getId()).get(0).getId());
+        assertThat(hiring.severance(e)).isEqualTo(e.getMonthlySalary() * 3);
+    }
+
+    @Test
+    void theOnboardingStaffWorksAtOnce() {
+        var c = fx.character(sg, CharacterRole.VILLAGER, de.farmpulse.rpsim.domain.CharacterCategory.DYNAMIC, "Eva Lenz");
+        Employee e = hiring.createEmployee(sg, c, JobRole.MECHANIC, 60, 2500);
+        assertThat(e.getStatus()).isEqualTo(EmployeeStatus.ACTIVE);
+        assertThat(e.getStartsAtGameTime()).isNull();
     }
 
     @Test

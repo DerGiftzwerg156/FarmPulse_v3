@@ -56,5 +56,7 @@ public enum MoneyReason {
     /** Roadmap V3.1 R31-D6 / R31-D8 (owner decision 2026-10-05): holiday flat setup and tank lock. */
     FARM_HOLIDAY_SETUP,
     TANK_LOCK,
+    /** Owner decision 2026-10-06: severance when a hired employee is cancelled before the first working day. */
+    SEVERANCE,
     OTHER
 }
