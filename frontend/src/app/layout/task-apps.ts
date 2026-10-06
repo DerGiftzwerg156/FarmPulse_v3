@@ -1,5 +1,6 @@
 import { TaskView } from '../core/api/models';
 import { APPS, AppDef } from './apps';
+import { caseTabOf, contractTabOf, isTab } from './app-tabs';
 
 /** App of a service case kind (where the case lives after the split of "Verträge & Vorgänge"). */
 const CASE_APP: Record<string, string> = {
@@ -88,30 +89,62 @@ export function taskAppId(t: TaskView): string {
   return known(TYPE_APP[t.type] ?? FALLBACK_APP);
 }
 
+/** Tab of the task inside its app (badge on the tab and the deep link); undefined for apps without tabs. */
+export function taskTabId(t: TaskView): string | undefined {
+  const appId = taskAppId(t);
+  let tab: string | undefined;
+  switch (t.type) {
+    case 'CASE':
+      tab = caseTabOf(t.kind ?? '');
+      break;
+    case 'CONTRACT_OFFER':
+      tab = contractTabOf(t.kind ?? '', t.contract?.level);
+      break;
+    case 'LEASE_RENEWAL':
+      tab = 'pacht';
+      break;
+    case 'CREDIT_COUNTER':
+      tab = 'antrag';
+      break;
+    case 'NEGOTIATION':
+      tab = t.negotiation?.assetType === 'VEHICLE' ? 'gebraucht' : 'verhandlungen';
+      break;
+    case 'MARKET_OFFER':
+      tab = 'ereignisse';
+      break;
+    case 'POSTING':
+      tab = 'stellen';
+      break;
+  }
+  return isTab(appId, tab) ? tab : undefined;
+}
+
 export function taskApp(t: TaskView): AppDef {
   const id = taskAppId(t);
   return APPS.find((a) => a.id === id)!;
 }
 
-/** Link into the app with the entry highlighted (the pages read these query parameters). */
+/** Link into the app's tab with the entry highlighted (the pages read these query parameters). */
 export function taskLink(t: TaskView): { path: string; query: Record<string, number> } {
   const app = taskApp(t);
+  const tab = taskTabId(t);
+  const path = tab ? `${app.path}/${tab}` : app.path;
   const id = (v: { id: number } | null) => v?.id ?? 0;
   switch (t.type) {
     case 'CASE':
-      return { path: app.path, query: { case: id(t.serviceCase) } };
+      return { path, query: { case: id(t.serviceCase) } };
     case 'CONTRACT_OFFER':
     case 'LEASE_RENEWAL':
-      return { path: app.path, query: { contract: id(t.contract) } };
+      return { path, query: { contract: id(t.contract) } };
     case 'CREDIT_COUNTER':
-      return { path: app.path, query: { application: id(t.application) } };
+      return { path, query: { application: id(t.application) } };
     case 'CALL':
-      return { path: app.path, query: { id: id(t.call) } };
+      return { path, query: { id: id(t.call) } };
     case 'NEGOTIATION':
-      return { path: app.path, query: { negotiation: id(t.negotiation) } };
+      return { path, query: { negotiation: id(t.negotiation) } };
     case 'MARKET_OFFER':
-      return { path: app.path, query: { event: id(t.marketEvent) } };
+      return { path, query: { event: id(t.marketEvent) } };
     case 'POSTING':
-      return { path: app.path, query: { posting: id(t.posting) } };
+      return { path, query: { posting: id(t.posting) } };
   }
 }

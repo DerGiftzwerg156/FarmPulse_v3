@@ -1,4 +1,28 @@
+<!-- Tabs (owner decision 2026-10-06): Aufgaben | Meldungen (notices, questions in the game, today in the diary) -->
 <section class="flex flex-col gap-4">
+  @if (tab() === 'meldungen') {
+    <div class="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
+      <app-notices-card (resolved)="tasks.reload()" />
+      @if (tasks.waitingPrompts() > 0) {
+        <div class="rounded-2xl border border-warn/50 bg-surface p-4" data-testid="waiting-prompts">
+          <div class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-warn">{{ 'tasks.inGame' | t }}</div>
+          <div class="mt-1 text-[14px] font-semibold text-text">{{ 'tasks.waitingPrompts' | t: { n: tasks.waitingPrompts() } }}</div>
+        </div>
+      }
+      <app-card [title]="'tasks.todayDiary' | t" data-testid="today-diary">
+        <ul class="space-y-1.5">
+          @for (d of today(); track d.id) {
+            <li class="flex items-start gap-2 text-[13px] text-muted">
+              <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"></span>{{ d.title }}
+            </li>
+          } @empty {
+            <li class="text-[13px] text-muted">{{ 'tasks.nothingToday' | t }}</li>
+          }
+        </ul>
+        <a routerLink="/diary" class="mt-3 inline-block font-display text-[10px] uppercase tracking-[0.12em] text-accent hover:underline">{{ 'tasks.toDiary' | t }} →</a>
+      </app-card>
+    </div>
+  } @else {
   <div class="flex flex-wrap gap-2" role="group" [attr.aria-label]="'tasks.filter' | t" data-testid="task-filters">
     @for (f of filters; track f) {
       <button type="button" (click)="filter.set(f)" [attr.aria-pressed]="filter() === f" [attr.data-testid]="'task-filter-' + f"
@@ -10,7 +34,7 @@
     }
   </div>
 
-  <div class="flex flex-col gap-6 lg:flex-row">
+  <div class="flex flex-col gap-6">
     <div class="flex min-w-0 flex-1 flex-col gap-5">
       @if (tasks.loaded() && shown().length === 0) {
         <p class="rounded-2xl border border-border bg-surface p-5 text-sm text-muted" data-testid="tasks-empty">{{ 'tasks.empty' | t }}</p>
@@ -34,27 +58,6 @@
       }
     </div>
 
-    <aside class="flex w-full shrink-0 flex-col gap-3.5 lg:w-[340px]">
-      <app-notices-card (resolved)="tasks.reload()" />
-      @if (tasks.waitingPrompts() > 0) {
-        <div class="rounded-2xl border border-warn/50 bg-surface p-4" data-testid="waiting-prompts">
-          <div class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-warn">{{ 'tasks.inGame' | t }}</div>
-          <div class="mt-1 text-[14px] font-semibold text-text">{{ 'tasks.waitingPrompts' | t: { n: tasks.waitingPrompts() } }}</div>
-          <div class="mt-1 text-[12px] text-muted">{{ 'tasks.waitingPromptsHint' | t }}</div>
-        </div>
-      }
-      <app-card [title]="'tasks.todayDiary' | t" data-testid="today-diary">
-        <ul class="space-y-1.5">
-          @for (d of today(); track d.id) {
-            <li class="flex items-start gap-2 text-[13px] text-muted">
-              <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"></span>{{ d.title }}
-            </li>
-          } @empty {
-            <li class="text-[13px] text-muted">{{ 'tasks.nothingToday' | t }}</li>
-          }
-        </ul>
-        <a routerLink="/diary" class="mt-3 inline-block font-display text-[10px] uppercase tracking-[0.12em] text-accent hover:underline">{{ 'tasks.toDiary' | t }} →</a>
-      </app-card>
-    </aside>
   </div>
+  }
 </section>

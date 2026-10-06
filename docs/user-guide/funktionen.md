@@ -26,27 +26,35 @@ Homescreen.
 - **Dock:** Post, Telefon, Aufgaben und Kalender liegen immer griffbereit – auf dem Start unten schwebend, in jeder
   App als Leiste am unteren Rand.
 - **In einer App** steht oben ihr Name mit einer kurzen Beschreibung; **Start** führt zurück zum Homescreen.
+- **Tabs:** Größere Apps sind in Unterseiten geteilt (Tabbar unter dem App-Kopf, siehe Tabelle unten). Jede Unterseite
+  hat ihre eigene Adresse, z. B. `/bank/kontoauszug`. Öffnest du eine App vom Startbildschirm, landest du im Tab, den
+  du auf diesem Gerät zuletzt benutzt hast. Links aus Mails und Aufgaben öffnen direkt den Tab mit dem Eintrag. Eine
+  Zahl am Tab zählt die offenen Entscheidungen dort.
+- **Hinweise:** Beim ersten Öffnen einer App erklärt ein Fenster kurz, wie sie funktioniert. Mit **Verstanden**
+  erscheint es nicht wieder – auch nicht auf dem Tablet oder Handy, denn FarmPulse merkt sich das für die ganze
+  Installation. Schließt du das Fenster nur, kommt es beim nächsten Laden wieder. Über das **?** oben rechts im
+  App-Kopf liest du den Hinweis jederzeit nach.
 
-| App | Was du dort findest |
-| --- | --- |
-| **Post** | Mails aus dem Dorf, Entscheidungen direkt in der Mail |
-| **Telefon** | Anrufe annehmen, zurückrufen und nachlesen |
-| **Kontakte** | Dorf, Familie und Vereine, Vertrauen und Ansehen, Sponsoring |
-| **Dorfblatt** | Die Dorfzeitung: jede Periode eine neue Ausgabe mit dem, was im Dorf öffentlich ist |
-| **Dorfchat** | Gruppen für das Dorf, die Nachbarn und die Vereine – mitlesen und mitschreiben |
-| **Aufgaben** | Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert |
-| **Kalender** | Die nächsten Tage, Abbuchungen zum Monatsbeginn, Dorffeste, Steuertermine, Familie, Einladungen, Stammtisch, Schulbesuch, Genossenschaft |
-| **Bank** | Kredite, Anträge, Hofbuchhaltung und Kontoauszug |
-| **Ämter** | Finanzamt (Steuern, Bescheide, Steuerberatung) und Landwirtschaftsamt (Kontrollen) |
-| **Agrarbörse** | Silo, Preise, Marktgeschehen, Kontrakte, Preisalarm und Vorkontrakte |
-| **Versicherung** | Sturm- und Hagelversicherung (auch mit Baustein „Diebstahl“), Schäden melden, Wildschaden |
-| **Personal** | Team, Helferstunden, Helfer im Spiel und Stellenausschreibungen |
-| **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen |
-| **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl |
-| **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker und Tankschloss |
-| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Hofladen, Ferien auf dem Hof, Genossenschaftsanteile |
-| **Tagebuch** | Die Chronik deines Hofs |
-| **Einstellungen** | KI, Fragen im Spiel, Hinweise und Reaktionen |
+| App | Was du dort findest | Tabs |
+| --- | --- | --- |
+| **Post** | Mails aus dem Dorf, Entscheidungen direkt in der Mail | – |
+| **Telefon** | Anrufe annehmen, zurückrufen und nachlesen | – |
+| **Kontakte** | Dorf, Familie und Vereine, Vertrauen und Ansehen, Sponsoring | Kontakte (im Profil: *Profil* / *Nachricht*) · Vereine & Sponsoring |
+| **Dorfblatt** | Die Dorfzeitung: jede Periode eine neue Ausgabe mit dem, was im Dorf öffentlich ist | – |
+| **Dorfchat** | Gruppen für das Dorf, die Nachbarn und die Vereine – mitlesen und mitschreiben | – |
+| **Aufgaben** | Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert | Aufgaben · Meldungen |
+| **Kalender** | Die nächsten Tage, Abbuchungen zum Monatsbeginn, Dorffeste, Steuertermine, Familie, Einladungen, Stammtisch, Schulbesuch, Genossenschaft | Nächste Tage · Einladungen · Jahr |
+| **Bank** | Kredite, Anträge, Hofbuchhaltung und Kontoauszug | Kredite · Kreditantrag · Kontoauszug · Betriebsergebnis · Planung & Jahresbericht |
+| **Ämter** | Finanzamt, Landwirtschaftsamt, Berufsgenossenschaft und Gemeinde | Finanzamt · Anträge & Förderung · Kontrollen & Tierseuchen · Berufsgenossenschaft · Gemeinde |
+| **Agrarbörse** | Silo, Preise, Marktgeschehen, Kontrakte, Preisalarm und Vorkontrakte | Lager & Preise · Preisverlauf · Ereignisse · Preisalarme · Vorkontrakte |
+| **Versicherung** | Sturm- und Hagelversicherung (auch mit Baustein „Diebstahl“), Dürre-Index, Schäden melden, Wildschaden | Hofversicherung · Dürre-Index · Schäden |
+| **Personal** | Team, Helferstunden und Stellenausschreibungen | Team · Stellen & Bewerber · Ehemalige |
+| **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen | Karte · Meine Felder · Verhandlungen · Pacht · Vorgänge |
+| **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl | Ställe · Handel & Tierarzt |
+| **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
+| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Ferienwohnung · Genossenschaft |
+| **Tagebuch** | Die Chronik deines Hofs | – |
+| **Einstellungen** | Alle Einstellungen: KI, Hof, Ereignisse, Fragen und Helfer im Spiel, Tablet & Netzwerk | KI · Hof · Ereignisse · Im Spiel · Tablet & Netzwerk |
 
 Alte Lesezeichen (z. B. `/mailbox`, `/bank`, `/contracts`) funktionieren weiter und führen in die passende App.
 
@@ -59,13 +67,14 @@ das Gegenangebot der Bank, klingelnde Anrufe, offene Verhandlungen, Sonderkontra
 Einladungen, Steuerbescheide und angekündigte Kontrollen. Die Liste ist nach Frist sortiert und in **Heute**,
 **Diese Woche** und **Später** gegliedert; oben filterst du nach *Heute*, *Geld*, *Hof* und *Dorf*.
 
-Ganz oben stehen die **Hinweise aus dem Spiel** – z. B. eine Buchung, die der Mod mangels Geld nicht ausführen
+Im Tab **Meldungen** stehen die **Hinweise aus dem Spiel** – z. B. eine Buchung, die der Mod mangels Geld nicht ausführen
 konnte, oder die Frage nach dem Nachbuchen, wenn du einen älteren Spielstand geladen hast (siehe
 [Fehlerbehebung](fehlerbehebung.md#spielstand-ohne-speichern-neu-geladen)).
 
 Jede Karte zeigt, aus welcher App sie kommt. Einfache Entscheidungen triffst du direkt auf der Karte; **In App**
-öffnet die App mit dem Eintrag markiert. Warten Fragen im Spiel (siehe **Einstellungen**), steht ihre Zahl oben –
-entscheidest du hier, verschwinden sie im Spiel. Daneben siehst du, was heute im Tagebuch steht.
+öffnet die App im passenden Tab mit dem Eintrag markiert. Warten Fragen im Spiel (siehe **Einstellungen**), steht
+ihre Zahl unter **Meldungen** – entscheidest du hier, verschwinden sie im Spiel. Dort siehst du auch, was heute im
+Tagebuch steht.
 
 ## Kalender
 
@@ -283,7 +292,7 @@ Hektar deiner Felder plus 180 € je Mitarbeiter (auch Erntehelfer). Du bezahlst
 nach einem Arbeitsunfall (siehe **Personal**).
 
 Vor-Ort-Kontrolle, Düngeverordnung, Tierseuchen sowie Krankheit und Unfälle schaltest du unter **Einstellungen →
-Belastende Ereignisse** einzeln ab. Im idyllischen Weltmodus gibt es keine Tierseuchen, der Rest kommt seltener bzw.
+Ereignisse** (Karte *Belastende Ereignisse*) einzeln ab. Im idyllischen Weltmodus gibt es keine Tierseuchen, der Rest kommt seltener bzw.
 milder.
 
 **Gemeinde – Winterdienst.** Hast du einen eigenen mittleren oder großen Traktor (geliehene zählen nicht), bietet die
@@ -332,7 +341,7 @@ eingestellt, kommt kein Angebot.
   Gehalt. Wer schon vor diesem Update angestellt war, hat noch keine Schulung. Findet sich kein geschulter
   Maschinenführer, fährt wie bisher ein normaler Helfer zum Spiellohn – im *strengen Modus* startet der Helfer dann
   gar nicht, und das Spiel meldet, welche Schulung fehlt.
-- **Helfer im Spiel:** *Helferlohn über das Gehalt* (Standard an) – fährt ein Maschinenführer, bucht das Spiel keinen
+- **Helfer im Spiel** (unter **Einstellungen → Im Spiel**): *Helferlohn über das Gehalt* (Standard an) – fährt ein Maschinenführer, bucht das Spiel keinen
   Helferlohn. Ausgeschaltet zahlst du zusätzlich den normalen Spiellohn. *Strenger Modus* (Standard aus) – höchstens
   so viele Helfer wie aktive Maschinenführer; ohne Maschinenführer gibt es dann keine Helfer, streikende oder
   freigestellte zählen nicht. Das gilt auch für Helfer von Mods wie Courseplay oder AutoDrive: Ist das Limit erreicht,
@@ -386,7 +395,7 @@ fährst du mit der Maus darüber, steht alles im Text. Ein Klick auf ein Feld ö
 Aktionen (verkaufen, verpachten, Lohnunternehmer, Familienfeld). Die Tabelle zeigt die Felder als Kacheln. Die Karte
 braucht die aktuelle Mod-Version, die beim Spielstart die Feldumrisse mitschickt; ohne sie gibt es nur die Kacheln.
 
-**Meine Felder:** Mit der aktuellen Mod-Version steht über der Karte eine Tabelle deiner eigenen und gepachteten
+**Meine Felder:** Mit der aktuellen Mod-Version zeigt der Tab *Meine Felder* eine Tabelle deiner eigenen und gepachteten
 Felder: Fläche, Kultur, Phase (leer, wächst, erntereif, abgeerntet, verdorrt), was zu tun ist (ernten, kalken,
 pflügen, Unkraut, Steine) und die **Fruchtfolge** gegenüber dem Vorjahr. Darunter die voraussichtliche
 **Fruchtfolgeprämie** des laufenden Jahres und eine Warnung, auf welchen Feldern dieselbe Kultur wie im Vorjahr steht

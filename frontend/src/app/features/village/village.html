@@ -1,4 +1,8 @@
+<!-- Tabs (owner decision 2026-10-06): Kontakte | Vereine & Sponsoring; the profile has the sub tabs Profil | Nachricht -->
 <section class="space-y-4">
+  @if (tab() === 'vereine') {
+    <app-service-cases [caseKinds]="['SPONSORING_REQUEST']" openTitle="village.sponsoring" [highlightCase]="highlightedCase()" testId="club-cases" />
+  } @else {
   <div class="flex flex-wrap items-center justify-between gap-3">
     @if (reputation(); as rep) {
       <div class="flex items-center gap-2" data-testid="reputation">
@@ -58,6 +62,14 @@
               <app-badge>{{ d.role | label: 'characterRole' }}</app-badge>
               <app-badge [variant]="d.status === 'ACTIVE' ? 'positive' : 'warning'">{{ d.status | label: 'characterStatus' }}</app-badge>
             </div>
+            <div class="mt-3 inline-flex rounded-md border border-border p-0.5 text-[12px]" role="group" [attr.aria-label]="d.name" data-testid="profile-tabs">
+              @for (p of profileTabs; track p) {
+                <button type="button" class="rounded px-3 py-1" [class.bg-accent/20]="profileTab() === p" [class.text-text]="profileTab() === p"
+                  [class.text-muted]="profileTab() !== p" [attr.aria-pressed]="profileTab() === p" (click)="profileTab.set(p)"
+                  [attr.data-testid]="'profile-tab-' + p">{{ 'village.profileTabs.' + p | t }}</button>
+              }
+            </div>
+            @if (profileTab() === 'profile') {
             @if (d.role === 'NEIGHBOR_FARMER' && d.status === 'ACTIVE') {
               <a class="mt-2 inline-block text-[12px] text-accent hover:underline" [routerLink]="['/handel']" [queryParams]="{ neighbor: d.id }" data-testid="trade-link">{{ 'trade.contactLink' | t }}</a>
             }
@@ -104,6 +116,7 @@
               </div>
             }
 
+            } @else {
             @if (d.status !== 'TERMINATED') {
               <div class="mt-4 border-t border-border pt-3">
                 <div class="fp-label mb-2">{{ 'village.compose' | t }}</div>
@@ -126,12 +139,6 @@
                 </form>
               </div>
             }
-            @if (info()) {
-              <p class="mt-2 text-[12px] text-accent" data-testid="village-info">{{ info() }}</p>
-            }
-            @if (actionError()) {
-              <p class="mt-2 text-[12px] text-danger" data-testid="village-error">{{ actionError() }}</p>
-            }
 
             <div class="mt-4 border-t border-border pt-3">
               <div class="fp-label mb-2">{{ 'village.recent' | t }}</div>
@@ -149,6 +156,13 @@
                 }
               </ul>
             </div>
+            }
+            @if (info()) {
+              <p class="mt-2 text-[12px] text-accent" data-testid="village-info">{{ info() }}</p>
+            }
+            @if (actionError()) {
+              <p class="mt-2 text-[12px] text-danger" data-testid="village-error">{{ actionError() }}</p>
+            }
           </app-card>
         } @else if (selected() !== null) {
           <p class="text-sm text-muted">{{ 'common.loading' | t }}</p>
@@ -158,6 +172,5 @@
       </div>
     </div>
   }
-
-  <app-service-cases [caseKinds]="['SPONSORING_REQUEST']" openTitle="village.sponsoring" [showEmpty]="false" [highlightCase]="highlightedCase()" testId="club-cases" />
+  }
 </section>

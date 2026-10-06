@@ -60,8 +60,8 @@ Abläufe im Tool werden **nicht** zurückgedreht. Die Schwelle ist einstellbar
 
 ## Andere Mods mit Überschneidungen
 
-Die App **Aufgaben** zeigt unter *Hinweise aus dem Spiel* „Mods mit Überschneidungen erkannt“, wenn einer dieser Mods
-aktiv ist (Liste auch unter **Einstellungen → Spielstand**). FarmPulse schaltet nichts ab, aber die Effekte können
+Die App **Aufgaben** zeigt im Tab *Meldungen* unter *Hinweise aus dem Spiel* „Mods mit Überschneidungen erkannt“, wenn einer dieser Mods
+aktiv ist (Liste auch unter **Einstellungen → Im Spiel**). FarmPulse schaltet nichts ab, aber die Effekte können
 sich überlagern:
 
 | Mod | Was sich überschneidet |

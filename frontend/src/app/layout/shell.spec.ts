@@ -11,6 +11,8 @@ import { FakeEventSource, provideFakeEventSource } from '../../testing/fake-even
 class Blank {}
 
 describe('Shell', () => {
+  beforeEach(() => localStorage.clear());
+
   function setup() {
     TestBed.configureTestingModule({
       imports: [Shell],
@@ -40,6 +42,66 @@ describe('Shell', () => {
     expect(el.querySelector('[data-testid="back-to-start"]')?.getAttribute('href')).toBe('/');
     expect(el.querySelector('[data-testid="quick-bar"]')).not.toBeNull();
     expect(el.querySelector('[data-testid="dock"]')).toBeNull();
+  });
+
+  // owner decisions 2026-10-06: tabs below the app header, first-open hint once per installation, "?" reopens it
+  it('shows the tabs of an app with its own address per tab', async () => {
+    const { fixture, el, http } = setup();
+    http.expectOne('/api/savegame').flush(null);
+    http.expectOne('/api/app-hints').flush({ seen: ['bank'] });
+    await TestBed.inject(Router).navigateByUrl('/bank/kontoauszug');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const tabs = el.querySelectorAll('[data-testid="tab-bar"] a');
+    expect(tabs.length).toBe(5);
+    expect(el.querySelector('[data-testid="tab-kontoauszug"]')?.getAttribute('href')).toBe('/bank/kontoauszug');
+    expect(el.querySelector('[data-testid="tab-kontoauszug"]')?.getAttribute('aria-current')).toBe('page');
+    expect(localStorage.getItem('fp.tab.bank')).toBe('kontoauszug');
+    await TestBed.inject(Router).navigateByUrl('/mailbox');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="tab-bar"]')).toBeNull();
+  });
+
+  it('opens the hint of an app once until it is confirmed, and again with "?"', async () => {
+    const { fixture, el, http } = setup();
+    http.expectOne('/api/savegame').flush(null);
+    http.expectOne('/api/app-hints').flush({ seen: ['bank'] });
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/bank/kredite');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-hint"]')).toBeNull();
+
+    await router.navigateByUrl('/market/lager');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-hint"]')?.textContent).toContain('Bonität');
+    (el.querySelector('[data-testid="app-hint-ok"] button') as HTMLButtonElement).click();
+    const req = http.expectOne('/api/app-hints/market');
+    expect(req.request.method).toBe('PUT');
+    req.flush({ seen: ['bank', 'market'] });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-hint"]')).toBeNull();
+
+    (el.querySelector('[data-testid="app-hint-open"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-hint"]')?.textContent).toContain('Bonität');
+    (el.querySelector('[data-testid="app-hint-ok"] button') as HTMLButtonElement).click();
+    http.expectNone('/api/app-hints/market');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-hint"]')).toBeNull();
+  });
+
+  it('closing the hint without "Verstanden" does not mark it as read', async () => {
+    const { fixture, el, http } = setup();
+    http.expectOne('/api/savegame').flush(null);
+    http.expectOne('/api/app-hints').flush({ seen: [] });
+    await TestBed.inject(Router).navigateByUrl('/dorfblatt');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-hint"]')?.textContent).toContain('Dorfblatt');
+    (el.querySelector('[data-testid="modal-close"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="app-hint"]')).toBeNull();
+    http.expectNone('/api/app-hints/newspaper');
   });
 
   it('shows savegame context, live balance and notification count', () => {

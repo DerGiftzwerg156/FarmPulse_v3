@@ -17,50 +17,64 @@ import { UsedVehiclesCard } from './used-vehicles-card';
 /**
  * Hof-Tablet app "Werkstatt" (TODO T-22, Roadmap V2 R2-A6): the maintenance contract with the workshop, the repairs
  * it did in the game and the farm's own mechanics; Roadmap V3 R3-V: used machines bought and sold; Roadmap V3.1 R31-A2:
- * demo and borrowed machines; Roadmap V3.1 R31-D8: tank locks.
+ * demo and borrowed machines; Roadmap V3.1 R31-D8: tank locks. Tabs (owner decision 2026-10-06): Wartung,
+ * Gebrauchtmaschinen, Leihen & Vorführen, Tankschlösser.
  */
 @Component({
   selector: 'app-workshop',
   imports: [RouterLink, TranslatePipe, Button, Card, ServiceCases, UsedVehiclesCard, MachineLoansCard, TankLockCard],
   template: `
-    <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      <div class="flex flex-col gap-4">
-        <app-card [title]="'workshop.maintenance' | t" data-testid="maintenance">
-          <p class="mb-3 text-[12px] text-muted">{{ 'contracts.maintenanceHint' | t }}</p>
-          @if (!hasMaintenance()) {
-            <app-button variant="secondary" [disabled]="busy()" (pressed)="requestMaintenance()" data-testid="request-maintenance">{{ 'contracts.requestMaintenance' | t }}</app-button>
-          }
-          @if (error(); as e) {
-            <p class="mt-2 text-[12px] text-danger">{{ e }}</p>
-          }
-        </app-card>
-        <app-card [title]="'workshop.mechanics' | t" data-testid="mechanics">
-          <ul class="space-y-2">
-            @for (m of mechanics(); track m.id) {
-              <li class="flex items-center justify-between gap-2 rounded-xl border border-border bg-bg px-3 py-2 text-[13px]" data-testid="mechanic">
-                <span class="text-text">{{ m.character.name }}</span>
-                <span class="fp-label">{{ 'employees.skill' | t }} {{ m.skill }}</span>
-              </li>
-            } @empty {
-              <li class="text-[13px] text-muted">{{ 'workshop.noMechanic' | t }}
-                <a routerLink="/employees" class="text-accent hover:underline">{{ 'workshop.toStaff' | t }}</a></li>
-            }
-          </ul>
-          <p class="mt-3 text-[12px] text-muted">{{ 'workshop.reports' | t }} <a routerLink="/mailbox" class="text-accent hover:underline">{{ 'nav.mailbox' | t }}</a></p>
-        </app-card>
-      </div>
-      <div class="flex flex-col gap-4">
+    <!-- Tabs (owner decision 2026-10-06): Wartung | Gebrauchtmaschinen | Leihen & Vorführen | Tankschlösser -->
+    @switch (tab()) {
+      @case ('gebraucht') {
         <app-used-vehicles-card [highlightNegotiation]="highlightedNegotiation()" (changed)="tasks.reload()" />
-        <!-- Roadmap V3.1 R31-A2: demo machines of the workshop and borrowed machines of the neighbours -->
-        <app-machine-loans-card />
+      }
+      @case ('leihen') {
+        <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <!-- Roadmap V3.1 R31-A2: demo machines of the workshop and borrowed machines of the neighbours -->
+          <app-machine-loans-card />
+          <app-service-cases [caseKinds]="['MACHINE_DEMO_OFFER']" openTitle="workshop.loans.demoOffers"
+            [highlightCase]="highlightedCase()" testId="demo-offer-cases" />
+        </section>
+      }
+      @case ('tankschloesser') {
         <!-- Roadmap V3.1 R31-D8: tank locks against diesel theft -->
         <app-tank-lock-card />
-        <app-service-cases [caseKinds]="['MACHINE_DEMO_OFFER']" openTitle="workshop.loans.demoOffers" [showEmpty]="false"
-          [highlightCase]="highlightedCase()" testId="demo-offer-cases" />
-        <app-service-cases [caseKinds]="['REPAIR']" [contractKinds]="['MAINTENANCE']" contractsTitle="workshop.contracts" [showEmpty]="false"
-          [highlightCase]="highlightedCase()" [highlightContract]="highlightedContract()" testId="workshop-cases" />
-      </div>
-    </section>
+      }
+      @default {
+        <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div class="flex flex-col gap-4">
+            <!-- with a running contract the card is empty: the contract stands under "Verträge" -->
+            @if (!hasMaintenance() || error()) {
+              <app-card [title]="'workshop.maintenance' | t" data-testid="maintenance">
+                @if (!hasMaintenance()) {
+                  <app-button variant="secondary" [disabled]="busy()" (pressed)="requestMaintenance()" data-testid="request-maintenance">{{ 'contracts.requestMaintenance' | t }}</app-button>
+                }
+                @if (error(); as e) {
+                  <p class="mt-2 text-[12px] text-danger">{{ e }}</p>
+                }
+              </app-card>
+            }
+            <app-card [title]="'workshop.mechanics' | t" data-testid="mechanics">
+              <ul class="space-y-2">
+                @for (m of mechanics(); track m.id) {
+                  <li class="flex items-center justify-between gap-2 rounded-xl border border-border bg-bg px-3 py-2 text-[13px]" data-testid="mechanic">
+                    <span class="text-text">{{ m.character.name }}</span>
+                    <span class="fp-label">{{ 'employees.skill' | t }} {{ m.skill }}</span>
+                  </li>
+                } @empty {
+                  <li class="text-[13px] text-muted">{{ 'workshop.noMechanic' | t }}
+                    <a routerLink="/employees" class="text-accent hover:underline">{{ 'workshop.toStaff' | t }}</a></li>
+                }
+              </ul>
+              <p class="mt-3 text-[12px] text-muted">{{ 'workshop.reports' | t }} <a routerLink="/mailbox" class="text-accent hover:underline">{{ 'nav.mailbox' | t }}</a></p>
+            </app-card>
+          </div>
+          <app-service-cases [caseKinds]="['REPAIR']" [contractKinds]="['MAINTENANCE']" contractsTitle="workshop.contracts" [showEmpty]="false"
+            [highlightCase]="highlightedCase()" [highlightContract]="highlightedContract()" testId="workshop-cases" />
+        </section>
+      }
+    }
   `,
 })
 export class Workshop {
@@ -69,6 +83,8 @@ export class Workshop {
   readonly tasks = inject(TasksStore);
   private readonly i18n = inject(TranslationService);
 
+  /** Tab of the route `/werkstatt/:tab`. */
+  readonly tab = input<string>('wartung');
   readonly contract = input<string>();
   readonly case = input<string>();
   /** R3-V: `?negotiation=` highlights a used-machine deal. */

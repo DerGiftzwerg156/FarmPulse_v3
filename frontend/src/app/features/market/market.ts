@@ -34,6 +34,7 @@ export function toChartSeries(series: PriceSeries[], sellPointOrder: string[]): 
 /**
  * Storage & market prices (AP-8.7): silo stock per fill type with value, current prices per sell point, price
  * history chart with selectable fill type / sell point / period, announced market events incl. special contracts.
+ * Tabs (owner decision 2026-10-06): Lager & Preise, Preisverlauf, Ereignisse, Preisalarme, Vorkontrakte.
  */
 @Component({
   selector: 'app-market',
@@ -48,6 +49,8 @@ export class Market {
 
   /** `?event=` highlights a market event (link from a special-offer mail). */
   readonly event = input<string>();
+  /** Tab of the route `/market/:tab`. */
+  readonly tab = input<string>('lager');
 
   readonly ranges = RANGES;
   readonly storage = signal<StorageOverview | null>(null);

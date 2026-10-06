@@ -21,10 +21,10 @@ describe('Insurance', () => {
     });
     TestBed.inject(GameStateStore).savegame.set(savegame({}));
     const fixture = TestBed.createComponent(Insurance);
+    fixture.componentRef.setInput('tab', 'hof');
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
     http.match('/api/contracts').forEach((r) => r.flush([contract()]));
-    http.expectOne('/api/cases').flush([]);
     http.expectOne('/api/insurance/quotes').flush([{ level: 'COMFORT', monthlyPremium: 131, coveragePercent: 90, deductible: 500 }]);
     http.match('/api/drought').forEach((r) => r.flush(droughtStatus()));
     fixture.detectChanges();
@@ -33,7 +33,6 @@ describe('Insurance', () => {
     expect(offer.textContent).toContain('Basis');
     expect(offer.textContent).toContain('60 % Erstattung');
     expect(el.querySelectorAll('[data-testid="insurance-quote"]').length).toBe(1);
-    expect(el.querySelector('[data-testid="damages"]')?.textContent).toContain('Schäden');
     (el.querySelector('[data-testid="offer-accept"] button') as HTMLButtonElement).click();
     http.expectOne('/api/contracts/1/accept').flush(contract({ status: 'ACTIVE' }));
     http.expectOne('/api/contracts').flush([contract({ status: 'ACTIVE', nextDueGameTime: 11 * DAY })]);
@@ -42,6 +41,14 @@ describe('Insurance', () => {
     http.match('/api/drought').forEach((r) => r.flush(droughtStatus()));
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="insurance-active"]')?.textContent).toContain('Aktiv');
+    // damages are their own tab (owner decision 2026-10-06)
+    expect(el.querySelector('[data-testid="damages"]')).toBeNull();
+    fixture.componentRef.setInput('tab', 'schaeden');
+    fixture.detectChanges();
+    http.match('/api/contracts').forEach((r) => r.flush([]));
+    http.match('/api/cases').forEach((r) => r.flush([]));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="damages"]')?.textContent).toContain('Schäden');
   });
 
   it('shows the drought cover beside storm and hail: rain of the months, quote, offer and declared droughts', () => {
@@ -51,6 +58,7 @@ describe('Insurance', () => {
     });
     TestBed.inject(GameStateStore).savegame.set(savegame({}));
     const fixture = TestBed.createComponent(Insurance);
+    fixture.componentRef.setInput('tab', 'hof');
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
     http.match('/api/contracts').forEach((r) => r.flush([contract({ status: 'ACTIVE' }),
@@ -61,6 +69,9 @@ describe('Insurance', () => {
     const el = fixture.nativeElement as HTMLElement;
     // the storm/hail card shows the BASIC insurance only
     expect(el.querySelector('[data-testid="insurance-active"]')?.textContent).toContain('Basis');
+    expect(el.querySelector('[data-testid="drought-insurance"]')).toBeNull();
+    fixture.componentRef.setInput('tab', 'duerre');
+    fixture.detectChanges();
     const card = el.querySelector('[data-testid="drought-insurance"]')!;
     expect(card.querySelector('[data-testid="drought-terms"]')?.textContent).toContain('4');
     expect(card.querySelector('[data-testid="drought-offer"]')?.textContent).toContain('Dürre-Index');

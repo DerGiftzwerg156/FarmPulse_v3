@@ -58,6 +58,8 @@ export class CalendarApp {
   private readonly tasks = inject(TasksStore);
 
   /** `?case=` highlights an invitation (links from mails and "Aufgaben"). */
+  /** Tab of the route `/kalender/:tab` (owner decision 2026-10-06): Nächste Tage, Einladungen, Jahr. */
+  readonly tab = input<string>('tage');
   readonly case = input<string>();
   readonly highlightedCase = computed(() => Number(this.case()) || null);
   readonly overview = signal<CalendarOverviewView | null>(null);

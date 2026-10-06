@@ -15,12 +15,9 @@ import { Card } from '../../shared/ui/card';
 import { Modal } from '../../shared/ui/modal';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { ServiceCases } from '../contracts/service-cases';
-import { HelperSettingsCard } from './helper-settings-card';
 
 export const JOB_ROLES = ['MACHINE_OPERATOR', 'MECHANIC', 'ANIMAL_KEEPER', 'OFFICE_CLERK', 'APPRENTICE', 'SEASONAL_WORKER'] as const;
 
-/** Roles that drive the FS25 helpers (R3-P2 apprentice, Roadmap V3.1 R31-A5 seasonal worker). */
-export const DRIVER_ROLES = ['MACHINE_OPERATOR', 'APPRENTICE', 'SEASONAL_WORKER'];
 export const NEED_KEYS = ['payFairness', 'workload', 'appreciation', 'workingConditions'] as const;
 export type NeedKey = (typeof NEED_KEYS)[number];
 
@@ -36,11 +33,12 @@ type Panel = { employeeId: number; kind: PanelKind } | null;
  * Employees (AP-8.5): job postings with applicants (skill and salary expectation visible, fixed), interview
  * questions by mail or call (they never change skill/salary), hiring; staff list with aggregated and per-category
  * satisfaction, raise, time off and dismissal. "Schulungen": machine operators show their trainings and can be sent to a
- * paid training (one game day away); applicants show a training they bring along.
+ * paid training (one game day away); applicants show a training they bring along. Tabs (owner decision 2026-10-06):
+ * Team, Stellen & Bewerber, Ehemalige.
  */
 @Component({
   selector: 'app-employees',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, Modal, PageErrorView, HelperSettingsCard,
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Card, Badge, Button, Modal, PageErrorView,
     ServiceCases],
   templateUrl: './employees.html',
 })
@@ -51,6 +49,8 @@ export class Employees {
 
   /** `?posting=` opens the applicants of a posting (link from an application mail). */
   readonly posting = input<string>();
+  /** Tab of the route `/employees/:tab`. */
+  readonly tab = input<string>('team');
   /** R3-P2: `?case=` highlights the takeover request of an apprentice. */
   readonly case = input<string>();
   readonly highlightedCase = computed(() => Number(this.case()) || null);
@@ -58,9 +58,6 @@ export class Employees {
   readonly roles = JOB_ROLES;
   readonly needKeys = NEED_KEYS;
   readonly employees = signal<EmployeeView[] | null>(null);
-  /** Roadmap V2 R2-A1: machine operators drive the FS25 helpers. */
-  readonly hasOperators = computed(() => (this.employees() ?? []).some((e) => e.status === 'ACTIVE'
-    && DRIVER_ROLES.includes(e.jobRole)));
   readonly postings = signal<JobPostingView[] | null>(null);
   readonly error = signal<PageError | null>(null);
   readonly openPosting = signal<number | null>(null);
@@ -74,7 +71,6 @@ export class Employees {
   readonly interviewFor = signal<number | null>(null);
   readonly interviewText = signal('');
   readonly interviewChannel = signal<'MAIL' | 'CALL'>('MAIL');
-  readonly showFormer = signal(false);
   /** "Schulungen": catalog (price per training), loaded when the training panel opens the first time. */
   readonly trainingCatalog = signal<TrainingOfferView[] | null>(null);
   readonly panelTraining = signal<string | null>(null);

@@ -78,8 +78,7 @@
                 @if (replyError()) {
                   <p class="text-[12px] text-danger" data-testid="reply-error">{{ replyError() }}</p>
                 }
-                <div class="flex items-center justify-between gap-2">
-                  <span class="text-[11px] text-muted">{{ 'mailbox.replyHint' | t }}</span>
+                <div class="flex items-center justify-end gap-2">
                   <app-button type="submit" [disabled]="sending() || !replyText().trim()" data-testid="reply-send">
                     <app-icon name="send" size="h-3.5 w-3.5" /> {{ 'common.send' | t }}
                   </app-button>

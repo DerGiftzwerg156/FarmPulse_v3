@@ -1161,7 +1161,9 @@
       "ACCIDENT": "nach Arbeitsunfall bis {at}",
       "getWell": "Genesungswünsche",
       "getWellSent": "Genesungswünsche an {name} geschickt."
-    }
+    },
+    "formerTitle": "Ehemalige Mitarbeiter",
+    "noFormer": "Noch keine ehemaligen Mitarbeiter."
   },
   "farmland": {
     "map": "Feldübersicht",
@@ -1402,6 +1404,10 @@
       "none": "Dieser Nachbar hat gerade keine Maschine zu verleihen.",
       "borrowed": "{vehicle} für {days} Spieltage geliehen – die Maschine wird auf den Hof gebracht.",
       "toWorkshop": "Zur Werkstatt"
+    },
+    "profileTabs": {
+      "profile": "Profil",
+      "message": "Nachricht"
     }
   },
   "diary": {
@@ -2131,5 +2137,90 @@
     "send": "Senden",
     "pacing": "Deine letzte Nachricht in dieser Gruppe ist noch keinen Spieltag her – der Ton zählt erst wieder ab morgen.",
     "hint": "Wie bei „Nachricht verfassen“: Der Ton deiner Nachricht wirkt auf das Vertrauen eines Mitglieds, Absprachen über Geld oder Preise laufen über die Formulare der Apps."
+  },
+  "tabs": {
+    "tasks": {
+      "aufgaben": "Aufgaben",
+      "meldungen": "Meldungen"
+    },
+    "calendar": {
+      "tage": "Nächste Tage",
+      "einladungen": "Einladungen",
+      "jahr": "Jahr"
+    },
+    "contacts": {
+      "kontakte": "Kontakte",
+      "vereine": "Vereine & Sponsoring"
+    },
+    "bank": {
+      "kredite": "Kredite",
+      "antrag": "Kreditantrag",
+      "kontoauszug": "Kontoauszug",
+      "ergebnis": "Betriebsergebnis",
+      "planung": "Planung & Jahresbericht"
+    },
+    "authorities": {
+      "finanzamt": "Finanzamt",
+      "antraege": "Anträge & Förderung",
+      "kontrollen": "Kontrollen & Tierseuchen",
+      "berufsgenossenschaft": "Berufsgenossenschaft",
+      "gemeinde": "Gemeinde"
+    },
+    "market": {
+      "lager": "Lager & Preise",
+      "verlauf": "Preisverlauf",
+      "ereignisse": "Ereignisse",
+      "alarme": "Preisalarme",
+      "vorkontrakte": "Vorkontrakte"
+    },
+    "insurance": {
+      "hof": "Hofversicherung",
+      "duerre": "Dürre-Index",
+      "schaeden": "Schäden"
+    },
+    "staff": {
+      "team": "Team",
+      "stellen": "Stellen & Bewerber",
+      "ehemalige": "Ehemalige"
+    },
+    "fields": {
+      "karte": "Karte",
+      "felder": "Meine Felder",
+      "verhandlungen": "Verhandlungen",
+      "pacht": "Pacht",
+      "vorgaenge": "Vorgänge"
+    },
+    "stable": {
+      "staelle": "Ställe",
+      "handel": "Handel & Tierarzt"
+    },
+    "workshop": {
+      "wartung": "Wartung",
+      "gebraucht": "Gebrauchtmaschinen",
+      "leihen": "Leihen & Vorführen",
+      "tankschloesser": "Tankschlösser"
+    },
+    "trade": {
+      "nachbarn": "Nachbarn & Ware",
+      "tiere": "Tierhandel",
+      "hofladen": "Hofladen",
+      "ferienwohnung": "Ferienwohnung",
+      "genossenschaft": "Genossenschaft"
+    },
+    "settings": {
+      "ki": "KI",
+      "hof": "Hof",
+      "ereignisse": "Ereignisse",
+      "spiel": "Im Spiel",
+      "netzwerk": "Tablet & Netzwerk"
+    }
+  },
+  "appHints": {
+    "ok": "Verstanden",
+    "open": "Hinweise zu dieser App",
+    "phone": "Charaktere rufen dich an, wenn sie etwas mit dir besprechen wollen. Nimmst du an, führst du das Gespräch hier im Tablet. Ein abgelehnter oder verpasster Anruf lässt das Thema offen, bis du dich selbst meldest. Alle Gespräche kannst du hier nachlesen.",
+    "contacts": "Hier stehen die Menschen aus Dorf, Familie, Vereinen und deinem Personal. Im Profil siehst du Charakterzüge, Hintergrund und Felder, unter „Nachricht“ schreibst du ihnen oder rufst an – die Antwort kommt in Spielzeit. Vertrauen und Ansehen zeigt das Tablet nur als Stufe, nie als Zahl. Die Anfragen der Vereine stehen unter „Vereine & Sponsoring“.",
+    "newspaper": "Das Dorfblatt erscheint zu Beginn jeder Periode mit Neuigkeiten aus dem Dorf, vom Hof und vom Markt, mit Amtlichem und Kleinanzeigen. Die neueste Ausgabe ist geöffnet, ältere Ausgaben bleiben in der Liste lesbar.",
+    "calendar": "Der Kalender folgt dem FS25-Kalender. „Nächste Tage“ zeigt Fristen und Termine und was zum Monatsbeginn automatisch abgebucht wird. Unter „Einladungen“ antwortest du auf Dorffeste, Stammtisch und Versammlungen, „Jahr“ zeigt Dorffeste, Steuertermine, Familien- und Amtstermine im Überblick."
   }
 }

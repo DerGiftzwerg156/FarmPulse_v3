@@ -46,7 +46,8 @@ export const STATE_BADGE: Record<ApplicationState, BadgeVariant> = {
 /**
  * Bank & credit (AP-8.4): application form (numbers only via form fields), processing state until the decision
  * is visible, result with coarse reason category (never a score), counter-offer handling, running loans with
- * repayment plan/history, deferral requests and Sondertilgungen (same installment, shorter term).
+ * repayment plan/history, deferral requests and Sondertilgungen (same installment, shorter term). Tabs: Kredite,
+ * Kreditantrag, Kontoauszug, Betriebsergebnis, Planung & Jahresbericht.
  */
 @Component({
   selector: 'app-bank',
@@ -59,6 +60,8 @@ export class Bank {
   private readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
 
+  /** Tab of the route `/bank/:tab` (owner decision 2026-10-06). */
+  readonly tab = input<string>('kredite');
   /** `?application=` highlights an application (link from the bank's mail). */
   readonly application = input<string>();
   /** `?case=` highlights a claim, an invitation to the annual review or a rate-cut offer (R3-K). */

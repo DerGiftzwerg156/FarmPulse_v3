@@ -32,6 +32,8 @@ export class Insurance {
   private readonly i18n = inject(TranslationService);
 
   /** `?contract=` / `?case=` highlight an entry (links from mails and "Aufgaben"). */
+  /** Tab of the route `/versicherung/:tab` (owner decision 2026-10-06): Hofversicherung, Dürre-Index, Schäden. */
+  readonly tab = input<string>('hof');
   readonly contract = input<string>();
   readonly case = input<string>();
 

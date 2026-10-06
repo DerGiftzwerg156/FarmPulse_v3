@@ -52,7 +52,6 @@ export function maxCount(n: AnimalNeighborView, t: AnimalTradeView, s: StableVie
   imports: [TranslatePipe, LabelPipe, MoneyPipe, Button, Card, TrustMeter],
   template: `
     <app-card [title]="'trade.animals.title' | t" data-testid="animal-trade">
-      <p class="mb-3 text-[12px] text-muted">{{ 'trade.animals.intro' | t }}</p>
       @if (view(); as t) {
         @if (!t.tracked) {
           <p class="rounded-sm border border-warn/40 px-3 py-2 text-[12px] text-warn" data-testid="no-stables">{{ 'trade.animals.noStables' | t }}</p>

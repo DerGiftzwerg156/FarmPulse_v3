@@ -53,6 +53,11 @@ describe('CalendarApp', () => {
     expect(debits[1].textContent).toContain('Pacht · Feld 8');
     expect(el.querySelector('[data-testid="debit-total"]')?.textContent?.replace(/\s/g, ' ')).toContain('5.990 €');
     expect(el.querySelector('[data-testid="month-start"]')?.textContent?.replace(/\s/g, ' ')).toContain('ungefähr 206.966 €');
+    // the year is its own tab (owner decision 2026-10-06)
+    expect(el.querySelector('[data-testid="year"]')).toBeNull();
+    fixture.componentRef.setInput('tab', 'jahr');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="debit"]')).toBeNull();
     const months = el.querySelectorAll('[data-testid="year-month"]');
     expect(months.length).toBe(12);
     expect(months[3].textContent).toContain('Schützenfest');

@@ -20,6 +20,15 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Tabs and first-open hints in the apps** (owner decisions 2026-10-06 in `QUESTIONS.md`):
+  - Larger apps are split into tabs with their own address (`/bank/kontoauszug`): Bank, Ämter, Flurkarte, Personal,
+    Agrarbörse, Werkstatt, Handel, Kontakte (with the profile sub tabs Profil / Nachricht), Versicherung, Stall,
+    Kalender, Aufgaben and Einstellungen. Old links and mail links open the tab of the entry; without a link the app opens
+    on the tab last used on this device. Tabs show the number of open decisions.
+  - The fixed explanation texts left the app pages: each app explains itself once in a dialog on first opening; after
+    "Verstanden" it does not show again on any device (backend table `app_hint_seen`, migration V37,
+    `GET /api/app-hints`, `PUT /api/app-hints/{appId}`). The "?" in the app header opens it again. Explanations in the
+    case cards and state-dependent warnings stay where they are.
 - **Booking statement ("Kontoauszug"):** the bank shows what was booked when and what it cost or brought - not only the
   month sums of the farm bookkeeping (owner decisions 2026-10-06 in `QUESTIONS.md`).
   - Mod: the `Farm:changeBalance` hook also writes single bookings (`farm_facts.json` → optional block `bookings`):
@@ -339,6 +348,11 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   money reason `TRAINING` (4,500–12,000 €), one game day away (`ON_LEAVE` for the mod), +appreciation, thank-you mail and
   diary entry. Machine operator applicants bring a training along with 30 % and expect 8 % more salary. Employees hired
   before have no training.
+
+### Changed
+
+- Settings only in the app "Einstellungen": the card "Helfer im Spiel" moved from "Personal" to *Einstellungen → Im
+  Spiel*; the settings are split into the tabs KI, Hof, Ereignisse, Im Spiel and Tablet & Netzwerk.
 
 ### Fixed
 

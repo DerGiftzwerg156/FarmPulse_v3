@@ -34,6 +34,7 @@ export function requestables(n: TradeNeighborView, t: TradeView): Requestable[] 
 /**
  * Hof-Tablet app "Handel" (Roadmap V3 R3-H, owner decision): the own silo goods, the neighbours with role, stock and
  * needs, "Ware anfragen" (H3), "Nach Arbeit fragen" (H5) and the offers, requests and contracts of the neighbours.
+ * Tabs (owner decision 2026-10-06): Nachbarn & Ware, Tierhandel, Hofladen, Ferienwohnung, Genossenschaft.
  */
 @Component({
   selector: 'app-trade',
@@ -46,6 +47,8 @@ export class Trade {
   private readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
   readonly casesView = viewChild(ServiceCases);
+  /** Tab of the route `/handel/:tab`. */
+  readonly tab = input<string>('nachbarn');
 
   /** `?neighbor=` highlights a neighbour (link from "Kontakte"). */
   readonly neighbor = input<string>();

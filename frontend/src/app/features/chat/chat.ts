@@ -70,7 +70,6 @@ import { Card } from '../../shared/ui/card';
             <app-button type="submit" [disabled]="busy() || !draft().trim()" data-testid="chat-send">{{ 'chat.send' | t }}</app-button>
           </form>
           @if (pacing()) { <p class="mt-1 text-[11px] text-muted" data-testid="chat-pacing">{{ 'chat.pacing' | t }}</p> }
-          <p class="mt-1 text-[11px] text-muted">{{ 'chat.hint' | t }}</p>
         </div>
       }
       @if (error(); as e) { <p class="text-[12px] text-danger" data-testid="chat-error">{{ e }}</p> }
