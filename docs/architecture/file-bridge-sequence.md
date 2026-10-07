@@ -74,3 +74,6 @@ flowchart LR
   restart) instead of starting over.
 - `writeInstructions()` writes the outbox in every cycle; the synchronisation of the open questions
   (`InstructionsWriting`) is queued like every other event.
+- **Version conflicts (Phase 1.4):** every changeable row has a version (`@Version`). If a listener's transaction
+  collides with another one (typically an input on the tablet at the same moment), it is rolled back and run again
+  at once on the fresh data - up to 3 times, without counting as a failed attempt.

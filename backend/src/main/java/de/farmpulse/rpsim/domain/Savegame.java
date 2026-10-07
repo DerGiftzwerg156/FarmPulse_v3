@@ -20,6 +20,11 @@ public class Savegame {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Technical review 10/2026, Phase 1.4 (R-2): optimistic locking - an outdated write fails instead of overwriting. */
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     @Column(name = "bridge_savegame_id", unique = true, length = 255)
     private String bridgeSavegameId;
 

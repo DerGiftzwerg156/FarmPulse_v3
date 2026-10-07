@@ -260,6 +260,10 @@ retried without running any listener twice, a failing ack listener loses neither
 the database, only own records are deserialised); the bridge-simulator end-to-end tests (`BridgeSimulatorEndToEndTest`,
 `SimulatorScenariosEndToEndTest`) drive the rebuilt cycle with the real file protocol - they need
 `npm ci` in `tools/bridge-simulator`, otherwise they are skipped.
+Technical review 10/2026, Phase 1.4 (optimistic locking): `OptimisticLockingTest` (a stale write fails and the change
+saved in between survives - on the code before 1.4 the stale save overwrote it; a version conflict in REST is
+`409 CONCURRENT_UPDATE`; a cycle listener that loses a race runs again at once without counting as a failed attempt);
+frontend `core/api/concurrent-update.interceptor.spec.ts` (hint + reload on `CONCURRENT_UPDATE` only).
 Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
 (journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
 month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,

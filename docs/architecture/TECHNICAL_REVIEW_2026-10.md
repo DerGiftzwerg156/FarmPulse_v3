@@ -313,7 +313,7 @@ Aufwand in Personentagen (PT) für eine Person, die den Code kennt.
 
 ### Phase 1: Robuster Bridge-Zyklus (Release 1.8, ca. 8–12 PT)
 
-> **Status (07.10.2026): 1.1–1.3 umgesetzt (PR A), 1.4 und 1.5–1.8 folgen in eigenen PRs.** Entscheidungen des
+> **Status (07.10.2026): 1.1–1.3 umgesetzt (PR A, #43), 1.4 umgesetzt (PR B), 1.5–1.8 folgen in PR C.** Entscheidungen des
 > Projektinhabers:
 > - 1.3: **strikte Reihenfolge** statt Kern-Transaktion + isolierte Feature-Handler: Jeder Listener läuft in eigener
 >   Transaktion mit Journal; ein fehlschlagender Listener hält die Warteschlange an und wird im nächsten Zyklus
@@ -322,6 +322,10 @@ Aufwand in Personentagen (PT) für eine Person, die den Code kennt.
 > - Meldung als Hinweis-Karte auf der Startseite (`CYCLE_STEP_SKIPPED`), nicht in den Einstellungen.
 > - Umsetzung: dauerhafte Warteschlange `cycle_event` statt Prüfsummen pro Datei (1.2) – die Einlese-Transaktion
 >   speichert Daten und Ereignisse atomar, der Datei-Cache wird erst nach dem Commit gesetzt.
+> - 1.4: `@Version` auf 71 von 72 Tabellen (Flyway V40); `app_hint_seen` wird nur einmal geschrieben und nie geändert.
+>   Ein Konflikt im Zyklus wird sofort bis zu 3-mal neu ausgeführt, ohne als Fehlversuch zu zählen. Im Frontend
+>   (Entscheidung): Hinweis „Die Daten wurden inzwischen geändert …“ und Neuladen aller Seiten.
+>   Nachgewiesen am Code vor 1.4: Ein veraltetes Speichern überschrieb eine dazwischen gespeicherte Änderung still.
 
 Ziel: Kein Fehler eines Features kann Buchungen, Acks oder die Spielzeit blockieren, und nichts geht still verloren.
 
