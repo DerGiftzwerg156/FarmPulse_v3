@@ -83,6 +83,7 @@
     "back": "Zurück",
     "next": "Weiter",
     "error": "Es ist ein Fehler aufgetreten.",
+    "concurrentUpdate": "Die Daten wurden inzwischen geändert – die Ansicht wurde neu geladen. Bitte die Eingabe prüfen und erneut absenden.",
     "yes": "Ja",
     "no": "Nein",
     "retry": "Erneut versuchen",

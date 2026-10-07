@@ -13,6 +13,7 @@ import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.notice.NoticeService;
 import de.farmpulse.rpsim.repository.CycleStepRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
+import jakarta.persistence.OptimisticLockException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -20,6 +21,7 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.context.event.SmartApplicationListener;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -43,6 +45,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class CycleDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(CycleDispatcher.class);
+    /** Immediate re-runs of a listener after a version conflict (not counted as failed attempts). */
+    static final int CONFLICT_RETRIES = 3;
 
     /** Result of a delivery. */
     public enum Outcome {
@@ -88,10 +92,10 @@ public class CycleDispatcher {
                 continue; // DONE or SKIPPED
             }
             try {
-                tx.executeWithoutResult(s -> {
+                runWithConflictRetries(() -> tx.executeWithoutResult(s -> {
                     multicaster.invoke(listener, event);
                     record(savegameId, cycleEventId, stepKey, id, CycleStepStatus.DONE, null);
-                });
+                }));
             } catch (RuntimeException e) {
                 int attempts = before.map(CycleStep::getAttempts).orElse(0) + 1;
                 boolean skip = attempts >= Math.max(1, props.getBridge().getStepMaxAttempts());
@@ -110,6 +114,34 @@ public class CycleDispatcher {
             }
         }
         return Outcome.COMPLETE;
+    }
+
+    /**
+     * Review 10/2026 Phase 1.4 (R-2): a version conflict means another transaction (e.g. a player's input) changed
+     * the same row in between. The listener is rolled back and simply run again on fresh data - up to
+     * {@value #CONFLICT_RETRIES} times before it counts as a failed attempt.
+     */
+    static void runWithConflictRetries(Runnable step) {
+        for (int i = 0; ; i++) {
+            try {
+                step.run();
+                return;
+            } catch (RuntimeException e) {
+                if (i >= CONFLICT_RETRIES || !isVersionConflict(e)) {
+                    throw e;
+                }
+                log.info("Version conflict in a cycle step, running it again ({}/{})", i + 1, CONFLICT_RETRIES);
+            }
+        }
+    }
+
+    static boolean isVersionConflict(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof OptimisticLockingFailureException || t instanceof OptimisticLockException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** {@code de.Class.method(Param)} for {@code @EventListener} methods, the class name otherwise. */

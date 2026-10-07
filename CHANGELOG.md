@@ -426,6 +426,12 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   `rpsim.bridge.step-max-attempts` (3) failures the step is skipped and reported as the notice *Verarbeitungsschritt
   übersprungen*. A long catch-up of game days resumes where it stopped, also after a restart.
 
+- **Lost updates (technical review 10/2026, Phase 1.4, R-2):** a change based on an outdated read no longer silently
+  overwrites a change saved in between (e.g. an input on the tablet while the game logic of a day runs). Every
+  changeable table has a version counter (`@Version`, Flyway V40): the outdated write fails instead. In the Hof-Tablet
+  the hint *Die Daten wurden inzwischen geändert – die Ansicht wurde neu geladen …* appears and the pages reload; in
+  the bridge cycle the listener simply runs again on the fresh data.
+
 ### Security
 
 Technical review 10/2026, Phase 0 ([`docs/architecture/TECHNICAL_REVIEW_2026-10.md`](docs/architecture/TECHNICAL_REVIEW_2026-10.md)):
