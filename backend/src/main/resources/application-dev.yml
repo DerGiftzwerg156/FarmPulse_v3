@@ -11,5 +11,6 @@ spring:
 rpsim:
   db:
     password-file: ./data/db.properties
+    backup-dir: ./data/backups   # review 10/2026 Phase 1.8: backup at every start, newest 5 kept
   bridge:
     path: ./tools/bridge-simulator/runtime/modSettings/FS25_RPSim

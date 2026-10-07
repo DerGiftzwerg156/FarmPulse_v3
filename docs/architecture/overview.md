@@ -58,3 +58,19 @@ flowchart LR
 
 Development and tests run without FS25: the bridge simulator (`tools/bridge-simulator/`) plays the mod's part on
 the same files.
+
+## Threads and shutdown (technical review 10/2026, Phase 1.5–1.8)
+
+Each kind of background work has a thread of its own, so a slow part cannot hold the others:
+
+| Work | Thread | Notes |
+| --- | --- | --- |
+| Bridge cycle (`BridgeScheduler`) | `bridge` (1, strictly one cycle after the other) | `rpsim.bridge.poll-interval-ms`; on shutdown a running cycle gets 10 s, an interrupted one continues from its queue |
+| Narration (`NarrationWorker`) | `narration-poll` + `narration-1..n` (`rpsim.ai.worker-threads`, default 1) | Claim the job (transaction, `IN_PROGRESS` + lease) → AI call **without** transaction → store (transaction). A lease that runs out is claimed again |
+| Live updates (`SseHub`) | `sse-<n>`, one per connected app | `broadcast` only queues (100 events per client); a client that lags behind is disconnected and reconnects by itself |
+| SSE keep-alive | Spring's scheduler (`@Scheduled`) | only queues a `ping` |
+
+All these threads are daemons. When the backend stops, `SseHub` completes every stream first (an open stream would
+make Tomcat's graceful shutdown wait 30 s), then bridge and narration finish their current work, then the AI HTTP
+clients are closed. At every start, before Flyway migrates, the H2 database is backed up (`rpsim.db.backup-dir`,
+newest 5 kept).

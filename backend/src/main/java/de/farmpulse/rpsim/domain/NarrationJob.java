@@ -82,4 +82,8 @@ public class NarrationJob extends SavegameScoped {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    /** Technical review 10/2026, Phase 1.6: while IN_PROGRESS the claim ends here; afterwards the job is claimed again. */
+    @Column(name = "lease_until")
+    private Instant leaseUntil;
 }

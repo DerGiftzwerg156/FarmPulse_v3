@@ -72,6 +72,8 @@ flowchart LR
 - **Game time:** the work of a snapshot (`TickWork`) commits the game time of a day before its listeners run and the
   finished day (`lastProcessedGameDay`) after them, so a long catch-up resumes where it stopped (also after a
   restart) instead of starting over.
+- **Own thread (Phase 1.5):** the cycle runs on the thread `bridge`, which nothing else uses - neither a slow AI
+  provider nor a slow live-update client can delay bookings, acknowledgements or game time.
 - `writeInstructions()` writes the outbox in every cycle; the synchronisation of the open questions
   (`InstructionsWriting`) is queued like every other event.
 - **Version conflicts (Phase 1.4):** every changeable row has a version (`@Version`). If a listener's transaction

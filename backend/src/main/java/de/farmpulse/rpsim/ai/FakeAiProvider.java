@@ -2,6 +2,7 @@ package de.farmpulse.rpsim.ai;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,8 @@ public class FakeAiProvider implements AiProvider {
 
     private final List<AiPrompt> prompts = new ArrayList<>();
     private volatile boolean failing;
+    /** Runs on every call before the answer, outside the lock (tests: block like a slow provider, inspect the thread). */
+    private volatile Consumer<AiPrompt> onCall = p -> { };
 
     @Override
     public String id() {
@@ -18,8 +21,11 @@ public class FakeAiProvider implements AiProvider {
     }
 
     @Override
-    public synchronized AiResult generate(AiPrompt prompt) {
-        prompts.add(prompt);
+    public AiResult generate(AiPrompt prompt) {
+        synchronized (this) {
+            prompts.add(prompt);
+        }
+        onCall.accept(prompt);
         if (failing) {
             throw new AiProviderException("fake provider configured to fail");
         }
@@ -34,8 +40,13 @@ public class FakeAiProvider implements AiProvider {
         this.failing = failing;
     }
 
+    public void setOnCall(Consumer<AiPrompt> onCall) {
+        this.onCall = onCall;
+    }
+
     public synchronized void reset() {
         prompts.clear();
         failing = false;
+        onCall = p -> { };
     }
 }

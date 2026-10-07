@@ -10,13 +10,23 @@ import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.Map;
 
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
 /** java.net.http implementation of {@link AiHttp}. */
 @Component
-public class JdkAiHttp implements AiHttp {
+public class JdkAiHttp implements AiHttp, DisposableBean {
 
     private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+
+    /**
+     * Technical review 10/2026, Phase 1.7 (R-7): closes the client when the application stops. {@code shutdownNow}
+     * instead of {@code close}: {@code close} would wait for a request that still runs.
+     */
+    @Override
+    public void destroy() {
+        client.shutdownNow();
+    }
 
     @Override
     public Response postJson(URI uri, Map<String, String> headers, String body, Duration timeout) {
