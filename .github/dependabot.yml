@@ -1,0 +1,48 @@
+# Technical review 10/2026, Phase 0.6 (S-4): weekly version updates. Minor and patch updates of one ecosystem come as
+# one grouped PR, majors one by one. Security updates are opened independently of this schedule.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /backend
+    schedule:
+      interval: weekly
+    groups:
+      maven-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      frontend-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /tools/bridge-simulator
+    schedule:
+      interval: weekly
+    groups:
+      bridge-simulator-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /tools/screenshot-generator
+    schedule:
+      interval: weekly
+    groups:
+      screenshot-generator-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
