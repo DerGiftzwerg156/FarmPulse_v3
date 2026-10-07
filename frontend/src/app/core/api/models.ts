@@ -157,7 +157,7 @@ export interface DroughtStatusView {
 /** Dashboard notice of the fact layer (TODO T-02 rewind, T-03 bookings the game did not execute). */
 export interface NoticeView {
   id: number;
-  kind: 'REWIND_DECISION' | 'REWIND_RESENT' | 'INSTRUCTION_FAILED' | string;
+  kind: 'REWIND_DECISION' | 'REWIND_RESENT' | 'INSTRUCTION_FAILED' | 'CYCLE_STEP_SKIPPED' | string;
   status: string;
   gameTime: number;
   details: Record<string, unknown>;

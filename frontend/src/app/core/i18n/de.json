@@ -427,6 +427,19 @@
       "TANK_LOCK": "Tankschloss",
       "SEVERANCE": "Abfindung"
     },
+    "cycleEvent": {
+      "GameTimeAdvancedEvent": "Spielzeit",
+      "GameDayPassedEvent": "Tageswechsel",
+      "GameMonthPassedEvent": "Monatswechsel",
+      "FactsIngested": "Hofdaten",
+      "InstructionAcked": "Buchungsbestätigung",
+      "ContractReported": "Vertragsmeldung",
+      "MarketContextUpdated": "Marktdaten",
+      "PlayerResponsesRead": "Antworten aus dem Spiel",
+      "InstructionsWriting": "Anweisungen ans Spiel",
+      "Rewound": "älterer Spielstand",
+      "CalendarChangedEvent": "Kalender"
+    },
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
       "PRICE_EVENT": "Preis-Ereignis",
@@ -1578,6 +1591,10 @@
     "INSTRUCTION_FAILED": {
       "title": "Buchung nicht ausgeführt",
       "text": "{what} {amount} wurde im Spiel nicht ausgeführt: {reason}."
+    },
+    "CYCLE_STEP_SKIPPED": {
+      "title": "Verarbeitungsschritt übersprungen",
+      "text": "Der Schritt „{step}“ ({event}, {time}) ist dreimal fehlgeschlagen und wurde übersprungen, damit das Spiel weiterläuft. Fehler: {error}. Details stehen im Backend-Log."
     },
     "insufficientFunds": "zu wenig Geld auf dem Konto",
     "modOutdated": "Mod aktualisieren – der installierte Mod FS25_RPSim kennt diese Anweisung noch nicht",

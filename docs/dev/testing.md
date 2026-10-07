@@ -253,6 +253,13 @@ writing requests → 403 `ORIGIN_FORBIDDEN`), `AiSettingsServiceTest` (a new `ba
 the key, owner-only file), `LanAccessTest.aiSettingsAreReadOnlyOnATablet`, `ProfileHardeningTest` (no `AUTO_SERVER`,
 password file in `dev`/`prod`, no OpenAPI / Swagger UI in `prod`); frontend `features/settings/settings.spec.ts`
 (read-only AI form on a tablet). On real Windows: manual test plan section 27.
+Technical review 10/2026, Phase 1.1-1.3 (bridge cycle): `CycleResilienceTest` (written before the fix, red on 1.7.0:
+a failing day listener is retried and skipped after three attempts while the game goes on, a transient failure is
+retried without running any listener twice, a failing ack listener loses neither the ack nor its retry),
+`CycleInfrastructureTest` (every listener of every cycle event has its own journal key, every queued payload survives
+the database, only own records are deserialised); the bridge-simulator end-to-end tests (`BridgeSimulatorEndToEndTest`,
+`SimulatorScenariosEndToEndTest`) drive the rebuilt cycle with the real file protocol - they need
+`npm ci` in `tools/bridge-simulator`, otherwise they are skipped.
 Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
 (journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
 month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,

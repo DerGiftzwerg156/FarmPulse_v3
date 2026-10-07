@@ -1,15 +1,17 @@
 package de.farmpulse.rpsim.time;
 
+import java.util.Optional;
+
 import de.farmpulse.rpsim.bridge.BridgeDtos;
 import de.farmpulse.rpsim.domain.Savegame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /**
  * TODO T-08: keeps the FS25 calendar of every savegame (period, day in period, days per period, year) and the
  * monotonic month counter derived from it. Called for every ingested farm_facts.json before game time advances.
+ * The {@link CalendarChangedEvent} it returns is queued by the bridge cycle (technical review 10/2026, Phase 1.3).
  */
 @Service
 public class CalendarService {
@@ -17,11 +19,9 @@ public class CalendarService {
     private static final Logger log = LoggerFactory.getLogger(CalendarService.class);
 
     private final GameTime gameTime;
-    private final ApplicationEventPublisher events;
 
-    public CalendarService(GameTime gameTime, ApplicationEventPublisher events) {
+    public CalendarService(GameTime gameTime) {
         this.gameTime = gameTime;
-        this.events = events;
     }
 
     /**
@@ -29,9 +29,9 @@ public class CalendarService {
      * {@code (monotonicDay - (dayInPeriod - 1)) * 1 game day} - the same day base as the mod's gameTime
      * ({@code currentMonotonicDay * 86 400 000 + dayTime}).
      */
-    public void update(Savegame sg, BridgeDtos.Calendar c) {
+    public Optional<CalendarChangedEvent> update(Savegame sg, BridgeDtos.Calendar c) {
         if (c == null || c.period() == null || c.daysPerPeriod() == null || c.monotonicDay() == null) {
-            return;
+            return Optional.empty();
         }
         int n = Math.max(1, c.daysPerPeriod());
         int dayInPeriod = c.dayInPeriod() == null ? 1 : Math.max(1, c.dayInPeriod());
@@ -68,7 +68,8 @@ public class CalendarService {
                 log.info("Savegame {}: days per period changed {} -> {}, rescheduling monthly dates", sg.getId(),
                         old.daysPerPeriod(), n);
             }
-            events.publishEvent(new CalendarChangedEvent(sg.getId(), old, current));
+            return Optional.of(new CalendarChangedEvent(sg.getId(), old, current));
         }
+        return Optional.empty();
     }
 }

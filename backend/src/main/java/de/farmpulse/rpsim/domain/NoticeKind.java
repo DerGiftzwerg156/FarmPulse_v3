@@ -7,5 +7,7 @@ public enum NoticeKind {
     /** Lost bookings were re-sent automatically after a short rewind (T-02). */
     REWIND_RESENT,
     /** The mod did not execute an instruction (FAILED / REJECTED ack, T-03). */
-    INSTRUCTION_FAILED
+    INSTRUCTION_FAILED,
+    /** Technical review 10/2026, Phase 1.3: a listener of the bridge cycle failed repeatedly and was skipped. */
+    CYCLE_STEP_SKIPPED
 }

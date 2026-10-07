@@ -83,6 +83,11 @@ public class RpsimProperties {
         private String path = "../tools/bridge-simulator/runtime/modSettings/FS25_RPSim";
         /** Real-time polling interval of the bridge reader (ms). */
         private long pollIntervalMs = 2000;
+        /**
+         * Technical review 10/2026, Phase 1.3: a listener of the bridge cycle that fails is retried by the next cycles;
+         * after this many failed attempts it is skipped for that event and the player gets a notice.
+         */
+        private int stepMaxAttempts = 3;
         /** Whether the bridge scheduler runs (disabled in unit tests). */
         private boolean enabled = true;
         /**
