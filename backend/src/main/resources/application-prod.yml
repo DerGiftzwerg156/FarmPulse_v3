@@ -5,10 +5,18 @@ spring:
     # Imported here (not in application.yml) so it overrides the values of this profile file.
     import: optional:file:./application-local.yml
   datasource:
-    url: jdbc:h2:file:${user.home}/.rpsim/rpsim;AUTO_SERVER=TRUE
+    url: jdbc:h2:file:${user.home}/.rpsim/rpsim
     username: sa
-    password:
+    password:                     # empty: the random password from rpsim.db.password-file is used (review 10/2026 Phase 0.1)
+# review 10/2026 Phase 0.5 (S-3): no OpenAPI document / Swagger UI for players (dev and e2e keep them)
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 rpsim:
+  db:
+    password-file: ${user.home}/.rpsim/db.properties
   bridge:
     path: ${user.home}/Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim
 # Roadmap V3 R3-N1: server.address stays unset (all interfaces). The LanAccessFilter decides by the sender address:

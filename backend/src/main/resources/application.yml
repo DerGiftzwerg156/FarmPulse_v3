@@ -38,8 +38,11 @@ rpsim:
     ingame-prompts: true               # Roadmap V2 R2-F2: yes/no questions in the game
     prompt-default-kinds: [CALL]       # R2-F2: occasions asked in the game until the player chooses (settings page)
     prompt-max-age-hours: 48           # R2-F2: questions without their own deadline expire after this many game hours
+  db:
+    password-file: ""             # review 10/2026 Phase 0.1: H2 password file (dev/prod set it); empty = spring.datasource.password as is
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
+    allowed-hosts: []             # review 10/2026 Phase 0.2: extra Host-header names (localhost, IPs and this computer's name always work)
     lan:                          # Roadmap V3 R3-N2: PIN login of devices in the home network (owner decisions)
       pin-min-length: 4           # PIN = 4..8 digits
       pin-max-length: 8

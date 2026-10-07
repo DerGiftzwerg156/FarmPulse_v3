@@ -552,3 +552,20 @@ The single bookings (`farm_facts.json` → `bookings`, see [bridge protocol](bri
 | 26.3 | 🟡 Vehicle name of a shop purchase / sale | Buy a tractor in the shop; then sell another own vehicle in the shop | the purchase shows the tractor's name after at most `statement-vehicle-match-exports` exports (default 3, about 30 s); the sale shows the name of the sold vehicle. Note whether the vehicle appears in the same export as the booking or one later | if the vehicle appears **before** its booking (no name), the order is reversed: compare with the export before the previous one |
 | 26.4 | Two purchases at once | Buy two vehicles within 10 seconds | both purchases show both names with *nicht eindeutig zuordenbar* | – |
 | 26.5 | Reload without saving | Save, buy something, quit without saving and load the save again | the purchase disappears from the *Kontoauszug* after the first export | – |
+
+## 27. Security hardening on Windows (technical review 10/2026, Phase 0)
+
+The automated tests cover Linux and an in-memory Windows-style file system (Jimfs); these checks need a real Windows
+installation of the release. 🟡 = only checkable on Windows.
+
+| # | Check | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 27.1 | Existing installation is migrated | Install the release over a 1.7.0 installation with savegames, start `start.bat` | the backend starts, all savegames are there; `%USERPROFILE%\.rpsim\db.properties` exists; the window logs "Database … is protected with the password from …" once | – |
+| 27.2 | 🟡 No H2 port | While the backend runs: `netstat -ano \| findstr LISTENING` and compare with the PID of `java.exe` | the Java process listens on 8080 only (no second, random port of an H2 TCP server) | – |
+| 27.3 | 🟡 Permissions of `db.properties` | Explorer → *Eigenschaften → Sicherheit* of `%USERPROFILE%\.rpsim\db.properties`, or `icacls %USERPROFILE%\.rpsim\db.properties` | exactly one entry: the own user with full access (no *SYSTEM*, *Administratoren*, *Benutzer*); note whether `icacls` shows inherited entries `(I)` | if inherited entries remain, the ACL is re-inherited by Windows: note the output for a follow-up |
+| 27.4 | 🟡 Permissions of `ai-provider.properties` | Save the AI settings once, then as in 27.3 for `data\local-config\ai-provider.properties` next to `start.bat` | as in 27.3 | as in 27.3 |
+| 27.5 | Swagger is off | Open <http://localhost:8080/swagger-ui/index.html> and <http://localhost:8080/v3/api-docs> | 404 for both | – |
+| 27.6 | Foreign host name | `curl -H "Host: evil.example" http://localhost:8080/api/settings/ai` | 403 `HOST_FORBIDDEN`; without the header (or with `localhost`) 200 | – |
+| 27.7 | Own DNS name | Open the Hof-Tablet on the tablet via the router name of the PC (e.g. `http://mein-pc.fritz.box:8080`) | 403 `HOST_FORBIDDEN` until the name is entered in `rpsim.web.allowed-hosts` (`application-local.yml`); the IP address and the computer name always work | – |
+| 27.8 | AI settings on the tablet | Home-network access on, open *Einstellungen → KI* on the tablet | form read-only with "Nur am Spiele-PC änderbar …"; on the gaming PC editable | – |
+

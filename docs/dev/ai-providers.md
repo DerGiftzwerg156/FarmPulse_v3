@@ -19,6 +19,16 @@ Resolution order per value (`AiSettingsService`):
 3. Defaults from `application.yml` (never contains a key).
 
 `GET /api/settings/ai` returns only `apiKeySet: true/false` - a stored key is never sent back to the browser.
+
+Protection of the key (technical review 10/2026, Phase 0.4/0.5):
+
+- `PUT /api/settings/ai` is accepted from the gaming PC (loopback) only; a tablet gets `403 LAN_GAME_PC_ONLY` and sees
+  the form read-only (`editable: false`).
+- A stored key is only ever sent to the host it was entered for: a `baseUrl` with another host and no new key in the
+  same request discards the key (an empty `<provider>.apiKey` entry, which also hides a key from
+  `application-local.yml`). Enter the key again for the new address.
+- The local file is written with owner-only permissions (POSIX `600`, Windows ACL with the owner alone); a file of an
+  older version is restricted on start.
 Never commit a key: `.gitignore` covers `*.local.yml`, `application-local.yml`, `.env*` and `backend/data/`.
 
 ## Providers

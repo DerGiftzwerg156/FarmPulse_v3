@@ -82,6 +82,7 @@ commit convention.
 | Path | Content |
 | --- | --- |
 | `backend/data/rpsim-dev.mv.db` | dev database (delete to start over) |
+| `backend/data/db.properties` | password of the dev database, created on the first start (owner-only; delete it together with the database) |
 | `backend/data/local-config/ai-provider.properties` | AI settings written by the settings page (git-ignored) |
 | `tools/bridge-simulator/runtime/` | simulator bridge folder and state (`--reset` to start over) |
 | `backend/target/site/jacoco/index.html` | backend coverage report |

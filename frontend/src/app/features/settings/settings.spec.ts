@@ -5,20 +5,21 @@ import { provideRouter } from '@angular/router';
 import { AiSettingsView, BypassSettingsView, FieldSettingsView, PromptSettingsView } from '../../core/api/models';
 import { Settings } from './settings';
 
-const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, apiKeySet: true, providers: ['NONE', 'OPENAI', 'ANTHROPIC', 'GEMINI', 'OLLAMA'] };
+const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, apiKeySet: true, providers: ['NONE', 'OPENAI', 'ANTHROPIC', 'GEMINI', 'OLLAMA'], editable: true };
 
 describe('Settings', () => {
   function setup(game: unknown = { tonePreset: 'REALISTIC', toneLabel: 'realistisch-ausgewogen' },
     fields: FieldSettingsView = { fieldHintsEnabled: true, fieldsTracked: true },
     bypass: BypassSettingsView = { reactionsEnabled: true, interestSurchargePercent: 0 },
-    prompts: PromptSettingsView = { available: true, kinds: ['CALL'], allKinds: ['CALL', 'CONTRACT_OFFER', 'TAX_BILL'] }) {
+    prompts: PromptSettingsView = { available: true, kinds: ['CALL'], allKinds: ['CALL', 'CONTRACT_OFFER', 'TAX_BILL'] },
+    aiView: AiSettingsView = ai) {
     TestBed.configureTestingModule({
       imports: [Settings],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     const fixture = TestBed.createComponent(Settings);
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne('/api/settings/ai').flush(ai);
+    http.expectOne('/api/settings/ai').flush(aiView);
     const g = http.expectOne('/api/settings/game');
     if (game) g.flush(game);
     else g.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
@@ -49,6 +50,20 @@ describe('Settings', () => {
     expect(key.type).toBe('password');
     expect(key.value).toBe('');
     expect(key.placeholder).toContain('hinterlegt');
+  });
+
+  it('is read-only on a tablet: the gaming PC alone changes provider, key and address (review 10/2026 Phase 0.4)', () => {
+    const { el } = setup(undefined, undefined, undefined, undefined, { ...ai, editable: false });
+    expect(el.querySelector('[data-testid="ai-readonly"]')?.textContent).toContain('Nur am Spiele-PC');
+    expect((el.querySelector('[data-testid="provider"]') as HTMLSelectElement).disabled).toBe(true);
+    expect((el.querySelector('[data-testid="api-key"]') as HTMLInputElement).disabled).toBe(true);
+    expect((el.querySelector('[data-testid="settings-save"] button') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('is editable on the gaming PC', () => {
+    const { el } = setup();
+    expect(el.querySelector('[data-testid="ai-readonly"]')).toBeNull();
+    expect((el.querySelector('[data-testid="api-key"]') as HTMLInputElement).disabled).toBe(false);
   });
 
   it('saves provider, model and key, then clears the key field', () => {

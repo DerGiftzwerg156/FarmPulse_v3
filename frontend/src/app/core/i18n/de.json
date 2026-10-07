@@ -1517,6 +1517,7 @@
     "baseUrl": "Adresse des lokalen Servers",
     "noneHint": "Ohne KI-Anbieter verwenden alle Charaktere passende Textvorlagen.",
     "saved": "Gespeichert.",
+    "aiReadOnly": "Nur am Spiele-PC änderbar – der API-Schlüssel wird an die hier eingestellte Adresse geschickt.",
     "game": "Spielstand",
     "toneFixed": "Der Ton wurde im Onboarding festgelegt und bleibt für diesen Spielstand fest.",
     "detectedMods": "Erkannte Mods mit Überschneidungen",

@@ -7,6 +7,7 @@
 | `java` wird nicht gefunden, oder `UnsupportedClassVersionError` | Java 21 installieren (`java -version` muss 21 oder neuer zeigen) |
 | `Port 8080 was already in use` | anderes Programm auf Port 8080 beenden, oder in `application-local.yml` `server.port: 8090` setzen und dann <http://localhost:8090> öffnen |
 | Fenster schließt sich sofort | `start.bat` aus einer Eingabeaufforderung starten, um die Meldung zu lesen |
+| `The database … refuses the password from …\db.properties` | Die Datei `<Benutzerordner>\.rpsim\db.properties` gehört nicht (mehr) zur Datenbank – meist wurde sie gelöscht oder aus einer anderen Installation kopiert. Die passende `db.properties` aus einer Sicherung zurücklegen. Ohne sie ist die Datenbank nicht mehr zu öffnen: dann wie unter [Neu anfangen](#neu-anfangen) den Ordner `.rpsim` löschen. |
 
 ## Der Mod schreibt keine Daten
 
@@ -107,6 +108,12 @@ sich die Oberfläche von selbst wieder (nach 1 bis 30 Sekunden); notfalls die Se
 - **Meldung „Zugriff nur vom Spiele-PC …“ (403):** Der Schalter **Im Heimnetz erreichbar** ist aus, oder das Gerät
   kommt nicht aus dem Heimnetz (z. B. über mobile Daten). Am Spiele-PC unter *Einstellungen → Tablet & Netzwerk*
   einschalten und das Tablet ins WLAN bringen.
+- **Meldung „Unbekannte Adresse …“ (403):** FarmPulse wurde über einen Namen aufgerufen, den es nicht kennt, z. B.
+  `mein-pc.fritz.box`. Das schützt vor fremden Webseiten (DNS-Rebinding). Die IP-Adresse aus der Einstellungskarte
+  oder den Rechnernamen verwenden – oder den Namen in `application-local.yml` unter `rpsim.web.allowed-hosts`
+  eintragen und das Backend neu starten.
+- **KI-Einstellungen lassen sich am Tablet nicht ändern:** Absicht. Anbieter, Schlüssel und Adresse ändert nur der
+  Spiele-PC, denn der Schlüssel wird an die eingestellte Adresse geschickt.
 - **Adresse passt nicht mehr:** Der Router hat dem PC eine neue Adresse gegeben. Die aktuelle steht in der
   Einstellungskarte und im Backend-Fenster.
 - **Immer wieder nach der PIN gefragt:** Die PIN wurde geändert oder der Heimnetz-Zugriff aus- und wieder eingeschaltet
@@ -115,7 +122,8 @@ sich die Oberfläche von selbst wieder (nach 1 bis 30 Sekunden); notfalls die Se
 ## Neu anfangen
 
 - **Neuer Spielstand:** einfach das Onboarding erneut durchlaufen und mit dem neuen FS25-Spielstand verknüpfen.
-- **Alles zurücksetzen:** Backend beenden und den Ordner `<Benutzerordner>\.rpsim\` löschen. Achtung: Damit sind
+- **Alles zurücksetzen:** Backend beenden und den Ordner `<Benutzerordner>\.rpsim\` löschen (Datenbank und ihr
+  Passwort `db.properties` zusammen). Achtung: Damit sind
   alle Charaktere, Mails und Kredite aller Spielstände weg; das Spielgeld im FS25-Spielstand bleibt, wie es ist.
 
 ## Fehler melden

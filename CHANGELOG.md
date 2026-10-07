@@ -417,6 +417,24 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   helpers their own way could exceed it. The mod now refuses such a start itself (*Kein freier Maschinenführer (strenger
   Modus)*) and stops a helper started over the limit right away with its own message.
 
+### Security
+
+Technical review 10/2026, Phase 0 ([`docs/architecture/TECHNICAL_REVIEW_2026-10.md`](docs/architecture/TECHNICAL_REVIEW_2026-10.md)):
+
+- **Database (S-1):** the H2 file database no longer starts an H2 TCP server (`AUTO_SERVER=TRUE` removed from `dev`
+  and `prod`; H2 opened it with `-tcpAllowOthers` on all interfaces - a connection still needed the random key from
+  `rpsim.lock.db`, but user `sa` had no password).
+  The database gets a random password in an owner-only file (`rpsim.db.password-file`, `prod`:
+  `~/.rpsim/db.properties`); an existing database without password is switched over on the first start.
+- **DNS rebinding (S-2):** requests with a `Host` header other than `localhost`, an IP address, the computer name or
+  `rpsim.web.allowed-hosts` get `403 HOST_FORBIDDEN`; writing requests from a foreign `Origin` get
+  `403 ORIGIN_FORBIDDEN`.
+- **AI key (S-2):** the AI settings can only be changed on the gaming PC (a tablet sees them read-only), and a new
+  `baseUrl` host without a new key discards the stored key.
+- **Files and endpoints (S-3):** `ai-provider.properties` and `db.properties` are readable by the owner only; the
+  `prod` profile serves no OpenAPI document and no Swagger UI.
+- **Repository (S-4):** Dependabot (weekly, minor/patch grouped) and CodeQL code scanning (Java, JavaScript/TypeScript).
+
 ## [1.7.0] - 2026-09-30
 
 The web app becomes the **Hof-Tablet**: every function is an app on a tablet home screen. Update the mod

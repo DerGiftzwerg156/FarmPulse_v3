@@ -1011,6 +1011,8 @@ export interface AiSettingsView {
   baseUrl: string | null;
   apiKeySet: boolean;
   providers: string[];
+  /** Review 10/2026 Phase 0.4: false on a tablet - only the gaming PC may change provider, key and address. */
+  editable: boolean;
 }
 
 export interface GameSettingsView {

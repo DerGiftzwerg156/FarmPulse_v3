@@ -271,7 +271,9 @@ public final class Views {
     public record ReputationView(String tier, String label) {
     }
 
-    public record AiSettingsView(String provider, String model, String baseUrl, boolean apiKeySet, List<String> providers) {
+    /** {@code editable}: false on other devices than the gaming PC (review 10/2026 Phase 0.4, read-only there). */
+    public record AiSettingsView(String provider, String model, String baseUrl, boolean apiKeySet, List<String> providers,
+                                 boolean editable) {
     }
 
     public record GameSettingsView(String tonePreset, String toneLabel) {
