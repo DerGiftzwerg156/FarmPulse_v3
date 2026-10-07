@@ -19,7 +19,7 @@
     <properties>
         <java.version>21</java.version>
         <springdoc.version>3.1.1</springdoc.version>
-        <anthropic.version>2.65.0</anthropic.version>
+        <anthropic.version>2.68.0</anthropic.version>
     </properties>
 
     <dependencies>
@@ -131,7 +131,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.13</version>
+                <version>0.8.15</version>
                 <executions>
                     <execution>
                         <goals>
