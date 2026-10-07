@@ -18,7 +18,7 @@ class CalendarServiceTest {
 
     GameTime gameTime = new GameTime();
     List<Object> events = new ArrayList<>();
-    CalendarService calendar = new CalendarService(gameTime, events::add);
+    CalendarService calendar = new CalendarService(gameTime);
     Savegame sg;
 
     @BeforeEach
@@ -42,7 +42,7 @@ class CalendarServiceTest {
     @Test
     void periodStartAndLengthComeFromTheExport() {
         // monotonic day 40 is day 2 of period 8 (October), 3 days per period
-        calendar.update(sg, cal(8, 2, 3, 2, 40));
+        update(sg, cal(8, 2, 3, 2, 40));
         assertThat(sg.getCalMonthStartGameTime()).isEqualTo(39 * DAY);
         assertThat(gameTime.msPerMonth(sg)).isEqualTo(3 * DAY);
         assertThat(gameTime.addMonths(sg, 40 * DAY + 3600, 1)).isEqualTo(42 * DAY);
@@ -55,25 +55,25 @@ class CalendarServiceTest {
 
     @Test
     void monthCounterContinuesOverPeriodChanges() {
-        calendar.update(sg, cal(8, 1, 3, 2, 39));
+        update(sg, cal(8, 1, 3, 2, 39));
         long index = sg.getCalMonthIndex();
-        calendar.update(sg, cal(8, 3, 3, 2, 41));
+        update(sg, cal(8, 3, 3, 2, 41));
         assertThat(sg.getCalMonthIndex()).isEqualTo(index);
-        calendar.update(sg, cal(10, 1, 3, 2, 45)); // slept over two periods
+        update(sg, cal(10, 1, 3, 2, 45)); // slept over two periods
         assertThat(sg.getCalMonthIndex()).isEqualTo(index + 2);
-        calendar.update(sg, cal(8, 1, 3, 2, 39)); // older save loaded
+        update(sg, cal(8, 1, 3, 2, 39)); // older save loaded
         assertThat(sg.getCalMonthIndex()).isEqualTo(index);
     }
 
     @Test
     void changingDaysPerPeriodKeepsTheMonthOfScheduledDates() {
-        calendar.update(sg, cal(8, 1, 3, 2, 39));
+        update(sg, cal(8, 1, 3, 2, 39));
         events.clear();
         long index = sg.getCalMonthIndex();
         long due = gameTime.addMonths(sg, 39 * DAY, 2); // start of period 10: day 45
         assertThat(due).isEqualTo(45 * DAY);
         // the player switches to 5 days per period on day 40 (day 2 of period 8)
-        calendar.update(sg, cal(8, 2, 5, 2, 40));
+        update(sg, cal(8, 2, 5, 2, 40));
         assertThat(sg.getCalMonthIndex()).isEqualTo(index);
         assertThat(events).singleElement().isInstanceOf(CalendarChangedEvent.class);
         CalendarChangedEvent e = (CalendarChangedEvent) events.getFirst();
@@ -84,10 +84,15 @@ class CalendarServiceTest {
     @Test
     void firstCalendarReplacesTheFallbackAndReschedules() {
         long dueUnderFallback = gameTime.addMonths(sg, 39 * DAY, 3); // fallback: day 42
-        calendar.update(sg, cal(8, 1, 3, 2, 39));
+        update(sg, cal(8, 1, 3, 2, 39));
         CalendarChangedEvent e = (CalendarChangedEvent) events.getFirst();
         assertThat(e.previous()).isEqualTo(GameTime.Anchor.FALLBACK);
         // the month count continues: the date stays 3 months after day 39 -> day 48
         assertThat(e.remap(dueUnderFallback)).isEqualTo(48 * DAY);
+    }
+
+    /** Review 10/2026 Phase 1.3: the change event is returned (and queued by the bridge cycle) instead of published. */
+    private void update(Savegame sg, BridgeDtos.Calendar c) {
+        calendar.update(sg, c).ifPresent(events::add);
     }
 }

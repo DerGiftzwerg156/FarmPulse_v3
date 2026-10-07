@@ -91,6 +91,14 @@ persönliche Note.
 Antworten kommen außerdem nicht sofort: Charaktere melden sich in Spielzeit. Ist das Spiel pausiert, vergeht keine
 Spielzeit.
 
+## Hinweis „Verarbeitungsschritt übersprungen“
+
+Ein Teil der Spiellogik (z. B. die Dorfzeitung an einem Spieltag) ist dreimal hintereinander mit einem Fehler
+abgebrochen. FarmPulse hat diesen einen Schritt übersprungen, damit Buchungen, Gehälter und die Spielzeit
+weiterlaufen – der Rest des Tages ist normal verarbeitet. Der Hinweis nennt den Schritt und die Fehlermeldung; die
+Einzelheiten stehen im Backend-Fenster (`Cycle step … failed`). Bitte als Fehler melden (siehe unten) und den Hinweis
+mit *Verstanden* schließen.
+
 ## Oben steht „Offline“
 
 Die Live-Verbindung zum Backend ist unterbrochen. Läuft das Backend-Fenster noch? Nach einem Neustart verbindet

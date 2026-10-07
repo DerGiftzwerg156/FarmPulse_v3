@@ -54,6 +54,22 @@ describe('NoticesCard', () => {
     expect(text).not.toContain('unknown type');
   });
 
+  it('explains a skipped step of the bridge cycle (review 10/2026 Phase 1.3)', () => {
+    const { fixture, http, el } = setup();
+    http.expectOne('/api/notices').flush([
+      { id: 4, kind: 'CYCLE_STEP_SKIPPED', status: 'OPEN', gameTime: 12 * DAY, relatedType: null, relatedId: null,
+        details: { listener: 'VillageNewspaperService.onDay', event: 'GameDayPassedEvent', error: 'boom' } },
+    ]);
+    fixture.detectChanges();
+    const item = el.querySelector('[data-testid="notice"]');
+    expect(item?.textContent).toContain('Verarbeitungsschritt übersprungen');
+    expect(item?.textContent).toContain('VillageNewspaperService.onDay');
+    expect(item?.textContent).toContain('Tageswechsel');
+    expect(item?.textContent).toContain('Tag 12');
+    expect(item?.textContent).toContain('boom');
+    expect(item?.querySelector('[data-testid="notice-dismiss"]')).not.toBeNull();
+  });
+
   it('warns about installed mods with overlapping features (TODO T-09)', () => {
     const { fixture, http, el } = setup();
     TestBed.inject(GameStateStore).savegame.set(savegame({ detectedMods: ['FS25_UsedPlus'] }));

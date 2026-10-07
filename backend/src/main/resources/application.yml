@@ -30,6 +30,7 @@ rpsim:
   bridge:
     path: ../tools/bridge-simulator/runtime/modSettings/FS25_RPSim
     poll-interval-ms: 2000
+    step-max-attempts: 3               # review 10/2026 Phase 1.3: failed attempts of a cycle listener before it is skipped (notice)
     enabled: true
     rewind-auto-resend-max-hours: 24   # T-02: reload without saving up to 1 game day -> re-send lost bookings automatically
     rewind-lookback-hours: 24          # T-02: bookings acked this long before the reloaded point are checked as well

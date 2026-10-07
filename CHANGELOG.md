@@ -417,6 +417,15 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   helpers their own way could exceed it. The mod now refuses such a start itself (*Kein freier Maschinenführer (strenger
   Modus)*) and stops a helper started over the limit right away with its own message.
 
+- **Bridge cycle (technical review 10/2026, Phase 1.1-1.3, R-1):** one failing listener no longer loses data or stops
+  the game. Before, the whole cycle was one transaction and the file was remembered as read before it committed: a
+  single failure of any of the ~130 listeners rolled everything back, and the acknowledgement or the game days of that
+  file were lost for good (a listener that always failed stopped all game logic). Now every read stores its data and
+  enqueues its events in one transaction (`cycle_event`), and every listener runs in its own transaction with a
+  journal (`cycle_step`): a failure is retried by the next cycle in the same order, nothing runs twice, and after
+  `rpsim.bridge.step-max-attempts` (3) failures the step is skipped and reported as the notice *Verarbeitungsschritt
+  übersprungen*. A long catch-up of game days resumes where it stopped, also after a restart.
+
 ### Security
 
 Technical review 10/2026, Phase 0 ([`docs/architecture/TECHNICAL_REVIEW_2026-10.md`](docs/architecture/TECHNICAL_REVIEW_2026-10.md)):
