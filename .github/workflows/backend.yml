@@ -23,7 +23,7 @@ jobs:
           java-version: '21'
           cache: maven
       # the backend E2E test drives the real bridge simulator (skipped without Node)
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
