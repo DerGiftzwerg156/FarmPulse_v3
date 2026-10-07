@@ -87,7 +87,7 @@ Mehr in [`docs/dev/setup.md`](docs/dev/setup.md).
 | [Dein erster Spielstand](docs/user-guide/erster-spielstand.md) | [Architektur](docs/architecture/overview.md) · [Bridge-Zyklus](docs/architecture/file-bridge-sequence.md) · [Domänenmodell](docs/architecture/domain-model.md) · [Zwei-Ebenen-Prinzip](docs/architecture/two-tier-principle.md) · [Anruf-Automat](docs/architecture/call-state-machine.md) |
 | [Funktionen](docs/user-guide/funktionen.md) | [Bridge-Protokoll](docs/dev/bridge-protocol.md) · [Konfiguration](docs/dev/configuration-reference.md) · [KI-Anbieter](docs/dev/ai-providers.md) |
 | [Fehlerbehebung](docs/user-guide/fehlerbehebung.md) | [Tests](docs/dev/testing.md) · [Manueller Testplan](docs/dev/manual-test-plan.md) · [Frontend](docs/dev/frontend.md) · [Mod-Tests](docs/dev/mod-testing.md) |
-| [Mod-README](mod/README.md) | [Offene technische Punkte](docs/dev/offene-technische-punkte.md) · [Offene Fragen](docs/architecture/QUESTIONS.md) · [Konzepte](docs/concept/) |
+| [Mod-README](mod/README.md) | [Offene technische Punkte](docs/dev/offene-technische-punkte.md) · [Technisches Review 10/2026](docs/architecture/TECHNICAL_REVIEW_2026-10.md) · [Offene Fragen](docs/architecture/QUESTIONS.md) · [Konzepte](docs/concept/) |
 
 Ausbauplan: [Roadmap V2](docs/architecture/ROADMAP_V2.md) – Mitarbeiter als FS25-Helfer, echte Hof-Finanzen, Felder & Wetter, neue
 Rollenspiel-Bereiche und Entscheidungen im Spiel.
