@@ -60,6 +60,8 @@ export class Settings {
   readonly needsUrl = computed(() => URL_PROVIDERS.includes(this.provider()));
   readonly isActive = computed(() => this.ai()?.provider === this.provider());
   readonly keyStored = computed(() => this.isActive() && !!this.ai()?.apiKeySet);
+  /** Review 10/2026 Phase 0.4: read-only on other devices than the gaming PC (the backend refuses the change). */
+  readonly editable = computed(() => this.ai()?.editable !== false);
 
   constructor() {
     this.api.aiSettings().subscribe({

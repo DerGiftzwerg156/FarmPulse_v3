@@ -15,8 +15,10 @@ import de.farmpulse.rpsim.domain.HelperWageMode;
 import de.farmpulse.rpsim.domain.PromptKind;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.WorkforceService;
+import de.farmpulse.rpsim.lan.NetworkAddresses;
 import de.farmpulse.rpsim.prompt.PromptService;
 import de.farmpulse.rpsim.savegame.SavegameContext;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -178,20 +180,26 @@ public class SettingsController {
         return new Views.FarmSettingsView(sg.getFarmName(), sg.getMapName());
     }
 
-    private AiSettingsView view(AiSettingsService.View v) {
+    private AiSettingsView view(AiSettingsService.View v, HttpServletRequest req) {
         List<String> providers = registry.ids().stream().filter(id -> !"FAKE".equals(id)).toList();
-        return new AiSettingsView(v.provider(), v.model(), v.baseUrl(), v.apiKeySet(), providers);
+        return new AiSettingsView(v.provider(), v.model(), v.baseUrl(), v.apiKeySet(), providers,
+                NetworkAddresses.isLoopback(req.getRemoteAddr()));
     }
 
     @GetMapping("/api/settings/ai")
-    public AiSettingsView ai() {
-        return view(settings.view());
+    public AiSettingsView ai(HttpServletRequest req) {
+        return view(settings.view(), req);
     }
 
+    /**
+     * Review 10/2026 Phase 0.4 (S-2): only on the gaming PC - the key goes to the configured address, so a device in
+     * the home network must not be able to redirect it.
+     */
     @PutMapping("/api/settings/ai")
-    public AiSettingsView save(@Valid @RequestBody AiSettingsRequest r) {
+    public AiSettingsView save(@Valid @RequestBody AiSettingsRequest r, HttpServletRequest req) {
+        NetworkAddresses.requireGamePc(req.getRemoteAddr());
         registry.byId(r.provider()); // validates the id
-        return view(settings.save(r.provider(), r.model(), r.apiKey(), r.baseUrl()));
+        return view(settings.save(r.provider(), r.model(), r.apiKey(), r.baseUrl()), req);
     }
 
     /** Tone preset is fixed since the onboarding (read-only). */

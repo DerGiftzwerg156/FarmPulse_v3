@@ -53,7 +53,8 @@ class AnthropicProviderTest {
 
     AnthropicProvider provider(String key) {
         AiSettingsService s = ProviderTestSupport.settings("ANTHROPIC", key);
-        s.save("ANTHROPIC", null, null, "http://127.0.0.1:" + server.getAddress().getPort());
+        // review 10/2026 Phase 0.4: a new host needs its key in the same request, otherwise the stored key is discarded
+        s.save("ANTHROPIC", null, key, "http://127.0.0.1:" + server.getAddress().getPort());
         return new AnthropicProvider(s);
     }
 

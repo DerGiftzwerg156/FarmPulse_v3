@@ -26,6 +26,17 @@ public class RpsimProperties {
     private Ai ai = new Ai();
     private Formulas formulas = new Formulas();
     private Web web = new Web();
+    private Db db = new Db();
+
+    /** Technical review 10/2026, Phase 0.1 (S-1): password of the H2 file database. */
+    @Getter @Setter
+    public static class Db {
+        /**
+         * Properties file with the database password (owner-only permissions), created on the first start. Empty =
+         * the password from {@code spring.datasource.password} is used as it is (in-memory databases of tests/e2e).
+         */
+        private String passwordFile = "";
+    }
 
     @Getter @Setter
     public static class Web {
@@ -34,6 +45,12 @@ public class RpsimProperties {
          * SPA fallback to index.html, so players only start one process. Empty = API only (dev: ng serve).
          */
         private String staticDir = "";
+        /**
+         * Technical review 10/2026, Phase 0.2 (S-2): host names accepted in the {@code Host} header besides
+         * {@code localhost}, IP addresses and the name of this computer, e.g. {@code mein-pc.fritz.box}. Protects
+         * against DNS rebinding: a web page cannot point one of these names at this computer.
+         */
+        private List<String> allowedHosts = new ArrayList<>();
         /** Roadmap V3 R3-N1/N2: access from devices in the home network (tablet). */
         private Lan lan = new Lan();
     }

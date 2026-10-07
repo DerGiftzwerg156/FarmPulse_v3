@@ -1,9 +1,7 @@
 package de.farmpulse.rpsim.lan;
 
 import java.util.List;
-import java.util.Map;
 
-import de.farmpulse.rpsim.api.ApiExceptionHandler.ApiError;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -13,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -109,18 +106,6 @@ public class LanController {
     }
 
     private static void requireGamePc(HttpServletRequest req) {
-        if (!NetworkAddresses.isLoopback(req.getRemoteAddr())) {
-            throw new GamePcOnlyException();
-        }
-    }
-
-    /** Changing the switch or the PIN from a tablet. */
-    static class GamePcOnlyException extends RuntimeException {
-    }
-
-    @ExceptionHandler(GamePcOnlyException.class)
-    public ResponseEntity<ApiError> gamePcOnly() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ApiError("LAN_GAME_PC_ONLY", "Nur am Spiele-PC änderbar", Map.of()));
+        NetworkAddresses.requireGamePc(req.getRemoteAddr());
     }
 }

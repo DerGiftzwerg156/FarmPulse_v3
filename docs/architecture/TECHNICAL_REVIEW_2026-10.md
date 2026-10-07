@@ -14,7 +14,7 @@ H2-JAR geprüft. Pfade sind relativ zu `backend/src/main/java/de/farmpulse/rpsim
 | Grundarchitektur (Mod ↔ Datei-Bridge ↔ Backend ↔ UI) | **gut** | Klare Zuständigkeiten, Zwei-Ebenen-Prinzip (KI schreibt nur Text) sauber umgesetzt, Idempotenz über `instructionId`, Rewind-Erkennung |
 | Fachlogik / Determinismus | **gut** | Alle Formeln konfigurierbar (`rpsim.formulas.*`), Spielzeit statt Echtzeit, Aufholen Tag für Tag |
 | Konsistenz & Fehlertoleranz der Laufzeit | **kritisch** | Ein einziger Riesen-Transaktions-Zyklus, In-Memory-Caches überleben ein Rollback, keine optimistische Sperre |
-| Sicherheit | **kritisch** | H2-TCP-Server ohne Passwort im LAN offen, DNS-Rebinding kann den KI-API-Key abgreifen |
+| Sicherheit | **kritisch** | DNS-Rebinding kann den KI-API-Key abgreifen; H2-TCP-Server im LAN offen (durch Zufallsschlüssel geschützt, korrigiert am 07.10.2026) |
 | Modularität / Wartbarkeit | **mittel bis schwach** | 20 zyklische Paketabhängigkeiten, 136 synchrone Event-Listener, deren Reihenfolge an 96 verstreuten `@Order`-Zahlen hängt, God-Objekte |
 | Performance / Skalierung über lange Spielstände | **mittel** | Unbegrenzt wachsende Ack-Datei und Snapshot-Tabelle, wiederholtes JSON-Parsen, ein Scheduler-Thread für alles |
 | Tests & CI | **gut** | 1.153 Backend-Tests grün (11 übersprungen), 88 % Instruktions- und 68 % Branch-Abdeckung, E2E mit Playwright; es fehlen Architektur-, Abhängigkeits- und Sicherheits-Gates |
@@ -53,20 +53,27 @@ wahrscheinlich), **M** = mittel (Wartbarkeit oder Performance), **N** = niedrig.
 
 ### 3.1 Sicherheit
 
-#### S-1 (K) H2 lauscht im Netzwerk, Benutzer `sa` ohne Passwort
-- **Beleg:** `backend/src/main/resources/application-prod.yml:8` und `application-dev.yml:8` setzen
+#### S-1 (M, korrigiert am 07.10.2026; ursprünglich K) H2 lauscht im Netzwerk, Benutzer `sa` ohne Passwort
+- **Beleg:** `backend/src/main/resources/application-prod.yml:8` und `application-dev.yml:8` setzten
   `jdbc:h2:file:...;AUTO_SERVER=TRUE`, `username: sa`, `password:` (leer). H2 2.4.240 startet im Auto-Server-Modus
   einen TCP-Server mit `-tcpAllowOthers` (nachgeprüft in `org/h2/engine/Database.class`). Port und Schlüssel stehen
   in der `.lock.db`.
-- **Auswirkung:** Die Datenbank ist am `LanAccessFilter` vorbei aus dem Heimnetz erreichbar. Die
-  Fehlerbehebungs-Anleitung empfiehlt sogar, Java in der Windows-Firewall für private Netze freizugeben
-  (`docs/user-guide/fehlerbehebung.md:101`). Über H2 lassen sich die Daten lesen und ändern. `CREATE ALIAS` erlaubt
-  außerdem das Ausführen von Java-Code, also Codeausführung auf dem Spiele-PC.
+- **Nachmessung am laufenden 1.7.0-JAR (Profil `prod`):** Der Prozess lauscht zusätzlich zu 8080 auf einem zufälligen
+  Port an `0.0.0.0`, also auf allen Schnittstellen. Eine Verbindung über die LAN-Adresse gelingt aber **nur**, wenn der
+  Datenbankname der Zufallsschlüssel aus `rpsim.lock.db` ist (`id=…`, 43 Hex-Zeichen). Mit dem Dateipfad oder einem
+  falschen Schlüssel antwortet H2 mit `28000 Wrong user name or password`, auch bei `sa` ohne Passwort.
+- **Auswirkung (korrigiert):** Ein Gerät im Heimnetz kommt ohne den Schlüssel **nicht** an die Daten. Die
+  ursprüngliche Aussage „Über H2 lassen sich die Daten lesen und ändern“ war überzogen. Es bleiben: ein unnötiger,
+  aus dem LAN erreichbarer Netzwerkdienst als Angriffsfläche (die Fehlerbehebungs-Anleitung empfiehlt, Java in der
+  Windows-Firewall für private Netze freizugeben), und wer die Lock-Datei lesen kann, braucht kein Passwort. Mit
+  Zugriff gäbe es über `CREATE ALIAS` Codeausführung.
 - **Empfehlung:** `AUTO_SERVER` entfernen, denn Backend und Spiel teilen sich die DB nicht. Ein zufälliges Passwort
-  beim ersten Start erzeugen und lokal ablegen. Für Entwickler-Zugriff gibt es die H2-Konsole nur im `dev`-Profil,
-  gebunden an localhost.
+  beim ersten Start erzeugen und lokal ablegen. Umgesetzt in Phase 0.1.
 
 #### S-2 (K) DNS-Rebinding und Abfluss des KI-API-Keys
+- **Nachweis am laufenden 1.7.0-JAR (07.10.2026):** `PUT /api/settings/ai` mit `Host: evil.example` und
+  `Origin: http://evil.example` (so sendet der Browser nach DNS-Rebinding) wurde mit 200 angenommen; danach stand
+  `openai.baseUrl=https://evil.example/v1` neben dem unveränderten `openai.apiKey` in `ai-provider.properties`.
 - **Beleg:** Die Herkunftsprüfung in `lan/LanAccessFilter.java:49` behandelt Loopback als vertrauenswürdig. Ein
   `Host`-Header wird nirgends geprüft. Danach behält `ai/AiSettingsService.java:75-88` beim Speichern einer neuen
   `baseUrl` den bisherigen `apiKey` bei, und `PUT /api/settings/ai` ist für jeden erlaubten Absender offen.
@@ -284,6 +291,17 @@ Aufwand in Personentagen (PT) für eine Person, die den Code kennt.
 
 ### Phase 0: Sofortmaßnahmen Sicherheit (Patch-Release 1.7.1, ca. 2–3 PT)
 
+> **Status (07.10.2026): umgesetzt.** Abweichungen und Entscheidungen des Projektinhabers:
+> - 0.2: Erlaubt sind `localhost`, **jede** IP-Adresse (eine IP im `Host`-Header kann nicht aus DNS-Rebinding stammen),
+>   der Rechnername und die Liste `rpsim.web.allowed-hosts`, statt nur der beim Start erkannten eigenen LAN-IPs.
+> - 0.1: Ein in `spring.datasource.password` gesetztes Passwort hat Vorrang. Die Passwortdatei wird *vor* der Änderung
+>   der Datenbank geschrieben, ein Absturz dazwischen wird beim nächsten Start repariert.
+> - 0.5: Der Windows-ACL-Pfad ist gegen ein In-Memory-Dateisystem (Jimfs) getestet. Die Prüfung auf echtem Windows
+>   steht im [manuellen Testplan, Abschnitt 27](../dev/manual-test-plan.md#27-security-hardening-on-windows-technical-review-102026-phase-0).
+> - 0.6: CodeQL übersetzt Java mit Maven (`build-mode: manual`, wegen Lombok), JavaScript/TypeScript ohne Build.
+>   Dependabot läuft wöchentlich, Minor- und Patch-Updates je Ökosystem gruppiert.
+> - Versionsnummer: Einträge unter `[Unreleased]`, das Release 1.7.1 taggt der Projektinhaber.
+
 | # | Maßnahme | Finding | Akzeptanzkriterium |
 | --- | --- | --- | --- |
 | 0.1 | `AUTO_SERVER=TRUE` aus `application-prod.yml`/`application-dev.yml` entfernen; beim ersten Start ein zufälliges DB-Passwort erzeugen und in `~/.rpsim/db.properties` ablegen (Dateirechte nur Benutzer); bestehende DBs per `ALTER USER sa SET PASSWORD` migrieren | S-1 | `netstat` zeigt keinen H2-Port; Integrationstest: Start mit vorhandener DB ohne Passwort läuft und setzt das Passwort |
@@ -374,7 +392,7 @@ flowchart LR
 
 | Phase | Aufwand | Nutzen |
 | --- | --- | --- |
-| 0 | 2–3 PT | Schließt zwei kritische Sicherheitslücken |
+| 0 | 2–3 PT | Schließt eine kritische (S-2) und eine mittlere (S-1) Sicherheitslücke |
 | 1 | 8–12 PT | Beseitigt die wahrscheinlichsten Ursachen für „nichts passiert mehr" und stille Datenverluste |
 | 2 | 6–8 PT | Stabil über lange Spielstände, Mod/Backend-Versionen sicher kombinierbar |
 | 3 | 15–25 PT | Hält die Roadmap umsetzbar, ohne dass jede Funktion alle anderen gefährdet |

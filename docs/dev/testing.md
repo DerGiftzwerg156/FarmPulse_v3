@@ -244,6 +244,15 @@ PIN session cookie for API and live updates, game-PC-only settings, PIN format a
 session end after 30 days / new PIN / switch off); the test profile hashes with 1,000 PBKDF2 iterations to stay fast.
 Frontend: `app.spec.ts` (PIN login gate) and `features/lan/lan.spec.ts` (login, card, QR code, interceptor). Access from
 a real tablet: manual test plan section 12.
+Technical review 10/2026, Phase 0 (security hardening): `DatabaseCredentialsTest` (random password for a new H2 file
+database, migration of a database without password, crash between file and database, lost password file, configured
+password wins), `DatabasePasswordStartupTest` (full start on a Flyway-migrated database of 1.7.0 without password),
+`OwnerOnlyFilesTest` (POSIX `600` on the real file system and in Jimfs, Windows-style ACL with the owner alone in Jimfs),
+`AllowedHostsTest` and `HostHeaderFilterTest` (DNS rebinding: foreign `Host` → 403 `HOST_FORBIDDEN`, foreign `Origin` of
+writing requests → 403 `ORIGIN_FORBIDDEN`), `AiSettingsServiceTest` (a new `baseUrl` host without a new key discards
+the key, owner-only file), `LanAccessTest.aiSettingsAreReadOnlyOnATablet`, `ProfileHardeningTest` (no `AUTO_SERVER`,
+password file in `dev`/`prod`, no OpenAPI / Swagger UI in `prod`); frontend `features/settings/settings.spec.ts`
+(read-only AI form on a tablet). On real Windows: manual test plan section 27.
 Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
 (journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
 month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,

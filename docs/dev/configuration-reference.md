@@ -24,11 +24,18 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.bridge.prompt-default-kinds` | `[CALL]` | Occasions asked in the game until the player chooses on the settings page: `CALL`, `CONTRACT_OFFER` (lease, maintenance, insurance offers and the lease renewal), `WILDLIFE_OFFER`, `CREDIT_COUNTER`, `INVITATION`, `COMPENSATION_CLAIM`, `TAX_BILL`, `TAX_ADVISOR`. | Roadmap V2 R2-F2 |
 | `rpsim.bridge.prompt-max-age-hours` | `48` | A question without its own deadline (the counter offer of the bank; a tax bill past its deadline) expires after this many game hours; the others expire with the deadline of their decision (ring timeout, offer validity, end of the lease). | Roadmap V2 R2-F2 |
 
+## `rpsim.db` – Database
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.db.password-file` | `""` | Properties file (`password=…`) with the password of the H2 file database, readable by the owner only (POSIX `600`, on Windows an ACL with the owner alone). Created with a random password on the first start; an existing database without password (every installation up to 1.7.0) gets this password on the next start. Profiles: `dev` `./data/db.properties`, `prod` `${user.home}/.rpsim/db.properties`. Empty = `spring.datasource.password` is used as it is (in-memory databases of `test`/`e2e`). A password set in `spring.datasource.password` always wins - the file is then neither read nor written. | Technical review 10/2026, Phase 0.1 (S-1) |
+
 ## `rpsim.web` – Web
 
 | Key | Default | Meaning | Concept |
 | --- | --- | --- | --- |
 | `rpsim.web.static-dir` | `""` | Folder of the built Angular app. When set (release: `web/`) the backend serves it on `/` with an SPA fallback. Empty = API only. | – |
+| `rpsim.web.allowed-hosts` | `[]` | Extra host names accepted in the `Host` header (e.g. `mein-pc.fritz.box`). Always accepted: `localhost`, every IP address and the name of this computer. Any other name gets `403 HOST_FORBIDDEN`; writing requests (`POST`/`PUT`/`DELETE`) whose `Origin` header names another host get `403 ORIGIN_FORBIDDEN`. Protects against DNS rebinding: a web page cannot point one of these names at this computer. | Technical review 10/2026, Phase 0.2/0.3 (S-2) |
 | `rpsim.web.lan.pin-min-length` | `4` | Shortest PIN for devices in the home network (digits only). | Roadmap V3 R3-N2 |
 | `rpsim.web.lan.pin-max-length` | `8` | Longest PIN (digits only). | Roadmap V3 R3-N2 |
 | `rpsim.web.lan.max-failed-attempts` | `5` | Wrong PINs of one sender address before it is locked. | Roadmap V3 R3-N2 |
@@ -1325,7 +1332,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 
 | Profile | Purpose | Overrides |
 | --- | --- | --- |
-| `dev` (default) | local development against the bridge simulator | H2 file DB `backend/data/rpsim-dev`, bridge path = simulator runtime folder |
-| `prod` | playing with FS25 (release `start` scripts) | H2 file DB `~/.rpsim/rpsim`, bridge path = FS25 `modSettings/FS25_RPSim`; `server.address` unset (Roadmap V3 R3-N1: the home-network filter decides by the sender address) |
+| `dev` (default) | local development against the bridge simulator | H2 file DB `backend/data/rpsim-dev` with password file `backend/data/db.properties`, bridge path = simulator runtime folder |
+| `prod` | playing with FS25 (release `start` scripts) | H2 file DB `~/.rpsim/rpsim` with password file `~/.rpsim/db.properties` (no H2 TCP server, technical review 10/2026 Phase 0.1), bridge path = FS25 `modSettings/FS25_RPSim`; `server.address` unset (Roadmap V3 R3-N1: the home-network filter decides by the sender address); no OpenAPI document / Swagger UI (`springdoc.api-docs.enabled` / `springdoc.swagger-ui.enabled: false`, Phase 0.5) |
 | `e2e` | Playwright tests and screenshot generator | in-memory H2, AI provider `FAKE`, fast polling, bridge folder under `frontend/e2e/.runtime` |
 | `test` (tests only) | unit/integration tests | bridge scheduler off, provider `NONE`, narration worker off |

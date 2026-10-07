@@ -5,9 +5,11 @@ spring:
     # Imported here (not in application.yml) so it overrides the values of this profile file.
     import: optional:file:./application-local.yml
   datasource:
-    url: jdbc:h2:file:./data/rpsim-dev;AUTO_SERVER=TRUE
+    url: jdbc:h2:file:./data/rpsim-dev
     username: sa
-    password:
+    password:                     # empty: the random password from rpsim.db.password-file is used (review 10/2026 Phase 0.1)
 rpsim:
+  db:
+    password-file: ./data/db.properties
   bridge:
     path: ./tools/bridge-simulator/runtime/modSettings/FS25_RPSim
