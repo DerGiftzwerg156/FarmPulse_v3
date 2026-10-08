@@ -21,6 +21,12 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Roadmap V3.2 (`docs/architecture/ROADMAP_V3.2.md`):** plan for bulk orders and large investors, checked against
+  the FS25 code. Bulk buyers tied to a sell point order large amounts, delivered at once from the own silos (best
+  price × 1.25) or in an agreed whole month at their sell point (fixed price, penalty on shortfall). Rarely an
+  investor offers 250,000–2,500,000 € as silent partnership or subordinated loan, with 2–3 packages of consideration
+  (goods, milk from the husbandry storage, profit share, animals, obligations, rights) and a staged breach procedure.
+  Owner decisions and open proposals are in `QUESTIONS.md` (2026-10-08).
 - **Lohnunternehmer: done the next day, up to 3 works at once, new work "Düngen"** (owner decisions 2026-10-06 in
   `QUESTIONS.md`):
   - A contractor job is always done at the end of the game day after the order day
