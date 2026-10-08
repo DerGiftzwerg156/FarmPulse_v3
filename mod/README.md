@@ -52,6 +52,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   und die Positionen der gerade gefahrenen eigenen Maschinen mit Farmland und einer `FieldState`-Stichprobe, ob dort
   Frucht steht. Seit der **Hofkarte** (R31-K1) liest er einmal je Spielstart die Feldumrisse (`field.polygonPoints`
   über `getWorldTranslation`) und die Kartengröße (`terrainSize`).
+- Exportiert für **Roadmap V3.2** (R32-Q1) je eigenem Stall mit Milch die Milch im Stall-Lager
+  (`husbandries[].storage[]` = `{ fillType, amount, capacity }`, Sorten aus `spec_husbandryMilk.fillTypes`, Menge und
+  Kapazität über `getHusbandryFillLevel` / `getHusbandryCapacity`, ganze Liter).
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -101,6 +104,10 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   - `VEHICLE_FUEL` (Roadmap V3.1, R31-D8) – zieht Diesel aus einer abgestellten eigenen Maschine (niemand drin, kein
     Helfer, mit Dieseltank), höchstens den Tankinhalt (`addFillUnitFillLevel` mit negativer Menge); Quittung mit
     `result.liters`; `FAILED` mit `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE`, `VEHICLE_IN_USE` oder `NO_DIESEL_TANK`
+  - `HUSBANDRY_TRANSFER` (Roadmap V3.2, R32-Q1) – nimmt Milch aus dem Lager eines eigenen Stalls
+    (`removeHusbandryFillLevel` über die Beladestation, nur Milch-Sorten des Stalls, Bestand vorher geprüft); bleibt
+    eine Restmenge, bucht der Mod das Entnommene zurück (`addHusbandryFillLevelFromTool`). `FAILED` mit
+    `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE`, `WRONG_FILLTYPE` oder `INSUFFICIENT_STOCK`
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.

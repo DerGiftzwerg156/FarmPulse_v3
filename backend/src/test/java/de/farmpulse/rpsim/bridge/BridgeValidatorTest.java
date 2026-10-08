@@ -219,6 +219,38 @@ class BridgeValidatorTest {
                 .singleElement().asString().startsWith("invalid vehicle position");
     }
 
+    // Roadmap V3.2 (R32-Q1): the milk storage of a husbandry is optional like the subtypes of V3.1
+
+    private static final String HUSBANDRY = """
+            "husbandryUniqueId": "hus_00001", "health": 80, "food": 0.5, "conditions": []""";
+
+    @Test
+    void husbandryStorageIsNotPresentForAnOlderModOrWithoutMilk() {
+        FarmFacts old = facts("\"husbandries\": [{" + HUSBANDRY + ", \"freeSlots\": 2 }]");
+        assertThat(BridgeValidator.validate(old)).isEmpty();
+        assertThat(old.husbandries().get(0).storage()).isNull();
+        assertThat(old.husbandries().get(0).freeSlots()).isEqualTo(2);
+    }
+
+    @Test
+    void husbandryStorageIsParsedAndChecked() {
+        FarmFacts f = facts("\"husbandries\": [{" + HUSBANDRY
+                + ", \"storage\": [{ \"fillType\": \"MILK\", \"amount\": 12000, \"capacity\": 50000 }] }]");
+        assertThat(BridgeValidator.validate(f)).isEmpty();
+        var s = f.husbandries().get(0).storage().get(0);
+        assertThat(s.fillType()).isEqualTo("MILK");
+        assertThat(s.amount()).isEqualTo(12000.0);
+        assertThat(s.capacity()).isEqualTo(50000.0);
+
+        for (String entry : new String[] {
+                "{ \"fillType\": \" \", \"amount\": 1, \"capacity\": 1 }",
+                "{ \"fillType\": \"MILK\", \"amount\": -1, \"capacity\": 1 }",
+                "{ \"fillType\": \"MILK\", \"amount\": 1 }"}) {
+            assertThat(BridgeValidator.validate(facts("\"husbandries\": [{" + HUSBANDRY + ", \"storage\": [" + entry
+                    + "] }]"))).as(entry).singleElement().asString().startsWith("invalid husbandry");
+        }
+    }
+
     @Test
     void fieldShapesAreOptionalInTheMarketContext() {
         String base = """

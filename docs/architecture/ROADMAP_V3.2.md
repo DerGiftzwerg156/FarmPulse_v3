@@ -59,36 +59,45 @@ angewiesen; alle anderen Gegenleistungen kommen ohne Mod-Änderung aus.
 
 ## Q – Querschnitt
 
-Wie R3-Q und R31-Q legt Q nur den Vertrag an (Schemas, DTOs, Validator, Normalisierung im Mod, Simulator, Doku).
+**Stand 08.10.2026: umgesetzt.** Wie R3-Q und R31-Q legt Q den Vertrag an (Schemas, DTOs, Validator, Normalisierung
+im Mod, Simulator, Doku). Anders als dort liest der Mod den Stall-Lager-Export schon im Spiel aus und führt
+`HUSBANDRY_TRANSFER` aus (Entscheidung 08.10.2026). Entscheidungen (siehe `QUESTIONS.md`): Die Tabellen `bulk_order`,
+`investor_contract` / `investor_obligation` und die Werte unter `rpsim.formulas.bulk-order.*` / `investor.*` kommen
+mit G bzw. I; Q bringt nur die Enums und die Buchungsklassen. `INVESTOR_PAYOUT` ist `FINANCING`. Buchungstitel:
+Investorenkapital, Rückzahlung an Investor, Ausschüttung an Investor, Ausgleichszahlung an Investor; Rollen
+„Großabnehmer“ und „Investor/in“. `husbandries[].storage[]` wie `tradeStorage` (nur Milch-Sorten, ganze Liter, nur
+Einträge mit Menge oder Kapazität, sortiert). Der Simulator führt `HUSBANDRY_TRANSFER` aus wie der Mod; nur
+`investor-milch` liefert `storage[]`. Ob ein fehlender `HUSBANDRY_TRANSFER` nach dem Zurückspulen erneut gesendet wird,
+entscheidet I3. Spieler-Doku nur im `CHANGELOG`.
 
 ### R32-Q1 Domäne und Bridge erweitern
 
-- [ ] Neue `CharacterRole`-Werte:
+- [x] Neue `CharacterRole`-Werte:
   - `BULK_BUYER` (Großabnehmer, G1),
   - `INVESTOR` (Großinvestor, I1).
 
   Beide werden bei Bedarf angelegt, wie Bewerber; sie gehören nicht zur Startbesetzung.
-- [ ] Neue `CaseKind`-Werte: `BULK_ORDER` (G), `INVESTOR_OFFER`, `INVESTOR_REMINDER`, `INVESTOR_CLAIM` (I). Neue
-  Tabellen `bulk_order` und `investor_contract` mit `investor_obligation` (je Gegenleistung eine Zeile mit Typ,
-  Parametern, Soll und Ist je Abrechnungszeitraum).
-- [ ] Neue `MoneyReason`-Werte und ihre Klassen in `rpsim.formulas.finance.categories`:
+- [x] Neue `CaseKind`-Werte: `BULK_ORDER` (G), `INVESTOR_OFFER`, `INVESTOR_REMINDER`, `INVESTOR_CLAIM` (I).
+- [ ] Neue Tabellen `bulk_order` und `investor_contract` mit `investor_obligation` (je Gegenleistung eine Zeile mit Typ,
+  Parametern, Soll und Ist je Abrechnungszeitraum). Kommt mit G bzw. I (Entscheidung 08.10.2026).
+- [x] Neue `MoneyReason`-Werte und ihre Klassen in `rpsim.formulas.finance.categories`:
 
   | Grund | Wofür | Klasse |
   | --- | --- | --- |
   | `INVESTOR_CAPITAL` | Einzahlung des Investors (I2) | `FINANCING` |
   | `INVESTOR_REPAYMENT` | Rückkauf der Anteile bzw. Rückzahlung des Darlehens (I5, Kündigung I4) | `FINANCING` |
-  | `INVESTOR_PAYOUT` | Gewinnanteil oder feste Ausschüttung (I3, Typ R1/R2) | offen, siehe [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung) |
+  | `INVESTOR_PAYOUT` | Gewinnanteil oder feste Ausschüttung (I3, Typ R1/R2) | `FINANCING` (Entscheidung 08.10.2026) |
   | `INVESTOR_COMPENSATION` | Ausgleichszahlung bei Fehlmenge oder verfehlter Auflage (I4) | `OPERATING_EXPENSE` |
 
   Großaufträge brauchen keinen neuen Grund: Sofortlieferung bucht `GOODS_SALE` (wie Hofladen), Termin-Lieferung zahlt
   das Spiel an der Verkaufsstelle, eine Fehlmenge kostet `CONTRACT_PENALTY` (wie R3-M2).
-- [ ] `farm_facts.json`, neues optionales Feld `husbandries[].storage[]` = `{ fillType, amount, capacity }` für die
+- [x] `farm_facts.json`, neues optionales Feld `husbandries[].storage[]` = `{ fillType, amount, capacity }` für die
   Milch-Sorten des Stalls (I3, Typ W3), siehe Beleg.
-- [ ] Neue Anweisung `HUSBANDRY_TRANSFER { husbandryUniqueId, fillType, amount }` (nur Entnahme). Eine **eigene**
+- [x] Neue Anweisung `HUSBANDRY_TRANSFER { husbandryUniqueId, fillType, amount }` (nur Entnahme). Eine **eigene**
   Anweisung statt eines neuen Felds an `STORAGE_TRANSFER`: Ein älterer Mod würde ein unbekanntes Feld überlesen und aus
   den Silos buchen. Ein unbekannter Typ wird dagegen abgelehnt (`REJECTED`, bzw. `FAILED` / `NOT_SUPPORTED`), und das
   Backend rät zum Update (`modOutdated`, wie R31-Q1).
-- [ ] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code.
+- [x] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code.
 
 **Beleg (Stall-Lager, nur für I3 / W3):**
 - ✅ `Specializations/PlaceableHusbandry.md` (LUADOC) und `animals/husbandry/placeables/PlaceableHusbandry.lua` (Dump):
@@ -118,16 +127,20 @@ die entnommene Menge zurück (`addHusbandryFillLevelFromTool`) und meldet `INSUF
 
 ### R32-Q2 Simulator, Tests, Konfiguration, Doku, Testplan
 
-- [ ] Bridge-Simulator: Szenarien `grossauftrag` (volles Raps-Silo, Ölmühle als Verkaufsstelle) und `investor-milch`
+- [x] Bridge-Simulator: Szenarien `grossauftrag` (volles Raps-Silo, Ölmühle als Verkaufsstelle) und `investor-milch`
   (Kuhstall mit Milch im Lager); Steuer-Endpunkt für die Milchmenge eines Stalls.
-- [ ] Mod-Tests mit gemockten FS25-Globals: Normalisierung von `husbandries[].storage[]`, Prüfung und Ausführung von
+- [x] Mod-Tests mit gemockten FS25-Globals: Normalisierung von `husbandries[].storage[]`, Prüfung und Ausführung von
   `HUSBANDRY_TRANSFER` samt Fehlercodes und Rückbuchung.
-- [ ] Backend: Grenzwert-Tests je Formel (Preis, Menge, Strafe, Paket-Bewertung, Vertragsbruch-Stufen), End-to-End-Test
+- [x] Backend: Grenzwert-Tests je Formel (Preis, Menge, Strafe, Paket-Bewertung, Vertragsbruch-Stufen), End-to-End-Test
   gegen den Simulator, `BridgeValidatorTest` und `FailedInstructionTest` für das neue Feld und die neue Anweisung.
-- [ ] Neue Werte unter `rpsim.formulas.bulk-order.*` und `rpsim.formulas.investor.*` samt
-  `docs/dev/configuration-reference.md` (`ConfigurationReferenceDocTest`).
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`.
-- [ ] `docs/dev/manual-test-plan.md`: Abschnitt **„28. Roadmap V3.2 im echten FS25“**, eine Zeile je 🟡 und je
+  Q bringt keine Formel; die Grenzwert-Tests kommen mit G und I. `SimulatorScenariosEndToEndTest` prüft Milch-Lager,
+  Ölmühle und `HUSBANDRY_TRANSFER`.
+- [x] Neue Werte unter `rpsim.formulas.bulk-order.*` und `rpsim.formulas.investor.*` samt
+  `docs/dev/configuration-reference.md` (`ConfigurationReferenceDocTest`). Q bringt nur die Klassen der neuen
+  Buchungsgründe unter `rpsim.formulas.finance.categories`; die Werte kommen mit G bzw. I.
+- [x] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`. Q ist für Spieler nicht sichtbar, daher nur der
+  `CHANGELOG`-Eintrag.
+- [x] `docs/dev/manual-test-plan.md`: Abschnitt **„28. Roadmap V3.2 im echten FS25“**, eine Zeile je 🟡 und je
   Akzeptanzkriterium.
 
 ---
@@ -391,7 +404,7 @@ Konfig. Eingetragen in `QUESTIONS.md` mit Status `open`.
 | G4 | Vertrauen | +3 bei voller Lieferung, −5 bei Fehlmenge (wie R3-M2). |
 | I1 | Summe im Verhältnis zur Hofgröße | Summe höchstens 50 % des Hofvermögens (Bank-Sicht), gerundet auf 50.000 €, innerhalb 250.000–2.500.000 €. Liegt die Grenze unter 250.000 €, kommt kein Angebot. |
 | I2 | Laufzeit und Zielrendite | 2–5 FS25-Jahre; Zielrendite je Art 6–12 % p. a. |
-| I3 | Buchungsklasse des Gewinnanteils / der Ausschüttung (`INVESTOR_PAYOUT`) | `FINANCING` (Gewinnverwendung, mindert nicht den Gewinn und nicht die Steuer). Alternative: `OPERATING_EXPENSE` (mindert Gewinn und Steuer). |
+| I3 | Buchungsklasse des Gewinnanteils / der Ausschüttung (`INVESTOR_PAYOUT`) | **Entschieden 08.10.2026:** `FINANCING` (Gewinnverwendung, mindert nicht den Gewinn und nicht die Steuer). |
 | I4 | Nachfrist, Aufschlag, Anzahl Brüche | 5 Spieltage Nachfrist, Ausgleich = Fehlmenge × Marktpreis × 1,25, Kündigung beim 3. Bruch in der Laufzeit. |
 | I4 | Höhe der Rückforderung bei Kündigung („anteilig“) | Volle Summe (Nennwert bzw. Restschuld) sofort fällig, plus offene Ausgleichszahlungen. Alternative: Summe × Restlaufzeit / Laufzeit (früher Bruch teurer, später billiger). |
 | I6 | Zählt ein Nachrangdarlehen bei der Bank voll als Schuld? | Ja, voll (Faktor 1,0, konfigurierbar). |

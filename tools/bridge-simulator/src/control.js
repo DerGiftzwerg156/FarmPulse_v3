@@ -73,7 +73,9 @@ export function startControlServer(sim, port, log = () => {}) {
         '/npc-field': (b) => sim.setNpcField(b), '/mission-limit': (b) => sim.setMissionLimit(b.reached),
         // Roadmap V3.1 (R31-Q2)
         '/snow': (b) => sim.setSnow(b.height), '/vehicle-positions': (b) => sim.setVehiclePositions(b.positions),
-        '/fuel': (b) => sim.setFuel(b.uniqueId, b.liters) };
+        '/fuel': (b) => sim.setFuel(b.uniqueId, b.liters),
+        // Roadmap V3.2 (R32-Q2): milk in the storage of a husbandry
+        '/husbandry-milk': (b) => sim.setHusbandryMilk(b.husbandryUniqueId, b.fillType, b.amount) };
       if (req.method === 'POST' && patches[url.pathname]) {
         const result = patches[url.pathname](await body(req));
         sim.exportFarmFacts();

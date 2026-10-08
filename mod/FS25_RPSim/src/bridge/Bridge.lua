@@ -464,6 +464,9 @@ function RPSimBridge:pollInstructions()
                         and function(ins) return adapter:animalTransfer(ins) end or nil,
                     vehicleFuel = adapter.vehicleFuel ~= nil
                         and function(ins) return adapter:vehicleFuel(ins) end or nil,
+                    -- Roadmap V3.2 R32-Q1
+                    husbandryTransfer = adapter.husbandryTransfer ~= nil
+                        and function(ins) return adapter:husbandryTransfer(ins) end or nil,
                 },
             })
             -- R2-F1 / R2-F2: processed answers and questions decided in the browser

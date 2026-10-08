@@ -142,7 +142,9 @@ const V2_SCENARIOS = { 'wohlhabender-hof': ['finances', 'husbandries', 'fields',
   'duerre-sommer': ['fields', 'fieldRules', 'weather'],
   // Roadmap V3.1 (R31-Q2): snow height, spray type and the stables use the V2 blocks weather, fields and husbandries
   'winter-schnee': ['weather'], lohnunternehmer: ['fields', 'fieldRules', 'weather'],
-  viehhandel: ['husbandries', 'weather'] };
+  viehhandel: ['husbandries', 'weather'],
+  // Roadmap V3.2 (R32-Q2): the bulk order farm has the V3.1 weather, the dairy farm the husbandries with milk storage
+  grossauftrag: ['weather'], 'investor-milch': ['husbandries', 'weather'] };
 
 test('Roadmap V2: the new scenarios export their blocks, all others leave them out (older mod)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {

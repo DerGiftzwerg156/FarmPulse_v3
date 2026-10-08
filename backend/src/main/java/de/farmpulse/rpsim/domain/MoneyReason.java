@@ -58,5 +58,11 @@ public enum MoneyReason {
     TANK_LOCK,
     /** Owner decision 2026-10-06: severance when a hired employee is cancelled before the first working day. */
     SEVERANCE,
+    // Roadmap V3.2 (R32-Q1): capital of a large investor (I2), buy-back / repayment (I4/I5), profit share or fixed
+    // payout (I3, R1/R2), compensation for a shortfall or a missed obligation (I4)
+    INVESTOR_CAPITAL,
+    INVESTOR_REPAYMENT,
+    INVESTOR_PAYOUT,
+    INVESTOR_COMPENSATION,
     OTHER
 }

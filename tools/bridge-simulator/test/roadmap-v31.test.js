@@ -25,7 +25,8 @@ function setup(scenario) {
   };
   return { sim, write, run };
 }
-const V31 = ['winter-schnee', 'lohnunternehmer', 'viehhandel'];
+// Roadmap V3.2 (R32-Q2): the V3.2 scenarios stand for a mod with the V3.1 contract too
+const V31 = ['winter-schnee', 'lohnunternehmer', 'viehhandel', 'grossauftrag', 'investor-milch'];
 
 test('the Roadmap V3.1 scenarios export the new fields, all others leave them out (older mod)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {

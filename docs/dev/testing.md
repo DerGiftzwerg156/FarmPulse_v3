@@ -129,6 +129,14 @@ backend side. The mod covers normalisation, validation and `NOT_SUPPORTED` in `t
 `test_market_context.lua` and `test_instructions.lua` (every booking reason needs its title in `modDesc.xml`,
 `test_game_adapter.lua`), the simulator the scenarios, the execution and the control endpoints in
 `test/roadmap-v31.test.js`. Q brings no formula; the formula boundary tests come with the features.
+Roadmap V3.2 (R32-Q2): `SimulatorScenariosEndToEndTest` checks that the milk storage of `investor-milch` and the oil
+mill / canola silo of `grossauftrag` arrive (and that `viehhandel` has no storage) and that a `HUSBANDRY_TRANSFER` is
+applied and lowers the milk; `BridgeValidatorTest` (`husbandries[].storage[]`) and `FailedInstructionTest` (notice
+"Mod aktualisieren" for `HUSBANDRY_TRANSFER`) cover the backend side. The mod covers the normalisation, the export
+from the game, the execution with its failure codes and the booking back of a partly taken amount in
+`test_roadmap_v32.lua`, validation and `NOT_SUPPORTED` in `test_instructions.lua`; the simulator the scenarios, the
+execution and the control endpoint in `test/roadmap-v32.test.js`. Q brings no formula; the tables, the values under
+`rpsim.formulas.bulk-order.*` / `investor.*` and their boundary tests come with G and I (owner decision 2026-10-08).
 Roadmap V3 R3-M (market and marketing): `MarketingTest` covers the price alarm (best price, hint, mail, once,
 re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_EVENT / FIXED` held back until the
 delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and

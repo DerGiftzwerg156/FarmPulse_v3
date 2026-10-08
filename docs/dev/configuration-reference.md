@@ -1299,6 +1299,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_MACHINE_RENT` | `OPERATING_EXPENSE` | tool booking: operating expense (rented machine of a neighbour, R31-A2). | Roadmap V3.1 R31-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_LIVESTOCK_PURCHASE` | `OPERATING_EXPENSE` | tool booking: operating expense (animals from a neighbour, R31-A3). | Roadmap V3.1 R31-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_SOCIAL_INSURANCE` | `OPERATING_EXPENSE` | tool booking: operating expense (agricultural social insurance, R31-B5). | Roadmap V3.1 R31-Q1 |
+| `rpsim.formulas.finance.categories.RPSIM_INVESTOR_COMPENSATION` | `OPERATING_EXPENSE` | tool booking: operating expense (compensation to an investor for a shortfall or a missed obligation, R32-I4). | Roadmap V3.2 R32-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_OTHER` | `OPERATING_EXPENSE` | tool booking: operating expense. | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_PROPERTY_BUY` | `INVESTMENT` | FS25 money type: investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.SHOP_VEHICLE_BUY` | `INVESTMENT` | FS25 money type: vehicle purchase in the shop (seen in the game's journal), investment (changes only the assets, not the cash flow). | Roadmap V2 R2-B2, manual test 10.9 |
@@ -1318,6 +1319,9 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_PREPAYMENT_FEE` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
 | `rpsim.formulas.finance.categories.RPSIM_STARTING_CAPITAL_ADJUSTMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_COOP_SHARES` | `FINANCING` | tool booking: financing (not part of the cash flow) (cooperative shares and their repayment at face value, R31-D7). | Roadmap V3.1 R31-Q1 |
+| `rpsim.formulas.finance.categories.RPSIM_INVESTOR_CAPITAL` | `FINANCING` | tool booking: financing (not part of the cash flow) (capital of a large investor, R32-I2). | Roadmap V3.2 R32-Q1 |
+| `rpsim.formulas.finance.categories.RPSIM_INVESTOR_REPAYMENT` | `FINANCING` | tool booking: financing (not part of the cash flow) (buy-back of the shares / repayment of the loan, R32-I4/I5). | Roadmap V3.2 R32-Q1 |
+| `rpsim.formulas.finance.categories.RPSIM_INVESTOR_PAYOUT` | `FINANCING` | tool booking: financing (not part of the cash flow) (profit share or fixed payout to an investor, R32-I3; appropriation of profit, lowers neither profit nor tax). | Roadmap V3.2 R32-Q1, owner decision 2026-10-08 |
 | `rpsim.formulas.finance.categories.RPSIM_DAMAGE` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_INSURANCE_PAYOUT` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_WILDLIFE_COMPENSATION` | `IGNORE` | tool booking: ignored one-off booking (not part of the cash flow, as in V1). | Roadmap V2 R2-B2 |

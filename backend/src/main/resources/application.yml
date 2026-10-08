@@ -972,6 +972,7 @@ rpsim:
         RPSIM_MACHINE_RENT: OPERATING_EXPENSE         # Roadmap V3.1 (R31-Q1): rented machine of a neighbour (R31-A2)
         RPSIM_LIVESTOCK_PURCHASE: OPERATING_EXPENSE   # Roadmap V3.1 (R31-Q1): animals from a neighbour (R31-A3)
         RPSIM_SOCIAL_INSURANCE: OPERATING_EXPENSE     # Roadmap V3.1 (R31-Q1): agricultural social insurance (R31-B5)
+        RPSIM_INVESTOR_COMPENSATION: OPERATING_EXPENSE # Roadmap V3.2 (R32-Q1): compensation to an investor (R32-I4)
         RPSIM_OTHER: OPERATING_EXPENSE
         SHOP_PROPERTY_BUY: INVESTMENT
         SHOP_VEHICLE_BUY: INVESTMENT
@@ -991,6 +992,9 @@ rpsim:
         RPSIM_CREDIT_PREPAYMENT_FEE: FINANCING
         RPSIM_STARTING_CAPITAL_ADJUSTMENT: FINANCING
         RPSIM_COOP_SHARES: FINANCING                  # Roadmap V3.1 (R31-Q1): cooperative shares and their repayment (R31-D7)
+        RPSIM_INVESTOR_CAPITAL: FINANCING             # Roadmap V3.2 (R32-Q1): capital of a large investor (R32-I2)
+        RPSIM_INVESTOR_REPAYMENT: FINANCING           # Roadmap V3.2 (R32-Q1): buy-back / repayment to an investor (R32-I4/I5)
+        RPSIM_INVESTOR_PAYOUT: FINANCING              # Roadmap V3.2 (R32-Q1): profit share / fixed payout (R32-I3), appropriation of profit
         RPSIM_DAMAGE: IGNORE
         RPSIM_INSURANCE_PAYOUT: IGNORE
         RPSIM_WILDLIFE_COMPENSATION: IGNORE

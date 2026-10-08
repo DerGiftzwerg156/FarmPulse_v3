@@ -143,17 +143,27 @@ public final class BridgeDtos {
      * cluster health (0..100 like the game's info box), productivity = production factor (missing for horses and
      * pigs), food = total food / capacity. Roadmap V3.1 R31-A3 (owner decision 2026-10-02), each optional: animals per
      * subtype ({@code subTypes}), the subtypes the husbandry accepts ({@code supportedSubTypes}) and its free places
-     * ({@code freeSlots}); null with an older mod.
+     * ({@code freeSlots}); null with an older mod. Roadmap V3.2 R32-Q1, optional: the milk sorts in the storage of the
+     * husbandry ({@code storage}, {@code { fillType, amount, capacity }} in whole litres, like {@code tradeStorage});
+     * null without milk or with an older mod.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
                             List<HusbandryCondition> conditions, List<SubTypeCount> subTypes,
-                            List<String> supportedSubTypes, Integer freeSlots) {
+                            List<String> supportedSubTypes, Integer freeSlots, List<StorageEntry> storage) {
 
         /** R2-A7 contract without the subtypes of Roadmap V3.1 (older mod). */
         public Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
                          List<HusbandryCondition> conditions) {
-            this(husbandryUniqueId, health, productivity, food, conditions, null, null, null);
+            this(husbandryUniqueId, health, productivity, food, conditions, null, null, null, null);
+        }
+
+        /** R31-A3 contract without the milk storage of Roadmap V3.2 (older mod). */
+        public Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
+                         List<HusbandryCondition> conditions, List<SubTypeCount> subTypes,
+                         List<String> supportedSubTypes, Integer freeSlots) {
+            this(husbandryUniqueId, health, productivity, food, conditions, subTypes, supportedSubTypes, freeSlots,
+                    null);
         }
     }
 

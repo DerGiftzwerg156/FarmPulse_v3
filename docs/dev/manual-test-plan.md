@@ -569,3 +569,29 @@ installation of the release. 🟡 = only checkable on Windows.
 | 27.7 | Own DNS name | Open the Hof-Tablet on the tablet via the router name of the PC (e.g. `http://mein-pc.fritz.box:8080`) | 403 `HOST_FORBIDDEN` until the name is entered in `rpsim.web.allowed-hosts` (`application-local.yml`); the IP address and the computer name always work | – |
 | 27.8 | AI settings on the tablet | Home-network access on, open *Einstellungen → KI* on the tablet | form read-only with "Nur am Spiele-PC änderbar …"; on the gaming PC editable | – |
 
+
+## 28. Roadmap V3.2 in the real FS25
+
+Every point of [`ROADMAP_V3.2.md`](../architecture/ROADMAP_V3.2.md) marked 🟡 ("Im Spiel prüfen") and every acceptance
+criterion has one row here. Rows 28.1–28.3 can be checked since R32-Q (the mod reads the milk storage and executes
+`HUSBANDRY_TRANSFER`, see [bridge protocol](bridge-protocol.md#roadmap-v32-field-optional-r32-q1)); the rows of G and I
+once the roadmap item named in the first column is built. Without FS25 the bridge simulator scenarios `grossauftrag`
+(G) and `investor-milch` (I3, type W3) show the same flow. Note the result in the row's issue and, if the fallback is
+needed, switch the implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 28.1 | 🟡 Milk tank extensions in reach (R32-Q1) | Own a cow stable with a milk tank extension placed in reach (the dump adds it to the loading and unloading stations of the husbandry); fill both, read `farm_facts.json` → `husbandries[].storage[]`, then send a `HUSBANDRY_TRANSFER` larger than the stable's own tank (bridge simulator control or a test build) | note whether `amount` / `capacity` include the extension and whether `removeHusbandryFillLevel` takes from it too | export and stock check only with what `getHusbandryFillLevel` gives; the take-out evaluates the rest (`INSUFFICIENT_STOCK` with booking back, built since R32-Q1) |
+| 28.2 | 🟡 Info box after the take-out (R32-Q1) | Open the info box of the stable, send a `HUSBANDRY_TRANSFER` of 1 000 l `MILK` | note whether the milk shown drops at once | the display with the next update is enough (like R3-H4) |
+| 28.3 | Partial take-out is booked back (R32-Q1) | Send a `HUSBANDRY_TRANSFER` to a stable whose loading station is missing or reaches only part of the storage (e.g. a mod stable), compare the milk before and after | ack `FAILED` / `INSUFFICIENT_STOCK`, the milk in the stable is the same as before | – |
+| 28.4 | Bulk request (R32-G1) | Wait for a bulk request (or force one) with canola and an oil mill on the map | a request over e.g. 500 000 l canola arrives in the inbox | – |
+| 28.5 | Instant delivery (R32-G2) | With the amount in the own silos: *Sofort liefern* | the silo stock drops by the amount, 125 % of the best market price is booked (`GOODS_SALE`) | – |
+| 28.6 | Delivery month (R32-G3) | Agree a later delivery month | the sell point shows the fixed price for exactly that month and not before or after | – |
+| 28.7 | Shortfall (R32-G4) | Deliver less than ordered within the delivery month | at the end of the month 25 % of the shortfall at the fixed price is booked (`CONTRACT_PENALTY`) | – |
+| 28.8 | Days per period changed (R32-G3) | Change *Tage je Periode* in the savegame settings while a bulk order with a delivery month runs | the delivery stays in its month | – |
+| 28.9 | Investor offer (R32-I1/I2) | Play a good year, wait for (or force) an investor | an investor calls and offers 1 000 000 € in three packages | – |
+| 28.10 | Accept (R32-I2) | *Annehmen* on one package | the capital is booked (`INVESTOR_CAPITAL`) | – |
+| 28.11 | Milk delivery (R32-I3, type W3) | Package with *5 000 l Milch je Monat*: *Liefern* | `HUSBANDRY_TRANSFER` takes the milk out of the cow stable (see 28.1–28.3) | – |
+| 28.12 | Staged breach (R32-I4) | Deliver no milk until the end of the month, then let the grace period pass, repeat until the third breach | a reminder, after the grace period a compensation (`INVESTOR_COMPENSATION`), at the third breach the termination with the claim | – |
+| 28.13 | End of term (R32-I5) | Play until the last month of a silent partnership | the farm buys the shares back at face value (`INVESTOR_REPAYMENT`) | – |
+| 28.14 | Bank view (R32-I6) | Compare the equity ratio of the bank before and after a subordinated loan and a silent partnership | the subordinated loan lowers the equity ratio, the silent partnership raises it | – |

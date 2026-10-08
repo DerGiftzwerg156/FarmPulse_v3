@@ -224,6 +224,61 @@ class SimulatorScenariosEndToEndTest {
         });
     }
 
+    /**
+     * Roadmap V3.2 (R32-Q2): the milk storage of investor-milch and the oil mill of grossauftrag reach the backend; an
+     * older scenario exports its husbandries without the storage.
+     */
+    @Test
+    void roadmapV32FieldsArriveFromTheNewScenarios() {
+        Savegame dairy = link("investor-milch", "sim_milch_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            var h = facts.latest(savegames.findById(dairy.getId()).orElseThrow()).orElseThrow().husbandries().get(0);
+            assertThat(h.storage()).singleElement().satisfies(m -> {
+                assertThat(m.fillType()).isEqualTo("MILK");
+                assertThat(m.amount()).isEqualTo(12000.0);
+                assertThat(m.capacity()).isEqualTo(30000.0);
+            });
+        });
+        Savegame bulk = link("grossauftrag", "sim_gross_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(bulk.getId()).orElseThrow();
+            assertThat(facts.marketContext(sg).orElseThrow().sellPoints())
+                    .anySatisfy(p -> assertThat(p.acceptedFillTypes()).contains("CANOLA"));
+            assertThat(facts.latest(sg).orElseThrow().tradeStorage())
+                    .anySatisfy(t -> assertThat(t.fillType()).isEqualTo("CANOLA"));
+        });
+        Savegame old = link("viehhandel", "sim_alt32_" + System.nanoTime());
+        tx.executeWithoutResult(s -> assertThat(facts.latest(savegames.findById(old.getId()).orElseThrow()).orElseThrow()
+                .husbandries()).allSatisfy(h -> assertThat(h.storage()).isNull()));
+    }
+
+    /** Roadmap V3.2 (R32-Q2): a HUSBANDRY_TRANSFER goes out, the simulator takes the milk out of the stable. */
+    @Test
+    void husbandryTransferTakesTheMilkOutOfTheStable() {
+        String id = "sim_milk_" + System.nanoTime();
+        Savegame sg = link("investor-milch", id);
+        String instructionId = tx.execute(s -> {
+            OutboxInstruction o = new OutboxInstruction();
+            o.setSavegame(savegames.findById(sg.getId()).orElseThrow());
+            o.setInstructionId(OutboxService.newInstructionId());
+            o.setType(de.farmpulse.rpsim.domain.InstructionType.HUSBANDRY_TRANSFER);
+            o.setPayloadJson("{\"husbandryUniqueId\":\"hus_00001\",\"fillType\":\"MILK\",\"amount\":5000}");
+            o.setStatus(InstructionStatus.PENDING);
+            o.setCreatedAtGameTime(0);
+            o.setCreatedAt(java.time.Instant.now());
+            return outbox.save(o).getInstructionId();
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "investor-milch", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            assertThat(outbox.findByInstructionId(instructionId).orElseThrow().getStatus())
+                    .isEqualTo(InstructionStatus.APPLIED);
+            var h = facts.latest(savegames.findById(sg.getId()).orElseThrow()).orElseThrow().husbandries().get(0);
+            assertThat(h.storage().get(0).amount()).isEqualTo(7000.0);
+        });
+    }
+
     /** Roadmap V3 (R3-W2): the growing own fields of duerre-sommer are recorded for the drought aid. */
     @Test
     void duerreSommerRecordsTheGrowingOwnFields() {

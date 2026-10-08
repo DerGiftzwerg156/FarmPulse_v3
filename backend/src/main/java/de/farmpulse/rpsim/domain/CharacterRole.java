@@ -31,5 +31,12 @@ public enum CharacterRole {
     /** Roadmap V3.1 R31-D8: the village police (diesel theft). */
     POLICE,
     /** Roadmap V3.1 R31-D6: the teacher of the village school (school visits). */
-    SCHOOL
+    SCHOOL,
+    /**
+     * Roadmap V3.2 R32-Q1: a bulk buyer tied to a sell point of the map (bulk orders, R32-G1); created when needed like
+     * an applicant, not part of the starting cast.
+     */
+    BULK_BUYER,
+    /** Roadmap V3.2 R32-Q1: a large investor (R32-I1); created with the offer, not part of the starting cast. */
+    INVESTOR
 }

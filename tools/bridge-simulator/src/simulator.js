@@ -26,7 +26,9 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   'INVESTMENT_GRANT', 'SOCIAL_INSURANCE', 'GUEST_INCOME', 'COOP_SHARES', 'COOP_DIVIDEND',
   'FARM_HOLIDAY_SETUP', 'TANK_LOCK',
   // owner decision 2026-10-06: severance before the first working day
-  'SEVERANCE']);
+  'SEVERANCE',
+  // Roadmap V3.2 (R32-Q1)
+  'INVESTOR_CAPITAL', 'INVESTOR_REPAYMENT', 'INVESTOR_PAYOUT', 'INVESTOR_COMPENSATION']);
 // Roadmap V3.1 R31-A1: works of the contractor
 const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'FERTILIZE', 'HARVEST'];
 // crop details a field loses when the contractor plows, cultivates or sows (R2-C1 fields of a standing crop)
@@ -172,6 +174,12 @@ export function validateInstruction(ins) {
       if (typeof ins.vehicleId !== 'string' || !ins.vehicleId) return 'vehicleId is required';
       if (!num(ins.delta) || ins.delta >= 0) return 'delta must be < 0';
       return null;
+    // Roadmap V3.2 (R32-Q1): same checks as RPSimInstructions.validate
+    case 'HUSBANDRY_TRANSFER':
+      if (typeof ins.husbandryUniqueId !== 'string' || !ins.husbandryUniqueId) return 'husbandryUniqueId is required';
+      if (typeof ins.fillType !== 'string' || !ins.fillType) return 'fillType is required';
+      if (!num(ins.amount) || ins.amount <= 0) return 'amount must be > 0';
+      return null;
     default:
       return `unknown type ${ins.type}`;
   }
@@ -224,7 +232,9 @@ export class BridgeSimulator {
       : { daysPerPeriod, anchorDay: 0, anchorIndex: 0 };
     this.priceWalk = {};
     this.priceTrend = {};
-    for (const sp of MAP.sellPoints) for (const ft of sp.acceptedFillTypes) this.priceWalk[`${sp.id}|${ft}`] = 1;
+    // Roadmap V3.2 (R32-Q2): a scenario may add sell points of its own to the map (grossauftrag: the oil mill)
+    this.sellPoints = [...MAP.sellPoints, ...(preset.sellPoints ?? [])];
+    for (const sp of this.sellPoints) for (const ft of sp.acceptedFillTypes) this.priceWalk[`${sp.id}|${ft}`] = 1;
     this.processed = {};
     this.priceEvents = [];
     this.contractReports = [];
@@ -528,7 +538,11 @@ export class BridgeSimulator {
         workedGameMs: Object.fromEntries(Object.entries(this.workforce.workedGameMs).map(([k, v]) => [k, Math.round(v)])) };
     }
     if (this.husbandries) {
-      blocks.husbandries = this.husbandries.map((h) => ({ ...structuredClone(h), ...this.stableExport(h.husbandryUniqueId) }))
+      blocks.husbandries = this.husbandries.map((h) => ({ ...structuredClone(h), ...this.stableExport(h.husbandryUniqueId),
+        // R32-Q1: milk sorts in the storage like the mod (whole litres, only amount + capacity > 0, sorted)
+        ...(h.storage ? { storage: h.storage.map((s) => ({ fillType: s.fillType, amount: Math.max(0, Math.round(s.amount)),
+          capacity: Math.max(0, Math.round(s.capacity)) })).filter((s) => s.amount + s.capacity > 0)
+          .sort((a, b) => a.fillType.localeCompare(b.fillType)) } : {}) }))
         .sort((a, b) => a.husbandryUniqueId.localeCompare(b.husbandryUniqueId));
     }
     if (this.fields) {
@@ -795,6 +809,40 @@ export class BridgeSimulator {
   }
 
   /**
+   * R32-Q1 like the mod action (RPSimGameAdapter:husbandryTransfer): milk out of the storage of an own husbandry. The
+   * storage entries of the husbandry are its milk sorts (spec_husbandryMilk.fillTypes in the game).
+   * HUSBANDRY_NOT_FOUND, UNKNOWN_FILLTYPE (a fill type the simulated game does not know), WRONG_FILLTYPE (no milk sort of
+   * this husbandry), INSUFFICIENT_STOCK (the whole amount or nothing).
+   */
+  husbandryTransfer(ins) {
+    const h = this.husbandries?.find((x) => x.husbandryUniqueId === ins.husbandryUniqueId);
+    if (!h) return 'HUSBANDRY_NOT_FOUND';
+    const milk = (h.storage ?? []).find((s) => s.fillType === ins.fillType);
+    if (!milk) return this.knowsFillType(ins.fillType) ? 'WRONG_FILLTYPE' : 'UNKNOWN_FILLTYPE';
+    if (milk.amount + 0.001 < ins.amount) return 'INSUFFICIENT_STOCK';
+    milk.amount -= ins.amount;
+    this.log(`husbandry ${ins.husbandryUniqueId} -${ins.amount} l ${ins.fillType}`);
+    return null;
+  }
+
+  /** The fill types the simulated game knows: prices of the map, fruit types and the milk sorts of the stables. */
+  knowsFillType(fillType) {
+    return MAP.basePrices[fillType] !== undefined || FRUIT_TYPES.includes(fillType)
+      || (this.husbandries ?? []).some((h) => (h.storage ?? []).some((s) => s.fillType === fillType));
+  }
+
+  /** Control API (R32-Q2): the milk of a husbandry changes in the game (milking, selling it at the dairy). */
+  setHusbandryMilk(husbandryUniqueId, fillType, amount) {
+    const h = this.husbandries?.find((x) => x.husbandryUniqueId === husbandryUniqueId);
+    if (!h) throw new Error(`unknown husbandry ${husbandryUniqueId}`);
+    const milk = (h.storage ?? []).find((s) => s.fillType === fillType);
+    if (!milk) throw new Error(`husbandry ${husbandryUniqueId} has no milk sort ${fillType}`);
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) throw new Error('amount (number >= 0) is required');
+    milk.amount = Math.min(amount, milk.capacity);
+    return { husbandryUniqueId, fillType, amount: milk.amount, capacity: milk.capacity };
+  }
+
+  /**
    * Control API: a booking of the game (R2-B1), e.g. a vehicle purchase or leasing costs. It changes the balance and
    * lands in the journal under its FS25 money type, like Farm:changeBalance in the mod.
    */
@@ -952,7 +1000,7 @@ export class BridgeSimulator {
       .map(([fillType, s]) => ({ fillType, amount: Math.round(s.amount), capacity: Math.round(s.capacity) }))
       .sort((a, b) => a.fillType.localeCompare(b.fillType));
     const prices = [];
-    for (const sp of MAP.sellPoints) {
+    for (const sp of this.sellPoints) {
       for (const ft of sp.acceptedFillTypes) {
         prices.push({ sellPoint: sp.id, fillType: ft, currentPrice: Math.round(this.effectivePrice(sp.id, ft)),
           trend: this.priceTrend[`${sp.id}|${ft}`] ?? 'STABLE' });
@@ -1011,11 +1059,11 @@ export class BridgeSimulator {
   }
 
   buildMarketContext() {
-    const fillTypes = [...new Set(MAP.sellPoints.flatMap((s) => s.acceptedFillTypes))].sort();
+    const fillTypes = [...new Set(this.sellPoints.flatMap((s) => s.acceptedFillTypes))].sort();
     return {
       savegameId: this.savegameId,
       mapName: MAP.mapName,
-      sellPoints: MAP.sellPoints.map((s) => ({ id: s.id, name: s.name, acceptedFillTypes: [...s.acceptedFillTypes].sort(),
+      sellPoints: this.sellPoints.map((s) => ({ id: s.id, name: s.name, acceptedFillTypes: [...s.acceptedFillTypes].sort(),
         ...(s.production ? { production: true, ownedByPlayer: s.ownedByPlayer === true } : {}) })),
       fillTypes,
       farmlands: this.farmlands.map((f) => ({ ...f, showOnFarmlandsScreen: f.showOnFarmlandsScreen !== false,
@@ -1132,6 +1180,9 @@ export class BridgeSimulator {
         return this.animalTransfer(ins);
       case 'VEHICLE_FUEL':
         return this.vehicleFuel(ins);
+      // Roadmap V3.2 (R32-Q2): executed like the mod action
+      case 'HUSBANDRY_TRANSFER':
+        return this.husbandryTransfer(ins);
       default:
         return 'unsupported type';
     }

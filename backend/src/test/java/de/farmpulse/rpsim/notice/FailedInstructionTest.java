@@ -292,4 +292,23 @@ class FailedInstructionTest {
                 .containsEntry("modOutdated", false).containsEntry("subType", "COW_HOLSTEIN")
                 .containsEntry("count", 3.0).containsEntry("husbandryUniqueId", "hus_00001"));
     }
+
+    // Roadmap V3.2 (R32-Q1): HUSBANDRY_TRANSFER counts as "Mod aktualisieren" like the V3 / V3.1 types
+
+    @Test
+    void anOlderModRefusingHusbandryTransferAsksForAModUpdate() {
+        assertThat(FailedInstructionService.modOutdated(InstructionType.HUSBANDRY_TRANSFER,
+                "a: unknown type HUSBANDRY_TRANSFER")).isTrue();
+        assertThat(FailedInstructionService.modOutdated(InstructionType.HUSBANDRY_TRANSFER, "NOT_SUPPORTED")).isTrue();
+        assertThat(FailedInstructionService.modOutdated(InstructionType.HUSBANDRY_TRANSFER, "INSUFFICIENT_STOCK"))
+                .isFalse();
+
+        OutboxInstruction milk = v3Instruction(InstructionType.HUSBANDRY_TRANSFER,
+                "{\"husbandryUniqueId\":\"hus_00001\",\"fillType\":\"MILK\",\"amount\":5000}", null);
+        refuse(milk, "REJECTED", "ins: unknown type HUSBANDRY_TRANSFER");
+        assertThat(notices.open(sg)).singleElement().satisfies(n -> assertThat(notices.details(n))
+                .containsEntry("type", "HUSBANDRY_TRANSFER").containsEntry("modOutdated", true)
+                .containsEntry("fillType", "MILK").containsEntry("amount", 5000.0)
+                .containsEntry("husbandryUniqueId", "hus_00001"));
+    }
 }

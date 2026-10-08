@@ -158,7 +158,9 @@
       "CLUB": "Verein",
       "SOCIAL_INSURANCE": "Berufsgenossenschaft",
       "POLICE": "Polizei",
-      "SCHOOL": "Dorfschule"
+      "SCHOOL": "Dorfschule",
+      "BULK_BUYER": "Großabnehmer",
+      "INVESTOR": "Investor/in"
     },
     "characterCategory": {
       "MANDATORY": "Pflichtrolle",
@@ -426,7 +428,11 @@
       "COOP_DIVIDEND": "Genossenschaftsdividende",
       "FARM_HOLIDAY_SETUP": "Einrichtung Ferienwohnung",
       "TANK_LOCK": "Tankschloss",
-      "SEVERANCE": "Abfindung"
+      "SEVERANCE": "Abfindung",
+      "INVESTOR_CAPITAL": "Investorenkapital",
+      "INVESTOR_REPAYMENT": "Rückzahlung an Investor",
+      "INVESTOR_PAYOUT": "Ausschüttung an Investor",
+      "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor"
     },
     "cycleEvent": {
       "GameTimeAdvancedEvent": "Spielzeit",
@@ -525,7 +531,11 @@
       "CROP_DAMAGE_CLAIM": "Flurschaden",
       "SCHOOL_VISIT": "Hofführung Schulklasse",
       "COOP_ASSEMBLY": "Generalversammlung",
-      "COOP_BOARD_MEETING": "Vorstandssitzung"
+      "COOP_BOARD_MEETING": "Vorstandssitzung",
+      "BULK_ORDER": "Großauftrag",
+      "INVESTOR_OFFER": "Angebot Investor",
+      "INVESTOR_REMINDER": "Mahnung Investor",
+      "INVESTOR_CLAIM": "Rückforderung Investor"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -713,7 +723,11 @@
       "RPSIM_COOP_SHARES": "Genossenschaftsanteile",
       "RPSIM_COOP_DIVIDEND": "Genossenschaftsdividende",
       "RPSIM_FARM_HOLIDAY_SETUP": "Einrichtung Ferienwohnung",
-      "RPSIM_TANK_LOCK": "Tankschloss"
+      "RPSIM_TANK_LOCK": "Tankschloss",
+      "RPSIM_INVESTOR_CAPITAL": "Investorenkapital",
+      "RPSIM_INVESTOR_REPAYMENT": "Rückzahlung an Investor",
+      "RPSIM_INVESTOR_PAYOUT": "Ausschüttung an Investor",
+      "RPSIM_INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",

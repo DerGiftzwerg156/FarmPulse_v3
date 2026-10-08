@@ -44,7 +44,7 @@ import tools.jackson.databind.json.JsonMapper;
  * Roadmap V3 (R3-Q1): an older mod refuses the new instruction types ({@link #ROADMAP_V3_TYPES}) with "unknown type …"
  * (REJECTED) or NOT_SUPPORTED; the notice then carries {@code modOutdated = true} and says "Mod aktualisieren". The
  * features that send these types cancel their deal themselves. Roadmap V3.1 (R31-Q1): the same for
- * {@link #ROADMAP_V31_TYPES}.
+ * {@link #ROADMAP_V31_TYPES}, Roadmap V3.2 (R32-Q1) for {@link #ROADMAP_V32_TYPES}.
  */
 @Service
 public class FailedInstructionService {
@@ -58,6 +58,9 @@ public class FailedInstructionService {
     /** Roadmap V3.1 (R31-Q1): instruction types an older mod does not know. */
     public static final Set<InstructionType> ROADMAP_V31_TYPES = EnumSet.of(InstructionType.FIELD_WORK,
             InstructionType.ANIMAL_TRANSFER, InstructionType.VEHICLE_FUEL);
+
+    /** Roadmap V3.2 (R32-Q1): instruction types an older mod does not know. */
+    public static final Set<InstructionType> ROADMAP_V32_TYPES = EnumSet.of(InstructionType.HUSBANDRY_TRANSFER);
 
     private static final Logger log = LoggerFactory.getLogger(FailedInstructionService.class);
 
@@ -225,7 +228,7 @@ public class FailedInstructionService {
             d.put("direction", p.path("direction").asString(""));
             d.put("price", p.path("price").asLong(0));
         } else if (newType(ins.getType())) {
-            // Roadmap V3 (R3-Q1) / V3.1 (R31-Q1): the payload fields that name the deal
+            // Roadmap V3 (R3-Q1) / V3.1 (R31-Q1) / V3.2 (R32-Q1): the payload fields that name the deal
             for (String field : new String[] { "direction", "fillType", "amount", "missionType", "farmlandId",
                     "storeXmlFilename", "price", "vehicleId", "work", "fruitType", "husbandryUniqueId", "subType",
                     "count", "delta" }) {
@@ -244,13 +247,13 @@ public class FailedInstructionService {
         notices.raise(sg, NoticeKind.INSTRUCTION_FAILED, d, RELATED, ins.getId());
     }
 
-    /** Roadmap V3 (R3-Q1) / V3.1 (R31-Q1): an instruction type an older mod does not know. */
+    /** Roadmap V3 (R3-Q1) / V3.1 (R31-Q1) / V3.2 (R32-Q1): an instruction type an older mod does not know. */
     static boolean newType(InstructionType type) {
-        return ROADMAP_V3_TYPES.contains(type) || ROADMAP_V31_TYPES.contains(type);
+        return ROADMAP_V3_TYPES.contains(type) || ROADMAP_V31_TYPES.contains(type) || ROADMAP_V32_TYPES.contains(type);
     }
 
     /**
-     * Roadmap V3 (R3-Q1): true when the mod refused a Roadmap V3 (or, R31-Q1, V3.1) instruction because it does not
+     * Roadmap V3 (R3-Q1): true when the mod refused a Roadmap V3 (or, R31-Q1, V3.1; R32-Q1, V3.2) instruction because it does not
      * know or execute the type yet (validation "unknown type …" → REJECTED, or an action missing in the mod →
      * NOT_SUPPORTED).
      */

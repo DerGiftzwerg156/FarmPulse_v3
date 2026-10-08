@@ -14,13 +14,30 @@ Update the mod `FS25_RPSim` together with the backend: an older mod rejects the 
 is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
 types and booking reasons (the neighbour trade and contracts then fail); the notice then says "Mod aktualisieren".
 The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q), for the booking reason
-`SEVERANCE` (severance before the first working day) and for the contractor work `FERTILIZE` (*Düngen*).
+`SEVERANCE` (severance before the first working day) and for the contractor work `FERTILIZE` (*Düngen*). Also for the
+Roadmap V3.2 instruction type `HUSBANDRY_TRANSFER` and the booking reasons `INVESTOR_*` (R32-Q).
 
 The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
 filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
 
 ### Added
 
+- **Roadmap V3.2 groundwork - bridge contract for bulk orders and investors [R32-Q]:** not visible to players yet.
+  - Mod: `farm_facts.json` exports the milk in the storage of every own husbandry (`husbandries[].storage[]` =
+    `{ fillType, amount, capacity }`, milk sorts of `spec_husbandryMilk.fillTypes`, `getHusbandryFillLevel` /
+    `getHusbandryCapacity`; whole litres like `tradeStorage`). New instruction `HUSBANDRY_TRANSFER { husbandryUniqueId,
+    fillType, amount }` takes milk out of an own husbandry (`removeHusbandryFillLevel`); a partly taken amount is booked
+    back (`addHusbandryFillLevelFromTool`). Failure codes `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE`, `WRONG_FILLTYPE`,
+    `INSUFFICIENT_STOCK`.
+  - New booking reasons `INVESTOR_CAPITAL`, `INVESTOR_REPAYMENT`, `INVESTOR_PAYOUT` (financing) and
+    `INVESTOR_COMPENSATION` (operating expense) with booking titles, UI and chronicle labels; `INVESTOR_PAYOUT` counts
+    as appropriation of profit (owner decision 2026-10-08).
+  - Backend: roles `BULK_BUYER` (*Großabnehmer*) and `INVESTOR` (*Investor/in*), case kinds `BULK_ORDER`,
+    `INVESTOR_OFFER`, `INVESTOR_REMINDER`, `INVESTOR_CLAIM`; DTO and validator for the milk storage; a refused
+    `HUSBANDRY_TRANSFER` raises the notice "Mod aktualisieren".
+  - Bridge simulator: scenarios `grossauftrag` (full canola silo, oil mill as sell point) and `investor-milch` (cow
+    stable with milk), control endpoint `POST /husbandry-milk`; `HUSBANDRY_TRANSFER` is executed like in the mod.
+  - Docs: bridge protocol with FS25 sources, configuration reference, manual test plan section 28.
 - **Roadmap V3.2 (`docs/architecture/ROADMAP_V3.2.md`):** plan for bulk orders and large investors, checked against
   the FS25 code. Bulk buyers tied to a sell point order large amounts, delivered at once from the own silos (best
   price × 1.25) or in an agreed whole month at their sell point (fixed price, penalty on shortfall). Rarely an
