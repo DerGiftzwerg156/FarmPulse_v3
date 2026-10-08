@@ -40,14 +40,14 @@ jobs:
         run: mvn -B verify
       - name: Coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: backend-coverage
           path: backend/target/site/jacoco/
           if-no-files-found: ignore
       - name: Test reports
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: backend-surefire-reports
           path: backend/target/surefire-reports/

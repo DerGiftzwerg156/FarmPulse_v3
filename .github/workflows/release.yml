@@ -93,7 +93,7 @@ jobs:
             ' CHANGELOG.md
           } > release/RELEASE_NOTES.md
       - name: Upload build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: FarmPulse-${{ steps.version.outputs.version }}
           path: |
@@ -103,7 +103,7 @@ jobs:
           if-no-files-found: error
       # input of the Windows setup (jar + built frontend), not published
       - name: Upload setup input
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: setup-input
           path: |
@@ -139,7 +139,7 @@ jobs:
           if ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:GITHUB_REF_TYPE -eq 'branch') { $name = "FarmPulse-$env:VERSION-snapshot-Setup" }
           tools/release/build-installer.ps1 -Version $env:VERSION -SetupName $name
       - name: Upload setup
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: FarmPulse-${{ needs.build.outputs.version }}-Setup
           path: release/*-Setup.exe
