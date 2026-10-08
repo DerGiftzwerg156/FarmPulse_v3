@@ -21,6 +21,23 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Windows setup `FarmPulse-<version>-Setup.exe`** (owner decisions 2026-10-08 in `QUESTIONS.md`, concept
+  `docs/architecture/windows-installer.md`); the ZIP bundle with `start.bat` / `start.sh` stays unchanged for experts:
+  - The setup brings its own Java runtime (`jpackage`), installs "only for me" (no admin rights) or "for all users",
+    and asks for the AI provider (key, model, Ollama address – merged into the same `ai-provider.properties` the
+    settings page writes), the exchange folder and the FS25 `mods` folder (pre-filled from the real *Documents*
+    folder, also with a OneDrive redirect), the port and "Browser beim Start öffnen". Tasks: copy the mod, start with
+    Windows, desktop shortcut (all preselected). German only, not code-signed yet (SmartScreen hint in the guide).
+  - Update: keep the previous settings or set them again (pre-filled; an empty key keeps the stored key). Uninstall
+    asks whether to delete savegames and settings in `%USERPROFILE%\.rpsim` (default no); the mod stays.
+  - Desktop mode of the backend (`de.farmpulse.rpsim.desktop`, only with `-Drpsim.desktop.enabled=true`, profiles
+    `prod,desktop`): runs without a console window, tray icon (open, log, quit), opens the browser when ready, one
+    instance per user (a second start opens the browser), takes the next free port when the configured one is in use,
+    shows start errors in a dialog, logs to `~/.rpsim/logs/farmpulse.log`. New keys `rpsim.desktop.*`; settings of
+    the setup in `~/.rpsim/farmpulse-setup.yml`, overridden by `~/.rpsim/application-local.yml`.
+  - Release workflow: jobs `build` → `windows-installer` (`tools/release/build-installer.ps1`, Inno Setup
+    `tools/release/installer/FarmPulse.iss`) → `publish`; releases and the snapshot get the setup. Pull requests that
+    touch the release tooling or the desktop mode build the setup without publishing.
 - **Lohnunternehmer: done the next day, up to 3 works at once, new work "Düngen"** (owner decisions 2026-10-06 in
   `QUESTIONS.md`):
   - A contractor job is always done at the end of the game day after the order day

@@ -5,7 +5,7 @@ FarmPulse besteht aus drei Teilen, die du einmal einrichtest:
 | Teil | Was er macht | Wo er läuft |
 | --- | --- | --- |
 | **Mod `FS25_RPSim`** | liest Kontostand, Maschinen, Felder, Silo und Preise aus dem Spiel und führt Buchungen/Preisänderungen aus | in Farming Simulator 25 |
-| **Backend** (`rpsim-backend.jar`) | das „Gehirn“: Bank, Markt, Dorf, Personal, KI-Texte | als kleines Programm auf deinem PC |
+| **Backend** (`FarmPulse.exe` bzw. `rpsim-backend.jar`) | das „Gehirn“: Bank, Markt, Dorf, Personal, KI-Texte | als kleines Programm auf deinem PC |
 | **Oberfläche** | Hof-Tablet mit Post, Telefon, Bank … im Browser | wird vom Backend mitgeliefert: <http://localhost:8080> |
 
 Mod und Backend unterhalten sich nur über Dateien im Ordner `modSettings/FS25_RPSim` – es gibt keine
@@ -13,11 +13,70 @@ Netzwerkverbindung ins Spiel und dein API-Schlüssel landet nie im Mod-Ordner.
 
 ## Voraussetzungen
 
-- Farming Simulator 25 (PC), Einzelspieler-Spielstand
-- **Java 21** (z. B. [Eclipse Temurin 21 JRE](https://adoptium.net/)) – prüfen mit `java -version`
+- Farming Simulator 25 (PC), Einzelspieler-Spielstand, Windows 10 oder 11 (64 Bit) für das Setup
+- **Java 21** – nur für die [ZIP-Variante](#variante-b-zip-für-experten) (z. B. [Eclipse Temurin 21 JRE](https://adoptium.net/),
+  prüfen mit `java -version`); das Setup bringt sein eigenes Java mit
 - ein aktueller Browser (Chrome, Edge, Firefox)
 - optional ein KI-Zugang (OpenAI, Anthropic, Google Gemini) oder ein lokales [Ollama](https://ollama.com/) –
   ohne KI funktioniert alles mit vorformulierten Texten
+
+## Variante A: Setup für Windows (empfohlen)
+
+1. `FarmPulse-<version>-Setup.exe` von der [Releases-Seite](https://github.com/DerGiftzwerg156/FarmPulse_v3/releases)
+   laden und starten.
+2. **Windows-SmartScreen** meldet „Der Computer wurde durch Windows geschützt“, weil das Setup (noch) nicht signiert
+   ist: auf **Weitere Informationen → Trotzdem ausführen** klicken.
+3. **Nur für mich** (empfohlen, ohne Administratorrechte) oder **für alle Benutzer** installieren.
+4. Die Einstellungsseiten ausfüllen. Alles lässt sich später ändern:
+
+   | Seite | Was du einstellst |
+   | --- | --- |
+   | KI-Anbieter | OpenAI, Anthropic, Google Gemini, Ollama, ohne KI – oder „später im Tablet einrichten“. Dazu API-Schlüssel, optional ein Modell, bei Ollama die Adresse. Mehr dazu unter [KI-Anbieter einrichten](#5-ki-anbieter-einrichten-optional). |
+   | Ordner | **Austauschordner** `…\My Games\FarmingSimulator2025\modSettings\FS25_RPSim` und der **mods-Ordner**. Vorbelegt ist dein echter Dokumente-Ordner, auch wenn OneDrive ihn verschoben hat. |
+   | Start | **Port** (Standard 8080) und **Browser beim Start öffnen** |
+   | Zusätzliche Aufgaben | **Mod kopieren** (legt `FS25_RPSim.zip` in den mods-Ordner), **mit Windows starten**, **Desktop-Verknüpfung** |
+
+5. Am Ende **FarmPulse jetzt starten** angehakt lassen.
+6. Weiter mit [2. Mod installieren](#2-mod-installieren) – das Kopieren entfällt, wenn „Mod kopieren“ angehakt war –
+   und [4. Oberfläche öffnen](#4-oberfläche-öffnen). Die Schritte 1 und 3 sind nur für die ZIP-Variante.
+
+**So läuft FarmPulse:** Es gibt kein Konsolenfenster mehr. FarmPulse läuft im Hintergrund und zeigt ein Symbol im
+Infobereich neben der Uhr (eventuell unter dem Pfeil **^**). Sobald es bereit ist, öffnet sich der Browser mit dem
+Hof-Tablet.
+
+| Symbol im Infobereich | Wirkung |
+| --- | --- |
+| Doppelklick oder **FarmPulse öffnen** | öffnet das Hof-Tablet im Browser |
+| **Protokoll öffnen** | zeigt die Protokolldatei (bei Problemen) |
+| **Beenden** | beendet FarmPulse sauber |
+
+- Startest du FarmPulse ein zweites Mal (Startmenü, Desktop), startet es nicht doppelt, sondern öffnet nur den Browser.
+- Ist der eingestellte Port belegt, nimmt FarmPulse automatisch den nächsten freien (z. B. 8081) und meldet das am
+  Symbol. Die Adresse für das Tablet ändert sich dann.
+- Kann FarmPulse nicht starten, erscheint ein Fenster mit dem Grund und dem Pfad der Protokolldatei.
+
+**Update:** Das neue Setup einfach über die alte Version installieren; ein laufendes FarmPulse wird vorher beendet. Das
+Setup fragt, ob die **bisherigen Einstellungen bleiben** oder **neu festgelegt** werden. Beim Neu-Festlegen sind alle
+Felder mit den alten Werten vorausgefüllt; ein leeres Schlüsselfeld behält den gespeicherten Schlüssel.
+
+**Deinstallieren:** *Windows-Einstellungen → Apps → FarmPulse → Deinstallieren*. Danach fragt das Setup, ob auch
+Spielstände und Einstellungen (`<Benutzerordner>\.rpsim\`) gelöscht werden sollen (Standard: Nein). Der Mod im
+mods-Ordner bleibt liegen.
+
+**Wo liegt was?** Programm: `%LOCALAPPDATA%\Programs\FarmPulse` (bzw. `C:\Programme\FarmPulse` für alle Benutzer).
+Deine Daten im Ordner `<Benutzerordner>\.rpsim\`:
+
+| Datei | Inhalt |
+| --- | --- |
+| `farmpulse-setup.yml` | Port, Austauschordner, Browser öffnen – vom Setup geschrieben |
+| `application-local.yml` | optional, eigene Einstellungen für Experten; gewinnen gegen `farmpulse-setup.yml` |
+| `local-config\ai-provider.properties` | KI-Anbieter und Schlüssel (Setup und Einstellungsseite im Tablet) |
+| `logs\farmpulse.log` | Protokoll |
+| `rpsim.mv.db`, `db.properties` | deine Spieldaten |
+
+## Variante B: ZIP für Experten
+
+Die ZIP-Variante läuft auch unter Linux und macOS und startet das Backend mit sichtbarem Konsolenfenster.
 
 ## 1. Release entpacken
 
@@ -96,13 +155,18 @@ Unter **Einstellungen** wählst du den Anbieter, optional ein Modell und trägst
 | Google Gemini | API-Schlüssel aus Google AI Studio (das Standardmodell kann sich ändern – bei Fehlern ein aktuelles Modell eintragen) |
 | Ollama (lokal) | laufendes Ollama, Adresse z. B. `http://localhost:11434` und ein installiertes Modell |
 
-Der Schlüssel wird **nur lokal** in `data\local-config\ai-provider.properties` neben dem Backend gespeichert,
+Der Schlüssel wird **nur lokal** gespeichert – beim Setup in `<Benutzerordner>\.rpsim\local-config\ai-provider.properties`,
+bei der ZIP-Variante in `data\local-config\ai-provider.properties` neben dem Backend –
 nie im Browser, nie im Mod und nie wieder angezeigt. Die KI schreibt ausschließlich Texte – Geld, Preise und
 Entscheidungen berechnet FarmPulse immer selbst.
 
 ## Eigene Einstellungen (optional)
 
-`application-local.yml.example` nach `application-local.yml` (gleicher Ordner wie die JAR) kopieren und anpassen,
+**Setup:** Einstellungen änderst du am einfachsten, indem du das Setup erneut startest und *Einstellungen neu festlegen*
+wählst. Für alles Weitere eine `application-local.yml` im Ordner `<Benutzerordner>\.rpsim\` anlegen (Inhalt wie
+unten) und FarmPulse über das Symbol im Infobereich beenden und neu starten.
+
+**ZIP-Variante:** `application-local.yml.example` nach `application-local.yml` (gleicher Ordner wie die JAR) kopieren und anpassen,
 z. B. für einen abweichenden Dokumente-Ordner:
 
 ```yaml

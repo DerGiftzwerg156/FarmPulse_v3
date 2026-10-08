@@ -45,6 +45,20 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.web.lan.pbkdf2-iterations` | `600000` | Iterations of the PIN hash (`PBKDF2WithHmacSHA256` from the JDK, OWASP Password Storage Cheat Sheet). A PIN keeps the count it was hashed with. | Roadmap V3 R3-N2 |
 | `rpsim.web.lan.cookie-name` | `FP_LAN_SESSION` | Name of the session cookie (`HttpOnly`, `SameSite=Strict`, sent by `EventSource` too). | Roadmap V3 R3-N2 |
 
+## `rpsim.desktop` – Windows installer (background mode)
+
+Only used by `FarmPulse.exe` of the Windows setup (the launcher passes `-Drpsim.desktop.enabled=true`, profiles
+`prod,desktop`); see [Windows installer](../architecture/windows-installer.md). The setup writes `server.port`,
+`rpsim.bridge.path` and `rpsim.desktop.open-browser` to `~/.rpsim/farmpulse-setup.yml`; `~/.rpsim/application-local.yml`
+overrides it.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.desktop.enabled` | `false` | Background mode: single instance, tray icon, browser on start, free port, start errors as dialog. Set by the launcher only, never in a file. | Windows installer |
+| `rpsim.desktop.open-browser` | `true` | Open the browser on the tablet as soon as the server is ready (setup: „Browser beim Start öffnen“). | Windows installer |
+| `rpsim.desktop.port-search-range` | `20` | When `server.port` is in use, the next free port up to `server.port` + this value is used; the tray icon says so (owner decision 2026-10-08). | Windows installer |
+| `rpsim.desktop.data-dir` | `""` | Folder of `farmpulse-setup.yml`, `application-local.yml`, the AI settings, the log, `desktop.lock` and `desktop.url`. Set by the launcher (`~/.rpsim`). | Windows installer |
+
 ## Game month = FS25 period
 
 There is no `rpsim.time` configuration any more (TODO T-08): the game month is the FS25 period of the savegame.

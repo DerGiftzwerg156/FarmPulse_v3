@@ -52,6 +52,11 @@ rpsim:
       session-days: 30            # validity of the session cookie (real days; survives a backend restart)
       pbkdf2-iterations: 600000   # PBKDF2WithHmacSHA256 (OWASP Password Storage Cheat Sheet)
       cookie-name: FP_LAN_SESSION
+  desktop:                        # Windows installer: background mode of FarmPulse.exe (docs/architecture/windows-installer.md)
+    enabled: false                # set by the launcher (-Drpsim.desktop.enabled=true), never in a file
+    open-browser: true            # open the browser as soon as the server is ready
+    port-search-range: 20         # server.port in use -> the next free port up to server.port + 20
+    data-dir: ""                  # set by the launcher: setup settings, lock and URL file (~/.rpsim)
   ai:
     provider: NONE                # FAKE | OPENAI | ANTHROPIC | GEMINI | OLLAMA | NONE
     timeout-seconds: 30
