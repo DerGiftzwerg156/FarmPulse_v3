@@ -52,7 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
  *   only after that month has passed or the plan has recovered).</li>
  * </ul>
  * R3-M2: the expected income of an open forward contract is its own posting in the delivery month, marked as
- * estimate; Roadmap V3.2 R32-G3 the same for an open bulk order with a delivery month. Nothing here books anything; lease income (R3-L) joins once that section exists.
+ * estimate; Roadmap V3.2 R32-G3 the same for an open bulk order with a delivery month; R32-I6 the payments to investors. Nothing here books anything; lease income (R3-L) joins once that section exists.
  */
 @Service
 public class LiquidityPlanService {
@@ -73,15 +73,18 @@ public class LiquidityPlanService {
     private final RpsimProperties props;
     private final de.farmpulse.rpsim.market.ForwardContractService forwardContracts;
     private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
+    private final de.farmpulse.rpsim.investor.InvestorService investors;
 
     public LiquidityPlanService(SavegameRepository savegames, FactsService facts, FinanceJournalService journal,
                                 EmployeeRepository employees, LoanRepository loans, ContractRepository contracts,
                                 FamilyService family, TaxService tax, GameTime gameTime, CharacterLookup lookup,
                                 NarrationRequestService narration, RpsimProperties props,
                                 de.farmpulse.rpsim.market.ForwardContractService forwardContracts,
-                                de.farmpulse.rpsim.market.BulkOrderService bulkOrders) {
+                                de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
+                                de.farmpulse.rpsim.investor.InvestorService investors) {
         this.forwardContracts = forwardContracts;
         this.bulkOrders = bulkOrders;
+        this.investors = investors;
         this.savegames = savegames;
         this.facts = facts;
         this.journal = journal;
@@ -203,6 +206,11 @@ public class LiquidityPlanService {
                     postings.add(new Posting("BULK_ORDER", bo.getFillType(),
                             Math.round(bo.getQuantity() / 1000.0 * bo.getFixedPrice()), true));
                 }
+            }
+            // Roadmap V3.2 R32-I6: buy-back / repayment, fixed payouts (R2) and compensations known, profit share (R1)
+            // and running compensations as estimate
+            for (var ip : investors.planned(sg, idx)) {
+                postings.add(new Posting(ip.kind(), ip.label(), ip.amount(), ip.estimate()));
             }
             if (hasCalendar && PREPAYMENT_PERIODS.contains(period)) {
                 boolean afterYearChange = y > year;

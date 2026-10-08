@@ -5,7 +5,7 @@ import { ApiService } from '../../core/api/api.service';
 import { CaseView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
-import { GameTimePipe, MoneyPipe } from '../../shared/format/format.pipes';
+import { GameTimePipe, MoneyPipe, NumberPipe } from '../../shared/format/format.pipes';
 import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
@@ -17,7 +17,7 @@ import { BulkOrderRequest } from '../trade/bulk-order-request';
  */
 @Component({
   selector: 'app-case-card',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Badge, Button, BulkOrderRequest],
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Badge, Button, BulkOrderRequest],
   template: `
     <div data-testid="case" [attr.data-kind]="c().kind" [class]="framed() ? 'rounded-xl border border-warn/50 bg-bg p-3' : ''" [class.ring-1]="highlight()">
 
@@ -157,6 +157,65 @@ import { BulkOrderRequest } from '../trade/bulk-order-request';
       @if (c().kind === 'BULK_ORDER') {
         <!-- Roadmap V3.2 R32-G: request of a bulk buyer - instant delivery, delivery month or decline -->
         <app-bulk-order-request [c]="c()" (changed)="changed.emit(c())" />
+      }
+      @if (c().kind === 'INVESTOR_OFFER') {
+        <!-- Roadmap V3.2 R32-I2: the packages are compared and accepted in "Bank → Investoren" -->
+        <div class="mt-1 text-[12px] text-text" data-testid="investor-offer-case">{{ (c().direction === 'EXTENSION' ? 'investors.case.extension' : 'investors.case.offer') | t: { name: c().character?.name ?? '–', kind: c().title ?? '–', amount: (c().offerAmount | money), n: c().quantity } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button variant="secondary" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'investors.case.offerHint' | t }}</p>
+      }
+      @if (c().kind === 'INVESTOR_REMINDER') {
+        <!-- Roadmap V3.2 R32-I4 stage 1: reminder with a grace period -->
+        <div class="mt-1 text-[12px] text-text" data-testid="investor-reminder">{{ 'investors.case.reminder' | t: { name: c().character?.name ?? '–', what: ('investors.type.' + c().reference | t) } }}@if (c().quantity) { · {{ 'investors.case.shortfall' | t: { n: (c().quantity | num) } }} }</div>
+        @if (c().status === 'AWAITING_PLAYER' && c().deadlineGameTime) {
+          <p class="mt-1 text-[12px] text-warn">{{ 'investors.case.grace' | t: { at: (c().deadlineGameTime | gameTime) } }}</p>
+        } @else if (c().resolution === 'MADE_UP') {
+          <app-badge variant="positive">{{ 'investors.case.madeUp' | t }}</app-badge>
+        } @else if (c().resolution === 'COMPENSATED') {
+          <app-badge variant="negative">{{ 'investors.case.compensated' | t }}</app-badge>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'investors.case.reminderHint' | t }}</p>
+      }
+      @if (c().kind === 'INVESTOR_CLAIM') {
+        <!-- Roadmap V3.2 R32-I4 stage 3 / R32-I5: claim, paid by button like a tax bill -->
+        <div class="mt-1 text-[12px] text-text" data-testid="investor-claim">{{ 'investors.case.claim' | t: { name: c().character?.name ?? '–', amount: (c().offerAmount | money) } }}</div>
+        @if (c().roundsUsed > 0 && c().status === 'AWAITING_PLAYER') {
+          <app-badge variant="negative" data-testid="investor-claim-overdue">{{ 'investors.case.overdue' | t: { n: c().roundsUsed } }}</app-badge>
+        }
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'investors.case.pay' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'investors.case.claimHint' | t }}</p>
+      }
+      @if (c().kind === 'INVESTOR_PURCHASE') {
+        <!-- Roadmap V3.2 R32-I3 P2: right of first refusal, delivered from the silos like a bulk order -->
+        <div class="mt-1 text-[12px] text-text" data-testid="investor-purchase">{{ 'investors.case.purchase' | t: { name: c().character?.name ?? '–', quantity: (c().quantity | num), fillType: (c().reference | label: 'fillType'), unit: (c().costAmount | money), amount: (c().offerAmount | money) } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'trade.bulk.deliver' | t }}</app-button>
+            <app-button variant="danger" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.decline' | t }}</app-button>
+          </div>
+        } @else if (c().status === 'IN_PROGRESS') {
+          <app-badge variant="positive">{{ 'trade.inTransfer' | t }}</app-badge>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'investors.case.breachHint' | t }}</p>
+      }
+      @if (c().kind === 'INVESTOR_VISIT') {
+        <!-- Roadmap V3.2 R32-I3 P4: visit of the investor -->
+        <div class="mt-1 text-[12px] text-text" data-testid="investor-visit">{{ 'investors.case.visit' | t: { name: c().character?.name ?? '–' } }}</div>
+        @if (c().status === 'AWAITING_PLAYER') {
+          <div class="mt-2 flex flex-wrap gap-2">
+            <app-button [disabled]="busy()" (pressed)="act('accept')" data-testid="case-accept">{{ 'contracts.rsvpAccept' | t }}</app-button>
+            <app-button variant="danger" [disabled]="busy()" (pressed)="act('decline')" data-testid="case-decline">{{ 'contracts.rsvpDecline' | t }}</app-button>
+          </div>
+        }
+        <p class="mt-1 text-[11px] text-muted">{{ 'investors.case.breachHint' | t }}</p>
       }
       @if (c().kind === 'APPRENTICE_TAKEOVER') {
         <div class="mt-1 text-[12px] text-text" data-testid="apprentice-takeover">{{ 'employees.takeoverText' | t: { name: c().character?.name ?? '–', amount: (c().offerAmount | money), skill: c().quantity } }}</div>

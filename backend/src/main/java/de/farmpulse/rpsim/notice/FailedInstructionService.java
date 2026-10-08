@@ -67,6 +67,7 @@ public class FailedInstructionService {
     private final OutboxInstructionRepository outbox;
     private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
     private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
+    private final de.farmpulse.rpsim.investor.InvestorService investors;
     private final SavegameRepository savegames;
     private final LoanService loans;
     private final PayrollScheduler payroll;
@@ -98,8 +99,10 @@ public class FailedInstructionService {
                                     de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans,
                                     de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade,
                                     DieselTheftService dieselThefts,
-                                    de.farmpulse.rpsim.market.BulkOrderService bulkOrders) {
+                                    de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
+                                    de.farmpulse.rpsim.investor.InvestorService investors) {
         this.bulkOrders = bulkOrders;
+        this.investors = investors;
         this.dieselThefts = dieselThefts;
         this.machineLoans = machineLoans;
         this.livestockTrade = livestockTrade;
@@ -193,6 +196,14 @@ public class FailedInstructionService {
         } else if (de.farmpulse.rpsim.market.BulkOrderService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = bulkOrders.onInstructionFailed(relatedId, ins.getAckMessage()); // R32-G2: the request stays open
+        } else if (de.farmpulse.rpsim.investor.InvestorService.DELIVERY_RELATED.equals(related) && relatedId != null) {
+            handled = investors.onDeliveryFailed(relatedId); // R32-I3: the delivery does not count
+        } else if (de.farmpulse.rpsim.investor.InvestorService.PURCHASE_RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.STORAGE_TRANSFER) {
+            handled = investors.onPurchaseFailed(relatedId); // R32-I3 P2: the request stays open
+        } else if (de.farmpulse.rpsim.investor.InvestorOfferService.PAYMENT_RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.MONEY_TRANSACTION) {
+            handled = investors.onPaymentFailed(relatedId); // R32-I: a refused payment stays open
         } else if (de.farmpulse.rpsim.neighbor.FarmShopService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = farmShop.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-M3

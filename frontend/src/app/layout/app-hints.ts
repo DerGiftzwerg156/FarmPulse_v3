@@ -21,6 +21,7 @@ export const APP_HINTS: Record<string, HintParagraph[]> = {
   bank: [
     { heading: 'bank.apply', text: 'bank.processingHint' },
     { heading: 'bank.deferral', text: 'bank.deferralHint' },
+    { heading: 'investors.title', text: 'investors.offerHint' }, // Roadmap V3.2 R32-I
   ],
   authorities: [
     { heading: 'authorities.advisor', text: 'bank.tax.advisorHint' },

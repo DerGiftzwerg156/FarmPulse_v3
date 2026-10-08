@@ -197,6 +197,7 @@ public class RpsimProperties {
         private ForwardContract forwardContract = new ForwardContract();
         private FarmShop farmShop = new FarmShop();
         private BulkOrder bulkOrder = new BulkOrder();
+        private Investor investor = new Investor();
         private Finance finance = new Finance();
         private LiquidityPlan liquidityPlan = new LiquidityPlan();
         private Drought drought = new Drought();
@@ -1148,6 +1149,152 @@ public class RpsimProperties {
             }
             m.put("POTATO", Amount.of(50_000, 300_000, 10_000));
             m.put("SUGARBEET", Amount.of(50_000, 300_000, 10_000));
+            return m;
+        }
+    }
+
+    /** Roadmap V3.2 R32-I: large investors with 2-3 packages of considerations (owner decisions 2026-10-08). */
+    @Getter @Setter
+    public static class Investor {
+        private boolean enabled = true;
+        /** I1: at most this many running investor contracts. */
+        private int maxActive = 2;
+        /** I1: amount = random step between amount-min and min(amount-max, asset-share x assets in bank view). */
+        private long amountMin = 250_000;
+        private long amountMax = 2_500_000;
+        private long amountStep = 50_000;
+        private double assetShare = 0.5;
+        /** I1: credit score of a loan over the amount (credit-term-months, base rate of the bank) at least this. */
+        private double minCreditScore = 50;
+        private int creditTermMonths = 60;
+        /** I1: no payment delay within these months and no running call-back of a loan. */
+        private int delayLookbackMonths = 12;
+        /** I1: chance per month = base + per milestone (capped) + good reputation - controversial reputation. */
+        private double baseProbability = 0.05;
+        private double milestoneBonus = 0.02;
+        private double milestoneBonusMax = 0.06;
+        private double goodReputationBonus = 0.02;
+        private double controversialReputationMalus = 0.02;
+        /** Share of the offers that come as a call; a missed or declined call also brings the mail. */
+        private double callShare = 0.5;
+        private double answerDays = 10;
+        /** Trust of the investor when an offer is left unanswered (declining costs nothing). */
+        private double ignoredTrustDelta = -3;
+        /** I2: packages per offer and term in FS25 years (random per package). */
+        private int minPackages = 2;
+        private int maxPackages = 3;
+        private int minYears = 2;
+        private int maxYears = 5;
+        private int maxSideConsiderations = 2;
+        /** I3: goods and milk quantities are rounded to this many litres. */
+        private long litersStep = 1_000;
+        /** I3 R1: profit share = value per year / operating result, rounded to step, between min and max. */
+        private double profitShareMin = 0.02;
+        private double profitShareMax = 0.30;
+        private double profitShareStep = 0.005;
+        /** I3 R2: fixed payout rounded to this step of the amount. */
+        private double payoutRateStep = 0.001;
+        /** I3: fixed value per year of the term of the obligations and rights (EUR; P4 per date). */
+        private Map<String, Long> values = defaultValues();
+        /** I3 P2: per year the investor asks for amount x share / market price at market price x (1 - discount). */
+        private double purchaseAmountShare = 0.10;
+        private double purchaseDiscount = 0.10;
+        private double purchaseAnswerDays = 5;
+        /** I3 P3: FS25 periods the holiday flat is kept free for the investor (5 = July, 6 = August). */
+        private List<Integer> holidayPeriods = new ArrayList<>(List.of(5, 6));
+        /** I3 P4: dates per year; days to accept the invitation. */
+        private int visitsPerYear = 1;
+        private double visitAnswerDays = 3;
+        /** I3 A2: mean health of the stables with animals over the exports of a month at least this. */
+        private double welfareMinHealth = 70;
+        /** I3 A4: target = today's own area (or animals) x growth-factor by the end of the first term year. */
+        private double growthFactor = 1.2;
+        /** I3 A3: crop obligation = crop-area-share x own area, rounded to crop-area-step ha, at least crop-area-min. */
+        private double cropAreaShare = 0.30;
+        private double cropAreaStep = 0.5;
+        private double cropAreaMin = 1.0;
+        /** I4: reminder this many game days before the end of a month (or the year for yearly considerations). */
+        private double reminderDaysBeforeEnd = 7;
+        /** I4 stage 1: grace period of a reminder. */
+        private double graceDays = 5;
+        /** I4 stage 2: compensation = shortfall x market price (animals: game value) x markup, or value per year x markup. */
+        private double compensationMarkup = 1.25;
+        /** I4 stage 3: the investor terminates at this breach within the term. */
+        private int breachesToTerminate = 3;
+        /** I4 / I5: days to pay a claim (like a tax bill); trust per overdue month. */
+        private double claimDays = 10;
+        private double claimOverdueTrustDelta = -5;
+        /** I5: announcement this many months before the end; chance of an extension offer without a breach. */
+        private int announceMonths = 3;
+        private double extensionProbability = 0.5;
+        /** I6: a subordinated loan counts with this factor as debt in the bank view. */
+        private double subordinatedDebtFactor = 1.0;
+        /** Trust of the investor: made up in the grace, compensation, termination, period fulfilled, end without breach. */
+        private double reminderTrustDelta = -2;
+        private double compensationTrustDelta = -5;
+        private double terminationTrustDelta = -10;
+        private double fulfilledTrustDelta = 1;
+        private double endTrustDelta = 5;
+        /** I3 P5: a breach or the termination of an investor named in the village paper is public too. */
+        private double publicBreachDelta = -2;
+        /** I1: kinds of investors (key = InvestorKind). */
+        private Map<String, Kind> kinds = defaultKinds();
+
+        /** One kind of investor: weight of the draw, target return p.a., main considerations, fill types, crop, P5. */
+        @Getter @Setter
+        public static class Kind {
+            private String label;
+            private double weight = 1;
+            private double targetReturn;
+            /** Main considerations the kind prefers (W1, W2, W3, A1, R1, R2). */
+            private List<String> main = new ArrayList<>();
+            /** Fill types of W1 / W2 / P2 (only with an own silo entry for the sort). */
+            private List<String> fillTypes = new ArrayList<>();
+            /** Fruit type of the crop obligation A3 (none = no A3). */
+            private String crop;
+            /** Village reputation of the name in the village paper (P5) at the signing. */
+            private double reputationDelta;
+
+            static Kind of(String label, double weight, double targetReturn, List<String> main, List<String> fillTypes,
+                           String crop, double reputationDelta) {
+                Kind k = new Kind();
+                k.setLabel(label);
+                k.setWeight(weight);
+                k.setTargetReturn(targetReturn);
+                k.setMain(new ArrayList<>(main));
+                k.setFillTypes(new ArrayList<>(fillTypes));
+                k.setCrop(crop);
+                k.setReputationDelta(reputationDelta);
+                return k;
+            }
+        }
+
+        /** Owner decision 2026-10-08: values per year of the term. */
+        private static Map<String, Long> defaultValues() {
+            Map<String, Long> m = new LinkedHashMap<>();
+            m.put("A2", 8_000L);
+            m.put("A3", 12_000L);
+            m.put("A4", 15_000L);
+            m.put("P1", 10_000L);
+            m.put("P4", 3_000L);
+            m.put("P5", 4_000L);
+            return m;
+        }
+
+        /** Owner decisions 2026-10-08: the kinds of the roadmap table (brewery and oil mill share one row). */
+        private static Map<String, Kind> defaultKinds() {
+            Map<String, Kind> m = new LinkedHashMap<>();
+            m.put("AGRI_FUND", Kind.of("Agrarfonds", 1, 0.10, List.of("R1", "R2"), List.of(), null, -1));
+            m.put("FOOD_CHAIN", Kind.of("Regionale Lebensmittelkette", 1, 0.08, List.of("W1", "W2"),
+                    List.of("WHEAT", "POTATO"), "WHEAT", 2));
+            m.put("DAIRY", Kind.of("Molkerei-Unternehmer", 1, 0.08, List.of("W3", "A1"), List.of(), null, 2));
+            m.put("BREWERY", Kind.of("Brauerei", 0.5, 0.07, List.of("W1", "W2"), List.of("BARLEY"), "BARLEY", 2));
+            m.put("OIL_MILL", Kind.of("Ölmühle", 0.5, 0.07, List.of("W1", "W2"), List.of("CANOLA", "SUNFLOWER"),
+                    "CANOLA", 2));
+            m.put("ENERGY", Kind.of("Energieunternehmen", 1, 0.09, List.of("W1", "W2", "R2"), List.of("MAIZE"),
+                    "MAIZE", -2));
+            m.put("PRIVATE", Kind.of("Privatinvestorin / Familienstiftung", 1, 0.06, List.of("R1", "A1"), List.of(),
+                    null, 1));
             return m;
         }
     }

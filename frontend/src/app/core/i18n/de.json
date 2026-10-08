@@ -535,7 +535,9 @@
       "BULK_ORDER": "Großauftrag",
       "INVESTOR_OFFER": "Angebot Investor",
       "INVESTOR_REMINDER": "Mahnung Investor",
-      "INVESTOR_CLAIM": "Rückforderung Investor"
+      "INVESTOR_CLAIM": "Rückforderung Investor",
+      "INVESTOR_PURCHASE": "Vorkaufsrecht Investor",
+      "INVESTOR_VISIT": "Besuch Investor"
     },
     "caseStatus": {
       "AWAITING_PLAYER": "Wartet auf dich",
@@ -805,7 +807,10 @@
       "RETIREMENT": "Altenteil",
       "TAX_PREPAYMENT": "Steuervorauszahlung",
       "FORWARD_CONTRACT": "Vorkontrakt (erwartet)",
-      "BULK_ORDER": "Großauftrag (erwartet)"
+      "BULK_ORDER": "Großauftrag (erwartet)",
+      "INVESTOR_REPAYMENT": "Rückzahlung an Investor",
+      "INVESTOR_PAYOUT": "Ausschüttung an Investor",
+      "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor"
     },
     "fieldWork": {
       "PLOW": "Pflügen",
@@ -888,6 +893,15 @@
     "coopResult": {
       "ACCEPTED": "Angenommen",
       "REJECTED": "Abgelehnt"
+    },
+    "investorKind": {
+      "AGRI_FUND": "Agrarfonds",
+      "FOOD_CHAIN": "Regionale Lebensmittelkette",
+      "DAIRY": "Molkerei-Unternehmer",
+      "BREWERY": "Brauerei",
+      "OIL_MILL": "Ölmühle",
+      "ENERGY": "Energieunternehmen",
+      "PRIVATE": "Privatinvestorin / Familienstiftung"
     }
   },
   "onboarding": {
@@ -1593,7 +1607,8 @@
       "idyllic": "Weltmodus idyllisch: keine Tierseuchen und kein Dieselklau; Kontrollen, Kürzungen, Bußgelder der Düngeverordnung, Ausfälle, Vertrauensverluste durch Nachtarbeit und Flurschaden sowie Entschädigungen nur zu {percent} %.",
       "nightWork": "Beschwerden über Nachtarbeit",
       "cropDamage": "Flurschaden auf Nachbarfeldern",
-      "dieselTheft": "Dieselklau"
+      "dieselTheft": "Dieselklau",
+      "investors": "Großinvestoren (Angebote von Investoren)"
     }
   },
   "notices": {
@@ -1743,7 +1758,8 @@
     "nothingToday": "Heute ist noch nichts eingetragen.",
     "toDiary": "Zum Tagebuch",
     "counterOfferShort": "Gegenangebot der Bank",
-    "leaseOutEndsHint": "Der Pächter möchte verlängern – ohne Antwort bekommst du das Feld zum Ende zurück."
+    "leaseOutEndsHint": "Der Pächter möchte verlängern – ohne Antwort bekommst du das Feld zum Ende zurück.",
+    "investorDue": "Lieferung an {name}"
   },
   "calendar": {
     "nextDays": "Nächste Tage",
@@ -1776,7 +1792,9 @@
       "coopAssembly": "Generalversammlung der Genossenschaft",
       "coopBoardMeeting": "Vorstandssitzung",
       "bulkOrderStart": "Liefermonat beginnt: {fillType} an {sellPoint} ({amount})",
-      "bulkOrderEnd": "Liefermonat endet: {quantity} l {fillType} an {sellPoint}"
+      "bulkOrderEnd": "Liefermonat endet: {quantity} l {fillType} an {sellPoint}",
+      "investorDelivery": "{name} wartet noch auf {remaining} {unit} {what}",
+      "investorRepayment": "Rückzahlung an {name}: {amount}"
     },
     "debits": {
       "salaries": "Gehälter ({n})",
@@ -2204,7 +2222,12 @@
       "wages": "Löhne je Monat",
       "animals": "Tiere",
       "reputation": "Ansehen im Dorf",
-      "inspections": "{n} Tierwohl-Kontrolle(n) im Jahr"
+      "inspections": "{n} Tierwohl-Kontrolle(n) im Jahr",
+      "investors": "Investoren",
+      "investorLine": "{name} ({kind}): {amount}, {capital}",
+      "investorMoney": "Kapital {capital} · Ausschüttungen {payouts} · Ausgleich {compensations} · Rückzahlung {repayments}",
+      "investorDelivered": "geliefert: {items}",
+      "investorBreaches": "Vertragsbrüche: {n}"
     },
     "leaseConsentGiven": "Verpachtung erlaubt",
     "requestLeaseConsent": "Zustimmung zur Verpachtung"
@@ -2248,7 +2271,8 @@
       "antrag": "Kreditantrag",
       "kontoauszug": "Kontoauszug",
       "ergebnis": "Betriebsergebnis",
-      "planung": "Planung & Jahresbericht"
+      "planung": "Planung & Jahresbericht",
+      "investoren": "Investoren"
     },
     "authorities": {
       "finanzamt": "Finanzamt",
@@ -2314,5 +2338,108 @@
     "contacts": "Hier stehen die Menschen aus Dorf, Familie, Vereinen und deinem Personal. Im Profil siehst du Charakterzüge, Hintergrund und Felder, unter „Nachricht“ schreibst du ihnen oder rufst an – die Antwort kommt in Spielzeit. Vertrauen und Ansehen zeigt das Tablet nur als Stufe, nie als Zahl. Die Anfragen der Vereine stehen unter „Vereine & Sponsoring“.",
     "newspaper": "Das Dorfblatt erscheint zu Beginn jeder Periode mit Neuigkeiten aus dem Dorf, vom Hof und vom Markt, mit Amtlichem und Kleinanzeigen. Die neueste Ausgabe ist geöffnet, ältere Ausgaben bleiben in der Liste lesbar.",
     "calendar": "Der Kalender folgt dem FS25-Kalender. „Nächste Tage“ zeigt Fristen und Termine und was zum Monatsbeginn automatisch abgebucht wird. Unter „Einladungen“ antwortest du auf Dorffeste, Stammtisch und Versammlungen, „Jahr“ zeigt Dorffeste, Steuertermine, Familien- und Amtstermine im Überblick."
+  },
+  "investors": {
+    "title": "Großinvestoren",
+    "intro": "Ein Investor steckt Geld in den Hof und verlangt eine Gegenleistung. Höchstens {max} laufende Investoren. Fehlt eine Gegenleistung, kommt eine Mahnung mit {grace} Tagen Nachfrist, danach ein Ausgleich (Marktwert + {markup} %); beim {breaches}. Bruch kündigt der Investor und fordert die Summe zurück.",
+    "off": "Großinvestoren sind ausgeschaltet (Einstellungen → Ereignisse) – laufende Verträge gelten weiter.",
+    "offer": "{name} ({kind}) bietet {amount}",
+    "offerExtension": "{name} ({kind}) möchte die {amount} im Hof lassen",
+    "until": "Antwort bis {at}",
+    "package": "Paket {n}",
+    "term": "{years} Jahre ({from}–{to})",
+    "side": "Nebenleistung",
+    "value": "Wert der Gegenleistung {value} ({percent} % je Jahr)",
+    "offerHint": "Die Pakete sind gleich viel wert, aber unterschiedlich belastend. Das Geld kommt sofort, die Laufzeit beginnt mit dem nächsten Jahr. Ablehnen kostet nichts.",
+    "extensionHint": "Angenommen entfällt die Rückzahlung am Laufzeitende; es fließt kein Geld.",
+    "none": "Noch kein Investor. Angebote kommen höchstens einmal im Jahr nach einem guten Hofbericht.",
+    "status": {
+      "ACTIVE": "läuft",
+      "ENDED": "beendet",
+      "TERMINATED": "gekündigt",
+      "OFFERED": "Angebot"
+    },
+    "capital": {
+      "SILENT": "stille Beteiligung (Eigenkapital, Rückkauf zum Nennwert)",
+      "SUBORDINATED": "Nachrangdarlehen (Schuld, Rückzahlung am Ende)"
+    },
+    "breaches": "{n} von {max} Brüchen",
+    "extended": "verlängert",
+    "progress": "{delivered} von {required} {unit} in diesem Zeitraum",
+    "quantity": "Menge ({unit})",
+    "stall": "Stall",
+    "chooseStall": "Stall wählen",
+    "deliver": "Liefern",
+    "open": "noch {n} {unit} offen",
+    "animals": "Tiere",
+    "due": "{remaining} {unit} {what} offen",
+    "chooseField": "Feld wählen",
+    "consent": "Zustimmung einholen",
+    "period": {
+      "REMINDED": "Mahnung ({year}) – Nachfrist bis {at}",
+      "MADE_UP": "Bruch ({year}) – in der Nachfrist nachgeholt",
+      "COMPENSATED": "Bruch ({year}) – Ausgleich {amount}",
+      "CANCELLED": "Bruch ({year}) – Kündigung"
+    },
+    "payment": {
+      "CAPITAL": "Kapital erhalten",
+      "PAYOUT": "Ausschüttung",
+      "COMPENSATION": "Ausgleichszahlung",
+      "REPAYMENT": "Rückzahlung"
+    },
+    "paymentOpen": "offen",
+    "paymentClaimed": "in der Rückforderung",
+    "cases": "Mahnungen, Anfragen und Rückforderungen",
+    "type": {
+      "W1": "Ware über die Laufzeit",
+      "W2": "Ware je Monat",
+      "W3": "Milch je Monat",
+      "R1": "Gewinnanteil",
+      "R2": "Feste Ausschüttung",
+      "A1": "Tiere je Jahr",
+      "A2": "Tierwohl",
+      "A3": "Anbaupflicht",
+      "A4": "Wachstumsziel",
+      "P1": "Vetorecht beim Feldverkauf",
+      "P2": "Vorkaufsrecht",
+      "P3": "Ferienwohnung",
+      "P4": "Besuch",
+      "P5": "Namensnennung"
+    },
+    "c": {
+      "W1": "{quantity} l {sort} über die Laufzeit, mindestens {min} l je Jahr",
+      "W2": "{quantity} l {sort} je Monat",
+      "W3": "{quantity} l {sort} je Monat aus dem Stall",
+      "R1": "{rate} % des Betriebsergebnisses je Jahr (nach dem Hofbericht)",
+      "R2": "{rate} % der Summe je Jahr als Ausschüttung",
+      "A1": "{quantity} Tiere ({sub}) je Jahr",
+      "A2": "Tierwohl: Stallgesundheit im Monatsmittel mindestens {target} %",
+      "A3": "{hectares} ha {sort} je Erntejahr",
+      "A4_AREA": "Hof-Fläche mindestens {target} ha bis Ende des ersten Jahres",
+      "A4_ANIMALS": "Tierbestand mindestens {target} bis Ende des ersten Jahres",
+      "P1": "Vetorecht beim Feldverkauf",
+      "P2": "Vorkaufsrecht auf {quantity} l {sort} je Jahr (Marktpreis − 10 %)",
+      "P3": "Ferienwohnung im Juli und August für den Investor",
+      "P4": "{quantity} Besuch(e) je Jahr",
+      "P5": "Namensnennung im Dorfblatt"
+    },
+    "case": {
+      "offer": "{name} ({kind}) bietet {amount} in {n} Paketen an.",
+      "extension": "{name} ({kind}) bietet an, die {amount} weiter im Hof zu lassen ({n} Pakete).",
+      "offerHint": "Die Pakete vergleichen und annehmen: App „Bank“ → Investoren.",
+      "reminder": "Mahnung von {name}: {what} nicht erfüllt",
+      "shortfall": "{n} offen",
+      "grace": "Nachfrist bis {at} – jetzt in „Bank → Investoren“ liefern.",
+      "madeUp": "nachgeholt",
+      "compensated": "Ausgleich fällig",
+      "reminderHint": "Der Bruch zählt auch, wenn du nachlieferst. Nach der Nachfrist wird ein Ausgleich gebucht.",
+      "claim": "{name} fordert {amount} zurück.",
+      "overdue": "{n} Monat(e) überfällig",
+      "pay": "Bezahlen",
+      "claimHint": "Zahlbar wie ein Bescheid. Unbezahlt mahnt der Investor jeden Monat; das kostet Vertrauen und zählt als Zahlungsverzug. Zinsen fallen nicht an.",
+      "purchase": "{name} nutzt sein Vorkaufsrecht: {quantity} l {fillType} aus deinen Silos zu {unit} je 1.000 l ({amount}).",
+      "visit": "{name} möchte diesen Monat zu Besuch auf den Hof kommen.",
+      "breachHint": "Ablehnen oder Ignorieren ist ein Vertragsbruch."
+    }
   }
 }

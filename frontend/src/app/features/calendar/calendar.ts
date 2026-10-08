@@ -40,6 +40,8 @@ export function yearTone(kind: string): EventTone {
   if (kind.startsWith('FAMILY_') || kind === 'SCHOOL_START' || kind === 'STAMMTISCH') return 'com';
   if (kind.startsWith('COOP_')) return 'money'; // Roadmap V3.1 R31-D7: cooperative
   if (kind.startsWith('BULK_ORDER_')) return 'farm'; // Roadmap V3.2 R32-G3: delivery month of a bulk order
+  if (kind === 'INVESTOR_DELIVERY') return 'farm'; // Roadmap V3.2 R32-I4
+  if (kind === 'INVESTOR_REPAYMENT') return 'money'; // Roadmap V3.2 R32-I5
   return 'sys';
 }
 
@@ -125,6 +127,11 @@ export class CalendarApp {
         sellPoint: e.title ?? '', amount }),
       BULK_ORDER_END: () => this.i18n.t('calendar.agenda.bulkOrderEnd', { fillType: this.fillType(e.reference),
         sellPoint: e.title ?? '', quantity: (e.amount ?? 0).toLocaleString('de-DE') }),
+      // Roadmap V3.2 R32-I4 / I5: open delivery to an investor (subKind = type), buy-back / repayment
+      INVESTOR_DELIVERY: () => this.i18n.t('calendar.agenda.investorDelivery', { name: e.title ?? '',
+        remaining: (e.amount ?? 0).toLocaleString('de-DE'), unit: e.subKind === 'A1' ? this.i18n.t('investors.animals') : 'l',
+        what: this.fillType(e.reference) }),
+      INVESTOR_REPAYMENT: () => this.i18n.t('calendar.agenda.investorRepayment', { name: e.title ?? '', amount }),
     };
     const contractApp = e.subKind ? APPS.find((a) => a.id === contractAppId(e.subKind!)) : undefined;
     const apps: Record<string, [string, string | null]> = {
@@ -133,6 +140,7 @@ export class CalendarApp {
       CONTRACT_PAYMENT: [contractApp?.label ?? 'nav.bank', contractApp?.path ?? null], LEASE_END: ['nav.farmland', '/farmland'],
       STAMMTISCH: ['nav.village', null], COOP_ASSEMBLY: ['nav.trade', '/handel'], COOP_BOARD_MEETING: ['nav.trade', '/handel'],
       BULK_ORDER_START: ['nav.trade', '/handel/grossauftraege'], BULK_ORDER_END: ['nav.trade', '/handel/grossauftraege'],
+      INVESTOR_DELIVERY: ['nav.bank', '/bank/investoren'], INVESTOR_REPAYMENT: ['nav.bank', '/bank/investoren'],
     };
     const [app, link] = apps[e.kind] ?? ['nav.calendar', null];
     return { gameTime: e.gameTime, text: (texts[e.kind] ?? (() => e.kind))(), app: this.i18n.t(app), tone: yearTone(e.kind), link, query: null };

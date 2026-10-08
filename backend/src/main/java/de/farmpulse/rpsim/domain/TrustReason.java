@@ -80,6 +80,14 @@ public enum TrustReason {
     CROP_DAMAGE_CLAIM_DECLINED,
     SCHOOL_VISIT,
     COOP_BOARD_MISSED,
+    /** Roadmap V3.2 R32-I: large investors - offer, considerations, breaches, claim, end of term. */
+    INVESTOR_OFFER_IGNORED,
+    INVESTOR_FULFILLED,
+    INVESTOR_REMINDER,
+    INVESTOR_COMPENSATION,
+    INVESTOR_TERMINATION,
+    INVESTOR_CLAIM_OVERDUE,
+    INVESTOR_CONTRACT_ENDED,
     INITIAL,
     OTHER
 }

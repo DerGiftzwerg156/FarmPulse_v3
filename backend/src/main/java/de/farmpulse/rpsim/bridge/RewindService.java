@@ -64,7 +64,14 @@ public class RewindService {
      */
     private static final Set<InstructionType> RESENDABLE = EnumSet.of(InstructionType.MONEY_TRANSACTION,
             InstructionType.PRICE_EVENT, InstructionType.FARMLAND_TRANSFER, InstructionType.VEHICLE_SPAWN,
-            InstructionType.VEHICLE_REMOVE, InstructionType.FIELD_WORK, InstructionType.ANIMAL_TRANSFER);
+            InstructionType.VEHICLE_REMOVE, InstructionType.FIELD_WORK, InstructionType.ANIMAL_TRANSFER,
+            InstructionType.HUSBANDRY_TRANSFER);
+    /**
+     * Roadmap V3.2 R32-I3 (owner decision 2026-10-08): the deliveries to an investor go again too - milk
+     * (HUSBANDRY_TRANSFER, above), animals (ANIMAL_TRANSFER, above) and goods (STORAGE_TRANSFER of this related type);
+     * the backend counts a delivery once, with its first ack.
+     */
+    private static final String INVESTOR_DELIVERY = "INVESTOR_DELIVERY";
     /** Roadmap V3.1: types whose whole batch is re-sent (e.g. the STORAGE_TRANSFER of a contractor harvest). */
     private static final Set<InstructionType> WHOLE_BATCH = EnumSet.of(InstructionType.FIELD_WORK,
             InstructionType.ANIMAL_TRANSFER);
@@ -170,7 +177,9 @@ public class RewindService {
             }
         }
         return applied.stream()
-                .filter(o -> RESENDABLE.contains(o.getType()) || (o.getBatchId() != null && wholeBatches.contains(o.getBatchId())))
+                .filter(o -> RESENDABLE.contains(o.getType()) || (o.getBatchId() != null && wholeBatches.contains(o.getBatchId()))
+                        || (o.getType() == InstructionType.STORAGE_TRANSFER
+                        && INVESTOR_DELIVERY.equals(o.getRelatedEntityType())))
                 .toList();
     }
 
@@ -220,6 +229,10 @@ public class RewindService {
                 i.put("subType", p.path("subType").asString(""));
                 i.put("count", p.path("count").asInt());
                 i.put("direction", p.path("direction").asString(""));
+            } else if (o.getType() == InstructionType.HUSBANDRY_TRANSFER) { // Roadmap V3.2 R32-I3
+                i.put("fillType", p.path("fillType").asString(""));
+                i.put("amount", p.path("amount").asLong(0));
+                i.put("husbandryUniqueId", p.path("husbandryUniqueId").asString(""));
             } else if (o.getType() == InstructionType.STORAGE_TRANSFER) {
                 i.put("fillType", p.path("fillType").asString(""));
                 i.put("amount", p.path("amount").asLong(0));

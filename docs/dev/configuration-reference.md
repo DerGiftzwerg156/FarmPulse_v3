@@ -902,6 +902,79 @@ Price alarms and forward contracts of the Agrarbörse, the farm shop in the app 
 | `rpsim.formulas.bulk-order.fulfilled-trust-delta` | `3` | Trust of the bulk buyer for a full delivery (instant or delivery month). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
 | `rpsim.formulas.bulk-order.shortfall-trust-delta` | `-5` | Trust of the bulk buyer for a shortfall. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
 
+## `rpsim.formulas.investor` (Roadmap V3.2 R32-I)
+
+Large investors with 2–3 packages of considerations. Owner decisions 2026-10-08 in `QUESTIONS.md`.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.investor.enabled` | `true` | Large investors send offers (I1); switched off per savegame in settings → events (`savegame.investors_enabled`, default on). | Roadmap V3.2 R32-I1 |
+| `rpsim.formulas.investor.max-active` | `2` | At most this many running investor contracts (an accepted extension does not count twice). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.amount-min` | `250000` | Smallest amount of an offer (EUR); below it no offer. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.amount-max` | `2500000` | Largest amount of an offer (EUR). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.amount-step` | `50000` | Amounts in steps of this; the amount is random between amount-min and the limit. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.asset-share` | `0.5` | Limit = asset-share × farm assets in the bank view (`CreditScoringService.totalAssets`), rounded down to amount-step, capped at amount-max. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.min-credit-score` | `50` | Credit score of a loan over the amount must reach this ("wie ein Kredit"). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.credit-term-months` | `60` | Term of that score; rate = `credit.base-interest-rate`. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.delay-lookback-months` | `12` | No offer with a payment delay (`payment_delay`) within these FS25 months or a running call-back (`LoanStatus.DEFAULTED`). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.base-probability` | `0.05` | Chance per FS25 month (with a farm report whose operating result is > 0) … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.milestone-bonus` | `0.02` | … plus this per reached milestone (R3-T1) … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.milestone-bonus-max` | `0.06` | … at most this in total … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.good-reputation-bonus` | `0.02` | … plus this with village reputation GOOD … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.controversial-reputation-malus` | `0.02` | … minus this with CONTROVERSIAL. At most one offer per FS25 year (`savegame.investor_offer_year`). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.call-share` | `0.5` | Share of the offers that come as a call; a missed or declined call also brings the mail. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.answer-days` | `10` | Game days to answer an offer (also an extension offer). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.ignored-trust-delta` | `-3` | Trust of the investor for an offer left unanswered; declining costs nothing. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.min-packages` | `2` | Packages per offer, from … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.max-packages` | `3` | … to (different main considerations; only the farm can deliver). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.min-years` | `2` | Term in full FS25 years (from period 1 after the acceptance), random per package, from … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.max-years` | `5` | … to. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.max-side-considerations` | `2` | 0 to this many side considerations (A2–A4, P1–P5) per package. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.liters-step` | `1000` | Goods and milk quantities (W1–W3, P2) are rounded to this many litres. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.profit-share-min` | `0.02` | R1 profit share = value per year ÷ operating result of the last farm report, at least … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.profit-share-max` | `0.30` | … at most … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.profit-share-step` | `0.005` | … rounded to 0.5 %. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.payout-rate-step` | `0.001` | R2 fixed payout = value per year ÷ amount (the target return of the kind without side considerations), rounded to 0.1 %. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.values.A2` | `8000` | Value per term year of the animal-welfare obligation (EUR); compensation = value × compensation-markup. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.values.A3` | `12000` | Value per term year of the crop obligation. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.values.A4` | `15000` | Value per term year of the growth target. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.values.P1` | `10000` | Value per term year of the veto on field sales. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.values.P4` | `3000` | Value per visit (P4). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.values.P5` | `4000` | Value per term year of the name in the village paper. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.purchase-amount-share` | `0.10` | P2 right of first refusal: litres per year = amount × 10 % ÷ today's best market price (rounded to liters-step) … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.purchase-discount` | `0.10` | … at the best market price × (1 − 0.10); value per year = litres × price × 0.10. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.purchase-answer-days` | `5` | Game days to deliver or decline the P2 request (declined or ignored = breach). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.holiday-periods` | `[5, 6]` | P3: FS25 periods (July, August) the holiday flat is kept free for the investor (no guests, no `GUEST_INCOME`); value = `farm-holiday.base-income-per-month` × periods. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.visits-per-year` | `1` | P4 visits per term year (random month, invitation case) … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.visit-answer-days` | `3` | … to accept within these game days (no acceptance = breach). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.welfare-min-health` | `70` | A2: mean health of the stables with animals over the exports of a month at least this; no stable data = no breach. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.growth-factor` | `1.2` | A4: target = today's own area (or animal count without fields) × 1.2 by the end of the first term year (checked once). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.crop-area-share` | `0.30` | A3: hectares of the kind's crop per year = 30 % of today's own area … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.crop-area-step` | `0.5` | … rounded to 0.5 ha … | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.crop-area-min` | `1.0` | … at least 1 ha; checked at the FS25 year change from `field_crop_history`. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.reminder-days-before-end` | `7` | Reminder (mail + NOTIFICATION) this many game days before the end of a month (or FS25 year) with something still to deliver. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.grace-days` | `5` | Stage 1: grace period of the reminder after a breach. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.compensation-markup` | `1.25` | Stage 2: compensation = shortfall × today's best market price (animals: game value per animal) × 1.25; obligations and rights: value per year × 1.25 (P2: refused litres × market price × 1.25). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.breaches-to-terminate` | `3` | Stage 3: the investor terminates at this breach within the term (a breach counts even when made up in the grace); claim = amount still in the farm + open payments. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.claim-days` | `10` | Days to pay a claim (`INVESTOR_CLAIM`, like a tax bill); also the repayment that did not fit at the end. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.claim-overdue-trust-delta` | `-5` | Per started overdue month of a claim: trust of the investor, a payment delay (`INVESTOR_CLAIM`) and a reminder; no interest. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.announce-months` | `3` | The end of the term is announced this many months before the repayment month (mail, calendar, liquidity plan). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.extension-probability` | `0.5` | Without a breach the investor offers an extension (2–3 new packages, same amount) with this chance; accepted it replaces the repayment. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.subordinated-debt-factor` | `1.0` | I6 bank view: a subordinated loan counts with this factor as debt (its amount also as asset); a silent partnership counts as asset only. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.reminder-trust-delta` | `-2` | Trust of the investor when a breach is made up within the grace. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.compensation-trust-delta` | `-5` | Trust of the investor at a compensation. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.termination-trust-delta` | `-10` | Trust of the investor at the termination. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.fulfilled-trust-delta` | `1` | Trust of the investor per fulfilled billing period. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.end-trust-delta` | `5` | Trust of the investor at the end of a term without a breach. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.public-breach-delta` | `-2` | Village reputation of a breach and of the termination when the investor is named in the village paper (P5). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.kinds.AGRI_FUND` | `{ label: "Agrarfonds", weight: 1, target-return: 0.10, main: [R1, R2], fill-types: [], reputation-delta: -1 }` | Kind of investor: weight of the draw, target return p.a., main considerations, sorts of W1/W2/P2 (own silo entry required), crop of A3, village reputation of P5 at the signing. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.kinds.FOOD_CHAIN` | `{ label: "Regionale Lebensmittelkette", weight: 1, target-return: 0.08, main: [W1, W2], fill-types: [WHEAT, POTATO], crop: WHEAT, reputation-delta: 2 }` | See above. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.kinds.DAIRY` | `{ label: "Molkerei-Unternehmer", weight: 1, target-return: 0.08, main: [W3, A1], fill-types: [], reputation-delta: 2 }` | See above (W3: milk sort of the stable with the largest storage; A1: most common subtype). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.kinds.BREWERY` | `{ label: "Brauerei", weight: 0.5, target-return: 0.07, main: [W1, W2], fill-types: [BARLEY], crop: BARLEY, reputation-delta: 2 }` | See above (brewery and oil mill share the roadmap row, hence weight 0.5 each). | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.kinds.OIL_MILL` | `{ label: "Ölmühle", weight: 0.5, target-return: 0.07, main: [W1, W2], fill-types: [CANOLA, SUNFLOWER], crop: CANOLA, reputation-delta: 2 }` | See above. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.kinds.ENERGY` | `{ label: "Energieunternehmen", weight: 1, target-return: 0.09, main: [W1, W2, R2], fill-types: [MAIZE], crop: MAIZE, reputation-delta: -2 }` | See above. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+| `rpsim.formulas.investor.kinds.PRIVATE` | `{ label: "Privatinvestorin / Familienstiftung", weight: 1, target-return: 0.06, main: [R1, A1], fill-types: [], reputation-delta: 1 }` | See above. | Roadmap V3.2 R32-I, owner decision 2026-10-08 |
+
 ## `rpsim.formulas.office-clerk` / `apprentice` (Roadmap V3 R3-P)
 
 Office clerk with more effect and apprentices. Owner decisions in `QUESTIONS.md`.

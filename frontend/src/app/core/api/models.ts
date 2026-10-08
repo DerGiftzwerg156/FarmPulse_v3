@@ -350,6 +350,22 @@ export interface FarmReportSnapshot {
   trust: { characterId: number; name: string; role: string | null; level: string }[];
 }
 
+/** Roadmap V3.2 R32-I6: section "Investoren" of a farm report (amounts of the year). */
+export interface FarmReportInvestorLine {
+  contractId: number;
+  investor: string | null;
+  kind: string;
+  amount: number;
+  capitalType: string;
+  status: string;
+  delivered: { type: string; what: string | null; quantity: number }[];
+  capital: number;
+  payouts: number;
+  compensations: number;
+  repayments: number;
+  breaches: number;
+}
+
 export interface FarmReportView {
   year: number;
   months: number;
@@ -363,6 +379,8 @@ export interface FarmReportView {
   welfareInspections: number;
   snapshot: FarmReportSnapshot;
   previous: FarmReportSnapshot | null;
+  /** null in reports written before R32-I. */
+  investors?: FarmReportInvestorLine[] | null;
 }
 
 export interface LoanPaymentView {
@@ -1027,7 +1045,8 @@ export interface ApiError {
 }
 
 /** Hof-Tablet "Aufgaben": one open decision of any area (type names the payload that is set). */
-export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING';
+export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING'
+  | 'INVESTOR_DUE';
 
 export interface TaskView {
   key: string;
@@ -1043,6 +1062,18 @@ export interface TaskView {
   marketEvent: MarketEventView | null;
   posting: JobPostingView | null;
   pendingApplicants: number | null;
+  /** Roadmap V3.2 R32-I4: a delivery still due to an investor (type INVESTOR_DUE). */
+  investorDue?: InvestorDueView | null;
+}
+
+export interface InvestorDueView {
+  contractId: number;
+  obligationId: number;
+  investor: string | null;
+  type: string;
+  fillType: string | null;
+  subType: string | null;
+  remaining: number;
 }
 
 export interface TasksView {
@@ -1266,6 +1297,8 @@ export interface BurdenSettingsView {
   dieselTheft: boolean;
   tonePreset: string;
   idyllicFactor: number;
+  /** Roadmap V3.2 R32-I1: large investors (not a burden, same card). */
+  investors: boolean;
 }
 
 /** R31-B1: one field of an area payment application. */
@@ -1584,4 +1617,107 @@ export interface MapFieldView {
 export interface FieldMapView {
   mapSize: number | null;
   fields: MapFieldView[];
+}
+
+/** Roadmap V3.2 R32-I: one billing period; A3 required / delivered in hectares x 100. */
+export interface InvestorPeriodView {
+  periodKey: number;
+  monthly: boolean;
+  year: number;
+  required: number | null;
+  delivered: number;
+  status: string;
+  graceUntil: number | null;
+  compensation: number | null;
+  checkedGameTime: number | null;
+}
+
+/** Roadmap V3.2 R32-I3: one consideration (W1-W3, R1/R2, A1-A4, P1-P5). */
+export interface InvestorObligationView {
+  id: number;
+  type: string;
+  main: boolean;
+  fillType: string | null;
+  subType: string | null;
+  quantity: number | null;
+  minPerYear: number | null;
+  hectares: number | null;
+  rate: number | null;
+  target: number | null;
+  targetKind: string | null;
+  unitPrice: number | null;
+  valuePerYear: number;
+  totalValue: number;
+  deliveredTotal: number;
+  consents: number[];
+  current: InvestorPeriodView | null;
+  outstanding: number;
+  breaches: InvestorPeriodView[];
+}
+
+export interface InvestorPaymentView {
+  id: number;
+  kind: string;
+  amount: number;
+  year: number | null;
+  gameTime: number;
+  status: string;
+  claimCaseId: number | null;
+  note: string | null;
+}
+
+/** Roadmap V3.2 R32-I2: a package of an offer or a running / finished contract. */
+export interface InvestorContractView {
+  id: number;
+  caseId: number;
+  characterId: number | null;
+  investor: string | null;
+  kind: string;
+  kindLabel: string;
+  packageNo: number;
+  amount: number;
+  capitalType: string;
+  years: number;
+  startYear: number;
+  endYear: number;
+  targetReturn: number;
+  targetValue: number;
+  status: string;
+  breaches: number;
+  announced: boolean;
+  repaymentDue: boolean;
+  extensionOf: number | null;
+  extendedBy: number | null;
+  endReason: string | null;
+  considerations: InvestorObligationView[];
+  payments: InvestorPaymentView[];
+}
+
+export interface InvestorOfferView {
+  offer: CaseView;
+  extension: boolean;
+  packages: InvestorContractView[];
+}
+
+export interface InvestorStallView {
+  husbandryUniqueId: string;
+  animalType: string | null;
+  milk: { fillType: string; amount: number }[];
+  subTypes: { name: string; count: number }[];
+}
+
+/** Roadmap V3.2 R32-I: app "Bank", area "Investoren". */
+export interface InvestorsView {
+  enabled: boolean;
+  savegameEnabled: boolean;
+  maxActive: number;
+  running: number;
+  breachesToTerminate: number;
+  graceDays: number;
+  compensationMarkup: number;
+  offers: InvestorOfferView[];
+  contracts: InvestorContractView[];
+  cases: CaseView[];
+  stalls: InvestorStallView[];
+  fields: { farmlandId: number; name: string | null; hectares: number | null }[];
 }

@@ -29,6 +29,12 @@ const CASE_APP: Record<string, string> = {
   FARM_SHOP_ORDER: 'trade',
   // Roadmap V3.2 R32-G1
   BULK_ORDER: 'trade',
+  // Roadmap V3.2 R32-I
+  INVESTOR_OFFER: 'bank',
+  INVESTOR_REMINDER: 'bank',
+  INVESTOR_CLAIM: 'bank',
+  INVESTOR_PURCHASE: 'bank',
+  INVESTOR_VISIT: 'bank',
   // Roadmap V3 R3-W2
   DROUGHT_AID: 'authorities',
   // Roadmap V3 R3-P2
@@ -65,6 +71,7 @@ const TYPE_APP: Record<string, string> = {
   NEGOTIATION: 'fields',
   MARKET_OFFER: 'market',
   POSTING: 'staff',
+  INVESTOR_DUE: 'bank', // Roadmap V3.2 R32-I4
 };
 
 /** Where an unknown kind shows up: the task list itself. */
@@ -117,6 +124,9 @@ export function taskTabId(t: TaskView): string | undefined {
     case 'POSTING':
       tab = 'stellen';
       break;
+    case 'INVESTOR_DUE':
+      tab = 'investoren';
+      break;
   }
   return isTab(appId, tab) ? tab : undefined;
 }
@@ -148,5 +158,7 @@ export function taskLink(t: TaskView): { path: string; query: Record<string, num
       return { path, query: { event: id(t.marketEvent) } };
     case 'POSTING':
       return { path, query: { posting: id(t.posting) } };
+    case 'INVESTOR_DUE':
+      return { path, query: {} };
   }
 }

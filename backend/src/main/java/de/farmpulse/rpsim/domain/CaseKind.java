@@ -91,5 +91,13 @@ public enum CaseKind {
      * Roadmap V3.2 R32-Q1: claim of an investor after the termination or at the end of the term (R32-I4 stage 3,
      * R32-I5) - pay by button within the deadline like a tax bill.
      */
-    INVESTOR_CLAIM
+    INVESTOR_CLAIM,
+    /**
+     * Roadmap V3.2 R32-I3 P2: right of first refusal - the investor asks for goods at a fixed price (deliver like a bulk
+     * order G2 / decline = breach). reference = fill type, quantity = litres, costAmount = price per 1000 l,
+     * offerAmount = total.
+     */
+    INVESTOR_PURCHASE,
+    /** Roadmap V3.2 R32-I3 P4: the investor's visit / farm festival - accept by button (no acceptance = breach). */
+    INVESTOR_VISIT
 }

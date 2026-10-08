@@ -295,6 +295,14 @@ public class Savegame {
     @Column(name = "bulk_order_factor", nullable = false)
     private double bulkOrderFactor = 1.0;
 
+    /** Roadmap V3.2 R32-I1: large investors switched per savegame (settings, events; default on). */
+    @Column(name = "investors_enabled", nullable = false)
+    private boolean investorsEnabled = true;
+
+    /** Roadmap V3.2 R32-I1: FS25 year of the last investor offer (at most one per year; extensions do not count). */
+    @Column(name = "investor_offer_year")
+    private Integer investorOfferYear;
+
     /** Roadmap V3 R3-W1: dry growth months in a row of the current series (0 = no series). */
     @Column(name = "drought_dry_months", nullable = false)
     private int droughtDryMonths;

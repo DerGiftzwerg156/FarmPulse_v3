@@ -37,6 +37,7 @@ import de.farmpulse.rpsim.repository.ServiceCaseRepository;
 import de.farmpulse.rpsim.repository.TaxYearRepository;
 import de.farmpulse.rpsim.tablet.StableService;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
+import de.farmpulse.rpsim.investor.InvestorLedger;
 import de.farmpulse.rpsim.time.GameTime;
 import de.farmpulse.rpsim.trust.TrustScoreService;
 import de.farmpulse.rpsim.village.VillageReputationService;
@@ -72,6 +73,7 @@ public class FarmReportService {
     private final VillageReputationService reputation;
     private final DiaryService diary;
     private final AnnualReviewService annualReview;
+    private final InvestorLedger investors;
     private final GameTime gameTime;
     private final RpsimProperties props;
     private final JsonMapper json;
@@ -81,7 +83,8 @@ public class FarmReportService {
                              RainPeriodRepository rain, StableService stables, ServiceCaseRepository cases,
                              EmployeeRepository employees, CharacterRepository characters, TrustScoreService trust,
                              VillageReputationService reputation, DiaryService diary, AnnualReviewService annualReview,
-                             GameTime gameTime, RpsimProperties props, JsonMapper json) {
+                             GameTime gameTime, RpsimProperties props, JsonMapper json, InvestorLedger investors) {
+        this.investors = investors;
         this.savegames = savegames;
         this.reports = reports;
         this.facts = facts;
@@ -132,9 +135,18 @@ public class FarmReportService {
                            List<TrustLine> trust) {
     }
 
+    /** Roadmap V3.2 R32-I6: {@code investors} = section "Investoren" (null in reports written before). */
     public record Report(int year, int months, List<CategoryLine> income, List<CategoryLine> expenses, Totals totals,
                          TaxLine tax, List<FieldLine> fields, List<RainLine> rain, List<StableLine> stables,
-                         int welfareInspections, Snapshot snapshot, Snapshot previous) {
+                         int welfareInspections, Snapshot snapshot, Snapshot previous,
+                         List<InvestorLedger.ReportLine> investors) {
+
+        public Report(int year, int months, List<CategoryLine> income, List<CategoryLine> expenses, Totals totals,
+                      TaxLine tax, List<FieldLine> fields, List<RainLine> rain, List<StableLine> stables,
+                      int welfareInspections, Snapshot snapshot, Snapshot previous) {
+            this(year, months, income, expenses, totals, tax, fields, rain, stables, welfareInspections, snapshot,
+                    previous, null);
+        }
     }
 
     /** Year change: write the report of the finished year once, then the diary entry and the invitation. */
@@ -236,7 +248,7 @@ public class FarmReportService {
                 .filter(p -> p.getReportYear() < year).findFirst()
                 .map(p -> json.readValue(p.getReportJson(), Report.class).snapshot()).orElse(null);
         return new Report(year, months.size(), lines(income), lines(expenses), totals, tax, fieldLines, rainLines,
-                stableLines, inspections, snapshot, previous);
+                stableLines, inspections, snapshot, previous, investors.reportLines(sg, year));
     }
 
     private static List<CategoryLine> lines(Map<String, Double> m) {

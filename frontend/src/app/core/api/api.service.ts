@@ -454,6 +454,7 @@ export class ApiService {
     nightWork: boolean;
     cropDamage: boolean;
     dieselTheft: boolean;
+    investors?: boolean;
   }): Observable<M.BurdenSettingsView> {
     return this.http.put<M.BurdenSettingsView>(`${this.base}/settings/burdening-events`, r);
   }
@@ -509,6 +510,22 @@ export class ApiService {
   }
   agreeBulkOrder(caseId: number, leadMonths: number): Observable<M.BulkOrderView> {
     return this.post(`/trade/bulk-orders/${caseId}/term`, { leadMonths });
+  }
+  /** Roadmap V3.2 R32-I: large investors ("Bank → Investoren"). */
+  investors(): Observable<M.InvestorsView> {
+    return this.get('/investors');
+  }
+  acceptInvestorPackage(caseId: number, contractId: number): Observable<M.InvestorContractView> {
+    return this.post(`/investors/offers/${caseId}/packages/${contractId}/accept`);
+  }
+  deliverToInvestor(obligationId: number, quantity: number, husbandryUniqueId: string | null): Observable<unknown> {
+    return this.post(`/investors/obligations/${obligationId}/deliver`, { quantity, husbandryUniqueId });
+  }
+  investorFieldConsent(contractId: number, farmlandId: number): Observable<M.InvestorContractView> {
+    return this.post(`/investors/contracts/${contractId}/field-consent`, { farmlandId });
+  }
+  payInvestorPayment(paymentId: number): Observable<M.InvestorPaymentView> {
+    return this.post(`/investors/payments/${paymentId}/pay`);
   }
   cooperative(): Observable<M.CooperativeView> {
     return this.get('/cooperative');

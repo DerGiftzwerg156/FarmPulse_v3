@@ -28,6 +28,7 @@ export const APP_TABS: Record<string, TabDef[]> = {
     { id: 'kontoauszug', label: 'tabs.bank.kontoauszug' },
     { id: 'ergebnis', label: 'tabs.bank.ergebnis' },
     { id: 'planung', label: 'tabs.bank.planung' },
+    { id: 'investoren', label: 'tabs.bank.investoren' },
   ],
   authorities: [
     { id: 'finanzamt', label: 'tabs.authorities.finanzamt' },
@@ -129,6 +130,12 @@ const CASE_TAB: Record<string, string> = {
   COLLATERAL_CLAIM: 'kredite',
   ANNUAL_REVIEW: 'kredite',
   ANNUAL_REVIEW_OFFER: 'kredite',
+  // Roadmap V3.2 R32-I
+  INVESTOR_OFFER: 'investoren',
+  INVESTOR_REMINDER: 'investoren',
+  INVESTOR_CLAIM: 'investoren',
+  INVESTOR_PURCHASE: 'investoren',
+  INVESTOR_VISIT: 'investoren',
   APPRENTICE_TAKEOVER: 'team',
   MACHINE_DEMO_OFFER: 'leihen',
 };

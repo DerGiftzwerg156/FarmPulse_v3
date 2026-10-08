@@ -360,6 +360,28 @@ class ApiIntegrationTest {
                 .andExpect(status().is4xxClientError());
     }
 
+    /** Roadmap V3.2 R32-I: app "Bank", area "Investoren", and the switch in settings -> events. */
+    @Test
+    void investorEndpoints() throws Exception {
+        mvc.perform(get("/api/investors")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.savegameEnabled").value(true))
+                .andExpect(jsonPath("$.maxActive").value(2))
+                .andExpect(jsonPath("$.breachesToTerminate").value(3))
+                .andExpect(jsonPath("$.offers").isEmpty())
+                .andExpect(jsonPath("$.contracts").isEmpty());
+        mvc.perform(get("/api/settings/burdening-events")).andExpect(jsonPath("$.investors").value(true));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/settings/burdening-events")
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of(
+                                "areaCheck", true, "fertilizer", true, "disease", true, "sickLeave", true,
+                                "investors", false))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.investors").value(false));
+        mvc.perform(get("/api/investors")).andExpect(jsonPath("$.savegameEnabled").value(false));
+        mvc.perform(post("/api/investors/offers/999999/packages/1/accept")).andExpect(status().isNotFound());
+        postJson("/api/investors/obligations/999999/deliver", java.util.Map.of("quantity", 0))
+                .andExpect(status().isBadRequest());
+    }
+
     @Test
     void storageAndPrices() throws Exception {
         mvc.perform(get("/api/storage")).andExpect(status().isOk())

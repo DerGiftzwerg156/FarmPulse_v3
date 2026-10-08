@@ -22,6 +22,30 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Large investors [R32-I]** (owner decisions 2026-10-08 in `QUESTIONS.md`): new tab *Bank → Investoren* and switch
+  *Großinvestoren* in settings → events (default on).
+  - Offer: checked once per FS25 month - only with a farm report in profit, no payment delay within 12 months, no
+    running call-back and a credit score ≥ 50 for the amount; chance 5 % + 2 % per milestone (max +6 %) ± 2 % by
+    village reputation; at most one offer per FS25 year and 2 running investors. A new investor (`INVESTOR`) of one of
+    seven kinds offers 250,000–2,500,000 € (at most 50 % of the farm assets in the bank view) as a call (50 %, a missed
+    call also brings the mail) or mail, 10 days to answer (ignored −3 trust, declining costs nothing).
+  - 2–3 packages for the same amount: silent partnership or subordinated loan, 2–5 full FS25 years from the next year
+    start, a main consideration of the kind and 0–2 side considerations whose value adds up to amount × target return
+    (6–10 %) × years. Catalogue: goods over the term or per month, milk per month from a stable
+    (`HUSBANDRY_TRANSFER`), profit share, fixed payout, animals per year, animal welfare, crop obligation, growth target,
+    veto on field sales, right of first refusal, holiday flat in July/August, a visit per year, name in the village
+    paper. Accepting books `INVESTOR_CAPITAL`.
+  - *Liefern* (amount, stable) sends goods, milk and animals without money; deliveries count with the mod's ack and are
+    sent again after a rewind. Checks at the month or FS25 year change; a reminder a week before the end. A breach:
+    reminder with 5 days grace, then a compensation (market value × 1.25, obligations: value per year × 1.25), the
+    third breach terminates with a claim of the full amount (pay by button like a tax bill, then monthly reminders,
+    trust −5, payment delay, no interest). A payment refused for lack of money stays open and can be paid by button.
+  - End of term: announcement 3 months before, buy-back / repayment in the last month (`INVESTOR_REPAYMENT`, else a
+    claim); without a breach an extension offer with 50 % chance replaces the repayment.
+  - Bank: a silent partnership counts as asset (equity ratio up), a subordinated loan as asset and debt (down); the
+    advisor names new investors in the annual review. Liquidity plan, calendar, tasks, farm report section
+    "Investoren", chronicle (diary). Values under `rpsim.formulas.investor.*`; tables `investor_contract`,
+    `investor_obligation`, `investor_period`, `investor_delivery`, `investor_payment` (migration V42).
 - **Bulk orders [R32-G]** (owner decisions 2026-10-08 in `QUESTIONS.md`): about once a month (0.3 x a refusal factor)
   a new bulk buyer of a sell point of the map (no production) asks for 50,000-500,000 l of wheat, barley, canola,
   sunflower, soybean or maize (potatoes and sugar beet 50,000-300,000 l), as a mail or - 10 % - a call (a missed or
@@ -454,6 +478,8 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Fixed
 
+- **Long affiliations of characters** (R32-I / R32-G): the investor kind "Privatinvestorin / Familienstiftung" or
+  a long sell point name of a bulk buyer no longer exceeds the column (`game_character.affiliation` now 128 characters).
 - **Forward contracts keep their delivery month when "Tage je Periode" changes** (owner decision 2026-10-08, R32-G3):
   as long as the mod has not taken the `PRICE_EVENT`, start, end and the pending instruction move to the new month
   boundaries. In a running delivery month the mod keeps the end it has. Before, the window stayed on the old game

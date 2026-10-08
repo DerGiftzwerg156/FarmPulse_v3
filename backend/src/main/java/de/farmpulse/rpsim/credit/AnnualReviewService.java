@@ -59,10 +59,13 @@ public class AnnualReviewService {
     private final CharacterLookup lookup;
     private final NarrationRequestService narration;
     private final DiaryService diary;
+    private final de.farmpulse.rpsim.investor.InvestorLedger investors;
 
     public AnnualReviewService(ServiceCaseRepository cases, SavegameRepository savegames, CreditScoringService scoring,
                                CreditConfigResolver configs, LoanRepository loans, LoanService loanService,
-                               CharacterLookup lookup, NarrationRequestService narration, DiaryService diary) {
+                               CharacterLookup lookup, NarrationRequestService narration, DiaryService diary,
+                               de.farmpulse.rpsim.investor.InvestorLedger investors) {
+        this.investors = investors;
         this.cases = cases;
         this.savegames = savegames;
         this.scoring = scoring;
@@ -114,7 +117,9 @@ public class AnnualReviewService {
                 .put("previousStaff", r.previous() == null ? null : r.previous().staff())
                 .put("reputationTier", r.snapshot().reputationTier())
                 .put("previousReputationTier", r.previous() == null ? null : r.previous().reputationTier())
-                .put("invitationDays", Math.round(cfg.getInvitationDays()));
+                .put("invitationDays", Math.round(cfg.getInvitationDays()))
+                // Roadmap V3.2 R32-I6: the advisor comments new investors and open investor claims
+                .put("investorNote", investors.reviewNote(sg, r.investors()));
         narration.request(sg, NarrationEventType.ANNUAL_REVIEW_INVITATION).from(bank).facts(f.build())
                 .category(CommunicationCategory.CREDIT).related(RELATED, sc.getId()).formLink("/bank?case=" + sc.getId())
                 .submit();

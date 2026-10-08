@@ -575,7 +575,7 @@ installation of the release. 🟡 = only checkable on Windows.
 Every point of [`ROADMAP_V3.2.md`](../architecture/ROADMAP_V3.2.md) marked 🟡 ("Im Spiel prüfen") and every acceptance
 criterion has one row here. Rows 28.1–28.3 can be checked since R32-Q (the mod reads the milk storage and executes
 `HUSBANDRY_TRANSFER`, see [bridge protocol](bridge-protocol.md#roadmap-v32-field-optional-r32-q1)), rows 28.4–28.8b since
-R32-G; the rows of I once the roadmap item named in the first column is built. Without FS25 the bridge simulator scenarios `grossauftrag`
+R32-G, rows 28.9–28.14c since R32-I. Without FS25 the bridge simulator scenarios `grossauftrag`
 (G) and `investor-milch` (I3, type W3) show the same flow. Note the result in the row's issue and, if the fallback is
 needed, switch the implementation to it.
 
@@ -597,3 +597,6 @@ needed, switch the implementation to it.
 | 28.12 | Staged breach (R32-I4) | Deliver no milk until the end of the month, then let the grace period pass, repeat until the third breach | a reminder, after the grace period a compensation (`INVESTOR_COMPENSATION`), at the third breach the termination with the claim | – |
 | 28.13 | End of term (R32-I5) | Play until the last month of a silent partnership | the farm buys the shares back at face value (`INVESTOR_REPAYMENT`) | – |
 | 28.14 | Bank view (R32-I6) | Compare the equity ratio of the bank before and after a subordinated loan and a silent partnership | the subordinated loan lowers the equity ratio, the silent partnership raises it | – |
+| 28.14a | Goods and animals (R32-I3, W1/W2/A1) | Package with goods or animals: *Liefern* an amount (from the silo; animals from a chosen stable) | the silo stock / the animals of the stable drop, no money is booked; the delivery counts in *Bank → Investoren* | – |
+| 28.14b | Rewind (R32-I3) | Deliver milk, goods or animals to an investor, then reload the save before the delivery | the delivery is executed again (same `instructionId`), the backend counts it once | – |
+| 28.14c | Veto (R32-I3, P1) | With a veto: offer a field in the field map, then ask for the consent; sell another field in the game menu | the sale offer is refused until the consent; the menu sale is a breach (reminder) | – |

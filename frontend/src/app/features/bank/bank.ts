@@ -21,6 +21,7 @@ import { FarmReportCard } from './farm-report-card';
 import { FinanceCard } from './finance-card';
 import { StatementCard } from './statement-card';
 import { LiquidityPlanCard } from './liquidity-plan-card';
+import { InvestorsPanel } from './investors-panel';
 
 export type ApplicationState = 'processing' | 'approved' | 'counter' | 'rejected' | 'accepted' | 'declined';
 
@@ -47,12 +48,12 @@ export const STATE_BADGE: Record<ApplicationState, BadgeVariant> = {
  * Bank & credit (AP-8.4): application form (numbers only via form fields), processing state until the decision
  * is visible, result with coarse reason category (never a score), counter-offer handling, running loans with
  * repayment plan/history, deferral requests and Sondertilgungen (same installment, shorter term). Tabs: Kredite,
- * Kreditantrag, Kontoauszug, Betriebsergebnis, Planung & Jahresbericht.
+ * Kreditantrag, Kontoauszug, Betriebsergebnis, Planung & Jahresbericht, Investoren (Roadmap V3.2 R32-I).
  */
 @Component({
   selector: 'app-bank',
   imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard, StatementCard,
-    CollateralPicker, LiquidityPlanCard, FarmReportCard, ServiceCases],
+    CollateralPicker, LiquidityPlanCard, FarmReportCard, ServiceCases, InvestorsPanel],
   templateUrl: './bank.html',
 })
 export class Bank {

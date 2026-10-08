@@ -1,0 +1,7 @@
+Erinnerung: {{what}}
+Guten Tag,
+
+bis zum Ende des Zeitraums fehlt noch: {{what}} ({{remaining}} offen). Bitte liefern Sie in der App „Bank“ unter „Investoren“.
+
+Viele Grüße
+{{characterName}}

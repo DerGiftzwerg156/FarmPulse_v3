@@ -101,6 +101,10 @@
     @case ('ergebnis') {
       <app-finance-card />
     }
+    @case ('investoren') {
+      <!-- Roadmap V3.2 R32-I: large investors -->
+      <app-investors-panel [highlightCase]="highlightedCase()" />
+    }
     @case ('planung') {
       <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <app-liquidity-plan-card />

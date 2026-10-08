@@ -79,8 +79,11 @@ entscheidet I3. Spieler-Doku nur im `CHANGELOG`.
 
   Beide werden bei Bedarf angelegt, wie Bewerber; sie gehören nicht zur Startbesetzung.
 - [x] Neue `CaseKind`-Werte: `BULK_ORDER` (G), `INVESTOR_OFFER`, `INVESTOR_REMINDER`, `INVESTOR_CLAIM` (I).
-- [ ] Neue Tabellen `bulk_order` und `investor_contract` mit `investor_obligation` (je Gegenleistung eine Zeile mit Typ,
-  Parametern, Soll und Ist je Abrechnungszeitraum). Kommt mit G bzw. I (Entscheidung 08.10.2026).
+- [x] Neue Tabellen `bulk_order` und `investor_contract` mit `investor_obligation` (je Gegenleistung eine Zeile mit Typ,
+  Parametern, Soll und Ist je Abrechnungszeitraum). Kommt mit G bzw. I (Entscheidung 08.10.2026). Umgesetzt: `bulk_order`
+  (V41); `investor_contract`, `investor_obligation`, dazu `investor_period` (Soll/Ist je Abrechnungszeitraum),
+  `investor_delivery` und `investor_payment` (V42). I bringt außerdem die Fälle `INVESTOR_PURCHASE` (P2) und
+  `INVESTOR_VISIT` (P4).
 - [x] Neue `MoneyReason`-Werte und ihre Klassen in `rpsim.formulas.finance.categories`:
 
   | Grund | Wofür | Klasse |
@@ -265,9 +268,22 @@ Tage je Periode verschiebt den Termin nicht aus seinem Monat.
 - Katalog: **alle vier Gruppen** – Waren & Milch, Geld-Rendite, Tiere & Auflagen, Rechte & Rollenspiel.
 - Häufigkeit: **höchstens ein Angebot je FS25-Jahr, höchstens 2 laufende Investoren**.
 
+**Stand 08.10.2026: umgesetzt** (`investor/InvestorOfferService`, `investor/InvestorService`, `investor/InvestorLedger`,
+Tab „Bank → Investoren“, Migration V42). Weitere Entscheidungen vom 08.10.2026 (`QUESTIONS.md`), fast alle wie
+vorgeschlagen: Summe ≤ 50 % des Hofvermögens (Bank-Sicht), Prüfung monatlich nur mit Hofbericht und Betriebsergebnis
+> 0, ohne Verzug in 12 Monaten und ohne Fälligstellung, Bonitätsscore ≥ 50 „wie ein Kredit“; p = 0,05 + 0,02 je
+Meilenstein (max. +0,06) ± 0,02 nach Dorf-Ansehen. Schalter „Großinvestoren“ (Einstellungen → Ereignisse, an). Hälfte
+als Anruf, 10 Tage Antwortfrist, Ignorieren −3 Vertrauen. **Laufzeit = volle FS25-Jahre** ab dem nächsten
+Jahresanfang (das Geld kommt sofort). Zielrendite je Art 6–10 %. Gegenleistungen, Werte und Prüfungen siehe I3; Stufen
+siehe I4 (5 Tage Nachfrist, Ausgleich × 1,25, Kündigung beim 3. Bruch, Rückforderung = volle Summe + offene Zahlungen
+wie ein Steuerbescheid). **Bank-Sicht:** Eine laufende stille Beteiligung zählt als Vermögen (Quote steigt), ein
+Nachrangdarlehen als Vermögen und Schuld (Quote sinkt), weil die Eigenkapitalquote Bargeld nicht zählt. Lieferungen
+an Investoren werden nach dem Zurückspulen erneut gesendet. Eine abgelehnte Zahlung (kein Geld) bleibt offen und ist
+per Knopf zahlbar.
+
 ### R32-I1 Anlass und Investor
 
-- [ ] Prüfung einmal je FS25-Monat, höchstens ein Angebot je FS25-Jahr, höchstens `investor.max-active` (**2**) laufende
+- [x] Prüfung einmal je FS25-Monat, höchstens ein Angebot je FS25-Jahr, höchstens `investor.max-active` (**2**) laufende
   Verträge. Die Wahrscheinlichkeit steigt nach Formel mit:
   - Dorf-Ansehen (`VillageRelation`),
   - Ergebnis des letzten Hofberichts (R3-K3, `FarmReport`),
@@ -276,7 +292,7 @@ Tage je Periode verschiebt den Termin nicht aus seinem Monat.
 
   Ohne Hofbericht (erstes Jahr) gibt es kein Angebot. Das Ganze ist je Spielstand abschaltbar (Einstellungen →
   Ereignisse).
-- [ ] Der Investor (`INVESTOR`) wird beim Angebot angelegt. Seine **Art** (Konfig-Liste) bestimmt, welche
+- [x] Der Investor (`INVESTOR`) wird beim Angebot angelegt. Seine **Art** (Konfig-Liste) bestimmt, welche
   Gegenleistungen er bevorzugt und welche Rendite er erwartet, z. B.:
 
   | Art | bevorzugte Gegenleistung |
@@ -288,26 +304,26 @@ Tage je Periode verschiebt den Termin nicht aus seinem Monat.
   | Energieunternehmen | Anbaupflicht (A3, z. B. Mais/Silage), Geld-Rendite (R2) |
   | Privatinvestorin / Familienstiftung | Geld-Rendite (R1), Ferienwohnung (P3), Hoffest (P4) |
 
-- [ ] Kontakt per Mail ins Postfach oder als Anruf (`Channel.CALL`). Ein verpasster oder abgelehnter Anruf lässt das
+- [x] Kontakt per Mail ins Postfach oder als Anruf (`Channel.CALL`). Ein verpasster oder abgelehnter Anruf lässt das
   Thema offen (`openTopic`), das Angebot kommt dann zusätzlich als Mail.
-- [ ] Summe zwischen `investor.amount-min` (**250.000 €**) und `investor.amount-max` (**2.500.000 €**), in Schritten;
+- [x] Summe zwischen `investor.amount-min` (**250.000 €**) und `investor.amount-max` (**2.500.000 €**), in Schritten;
   wie sie zur Hofgröße passt, siehe [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung).
 
 **Beleg:** – (Backend; Daten aus R3-K3, R3-T1, Kreditbewertung, Dorf-Ansehen).
 
 ### R32-I2 Angebot mit 2–3 Paketen
 
-- [ ] Der Investor legt für **dieselbe Summe** 2–3 Pakete vor. Jedes Paket nennt:
+- [x] Der Investor legt für **dieselbe Summe** 2–3 Pakete vor. Jedes Paket nennt:
   - Kapitalart (stille Beteiligung oder Nachrangdarlehen),
   - Laufzeit in FS25-Jahren (Konfig-Spanne),
   - eine Hauptleistung und 0–2 Nebenleistungen aus dem Katalog (I3), passend zur Art des Investors und zum Hof (nur
     was der Hof liefern kann: Silo für die Sorte, Stall mit Milch, Tiere des Untertyps, Ferienwohnung eingerichtet …).
-- [ ] **Bewertung nach Formel:** Wert aller Gegenleistungen über die Laufzeit ≈ Summe × Zielrendite der Art × Jahre.
+- [x] **Bewertung nach Formel:** Wert aller Gegenleistungen über die Laufzeit ≈ Summe × Zielrendite der Art × Jahre.
   Ware wird zum heutigen besten Marktpreis bewertet, Auflagen und Rechte mit festen Konfig-Werten. So sind die Pakete
   untereinander gleichwertig, aber unterschiedlich belastend.
-- [ ] Formular in der Bank-App, neuer Bereich **„Investoren“**: Pakete nebeneinander, Knopf „Annehmen“ je Paket,
+- [x] Formular in der Bank-App, neuer Bereich **„Investoren“**: Pakete nebeneinander, Knopf „Annehmen“ je Paket,
   „Ablehnen“. Antwortfrist in Spieltagen; Ablehnen kostet nichts, ein ignoriertes Angebot etwas Vertrauen beim Investor.
-- [ ] Annahme → `MONEY_TRANSACTION` `INVESTOR_CAPITAL` über die Summe, Vertrag `investor_contract` mit Startmonat,
+- [x] Annahme → `MONEY_TRANSACTION` `INVESTOR_CAPITAL` über die Summe, Vertrag `investor_contract` mit Startmonat,
   Tagebucheintrag, Mail der Bankberaterin (Einordnung, kein Rat).
 
 **Beleg:** – (`MONEY_TRANSACTION` gibt es seit V1).
@@ -351,50 +367,50 @@ die das Tool heute schon bekommt – einzige Ausnahme ist die Milch (W3, neuer E
 | P4 | Hoffest bzw. Besuch: n Termine je Jahr | Kalender-Vorgang mit Zusage per Knopf (Muster Stammtisch / Generalversammlung); Fernbleiben = Bruch | – (R31-D3/D7) |
 | P5 | Namensnennung | Das Dorfblatt meldet die Beteiligung (öffentliche Tat); je nach Art des Investors kleiner Bonus oder Malus beim Dorf-Ansehen (z. B. Energieunternehmen) | – (R31-D1, `PublicActionEvent`) |
 
-- [ ] Ware und Tiere aus W1/W2/A1 bringen dem Hof **kein Geld**: Der Wert ist die Gegenleistung. Im Journal erscheint
+- [x] Ware und Tiere aus W1/W2/A1 bringen dem Hof **kein Geld**: Der Wert ist die Gegenleistung. Im Journal erscheint
   nichts; der Hofbericht führt die gelieferten Mengen im Abschnitt „Investoren“.
-- [ ] Werte (Spannen, Schwellen, Bewertungssätze) unter `rpsim.formulas.investor.*`.
+- [x] Werte (Spannen, Schwellen, Bewertungssätze) unter `rpsim.formulas.investor.*`.
 
 ### R32-I4 Erfüllung prüfen und gestufter Vertragsbruch
 
-- [ ] Das Backend prüft je Abrechnungszeitraum (Monatswechsel bzw. Jahreswechsel, `GameMonthPassedEvent`) Soll und Ist
+- [x] Das Backend prüft je Abrechnungszeitraum (Monatswechsel bzw. Jahreswechsel, `GameMonthPassedEvent`) Soll und Ist
   jeder Gegenleistung. Offene Lieferungen stehen vorher in „Aufgaben“ und im Kalender; eine Woche vor Ende des Monats
   kommt eine Erinnerung (Mail, optional `NOTIFICATION`).
-- [ ] **Stufe 1 – Mahnung:** Fehlt etwas, kommt eine Mahnung mit Nachfrist (`investor.grace-days`). Liefert der Spieler
+- [x] **Stufe 1 – Mahnung:** Fehlt etwas, kommt eine Mahnung mit Nachfrist (`investor.grace-days`). Liefert der Spieler
   nach, ist der Bruch erledigt (Vertrauen −, klein).
-- [ ] **Stufe 2 – Ausgleichszahlung:** Nach der Nachfrist zahlt der Hof einen Ausgleich als `INVESTOR_COMPENSATION`:
+- [x] **Stufe 2 – Ausgleichszahlung:** Nach der Nachfrist zahlt der Hof einen Ausgleich als `INVESTOR_COMPENSATION`:
   - Ware/Milch/Tiere: Fehlmenge × heutiger Marktpreis (Tiere: Tierwert des Spiels) × `compensation-markup`,
   - Auflagen und Rechte (A2–A4, P1–P5): fester Betrag je Typ (Konfig).
 
   Die Fehlmenge ist damit abgegolten.
-- [ ] **Stufe 3 – Kündigung:** Ab dem n-ten Bruch in der Laufzeit (`investor.breaches-to-terminate`) kündigt der Investor.
+- [x] **Stufe 3 – Kündigung:** Ab dem n-ten Bruch in der Laufzeit (`investor.breaches-to-terminate`) kündigt der Investor.
   Die Rückforderung wird sofort fällig (Beteiligung: Rückkauf, Darlehen: Rückzahlung), Höhe siehe
   [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung). Der Fall erscheint wie ein Bescheid
   (`INVESTOR_CLAIM`, Zahlen per Knopf, Frist). Reicht das Geld nicht, gilt das vorhandene Verzugs-Muster (Mahnung,
   Vertrauen, Bank erfährt davon).
-- [ ] Ein Vertragsbruch und eine Kündigung sind öffentlich, wenn der Investor mit Namensnennung (P5) im Dorfblatt stand.
+- [x] Ein Vertragsbruch und eine Kündigung sind öffentlich, wenn der Investor mit Namensnennung (P5) im Dorfblatt stand.
 
 **Beleg:** – (Backend; Prüfdaten siehe I3).
 
 ### R32-I5 Laufzeitende
 
-- [ ] Stille Beteiligung: Rückkauf der Anteile zum **Nennwert** im letzten Monat der Laufzeit als `INVESTOR_REPAYMENT`.
-- [ ] Nachrangdarlehen: Rückzahlung der Summe im letzten Monat der Laufzeit als `INVESTOR_REPAYMENT` (endfällig).
-- [ ] Ankündigung drei Monate vorher (Mail, Kalender, Liquiditätsplanung). Ohne Bruch in der Laufzeit bietet der
+- [x] Stille Beteiligung: Rückkauf der Anteile zum **Nennwert** im letzten Monat der Laufzeit als `INVESTOR_REPAYMENT`.
+- [x] Nachrangdarlehen: Rückzahlung der Summe im letzten Monat der Laufzeit als `INVESTOR_REPAYMENT` (endfällig).
+- [x] Ankündigung drei Monate vorher (Mail, Kalender, Liquiditätsplanung). Ohne Bruch in der Laufzeit bietet der
   Investor optional eine Verlängerung mit neuen Paketen an (zählt nicht gegen „ein Angebot je Jahr“).
-- [ ] Reicht das Geld zum Termin nicht, wie Stufe 3 in I4.
+- [x] Reicht das Geld zum Termin nicht, wie Stufe 3 in I4.
 
 **Beleg:** – (Backend).
 
 ### R32-I6 Wirkung auf Bank, Planung und Dorf
 
-- [ ] **Bank:** Ein Nachrangdarlehen zählt in `CreditScoringService` zur Schuld (heute `loanDebt + vanilla`). Eine stille
+- [x] **Bank:** Ein Nachrangdarlehen zählt in `CreditScoringService` zur Schuld (heute `loanDebt + vanilla`). Eine stille
   Beteiligung zählt nicht als Schuld, das eingezahlte Geld hebt also die Eigenkapitalquote. Die Bankberaterin
   kommentiert neue Investoren im Jahresgespräch (R3-K3).
-- [ ] **Liquiditätsplanung (R3-K2):** Rückkauf/Rückzahlung, feste Ausschüttungen (R2) und Ausgleichszahlungen als bekannte
+- [x] **Liquiditätsplanung (R3-K2):** Rückkauf/Rückzahlung, feste Ausschüttungen (R2) und Ausgleichszahlungen als bekannte
   Posten; der Gewinnanteil (R1) als „erwartet“.
-- [ ] **Hofbericht (R3-K3):** Abschnitt „Investoren“ mit Summe, Kapitalart, gelieferten Mengen, Zahlungen und Brüchen.
-- [ ] **Chronik (R3-T2):** Abschluss und Ende eines Investorenvertrags als Eintrag.
+- [x] **Hofbericht (R3-K3):** Abschnitt „Investoren“ mit Summe, Kapitalart, gelieferten Mengen, Zahlungen und Brüchen.
+- [x] **Chronik (R3-T2):** Abschluss und Ende eines Investorenvertrags als Eintrag.
 
 **Beleg:** – (Backend und Oberfläche).
 
@@ -419,12 +435,12 @@ Konfig. Eingetragen in `QUESTIONS.md` mit Status `open`.
 | G2 ✅ 08.10.2026 wie vorgeschlagen | Dorf-Ansehen für Großaufträge? | Nein, Geschäftssache. Nur Vertrauen beim Großabnehmer. |
 | G3 ✅ 08.10.2026 wie vorgeschlagen | Vorlauf | 1–12 Monate (wie Vorkontrakt). |
 | G4 ✅ 08.10.2026 wie vorgeschlagen | Vertrauen | +3 bei voller Lieferung, −5 bei Fehlmenge (wie R3-M2). |
-| I1 | Summe im Verhältnis zur Hofgröße | Summe höchstens 50 % des Hofvermögens (Bank-Sicht), gerundet auf 50.000 €, innerhalb 250.000–2.500.000 €. Liegt die Grenze unter 250.000 €, kommt kein Angebot. |
-| I2 | Laufzeit und Zielrendite | 2–5 FS25-Jahre; Zielrendite je Art 6–12 % p. a. |
-| I3 | Buchungsklasse des Gewinnanteils / der Ausschüttung (`INVESTOR_PAYOUT`) | **Entschieden 08.10.2026:** `FINANCING` (Gewinnverwendung, mindert nicht den Gewinn und nicht die Steuer). |
-| I4 | Nachfrist, Aufschlag, Anzahl Brüche | 5 Spieltage Nachfrist, Ausgleich = Fehlmenge × Marktpreis × 1,25, Kündigung beim 3. Bruch in der Laufzeit. |
-| I4 | Höhe der Rückforderung bei Kündigung („anteilig“) | Volle Summe (Nennwert bzw. Restschuld) sofort fällig, plus offene Ausgleichszahlungen. Alternative: Summe × Restlaufzeit / Laufzeit (früher Bruch teurer, später billiger). |
-| I6 | Zählt ein Nachrangdarlehen bei der Bank voll als Schuld? | Ja, voll (Faktor 1,0, konfigurierbar). |
+| I1 ✅ 08.10.2026 wie vorgeschlagen | Summe im Verhältnis zur Hofgröße | Summe höchstens 50 % des Hofvermögens (Bank-Sicht), gerundet auf 50.000 €, innerhalb 250.000–2.500.000 €. Liegt die Grenze unter 250.000 €, kommt kein Angebot. |
+| I2 ✅ 08.10.2026: 2–5 Jahre, Agrarfonds 10 %, Energie 9 %, Lebensmittelkette und Molkerei 8 %, Brauerei/Ölmühle 7 %, Privat 6 % | Laufzeit und Zielrendite | 2–5 FS25-Jahre; Zielrendite je Art 6–12 % p. a. |
+| I3 ✅ | Buchungsklasse des Gewinnanteils / der Ausschüttung (`INVESTOR_PAYOUT`) | **Entschieden 08.10.2026:** `FINANCING` (Gewinnverwendung, mindert nicht den Gewinn und nicht die Steuer). |
+| I4 ✅ 08.10.2026 wie vorgeschlagen (ein nachgeholter Bruch zählt mit) | Nachfrist, Aufschlag, Anzahl Brüche | 5 Spieltage Nachfrist, Ausgleich = Fehlmenge × Marktpreis × 1,25, Kündigung beim 3. Bruch in der Laufzeit. |
+| I4 ✅ 08.10.2026: volle Summe | Höhe der Rückforderung bei Kündigung („anteilig“) | Volle Summe (Nennwert bzw. Restschuld) sofort fällig, plus offene Ausgleichszahlungen. Alternative: Summe × Restlaufzeit / Laufzeit (früher Bruch teurer, später billiger). |
+| I6 ✅ 08.10.2026: ja; zusätzlich zählt das Investorenkapital als Vermögen | Zählt ein Nachrangdarlehen bei der Bank voll als Schuld? | Ja, voll (Faktor 1,0, konfigurierbar). |
 
 ---
 

@@ -98,6 +98,13 @@ public class MemoryService {
             case MACHINE_LOAN_LOST -> "geliehene Maschine nicht zurückgegeben";
             case MACHINE_LOAN_RENT_MISSED -> "Miete für die geliehene Maschine nicht bezahlt";
             case AUTHORITY_BILL_OVERDUE -> "Bescheid nicht fristgerecht bezahlt"; // R31-B2 / R31-B5
+            case INVESTOR_OFFER_IGNORED -> "Investorenangebot unbeantwortet gelassen"; // R32-I
+            case INVESTOR_FULFILLED -> "Gegenleistung an den Investor erfüllt";
+            case INVESTOR_REMINDER -> "Gegenleistung erst nach Mahnung erbracht";
+            case INVESTOR_COMPENSATION -> "Gegenleistung nicht erbracht, Ausgleich fällig";
+            case INVESTOR_TERMINATION -> "Investorenvertrag wegen Vertragsbruch gekündigt";
+            case INVESTOR_CLAIM_OVERDUE -> "Rückforderung des Investors nicht bezahlt";
+            case INVESTOR_CONTRACT_ENDED -> "Investorenvertrag ohne Bruch erfüllt";
             case GET_WELL_WISHES -> "Genesungswünsche erhalten"; // R31-B5
             case STAMMTISCH -> "gemeinsam am Stammtisch gesessen"; // R31-D3
             case NIGHT_WORK -> "nachts von Maschinenlärm geweckt"; // R31-D4

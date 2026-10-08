@@ -1,0 +1,9 @@
+Verlängerung unserer Zusammenarbeit
+Guten Tag,
+
+unser Vertrag endet mit dem Jahr {{endYear}}, und Sie haben jede Gegenleistung erbracht. Ich würde die {{amount}} € gern im Betrieb lassen: In der App „Bank“ unter „Investoren“ liegen {{packages}} neue Pakete. Nehmen Sie eins an, entfällt die Rückzahlung.
+
+Bitte antworten Sie innerhalb von {{answerDays}} Tagen.
+
+Viele Grüße
+{{characterName}}

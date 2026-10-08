@@ -145,6 +145,18 @@ the liquidity plan, the calendar agenda, the settlement (penalty 25 %, trust, fa
 instructions after a changed calendar (bulk orders and forward contracts; a running month keeps its end);
 `ApiIntegrationTest.bulkOrderEndpoints` the REST endpoints. Frontend: `features/trade/bulk-orders.spec.ts`. In the
 game: manual test plan rows 28.4–28.8b.
+Roadmap V3.2 R32-I (large investors): `InvestorTest` covers the formulas and their boundaries (amount limit, chance,
+profit share, payout rate, crop area, litres), the offer (2–3 equal-valued packages, different main considerations,
+term from the next FS25 year), the monthly trigger (farm report, loss, payment delay, one offer per year, switch), the
+acceptance (capital, discarded packages), an ignored and a declined offer, the bank view (silent partnership raises,
+subordinated loan lowers the equity ratio), deliveries of goods, milk and animals without money and their acks (a
+re-ack counts once, a refused one not), the staged breach (reminder, made up, compensation, termination, claim paid by
+button), the overdue claim (reminder per month, payment delay, no interest), A2 / A3 / A4, R1 / R2, P1 veto and
+consent, P2 / P4 requests, P3 holiday flat, P5 public action, the end of term (announcement, buy-back, claim without
+money, extension), a refused payment that stays open, tasks, calendar and the reminder a week before.
+`RewindIntegrationTest.lostInvestorDeliveriesAreResent` the re-send rule, `ApiIntegrationTest.investorEndpoints` the
+REST endpoints and the settings switch. Frontend: `features/bank/investors.spec.ts`. In the game: manual test plan rows
+28.9–28.14c.
 Roadmap V3 R3-M (market and marketing): `MarketingTest` covers the price alarm (best price, hint, mail, once,
 re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_EVENT / FIXED` held back until the
 delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and

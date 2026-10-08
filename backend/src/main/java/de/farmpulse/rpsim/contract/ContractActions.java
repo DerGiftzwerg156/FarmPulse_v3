@@ -45,6 +45,8 @@ public class ContractActions {
     private final AnnualReviewService annualReview;
     private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
     private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
+    private final de.farmpulse.rpsim.investor.InvestorOfferService investorOffers;
+    private final de.farmpulse.rpsim.investor.InvestorService investors;
     private final de.farmpulse.rpsim.drought.DroughtService drought;
     private final de.farmpulse.rpsim.employee.ApprenticeService apprentices;
     private final LeaseOutService leaseOut;
@@ -73,8 +75,12 @@ public class ContractActions {
                            CropDamageService cropDamage,
                            SchoolVisitService schoolVisits,
                            CooperativeService cooperative,
-                           de.farmpulse.rpsim.market.BulkOrderService bulkOrders) {
+                           de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
+                           de.farmpulse.rpsim.investor.InvestorOfferService investorOffers,
+                           de.farmpulse.rpsim.investor.InvestorService investors) {
         this.bulkOrders = bulkOrders;
+        this.investorOffers = investorOffers;
+        this.investors = investors;
         this.cooperative = cooperative;
         this.schoolVisits = schoolVisits;
         this.cropDamage = cropDamage;
@@ -172,6 +178,9 @@ public class ContractActions {
             case ANNUAL_REVIEW_OFFER -> annualReview.acceptOffer(sg, id); // R3-K3: accept the rate cut
             case FARM_SHOP_ORDER -> farmShop.accept(sg, id); // R3-M3: deliver
             case BULK_ORDER -> bulkOrders.deliver(sg, id); // R32-G2: "Sofort liefern"
+            case INVESTOR_CLAIM -> investors.payClaim(sg, id); // R32-I4 / I5: pay by button like a tax bill
+            case INVESTOR_PURCHASE -> investors.deliverPurchase(sg, id); // R32-I3 P2: deliver like G2
+            case INVESTOR_VISIT -> investors.acceptVisit(sg, id); // R32-I3 P4: "Zusagen"
             case DROUGHT_AID -> drought.apply(sg, id); // R3-W2: "Antrag stellen"
             case APPRENTICE_TAKEOVER -> apprentices.accept(sg, id); // R3-P2: take over at the demanded salary
             case MACHINE_DEMO_OFFER -> machineLoans.acceptDemoOffer(sg, id); // R31-A2: "Vorführung annehmen"
@@ -217,6 +226,8 @@ public class ContractActions {
             case ANNUAL_REVIEW_OFFER -> annualReview.declineOffer(sg, id);
             case FARM_SHOP_ORDER -> farmShop.decline(sg, id); // R3-M3
             case BULK_ORDER -> bulkOrders.decline(sg, id); // R32-G1
+            case INVESTOR_OFFER -> investorOffers.decline(sg, id); // R32-I2: costs nothing
+            case INVESTOR_PURCHASE, INVESTOR_VISIT -> investors.declineRequest(sg, id); // R32-I3 P2 / P4: a breach
             case APPRENTICE_TAKEOVER -> apprentices.decline(sg, id); // R3-P2
             case MACHINE_DEMO_OFFER -> machineLoans.declineDemoOffer(sg, id); // R31-A2
             case ANIMAL_OFFER, ANIMAL_REQUEST -> livestockTrade.decline(sg, id); // R31-A3

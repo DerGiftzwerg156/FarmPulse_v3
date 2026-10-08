@@ -58,5 +58,7 @@ export function taskTitle(t: TaskView, i18n: TranslationService): string {
       return i18n.t('enums.marketEventType.' + t.kind);
     case 'POSTING':
       return i18n.t('tasks.applicants', { role: i18n.t('enums.jobRole.' + t.kind), n: t.pendingApplicants });
+    case 'INVESTOR_DUE':
+      return i18n.t('tasks.investorDue', { name: t.investorDue?.investor ?? '' });
   }
 }

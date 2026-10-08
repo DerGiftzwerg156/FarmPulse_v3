@@ -1,0 +1,7 @@
+Unser Vertrag endet bald
+Guten Tag,
+
+unser Vertrag endet mit dem Jahr {{endYear}}. Im letzten Monat der Laufzeit werden {{repayment}} € zur Rückzahlung fällig ({{capitalType}}).
+
+Viele Grüße
+{{characterName}}

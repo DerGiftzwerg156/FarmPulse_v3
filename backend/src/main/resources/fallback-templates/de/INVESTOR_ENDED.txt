@@ -1,0 +1,7 @@
+Danke für die Zusammenarbeit
+Guten Tag,
+
+unser Vertrag über {{amount}} € ist abgeschlossen. Vielen Dank für {{years}} Jahre Zusammenarbeit.
+
+Viele Grüße
+{{characterName}}

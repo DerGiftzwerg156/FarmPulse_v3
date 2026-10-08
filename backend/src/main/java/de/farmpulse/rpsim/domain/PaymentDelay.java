@@ -23,6 +23,8 @@ public class PaymentDelay extends SavegameScoped {
     public static final String COLLATERAL_CLAIM = "COLLATERAL_CLAIM";
     /** Roadmap V3.1 R31-B2 / R31-B5: overdue repayment of a grant or fee of the social insurance. */
     public static final String AUTHORITY_BILL = "AUTHORITY_BILL";
+    /** Roadmap V3.2 R32-I4 / R32-I5: overdue claim of an investor (repayment, open compensation). */
+    public static final String INVESTOR_CLAIM = "INVESTOR_CLAIM";
     /** A delay still open at the year change counts for the new year too. */
     public static final String OPEN_AT_YEAR_START = "OPEN_AT_YEAR_START";
 

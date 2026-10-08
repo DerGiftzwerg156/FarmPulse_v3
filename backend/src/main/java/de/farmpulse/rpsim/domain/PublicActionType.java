@@ -24,5 +24,8 @@ public enum PublicActionType {
     SCHOOL_VISIT,
     /** Roadmap V3.1 R31-D7: cooperative - festival sponsoring of the assembly, the board seat (positive). */
     COOPERATIVE,
+    /** Roadmap V3.2 R32-I3 P5: an investor named in the village paper (+/- by kind), a breach or termination (-). */
+    INVESTOR_NAMED,
+    INVESTOR_BREACH,
     OTHER
 }
