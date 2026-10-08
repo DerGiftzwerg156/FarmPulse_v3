@@ -264,6 +264,15 @@ Technical review 10/2026, Phase 1.4 (optimistic locking): `OptimisticLockingTest
 saved in between survives - on the code before 1.4 the stale save overwrote it; a version conflict in REST is
 `409 CONCURRENT_UPDATE`; a cycle listener that loses a race runs again at once without counting as a failed attempt);
 frontend `core/api/concurrent-update.interceptor.spec.ts` (hint + reload on `CONCURRENT_UPDATE` only).
+Technical review 10/2026, Phase 1.5-1.8 (threads, narration lease, shutdown, backup): `WorkerIsolationTest` (written
+before the fix, red on the code before 1.5: with a real bridge thread and narration worker, an AI call that hangs
+holds neither the bridge cycle nor a database transaction), `NarrationLeaseTest` (a run-out lease is claimed again, a
+running one is not, the result of an outdated claim is dropped, a failing store step or an unexpected provider
+failure makes the job pending again at once),
+`SseHubTest` (a stuck client neither holds the broadcast nor stays connected; closing the hub completes every stream),
+`DatabaseBackupTest` (a backup exists after the start, holds the database as it was before the migration and restores
+by unzipping it; 5 generations; no backup for in-memory databases). Phase 1.7: a full `mvn verify` no longer ends with
+"Surefire is going to kill self fork JVM" - `SseStreamIntegrationTest` alone reproduced it before (open SSE stream).
 Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
 (journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
 month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,

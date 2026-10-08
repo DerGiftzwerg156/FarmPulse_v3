@@ -36,6 +36,13 @@ public class RpsimProperties {
          * the password from {@code spring.datasource.password} is used as it is (in-memory databases of tests/e2e).
          */
         private String passwordFile = "";
+        /**
+         * Technical review 10/2026, Phase 1.8 (R-8): folder of the automatic backups ({@code BACKUP TO} at every start,
+         * before migrations). Empty = no backups (in-memory databases of tests/e2e).
+         */
+        private String backupDir = "";
+        /** Phase 1.8: backups kept; older ones are deleted. */
+        private int backupGenerations = 5;
     }
 
     @Getter @Setter
@@ -129,6 +136,11 @@ public class RpsimProperties {
         private String locale = "de";
         /** Worker polling interval (ms). */
         private long workerIntervalMs = 1500;
+        /**
+         * Technical review 10/2026, Phase 1.5 (R-3): narration jobs processed at the same time (own threads, never the
+         * bridge thread). 1 = one after the other, in the order they were created.
+         */
+        private int workerThreads = 1;
     }
 
     @Getter @Setter

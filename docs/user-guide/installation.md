@@ -55,7 +55,9 @@ Das Backend sucht die Mod-Dateien unter `<Benutzerordner>\Documents\My Games\Far
 Liegt dein Dokumente-Ordner woanders (z. B. in OneDrive), trage den Pfad ein – siehe
 [Eigene Einstellungen](#eigene-einstellungen-optional).
 
-Deine Spieldaten (Charaktere, Mails, Kredite …) speichert das Backend in `<Benutzerordner>\.rpsim\`.
+Deine Spieldaten (Charaktere, Mails, Kredite …) speichert das Backend in `<Benutzerordner>\.rpsim\`. Bei jedem Start legt
+es dort unter `backups\` eine Sicherung an (die neuesten 5 bleiben), siehe
+[Datensicherung zurückspielen](fehlerbehebung.md#datensicherung-zurückspielen).
 
 ## 4. Oberfläche öffnen
 

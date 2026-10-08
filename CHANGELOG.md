@@ -394,6 +394,11 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   diary entry. Machine operator applicants bring a training along with 30 % and expect 8 % more salary. Employees hired
   before have no training.
 
+- **Automatic database backup (technical review 10/2026, Phase 1.8, R-8):** at every start, before the database is
+  migrated, the backend writes a backup (`BACKUP TO`) to `<Benutzerordner>\.rpsim\backups\rpsim-<Zeit>.zip`
+  (dev: `backend/data/backups`) and keeps the newest 5 (`rpsim.db.backup-dir`, `rpsim.db.backup-generations`). How to
+  restore one: *Fehlerbehebung → Datensicherung zurückspielen*.
+
 ### Changed
 
 - **`market_context.json` every minute** (owner decision 2026-10-06 in `QUESTIONS.md`): the mod rewrites the file every
@@ -437,6 +442,19 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   changeable table has a version counter (`@Version`, Flyway V40): the outdated write fails instead. In the Hof-Tablet
   the hint *Die Daten wurden inzwischen geändert – die Ansicht wurde neu geladen …* appears and the pages reload; in
   the bridge cycle the listener simply runs again on the fresh data.
+
+- **A slow AI no longer stops the game logic (technical review 10/2026, Phase 1.5/1.6, R-3):** bridge cycle, narration
+  worker and SSE keep-alive shared Spring's one scheduler thread, and the AI was called inside a database transaction
+  (up to 30 s per attempt). A hanging provider (slow Ollama, rate limit) held bookings, acknowledgements and game time
+  for minutes. Now the bridge runs on a thread of its own, the narration worker on its own threads
+  (`rpsim.ai.worker-threads`, default 1), and a job is processed in three steps: claim it (`IN_PROGRESS` with a lease,
+  Flyway V41), call the AI without a transaction, store the text. A job whose lease ran out (backend stopped during
+  the call) is processed again. Live updates (SSE) are queued per client with a sender thread of its own; a client
+  that lags 100 events behind is disconnected and reconnects by itself.
+- **Slow shutdown (technical review 10/2026, Phase 1.7, R-7):** an open live-update stream of the app counted as a
+  running request, so stopping the backend waited 30 s for it (and the test run ended with "Surefire is going to kill
+  self fork JVM"). The streams are now completed when the backend stops; bridge and narration threads finish their
+  current work (up to 10 s), and the HTTP clients of the AI providers are closed.
 
 ### Security
 

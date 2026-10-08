@@ -17,6 +17,7 @@ springdoc:
 rpsim:
   db:
     password-file: ${user.home}/.rpsim/db.properties
+    backup-dir: ${user.home}/.rpsim/backups   # review 10/2026 Phase 1.8: backup at every start, newest 5 kept
   bridge:
     path: ${user.home}/Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim
 # Roadmap V3 R3-N1: server.address stays unset (all interfaces). The LanAccessFilter decides by the sender address:

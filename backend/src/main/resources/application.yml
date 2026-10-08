@@ -41,6 +41,8 @@ rpsim:
     prompt-max-age-hours: 48           # R2-F2: questions without their own deadline expire after this many game hours
   db:
     password-file: ""             # review 10/2026 Phase 0.1: H2 password file (dev/prod set it); empty = spring.datasource.password as is
+    backup-dir: ""                # review 10/2026 Phase 1.8: BACKUP TO at every start before migrations (dev/prod set it); empty = off
+    backup-generations: 5         # review 10/2026 Phase 1.8: backups kept, older ones are deleted
   web:
     static-dir: ""                # release: web/ (built Angular app served on "/"); empty = API only
     allowed-hosts: []             # review 10/2026 Phase 0.2: extra Host-header names (localhost, IPs and this computer's name always work)
@@ -59,6 +61,7 @@ rpsim:
     local-config-file: ./data/local-config/ai-provider.properties
     locale: de
     worker-interval-ms: 1500
+    worker-threads: 1             # review 10/2026 Phase 1.5: narration jobs at the same time (own threads; 1 = in order)
     openai:
       base-url: https://api.openai.com/v1
       model: gpt-4o-mini

@@ -16,7 +16,7 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | `rpsim.bridge.path` | `../tools/bridge-simulator/runtime/modSettings/FS25_RPSim` | Folder `modSettings/FS25_RPSim` (contains `export/` and `import/`). `dev`: simulator runtime folder; `prod`: `~/Documents/My Games/FarmingSimulator2025/modSettings/FS25_RPSim`. | Datei-Bridge |
 | `rpsim.bridge.poll-interval-ms` | `2000` | Real-time interval (ms) in which the backend reads the bridge files. The only real-time timer - all game logic runs on game time. | Datei-Bridge |
 | `rpsim.bridge.step-max-attempts` | `3` | A listener of the bridge cycle that fails is retried by the next cycles (the rest of the queue waits, see [file-bridge-sequence.md](../architecture/file-bridge-sequence.md#inside-the-backend-queue-and-steps-technical-review-102026-phase-1213)); after this many failed attempts it is skipped for that event and the player gets the notice *Verarbeitungsschritt übersprungen*. | Technical review 10/2026, Phase 1.3 |
-| `rpsim.bridge.enabled` | `true` | Runs the bridge scheduler; `false` in unit tests. | Datei-Bridge |
+| `rpsim.bridge.enabled` | `true` | Runs the bridge scheduler (thread `bridge` of its own, technical review 10/2026 Phase 1.5); `false` in unit tests. | Datei-Bridge |
 | `rpsim.bridge.rewind-auto-resend-max-hours` | `24` | Savegame reloaded without saving (game time jumps back): bookings lost by a rewind up to this many game hours are re-sent automatically; deeper rewinds show a decision card on the dashboard ("nachbuchen" / "Tool-Stand beibehalten"). | TODO T-02 |
 | `rpsim.bridge.rewind-lookback-hours` | `24` | Bookings acknowledged up to this many game hours before the reloaded point are checked as well (the first export after loading happens slightly after the saved point). Must stay below the mod's `processedRetentionGameDays`. | TODO T-02 |
 | `rpsim.bridge.ingame-notifications` | `true` | New mails and incoming calls are shown in the game (`NOTIFICATION` instruction → `addIngameNotification`). Only for savegames linked to FS25. | TODO T-21 |
@@ -30,6 +30,8 @@ the section of `docs/concept/Technisches_Konzept_V6.md` (or the functional conce
 | Key | Default | Meaning | Concept |
 | --- | --- | --- | --- |
 | `rpsim.db.password-file` | `""` | Properties file (`password=…`) with the password of the H2 file database, readable by the owner only (POSIX `600`, on Windows an ACL with the owner alone). Created with a random password on the first start; an existing database without password (every installation up to 1.7.0) gets this password on the next start. Profiles: `dev` `./data/db.properties`, `prod` `${user.home}/.rpsim/db.properties`. Empty = `spring.datasource.password` is used as it is (in-memory databases of `test`/`e2e`). A password set in `spring.datasource.password` always wins - the file is then neither read nor written. | Technical review 10/2026, Phase 0.1 (S-1) |
+| `rpsim.db.backup-dir` | `""` | Folder of the automatic database backups: at every start, before Flyway migrates, H2 writes `rpsim-<yyyyMMdd-HHmmss-SSS>.zip` there (`BACKUP TO`, owner-only file). Restore: [Fehlerbehebung](../user-guide/fehlerbehebung.md#datensicherung-zurückspielen). Profiles: `dev` `./data/backups`, `prod` `${user.home}/.rpsim/backups`. Empty = no backups (in-memory databases of `test`/`e2e`). A failed backup is logged; the backend starts anyway. | Technical review 10/2026, Phase 1.8 (R-8) |
+| `rpsim.db.backup-generations` | `5` | Backups kept in `rpsim.db.backup-dir`; older ones are deleted after each new backup. | Technical review 10/2026, Phase 1.8 (R-8) |
 
 ## `rpsim.web` – Web
 
@@ -63,6 +65,7 @@ period is assumed (FS25 default).
 | `rpsim.ai.local-config-file` | `./data/local-config/ai-provider.properties` | Git-ignored file where the settings page stores provider, model and API key. | KI-Adapter |
 | `rpsim.ai.locale` | `de` | Locale of prompts and fallback templates (V1: `de` only). | KI-Adapter |
 | `rpsim.ai.worker-interval-ms` | `1500` | Real-time polling interval of the narration worker. | Entkopplung & Resilienz |
+| `rpsim.ai.worker-threads` | `1` | Narration jobs processed at the same time, on threads of their own (never the bridge thread). `1` = one after the other in the order they were created; with more, jobs of one run may finish in any order. A job is claimed with a lease of 2 × `timeout-seconds` × `max-attempts` + 60 s; if the backend stops during the AI call, the job is processed again after the lease. | Technical review 10/2026, Phase 1.5/1.6 (R-3) |
 | `rpsim.ai.openai.base-url` | `https://api.openai.com/v1` | OpenAI API base URL (Chat Completions). | KI-Adapter |
 | `rpsim.ai.openai.model` | `gpt-4o-mini` | Default OpenAI model. | KI-Adapter |
 | `rpsim.ai.anthropic.base-url` | `https://api.anthropic.com` | Anthropic API base URL (official Java SDK). | KI-Adapter |
@@ -1333,7 +1336,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 
 | Profile | Purpose | Overrides |
 | --- | --- | --- |
-| `dev` (default) | local development against the bridge simulator | H2 file DB `backend/data/rpsim-dev` with password file `backend/data/db.properties`, bridge path = simulator runtime folder |
-| `prod` | playing with FS25 (release `start` scripts) | H2 file DB `~/.rpsim/rpsim` with password file `~/.rpsim/db.properties` (no H2 TCP server, technical review 10/2026 Phase 0.1), bridge path = FS25 `modSettings/FS25_RPSim`; `server.address` unset (Roadmap V3 R3-N1: the home-network filter decides by the sender address); no OpenAPI document / Swagger UI (`springdoc.api-docs.enabled` / `springdoc.swagger-ui.enabled: false`, Phase 0.5) |
+| `dev` (default) | local development against the bridge simulator | H2 file DB `backend/data/rpsim-dev` with password file `backend/data/db.properties` and backups in `backend/data/backups`, bridge path = simulator runtime folder |
+| `prod` | playing with FS25 (release `start` scripts) | H2 file DB `~/.rpsim/rpsim` with password file `~/.rpsim/db.properties` (no H2 TCP server, technical review 10/2026 Phase 0.1) and backups in `~/.rpsim/backups` (Phase 1.8), bridge path = FS25 `modSettings/FS25_RPSim`; `server.address` unset (Roadmap V3 R3-N1: the home-network filter decides by the sender address); no OpenAPI document / Swagger UI (`springdoc.api-docs.enabled` / `springdoc.swagger-ui.enabled: false`, Phase 0.5) |
 | `e2e` | Playwright tests and screenshot generator | in-memory H2, AI provider `FAKE`, fast polling, bridge folder under `frontend/e2e/.runtime` |
 | `test` (tests only) | unit/integration tests | bridge scheduler off, provider `NONE`, narration worker off |

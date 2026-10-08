@@ -175,6 +175,12 @@ wahrscheinlich), **M** = mittel (Wartbarkeit oder Performance), **N** = niedrig.
   System.exit(0)". Ein Nicht-Daemon-Thread blockiert also das Herunterfahren, wahrscheinlich HTTP-Client oder
   Executor der KI-Clients. Der `AnthropicClient` wird gecacht und nie geschlossen. Folge: ein langsamer Shutdown des
   Release-Backends und 30 s längere CI-Läufe.
+- **Korrektur (07.10.2026, nachgemessen):** Die vermutete Ursache war falsch. `SseStreamIntegrationTest` allein
+  reproduziert die Warnung (61 s Laufzeit): Der Test lässt einen SSE-Stream offen, `SseEmitter(0L)` hat kein Timeout,
+  und Tomcats Graceful Shutdown („Commencing graceful shutdown. Waiting for active requests to complete") wartet
+  30 s auf diese „aktive Anfrage". Beim Release-Backend greift derselbe Mechanismus, solange ein Browser-Tab offen ist
+  (gleiche Konfiguration; dort nicht gesondert gemessen). Seit
+  Phase 1.7 schließt `SseHub` alle Streams beim `ContextClosedEvent` (32 s, keine Warnung).
 
 #### R-8 (N) Keine Datensicherung
 - Es gibt keinen Backup-Mechanismus für `~/.rpsim/rpsim.mv.db`. Ein defekter Spielstand oder ein Fehler in einer
@@ -313,8 +319,8 @@ Aufwand in Personentagen (PT) für eine Person, die den Code kennt.
 
 ### Phase 1: Robuster Bridge-Zyklus (Release 1.8, ca. 8–12 PT)
 
-> **Status (07.10.2026): 1.1–1.3 umgesetzt (PR A, #43), 1.4 umgesetzt (PR B), 1.5–1.8 folgen in PR C.** Entscheidungen des
-> Projektinhabers:
+> **Status (07.10.2026): Phase 1 vollständig umgesetzt – 1.1–1.3 in PR A (#43), 1.4 in PR B (#44), 1.5–1.8 in PR C.**
+> Entscheidungen des Projektinhabers:
 > - 1.3: **strikte Reihenfolge** statt Kern-Transaktion + isolierte Feature-Handler: Jeder Listener läuft in eigener
 >   Transaktion mit Journal; ein fehlschlagender Listener hält die Warteschlange an und wird im nächsten Zyklus
 >   wiederholt, nach **3** Fehlversuchen übersprungen. Abgesichert sind **alle** Ereignisse des Bridge-Zyklus (auch
@@ -326,6 +332,20 @@ Aufwand in Personentagen (PT) für eine Person, die den Code kennt.
 >   Ein Konflikt im Zyklus wird sofort bis zu 3-mal neu ausgeführt, ohne als Fehlversuch zu zählen. Im Frontend
 >   (Entscheidung): Hinweis „Die Daten wurden inzwischen geändert …“ und Neuladen aller Seiten.
 >   Nachgewiesen am Code vor 1.4: Ein veraltetes Speichern überschrieb eine dazwischen gespeicherte Änderung still.
+> - 1.5: Bridge und Narration laufen auf eigenen Threads, aber bewusst **ohne** eigene `TaskScheduler`-/`Executor`-Beans:
+>   Jede solche Bean schaltet in Spring Boot 4.1.1 den automatischen `taskScheduler` und `applicationTaskExecutor` ab
+>   (`@ConditionalOnMissingBean`, geprüft im JAR). SSE (Entscheidung): pro Client eine begrenzte Queue (100 Ereignisse)
+>   mit eigenem Sender-Thread; ist sie voll, wird der Client getrennt (kein Timeout pro Send). Nur der Sender-Thread
+>   fasst den Emitter an, weil `send` und `complete` in `ResponseBodyEmitter` dieselbe Sperre teilen.
+>   Nachgewiesen am Code vor 1.5: Während ein KI-Aufruf hing, lief kein einziger Bridge-Zyklus
+>   (`WorkerIsolationTest` rot, danach grün).
+> - 1.6: Die Spalte `attempts` gab es schon; neu ist nur `lease_until` (Flyway V41). Lease = 2 × `timeout-seconds` ×
+>   `max-attempts` + 60 s (Faktor 2: das Anthropic-SDK wiederholt einmal selbst).
+> - 1.7: Die Ursache von R-7 war nicht der KI-Client (siehe Korrektur bei R-7), sondern ein offener SSE-Stream. Die
+>   KI-Clients werden trotzdem geschlossen.
+> - 1.8 (Entscheidung): Sicherung bei **jedem** Start, 5 Generationen. Sie läuft in Spring Boots
+>   `FlywayMigrationStrategy`, also unmittelbar vor der Migration. Schlägt sie fehl, startet das Backend trotzdem
+>   (Warnung im Log).
 
 Ziel: Kein Fehler eines Features kann Buchungen, Acks oder die Spielzeit blockieren, und nichts geht still verloren.
 

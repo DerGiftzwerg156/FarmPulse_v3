@@ -49,6 +49,8 @@ Thumbs.db
 tools/screenshot-generator/.runtime/
 /data/rpsim-dev.lock.db
 /data/rpsim-dev.mv.db
+/data/db.properties
+/data/backups/
 
 # --- Python ---
 __pycache__/

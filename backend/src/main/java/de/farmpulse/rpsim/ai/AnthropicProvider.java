@@ -11,6 +11,7 @@ import com.anthropic.models.beta.messages.BetaFallbacksParam;
 import com.anthropic.models.beta.messages.BetaMessage;
 import com.anthropic.models.beta.messages.BetaStopReason;
 import com.anthropic.models.beta.messages.MessageCreateParams;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
  * refusal is treated like any other failure and ends in the fallback template.
  */
 @Component
-public class AnthropicProvider implements AiProvider {
+public class AnthropicProvider implements AiProvider, DisposableBean {
 
     static final String FALLBACK_BETA = "server-side-fallback-2026-07-01";
     private static final long MAX_TOKENS = 16000;
@@ -40,6 +41,9 @@ public class AnthropicProvider implements AiProvider {
     private synchronized AnthropicClient client(AiSettingsService.ProviderSettings s) {
         String key = s.apiKey() + "|" + s.baseUrl();
         if (client == null || !Objects.equals(key, clientKey)) {
+            if (client != null) {
+                client.close(); // technical review 10/2026, Phase 1.7: releases the HTTP threads and connections
+            }
             client = AnthropicOkHttpClient.builder()
                     .apiKey(s.apiKey())
                     .baseUrl(s.baseUrl())
@@ -49,6 +53,16 @@ public class AnthropicProvider implements AiProvider {
             clientKey = key;
         }
         return client;
+    }
+
+    /** Technical review 10/2026, Phase 1.7 (R-7): the cached client is closed when the application stops. */
+    @Override
+    public synchronized void destroy() {
+        if (client != null) {
+            client.close();
+            client = null;
+            clientKey = null;
+        }
     }
 
     @Override

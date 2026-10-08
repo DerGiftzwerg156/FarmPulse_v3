@@ -127,11 +127,30 @@ sich die Oberfläche von selbst wieder (nach 1 bis 30 Sekunden); notfalls die Se
 - **Immer wieder nach der PIN gefragt:** Die PIN wurde geändert oder der Heimnetz-Zugriff aus- und wieder eingeschaltet
   – dann meldet sich jedes Tablet neu an. Nach fünf falschen PINs fünf Minuten warten.
 
+## Datensicherung zurückspielen
+
+Bei jedem Start sichert FarmPulse die Datenbank – noch bevor sie nach einem Update umgestellt wird. Die Sicherungen liegen in
+`<Benutzerordner>\.rpsim\backups\`; die neuesten **5** bleiben erhalten, ältere werden gelöscht. Der Name nennt den
+Zeitpunkt des Starts: `rpsim-20261007-181500-123.zip` = 07.10.2026, 18:15:00 Uhr.
+
+So holst du einen älteren Stand zurück, etwa nach einem fehlgeschlagenen Update:
+
+1. Das Backend beenden (Fenster schließen).
+2. Im Ordner `<Benutzerordner>\.rpsim\` die Datei `rpsim.mv.db` umbenennen, z. B. in `rpsim.mv.db.alt` (so bleibt der
+   aktuelle Stand erhalten, falls du zurückwechseln willst).
+3. Die gewünschte Sicherung öffnen (Doppelklick auf die ZIP-Datei) und die Datei `rpsim.mv.db` daraus nach
+   `<Benutzerordner>\.rpsim\` kopieren.
+4. Das Backend starten. Die Datei `db.properties` bleibt, wie sie ist: Das Passwort der Datenbank ändert sich nicht.
+
+Alles, was FarmPulse nach dem Zeitpunkt der Sicherung gespeichert hat, ist im zurückgespielten Stand nicht enthalten.
+Jeder Start legt eine neue Sicherung an und löscht dabei die älteste – kopiere eine Sicherung, die du behalten willst,
+vorher an einen anderen Ort.
+
 ## Neu anfangen
 
 - **Neuer Spielstand:** einfach das Onboarding erneut durchlaufen und mit dem neuen FS25-Spielstand verknüpfen.
-- **Alles zurücksetzen:** Backend beenden und den Ordner `<Benutzerordner>\.rpsim\` löschen (Datenbank und ihr
-  Passwort `db.properties` zusammen). Achtung: Damit sind
+- **Alles zurücksetzen:** Backend beenden und den Ordner `<Benutzerordner>\.rpsim\` löschen (Datenbank, ihr
+  Passwort `db.properties` und die Sicherungen in `backups\` zusammen). Achtung: Damit sind
   alle Charaktere, Mails und Kredite aller Spielstände weg; das Spielgeld im FS25-Spielstand bleibt, wie es ist.
 
 ## Fehler melden
