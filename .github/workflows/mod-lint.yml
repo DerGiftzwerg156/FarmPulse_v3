@@ -19,7 +19,7 @@ jobs:
       run:
         working-directory: mod
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Lua 5.1 (FS25 runtime), luarocks, luacheck, luaunit
         run: |
           sudo apt-get update
