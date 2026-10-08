@@ -100,22 +100,37 @@ player bundle `FarmPulse-<v>/` + `.zip` (jar, `web/`, mod ZIP, `start.bat`/`star
 `application-local.yml.example`). The script checks that `pom.xml`, `frontend/package.json`, `modDesc.xml`
 (`<v>.0`) and `CHANGELOG.md` agree on the version.
 
-**Publishing (GitHub Actions, `.github/workflows/release.yml`):** the workflow runs the same script (with tests)
-on GitHub.
+**Windows setup** ([concept](../architecture/windows-installer.md)): on Windows with JDK 21 and Inno Setup 6.3+
+(installed via Chocolatey when missing), after `build-release.sh`:
+
+```powershell
+tools/release/build-installer.ps1 -Version <v>     # -> release/FarmPulse-<v>-Setup.exe
+```
+
+`jpackage` turns the jar and `web/` into `FarmPulse.exe` with its own Java runtime (no console window, JVM option
+`-Drpsim.desktop.enabled=true`), `tools/release/installer/FarmPulse.iss` (German, UTF-8 with BOM) packs it with the
+settings pages. The backend's desktop mode (`de.farmpulse.rpsim.desktop`, profile `desktop`) is described in the
+concept; without that JVM option nothing changes.
+
+**Publishing (GitHub Actions, `.github/workflows/release.yml`):** the job `build` runs the same script (with tests)
+on GitHub, the job `windows-installer` runs `build-installer.ps1` on `windows-latest`, the job `publish` creates the
+release. Pull requests touching `tools/release/**`, the workflow or the desktop mode run `build` and
+`windows-installer` without publishing (the setup is attached to the run).
 
 1. Set the new version in `backend/pom.xml`, `frontend/package.json` (+ `package-lock.json`),
    `mod/FS25_RPSim/modDesc.xml` (`<v>.0`) and rename `## [Unreleased]` in `CHANGELOG.md` to `## [<v>] - <date>`.
 2. Merge to `main`, then tag and push: `git tag v<v> && git push origin v<v>`.
 3. The workflow checks that the tag matches the project version, builds, and publishes the GitHub Release
-   `v<v>` with `FarmPulse-<v>.zip` and `FS25_RPSim.zip`; the release notes are the `CHANGELOG.md` section of `<v>`.
+   `v<v>` with `FarmPulse-<v>-Setup.exe`, `FarmPulse-<v>.zip` and `FS25_RPSim.zip`; the release notes are the
+   `CHANGELOG.md` section of `<v>`.
 
 **Snapshots:** every push to `main` runs the same build (with tests) and replaces the pre-release `snapshot`
-(tag `snapshot`, moved to the pushed commit, never marked *latest*) with `FarmPulse-<v>-snapshot.zip` and
-`FS25_RPSim.zip`, where `<v>` is the current project version; the notes are the `[Unreleased]` section of
+(tag `snapshot`, moved to the pushed commit, never marked *latest*) with `FarmPulse-<v>-snapshot-Setup.exe`,
+`FarmPulse-<v>-snapshot.zip` and `FS25_RPSim.zip`, where `<v>` is the current project version; the notes are the `[Unreleased]` section of
 `CHANGELOG.md`. Tagged releases are not affected.
 
-A manual run (Actions → release → *Run workflow*) only builds and attaches the ZIPs to the run as workflow
-artifact – useful to try a build without publishing.
+A manual run (Actions → release → *Run workflow*) only builds and attaches the ZIPs and the setup to the run as workflow
+artifacts – useful to try a build without publishing.
 
 **Decision – the backend serves the frontend:** the start scripts run
 `java -jar rpsim-backend.jar --spring.profiles.active=prod --rpsim.web.static-dir=web`; the backend delivers the

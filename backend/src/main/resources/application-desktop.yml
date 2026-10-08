@@ -1,0 +1,15 @@
+# desktop: FarmPulse.exe of the Windows installer, activated after prod by DesktopLauncher ("prod,desktop"), which also
+# sets rpsim.desktop.data-dir (~/.rpsim). docs/architecture/windows-installer.md
+spring:
+  config:
+    import:
+      # written by the setup (port, exchange folder, browser) - then the player's own overrides, which win
+      - optional:file:${rpsim.desktop.data-dir}/farmpulse-setup.yml
+      - optional:file:${rpsim.desktop.data-dir}/application-local.yml
+rpsim:
+  ai:
+    # the same file the settings page writes - the setup merges the chosen provider into it
+    local-config-file: ${rpsim.desktop.data-dir}/local-config/ai-provider.properties
+logging:
+  file:
+    name: ${rpsim.desktop.data-dir}/logs/farmpulse.log   # no console window
