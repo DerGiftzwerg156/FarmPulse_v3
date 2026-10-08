@@ -291,6 +291,10 @@ public class Savegame {
     @Column(name = "farm_shop_factor", nullable = false)
     private double farmShopFactor = 1.0;
 
+    /** Roadmap V3.2 R32-G1: factor on the bulk-order request probability (refusals lower it, full deliveries raise it). */
+    @Column(name = "bulk_order_factor", nullable = false)
+    private double bulkOrderFactor = 1.0;
+
     /** Roadmap V3 R3-W1: dry growth months in a row of the current series (0 = no series). */
     @Column(name = "drought_dry_months", nullable = false)
     private int droughtDryMonths;

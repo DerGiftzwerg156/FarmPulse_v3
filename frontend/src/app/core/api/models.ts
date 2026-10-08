@@ -1466,6 +1466,52 @@ export interface CoopNoticeView {
   paidGameTime: number | null;
 }
 
+/** Roadmap V3.2 R32-G3: an order with a delivery month (fixed price per 1000 l). */
+export interface BulkOrderView {
+  id: number;
+  caseId: number;
+  fillType: string;
+  sellPoint: string;
+  sellPointName: string;
+  buyerName: string | null;
+  quantity: number;
+  fixedPrice: number;
+  expectedIncome: number;
+  leadMonths: number;
+  deliveryStartGameTime: number;
+  deadlineGameTime: number;
+  deliveryPeriod: number | null;
+  status: 'OPEN' | 'FULFILLED' | 'SHORTFALL' | string;
+  deliveredQuantity: number | null;
+  penalty: number | null;
+}
+
+/** Roadmap V3.2 R32-G: the requests of the bulk buyers and the orders with a delivery month. */
+export interface BulkOrdersView {
+  silosTracked: boolean;
+  minLeadMonths: number;
+  maxLeadMonths: number;
+  maxOpen: number;
+  open: number;
+  instantMarkupPercent: number;
+  penaltySharePercent: number;
+  requests: CaseView[];
+  orders: BulkOrderView[];
+}
+
+/** Roadmap V3.2 R32-G3: one selectable delivery month of a request; reason = NO_PRICE / FIXED_PRICE_BUSY. */
+export interface BulkOrderMonthView {
+  leadMonths: number;
+  monthIndex: number;
+  period: number | null;
+  startGameTime: number;
+  deadlineGameTime: number;
+  fixedPrice: number;
+  expectedIncome: number;
+  available: boolean;
+  reason: string | null;
+}
+
 export interface CooperativeView {
   enabled: boolean;
   sharePrice: number;

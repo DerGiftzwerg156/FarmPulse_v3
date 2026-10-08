@@ -78,7 +78,25 @@ public class TradeController {
     public record AnimalRequest(@NotBlank String husbandryUniqueId, @NotBlank String subType, @NotNull @Positive Integer count) {
     }
 
+    /** Roadmap V3.2 R32-G3: an order with a delivery month (fixed price per 1000 l, delivery month as game times). */
+    public record BulkOrderView(Long id, Long caseId, String fillType, String sellPoint, String sellPointName,
+                                String buyerName, long quantity, long fixedPrice, long expectedIncome, int leadMonths,
+                                long deliveryStartGameTime, long deadlineGameTime, Integer deliveryPeriod, String status,
+                                Long deliveredQuantity, Long penalty) {
+    }
+
+    /** Roadmap V3.2 R32-G: the requests (service cases BULK_ORDER) and the orders with a delivery month. */
+    public record BulkOrdersView(boolean silosTracked, int minLeadMonths, int maxLeadMonths, int maxOpen, int open,
+                                 double instantMarkupPercent, double penaltySharePercent, List<CaseView> requests,
+                                 List<BulkOrderView> orders) {
+    }
+
+    public record BulkOrderTermRequest(@NotNull @Positive Integer leadMonths) {
+    }
+
     private final SavegameContext context;
+    private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
+    private final de.farmpulse.rpsim.time.GameTime gameTime;
     private final NeighborService neighbors;
     private final NeighborTradeService trade;
     private final NeighborMissionService missions;
@@ -90,7 +108,11 @@ public class TradeController {
     public TradeController(SavegameContext context, NeighborService neighbors, NeighborTradeService trade,
                            NeighborMissionService missions, NpcFieldService fields,
                            de.farmpulse.rpsim.neighbor.LivestockTradeService livestock,
-                           de.farmpulse.rpsim.config.RpsimProperties props, ApiMapper mapper) {
+                           de.farmpulse.rpsim.config.RpsimProperties props, ApiMapper mapper,
+                           de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
+                           de.farmpulse.rpsim.time.GameTime gameTime) {
+        this.bulkOrders = bulkOrders;
+        this.gameTime = gameTime;
         this.livestock = livestock;
         this.props = props;
         this.context = context;
@@ -188,5 +210,47 @@ public class TradeController {
     public CaseView offerAnimals(@PathVariable Long id, @Valid @RequestBody AnimalRequest r) {
         return mapper.serviceCase(livestock.offerAnimals(context.requireActive(), id, r.husbandryUniqueId(), r.subType(),
                 r.count()));
+    }
+
+    // ------------------------------------------------------------------------------------------ Roadmap V3.2 R32-G
+
+    /** R32-G: requests of the bulk buyers and the orders with a delivery month ("Handel → Großaufträge"). */
+    @GetMapping("/api/trade/bulk-orders")
+    @Transactional(readOnly = true)
+    public BulkOrdersView bulkOrders() {
+        Savegame sg = context.requireActive();
+        FarmFacts f = neighbors.latest(sg).orElse(null);
+        var cfg = props.getFormulas().getBulkOrder();
+        return new BulkOrdersView(f != null && f.tradeStorage() != null, cfg.getMinLeadMonths(), cfg.getMaxLeadMonths(),
+                cfg.getMaxOpen(), bulkOrders.open(sg).size(), Math.round((cfg.getInstantMarkup() - 1) * 1000) / 10.0,
+                Math.round(cfg.getPenaltyShare() * 1000) / 10.0,
+                bulkOrders.requests(sg).stream().map(mapper::serviceCase).toList(),
+                bulkOrders.list(sg).stream().map(o -> view(sg, f, o)).toList());
+    }
+
+    private BulkOrderView view(Savegame sg, FarmFacts f, de.farmpulse.rpsim.domain.BulkOrder o) {
+        var anchor = gameTime.anchor(sg);
+        Integer period = f != null && f.calendar() != null
+                ? anchor.periodOf(anchor.monthIndex(o.getDeliveryStartGameTime())) : null;
+        return new BulkOrderView(o.getId(), o.getCaseId(), o.getFillType(), o.getSellPoint(),
+                bulkOrders.sellPointName(sg, o.getSellPoint()), o.getCharacter() == null ? null : o.getCharacter().getName(),
+                o.getQuantity(), o.getFixedPrice(), Math.round(o.getQuantity() / 1000.0 * o.getFixedPrice()),
+                o.getLeadMonths(), o.getDeliveryStartGameTime(), o.getDeadlineGameTime(), period, o.getStatus(),
+                o.getDeliveredQuantity(), o.getPenalty());
+    }
+
+    /** R32-G3: the delivery months of a request with the fixed price and whether they can be chosen. */
+    @GetMapping("/api/trade/bulk-orders/{caseId}/months")
+    @Transactional(readOnly = true)
+    public List<de.farmpulse.rpsim.market.BulkOrderService.MonthOption> bulkOrderMonths(@PathVariable Long caseId) {
+        return bulkOrders.months(context.requireActive(), caseId);
+    }
+
+    /** R32-G3: "Termin vereinbaren" - binding, no withdrawal. "Sofort liefern" / "Ablehnen" go through /api/cases. */
+    @PostMapping("/api/trade/bulk-orders/{caseId}/term")
+    @Transactional
+    public BulkOrderView agreeBulkOrder(@PathVariable Long caseId, @Valid @RequestBody BulkOrderTermRequest r) {
+        Savegame sg = context.requireActive();
+        return view(sg, neighbors.latest(sg).orElse(null), bulkOrders.agree(sg, caseId, r.leadMonths()));
     }
 }

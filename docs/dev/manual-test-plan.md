@@ -574,8 +574,8 @@ installation of the release. 🟡 = only checkable on Windows.
 
 Every point of [`ROADMAP_V3.2.md`](../architecture/ROADMAP_V3.2.md) marked 🟡 ("Im Spiel prüfen") and every acceptance
 criterion has one row here. Rows 28.1–28.3 can be checked since R32-Q (the mod reads the milk storage and executes
-`HUSBANDRY_TRANSFER`, see [bridge protocol](bridge-protocol.md#roadmap-v32-field-optional-r32-q1)); the rows of G and I
-once the roadmap item named in the first column is built. Without FS25 the bridge simulator scenarios `grossauftrag`
+`HUSBANDRY_TRANSFER`, see [bridge protocol](bridge-protocol.md#roadmap-v32-field-optional-r32-q1)), rows 28.4–28.8b since
+R32-G; the rows of I once the roadmap item named in the first column is built. Without FS25 the bridge simulator scenarios `grossauftrag`
 (G) and `investor-milch` (I3, type W3) show the same flow. Note the result in the row's issue and, if the fallback is
 needed, switch the implementation to it.
 
@@ -588,7 +588,9 @@ needed, switch the implementation to it.
 | 28.5 | Instant delivery (R32-G2) | With the amount in the own silos: *Sofort liefern* | the silo stock drops by the amount, 125 % of the best market price is booked (`GOODS_SALE`) | – |
 | 28.6 | Delivery month (R32-G3) | Agree a later delivery month | the sell point shows the fixed price for exactly that month and not before or after | – |
 | 28.7 | Shortfall (R32-G4) | Deliver less than ordered within the delivery month | at the end of the month 25 % of the shortfall at the fixed price is booked (`CONTRACT_PENALTY`) | – |
-| 28.8 | Days per period changed (R32-G3) | Change *Tage je Periode* in the savegame settings while a bulk order with a delivery month runs | the delivery stays in its month | – |
+| 28.8 | Days per period changed (R32-G3) | Agree a delivery month 2 months ahead, then change *Tage je Periode* in the savegame settings before that month starts; look at the delivery window in *Handel → Großaufträge* and at the price of the sell point in the delivery month | the delivery stays in its month: the fixed price applies from its first to its last day (owner decision 2026-10-08: the pending instruction is moved) | – |
+| 28.8a | Days per period changed in the running delivery month (R32-G3) | Change *Tage je Periode* while the delivery month of a bulk order runs | note when the fixed price ends: the mod keeps the end it has (owner decision 2026-10-08) - with more days per period it ends before the month ends, with fewer it runs into the next month; the backend settles the report as it comes | – (documented limitation) |
+| 28.8b | Forward contract and days per period (R32-G3) | As 28.8 with a forward contract | the forward contract stays in its delivery month | – |
 | 28.9 | Investor offer (R32-I1/I2) | Play a good year, wait for (or force) an investor | an investor calls and offers 1 000 000 € in three packages | – |
 | 28.10 | Accept (R32-I2) | *Annehmen* on one package | the capital is booked (`INVESTOR_CAPITAL`) | – |
 | 28.11 | Milk delivery (R32-I3, type W3) | Package with *5 000 l Milch je Monat*: *Liefern* | `HUSBANDRY_TRANSFER` takes the milk out of the cow stable (see 28.1–28.3) | – |

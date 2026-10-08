@@ -22,6 +22,21 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Bulk orders [R32-G]** (owner decisions 2026-10-08 in `QUESTIONS.md`): about once a month (0.3 x a refusal factor)
+  a new bulk buyer of a sell point of the map (no production) asks for 50,000-500,000 l of wheat, barley, canola,
+  sunflower, soybean or maize (potatoes and sugar beet 50,000-300,000 l), as a mail or - 10 % - a call (a missed or
+  declined call also brings the mail). New tab *Handel → Großaufträge*, the request is also a task (5 days to answer):
+  - *Sofort liefern* with the whole amount in the own silos at the best market price x 1.25 (`STORAGE_TRANSFER OUT` +
+    `GOODS_SALE`, like the farm shop); a refused transfer books nothing and leaves the request open.
+  - *Termin vereinbaren*: a delivery month 1-12 months ahead at today's price of the sell point x (1.05 + 0.01 per
+    month), sent as `PRICE_EVENT / FIXED` for that whole month with an in-game hint at its start; months with a fixed
+    price at the pair (forward contract, bulk order, special offer) cannot be chosen, at most 3 open orders, no
+    withdrawal. The liquidity plan shows the expected income, the calendar the start and end of the delivery month.
+  - Shortfall at the end of the month: 25 % of the shortfall at the fixed price as `CONTRACT_PENALTY`; full delivery
+    +3 trust, shortfall -5; declining, ignoring and shortfalls make requests rarer (x 0.75, at least 0.1), full
+    deliveries more frequent again. Every request has its own buyer, who leaves when the order ends.
+  - An open bulk order with a delivery month blocks forward contracts, special offers and drought price events at its
+    pair, like a forward contract. Values under `rpsim.formulas.bulk-order.*`; table `bulk_order` (migration V41).
 - **Roadmap V3.2 groundwork - bridge contract for bulk orders and investors [R32-Q]:** not visible to players yet.
   - Mod: `farm_facts.json` exports the milk in the storage of every own husbandry (`husbandries[].storage[]` =
     `{ fillType, amount, capacity }`, milk sorts of `spec_husbandryMilk.fillTypes`, `getHusbandryFillLevel` /
@@ -422,6 +437,10 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Fixed
 
+- **Forward contracts keep their delivery month when "Tage je Periode" changes** (owner decision 2026-10-08, R32-G3):
+  as long as the mod has not taken the `PRICE_EVENT`, start, end and the pending instruction move to the new month
+  boundaries. In a running delivery month the mod keeps the end it has. Before, the window stayed on the old game
+  times.
 - **Finances: FS25 production chain costs** (`unknown category 'PRODUCTION_COSTS'`): the FS25 money type
   `PRODUCTION_COSTS` is now classified as an operating expense (label "Produktionskosten"). Before, it counted as
   operating only by its sign, and the tax audit treated it as a disputed expense under an unknown category.

@@ -137,6 +137,14 @@ from the game, the execution with its failure codes and the booking back of a pa
 `test_roadmap_v32.lua`, validation and `NOT_SUPPORTED` in `test_instructions.lua`; the simulator the scenarios, the
 execution and the control endpoint in `test/roadmap-v32.test.js`. Q brings no formula; the tables, the values under
 `rpsim.formulas.bulk-order.*` / `investor.*` and their boundary tests come with G and I (owner decision 2026-10-08).
+Roadmap V3.2 R32-G (bulk orders): `BulkOrderTest` covers the request (sell point of the map without production, amount
+range and step, instant price = best price x 1.25, a new buyer per request, the call that becomes a mail), refusals and
+the factor, the instant delivery batch and its ack, the refused transfer, the delivery months with the fixed price
+(1.05 + 0.01 per month), one fixed price per pair and month (forward contract, bulk order, special offer), the limit,
+the liquidity plan, the calendar agenda, the settlement (penalty 25 %, trust, factor) and the moved pending
+instructions after a changed calendar (bulk orders and forward contracts; a running month keeps its end);
+`ApiIntegrationTest.bulkOrderEndpoints` the REST endpoints. Frontend: `features/trade/bulk-orders.spec.ts`. In the
+game: manual test plan rows 28.4–28.8b.
 Roadmap V3 R3-M (market and marketing): `MarketingTest` covers the price alarm (best price, hint, mail, once,
 re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_EVENT / FIXED` held back until the
 delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and

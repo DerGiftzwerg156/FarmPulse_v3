@@ -563,6 +563,8 @@
       "COUNTER_REJECTED": "Gegenangebot zu niedrig",
       "EMPLOYEE_GONE": "Nicht mehr auf dem Hof",
       "PLAYER": "Von dir abgelehnt",
+      "DELIVERED": "Sofort geliefert",
+      "TERM_AGREED": "Liefermonat vereinbart",
       "INCLUDED": "Im Wartungsvertrag repariert",
       "HINT": "Reparaturhinweis",
       "NOT_REPAIRED": "Nicht repariert (Fahrzeug nicht gefunden)",
@@ -802,7 +804,8 @@
       "CONTRACT": "Vertrag",
       "RETIREMENT": "Altenteil",
       "TAX_PREPAYMENT": "Steuervorauszahlung",
-      "FORWARD_CONTRACT": "Vorkontrakt (erwartet)"
+      "FORWARD_CONTRACT": "Vorkontrakt (erwartet)",
+      "BULK_ORDER": "Großauftrag (erwartet)"
     },
     "fieldWork": {
       "PLOW": "Pflügen",
@@ -1771,7 +1774,9 @@
       "deadline": "Frist: {what}",
       "stammtisch": "Nächster Stammtisch",
       "coopAssembly": "Generalversammlung der Genossenschaft",
-      "coopBoardMeeting": "Vorstandssitzung"
+      "coopBoardMeeting": "Vorstandssitzung",
+      "bulkOrderStart": "Liefermonat beginnt: {fillType} an {sellPoint} ({amount})",
+      "bulkOrderEnd": "Liefermonat endet: {quantity} l {fillType} an {sellPoint}"
     },
     "debits": {
       "salaries": "Gehälter ({n})",
@@ -2056,6 +2061,37 @@
     "shopText": "{name} bestellt {quantity} l {fillType} für {amount} ({unit} je 1.000 l).",
     "deliver": "Liefern",
     "shopHint": "Die Ware wird aus deinen Silos abgebucht, das Geld gutgeschrieben.",
+    "bulk": {
+      "requests": "Anfragen von Großabnehmern",
+      "requestText": "{name} kauft für {sellPoint} ein und möchte {quantity} l {fillType}. Sofort aus deinen Silos: {amount} ({unit} je 1.000 l).",
+      "requestHint": "Sofort liefern geht nur mit der ganzen Menge im Silo. Sonst vereinbarst du einen Liefermonat und fährst die Ware in diesem Monat selbst zur Verkaufsstelle. Ablehnen oder Ignorieren macht Anfragen seltener.",
+      "deliver": "Sofort liefern",
+      "term": "Termin vereinbaren",
+      "month": "Liefermonat",
+      "chooseMonth": "Monat wählen …",
+      "monthOption": "in {n} Monat(en) · {month}",
+      "reason": {
+        "FIXED_PRICE_BUSY": "dort gilt schon ein Festpreis",
+        "NO_PRICE": "kein Preis an der Verkaufsstelle"
+      },
+      "quote": "Festpreis {price} je 1.000 l für {quantity} l, Lieferung im {month} zu {sellPoint}. Erwartete Einnahme: {income}.",
+      "agree": "Verbindlich vereinbaren",
+      "termHint": "Der Festpreis gilt den ganzen Liefermonat an dieser Verkaufsstelle. Kein Rücktritt; fehlt am Monatsende Ware, wird eine Vertragsstrafe fällig.",
+      "agreed": "Liefermonat vereinbart",
+      "ordersTitle": "Großaufträge mit Liefermonat",
+      "intro": "Großabnehmer zahlen für die Sofortlieferung {markup} % über dem besten Marktpreis. Mit Liefermonat ({from} bis {to} Monate voraus) gilt ein Festpreis an ihrer Verkaufsstelle; eine Fehlmenge kostet {penalty} % des Festpreises. Höchstens {max} offene Aufträge mit Liefermonat.",
+      "noSilos": "Der Mod meldet deine Silos nicht – Sofortlieferung erst mit aktuellem Mod.",
+      "orderLine": "{quantity} l {fillType} an {sellPoint} zu {price} je 1.000 l, Liefermonat {month}",
+      "window": "Lieferung von {from} bis {to} · erwartet {income}",
+      "result": "{delivered} von {quantity} l geliefert",
+      "penalty": "Vertragsstrafe {amount}",
+      "none": "Noch kein Großauftrag mit Liefermonat.",
+      "status": {
+        "OPEN": "offen",
+        "FULFILLED": "erfüllt",
+        "SHORTFALL": "Fehlmenge"
+      }
+    },
     "animals": {
       "title": "Viehhandel mit Nachbarn",
       "intro": "Kaufe Tiere direkt vom Nachbarn oder verkaufe ihm welche. Er antwortet sofort mit seinem Preis; nach deiner Zusage wechseln die Tiere im Spiel den Stall.",
@@ -2260,6 +2296,7 @@
       "tiere": "Tierhandel",
       "hofladen": "Hofladen",
       "ferienwohnung": "Ferienwohnung",
+      "grossauftraege": "Großaufträge",
       "genossenschaft": "Genossenschaft"
     },
     "settings": {

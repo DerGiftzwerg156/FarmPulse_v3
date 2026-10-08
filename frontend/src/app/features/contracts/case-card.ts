@@ -9,6 +9,7 @@ import { GameTimePipe, MoneyPipe } from '../../shared/format/format.pipes';
 import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
+import { BulkOrderRequest } from '../trade/bulk-order-request';
 
 /**
  * One open service case with its actions (accept, counter, sponsor, pay, RSVP, report ...). Used wherever the case
@@ -16,7 +17,7 @@ import { Button } from '../../shared/ui/button';
  */
 @Component({
   selector: 'app-case-card',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Badge, Button],
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Badge, Button, BulkOrderRequest],
   template: `
     <div data-testid="case" [attr.data-kind]="c().kind" [class]="framed() ? 'rounded-xl border border-warn/50 bg-bg p-3' : ''" [class.ring-1]="highlight()">
 
@@ -152,6 +153,10 @@ import { Button } from '../../shared/ui/button';
           <app-badge variant="positive">{{ 'trade.inTransfer' | t }}</app-badge>
         }
         <p class="mt-1 text-[11px] text-muted">{{ 'trade.shopHint' | t }}</p>
+      }
+      @if (c().kind === 'BULK_ORDER') {
+        <!-- Roadmap V3.2 R32-G: request of a bulk buyer - instant delivery, delivery month or decline -->
+        <app-bulk-order-request [c]="c()" (changed)="changed.emit(c())" />
       }
       @if (c().kind === 'APPRENTICE_TAKEOVER') {
         <div class="mt-1 text-[12px] text-text" data-testid="apprentice-takeover">{{ 'employees.takeoverText' | t: { name: c().character?.name ?? '–', amount: (c().offerAmount | money), skill: c().quantity } }}</div>

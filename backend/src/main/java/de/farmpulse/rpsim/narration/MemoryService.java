@@ -90,6 +90,8 @@ public class MemoryService {
             case COLLATERAL_CLAIM_OVERDUE -> "geforderte Sondertilgung nicht gezahlt";
             case FORWARD_CONTRACT_FULFILLED -> "Vorkontrakt voll geliefert";
             case FORWARD_CONTRACT_SHORTFALL -> "Vorkontrakt nicht voll geliefert";
+            case BULK_ORDER_FULFILLED -> "Großauftrag voll geliefert";
+            case BULK_ORDER_SHORTFALL -> "Großauftrag nicht voll geliefert";
             case LEASE_OUT_RECLAIMED -> "verpachtetes Feld im Spielmenü zurückgeholt";
             case CONTRACTOR_WORK -> "Lohnauftrag auf dem eigenen Feld erledigt"; // R31-A1
             case MACHINE_LOAN_DAMAGE -> "geliehene Maschine beschädigt zurückgegeben"; // R31-A2

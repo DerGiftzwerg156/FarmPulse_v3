@@ -23,7 +23,8 @@ und die Community-LUADOC geprüft (Quellen am Ende).
   bewegen, laufen als Batch mit ihrer `MONEY_TRANSACTION`.
 - Spielmonat = FS25-Periode. Ein Termin ist **immer ein ganzer Monat**, weil „Tage je Periode“ in den
   Spielstand-Einstellungen jederzeit geändert werden kann. Das Backend rechnet heute schon so: Ein geplanter Termin
-  behält seinen Monat, auch wenn sich die Länge ändert (`docs/dev/bridge-protocol.md`, Block `calendar`;
+  behält seinen Monat, auch wenn sich die Länge ändert (Vorkontrakte erst seit G, solange ihre Anweisung noch nicht
+  ausgeführt ist) (`docs/dev/bridge-protocol.md`, Block `calendar`;
   `time/GameTime`, `time/CalendarService`; Vorkontrakt R3-M2 mit „Lieferfenster = ganzer Liefermonat“).
 
 **Hängt ab von V3 / V3.1:**
@@ -160,34 +161,47 @@ Verkaufsstelle des Abnehmers.
 - Fehlmenge am Monatsende: **Strafe wie Vorkontrakt** (25 % der Fehlmenge zum Festpreis, `CONTRACT_PENALTY`).
 - Absender: **neue Großabnehmer-Figuren**, passend zu einer Verkaufsstelle der Karte.
 
+**Stand 08.10.2026: umgesetzt** (`market/BulkOrderService`, Tab „Handel → Großaufträge“). Weitere Entscheidungen vom
+08.10.2026 (`QUESTIONS.md`): Sorten und Spannen, Häufigkeit (1 Anfrage/Monat, 0,3 × Faktor, Faktor × 0,75 je Ablehnung,
+Ignorieren oder Fehlmenge, mindestens 0,1), 5 Tage Antwortfrist und höchstens 3 offene Termin-Aufträge wie
+vorgeschlagen. **Kein Filter** auf eigene Silos oder Anbau. **Jede Anfrage bringt eine neue Figur**, die sich nach dem
+Auftrag verabschiedet. Keine Produktionen als Großabnehmer. 10 % der Anfragen als Anruf; ein verpasster oder
+abgelehnter Anruf bringt die Anfrage zusätzlich als Mail. **Keine Ja/Nein-Frage im Spiel.** Termin vereinbaren geht
+bis zur Antwortfrist. Kein Dorf-Ansehen; Vertrauen +3 bei voller Lieferung (sofort wie Termin), −5 bei Fehlmenge;
+Ablehnen kostet kein Vertrauen. Festpreis **monatsgenau** (siehe G3). „Tage je Periode“ geändert: vor dem Liefermonat
+wird die noch nicht ausgeführte Anweisung verschoben, im laufenden Liefermonat gilt das alte Ende im Mod (kein
+Mod-Eingriff); dieselbe Regel gilt jetzt auch für Vorkontrakte (R3-M2), die ihr Fenster vorher nicht umgerechnet
+haben.
+
 ### R32-G1 Großabnehmer und Anfrage
 
-- [ ] Ein Großabnehmer (`BULK_BUYER`) gehört zu einer **Verkaufsstelle der Karte**, die die Sorte annimmt
+- [x] Ein Großabnehmer (`BULK_BUYER`) gehört zu einer **Verkaufsstelle der Karte**, die die Sorte annimmt
   (`market_context.sellPoints[]` mit `acceptedFillTypes`). Name und Art kommen aus dem Namen der Verkaufsstelle (z. B.
   „Ölmühle Nord“), die KI gibt der Ansprechperson einen Namen. Ohne passende Verkaufsstelle gibt es für diese Sorte
   keine Großaufträge.
-- [ ] **Welche Sorten:** eine Konfigliste (`bulk-order.fill-types`) mit fester Mengenspanne je Sorte
+- [x] **Welche Sorten:** eine Konfigliste (`bulk-order.fill-types`) mit fester Mengenspanne je Sorte
   (`bulk-order.amounts.<FILLTYPE>.min/max/step`). Werte siehe [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung).
-- [ ] **Wann:** monatlich höchstens N Anfragen mit Wahrscheinlichkeit p × Ablehnungsfaktor des Spielstands (Muster
-  Hofladen: Ablehnen oder Ignorieren senkt den Faktor, eine erfüllte Lieferung hebt ihn).
-- [ ] **Wie:** Mail ins Postfach (Kategorie Handel) mit Link auf das Formular; selten als Anruf (`Channel.CALL`,
+- [x] **Wann:** monatlich höchstens N Anfragen mit Wahrscheinlichkeit p × Ablehnungsfaktor des Spielstands (Muster
+  Hofladen: Ablehnen oder Ignorieren senkt den Faktor, eine erfüllte Lieferung hebt ihn). Eine Fehlmenge senkt ihn
+  ebenfalls (G4).
+- [x] **Wie:** Mail ins Postfach (Kategorie Handel) mit Link auf das Formular; selten als Anruf (`Channel.CALL`,
   Zustandsautomat aus `docs/architecture/call-state-machine.md`). Antwortfrist in Spieltagen (Konfig), danach verfällt
   die Anfrage wie eine ignorierte Hofladen-Bestellung.
-- [ ] Ansicht: neuer Bereich **„Großaufträge“** in der App „Handel“ (neben „Hofladen“), Eintrag in „Aufgaben“, optional
-  als Ja/Nein-Frage im Spiel (F2, neuer Anlass, standardmäßig aus – wie bei H3/H4/M3).
+- [x] Ansicht: neuer Bereich **„Großaufträge“** in der App „Handel“ (neben „Hofladen“), Eintrag in „Aufgaben“. Eine
+  Ja/Nein-Frage im Spiel (F2) gibt es nicht (Entscheidung 08.10.2026).
 
 **Beleg:** – (`market_context.sellPoints` und `prices` gibt es seit V1, `docs/dev/bridge-protocol.md`).
 
 ### R32-G2 Sofort liefern (aus dem Silo)
 
-- [ ] Angeboten nur, wenn `tradeStorage.amount` der Sorte ≥ Auftragsmenge. Teillieferung gibt es nicht: Der
+- [x] Angeboten nur, wenn `tradeStorage.amount` der Sorte ≥ Auftragsmenge. Teillieferung gibt es nicht: Der
   Großabnehmer will die ganze Menge oder einen Termin.
-- [ ] Preis = bester Marktpreis (`prices`) × `bulk-order.instant-markup` (**1,25**).
-- [ ] **„Sofort liefern“** prüft den Bestand erneut und sendet den Batch wie Hofladen/H4:
+- [x] Preis = bester Marktpreis (`prices`) × `bulk-order.instant-markup` (**1,25**).
+- [x] **„Sofort liefern“** prüft den Bestand erneut und sendet den Batch wie Hofladen/H4:
   `STORAGE_TRANSFER { direction: "OUT", fillType, amount }` + `MONEY_TRANSACTION` `GOODS_SALE`.
   `FAILED` / `INSUFFICIENT_STOCK` → keine Buchung, der Auftrag bleibt offen, „Termin vereinbaren“ ist weiter möglich.
-- [ ] Erfolg: Dank-Mail, Vertrauen beim Großabnehmer, Tagebucheintrag. Dorf-Ansehen nur, wenn das Dorfblatt den Auftrag
-  meldet (Vorschlag: nein, Großaufträge sind Geschäftssache, siehe offene Punkte).
+- [x] Erfolg: Dank-Mail, Vertrauen beim Großabnehmer, Tagebucheintrag. Kein Dorf-Ansehen (Entscheidung 08.10.2026:
+  Großaufträge sind Geschäftssache).
 
 **Beleg:** ✅ wie R3-H4 / R3-M3 (`storage:getFillLevel` / `setFillLevel` in `PlaceableSilo`, LUADOC
 `Specializations/PlaceableSilo.md`). Eine Obergrenze für `amount` hat `STORAGE_TRANSFER` nicht (Mod prüft nur `> 0`,
@@ -195,18 +209,21 @@ Verkaufsstelle des Abnehmers.
 
 ### R32-G3 Termin vereinbaren (Lieferung an die Verkaufsstelle)
 
-- [ ] Formular **„Termin vereinbaren“**: Liefermonat als FS25-Monat aus einer Liste (Vorlauf `min-lead-months` bis
+- [x] Formular **„Termin vereinbaren“**: Liefermonat als FS25-Monat aus einer Liste (Vorlauf `min-lead-months` bis
   `max-lead-months`), nie ein Tag. Das Backend nennt den Festpreis:
   `heutiger Preis an der Verkaufsstelle × (1 + term-base-markup 0,05 + term-markup-per-month 0,01 × Monate Vorlauf)`.
-- [ ] Umsetzung mit der vorhandenen Anweisung `PRICE_EVENT` / `FIXED` wie der Vorkontrakt:
+- [x] Umsetzung mit der vorhandenen Anweisung `PRICE_EVENT` / `FIXED` wie der Vorkontrakt:
   `fixedPrice`, `maxQuantity` = Auftragsmenge, `gameTimeEarliest` = Beginn des Liefermonats, `deadlineGameTime` = sein
   Ende. Der Spieler fährt die Ware selbst hin (oder liefert direkt vom Feld). Die gelieferte Menge meldet der Mod in
   `contractReports` (`deliveredQuantity`).
-- [ ] **Ein Festpreis je Verkaufsstelle und Fruchtsorte** (Regel aus R3-M2, weil `FIXED` Vorrang vor `MULTIPLIER` hat):
+- [x] **Ein Festpreis je Verkaufsstelle und Fruchtsorte** (Regel aus R3-M2, weil `FIXED` Vorrang vor `MULTIPLIER` hat):
   Monate, in denen dort schon ein Vorkontrakt oder anderer Großauftrag läuft, stehen nicht zur Wahl. `MarketEventEngine`
-  erzeugt in der Zeit kein `SPECIAL_OFFER` an dieser Stelle.
-- [ ] Höchstzahl offener Termin-Aufträge je Spielstand (Konfig). Kein Rücktritt nach dem Abschluss (wie R3-M2).
-- [ ] Die Liquiditätsplanung (R3-K2) zeigt die erwartete Einnahme im Liefermonat als „erwartet“; der Kalender zeigt den
+  erzeugt in der Zeit kein `SPECIAL_OFFER` an dieser Stelle. Umgesetzt (Entscheidung 08.10.2026): auch Monate mit einem
+  angebotenen oder laufenden Sonderangebot sind gesperrt; ein Vorkontrakt bleibt am ganzen Paar gesperrt, solange dort
+  ein Vorkontrakt oder Großauftrag offen ist; Sonderangebote und Dürre-Preisanstiege meiden das Paar, solange ein
+  Großauftrag offen ist (`ForwardContractService.openPairs`).
+- [x] Höchstzahl offener Termin-Aufträge je Spielstand (Konfig). Kein Rücktritt nach dem Abschluss (wie R3-M2).
+- [x] Die Liquiditätsplanung (R3-K2) zeigt die erwartete Einnahme im Liefermonat als „erwartet“; der Kalender zeigt den
   Liefermonat; zu Beginn des Liefermonats kommt ein Hinweis im Spiel (`NOTIFICATION`: „Ölmühle Nord wartet diesen
   Monat auf 500.000 l Raps“).
 
@@ -216,13 +233,13 @@ begrenzt (`Instructions.lua` prüft `maxQuantity > 0`, `PriceEvents.lua` zählt 
 
 ### R32-G4 Abschluss, Strafe, Vertrauen
 
-- [ ] Nach `deadlineGameTime` wertet das Backend `contractReports` aus (`endReason` `MAX_QUANTITY_REACHED` oder
+- [x] Nach `deadlineGameTime` wertet das Backend `contractReports` aus (`endReason` `MAX_QUANTITY_REACHED` oder
   `DEADLINE_REACHED`):
   - volle Menge → Dank-Mail, Vertrauen + (Konfig), Ablehnungsfaktor eine Stufe hoch,
   - Fehlmenge → `Fehlmenge × Festpreis × penalty-share` (**0,25**) als `MONEY_TRANSACTION` `CONTRACT_PENALTY`,
     Mail des Abnehmers, Vertrauen − (Konfig), Ablehnungsfaktor eine Stufe runter.
-- [ ] Die Strafe erscheint im Journal als operative Ausgabe (wie R3-M2).
-- [ ] Werte unter `rpsim.formulas.bulk-order.*`.
+- [x] Die Strafe erscheint im Journal als operative Ausgabe (wie R3-M2).
+- [x] Werte unter `rpsim.formulas.bulk-order.*`.
 
 **Beleg:** – (Abrechnung wie R3-M2).
 
@@ -396,12 +413,12 @@ Konfig. Eingetragen in `QUESTIONS.md` mit Status `open`.
 
 | Punkt | Frage | Vorschlag |
 | --- | --- | --- |
-| G1 | Sorten und Mengenspannen | `WHEAT`, `BARLEY`, `CANOLA`, `SUNFLOWER`, `SOYBEAN`, `MAIZE`, `POTATO`, `SUGARBEET`; je Sorte 50.000–500.000 l in Schritten von 10.000 l (Kartoffeln/Zuckerrüben 50.000–300.000 l). |
-| G1 | Häufigkeit, Antwortfrist, Höchstzahl | höchstens 1 Anfrage je Monat (Wahrscheinlichkeit 0,3 × Ablehnungsfaktor, Faktor 0,75 je Ablehnung, mindestens 0,1), 5 Tage Antwortfrist, höchstens 3 offene Termin-Aufträge. |
-| G1 | Nur Sorten, die der Hof lagern oder anbauen kann? | Ja: eigenes Silo für die Sorte (`tradeStorage`) **oder** die Kultur steht im laufenden/letzten Erntejahr auf einem eigenen Feld. Sonst würden Anfragen kommen, die der Hof nie erfüllen kann. |
-| G2 | Dorf-Ansehen für Großaufträge? | Nein, Geschäftssache. Nur Vertrauen beim Großabnehmer. |
-| G3 | Vorlauf | 1–12 Monate (wie Vorkontrakt). |
-| G4 | Vertrauen | +3 bei voller Lieferung, −5 bei Fehlmenge (wie R3-M2). |
+| G1 ✅ 08.10.2026 wie vorgeschlagen | Sorten und Mengenspannen | `WHEAT`, `BARLEY`, `CANOLA`, `SUNFLOWER`, `SOYBEAN`, `MAIZE`, `POTATO`, `SUGARBEET`; je Sorte 50.000–500.000 l in Schritten von 10.000 l (Kartoffeln/Zuckerrüben 50.000–300.000 l). |
+| G1 ✅ 08.10.2026 wie vorgeschlagen | Häufigkeit, Antwortfrist, Höchstzahl | höchstens 1 Anfrage je Monat (Wahrscheinlichkeit 0,3 × Ablehnungsfaktor, Faktor 0,75 je Ablehnung, mindestens 0,1), 5 Tage Antwortfrist, höchstens 3 offene Termin-Aufträge. |
+| G1 ✅ 08.10.2026: **kein Filter** | Nur Sorten, die der Hof lagern oder anbauen kann? | Ja: eigenes Silo für die Sorte (`tradeStorage`) **oder** die Kultur steht im laufenden/letzten Erntejahr auf einem eigenen Feld. Sonst würden Anfragen kommen, die der Hof nie erfüllen kann. |
+| G2 ✅ 08.10.2026 wie vorgeschlagen | Dorf-Ansehen für Großaufträge? | Nein, Geschäftssache. Nur Vertrauen beim Großabnehmer. |
+| G3 ✅ 08.10.2026 wie vorgeschlagen | Vorlauf | 1–12 Monate (wie Vorkontrakt). |
+| G4 ✅ 08.10.2026 wie vorgeschlagen | Vertrauen | +3 bei voller Lieferung, −5 bei Fehlmenge (wie R3-M2). |
 | I1 | Summe im Verhältnis zur Hofgröße | Summe höchstens 50 % des Hofvermögens (Bank-Sicht), gerundet auf 50.000 €, innerhalb 250.000–2.500.000 €. Liegt die Grenze unter 250.000 €, kommt kein Angebot. |
 | I2 | Laufzeit und Zielrendite | 2–5 FS25-Jahre; Zielrendite je Art 6–12 % p. a. |
 | I3 | Buchungsklasse des Gewinnanteils / der Ausschüttung (`INVESTOR_PAYOUT`) | **Entschieden 08.10.2026:** `FINANCING` (Gewinnverwendung, mindert nicht den Gewinn und nicht die Steuer). |

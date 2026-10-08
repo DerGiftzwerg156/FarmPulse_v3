@@ -862,6 +862,31 @@ Price alarms and forward contracts of the Agrarbörse, the farm shop in the app 
 | `rpsim.formulas.farm-shop.min-factor` | `0.1` | Lower bound of the factor. | Roadmap V3 R3-M3 |
 | `rpsim.formulas.farm-shop.reputation-delta` | `1` | Village reputation per delivered order (`PublicActionType.FARM_SHOP`) ... | Roadmap V3 R3-M3 |
 | `rpsim.formulas.farm-shop.reputation-max-per-year` | `4` | ... at most this many times per FS25 year. | Roadmap V3 R3-M3 |
+| `rpsim.formulas.bulk-order.enabled` | `true` | Bulk buyers send requests (G1). | Roadmap V3.2 R32-G1 |
+| `rpsim.formulas.bulk-order.fill-types` | `[WHEAT, BARLEY, CANOLA, SUNFLOWER, SOYBEAN, MAIZE, POTATO, SUGARBEET]` | Fill types a bulk buyer orders; only with a sell point of the map that accepts the fill type (`market_context.sellPoints[].acceptedFillTypes`, no production). No filter on own silos or own crops (owner decision 2026-10-08). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.amounts.WHEAT` | `{ min: 50000, max: 500000, step: 10000 }` | Amount range of one order in litres (fixed per fill type, independent of the farm size). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.amounts.BARLEY` | `{ min: 50000, max: 500000, step: 10000 }` | Amount range of one order in litres (fixed per fill type, independent of the farm size). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.amounts.CANOLA` | `{ min: 50000, max: 500000, step: 10000 }` | Amount range of one order in litres (fixed per fill type, independent of the farm size). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.amounts.SUNFLOWER` | `{ min: 50000, max: 500000, step: 10000 }` | Amount range of one order in litres (fixed per fill type, independent of the farm size). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.amounts.SOYBEAN` | `{ min: 50000, max: 500000, step: 10000 }` | Amount range of one order in litres (fixed per fill type, independent of the farm size). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.amounts.MAIZE` | `{ min: 50000, max: 500000, step: 10000 }` | Amount range of one order in litres (fixed per fill type, independent of the farm size). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.amounts.POTATO` | `{ min: 50000, max: 300000, step: 10000 }` | Amount range of one order in litres. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.amounts.SUGARBEET` | `{ min: 50000, max: 300000, step: 10000 }` | Amount range of one order in litres. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.max-requests-per-month` | `1` | At most this many requests per FS25 month. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.probability` | `0.3` | Chance per possible request and month, multiplied by the refusal factor of the savegame. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.refusal-factor` | `0.75` | A declined or ignored request and a shortfall multiply the factor with this, a full delivery divides by it (max 1). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.min-factor` | `0.1` | Lowest refusal factor. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.answer-days` | `5` | Game days to answer; afterwards the request lapses like an ignored farm-shop order (factor down). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.call-share` | `0.1` | Share of the requests that come as a call (`Channel.CALL`) instead of a mail. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.instant-markup` | `1.25` | Instant delivery from the own silos: best market price of all sell points x 1.25 (G2). | Roadmap V3.2 R32-G2 |
+| `rpsim.formulas.bulk-order.term-base-markup` | `0.05` | Delivery month: today's price at the buyer's sell point x (1 + 0.05 + term-markup-per-month x months of lead) (G3). | Roadmap V3.2 R32-G3 |
+| `rpsim.formulas.bulk-order.term-markup-per-month` | `0.01` | ... plus 0.01 per month of lead. | Roadmap V3.2 R32-G3 |
+| `rpsim.formulas.bulk-order.min-lead-months` | `1` | Earliest delivery month (months ahead of the current one). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.max-lead-months` | `12` | Latest delivery month. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.max-open` | `3` | At most this many open orders with a delivery month per savegame. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.penalty-share` | `0.25` | Shortfall x fixed price x 25 % as `CONTRACT_PENALTY` (like the forward contract, G4). | Roadmap V3.2 R32-G4 |
+| `rpsim.formulas.bulk-order.fulfilled-trust-delta` | `3` | Trust of the bulk buyer for a full delivery (instant or delivery month). | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
+| `rpsim.formulas.bulk-order.shortfall-trust-delta` | `-5` | Trust of the bulk buyer for a shortfall. | Roadmap V3.2 R32-G, owner decision 2026-10-08 |
 
 ## `rpsim.formulas.office-clerk` / `apprentice` (Roadmap V3 R3-P)
 

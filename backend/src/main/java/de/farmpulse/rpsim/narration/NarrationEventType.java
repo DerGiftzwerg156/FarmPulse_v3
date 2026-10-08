@@ -160,6 +160,11 @@ public enum NarrationEventType {
     FORWARD_CONTRACT_FULFILLED,
     FORWARD_CONTRACT_SHORTFALL,
     FARM_SHOP_ORDER,
+    // Roadmap V3.2 R32-G: request of a bulk buyer, thanks after an instant delivery, settlement of a delivery month
+    BULK_ORDER_REQUEST,
+    BULK_ORDER_DELIVERED,
+    BULK_ORDER_FULFILLED,
+    BULK_ORDER_SHORTFALL,
     // Roadmap V3 R3-W: drought, drought aid, weather-index insurance
     DROUGHT_WARNING,
     DROUGHT_DECLARED,

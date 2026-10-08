@@ -560,6 +560,33 @@ rpsim:
       min-factor: 0.1
       reputation-delta: 1
       reputation-max-per-year: 4
+    bulk-order:                   # Roadmap V3.2 R32-G: bulk orders of bulk buyers (owner decisions 2026-10-08)
+      enabled: true
+      fill-types: [WHEAT, BARLEY, CANOLA, SUNFLOWER, SOYBEAN, MAIZE, POTATO, SUGARBEET]
+      amounts:                    # litres per order: min..max in steps of step
+        WHEAT: { min: 50000, max: 500000, step: 10000 }
+        BARLEY: { min: 50000, max: 500000, step: 10000 }
+        CANOLA: { min: 50000, max: 500000, step: 10000 }
+        SUNFLOWER: { min: 50000, max: 500000, step: 10000 }
+        SOYBEAN: { min: 50000, max: 500000, step: 10000 }
+        MAIZE: { min: 50000, max: 500000, step: 10000 }
+        POTATO: { min: 50000, max: 300000, step: 10000 }
+        SUGARBEET: { min: 50000, max: 300000, step: 10000 }
+      max-requests-per-month: 1
+      probability: 0.3            # x refusal factor of the savegame
+      refusal-factor: 0.75        # each refusal / ignored request / shortfall x 0.75, each full delivery / 0.75 (max 1)
+      min-factor: 0.1
+      answer-days: 5
+      call-share: 0.1             # 10 % of the requests come as a call
+      instant-markup: 1.25        # instant delivery: best market price x 1.25
+      term-base-markup: 0.05      # delivery month: price of the sell point x (1 + 0.05 + 0.01 x months of lead)
+      term-markup-per-month: 0.01
+      min-lead-months: 1
+      max-lead-months: 12
+      max-open: 3                 # open orders with a delivery month
+      penalty-share: 0.25         # shortfall x fixed price x 25 % as CONTRACT_PENALTY
+      fulfilled-trust-delta: 3
+      shortfall-trust-delta: -5
     neighbor-missions:            # Roadmap V3 R3-H5: real contracts of the neighbours (owner decisions, placeholders)
       types: [PLOW, STONE_PICK]
       probability-per-month: 0.4

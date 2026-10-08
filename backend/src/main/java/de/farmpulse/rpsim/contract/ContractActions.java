@@ -44,6 +44,7 @@ public class ContractActions {
     private final CollateralService collateral;
     private final AnnualReviewService annualReview;
     private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
+    private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
     private final de.farmpulse.rpsim.drought.DroughtService drought;
     private final de.farmpulse.rpsim.employee.ApprenticeService apprentices;
     private final LeaseOutService leaseOut;
@@ -71,7 +72,9 @@ public class ContractActions {
                            StammtischService stammtisch,
                            CropDamageService cropDamage,
                            SchoolVisitService schoolVisits,
-                           CooperativeService cooperative) {
+                           CooperativeService cooperative,
+                           de.farmpulse.rpsim.market.BulkOrderService bulkOrders) {
+        this.bulkOrders = bulkOrders;
         this.cooperative = cooperative;
         this.schoolVisits = schoolVisits;
         this.cropDamage = cropDamage;
@@ -168,6 +171,7 @@ public class ContractActions {
             case ANNUAL_REVIEW -> annualReview.attend(sg, id); // R3-K3: "Termin wahrnehmen"
             case ANNUAL_REVIEW_OFFER -> annualReview.acceptOffer(sg, id); // R3-K3: accept the rate cut
             case FARM_SHOP_ORDER -> farmShop.accept(sg, id); // R3-M3: deliver
+            case BULK_ORDER -> bulkOrders.deliver(sg, id); // R32-G2: "Sofort liefern"
             case DROUGHT_AID -> drought.apply(sg, id); // R3-W2: "Antrag stellen"
             case APPRENTICE_TAKEOVER -> apprentices.accept(sg, id); // R3-P2: take over at the demanded salary
             case MACHINE_DEMO_OFFER -> machineLoans.acceptDemoOffer(sg, id); // R31-A2: "Vorführung annehmen"
@@ -212,6 +216,7 @@ public class ContractActions {
             case ANNUAL_REVIEW -> annualReview.decline(sg, id); // R3-K3: without consequence
             case ANNUAL_REVIEW_OFFER -> annualReview.declineOffer(sg, id);
             case FARM_SHOP_ORDER -> farmShop.decline(sg, id); // R3-M3
+            case BULK_ORDER -> bulkOrders.decline(sg, id); // R32-G1
             case APPRENTICE_TAKEOVER -> apprentices.decline(sg, id); // R3-P2
             case MACHINE_DEMO_OFFER -> machineLoans.declineDemoOffer(sg, id); // R31-A2
             case ANIMAL_OFFER, ANIMAL_REQUEST -> livestockTrade.decline(sg, id); // R31-A3

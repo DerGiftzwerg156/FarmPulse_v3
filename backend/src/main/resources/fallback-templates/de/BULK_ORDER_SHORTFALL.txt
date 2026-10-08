@@ -1,0 +1,7 @@
+Großauftrag nicht erfüllt: {{fillType}}
+Guten Tag,
+
+beim Großauftrag für {{sellPoint}} fehlen {{shortfall}} Liter {{fillType}}: geliefert wurden {{delivered}} von {{quantity}} Litern. Für die Fehlmenge wird eine Vertragsstrafe von {{penalty}} € fällig.
+
+Viele Grüße
+{{characterName}}

@@ -500,6 +500,16 @@ export class ApiService {
     return this.post('/farm-holiday', {});
   }
   /** Roadmap V3.1 R31-D7: cooperative shares. */
+  // Roadmap V3.2 R32-G: bulk orders ("Sofort liefern" / "Ablehnen" go through caseAction)
+  bulkOrders(): Observable<M.BulkOrdersView> {
+    return this.get('/trade/bulk-orders');
+  }
+  bulkOrderMonths(caseId: number): Observable<M.BulkOrderMonthView[]> {
+    return this.get(`/trade/bulk-orders/${caseId}/months`);
+  }
+  agreeBulkOrder(caseId: number, leadMonths: number): Observable<M.BulkOrderView> {
+    return this.post(`/trade/bulk-orders/${caseId}/term`, { leadMonths });
+  }
   cooperative(): Observable<M.CooperativeView> {
     return this.get('/cooperative');
   }

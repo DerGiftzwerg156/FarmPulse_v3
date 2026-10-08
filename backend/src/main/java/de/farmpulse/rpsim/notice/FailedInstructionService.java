@@ -66,6 +66,7 @@ public class FailedInstructionService {
 
     private final OutboxInstructionRepository outbox;
     private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
+    private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
     private final SavegameRepository savegames;
     private final LoanService loans;
     private final PayrollScheduler payroll;
@@ -96,7 +97,9 @@ public class FailedInstructionService {
                                     de.farmpulse.rpsim.farmwork.ContractorWorkService contractorWork,
                                     de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans,
                                     de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade,
-                                    DieselTheftService dieselThefts) {
+                                    DieselTheftService dieselThefts,
+                                    de.farmpulse.rpsim.market.BulkOrderService bulkOrders) {
+        this.bulkOrders = bulkOrders;
         this.dieselThefts = dieselThefts;
         this.machineLoans = machineLoans;
         this.livestockTrade = livestockTrade;
@@ -187,6 +190,9 @@ public class FailedInstructionService {
         } else if (NeighborTradeService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = trade.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-H3 / R3-H4
+        } else if (de.farmpulse.rpsim.market.BulkOrderService.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.STORAGE_TRANSFER) {
+            handled = bulkOrders.onInstructionFailed(relatedId, ins.getAckMessage()); // R32-G2: the request stays open
         } else if (de.farmpulse.rpsim.neighbor.FarmShopService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = farmShop.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-M3

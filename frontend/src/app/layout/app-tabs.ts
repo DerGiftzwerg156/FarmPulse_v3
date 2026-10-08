@@ -74,6 +74,7 @@ export const APP_TABS: Record<string, TabDef[]> = {
     { id: 'nachbarn', label: 'tabs.trade.nachbarn' },
     { id: 'tiere', label: 'tabs.trade.tiere' },
     { id: 'hofladen', label: 'tabs.trade.hofladen' },
+    { id: 'grossauftraege', label: 'tabs.trade.grossauftraege' }, // Roadmap V3.2 R32-G
     { id: 'ferienwohnung', label: 'tabs.trade.ferienwohnung' },
     { id: 'genossenschaft', label: 'tabs.trade.genossenschaft' },
   ],
@@ -124,6 +125,7 @@ const CASE_TAB: Record<string, string> = {
   ANIMAL_OFFER: 'tiere',
   ANIMAL_REQUEST: 'tiere',
   FARM_SHOP_ORDER: 'hofladen',
+  BULK_ORDER: 'grossauftraege', // Roadmap V3.2 R32-G1
   COLLATERAL_CLAIM: 'kredite',
   ANNUAL_REVIEW: 'kredite',
   ANNUAL_REVIEW_OFFER: 'kredite',

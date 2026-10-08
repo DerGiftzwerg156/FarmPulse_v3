@@ -52,7 +52,7 @@ Homescreen.
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen | Karte · Meine Felder · Verhandlungen · Pacht · Vorgänge |
 | **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl | Ställe · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
-| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Ferienwohnung · Genossenschaft |
+| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
 | **Tagebuch** | Die Chronik deines Hofs | – |
 | **Einstellungen** | Alle Einstellungen: KI, Hof, Ereignisse, Fragen und Helfer im Spiel, Tablet & Netzwerk | KI · Hof · Ereignisse · Im Spiel · Tablet & Netzwerk |
 
@@ -89,6 +89,7 @@ Tagebuch steht.
   Vorauszahlungen, die Fruchtfolge-Prüfung des Amts und Familientermine (Geburtstage, Hochzeitstag, Einschulung).
 - **Einladungen** zu den Dorffesten beantwortest du hier: **Zusagen** freut die Gastgeber, **Absagen** ist in
   Ordnung, gar nicht zu antworten kostet ein wenig Vertrauen.
+- **Großaufträge:** Beginn und Ende des Liefermonats eines Großauftrags (siehe **Handel**).
 - **Stammtisch:** Alle 14 Spieltage lädt dich jemand aus dem Dorf in die Dorfkneipe ein (2 Tage Zeit). Wer
   **hingeht**, gewinnt Vertrauen bei drei Leuten am Tisch, das nächste Gerücht an der Agrarbörse stimmt öfter, und ab
   und zu gibt es einen Tipp – eine laufende Versteigerung oder jemanden, der ein Feld verkaufen würde. Wer dreimal
@@ -209,7 +210,8 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   Ist der Kredit getilgt, ist die Grundschuld gelöscht. Im Ton *Hart* nimmt die Bank bei einer Fälligstellung die
   belasteten Felder und rechnet sie gegen die Restschuld; einen Überschuss bekommst du.
 - **Liquiditätsplanung:** Die nächsten 12 Monate mit allem, was schon feststeht: Gehälter, Kreditraten, Verträge,
-  Pacht, Altenteil und Steuervorauszahlungen, dazu die erwartete Einnahme deiner Vorkontrakte im Liefermonat. Dazu
+  Pacht, Altenteil und Steuervorauszahlungen, dazu die erwartete Einnahme deiner Vorkontrakte und Großaufträge im
+  Liefermonat. Dazu
   kommen die Einnahmen als **Schätzung** aus dem gleichen Monat des
   Vorjahres. Fällt dein Kontostand in einem Monat unter null oder unter einen Monat Fixkosten, steht das oben. Ein Klick
   auf einen Monat zeigt die einzelnen Posten. Droht in den nächsten drei Monaten ein Minus, meldet sich die
@@ -529,7 +531,9 @@ bevorzugt die Früchte, die du wirklich lagerst.
   Verkaufsstelle im Spiel den Festpreis bis zur vereinbarten Menge. Fehlt am Monatsende Ware, kostet die Fehlmenge
   25 % ihres Werts als Vertragsstrafe, und die Landhändlerin ist enttäuscht. Volle Lieferung freut sie. Die
   erwartete Einnahme steht in der Liquiditätsplanung der Bank. Je Verkaufsstelle und Sorte gibt es nur einen
-  Festpreis zur selben Zeit.
+  Festpreis zur selben Zeit: Solange dort ein Vorkontrakt oder ein Großauftrag mit Liefermonat offen ist, gibt es dort
+  keinen weiteren Vorkontrakt. Stellst du die „Tage pro Monat“ um, bevor der Liefermonat begonnen hat, bleibt der
+  Vorkontrakt in seinem Monat; im laufenden Liefermonat gilt das bisherige Monatsende.
 
 ## Versicherung
 
@@ -641,6 +645,26 @@ Zuckerrüben oder Raps, je nachdem, was bei dir liegt), zum Hofladenpreis von 13
 *Liefern* wird die Ware aus dem Silo gebucht und das Geld gutgeschrieben. Das hebt dein Ansehen im Dorf (höchstens
 viermal im Jahr). Lehnst du ab oder antwortest nicht binnen 3 Tagen, kommen seltener Bestellungen; jede Lieferung
 macht das wieder besser.
+
+**Großaufträge:** Ab und zu (höchstens einmal im Monat) meldet sich ein **Großabnehmer** – per Mail, manchmal per
+Anruf. Er kauft für eine Verkaufsstelle der Karte ein (z. B. eine Mühle) und will eine große Menge einer Sorte: Weizen,
+Gerste, Raps, Sonnenblumen, Sojabohnen oder Mais 50.000–500.000 Liter, Kartoffeln oder Zuckerrüben 50.000–300.000 Liter.
+Du hast 5 Tage Zeit:
+
+- **Sofort liefern:** Liegt die ganze Menge in deinen Silos, nimmt er sie zu **125 % des besten Marktpreises** ab. Die
+  Ware wird aus dem Silo gebucht, das Geld gutgeschrieben. Eine Teillieferung gibt es nicht.
+- **Termin vereinbaren:** Du wählst einen Liefermonat 1 bis 12 Monate voraus. Der Festpreis ist der heutige Preis der
+  Verkaufsstelle mal (1,05 + 0,01 je Monat Vorlauf). In diesem **ganzen Monat** zahlt die Verkaufsstelle dir den
+  Festpreis; du fährst die Ware selbst hin (oder lieferst direkt vom Feld). Zu Monatsbeginn kommt ein Hinweis im
+  Spiel. Monate, in denen dort schon ein Festpreis gilt (Vorkontrakt, Sonderangebot oder ein anderer Großauftrag),
+  stehen nicht zur Wahl; höchstens 3 Großaufträge mit Liefermonat laufen gleichzeitig. Kein Rücktritt.
+- **Ablehnen** ist erlaubt, macht Anfragen aber seltener – wie Ignorieren.
+
+Fehlt am Ende des Liefermonats Ware, kostet das **25 % der Fehlmenge zum Festpreis** als Vertragsstrafe, und es kommen
+seltener Anfragen. Eine vollständige Lieferung macht sie wieder häufiger. Die erwartete Einnahme steht in der
+Liquiditätsplanung der **Bank**, Beginn und Ende des Liefermonats im **Kalender**. Jeder Auftrag hat eine eigene
+Ansprechperson, die sich nach dem Auftrag verabschiedet. Stellst du die „Tage pro Monat“ um, bevor der Liefermonat
+begonnen hat, bleibt der Termin in seinem Monat; während des laufenden Liefermonats gilt das bisherige Monatsende.
 
 **Viehhandel mit Nachbarn:** Milchviehbetriebe halten Kühe, Gemischtbetriebe Kühe, Schweine und Schafe. Du siehst
 ihren Bestand und ihre Preise je Tier (aus dem Tierwert des Spiels, etwas teurer beim Kauf, etwas günstiger beim

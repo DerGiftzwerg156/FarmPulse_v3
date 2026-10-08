@@ -179,6 +179,7 @@ public class RpsimProperties {
         private PriceAlarm priceAlarm = new PriceAlarm();
         private ForwardContract forwardContract = new ForwardContract();
         private FarmShop farmShop = new FarmShop();
+        private BulkOrder bulkOrder = new BulkOrder();
         private Finance finance = new Finance();
         private LiquidityPlan liquidityPlan = new LiquidityPlan();
         private Drought drought = new Drought();
@@ -1071,6 +1072,48 @@ public class RpsimProperties {
         /** Village reputation per delivered order, at most reputation-max-per-year times per FS25 year. */
         private double reputationDelta = 1;
         private int reputationMaxPerYear = 4;
+    }
+
+    /** Roadmap V3.2 R32-G: bulk orders of bulk buyers at a sell point of the map (owner decisions 2026-10-08). */
+    @Getter @Setter
+    public static class BulkOrder {
+        private boolean enabled = true;
+        /** Fill types a bulk buyer orders (only with a sell point of the map that accepts them, no production). */
+        private List<String> fillTypes = new ArrayList<>(List.of("WHEAT", "BARLEY", "CANOLA", "SUNFLOWER", "SOYBEAN",
+                "MAIZE", "POTATO", "SUGARBEET"));
+        /** Fixed amount range per fill type (litres), independent of the farm size; fill types without entry: none. */
+        private Map<String, Amount> amounts = new LinkedHashMap<>();
+        /** At most this many requests per month, each with probability x the refusal factor of the savegame. */
+        private int maxRequestsPerMonth = 1;
+        private double probability = 0.3;
+        /** Each refused, ignored or short order multiplies the factor with this; a full delivery divides by it (max 1). */
+        private double refusalFactor = 0.75;
+        private double minFactor = 0.1;
+        private double answerDays = 5;
+        /** Share of the requests that come as a call instead of a mail. */
+        private double callShare = 0.1;
+        /** Instant delivery from the own silos: best market price x instant-markup. */
+        private double instantMarkup = 1.25;
+        /** Delivery month: today's price of the sell point x (1 + term-base-markup + term-markup-per-month x months). */
+        private double termBaseMarkup = 0.05;
+        private double termMarkupPerMonth = 0.01;
+        private int minLeadMonths = 1;
+        private int maxLeadMonths = 12;
+        /** At most this many open orders with a delivery month per savegame. */
+        private int maxOpen = 3;
+        /** Shortfall x fixed price x penalty-share as CONTRACT_PENALTY. */
+        private double penaltyShare = 0.25;
+        /** Trust of the bulk buyer for a full delivery (instant or delivery month) and for a shortfall. */
+        private double fulfilledTrustDelta = 3;
+        private double shortfallTrustDelta = -5;
+
+        /** Amount range of one fill type: min..max in steps of step. */
+        @Getter @Setter
+        public static class Amount {
+            private long min;
+            private long max;
+            private long step;
+        }
     }
 
     @Getter @Setter
