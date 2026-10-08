@@ -250,6 +250,8 @@ public class VillageNewspaperService {
                 case SCHOOL_VISIT -> "Eine Schulklasse war zu Besuch auf " + farm + ".";
                 case COOPERATIVE -> farm + " engagiert sich in der Genossenschaft.";
                 case STAMMTISCH_LONER -> "Am Stammtisch fragt man sich, wo die Leute von " + farm + " bleiben.";
+                case INVESTOR_NAMED -> "Ein Investor beteiligt sich an " + farm + "."; // Roadmap V3.2 R32-I3 P5
+                case INVESTOR_BREACH -> "Zwischen " + farm + " und seinem Investor gibt es Streit.";
                 default -> null;
             };
             if (text != null) {

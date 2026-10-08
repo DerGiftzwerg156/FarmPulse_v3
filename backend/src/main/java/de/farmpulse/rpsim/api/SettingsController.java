@@ -154,6 +154,9 @@ public class SettingsController {
         if (r.dieselTheft() != null) {
             sg.setBurdenDieselTheft(r.dieselTheft());
         }
+        if (r.investors() != null) { // Roadmap V3.2 R32-I1: large investors (not a burden, same settings card)
+            sg.setInvestorsEnabled(r.investors());
+        }
         return burdenView(sg);
     }
 
@@ -161,7 +164,7 @@ public class SettingsController {
         return new Views.BurdenSettingsView(sg.isBurdenAreaCheck(), sg.isBurdenFertilizer(), sg.isBurdenDisease(),
                 sg.isBurdenSickLeave(), sg.isBurdenNightWork(), sg.isBurdenCropDamage(), sg.isBurdenDieselTheft(),
                 sg.getTonePreset().name(),
-                props.getFormulas().getBurdeningEvents().getIdyllicFactor());
+                props.getFormulas().getBurdeningEvents().getIdyllicFactor(), sg.isInvestorsEnabled());
     }
 
     /** Roadmap V3 R3-T2: optional farm name, heads the chronicle (without it the map name). */

@@ -57,6 +57,9 @@ public enum TrustReason {
     /** Roadmap V3 R3-M2: forward contract delivered in full / with a shortfall. */
     FORWARD_CONTRACT_FULFILLED,
     FORWARD_CONTRACT_SHORTFALL,
+    /** Roadmap V3.2 R32-G2 / G4: bulk order delivered in full (instant or delivery month) / with a shortfall. */
+    BULK_ORDER_FULFILLED,
+    BULK_ORDER_SHORTFALL,
     /** Roadmap V3 R3-L1: the leased-out field was taken back in the game menu / the family field was leased out. */
     LEASE_OUT_RECLAIMED,
     FAMILY_FIELD_LEASED,
@@ -77,6 +80,14 @@ public enum TrustReason {
     CROP_DAMAGE_CLAIM_DECLINED,
     SCHOOL_VISIT,
     COOP_BOARD_MISSED,
+    /** Roadmap V3.2 R32-I: large investors - offer, considerations, breaches, claim, end of term. */
+    INVESTOR_OFFER_IGNORED,
+    INVESTOR_FULFILLED,
+    INVESTOR_REMINDER,
+    INVESTOR_COMPENSATION,
+    INVESTOR_TERMINATION,
+    INVESTOR_CLAIM_OVERDUE,
+    INVESTOR_CONTRACT_ENDED,
     INITIAL,
     OTHER
 }

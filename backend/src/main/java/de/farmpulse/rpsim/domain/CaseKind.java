@@ -80,5 +80,24 @@ public enum CaseKind {
     /** Roadmap V3.1 R31-D7: general assembly of the cooperative - vote yes (accept) / no (decline). reference = topic. */
     COOP_ASSEMBLY,
     /** Roadmap V3.1 R31-D7: mandatory board meeting of the cooperative (attend before the deadline). */
-    COOP_BOARD_MEETING
+    COOP_BOARD_MEETING,
+    /** Roadmap V3.2 R32-Q1: request of a bulk buyer (R32-G1) - deliver at once from the silo or agree a delivery month. */
+    BULK_ORDER,
+    /** Roadmap V3.2 R32-Q1: offer of a large investor with 2-3 packages (R32-I2) - accept one or decline. */
+    INVESTOR_OFFER,
+    /** Roadmap V3.2 R32-Q1: reminder of an investor with a grace period after a missed consideration (R32-I4 stage 1). */
+    INVESTOR_REMINDER,
+    /**
+     * Roadmap V3.2 R32-Q1: claim of an investor after the termination or at the end of the term (R32-I4 stage 3,
+     * R32-I5) - pay by button within the deadline like a tax bill.
+     */
+    INVESTOR_CLAIM,
+    /**
+     * Roadmap V3.2 R32-I3 P2: right of first refusal - the investor asks for goods at a fixed price (deliver like a bulk
+     * order G2 / decline = breach). reference = fill type, quantity = litres, costAmount = price per 1000 l,
+     * offerAmount = total.
+     */
+    INVESTOR_PURCHASE,
+    /** Roadmap V3.2 R32-I3 P4: the investor's visit / farm festival - accept by button (no acceptance = breach). */
+    INVESTOR_VISIT
 }

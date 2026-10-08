@@ -565,6 +565,102 @@ rpsim:
       min-factor: 0.1
       reputation-delta: 1
       reputation-max-per-year: 4
+    bulk-order:                   # Roadmap V3.2 R32-G: bulk orders of bulk buyers (owner decisions 2026-10-08)
+      enabled: true
+      fill-types: [WHEAT, BARLEY, CANOLA, SUNFLOWER, SOYBEAN, MAIZE, POTATO, SUGARBEET]
+      amounts:                    # litres per order: min..max in steps of step
+        WHEAT: { min: 50000, max: 500000, step: 10000 }
+        BARLEY: { min: 50000, max: 500000, step: 10000 }
+        CANOLA: { min: 50000, max: 500000, step: 10000 }
+        SUNFLOWER: { min: 50000, max: 500000, step: 10000 }
+        SOYBEAN: { min: 50000, max: 500000, step: 10000 }
+        MAIZE: { min: 50000, max: 500000, step: 10000 }
+        POTATO: { min: 50000, max: 300000, step: 10000 }
+        SUGARBEET: { min: 50000, max: 300000, step: 10000 }
+      max-requests-per-month: 1
+      probability: 0.3            # x refusal factor of the savegame
+      refusal-factor: 0.75        # each refusal / ignored request / shortfall x 0.75, each full delivery / 0.75 (max 1)
+      min-factor: 0.1
+      answer-days: 5
+      call-share: 0.1             # 10 % of the requests come as a call
+      instant-markup: 1.25        # instant delivery: best market price x 1.25
+      term-base-markup: 0.05      # delivery month: price of the sell point x (1 + 0.05 + 0.01 x months of lead)
+      term-markup-per-month: 0.01
+      min-lead-months: 1
+      max-lead-months: 12
+      max-open: 3                 # open orders with a delivery month
+      penalty-share: 0.25         # shortfall x fixed price x 25 % as CONTRACT_PENALTY
+      fulfilled-trust-delta: 3
+      shortfall-trust-delta: -5
+    investor:                     # Roadmap V3.2 R32-I: large investors (owner decisions 2026-10-08)
+      enabled: true
+      max-active: 2               # running investor contracts
+      amount-min: 250000          # amount: random step up to min(amount-max, asset-share x assets in bank view)
+      amount-max: 2500000
+      amount-step: 50000
+      asset-share: 0.5
+      min-credit-score: 50        # score of a loan over the amount (60 months, base rate of the bank)
+      credit-term-months: 60
+      delay-lookback-months: 12   # no payment delay within these months, no running call-back
+      base-probability: 0.05      # chance per month = 0.05 + 0.02 per milestone (max 0.06) +/- 0.02 by reputation
+      milestone-bonus: 0.02
+      milestone-bonus-max: 0.06
+      good-reputation-bonus: 0.02
+      controversial-reputation-malus: 0.02
+      call-share: 0.5             # half of the offers come as a call
+      answer-days: 10
+      ignored-trust-delta: -3     # offer left unanswered (declining costs nothing)
+      min-packages: 2
+      max-packages: 3
+      min-years: 2                # term in full FS25 years, random per package
+      max-years: 5
+      max-side-considerations: 2
+      liters-step: 1000           # goods and milk quantities rounded to 1,000 l
+      profit-share-min: 0.02      # R1: value per year / operating result, rounded to 0.5 %, 2-30 %
+      profit-share-max: 0.30
+      profit-share-step: 0.005
+      payout-rate-step: 0.001     # R2: payout rate rounded to 0.1 %
+      values:                     # value per year of the term (EUR), P4 per date
+        A2: 8000
+        A3: 12000
+        A4: 15000
+        P1: 10000
+        P4: 3000
+        P5: 4000
+      purchase-amount-share: 0.10 # P2: amount x 10 % / market price, at market price x 0.9
+      purchase-discount: 0.10
+      purchase-answer-days: 5
+      holiday-periods: [5, 6]     # P3: July and August
+      visits-per-year: 1          # P4
+      visit-answer-days: 3
+      welfare-min-health: 70      # A2: mean stable health over the exports of a month
+      growth-factor: 1.2          # A4: today's area (or animals) x 1.2 by the end of the first term year
+      crop-area-share: 0.30       # A3: 30 % of the own area, rounded to 0.5 ha, at least 1 ha
+      crop-area-step: 0.5
+      crop-area-min: 1.0
+      reminder-days-before-end: 7
+      grace-days: 5               # stage 1
+      compensation-markup: 1.25   # stage 2
+      breaches-to-terminate: 3    # stage 3
+      claim-days: 10              # claim paid by button like a tax bill
+      claim-overdue-trust-delta: -5
+      announce-months: 3          # end of term
+      extension-probability: 0.5
+      subordinated-debt-factor: 1.0
+      reminder-trust-delta: -2
+      compensation-trust-delta: -5
+      termination-trust-delta: -10
+      fulfilled-trust-delta: 1
+      end-trust-delta: 5
+      public-breach-delta: -2
+      kinds:                      # weight of the draw, target return p.a., main considerations, sorts, crop, P5
+        AGRI_FUND: { label: "Agrarfonds", weight: 1, target-return: 0.10, main: [R1, R2], fill-types: [], reputation-delta: -1 }
+        FOOD_CHAIN: { label: "Regionale Lebensmittelkette", weight: 1, target-return: 0.08, main: [W1, W2], fill-types: [WHEAT, POTATO], crop: WHEAT, reputation-delta: 2 }
+        DAIRY: { label: "Molkerei-Unternehmer", weight: 1, target-return: 0.08, main: [W3, A1], fill-types: [], reputation-delta: 2 }
+        BREWERY: { label: "Brauerei", weight: 0.5, target-return: 0.07, main: [W1, W2], fill-types: [BARLEY], crop: BARLEY, reputation-delta: 2 }
+        OIL_MILL: { label: "Ölmühle", weight: 0.5, target-return: 0.07, main: [W1, W2], fill-types: [CANOLA, SUNFLOWER], crop: CANOLA, reputation-delta: 2 }
+        ENERGY: { label: "Energieunternehmen", weight: 1, target-return: 0.09, main: [W1, W2, R2], fill-types: [MAIZE], crop: MAIZE, reputation-delta: -2 }
+        PRIVATE: { label: "Privatinvestorin / Familienstiftung", weight: 1, target-return: 0.06, main: [R1, A1], fill-types: [], reputation-delta: 1 }
     neighbor-missions:            # Roadmap V3 R3-H5: real contracts of the neighbours (owner decisions, placeholders)
       types: [PLOW, STONE_PICK]
       probability-per-month: 0.4
@@ -977,6 +1073,7 @@ rpsim:
         RPSIM_MACHINE_RENT: OPERATING_EXPENSE         # Roadmap V3.1 (R31-Q1): rented machine of a neighbour (R31-A2)
         RPSIM_LIVESTOCK_PURCHASE: OPERATING_EXPENSE   # Roadmap V3.1 (R31-Q1): animals from a neighbour (R31-A3)
         RPSIM_SOCIAL_INSURANCE: OPERATING_EXPENSE     # Roadmap V3.1 (R31-Q1): agricultural social insurance (R31-B5)
+        RPSIM_INVESTOR_COMPENSATION: OPERATING_EXPENSE # Roadmap V3.2 (R32-Q1): compensation to an investor (R32-I4)
         RPSIM_OTHER: OPERATING_EXPENSE
         SHOP_PROPERTY_BUY: INVESTMENT
         SHOP_VEHICLE_BUY: INVESTMENT
@@ -996,6 +1093,9 @@ rpsim:
         RPSIM_CREDIT_PREPAYMENT_FEE: FINANCING
         RPSIM_STARTING_CAPITAL_ADJUSTMENT: FINANCING
         RPSIM_COOP_SHARES: FINANCING                  # Roadmap V3.1 (R31-Q1): cooperative shares and their repayment (R31-D7)
+        RPSIM_INVESTOR_CAPITAL: FINANCING             # Roadmap V3.2 (R32-Q1): capital of a large investor (R32-I2)
+        RPSIM_INVESTOR_REPAYMENT: FINANCING           # Roadmap V3.2 (R32-Q1): buy-back / repayment to an investor (R32-I4/I5)
+        RPSIM_INVESTOR_PAYOUT: FINANCING              # Roadmap V3.2 (R32-Q1): profit share / fixed payout (R32-I3), appropriation of profit
         RPSIM_DAMAGE: IGNORE
         RPSIM_INSURANCE_PAYOUT: IGNORE
         RPSIM_WILDLIFE_COMPENSATION: IGNORE

@@ -1,0 +1,7 @@
+Besuch auf Ihrem Hof
+Guten Tag,
+
+wie vereinbart möchte ich in diesem Monat zu Besuch auf Ihren Hof kommen. Bitte sagen Sie mir in den nächsten {{answerDays}} Tagen in der App „Bank“ unter „Investoren“ zu.
+
+Viele Grüße
+{{characterName}}

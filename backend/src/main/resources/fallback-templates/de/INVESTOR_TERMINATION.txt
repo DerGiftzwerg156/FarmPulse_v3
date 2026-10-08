@@ -1,0 +1,6 @@
+Kündigung unseres Vertrags
+Guten Tag,
+
+nach {{breaches}} Vertragsbrüchen kündige ich unseren Vertrag. Ich fordere {{claim}} € zurück, zahlbar innerhalb von {{claimDays}} Tagen in der App „Bank“ unter „Investoren“.
+
+{{characterName}}

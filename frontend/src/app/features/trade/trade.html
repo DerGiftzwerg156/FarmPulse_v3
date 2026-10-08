@@ -1,4 +1,4 @@
-<!-- Tabs (owner decision 2026-10-06): Nachbarn & Ware | Tierhandel | Hofladen | Ferienwohnung | Genossenschaft -->
+<!-- Tabs (owner decision 2026-10-06): Nachbarn & Ware | Tierhandel | Hofladen | Großaufträge | Ferienwohnung | Genossenschaft -->
 <section class="space-y-4">
   @switch (tab()) {
     @case ('tiere') {
@@ -10,6 +10,12 @@
     @case ('hofladen') {
       <app-service-cases [caseKinds]="['FARM_SHOP_ORDER']" openTitle="trade.farmShop" [highlightCase]="highlightedCase()"
         testId="farm-shop-cases" />
+    }
+    @case ('grossauftraege') {
+      <!-- Roadmap V3.2 R32-G: requests of the bulk buyers, orders with a delivery month -->
+      <app-service-cases [caseKinds]="['BULK_ORDER']" openTitle="trade.bulk.requests" [highlightCase]="highlightedCase()"
+        testId="bulk-order-cases" />
+      <app-bulk-orders-card />
     }
     @case ('ferienwohnung') {
       <!-- Roadmap V3.1 R31-D6 -->

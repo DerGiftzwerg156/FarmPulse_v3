@@ -13,5 +13,7 @@ public interface ForwardContractRepository extends JpaRepository<ForwardContract
 
     List<ForwardContract> findBySavegameAndStatus(Savegame savegame, String status);
 
+    List<ForwardContract> findBySavegame_IdAndStatus(Long savegameId, String status);
+
     Optional<ForwardContract> findByInstructionId(String instructionId);
 }

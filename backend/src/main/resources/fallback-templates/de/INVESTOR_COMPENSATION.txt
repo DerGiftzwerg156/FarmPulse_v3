@@ -1,0 +1,7 @@
+Ausgleichszahlung: {{what}}
+Guten Tag,
+
+auch nach der Nachfrist fehlt: {{what}}. Dafür wird eine Ausgleichszahlung von {{compensation}} € fällig. Beim {{breachesToTerminate}}. Bruch kündige ich den Vertrag.
+
+Viele Grüße
+{{characterName}}

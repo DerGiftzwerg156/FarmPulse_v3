@@ -1180,8 +1180,85 @@ function RPSimGameAdapter.husbandryState(p)
             return list
         end, nil)
         state.freeSlots = safe(function() return p:getNumOfFreeAnimalSlots() end, nil)
+        state.storage = RPSimGameAdapter.husbandryMilkStorage(p)
         return state
     end, nil)
+end
+
+--- Roadmap V3.2 R32-Q1: the milk sorts in the storage of a husbandry (dump animals/husbandry/placeables, LUADOC
+-- Specializations/PlaceableHusbandry.md and PlaceableHusbandryMilk.md): the sorts are spec_husbandryMilk.fillTypes
+-- (subType.output.milk.fillType of every subtype), amount = getHusbandryFillLevel(fillTypeIndex, farmId) and capacity =
+-- getHusbandryCapacity(fillTypeIndex, farmId) (both read the storage through the unloading station, 0 without one).
+-- Returns { {fillType, amount, capacity} } or nil without the milk specialization.
+function RPSimGameAdapter.husbandryMilkStorage(p)
+    return safe(function()
+        local spec = p.spec_husbandryMilk
+        if spec == nil or spec.fillTypes == nil then
+            return nil
+        end
+        local farmId = p:getOwnerFarmId()
+        local list = {}
+        for _, index in ipairs(spec.fillTypes) do
+            local name = safe(function() return g_fillTypeManager:getFillTypeNameByIndex(index) end, nil)
+            if name ~= nil then
+                list[#list + 1] = { fillType = name,
+                    amount = safe(function() return p:getHusbandryFillLevel(index, farmId) end, 0),
+                    capacity = safe(function() return p:getHusbandryCapacity(index, farmId) end, 0) }
+            end
+        end
+        return list
+    end, nil)
+end
+
+--- R32-Q1: HUSBANDRY_TRANSFER - milk out of the storage of an own husbandry (only taking out; used by R32-I3 type W3).
+-- The sort from g_fillTypeManager:getFillTypeIndexByName must be one of spec_husbandryMilk.fillTypes; the stock is
+-- checked with getHusbandryFillLevel, then removeHusbandryFillLevel(farmId, amount, fillTypeIndex) takes it out through
+-- the loading station and returns the amount NOT taken (the whole amount without a loading station; the game evaluates
+-- it the same way in PlaceableHusbandryWater / PlaceableHusbandryStraw). With a rest > 0 the taken part is booked back
+-- with addHusbandryFillLevelFromTool (as PlaceableHusbandryMilk:updateOutput adds the milk) and the result is
+-- INSUFFICIENT_STOCK. FAILED with HUSBANDRY_NOT_FOUND, UNKNOWN_FILLTYPE, WRONG_FILLTYPE or INSUFFICIENT_STOCK.
+function RPSimGameAdapter:husbandryTransfer(ins)
+    local p = self:husbandryByUniqueId(ins.husbandryUniqueId)
+    if p == nil then
+        return false, "HUSBANDRY_NOT_FOUND"
+    end
+    local index = safe(function() return g_fillTypeManager:getFillTypeIndexByName(ins.fillType) end, nil)
+    if index == nil then
+        return false, "UNKNOWN_FILLTYPE"
+    end
+    local milk = false
+    for _, i in ipairs(safe(function() return p.spec_husbandryMilk.fillTypes end, {})) do
+        if i == index then
+            milk = true
+            break
+        end
+    end
+    if not milk then
+        return false, "WRONG_FILLTYPE"
+    end
+    local farmId = self:getFarmId()
+    local level = safe(function() return p:getHusbandryFillLevel(index, farmId) end, 0)
+    if level + 0.001 < ins.amount then
+        return false, "INSUFFICIENT_STOCK"
+    end
+    local ok, rest = pcall(function() return p:removeHusbandryFillLevel(farmId, ins.amount, index) end)
+    if not ok then
+        return false, tostring(rest)
+    end
+    if type(rest) ~= "number" or rest ~= rest then
+        -- not documented as anything else; derive the rest from the stock so nothing is lost
+        rest = ins.amount - (level - safe(function() return p:getHusbandryFillLevel(index, farmId) end, level))
+    end
+    if rest > 0.001 then
+        local taken = ins.amount - rest
+        if taken > 0 then
+            safe(function() return p:addHusbandryFillLevelFromTool(farmId, taken, index, nil, nil, nil) end, nil)
+        end
+        return false, "INSUFFICIENT_STOCK"
+    end
+    RPSimLog.info("Husbandry transfer %s l %s (husbandry %s)", tostring(ins.amount), tostring(ins.fillType),
+        tostring(ins.husbandryUniqueId))
+    return true
 end
 
 -- ------------------------------------------------------------------------ Roadmap V2 R2-A: employees as helpers

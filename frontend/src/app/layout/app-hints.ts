@@ -21,6 +21,7 @@ export const APP_HINTS: Record<string, HintParagraph[]> = {
   bank: [
     { heading: 'bank.apply', text: 'bank.processingHint' },
     { heading: 'bank.deferral', text: 'bank.deferralHint' },
+    { heading: 'investors.title', text: 'investors.offerHint' }, // Roadmap V3.2 R32-I
   ],
   authorities: [
     { heading: 'authorities.advisor', text: 'bank.tax.advisorHint' },
@@ -61,6 +62,7 @@ export const APP_HINTS: Record<string, HintParagraph[]> = {
     { heading: 'trade.cases', text: 'trade.offerHint' },
     { heading: 'tabs.trade.tiere', text: 'trade.animals.intro' },
     { heading: 'trade.farmShop', text: 'trade.farmShopIntro' },
+    { heading: 'tabs.trade.grossauftraege', text: 'trade.bulk.requestHint' }, // Roadmap V3.2 R32-G
     { heading: 'trade.holiday.title', text: 'trade.holiday.hint' },
   ],
   diary: [{ heading: 'diary.addNote', text: 'diary.narrativeOnly' }],

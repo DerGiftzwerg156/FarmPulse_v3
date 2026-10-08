@@ -14,13 +14,69 @@ Update the mod `FS25_RPSim` together with the backend: an older mod rejects the 
 is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
 types and booking reasons (the neighbour trade and contracts then fail); the notice then says "Mod aktualisieren".
 The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q), for the booking reason
-`SEVERANCE` (severance before the first working day) and for the contractor work `FERTILIZE` (*Düngen*).
+`SEVERANCE` (severance before the first working day) and for the contractor work `FERTILIZE` (*Düngen*). Also for the
+Roadmap V3.2 instruction type `HUSBANDRY_TRANSFER` and the booking reasons `INVESTOR_*` (R32-Q).
 
 The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
 filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
 
 ### Added
 
+- **Large investors [R32-I]** (owner decisions 2026-10-08 in `QUESTIONS.md`): new tab *Bank → Investoren* and switch
+  *Großinvestoren* in settings → events (default on).
+  - Offer: checked once per FS25 month - only with a farm report in profit, no payment delay within 12 months, no
+    running call-back and a credit score ≥ 50 for the amount; chance 5 % + 2 % per milestone (max +6 %) ± 2 % by
+    village reputation; at most one offer per FS25 year and 2 running investors. A new investor (`INVESTOR`) of one of
+    seven kinds offers 250,000–2,500,000 € (at most 50 % of the farm assets in the bank view) as a call (50 %, a missed
+    call also brings the mail) or mail, 10 days to answer (ignored −3 trust, declining costs nothing).
+  - 2–3 packages for the same amount: silent partnership or subordinated loan, 2–5 full FS25 years from the next year
+    start, a main consideration of the kind and 0–2 side considerations whose value adds up to amount × target return
+    (6–10 %) × years. Catalogue: goods over the term or per month, milk per month from a stable
+    (`HUSBANDRY_TRANSFER`), profit share, fixed payout, animals per year, animal welfare, crop obligation, growth target,
+    veto on field sales, right of first refusal, holiday flat in July/August, a visit per year, name in the village
+    paper. Accepting books `INVESTOR_CAPITAL`.
+  - *Liefern* (amount, stable) sends goods, milk and animals without money; deliveries count with the mod's ack and are
+    sent again after a rewind. Checks at the month or FS25 year change; a reminder a week before the end. A breach:
+    reminder with 5 days grace, then a compensation (market value × 1.25, obligations: value per year × 1.25), the
+    third breach terminates with a claim of the full amount (pay by button like a tax bill, then monthly reminders,
+    trust −5, payment delay, no interest). A payment refused for lack of money stays open and can be paid by button.
+  - End of term: announcement 3 months before, buy-back / repayment in the last month (`INVESTOR_REPAYMENT`, else a
+    claim); without a breach an extension offer with 50 % chance replaces the repayment.
+  - Bank: a silent partnership counts as asset (equity ratio up), a subordinated loan as asset and debt (down); the
+    advisor names new investors in the annual review. Liquidity plan, calendar, tasks, farm report section
+    "Investoren", chronicle (diary). Values under `rpsim.formulas.investor.*`; tables `investor_contract`,
+    `investor_obligation`, `investor_period`, `investor_delivery`, `investor_payment` (migration V42).
+- **Bulk orders [R32-G]** (owner decisions 2026-10-08 in `QUESTIONS.md`): about once a month (0.3 x a refusal factor)
+  a new bulk buyer of a sell point of the map (no production) asks for 50,000-500,000 l of wheat, barley, canola,
+  sunflower, soybean or maize (potatoes and sugar beet 50,000-300,000 l), as a mail or - 10 % - a call (a missed or
+  declined call also brings the mail). New tab *Handel → Großaufträge*, the request is also a task (5 days to answer):
+  - *Sofort liefern* with the whole amount in the own silos at the best market price x 1.25 (`STORAGE_TRANSFER OUT` +
+    `GOODS_SALE`, like the farm shop); a refused transfer books nothing and leaves the request open.
+  - *Termin vereinbaren*: a delivery month 1-12 months ahead at today's price of the sell point x (1.05 + 0.01 per
+    month), sent as `PRICE_EVENT / FIXED` for that whole month with an in-game hint at its start; months with a fixed
+    price at the pair (forward contract, bulk order, special offer) cannot be chosen, at most 3 open orders, no
+    withdrawal. The liquidity plan shows the expected income, the calendar the start and end of the delivery month.
+  - Shortfall at the end of the month: 25 % of the shortfall at the fixed price as `CONTRACT_PENALTY`; full delivery
+    +3 trust, shortfall -5; declining, ignoring and shortfalls make requests rarer (x 0.75, at least 0.1), full
+    deliveries more frequent again. Every request has its own buyer, who leaves when the order ends.
+  - An open bulk order with a delivery month blocks forward contracts, special offers and drought price events at its
+    pair, like a forward contract. Values under `rpsim.formulas.bulk-order.*`; table `bulk_order` (migration V41).
+- **Roadmap V3.2 groundwork - bridge contract for bulk orders and investors [R32-Q]:** not visible to players yet.
+  - Mod: `farm_facts.json` exports the milk in the storage of every own husbandry (`husbandries[].storage[]` =
+    `{ fillType, amount, capacity }`, milk sorts of `spec_husbandryMilk.fillTypes`, `getHusbandryFillLevel` /
+    `getHusbandryCapacity`; whole litres like `tradeStorage`). New instruction `HUSBANDRY_TRANSFER { husbandryUniqueId,
+    fillType, amount }` takes milk out of an own husbandry (`removeHusbandryFillLevel`); a partly taken amount is booked
+    back (`addHusbandryFillLevelFromTool`). Failure codes `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE`, `WRONG_FILLTYPE`,
+    `INSUFFICIENT_STOCK`.
+  - New booking reasons `INVESTOR_CAPITAL`, `INVESTOR_REPAYMENT`, `INVESTOR_PAYOUT` (financing) and
+    `INVESTOR_COMPENSATION` (operating expense) with booking titles, UI and chronicle labels; `INVESTOR_PAYOUT` counts
+    as appropriation of profit (owner decision 2026-10-08).
+  - Backend: roles `BULK_BUYER` (*Großabnehmer*) and `INVESTOR` (*Investor/in*), case kinds `BULK_ORDER`,
+    `INVESTOR_OFFER`, `INVESTOR_REMINDER`, `INVESTOR_CLAIM`; DTO and validator for the milk storage; a refused
+    `HUSBANDRY_TRANSFER` raises the notice "Mod aktualisieren".
+  - Bridge simulator: scenarios `grossauftrag` (full canola silo, oil mill as sell point) and `investor-milch` (cow
+    stable with milk), control endpoint `POST /husbandry-milk`; `HUSBANDRY_TRANSFER` is executed like in the mod.
+  - Docs: bridge protocol with FS25 sources, configuration reference, manual test plan section 28.
 - **Roadmap V3.2 (`docs/architecture/ROADMAP_V3.2.md`):** plan for bulk orders and large investors, checked against
   the FS25 code. Bulk buyers tied to a sell point order large amounts, delivered at once from the own silos (best
   price × 1.25) or in an agreed whole month at their sell point (fixed price, penalty on shortfall). Rarely an
@@ -422,6 +478,12 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Fixed
 
+- **Long affiliations of characters** (R32-I / R32-G): the investor kind "Privatinvestorin / Familienstiftung" or
+  a long sell point name of a bulk buyer no longer exceeds the column (`game_character.affiliation` now 128 characters).
+- **Forward contracts keep their delivery month when "Tage je Periode" changes** (owner decision 2026-10-08, R32-G3):
+  as long as the mod has not taken the `PRICE_EVENT`, start, end and the pending instruction move to the new month
+  boundaries. In a running delivery month the mod keeps the end it has. Before, the window stayed on the old game
+  times.
 - **Finances: FS25 production chain costs** (`unknown category 'PRODUCTION_COSTS'`): the FS25 money type
   `PRODUCTION_COSTS` is now classified as an operating expense (label "Produktionskosten"). Before, it counted as
   operating only by its sign, and the tax audit treated it as a disputed expense under an unknown category.

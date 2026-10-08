@@ -200,7 +200,7 @@ public final class Views {
      */
     public record BurdenSettingsView(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave,
                                      boolean nightWork, boolean cropDamage, boolean dieselTheft,
-                                     String tonePreset, double idyllicFactor) {
+                                     String tonePreset, double idyllicFactor, boolean investors) {
     }
 
     /** Roadmap V3 R3-T2: optional farm name; {@code mapName} is the fallback shown when it is empty. */
@@ -350,7 +350,12 @@ public final class Views {
     public record TaskView(String key, String type, String kind, Long deadlineGameTime, long gameTime, CaseView serviceCase,
                            ContractView contract, CreditApplicationView application, MessageView call,
                            NegotiationView negotiation, MarketEventView marketEvent, JobPostingView posting,
-                           Integer pendingApplicants) {
+                           Integer pendingApplicants, InvestorDueView investorDue) {
+    }
+
+    /** Roadmap V3.2 R32-I4: a delivery still due to an investor in the current period (task "INVESTOR_DUE"). */
+    public record InvestorDueView(Long contractId, Long obligationId, String investor, String type, String fillType,
+                                  String subType, long remaining) {
     }
 
     /** Open tasks sorted by deadline (none last) plus the number of yes/no questions waiting in the game. */

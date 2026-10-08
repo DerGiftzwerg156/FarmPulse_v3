@@ -76,6 +76,7 @@ class ApiIntegrationTest {
     @Autowired MarketEventEngine market;
     @Autowired RpsimProperties props;
     @Autowired de.farmpulse.rpsim.employee.HiringService hiring;
+    @Autowired de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
 
     Savegame sg;
     Character bank;
@@ -328,6 +329,58 @@ class ApiIntegrationTest {
     }
 
     // ------------------------------------------------------------------ storage & prices
+
+    /** Roadmap V3.2 R32-G: requests, delivery months and the agreed order in "Handel → Großaufträge". */
+    @Test
+    void bulkOrderEndpoints() throws Exception {
+        var request = bulkOrders.spawnRequest(sg).orElseThrow();
+        mvc.perform(get("/api/trade/bulk-orders")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.silosTracked").value(false))
+                .andExpect(jsonPath("$.maxOpen").value(3))
+                .andExpect(jsonPath("$.instantMarkupPercent").value(25.0))
+                .andExpect(jsonPath("$.penaltySharePercent").value(25.0))
+                .andExpect(jsonPath("$.requests[0].kind").value("BULK_ORDER"))
+                .andExpect(jsonPath("$.requests[0].title").value(request.getTitle()))
+                .andExpect(jsonPath("$.orders").isEmpty());
+        mvc.perform(get("/api/trade/bulk-orders/" + request.getId() + "/months")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(12))
+                .andExpect(jsonPath("$[0].leadMonths").value(1))
+                .andExpect(jsonPath("$[0].available").value(true));
+        postJson("/api/trade/bulk-orders/" + request.getId() + "/term", java.util.Map.of("leadMonths", 2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OPEN"))
+                .andExpect(jsonPath("$.leadMonths").value(2))
+                .andExpect(jsonPath("$.sellPointName").value(request.getTitle()));
+        mvc.perform(get("/api/trade/bulk-orders")).andExpect(jsonPath("$.open").value(1))
+                .andExpect(jsonPath("$.orders[0].quantity").value(request.getQuantity()))
+                .andExpect(jsonPath("$.requests[0].status").value("SETTLED"));
+        // the request is done: no instant delivery anymore, and the lead must be a whole number > 0
+        mvc.perform(post("/api/cases/" + request.getId() + "/accept")).andExpect(status().is4xxClientError());
+        postJson("/api/trade/bulk-orders/" + request.getId() + "/term", java.util.Map.of("leadMonths", 0))
+                .andExpect(status().is4xxClientError());
+    }
+
+    /** Roadmap V3.2 R32-I: app "Bank", area "Investoren", and the switch in settings -> events. */
+    @Test
+    void investorEndpoints() throws Exception {
+        mvc.perform(get("/api/investors")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.savegameEnabled").value(true))
+                .andExpect(jsonPath("$.maxActive").value(2))
+                .andExpect(jsonPath("$.breachesToTerminate").value(3))
+                .andExpect(jsonPath("$.offers").isEmpty())
+                .andExpect(jsonPath("$.contracts").isEmpty());
+        mvc.perform(get("/api/settings/burdening-events")).andExpect(jsonPath("$.investors").value(true));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/settings/burdening-events")
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of(
+                                "areaCheck", true, "fertilizer", true, "disease", true, "sickLeave", true,
+                                "investors", false))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.investors").value(false));
+        mvc.perform(get("/api/investors")).andExpect(jsonPath("$.savegameEnabled").value(false));
+        mvc.perform(post("/api/investors/offers/999999/packages/1/accept")).andExpect(status().isNotFound());
+        postJson("/api/investors/obligations/999999/deliver", java.util.Map.of("quantity", 0))
+                .andExpect(status().isBadRequest());
+    }
 
     @Test
     void storageAndPrices() throws Exception {

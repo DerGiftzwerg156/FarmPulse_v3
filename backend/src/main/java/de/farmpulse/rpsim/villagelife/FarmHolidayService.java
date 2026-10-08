@@ -60,11 +60,14 @@ public class FarmHolidayService {
     private final DiaryService diary;
     private final GameTime gameTime;
     private final RpsimProperties props;
+    private final de.farmpulse.rpsim.investor.InvestorLedger investors;
 
     public FarmHolidayService(FarmHolidayMonthRepository months, SavegameRepository savegames, FactsService facts,
                               LiquidityService liquidity, OutboxService outbox, NightWorkService nightWork,
                               VillageReputationService reputation, NarrationRequestService narration, DiaryService diary,
-                              GameTime gameTime, RpsimProperties props) {
+                              GameTime gameTime, RpsimProperties props,
+                              de.farmpulse.rpsim.investor.InvestorLedger investors) {
+        this.investors = investors;
         this.months = months;
         this.savegames = savegames;
         this.facts = facts;
@@ -103,8 +106,9 @@ public class FarmHolidayService {
     }
 
     /** Result of one month - also the preview of the card. */
+    /** {@code investor} = Roadmap V3.2 R32-I3 P3: the flat is kept free for an investor (no guests, no income). */
     public record MonthResult(int period, double seasonFactor, double reputationFactor, double animalFactor,
-                              boolean noise, boolean smell, boolean badReview, long income) {
+                              boolean noise, boolean smell, boolean badReview, long income, boolean investor) {
     }
 
     /** Income of the month {@code index} (period, reputation now, animals of the latest export, night work and smell). */
@@ -125,7 +129,10 @@ public class FarmHolidayService {
         boolean smell = cfg().getSmellPeriods().contains(period) && spread != null && spread >= from && spread <= to;
         double cuts = (noise ? cfg().getNoiseCut() : 0) + (smell ? cfg().getSmellCut() : 0);
         long income = Math.round(cfg().getBaseIncomePerMonth() * season * rep * animals * Math.max(0, 1 - cuts));
-        return new MonthResult(period, season, rep, animals, noise, smell, bad, income);
+        if (investors.holidayFlatReserved(sg, index, period)) {
+            return new MonthResult(period, season, rep, animals, false, false, false, 0, true);
+        }
+        return new MonthResult(period, season, rep, animals, noise, smell, bad, income, false);
     }
 
     @EventListener

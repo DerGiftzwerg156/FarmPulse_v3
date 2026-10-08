@@ -28,6 +28,7 @@ export const APP_TABS: Record<string, TabDef[]> = {
     { id: 'kontoauszug', label: 'tabs.bank.kontoauszug' },
     { id: 'ergebnis', label: 'tabs.bank.ergebnis' },
     { id: 'planung', label: 'tabs.bank.planung' },
+    { id: 'investoren', label: 'tabs.bank.investoren' },
   ],
   authorities: [
     { id: 'finanzamt', label: 'tabs.authorities.finanzamt' },
@@ -74,6 +75,7 @@ export const APP_TABS: Record<string, TabDef[]> = {
     { id: 'nachbarn', label: 'tabs.trade.nachbarn' },
     { id: 'tiere', label: 'tabs.trade.tiere' },
     { id: 'hofladen', label: 'tabs.trade.hofladen' },
+    { id: 'grossauftraege', label: 'tabs.trade.grossauftraege' }, // Roadmap V3.2 R32-G
     { id: 'ferienwohnung', label: 'tabs.trade.ferienwohnung' },
     { id: 'genossenschaft', label: 'tabs.trade.genossenschaft' },
   ],
@@ -124,9 +126,16 @@ const CASE_TAB: Record<string, string> = {
   ANIMAL_OFFER: 'tiere',
   ANIMAL_REQUEST: 'tiere',
   FARM_SHOP_ORDER: 'hofladen',
+  BULK_ORDER: 'grossauftraege', // Roadmap V3.2 R32-G1
   COLLATERAL_CLAIM: 'kredite',
   ANNUAL_REVIEW: 'kredite',
   ANNUAL_REVIEW_OFFER: 'kredite',
+  // Roadmap V3.2 R32-I
+  INVESTOR_OFFER: 'investoren',
+  INVESTOR_REMINDER: 'investoren',
+  INVESTOR_CLAIM: 'investoren',
+  INVESTOR_PURCHASE: 'investoren',
+  INVESTOR_VISIT: 'investoren',
   APPRENTICE_TAKEOVER: 'team',
   MACHINE_DEMO_OFFER: 'leihen',
 };

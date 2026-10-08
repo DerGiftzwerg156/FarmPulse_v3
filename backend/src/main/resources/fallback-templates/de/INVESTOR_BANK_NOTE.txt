@@ -1,0 +1,7 @@
+Ihr neuer Investor
+Guten Tag,
+
+ich habe gesehen, dass {{investorKind}} mit {{amount}} € bei Ihnen eingestiegen ist ({{capitalType}}, {{years}} Jahre). Für unsere Bewertung gilt: {{bankEffect}} Eine Empfehlung ist das nicht – ich ordne es nur ein.
+
+Mit freundlichen Grüßen
+{{characterName}}

@@ -34,6 +34,7 @@ describe('app tabs (owner decisions 2026-10-06)', () => {
     expect(caseTabOf('TAX_BILL')).toBe('finanzamt');
     expect(caseTabOf('AUTHORITY_INSPECTION')).toBe('kontrollen');
     expect(caseTabOf('FARM_SHOP_ORDER')).toBe('hofladen');
+    expect(caseTabOf('BULK_ORDER')).toBe('grossauftraege');
     expect(caseTabOf('ANIMAL_OFFER')).toBe('tiere');
     expect(contractTabOf('INSURANCE', 'BASIC')).toBe('hof');
     expect(contractTabOf('INSURANCE', 'DROUGHT_INDEX')).toBe('duerre');

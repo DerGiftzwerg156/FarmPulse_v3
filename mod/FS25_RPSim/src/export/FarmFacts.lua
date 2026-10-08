@@ -138,8 +138,30 @@ local function buildNames(raw)
     return list
 end
 
+--- Roadmap V3.2 R32-Q1: milk sorts in the storage of a husbandry (raw = { {fillType, amount, capacity} }) like
+-- tradeStorage: whole litres, only entries with amount + capacity > 0, sorted by fillType; nil when not a table.
+local function buildHusbandryStorage(raw)
+    if type(raw) ~= "table" then
+        return nil
+    end
+    local list = RPSimJson.array({})
+    for _, e in ipairs(raw) do
+        if type(e) == "table" and type(e.fillType) == "string" and e.fillType ~= "" and type(e.amount) == "number"
+            and type(e.capacity) == "number" and e.amount == e.amount and e.capacity == e.capacity then
+            local amount = math.max(0, round(e.amount))
+            local capacity = math.max(0, round(e.capacity))
+            if amount + capacity > 0 then
+                list[#list + 1] = { fillType = e.fillType, amount = amount, capacity = capacity }
+            end
+        end
+    end
+    table.sort(list, function(a, b) return a.fillType < b.fillType end)
+    return list
+end
+
 --- R2-A7: raw = { {husbandryUniqueId, health, productivity?, food, conditions = { {title, ratio} }} }
 -- Roadmap V3.1 R31-A3, each optional: subTypes = { {name, count} }, supportedSubTypes = { name }, freeSlots.
+-- Roadmap V3.2 R32-Q1, optional: storage = { {fillType, amount, capacity} } (milk sorts, missing without milk).
 function RPSimFarmFacts.buildHusbandries(raw)
     local list = RPSimJson.array({})
     for _, h in ipairs(raw) do
@@ -157,6 +179,7 @@ function RPSimFarmFacts.buildHusbandries(raw)
             if type(h.freeSlots) == "number" and h.freeSlots == h.freeSlots then
                 e.freeSlots = math.max(0, round(h.freeSlots))
             end
+            e.storage = buildHusbandryStorage(h.storage)
             list[#list + 1] = e
         end
     end

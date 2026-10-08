@@ -44,7 +44,7 @@ Homescreen.
 | **Dorfchat** | Gruppen für das Dorf, die Nachbarn und die Vereine – mitlesen und mitschreiben | – |
 | **Aufgaben** | Alles, was auf deine Entscheidung wartet – aus allen Apps, nach Frist sortiert | Aufgaben · Meldungen |
 | **Kalender** | Die nächsten Tage, Abbuchungen zum Monatsbeginn, Dorffeste, Steuertermine, Familie, Einladungen, Stammtisch, Schulbesuch, Genossenschaft | Nächste Tage · Einladungen · Jahr |
-| **Bank** | Kredite, Anträge, Hofbuchhaltung und Kontoauszug | Kredite · Kreditantrag · Kontoauszug · Betriebsergebnis · Planung & Jahresbericht |
+| **Bank** | Kredite, Anträge, Hofbuchhaltung, Kontoauszug und Großinvestoren | Kredite · Kreditantrag · Kontoauszug · Betriebsergebnis · Planung & Jahresbericht · Investoren |
 | **Ämter** | Finanzamt, Landwirtschaftsamt, Berufsgenossenschaft und Gemeinde | Finanzamt · Anträge & Förderung · Kontrollen & Tierseuchen · Berufsgenossenschaft · Gemeinde |
 | **Agrarbörse** | Silo, Preise, Marktgeschehen, Kontrakte, Preisalarm und Vorkontrakte | Lager & Preise · Preisverlauf · Ereignisse · Preisalarme · Vorkontrakte |
 | **Versicherung** | Sturm- und Hagelversicherung (auch mit Baustein „Diebstahl“), Dürre-Index, Schäden melden, Wildschaden | Hofversicherung · Dürre-Index · Schäden |
@@ -52,7 +52,7 @@ Homescreen.
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen | Karte · Meine Felder · Verhandlungen · Pacht · Vorgänge |
 | **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl | Ställe · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
-| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Ferienwohnung · Genossenschaft |
+| **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
 | **Tagebuch** | Die Chronik deines Hofs | – |
 | **Einstellungen** | Alle Einstellungen: KI, Hof, Ereignisse, Fragen und Helfer im Spiel, Tablet & Netzwerk | KI · Hof · Ereignisse · Im Spiel · Tablet & Netzwerk |
 
@@ -89,6 +89,9 @@ Tagebuch steht.
   Vorauszahlungen, die Fruchtfolge-Prüfung des Amts und Familientermine (Geburtstage, Hochzeitstag, Einschulung).
 - **Einladungen** zu den Dorffesten beantwortest du hier: **Zusagen** freut die Gastgeber, **Absagen** ist in
   Ordnung, gar nicht zu antworten kostet ein wenig Vertrauen.
+- **Großaufträge:** Beginn und Ende des Liefermonats eines Großauftrags (siehe **Handel**).
+- **Investoren:** offene Lieferungen an einen Investor (Ende des Monats bzw. Jahres) und die Rückzahlung am
+  Laufzeitende (siehe **Bank**).
 - **Stammtisch:** Alle 14 Spieltage lädt dich jemand aus dem Dorf in die Dorfkneipe ein (2 Tage Zeit). Wer
   **hingeht**, gewinnt Vertrauen bei drei Leuten am Tisch, das nächste Gerücht an der Agrarbörse stimmt öfter, und ab
   und zu gibt es einen Tipp – eine laufende Versteigerung oder jemanden, der ein Feld verkaufen würde. Wer dreimal
@@ -209,7 +212,8 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   Ist der Kredit getilgt, ist die Grundschuld gelöscht. Im Ton *Hart* nimmt die Bank bei einer Fälligstellung die
   belasteten Felder und rechnet sie gegen die Restschuld; einen Überschuss bekommst du.
 - **Liquiditätsplanung:** Die nächsten 12 Monate mit allem, was schon feststeht: Gehälter, Kreditraten, Verträge,
-  Pacht, Altenteil und Steuervorauszahlungen, dazu die erwartete Einnahme deiner Vorkontrakte im Liefermonat. Dazu
+  Pacht, Altenteil und Steuervorauszahlungen, dazu die erwartete Einnahme deiner Vorkontrakte und Großaufträge im
+  Liefermonat. Dazu
   kommen die Einnahmen als **Schätzung** aus dem gleichen Monat des
   Vorjahres. Fällt dein Kontostand in einem Monat unter null oder unter einen Monat Fixkosten, steht das oben. Ein Klick
   auf einen Monat zeigt die einzelnen Posten. Droht in den nächsten drei Monaten ein Minus, meldet sich die
@@ -219,6 +223,52 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   Ansehen im Dorf im Vergleich zum Vorjahr. Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
   bietet sie eine Zinssenkung auf deine laufenden Kredite an (0,25 Prozentpunkte, die Rate sinkt). Lief es schlecht,
   wird es ein ernstes Gespräch, an deinen Verträgen ändert sich aber nichts. Absagen hat keine Folgen.
+  Ist ein Investor neu eingestiegen oder ist eine Rückforderung offen, spricht sie das in der Einladung an.
+
+### Großinvestoren (Bank → Investoren)
+
+Selten – höchstens einmal im FS25-Jahr – meldet sich ein **Investor**, dem dein Hof gefällt. Er ruft an oder schreibt
+und bietet 250.000 € bis 2.500.000 € (höchstens die Hälfte deines Hofvermögens). Das passiert nur, wenn der letzte
+Hofbericht einen Gewinn zeigt, du in den letzten 12 Monaten nichts zu spät bezahlt hast, kein Kredit fällig gestellt
+ist und die Bank dir einen Kredit in dieser Höhe zutrauen würde. Meilensteine und ein gutes Ansehen im Dorf machen ein
+Angebot wahrscheinlicher. Höchstens zwei Investoren gleichzeitig. Abschalten kannst du das unter **Einstellungen →
+Ereignisse** (*Großinvestoren*).
+
+- **Wer:** Agrarfonds, Regionale Lebensmittelkette, Molkerei-Unternehmer, Brauerei, Ölmühle, Energieunternehmen oder
+  Privatinvestorin / Familienstiftung. Die Art bestimmt, was er verlangt und wie viel Rendite er erwartet (6–10 % im
+  Jahr).
+- **Angebot:** 2–3 **Pakete** über dieselbe Summe nebeneinander. Jedes nennt die Kapitalart – **stille Beteiligung**
+  (zählt als Eigenkapital, am Ende kaufst du die Anteile zum Nennwert zurück) oder **Nachrangdarlehen** (zählt als
+  Schuld, am Ende zahlst du zurück, Zinsen gibt es nicht) –, die Laufzeit (2–5 volle FS25-Jahre ab dem nächsten
+  Jahresanfang) und die Gegenleistung. Alle Pakete sind gleich viel wert, aber unterschiedlich belastend. *Annehmen*
+  bucht das Geld sofort; *Ablehnen* kostet nichts, ein Angebot einfach liegen zu lassen (10 Tage) kostet ein wenig
+  Vertrauen.
+- **Gegenleistungen:** Ware (z. B. 600.000 l Weizen über die Laufzeit mit einer Mindestmenge je Jahr, oder 20.000 l je
+  Monat), Milch je Monat aus einem Stall, ein Gewinnanteil nach jedem Hofbericht oder eine feste Ausschüttung zum
+  Jahreswechsel, Tiere je Jahr, Tierwohl (Stallgesundheit im Monatsmittel ≥ 70 %), eine Anbaupflicht (z. B. 3 ha Mais
+  je Jahr), ein Wachstumsziel (Fläche × 1,2 bis Ende des ersten Jahres), ein Vetorecht beim Feldverkauf, ein
+  Vorkaufsrecht (einmal im Jahr fragt er nach Ware zum Marktpreis − 10 %), die Ferienwohnung im Juli und August, ein
+  Besuch im Jahr und die Namensnennung im Dorfblatt (je nach Investor gut oder schlecht fürs Ansehen).
+- **Liefern:** Unter *Investoren* wählst du Menge und – für Milch und Tiere – den Stall. Ware, Milch und Tiere gehen
+  ohne Geld an den Investor; der Wert ist die Gegenleistung. Teillieferungen sind erlaubt. Eine Woche vor Monats- bzw.
+  Jahresende erinnert er dich (Mail und Hinweis im Spiel); offene Lieferungen stehen in **Aufgaben** und im
+  **Kalender**. Lädst du einen älteren Spielstand ohne zu speichern, wird eine verlorene Lieferung erneut ausgeführt.
+- **Vetorecht:** Ein Feld kannst du in der **Flurkarte** erst verkaufen, wenn du unter *Investoren* die Zustimmung
+  eingeholt hast – der Investor stimmt immer zu. Ein Verkauf im Spielmenü ist ein Vertragsbruch.
+- **Vertragsbruch in Stufen:** Fehlt etwas, kommt eine **Mahnung** mit 5 Tagen Nachfrist; lieferst du nach, kostet es
+  nur ein wenig Vertrauen. Sonst wird ein **Ausgleich** gebucht (Fehlmenge zum heutigen Marktpreis + 25 %, bei
+  Auflagen und Rechten ihr Jahreswert + 25 %). Beim **dritten Bruch** kündigt der Investor und fordert die ganze Summe
+  zurück – zahlbar per Knopf binnen 10 Tagen wie ein Steuerbescheid; danach mahnt er jeden Monat, das kostet Vertrauen
+  und gilt als Zahlungsverzug (Zinsen gibt es keine). Auch nachgeholte Brüche zählen mit. Stand der Investor im
+  Dorfblatt, spricht sich ein Bruch herum. Reicht dein Geld für eine Zahlung nicht, bleibt sie offen; du bezahlst sie
+  später per Knopf.
+- **Laufzeitende:** Drei Monate vorher kündigt der Investor das Ende an (auch in Kalender und Liquiditätsplanung). Im
+  letzten Monat wird der Rückkauf bzw. die Rückzahlung gebucht; reicht das Geld nicht, wird daraus eine Rückforderung
+  wie oben. Gab es keinen Bruch, bietet er manchmal eine **Verlängerung** mit neuen Paketen an – angenommen entfällt die
+  Rückzahlung.
+- **Bank:** Eine stille Beteiligung hebt deine Eigenkapitalquote bei der Bank, ein Nachrangdarlehen senkt sie. Der
+  Hofbericht zeigt im Abschnitt *Investoren* Summe, Kapitalart, Lieferungen, Zahlungen und Brüche; Abschluss und Ende
+  stehen im Tagebuch.
 
 ## Ämter
 
@@ -529,7 +579,9 @@ bevorzugt die Früchte, die du wirklich lagerst.
   Verkaufsstelle im Spiel den Festpreis bis zur vereinbarten Menge. Fehlt am Monatsende Ware, kostet die Fehlmenge
   25 % ihres Werts als Vertragsstrafe, und die Landhändlerin ist enttäuscht. Volle Lieferung freut sie. Die
   erwartete Einnahme steht in der Liquiditätsplanung der Bank. Je Verkaufsstelle und Sorte gibt es nur einen
-  Festpreis zur selben Zeit.
+  Festpreis zur selben Zeit: Solange dort ein Vorkontrakt oder ein Großauftrag mit Liefermonat offen ist, gibt es dort
+  keinen weiteren Vorkontrakt. Stellst du die „Tage pro Monat“ um, bevor der Liefermonat begonnen hat, bleibt der
+  Vorkontrakt in seinem Monat; im laufenden Liefermonat gilt das bisherige Monatsende.
 
 ## Versicherung
 
@@ -641,6 +693,26 @@ Zuckerrüben oder Raps, je nachdem, was bei dir liegt), zum Hofladenpreis von 13
 *Liefern* wird die Ware aus dem Silo gebucht und das Geld gutgeschrieben. Das hebt dein Ansehen im Dorf (höchstens
 viermal im Jahr). Lehnst du ab oder antwortest nicht binnen 3 Tagen, kommen seltener Bestellungen; jede Lieferung
 macht das wieder besser.
+
+**Großaufträge:** Ab und zu (höchstens einmal im Monat) meldet sich ein **Großabnehmer** – per Mail, manchmal per
+Anruf. Er kauft für eine Verkaufsstelle der Karte ein (z. B. eine Mühle) und will eine große Menge einer Sorte: Weizen,
+Gerste, Raps, Sonnenblumen, Sojabohnen oder Mais 50.000–500.000 Liter, Kartoffeln oder Zuckerrüben 50.000–300.000 Liter.
+Du hast 5 Tage Zeit:
+
+- **Sofort liefern:** Liegt die ganze Menge in deinen Silos, nimmt er sie zu **125 % des besten Marktpreises** ab. Die
+  Ware wird aus dem Silo gebucht, das Geld gutgeschrieben. Eine Teillieferung gibt es nicht.
+- **Termin vereinbaren:** Du wählst einen Liefermonat 1 bis 12 Monate voraus. Der Festpreis ist der heutige Preis der
+  Verkaufsstelle mal (1,05 + 0,01 je Monat Vorlauf). In diesem **ganzen Monat** zahlt die Verkaufsstelle dir den
+  Festpreis; du fährst die Ware selbst hin (oder lieferst direkt vom Feld). Zu Monatsbeginn kommt ein Hinweis im
+  Spiel. Monate, in denen dort schon ein Festpreis gilt (Vorkontrakt, Sonderangebot oder ein anderer Großauftrag),
+  stehen nicht zur Wahl; höchstens 3 Großaufträge mit Liefermonat laufen gleichzeitig. Kein Rücktritt.
+- **Ablehnen** ist erlaubt, macht Anfragen aber seltener – wie Ignorieren.
+
+Fehlt am Ende des Liefermonats Ware, kostet das **25 % der Fehlmenge zum Festpreis** als Vertragsstrafe, und es kommen
+seltener Anfragen. Eine vollständige Lieferung macht sie wieder häufiger. Die erwartete Einnahme steht in der
+Liquiditätsplanung der **Bank**, Beginn und Ende des Liefermonats im **Kalender**. Jeder Auftrag hat eine eigene
+Ansprechperson, die sich nach dem Auftrag verabschiedet. Stellst du die „Tage pro Monat“ um, bevor der Liefermonat
+begonnen hat, bleibt der Termin in seinem Monat; während des laufenden Liefermonats gilt das bisherige Monatsende.
 
 **Viehhandel mit Nachbarn:** Milchviehbetriebe halten Kühe, Gemischtbetriebe Kühe, Schweine und Schafe. Du siehst
 ihren Bestand und ihre Preise je Tier (aus dem Tierwert des Spiels, etwas teurer beim Kauf, etwas günstiger beim
@@ -762,6 +834,8 @@ nicht nur für einen Spielstand, und lässt sich nur am Spiele-PC ändern.
 **Belastende Ereignisse:** Vor-Ort-Kontrolle des Sammelantrags, Kontrollen der Düngeverordnung, Tierseuchen,
 Krankheit und Arbeitsunfälle, Beschwerden über Nachtarbeit, Flurschaden auf Nachbarfeldern und Dieselklau einzeln
 ein- oder ausschalten (Standard an, Flurschaden aus; siehe **Ämter**, **Personal**, **Flurkarte** und **Werkstatt**).
+In derselben Karte schaltest du die Angebote von **Großinvestoren** ein oder aus (Standard an; laufende Verträge gelten
+weiter, siehe **Bank**).
 Im idyllischen Weltmodus gibt es keine Tierseuchen und keinen Dieselklau, die übrigen Ereignisse kommen nur halb so
 oft bzw. kosten nur halb so viel.
 

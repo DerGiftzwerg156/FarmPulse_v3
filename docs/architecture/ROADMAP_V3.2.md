@@ -23,7 +23,8 @@ und die Community-LUADOC geprüft (Quellen am Ende).
   bewegen, laufen als Batch mit ihrer `MONEY_TRANSACTION`.
 - Spielmonat = FS25-Periode. Ein Termin ist **immer ein ganzer Monat**, weil „Tage je Periode“ in den
   Spielstand-Einstellungen jederzeit geändert werden kann. Das Backend rechnet heute schon so: Ein geplanter Termin
-  behält seinen Monat, auch wenn sich die Länge ändert (`docs/dev/bridge-protocol.md`, Block `calendar`;
+  behält seinen Monat, auch wenn sich die Länge ändert (Vorkontrakte erst seit G, solange ihre Anweisung noch nicht
+  ausgeführt ist) (`docs/dev/bridge-protocol.md`, Block `calendar`;
   `time/GameTime`, `time/CalendarService`; Vorkontrakt R3-M2 mit „Lieferfenster = ganzer Liefermonat“).
 
 **Hängt ab von V3 / V3.1:**
@@ -59,36 +60,48 @@ angewiesen; alle anderen Gegenleistungen kommen ohne Mod-Änderung aus.
 
 ## Q – Querschnitt
 
-Wie R3-Q und R31-Q legt Q nur den Vertrag an (Schemas, DTOs, Validator, Normalisierung im Mod, Simulator, Doku).
+**Stand 08.10.2026: umgesetzt.** Wie R3-Q und R31-Q legt Q den Vertrag an (Schemas, DTOs, Validator, Normalisierung
+im Mod, Simulator, Doku). Anders als dort liest der Mod den Stall-Lager-Export schon im Spiel aus und führt
+`HUSBANDRY_TRANSFER` aus (Entscheidung 08.10.2026). Entscheidungen (siehe `QUESTIONS.md`): Die Tabellen `bulk_order`,
+`investor_contract` / `investor_obligation` und die Werte unter `rpsim.formulas.bulk-order.*` / `investor.*` kommen
+mit G bzw. I; Q bringt nur die Enums und die Buchungsklassen. `INVESTOR_PAYOUT` ist `FINANCING`. Buchungstitel:
+Investorenkapital, Rückzahlung an Investor, Ausschüttung an Investor, Ausgleichszahlung an Investor; Rollen
+„Großabnehmer“ und „Investor/in“. `husbandries[].storage[]` wie `tradeStorage` (nur Milch-Sorten, ganze Liter, nur
+Einträge mit Menge oder Kapazität, sortiert). Der Simulator führt `HUSBANDRY_TRANSFER` aus wie der Mod; nur
+`investor-milch` liefert `storage[]`. Ob ein fehlender `HUSBANDRY_TRANSFER` nach dem Zurückspulen erneut gesendet wird,
+entscheidet I3. Spieler-Doku nur im `CHANGELOG`.
 
 ### R32-Q1 Domäne und Bridge erweitern
 
-- [ ] Neue `CharacterRole`-Werte:
+- [x] Neue `CharacterRole`-Werte:
   - `BULK_BUYER` (Großabnehmer, G1),
   - `INVESTOR` (Großinvestor, I1).
 
   Beide werden bei Bedarf angelegt, wie Bewerber; sie gehören nicht zur Startbesetzung.
-- [ ] Neue `CaseKind`-Werte: `BULK_ORDER` (G), `INVESTOR_OFFER`, `INVESTOR_REMINDER`, `INVESTOR_CLAIM` (I). Neue
-  Tabellen `bulk_order` und `investor_contract` mit `investor_obligation` (je Gegenleistung eine Zeile mit Typ,
-  Parametern, Soll und Ist je Abrechnungszeitraum).
-- [ ] Neue `MoneyReason`-Werte und ihre Klassen in `rpsim.formulas.finance.categories`:
+- [x] Neue `CaseKind`-Werte: `BULK_ORDER` (G), `INVESTOR_OFFER`, `INVESTOR_REMINDER`, `INVESTOR_CLAIM` (I).
+- [x] Neue Tabellen `bulk_order` und `investor_contract` mit `investor_obligation` (je Gegenleistung eine Zeile mit Typ,
+  Parametern, Soll und Ist je Abrechnungszeitraum). Kommt mit G bzw. I (Entscheidung 08.10.2026). Umgesetzt: `bulk_order`
+  (V41); `investor_contract`, `investor_obligation`, dazu `investor_period` (Soll/Ist je Abrechnungszeitraum),
+  `investor_delivery` und `investor_payment` (V42). I bringt außerdem die Fälle `INVESTOR_PURCHASE` (P2) und
+  `INVESTOR_VISIT` (P4).
+- [x] Neue `MoneyReason`-Werte und ihre Klassen in `rpsim.formulas.finance.categories`:
 
   | Grund | Wofür | Klasse |
   | --- | --- | --- |
   | `INVESTOR_CAPITAL` | Einzahlung des Investors (I2) | `FINANCING` |
   | `INVESTOR_REPAYMENT` | Rückkauf der Anteile bzw. Rückzahlung des Darlehens (I5, Kündigung I4) | `FINANCING` |
-  | `INVESTOR_PAYOUT` | Gewinnanteil oder feste Ausschüttung (I3, Typ R1/R2) | offen, siehe [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung) |
+  | `INVESTOR_PAYOUT` | Gewinnanteil oder feste Ausschüttung (I3, Typ R1/R2) | `FINANCING` (Entscheidung 08.10.2026) |
   | `INVESTOR_COMPENSATION` | Ausgleichszahlung bei Fehlmenge oder verfehlter Auflage (I4) | `OPERATING_EXPENSE` |
 
   Großaufträge brauchen keinen neuen Grund: Sofortlieferung bucht `GOODS_SALE` (wie Hofladen), Termin-Lieferung zahlt
   das Spiel an der Verkaufsstelle, eine Fehlmenge kostet `CONTRACT_PENALTY` (wie R3-M2).
-- [ ] `farm_facts.json`, neues optionales Feld `husbandries[].storage[]` = `{ fillType, amount, capacity }` für die
+- [x] `farm_facts.json`, neues optionales Feld `husbandries[].storage[]` = `{ fillType, amount, capacity }` für die
   Milch-Sorten des Stalls (I3, Typ W3), siehe Beleg.
-- [ ] Neue Anweisung `HUSBANDRY_TRANSFER { husbandryUniqueId, fillType, amount }` (nur Entnahme). Eine **eigene**
+- [x] Neue Anweisung `HUSBANDRY_TRANSFER { husbandryUniqueId, fillType, amount }` (nur Entnahme). Eine **eigene**
   Anweisung statt eines neuen Felds an `STORAGE_TRANSFER`: Ein älterer Mod würde ein unbekanntes Feld überlesen und aus
   den Silos buchen. Ein unbekannter Typ wird dagegen abgelehnt (`REJECTED`, bzw. `FAILED` / `NOT_SUPPORTED`), und das
   Backend rät zum Update (`modOutdated`, wie R31-Q1).
-- [ ] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code.
+- [x] `docs/dev/bridge-protocol.md` je Feld und Anweisung mit Quelle im FS25-Code.
 
 **Beleg (Stall-Lager, nur für I3 / W3):**
 - ✅ `Specializations/PlaceableHusbandry.md` (LUADOC) und `animals/husbandry/placeables/PlaceableHusbandry.lua` (Dump):
@@ -118,16 +131,20 @@ die entnommene Menge zurück (`addHusbandryFillLevelFromTool`) und meldet `INSUF
 
 ### R32-Q2 Simulator, Tests, Konfiguration, Doku, Testplan
 
-- [ ] Bridge-Simulator: Szenarien `grossauftrag` (volles Raps-Silo, Ölmühle als Verkaufsstelle) und `investor-milch`
+- [x] Bridge-Simulator: Szenarien `grossauftrag` (volles Raps-Silo, Ölmühle als Verkaufsstelle) und `investor-milch`
   (Kuhstall mit Milch im Lager); Steuer-Endpunkt für die Milchmenge eines Stalls.
-- [ ] Mod-Tests mit gemockten FS25-Globals: Normalisierung von `husbandries[].storage[]`, Prüfung und Ausführung von
+- [x] Mod-Tests mit gemockten FS25-Globals: Normalisierung von `husbandries[].storage[]`, Prüfung und Ausführung von
   `HUSBANDRY_TRANSFER` samt Fehlercodes und Rückbuchung.
-- [ ] Backend: Grenzwert-Tests je Formel (Preis, Menge, Strafe, Paket-Bewertung, Vertragsbruch-Stufen), End-to-End-Test
+- [x] Backend: Grenzwert-Tests je Formel (Preis, Menge, Strafe, Paket-Bewertung, Vertragsbruch-Stufen), End-to-End-Test
   gegen den Simulator, `BridgeValidatorTest` und `FailedInstructionTest` für das neue Feld und die neue Anweisung.
-- [ ] Neue Werte unter `rpsim.formulas.bulk-order.*` und `rpsim.formulas.investor.*` samt
-  `docs/dev/configuration-reference.md` (`ConfigurationReferenceDocTest`).
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`.
-- [ ] `docs/dev/manual-test-plan.md`: Abschnitt **„28. Roadmap V3.2 im echten FS25“**, eine Zeile je 🟡 und je
+  Q bringt keine Formel; die Grenzwert-Tests kommen mit G und I. `SimulatorScenariosEndToEndTest` prüft Milch-Lager,
+  Ölmühle und `HUSBANDRY_TRANSFER`.
+- [x] Neue Werte unter `rpsim.formulas.bulk-order.*` und `rpsim.formulas.investor.*` samt
+  `docs/dev/configuration-reference.md` (`ConfigurationReferenceDocTest`). Q bringt nur die Klassen der neuen
+  Buchungsgründe unter `rpsim.formulas.finance.categories`; die Werte kommen mit G bzw. I.
+- [x] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`. Q ist für Spieler nicht sichtbar, daher nur der
+  `CHANGELOG`-Eintrag.
+- [x] `docs/dev/manual-test-plan.md`: Abschnitt **„28. Roadmap V3.2 im echten FS25“**, eine Zeile je 🟡 und je
   Akzeptanzkriterium.
 
 ---
@@ -147,34 +164,47 @@ Verkaufsstelle des Abnehmers.
 - Fehlmenge am Monatsende: **Strafe wie Vorkontrakt** (25 % der Fehlmenge zum Festpreis, `CONTRACT_PENALTY`).
 - Absender: **neue Großabnehmer-Figuren**, passend zu einer Verkaufsstelle der Karte.
 
+**Stand 08.10.2026: umgesetzt** (`market/BulkOrderService`, Tab „Handel → Großaufträge“). Weitere Entscheidungen vom
+08.10.2026 (`QUESTIONS.md`): Sorten und Spannen, Häufigkeit (1 Anfrage/Monat, 0,3 × Faktor, Faktor × 0,75 je Ablehnung,
+Ignorieren oder Fehlmenge, mindestens 0,1), 5 Tage Antwortfrist und höchstens 3 offene Termin-Aufträge wie
+vorgeschlagen. **Kein Filter** auf eigene Silos oder Anbau. **Jede Anfrage bringt eine neue Figur**, die sich nach dem
+Auftrag verabschiedet. Keine Produktionen als Großabnehmer. 10 % der Anfragen als Anruf; ein verpasster oder
+abgelehnter Anruf bringt die Anfrage zusätzlich als Mail. **Keine Ja/Nein-Frage im Spiel.** Termin vereinbaren geht
+bis zur Antwortfrist. Kein Dorf-Ansehen; Vertrauen +3 bei voller Lieferung (sofort wie Termin), −5 bei Fehlmenge;
+Ablehnen kostet kein Vertrauen. Festpreis **monatsgenau** (siehe G3). „Tage je Periode“ geändert: vor dem Liefermonat
+wird die noch nicht ausgeführte Anweisung verschoben, im laufenden Liefermonat gilt das alte Ende im Mod (kein
+Mod-Eingriff); dieselbe Regel gilt jetzt auch für Vorkontrakte (R3-M2), die ihr Fenster vorher nicht umgerechnet
+haben.
+
 ### R32-G1 Großabnehmer und Anfrage
 
-- [ ] Ein Großabnehmer (`BULK_BUYER`) gehört zu einer **Verkaufsstelle der Karte**, die die Sorte annimmt
+- [x] Ein Großabnehmer (`BULK_BUYER`) gehört zu einer **Verkaufsstelle der Karte**, die die Sorte annimmt
   (`market_context.sellPoints[]` mit `acceptedFillTypes`). Name und Art kommen aus dem Namen der Verkaufsstelle (z. B.
   „Ölmühle Nord“), die KI gibt der Ansprechperson einen Namen. Ohne passende Verkaufsstelle gibt es für diese Sorte
   keine Großaufträge.
-- [ ] **Welche Sorten:** eine Konfigliste (`bulk-order.fill-types`) mit fester Mengenspanne je Sorte
+- [x] **Welche Sorten:** eine Konfigliste (`bulk-order.fill-types`) mit fester Mengenspanne je Sorte
   (`bulk-order.amounts.<FILLTYPE>.min/max/step`). Werte siehe [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung).
-- [ ] **Wann:** monatlich höchstens N Anfragen mit Wahrscheinlichkeit p × Ablehnungsfaktor des Spielstands (Muster
-  Hofladen: Ablehnen oder Ignorieren senkt den Faktor, eine erfüllte Lieferung hebt ihn).
-- [ ] **Wie:** Mail ins Postfach (Kategorie Handel) mit Link auf das Formular; selten als Anruf (`Channel.CALL`,
+- [x] **Wann:** monatlich höchstens N Anfragen mit Wahrscheinlichkeit p × Ablehnungsfaktor des Spielstands (Muster
+  Hofladen: Ablehnen oder Ignorieren senkt den Faktor, eine erfüllte Lieferung hebt ihn). Eine Fehlmenge senkt ihn
+  ebenfalls (G4).
+- [x] **Wie:** Mail ins Postfach (Kategorie Handel) mit Link auf das Formular; selten als Anruf (`Channel.CALL`,
   Zustandsautomat aus `docs/architecture/call-state-machine.md`). Antwortfrist in Spieltagen (Konfig), danach verfällt
   die Anfrage wie eine ignorierte Hofladen-Bestellung.
-- [ ] Ansicht: neuer Bereich **„Großaufträge“** in der App „Handel“ (neben „Hofladen“), Eintrag in „Aufgaben“, optional
-  als Ja/Nein-Frage im Spiel (F2, neuer Anlass, standardmäßig aus – wie bei H3/H4/M3).
+- [x] Ansicht: neuer Bereich **„Großaufträge“** in der App „Handel“ (neben „Hofladen“), Eintrag in „Aufgaben“. Eine
+  Ja/Nein-Frage im Spiel (F2) gibt es nicht (Entscheidung 08.10.2026).
 
 **Beleg:** – (`market_context.sellPoints` und `prices` gibt es seit V1, `docs/dev/bridge-protocol.md`).
 
 ### R32-G2 Sofort liefern (aus dem Silo)
 
-- [ ] Angeboten nur, wenn `tradeStorage.amount` der Sorte ≥ Auftragsmenge. Teillieferung gibt es nicht: Der
+- [x] Angeboten nur, wenn `tradeStorage.amount` der Sorte ≥ Auftragsmenge. Teillieferung gibt es nicht: Der
   Großabnehmer will die ganze Menge oder einen Termin.
-- [ ] Preis = bester Marktpreis (`prices`) × `bulk-order.instant-markup` (**1,25**).
-- [ ] **„Sofort liefern“** prüft den Bestand erneut und sendet den Batch wie Hofladen/H4:
+- [x] Preis = bester Marktpreis (`prices`) × `bulk-order.instant-markup` (**1,25**).
+- [x] **„Sofort liefern“** prüft den Bestand erneut und sendet den Batch wie Hofladen/H4:
   `STORAGE_TRANSFER { direction: "OUT", fillType, amount }` + `MONEY_TRANSACTION` `GOODS_SALE`.
   `FAILED` / `INSUFFICIENT_STOCK` → keine Buchung, der Auftrag bleibt offen, „Termin vereinbaren“ ist weiter möglich.
-- [ ] Erfolg: Dank-Mail, Vertrauen beim Großabnehmer, Tagebucheintrag. Dorf-Ansehen nur, wenn das Dorfblatt den Auftrag
-  meldet (Vorschlag: nein, Großaufträge sind Geschäftssache, siehe offene Punkte).
+- [x] Erfolg: Dank-Mail, Vertrauen beim Großabnehmer, Tagebucheintrag. Kein Dorf-Ansehen (Entscheidung 08.10.2026:
+  Großaufträge sind Geschäftssache).
 
 **Beleg:** ✅ wie R3-H4 / R3-M3 (`storage:getFillLevel` / `setFillLevel` in `PlaceableSilo`, LUADOC
 `Specializations/PlaceableSilo.md`). Eine Obergrenze für `amount` hat `STORAGE_TRANSFER` nicht (Mod prüft nur `> 0`,
@@ -182,18 +212,21 @@ Verkaufsstelle des Abnehmers.
 
 ### R32-G3 Termin vereinbaren (Lieferung an die Verkaufsstelle)
 
-- [ ] Formular **„Termin vereinbaren“**: Liefermonat als FS25-Monat aus einer Liste (Vorlauf `min-lead-months` bis
+- [x] Formular **„Termin vereinbaren“**: Liefermonat als FS25-Monat aus einer Liste (Vorlauf `min-lead-months` bis
   `max-lead-months`), nie ein Tag. Das Backend nennt den Festpreis:
   `heutiger Preis an der Verkaufsstelle × (1 + term-base-markup 0,05 + term-markup-per-month 0,01 × Monate Vorlauf)`.
-- [ ] Umsetzung mit der vorhandenen Anweisung `PRICE_EVENT` / `FIXED` wie der Vorkontrakt:
+- [x] Umsetzung mit der vorhandenen Anweisung `PRICE_EVENT` / `FIXED` wie der Vorkontrakt:
   `fixedPrice`, `maxQuantity` = Auftragsmenge, `gameTimeEarliest` = Beginn des Liefermonats, `deadlineGameTime` = sein
   Ende. Der Spieler fährt die Ware selbst hin (oder liefert direkt vom Feld). Die gelieferte Menge meldet der Mod in
   `contractReports` (`deliveredQuantity`).
-- [ ] **Ein Festpreis je Verkaufsstelle und Fruchtsorte** (Regel aus R3-M2, weil `FIXED` Vorrang vor `MULTIPLIER` hat):
+- [x] **Ein Festpreis je Verkaufsstelle und Fruchtsorte** (Regel aus R3-M2, weil `FIXED` Vorrang vor `MULTIPLIER` hat):
   Monate, in denen dort schon ein Vorkontrakt oder anderer Großauftrag läuft, stehen nicht zur Wahl. `MarketEventEngine`
-  erzeugt in der Zeit kein `SPECIAL_OFFER` an dieser Stelle.
-- [ ] Höchstzahl offener Termin-Aufträge je Spielstand (Konfig). Kein Rücktritt nach dem Abschluss (wie R3-M2).
-- [ ] Die Liquiditätsplanung (R3-K2) zeigt die erwartete Einnahme im Liefermonat als „erwartet“; der Kalender zeigt den
+  erzeugt in der Zeit kein `SPECIAL_OFFER` an dieser Stelle. Umgesetzt (Entscheidung 08.10.2026): auch Monate mit einem
+  angebotenen oder laufenden Sonderangebot sind gesperrt; ein Vorkontrakt bleibt am ganzen Paar gesperrt, solange dort
+  ein Vorkontrakt oder Großauftrag offen ist; Sonderangebote und Dürre-Preisanstiege meiden das Paar, solange ein
+  Großauftrag offen ist (`ForwardContractService.openPairs`).
+- [x] Höchstzahl offener Termin-Aufträge je Spielstand (Konfig). Kein Rücktritt nach dem Abschluss (wie R3-M2).
+- [x] Die Liquiditätsplanung (R3-K2) zeigt die erwartete Einnahme im Liefermonat als „erwartet“; der Kalender zeigt den
   Liefermonat; zu Beginn des Liefermonats kommt ein Hinweis im Spiel (`NOTIFICATION`: „Ölmühle Nord wartet diesen
   Monat auf 500.000 l Raps“).
 
@@ -203,13 +236,13 @@ begrenzt (`Instructions.lua` prüft `maxQuantity > 0`, `PriceEvents.lua` zählt 
 
 ### R32-G4 Abschluss, Strafe, Vertrauen
 
-- [ ] Nach `deadlineGameTime` wertet das Backend `contractReports` aus (`endReason` `MAX_QUANTITY_REACHED` oder
+- [x] Nach `deadlineGameTime` wertet das Backend `contractReports` aus (`endReason` `MAX_QUANTITY_REACHED` oder
   `DEADLINE_REACHED`):
   - volle Menge → Dank-Mail, Vertrauen + (Konfig), Ablehnungsfaktor eine Stufe hoch,
   - Fehlmenge → `Fehlmenge × Festpreis × penalty-share` (**0,25**) als `MONEY_TRANSACTION` `CONTRACT_PENALTY`,
     Mail des Abnehmers, Vertrauen − (Konfig), Ablehnungsfaktor eine Stufe runter.
-- [ ] Die Strafe erscheint im Journal als operative Ausgabe (wie R3-M2).
-- [ ] Werte unter `rpsim.formulas.bulk-order.*`.
+- [x] Die Strafe erscheint im Journal als operative Ausgabe (wie R3-M2).
+- [x] Werte unter `rpsim.formulas.bulk-order.*`.
 
 **Beleg:** – (Abrechnung wie R3-M2).
 
@@ -235,9 +268,22 @@ Tage je Periode verschiebt den Termin nicht aus seinem Monat.
 - Katalog: **alle vier Gruppen** – Waren & Milch, Geld-Rendite, Tiere & Auflagen, Rechte & Rollenspiel.
 - Häufigkeit: **höchstens ein Angebot je FS25-Jahr, höchstens 2 laufende Investoren**.
 
+**Stand 08.10.2026: umgesetzt** (`investor/InvestorOfferService`, `investor/InvestorService`, `investor/InvestorLedger`,
+Tab „Bank → Investoren“, Migration V42). Weitere Entscheidungen vom 08.10.2026 (`QUESTIONS.md`), fast alle wie
+vorgeschlagen: Summe ≤ 50 % des Hofvermögens (Bank-Sicht), Prüfung monatlich nur mit Hofbericht und Betriebsergebnis
+> 0, ohne Verzug in 12 Monaten und ohne Fälligstellung, Bonitätsscore ≥ 50 „wie ein Kredit“; p = 0,05 + 0,02 je
+Meilenstein (max. +0,06) ± 0,02 nach Dorf-Ansehen. Schalter „Großinvestoren“ (Einstellungen → Ereignisse, an). Hälfte
+als Anruf, 10 Tage Antwortfrist, Ignorieren −3 Vertrauen. **Laufzeit = volle FS25-Jahre** ab dem nächsten
+Jahresanfang (das Geld kommt sofort). Zielrendite je Art 6–10 %. Gegenleistungen, Werte und Prüfungen siehe I3; Stufen
+siehe I4 (5 Tage Nachfrist, Ausgleich × 1,25, Kündigung beim 3. Bruch, Rückforderung = volle Summe + offene Zahlungen
+wie ein Steuerbescheid). **Bank-Sicht:** Eine laufende stille Beteiligung zählt als Vermögen (Quote steigt), ein
+Nachrangdarlehen als Vermögen und Schuld (Quote sinkt), weil die Eigenkapitalquote Bargeld nicht zählt. Lieferungen
+an Investoren werden nach dem Zurückspulen erneut gesendet. Eine abgelehnte Zahlung (kein Geld) bleibt offen und ist
+per Knopf zahlbar.
+
 ### R32-I1 Anlass und Investor
 
-- [ ] Prüfung einmal je FS25-Monat, höchstens ein Angebot je FS25-Jahr, höchstens `investor.max-active` (**2**) laufende
+- [x] Prüfung einmal je FS25-Monat, höchstens ein Angebot je FS25-Jahr, höchstens `investor.max-active` (**2**) laufende
   Verträge. Die Wahrscheinlichkeit steigt nach Formel mit:
   - Dorf-Ansehen (`VillageRelation`),
   - Ergebnis des letzten Hofberichts (R3-K3, `FarmReport`),
@@ -246,7 +292,7 @@ Tage je Periode verschiebt den Termin nicht aus seinem Monat.
 
   Ohne Hofbericht (erstes Jahr) gibt es kein Angebot. Das Ganze ist je Spielstand abschaltbar (Einstellungen →
   Ereignisse).
-- [ ] Der Investor (`INVESTOR`) wird beim Angebot angelegt. Seine **Art** (Konfig-Liste) bestimmt, welche
+- [x] Der Investor (`INVESTOR`) wird beim Angebot angelegt. Seine **Art** (Konfig-Liste) bestimmt, welche
   Gegenleistungen er bevorzugt und welche Rendite er erwartet, z. B.:
 
   | Art | bevorzugte Gegenleistung |
@@ -258,26 +304,26 @@ Tage je Periode verschiebt den Termin nicht aus seinem Monat.
   | Energieunternehmen | Anbaupflicht (A3, z. B. Mais/Silage), Geld-Rendite (R2) |
   | Privatinvestorin / Familienstiftung | Geld-Rendite (R1), Ferienwohnung (P3), Hoffest (P4) |
 
-- [ ] Kontakt per Mail ins Postfach oder als Anruf (`Channel.CALL`). Ein verpasster oder abgelehnter Anruf lässt das
+- [x] Kontakt per Mail ins Postfach oder als Anruf (`Channel.CALL`). Ein verpasster oder abgelehnter Anruf lässt das
   Thema offen (`openTopic`), das Angebot kommt dann zusätzlich als Mail.
-- [ ] Summe zwischen `investor.amount-min` (**250.000 €**) und `investor.amount-max` (**2.500.000 €**), in Schritten;
+- [x] Summe zwischen `investor.amount-min` (**250.000 €**) und `investor.amount-max` (**2.500.000 €**), in Schritten;
   wie sie zur Hofgröße passt, siehe [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung).
 
 **Beleg:** – (Backend; Daten aus R3-K3, R3-T1, Kreditbewertung, Dorf-Ansehen).
 
 ### R32-I2 Angebot mit 2–3 Paketen
 
-- [ ] Der Investor legt für **dieselbe Summe** 2–3 Pakete vor. Jedes Paket nennt:
+- [x] Der Investor legt für **dieselbe Summe** 2–3 Pakete vor. Jedes Paket nennt:
   - Kapitalart (stille Beteiligung oder Nachrangdarlehen),
   - Laufzeit in FS25-Jahren (Konfig-Spanne),
   - eine Hauptleistung und 0–2 Nebenleistungen aus dem Katalog (I3), passend zur Art des Investors und zum Hof (nur
     was der Hof liefern kann: Silo für die Sorte, Stall mit Milch, Tiere des Untertyps, Ferienwohnung eingerichtet …).
-- [ ] **Bewertung nach Formel:** Wert aller Gegenleistungen über die Laufzeit ≈ Summe × Zielrendite der Art × Jahre.
+- [x] **Bewertung nach Formel:** Wert aller Gegenleistungen über die Laufzeit ≈ Summe × Zielrendite der Art × Jahre.
   Ware wird zum heutigen besten Marktpreis bewertet, Auflagen und Rechte mit festen Konfig-Werten. So sind die Pakete
   untereinander gleichwertig, aber unterschiedlich belastend.
-- [ ] Formular in der Bank-App, neuer Bereich **„Investoren“**: Pakete nebeneinander, Knopf „Annehmen“ je Paket,
+- [x] Formular in der Bank-App, neuer Bereich **„Investoren“**: Pakete nebeneinander, Knopf „Annehmen“ je Paket,
   „Ablehnen“. Antwortfrist in Spieltagen; Ablehnen kostet nichts, ein ignoriertes Angebot etwas Vertrauen beim Investor.
-- [ ] Annahme → `MONEY_TRANSACTION` `INVESTOR_CAPITAL` über die Summe, Vertrag `investor_contract` mit Startmonat,
+- [x] Annahme → `MONEY_TRANSACTION` `INVESTOR_CAPITAL` über die Summe, Vertrag `investor_contract` mit Startmonat,
   Tagebucheintrag, Mail der Bankberaterin (Einordnung, kein Rat).
 
 **Beleg:** – (`MONEY_TRANSACTION` gibt es seit V1).
@@ -321,50 +367,50 @@ die das Tool heute schon bekommt – einzige Ausnahme ist die Milch (W3, neuer E
 | P4 | Hoffest bzw. Besuch: n Termine je Jahr | Kalender-Vorgang mit Zusage per Knopf (Muster Stammtisch / Generalversammlung); Fernbleiben = Bruch | – (R31-D3/D7) |
 | P5 | Namensnennung | Das Dorfblatt meldet die Beteiligung (öffentliche Tat); je nach Art des Investors kleiner Bonus oder Malus beim Dorf-Ansehen (z. B. Energieunternehmen) | – (R31-D1, `PublicActionEvent`) |
 
-- [ ] Ware und Tiere aus W1/W2/A1 bringen dem Hof **kein Geld**: Der Wert ist die Gegenleistung. Im Journal erscheint
+- [x] Ware und Tiere aus W1/W2/A1 bringen dem Hof **kein Geld**: Der Wert ist die Gegenleistung. Im Journal erscheint
   nichts; der Hofbericht führt die gelieferten Mengen im Abschnitt „Investoren“.
-- [ ] Werte (Spannen, Schwellen, Bewertungssätze) unter `rpsim.formulas.investor.*`.
+- [x] Werte (Spannen, Schwellen, Bewertungssätze) unter `rpsim.formulas.investor.*`.
 
 ### R32-I4 Erfüllung prüfen und gestufter Vertragsbruch
 
-- [ ] Das Backend prüft je Abrechnungszeitraum (Monatswechsel bzw. Jahreswechsel, `GameMonthPassedEvent`) Soll und Ist
+- [x] Das Backend prüft je Abrechnungszeitraum (Monatswechsel bzw. Jahreswechsel, `GameMonthPassedEvent`) Soll und Ist
   jeder Gegenleistung. Offene Lieferungen stehen vorher in „Aufgaben“ und im Kalender; eine Woche vor Ende des Monats
   kommt eine Erinnerung (Mail, optional `NOTIFICATION`).
-- [ ] **Stufe 1 – Mahnung:** Fehlt etwas, kommt eine Mahnung mit Nachfrist (`investor.grace-days`). Liefert der Spieler
+- [x] **Stufe 1 – Mahnung:** Fehlt etwas, kommt eine Mahnung mit Nachfrist (`investor.grace-days`). Liefert der Spieler
   nach, ist der Bruch erledigt (Vertrauen −, klein).
-- [ ] **Stufe 2 – Ausgleichszahlung:** Nach der Nachfrist zahlt der Hof einen Ausgleich als `INVESTOR_COMPENSATION`:
+- [x] **Stufe 2 – Ausgleichszahlung:** Nach der Nachfrist zahlt der Hof einen Ausgleich als `INVESTOR_COMPENSATION`:
   - Ware/Milch/Tiere: Fehlmenge × heutiger Marktpreis (Tiere: Tierwert des Spiels) × `compensation-markup`,
   - Auflagen und Rechte (A2–A4, P1–P5): fester Betrag je Typ (Konfig).
 
   Die Fehlmenge ist damit abgegolten.
-- [ ] **Stufe 3 – Kündigung:** Ab dem n-ten Bruch in der Laufzeit (`investor.breaches-to-terminate`) kündigt der Investor.
+- [x] **Stufe 3 – Kündigung:** Ab dem n-ten Bruch in der Laufzeit (`investor.breaches-to-terminate`) kündigt der Investor.
   Die Rückforderung wird sofort fällig (Beteiligung: Rückkauf, Darlehen: Rückzahlung), Höhe siehe
   [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung). Der Fall erscheint wie ein Bescheid
   (`INVESTOR_CLAIM`, Zahlen per Knopf, Frist). Reicht das Geld nicht, gilt das vorhandene Verzugs-Muster (Mahnung,
   Vertrauen, Bank erfährt davon).
-- [ ] Ein Vertragsbruch und eine Kündigung sind öffentlich, wenn der Investor mit Namensnennung (P5) im Dorfblatt stand.
+- [x] Ein Vertragsbruch und eine Kündigung sind öffentlich, wenn der Investor mit Namensnennung (P5) im Dorfblatt stand.
 
 **Beleg:** – (Backend; Prüfdaten siehe I3).
 
 ### R32-I5 Laufzeitende
 
-- [ ] Stille Beteiligung: Rückkauf der Anteile zum **Nennwert** im letzten Monat der Laufzeit als `INVESTOR_REPAYMENT`.
-- [ ] Nachrangdarlehen: Rückzahlung der Summe im letzten Monat der Laufzeit als `INVESTOR_REPAYMENT` (endfällig).
-- [ ] Ankündigung drei Monate vorher (Mail, Kalender, Liquiditätsplanung). Ohne Bruch in der Laufzeit bietet der
+- [x] Stille Beteiligung: Rückkauf der Anteile zum **Nennwert** im letzten Monat der Laufzeit als `INVESTOR_REPAYMENT`.
+- [x] Nachrangdarlehen: Rückzahlung der Summe im letzten Monat der Laufzeit als `INVESTOR_REPAYMENT` (endfällig).
+- [x] Ankündigung drei Monate vorher (Mail, Kalender, Liquiditätsplanung). Ohne Bruch in der Laufzeit bietet der
   Investor optional eine Verlängerung mit neuen Paketen an (zählt nicht gegen „ein Angebot je Jahr“).
-- [ ] Reicht das Geld zum Termin nicht, wie Stufe 3 in I4.
+- [x] Reicht das Geld zum Termin nicht, wie Stufe 3 in I4.
 
 **Beleg:** – (Backend).
 
 ### R32-I6 Wirkung auf Bank, Planung und Dorf
 
-- [ ] **Bank:** Ein Nachrangdarlehen zählt in `CreditScoringService` zur Schuld (heute `loanDebt + vanilla`). Eine stille
+- [x] **Bank:** Ein Nachrangdarlehen zählt in `CreditScoringService` zur Schuld (heute `loanDebt + vanilla`). Eine stille
   Beteiligung zählt nicht als Schuld, das eingezahlte Geld hebt also die Eigenkapitalquote. Die Bankberaterin
   kommentiert neue Investoren im Jahresgespräch (R3-K3).
-- [ ] **Liquiditätsplanung (R3-K2):** Rückkauf/Rückzahlung, feste Ausschüttungen (R2) und Ausgleichszahlungen als bekannte
+- [x] **Liquiditätsplanung (R3-K2):** Rückkauf/Rückzahlung, feste Ausschüttungen (R2) und Ausgleichszahlungen als bekannte
   Posten; der Gewinnanteil (R1) als „erwartet“.
-- [ ] **Hofbericht (R3-K3):** Abschnitt „Investoren“ mit Summe, Kapitalart, gelieferten Mengen, Zahlungen und Brüchen.
-- [ ] **Chronik (R3-T2):** Abschluss und Ende eines Investorenvertrags als Eintrag.
+- [x] **Hofbericht (R3-K3):** Abschnitt „Investoren“ mit Summe, Kapitalart, gelieferten Mengen, Zahlungen und Brüchen.
+- [x] **Chronik (R3-T2):** Abschluss und Ende eines Investorenvertrags als Eintrag.
 
 **Beleg:** – (Backend und Oberfläche).
 
@@ -383,18 +429,18 @@ Konfig. Eingetragen in `QUESTIONS.md` mit Status `open`.
 
 | Punkt | Frage | Vorschlag |
 | --- | --- | --- |
-| G1 | Sorten und Mengenspannen | `WHEAT`, `BARLEY`, `CANOLA`, `SUNFLOWER`, `SOYBEAN`, `MAIZE`, `POTATO`, `SUGARBEET`; je Sorte 50.000–500.000 l in Schritten von 10.000 l (Kartoffeln/Zuckerrüben 50.000–300.000 l). |
-| G1 | Häufigkeit, Antwortfrist, Höchstzahl | höchstens 1 Anfrage je Monat (Wahrscheinlichkeit 0,3 × Ablehnungsfaktor, Faktor 0,75 je Ablehnung, mindestens 0,1), 5 Tage Antwortfrist, höchstens 3 offene Termin-Aufträge. |
-| G1 | Nur Sorten, die der Hof lagern oder anbauen kann? | Ja: eigenes Silo für die Sorte (`tradeStorage`) **oder** die Kultur steht im laufenden/letzten Erntejahr auf einem eigenen Feld. Sonst würden Anfragen kommen, die der Hof nie erfüllen kann. |
-| G2 | Dorf-Ansehen für Großaufträge? | Nein, Geschäftssache. Nur Vertrauen beim Großabnehmer. |
-| G3 | Vorlauf | 1–12 Monate (wie Vorkontrakt). |
-| G4 | Vertrauen | +3 bei voller Lieferung, −5 bei Fehlmenge (wie R3-M2). |
-| I1 | Summe im Verhältnis zur Hofgröße | Summe höchstens 50 % des Hofvermögens (Bank-Sicht), gerundet auf 50.000 €, innerhalb 250.000–2.500.000 €. Liegt die Grenze unter 250.000 €, kommt kein Angebot. |
-| I2 | Laufzeit und Zielrendite | 2–5 FS25-Jahre; Zielrendite je Art 6–12 % p. a. |
-| I3 | Buchungsklasse des Gewinnanteils / der Ausschüttung (`INVESTOR_PAYOUT`) | `FINANCING` (Gewinnverwendung, mindert nicht den Gewinn und nicht die Steuer). Alternative: `OPERATING_EXPENSE` (mindert Gewinn und Steuer). |
-| I4 | Nachfrist, Aufschlag, Anzahl Brüche | 5 Spieltage Nachfrist, Ausgleich = Fehlmenge × Marktpreis × 1,25, Kündigung beim 3. Bruch in der Laufzeit. |
-| I4 | Höhe der Rückforderung bei Kündigung („anteilig“) | Volle Summe (Nennwert bzw. Restschuld) sofort fällig, plus offene Ausgleichszahlungen. Alternative: Summe × Restlaufzeit / Laufzeit (früher Bruch teurer, später billiger). |
-| I6 | Zählt ein Nachrangdarlehen bei der Bank voll als Schuld? | Ja, voll (Faktor 1,0, konfigurierbar). |
+| G1 ✅ 08.10.2026 wie vorgeschlagen | Sorten und Mengenspannen | `WHEAT`, `BARLEY`, `CANOLA`, `SUNFLOWER`, `SOYBEAN`, `MAIZE`, `POTATO`, `SUGARBEET`; je Sorte 50.000–500.000 l in Schritten von 10.000 l (Kartoffeln/Zuckerrüben 50.000–300.000 l). |
+| G1 ✅ 08.10.2026 wie vorgeschlagen | Häufigkeit, Antwortfrist, Höchstzahl | höchstens 1 Anfrage je Monat (Wahrscheinlichkeit 0,3 × Ablehnungsfaktor, Faktor 0,75 je Ablehnung, mindestens 0,1), 5 Tage Antwortfrist, höchstens 3 offene Termin-Aufträge. |
+| G1 ✅ 08.10.2026: **kein Filter** | Nur Sorten, die der Hof lagern oder anbauen kann? | Ja: eigenes Silo für die Sorte (`tradeStorage`) **oder** die Kultur steht im laufenden/letzten Erntejahr auf einem eigenen Feld. Sonst würden Anfragen kommen, die der Hof nie erfüllen kann. |
+| G2 ✅ 08.10.2026 wie vorgeschlagen | Dorf-Ansehen für Großaufträge? | Nein, Geschäftssache. Nur Vertrauen beim Großabnehmer. |
+| G3 ✅ 08.10.2026 wie vorgeschlagen | Vorlauf | 1–12 Monate (wie Vorkontrakt). |
+| G4 ✅ 08.10.2026 wie vorgeschlagen | Vertrauen | +3 bei voller Lieferung, −5 bei Fehlmenge (wie R3-M2). |
+| I1 ✅ 08.10.2026 wie vorgeschlagen | Summe im Verhältnis zur Hofgröße | Summe höchstens 50 % des Hofvermögens (Bank-Sicht), gerundet auf 50.000 €, innerhalb 250.000–2.500.000 €. Liegt die Grenze unter 250.000 €, kommt kein Angebot. |
+| I2 ✅ 08.10.2026: 2–5 Jahre, Agrarfonds 10 %, Energie 9 %, Lebensmittelkette und Molkerei 8 %, Brauerei/Ölmühle 7 %, Privat 6 % | Laufzeit und Zielrendite | 2–5 FS25-Jahre; Zielrendite je Art 6–12 % p. a. |
+| I3 ✅ | Buchungsklasse des Gewinnanteils / der Ausschüttung (`INVESTOR_PAYOUT`) | **Entschieden 08.10.2026:** `FINANCING` (Gewinnverwendung, mindert nicht den Gewinn und nicht die Steuer). |
+| I4 ✅ 08.10.2026 wie vorgeschlagen (ein nachgeholter Bruch zählt mit) | Nachfrist, Aufschlag, Anzahl Brüche | 5 Spieltage Nachfrist, Ausgleich = Fehlmenge × Marktpreis × 1,25, Kündigung beim 3. Bruch in der Laufzeit. |
+| I4 ✅ 08.10.2026: volle Summe | Höhe der Rückforderung bei Kündigung („anteilig“) | Volle Summe (Nennwert bzw. Restschuld) sofort fällig, plus offene Ausgleichszahlungen. Alternative: Summe × Restlaufzeit / Laufzeit (früher Bruch teurer, später billiger). |
+| I6 ✅ 08.10.2026: ja; zusätzlich zählt das Investorenkapital als Vermögen | Zählt ein Nachrangdarlehen bei der Bank voll als Schuld? | Ja, voll (Faktor 1,0, konfigurierbar). |
 
 ---
 

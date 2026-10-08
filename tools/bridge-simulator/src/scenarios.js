@@ -376,6 +376,48 @@ Object.assign(SCENARIOS, {
   },
 });
 
+// Roadmap V3.2 (R32-Q2): grossauftrag has a full canola silo and an oil mill of the map as sell point (bulk orders,
+// R32-G); investor-milch has a cow stable with milk in its storage (husbandries[].storage[], HUSBANDRY_TRANSFER for the
+// milk delivery to an investor, R32-I3 type W3). Only investor-milch exports the milk storage; all other scenarios stand
+// for a mod without it. All numbers and names are simulated examples, not values read from FS25.
+Object.assign(SCENARIOS, {
+  grossauftrag: {
+    description: 'Großauftrag: volles Raps-Silo, Ölmühle als Verkaufsstelle der Karte (R32-G).',
+    balance: 130000, vanillaLoan: 0, ownedFarmlands: [2, 4], roadmapV31: true,
+    vehicles: [
+      { ...vehicle(1, 160000, 0.2), name: 'Fendt 700 Vario', xmlFilename: 'data/vehicles/fendt/vario700/vario700.xml',
+        category: 'TRACTORSL', fuel: { liters: 300, capacity: 400 } },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 120000 }],
+    animals: [],
+    storage: { CANOLA: { amount: 600000, capacity: 600000 }, WHEAT: { amount: 30000, capacity: 100000 } },
+    tradeStorage: { CANOLA: { amount: 600000, capacity: 600000 }, WHEAT: { amount: 30000, capacity: 100000 } },
+    sellPoints: [{ id: 'OilMillNorth', name: 'Ölmühle Nord', acceptedFillTypes: ['CANOLA', 'SUNFLOWER', 'SOYBEAN'] }],
+    drift: { income: 2500, expense: 2000 },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.3, temperature: 16, snowHeight: 0 },
+  },
+  'investor-milch': {
+    description: 'Milchviehhof: Kuhstall mit Milch im Lager des Stalls (R32-I3, Typ W3).',
+    balance: 110000, vanillaLoan: 0, ownedFarmlands: [3], roadmapV31: true,
+    vehicles: [
+      { ...vehicle(1, 90000, 0.3), name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml',
+        category: 'TRACTORSM', fuel: { liters: 80, capacity: 150 } },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 180000 }],
+    animals: [{ husbandryUniqueId: 'hus_00001', type: 'COW', count: 40, estimatedValue: 160000 }],
+    stables: { hus_00001: { capacity: 60, valuePerAnimal: 4000, subTypes: { COW_HOLSTEIN: 40 } } },
+    storage: { WHEAT: { amount: 10000, capacity: 40000 } },
+    drift: { income: 2400, expense: 2000 },
+    husbandries: [
+      { husbandryUniqueId: 'hus_00001', health: 90, productivity: 0.85, food: 0.75,
+        conditions: [{ title: 'Wasser', ratio: 0.9 }, { title: 'Stroh', ratio: 0.7 }, { title: 'Gülle', ratio: 0.3 },
+          { title: 'Milch', ratio: 0.4 }],
+        storage: [{ fillType: 'MILK', amount: 12000, capacity: 30000 }] },
+    ],
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.3, temperature: 14, snowHeight: 0 },
+  },
+});
+
 // Simulated vanilla contracts (TODO T-22); the mod reads them from g_missionManager:getMissions().
 export const MISSIONS = [
   { uniqueId: 'mission_001', title: 'Ernte', typeName: 'harvestMission', field: '7', npcIndex: 3, npcTitle: 'Otto Wendler',

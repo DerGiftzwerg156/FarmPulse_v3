@@ -1,0 +1,7 @@
+Vorkaufsrecht: {{quantity}} Liter {{fillType}}
+Guten Tag,
+
+wie vereinbart möchte ich mein Vorkaufsrecht nutzen: {{quantity}} Liter {{fillType}} aus Ihren Silos zu {{unitPrice}} € je 1.000 Liter, zusammen {{total}} €. Bitte liefern Sie in den nächsten {{answerDays}} Tagen über die App „Bank“ unter „Investoren“.
+
+Viele Grüße
+{{characterName}}

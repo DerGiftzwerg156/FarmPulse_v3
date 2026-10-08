@@ -54,7 +54,7 @@ describe('Shell', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const tabs = el.querySelectorAll('[data-testid="tab-bar"] a');
-    expect(tabs.length).toBe(5);
+    expect(tabs.length).toBe(6); // Roadmap V3.2 R32-I: "Investoren";
     expect(el.querySelector('[data-testid="tab-kontoauszug"]')?.getAttribute('href')).toBe('/bank/kontoauszug');
     expect(el.querySelector('[data-testid="tab-kontoauszug"]')?.getAttribute('aria-current')).toBe('page');
     expect(localStorage.getItem('fp.tab.bank')).toBe('kontoauszug');

@@ -47,5 +47,11 @@ public enum InstructionType {
      */
     ANIMAL_TRANSFER,
     /** Roadmap V3.1 (R31-Q1): diesel taken out of an own vehicle (diesel theft, R31-D8); result.liters in the ack. */
-    VEHICLE_FUEL
+    VEHICLE_FUEL,
+    /**
+     * Roadmap V3.2 (R32-Q1): milk taken out of the storage of an own husbandry (only taking out; milk delivery to an
+     * investor, R32-I3 type W3). An own type instead of a field of STORAGE_TRANSFER: an older mod would skip an unknown
+     * field and book from the silos, an unknown type is refused (notice "Mod aktualisieren").
+     */
+    HUSBANDRY_TRANSFER
 }

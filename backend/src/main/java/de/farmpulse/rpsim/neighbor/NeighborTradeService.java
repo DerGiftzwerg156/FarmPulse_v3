@@ -158,7 +158,8 @@ public class NeighborTradeService {
         BridgeDtos.TradeStorageEntry e = ts.get(fillType);
         double amount = e == null || e.amount() == null ? 0 : e.amount();
         return (long) Math.floor(amount) - reserved(sg, CaseKind.GOODS_REQUEST, fillType)
-                - reserved(sg, CaseKind.FARM_SHOP_ORDER, fillType);
+                - reserved(sg, CaseKind.FARM_SHOP_ORDER, fillType)
+                - reserved(sg, CaseKind.BULK_ORDER, fillType); // Roadmap V3.2 R32-G2: instant delivery on its way
     }
 
     // ------------------------------------------------------------------------------------------ monthly messages

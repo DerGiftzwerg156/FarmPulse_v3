@@ -173,7 +173,8 @@ public final class BridgeValidator {
                 if (h == null || blank(h.husbandryUniqueId()) || negativeOrNull(h.health()) || negativeOrNull(h.food())
                         || (h.productivity() != null && h.productivity() < 0) || h.conditions() == null
                         || h.conditions().stream().anyMatch(c -> c == null || c.title() == null || negativeOrNull(c.ratio()))
-                        || invalidSubTypes(h)) { // subtypes / free places: Roadmap V3.1 R31-A3
+                        || invalidSubTypes(h) // subtypes / free places: Roadmap V3.1 R31-A3
+                        || invalidHusbandryStorage(h)) { // milk storage: Roadmap V3.2 R32-Q1
                     e.add("invalid husbandry " + h);
                 }
             });
@@ -204,6 +205,12 @@ public final class BridgeValidator {
                 || s.count() == null || s.count() < 0))
                 || (h.supportedSubTypes() != null && h.supportedSubTypes().stream().anyMatch(BridgeValidator::blank))
                 || (h.freeSlots() != null && h.freeSlots() < 0);
+    }
+
+    /** Roadmap V3.2 R32-Q1: the optional milk storage of a husbandry. */
+    private static boolean invalidHusbandryStorage(BridgeDtos.Husbandry h) {
+        return h.storage() != null && h.storage().stream().anyMatch(s -> s == null || blank(s.fillType())
+                || negativeOrNull(s.amount()) || negativeOrNull(s.capacity()));
     }
 
     private static boolean negativeOrNull(Double v) {
