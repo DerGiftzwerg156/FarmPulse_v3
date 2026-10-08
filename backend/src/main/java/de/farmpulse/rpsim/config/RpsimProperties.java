@@ -27,6 +27,23 @@ public class RpsimProperties {
     private Formulas formulas = new Formulas();
     private Web web = new Web();
     private Db db = new Db();
+    private Desktop desktop = new Desktop();
+
+    /**
+     * Background mode of {@code FarmPulse.exe} from the Windows installer (docs/architecture/windows-installer.md): tray
+     * icon, browser on start, single instance, free port. Off for {@code start.bat}, development and tests.
+     */
+    @Getter @Setter
+    public static class Desktop {
+        /** Set by the installer's launcher ({@code -Drpsim.desktop.enabled=true}), never in a configuration file. */
+        private boolean enabled = false;
+        /** Open the browser on the tablet as soon as the server is ready. */
+        private boolean openBrowser = true;
+        /** Configured port in use: the next free port up to {@code server.port} + this value is used instead. */
+        private int portSearchRange = 20;
+        /** Folder of the setup settings, the lock and the URL file; set by the launcher ({@code ~/.rpsim}). */
+        private String dataDir = "";
+    }
 
     /** Technical review 10/2026, Phase 0.1 (S-1): password of the H2 file database. */
     @Getter @Setter
