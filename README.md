@@ -97,7 +97,9 @@ Rollenspiel-Bereiche und Entscheidungen im Spiel.
 Nächster Ausbauplan: [Roadmap V3](docs/architecture/ROADMAP_V3.md) – Tablet im Heimnetz, Handel und echte Aufträge der
 Nachbarn, Verpachtung, Kreditsicherheiten, Vorkontrakte, Dürre, Gebrauchtmaschinen und mehr. Ergänzt durch
 [Roadmap V3.1](docs/architecture/ROADMAP_V3.1.md) – Lohnunternehmer, Viehhandel, Winterdienst, Behörden und Förderung,
-Dorfzeitung, Dorfchat, Stammtisch und Hofkarte.
+Dorfzeitung, Dorfchat, Stammtisch und Hofkarte. Geplant:
+[Roadmap V3.2](docs/architecture/ROADMAP_V3.2.md) – Großaufträge (sofort aus dem Silo oder zum Liefermonat) und
+Großinvestoren mit Gegenleistung.
 
 Weitere Werkzeuge: [Bridge-Simulator](tools/bridge-simulator/README.md) ·
 [Screenshot-Generator](tools/screenshot-generator/README.md) · [Beitragen](CONTRIBUTING.md) ·

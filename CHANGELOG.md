@@ -21,6 +21,12 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Roadmap V3.2 (`docs/architecture/ROADMAP_V3.2.md`):** plan for bulk orders and large investors, checked against
+  the FS25 code. Bulk buyers tied to a sell point order large amounts, delivered at once from the own silos (best
+  price × 1.25) or in an agreed whole month at their sell point (fixed price, penalty on shortfall). Rarely an
+  investor offers 250,000–2,500,000 € as silent partnership or subordinated loan, with 2–3 packages of consideration
+  (goods, milk from the husbandry storage, profit share, animals, obligations, rights) and a staged breach procedure.
+  Owner decisions and open proposals are in `QUESTIONS.md` (2026-10-08).
 - **Windows setup `FarmPulse-<version>-Setup.exe`** (owner decisions 2026-10-08 in `QUESTIONS.md`, concept
   `docs/architecture/windows-installer.md`); the ZIP bundle with `start.bat` / `start.sh` stays unchanged for experts:
   - The setup brings its own Java runtime (`jpackage`), installs "only for me" (no admin rights) or "for all users",
