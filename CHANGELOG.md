@@ -22,6 +22,13 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Roadmap V3.3 (`docs/architecture/ROADMAP_V3.3.md`):** plan for the new app *Feldbuch*, checked against the FS25
+  code. Per field and harvest year it records crop and harvest product, 1st / 2nd fertilisation, liming, rolling, weed
+  control, mulching and the harvested litres - captured automatically from the field values and a new harvest counter
+  (hook on `Combine.addCutterArea`), correctable, with lockable years. The tab *Auswertung* shows a field × year table,
+  litres per hectare, a bar chart per field and averages with / without each measure per crop over a selectable
+  period (default 5 years). Measured litres replace the yield estimate in farm report, chronicle and bank review.
+  Owner decisions and open proposals are in `QUESTIONS.md` (2026-10-08).
 - **Large investors [R32-I]** (owner decisions 2026-10-08 in `QUESTIONS.md`): new tab *Bank → Investoren* and switch
   *Großinvestoren* in settings → events (default on).
   - Offer: checked once per FS25 month - only with a farm report in profit, no payment delay within 12 months, no

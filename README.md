@@ -100,6 +100,8 @@ Nachbarn, Verpachtung, Kreditsicherheiten, Vorkontrakte, Dürre, Gebrauchtmaschi
 Dorfzeitung, Dorfchat, Stammtisch und Hofkarte. Geplant:
 [Roadmap V3.2](docs/architecture/ROADMAP_V3.2.md) – Großaufträge (sofort aus dem Silo oder zum Liefermonat) und
 Großinvestoren mit Gegenleistung.
+[Roadmap V3.3](docs/architecture/ROADMAP_V3.3.md) – Feldbuch: je Feld und Erntejahr Kultur, Düngung, Kalk, Walzen,
+Unkraut, Mulchen und Erntemenge, mit Auswertung über die letzten Jahre.
 
 Weitere Werkzeuge: [Bridge-Simulator](tools/bridge-simulator/README.md) ·
 [Screenshot-Generator](tools/screenshot-generator/README.md) · [Beitragen](CONTRIBUTING.md) ·
