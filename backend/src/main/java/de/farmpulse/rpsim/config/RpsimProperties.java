@@ -1082,7 +1082,7 @@ public class RpsimProperties {
         private List<String> fillTypes = new ArrayList<>(List.of("WHEAT", "BARLEY", "CANOLA", "SUNFLOWER", "SOYBEAN",
                 "MAIZE", "POTATO", "SUGARBEET"));
         /** Fixed amount range per fill type (litres), independent of the farm size; fill types without entry: none. */
-        private Map<String, Amount> amounts = new LinkedHashMap<>();
+        private Map<String, Amount> amounts = defaultAmounts();
         /** At most this many requests per month, each with probability x the refusal factor of the savegame. */
         private int maxRequestsPerMonth = 1;
         private double probability = 0.3;
@@ -1113,6 +1113,25 @@ public class RpsimProperties {
             private long min;
             private long max;
             private long step;
+
+            static Amount of(long min, long max, long step) {
+                Amount a = new Amount();
+                a.setMin(min);
+                a.setMax(max);
+                a.setStep(step);
+                return a;
+            }
+        }
+
+        /** Owner decision 2026-10-08: 50,000-500,000 l in steps of 10,000 l, potatoes / sugar beet up to 300,000 l. */
+        private static Map<String, Amount> defaultAmounts() {
+            Map<String, Amount> m = new LinkedHashMap<>();
+            for (String fillType : List.of("WHEAT", "BARLEY", "CANOLA", "SUNFLOWER", "SOYBEAN", "MAIZE")) {
+                m.put(fillType, Amount.of(50_000, 500_000, 10_000));
+            }
+            m.put("POTATO", Amount.of(50_000, 300_000, 10_000));
+            m.put("SUGARBEET", Amount.of(50_000, 300_000, 10_000));
+            return m;
         }
     }
 
