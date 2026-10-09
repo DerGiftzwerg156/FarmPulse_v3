@@ -97,9 +97,11 @@ function RPSimMarketContext.buildFieldShapes(raw, maxPoints)
 end
 
 --- Roadmap V3.3 (R33-Q1, contract; read by the mod with R33-F): every crop of the map (g_fruitTypeManager:getFruitTypes())
--- for the crop dropdown of the field book. raw = { {name, fillType?, title?, regrows?, products? = { fillType names }} }:
+-- for the crop dropdown of the field book. raw = { {name, fillType?, title?, regrows?, needsRolling?,
+-- products? = { fillType names }} }:
 -- name = fruit type name (required), fillType = its standard harvest product, title = display name of the game,
--- regrows = grows again after a cut (FruitTypeDesc.regrows), products = further harvest products from the fruit type
+-- regrows = grows again after a cut (FruitTypeDesc.regrows), needsRolling = the crop is rolled after sowing
+-- (FruitTypeDesc.needsRolling, R33-F4 owner decision 2026-10-09), products = further harvest products from the fruit type
 -- converters (e.g. MAIZE -> CHAFF; sorted, unique, without the standard product). Optional values that are empty or of
 -- the wrong type are left out; entries without a name and repeated names are dropped. Sorted by name.
 function RPSimMarketContext.buildFruitTypes(raw)
@@ -117,6 +119,9 @@ function RPSimMarketContext.buildFruitTypes(raw)
             end
             if type(f.regrows) == "boolean" then
                 e.regrows = f.regrows
+            end
+            if type(f.needsRolling) == "boolean" then
+                e.needsRolling = f.needsRolling
             end
             if type(f.products) == "table" then
                 local products = RPSimJson.array({})

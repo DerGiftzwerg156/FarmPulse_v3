@@ -53,6 +53,7 @@ class SimulatorScenariosEndToEndTest {
     @Autowired TransactionTemplate tx;
     @Autowired de.farmpulse.rpsim.repository.GrowingFieldMonthRepository growing;
     @Autowired de.farmpulse.rpsim.time.GameTime gameTime;
+    @Autowired de.farmpulse.rpsim.field.FieldBookService fieldBook;
 
     @BeforeEach
     void requireSimulator() {
@@ -275,6 +276,15 @@ class SimulatorScenariosEndToEndTest {
                     .containsExactly("BARLEY", "CANOLA", "GRASS", "MAIZE", "POTATO", "WHEAT");
             assertThat(crops).filteredOn(t -> t.name().equals("MAIZE")).singleElement()
                     .satisfies(t -> assertThat(t.products()).containsExactly("CHAFF"));
+            // Roadmap V3.3 R33-F: the field book opened a running season per own field; the counted grass went to the
+            // running grass season of field 4 (F3 rule 1)
+            assertThat(fieldBook.all(sg)).extracting(de.farmpulse.rpsim.domain.FieldBookEntry::getFarmlandId)
+                    .containsExactlyInAnyOrder(2, 4, 5);
+            assertThat(fieldBook.all(sg)).filteredOn(x -> x.getFarmlandId() == 4).singleElement().satisfies(x -> {
+                assertThat(x.fruitType()).isEqualTo("GRASS");
+                assertThat(x.liters()).isEqualTo(18000.0);
+                assertThat(x.isFirstEntry()).isTrue();
+            });
         });
         Savegame old = link("lohnunternehmer", "sim_alt33_" + System.nanoTime());
         tx.executeWithoutResult(s -> {

@@ -6,6 +6,7 @@ globals = {
     "RPSim", "RPSimJson", "RPSimLog", "RPSimFileIO", "RPSimConfig", "RPSimBridgePaths", "RPSimStorage",
     "RPSimFarmFacts", "RPSimFinanceJournal", "RPSimBookingLog", "RPSimWorkforce", "RPSimMarketContext", "RPSimInstructions", "RPSimPriceEventMath", "RPSimPriceEvents",
     "RPSimProcessor", "RPSimPersistence", "RPSimBridge", "RPSimGameAdapter", "RPSimPrompts",
+    "RPSimHarvestCounter",
 }
 -- FS25 engine globals (read-only).
 read_globals = {

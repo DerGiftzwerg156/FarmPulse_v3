@@ -360,6 +360,27 @@ class ApiIntegrationTest {
                 .andExpect(status().is4xxClientError());
     }
 
+    /** Roadmap V3.3 R33-F: app "Feldbuch", tab "Dokumentation" (corrections, harvest button, closing a year). */
+    @Test
+    void fieldBookEndpoints() throws Exception {
+        mvc.perform(get("/api/field-book")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.fieldsTracked").value(false))
+                .andExpect(jsonPath("$.showLime").value(true))
+                .andExpect(jsonPath("$.showWeeds").value(true))
+                .andExpect(jsonPath("$.cropsFromMap").value(false))
+                .andExpect(jsonPath("$.crops[0].name").exists())
+                .andExpect(jsonPath("$.fields").isEmpty());
+        mvc.perform(post("/api/field-book/fields/12/harvest")).andExpect(status().isNotFound());
+        mvc.perform(post("/api/field-book/years/1/close")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.closedYears[0]").value(1));
+        mvc.perform(post("/api/field-book/years/1/reopen")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.closedYears").isEmpty());
+        postJson("/api/field-book/entries/999999/values", java.util.Map.of("field", "LIMED", "value", "true"))
+                .andExpect(status().isNotFound());
+        postJson("/api/field-book/entries/999999/values", java.util.Map.of("value", "true"))
+                .andExpect(status().is4xxClientError());
+    }
+
     /** Roadmap V3.2 R32-I: app "Bank", area "Investoren", and the switch in settings -> events. */
     @Test
     void investorEndpoints() throws Exception {

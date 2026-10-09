@@ -19,6 +19,7 @@
     "bank": "Bank",
     "employees": "Personal",
     "farmland": "Flurkarte",
+    "fieldBook": "Feldbuch",
     "market": "Agrarbörse",
     "village": "Kontakte",
     "diary": "Tagebuch",
@@ -50,6 +51,7 @@
     "insurance": "Sturm- und Hagelversicherung, Dürreversicherung, Schäden melden, Wildschaden",
     "staff": "Team, Helferstunden und Stellenausschreibungen",
     "fields": "Felder, Kulturen, Verhandlungen, Pacht und Forderungen",
+    "fieldbook": "Jedes Feld, jedes Erntejahr – was angebaut, gedüngt und geerntet wurde",
     "stable": "Tiere, Tierarzt, Viehhandel und Tierwohl",
     "workshop": "Wartungsvertrag, Reparaturen, Mechaniker und Gebrauchtmaschinen",
     "diary": "Die Chronik deines Hofs",
@@ -2305,6 +2307,9 @@
       "pacht": "Pacht",
       "vorgaenge": "Vorgänge"
     },
+    "fieldbook": {
+      "dokumentation": "Dokumentation"
+    },
     "stable": {
       "staelle": "Ställe",
       "handel": "Handel & Tierarzt"
@@ -2337,7 +2342,8 @@
     "phone": "Charaktere rufen dich an, wenn sie etwas mit dir besprechen wollen. Nimmst du an, führst du das Gespräch hier im Tablet. Ein abgelehnter oder verpasster Anruf lässt das Thema offen, bis du dich selbst meldest. Alle Gespräche kannst du hier nachlesen.",
     "contacts": "Hier stehen die Menschen aus Dorf, Familie, Vereinen und deinem Personal. Im Profil siehst du Charakterzüge, Hintergrund und Felder, unter „Nachricht“ schreibst du ihnen oder rufst an – die Antwort kommt in Spielzeit. Vertrauen und Ansehen zeigt das Tablet nur als Stufe, nie als Zahl. Die Anfragen der Vereine stehen unter „Vereine & Sponsoring“.",
     "newspaper": "Das Dorfblatt erscheint zu Beginn jeder Periode mit Neuigkeiten aus dem Dorf, vom Hof und vom Markt, mit Amtlichem und Kleinanzeigen. Die neueste Ausgabe ist geöffnet, ältere Ausgaben bleiben in der Liste lesbar.",
-    "calendar": "Der Kalender folgt dem FS25-Kalender. „Nächste Tage“ zeigt Fristen und Termine und was zum Monatsbeginn automatisch abgebucht wird. Unter „Einladungen“ antwortest du auf Dorffeste, Stammtisch und Versammlungen, „Jahr“ zeigt Dorffeste, Steuertermine, Familien- und Amtstermine im Überblick."
+    "calendar": "Der Kalender folgt dem FS25-Kalender. „Nächste Tage“ zeigt Fristen und Termine und was zum Monatsbeginn automatisch abgebucht wird. Unter „Einladungen“ antwortest du auf Dorffeste, Stammtisch und Versammlungen, „Jahr“ zeigt Dorffeste, Steuertermine, Familien- und Amtstermine im Überblick.",
+    "fieldbook": "Das Feldbuch führt für jedes eigene und gepachtete Feld eine laufende Saison und je Erntejahr einen Eintrag: Kultur, Ernteprodukt, 1. und 2. Düngung, Kalk, Walzen, Unkraut, Mulchen und die geernteten Liter. Fast alles erkennt FarmPulse aus dem Spiel; mit der Ernte endet der Eintrag, alles danach zählt zur nächsten Saison. Jeden Wert kannst du korrigieren („manuell“) und mit ↺ wieder der Erkennung überlassen. Ein abgeschlossenes Erntejahr ist gesperrt; was das Spiel danach noch meldet, erscheint als Hinweis und wird übernommen, wenn du das Jahr wieder öffnest."
   },
   "investors": {
     "title": "Großinvestoren",
@@ -2440,6 +2446,59 @@
       "purchase": "{name} nutzt sein Vorkaufsrecht: {quantity} l {fillType} aus deinen Silos zu {unit} je 1.000 l ({amount}).",
       "visit": "{name} möchte diesen Monat zu Besuch auf den Hof kommen.",
       "breachHint": "Ablehnen oder Ignorieren ist ein Vertragsbruch."
+    }
+  },
+  "fieldBook": {
+    "title": "Feldbuch",
+    "noFields": "Der Mod meldet keine Felder. Bitte den Mod FS25_RPSim aktualisieren – ohne Felder gibt es keine Einträge.",
+    "cropsFallback": "Der Mod meldet die Kulturen der Karte nicht. Zur Auswahl stehen die bekannten Kulturen; für alle Kulturen der Karte bitte den Mod aktualisieren.",
+    "year": "Erntejahr",
+    "yearOption": "Jahr {year}",
+    "closeYear": "Jahr abschließen",
+    "reopenYear": "Jahr wieder öffnen",
+    "yearClosed": "Erntejahr {year} ist abgeschlossen.",
+    "noYears": "Noch kein Erntejahr abgeschlossen oder beendet.",
+    "notices": "Späte Meldungen in abgeschlossenen Jahren",
+    "notice": "Feld {field}, Erntejahr {year}: Spiel meldet {liters} l nach dem Abschluss – wird übernommen, wenn du das Jahr wieder öffnest.",
+    "heldEntry": "Nach dem Abschluss erkannt – wird übernommen, wenn du das Jahr wieder öffnest.",
+    "running": "Laufende Saison",
+    "harvestNow": "Ernte eintragen",
+    "harvestNowHint": "Nur nötig, wenn das Spiel die Ernte nicht erkennt: beendet die laufende Saison mit dem aktuellen FS25-Jahr.",
+    "noHarvest": "ohne Ernte",
+    "firstEntry": "erster Eintrag nach dem Update",
+    "manual": "manuell",
+    "auto": "automatisch",
+    "notNeeded": "nicht nötig",
+    "none": "–",
+    "noEntries": "Noch keine Einträge.",
+    "hectares": "{hectares} ha",
+    "perHa": "{liters} l/ha",
+    "chooseCrop": "Kultur wählen",
+    "chooseProduct": "Produkt wählen",
+    "col": {
+      "year": "Erntejahr",
+      "crop": "Kultur",
+      "product": "Produkt",
+      "liters": "Liter",
+      "perHa": "l/ha",
+      "fert1": "1. Düngung",
+      "fert2": "2. Düngung",
+      "limed": "Kalk",
+      "rolled": "Walzen",
+      "weeds": "Unkraut",
+      "mulched": "Gemulcht",
+      "sprayTypes": "Düngerart"
+    },
+    "state": {
+      "ACTIVE": "bewirtschaftet",
+      "LEASED_OUT": "verpachtet",
+      "LEASE_ENDED": "Pacht beendet",
+      "SOLD": "verkauft"
+    },
+    "sprayType": {
+      "FERTILIZER": "Dünger",
+      "LIQUID_MANURE": "Gülle",
+      "MANURE": "Mist"
     }
   }
 }

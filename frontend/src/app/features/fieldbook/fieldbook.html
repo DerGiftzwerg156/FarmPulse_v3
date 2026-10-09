@@ -1,0 +1,276 @@
+<!-- Roadmap V3.3 R33-F: tab "Dokumentation" (the tab "Auswertung" follows with E, owner decision 2026-10-09) -->
+<section class="space-y-4">
+  @if (error(); as err) {
+    <app-page-error [error]="err" />
+  } @else if (view(); as v) {
+    @if (!v.fieldsTracked) {
+      <p
+        class="rounded-sm border border-warn/40 px-3 py-2 text-[12px] text-warn"
+        data-testid="fb-no-fields"
+      >
+        {{ 'fieldBook.noFields' | t }}
+      </p>
+    }
+    @if (!v.cropsFromMap) {
+      <p
+        class="rounded-sm border border-border px-3 py-2 text-[12px] text-muted"
+        data-testid="fb-crops-fallback"
+      >
+        {{ 'fieldBook.cropsFallback' | t }}
+      </p>
+    }
+
+    <!-- R33-F5: close / reopen a harvest year -->
+    <app-card [title]="'fieldBook.year' | t" data-testid="fb-years">
+      @if (yearOptions().length) {
+        <div class="flex flex-wrap items-center gap-2 text-[12px]">
+          <select
+            class="rounded-md border border-border bg-bg px-2 py-1 text-text"
+            data-testid="fb-year-select"
+            (change)="chooseYear($event)"
+          >
+            @for (y of yearOptions(); track y) {
+              <option [value]="y" [selected]="y === selectedYear()">
+                {{ 'fieldBook.yearOption' | t: { year: y } }}
+              </option>
+            }
+          </select>
+          @if (selectedClosed()) {
+            <span class="text-muted" data-testid="fb-year-closed">{{
+              'fieldBook.yearClosed' | t: { year: selectedYear() }
+            }}</span>
+            <app-button
+              variant="secondary"
+              [disabled]="busy()"
+              (pressed)="reopenYear()"
+              data-testid="fb-reopen"
+              >{{ 'fieldBook.reopenYear' | t }}</app-button
+            >
+          } @else {
+            <app-button
+              variant="secondary"
+              [disabled]="busy()"
+              (pressed)="closeYear()"
+              data-testid="fb-close"
+              >{{ 'fieldBook.closeYear' | t }}</app-button
+            >
+          }
+        </div>
+      } @else {
+        <p class="text-[12px] text-muted">{{ 'fieldBook.noYears' | t }}</p>
+      }
+      @if (v.notices.length) {
+        <h3 class="mt-3 font-display text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+          {{ 'fieldBook.notices' | t }}
+        </h3>
+        <ul class="mt-1 space-y-1 text-[12px]">
+          @for (n of v.notices; track $index) {
+            <li class="text-warn" data-testid="fb-notice">
+              {{
+                'fieldBook.notice'
+                  | t
+                    : {
+                        field: fieldName(n.farmlandId),
+                        year: n.harvestYear,
+                        liters: (n.liters | num),
+                      }
+              }}
+            </li>
+          }
+        </ul>
+      }
+    </app-card>
+
+    @if (actionError(); as e) {
+      <p class="text-[12px] text-danger" data-testid="fb-error">{{ e }}</p>
+    }
+
+    @for (f of v.fields; track f.farmlandId) {
+      <app-card [title]="f.name" data-testid="fb-field">
+        <div class="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-muted">
+          @if (f.hectares !== null) {
+            <span>{{ 'fieldBook.hectares' | t: { hectares: (f.hectares | num: 2) } }}</span>
+          }
+          <app-badge [variant]="stateBadge(f.state)" data-testid="fb-state">{{
+            'fieldBook.state.' + f.state | t
+          }}</app-badge>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[860px] text-[12px]">
+            <thead>
+              <tr class="text-left font-display text-[10px] uppercase tracking-[0.14em] text-muted">
+                <th class="py-1.5 pr-2 font-bold">{{ 'fieldBook.col.year' | t }}</th>
+                <th class="py-1.5 pr-2 font-bold">{{ 'fieldBook.col.crop' | t }}</th>
+                <th class="py-1.5 pr-2 font-bold">{{ 'fieldBook.col.product' | t }}</th>
+                <th class="py-1.5 pr-2 font-bold">{{ 'fieldBook.col.liters' | t }}</th>
+                <th class="py-1.5 pr-2 font-bold">{{ 'fieldBook.col.perHa' | t }}</th>
+                @for (tk of ticks(); track tk.key) {
+                  <th class="py-1.5 pr-2 font-bold">{{ 'fieldBook.col.' + tk.col | t }}</th>
+                }
+                <th class="py-1.5 pr-2 font-bold">{{ 'fieldBook.col.sprayTypes' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of f.running ? [f.running].concat(f.entries) : f.entries; track e.id) {
+                <tr
+                  class="border-t border-border align-top"
+                  [attr.data-testid]="e.status === 'RUNNING' ? 'fb-running' : 'fb-entry'"
+                >
+                  <td class="py-1.5 pr-2">
+                    @if (e.status === 'RUNNING') {
+                      <div class="text-text">{{ 'fieldBook.running' | t }}</div>
+                      <app-button
+                        variant="secondary"
+                        [disabled]="busy()"
+                        (pressed)="harvest(f)"
+                        [attr.title]="'fieldBook.harvestNowHint' | t"
+                        data-testid="fb-harvest"
+                        >{{ 'fieldBook.harvestNow' | t }}</app-button
+                      >
+                    } @else {
+                      <div class="text-text">{{ e.harvestYear }}</div>
+                      @if (e.status === 'NO_HARVEST') {
+                        <div class="text-muted" data-testid="fb-no-harvest">
+                          {{ 'fieldBook.noHarvest' | t }}
+                        </div>
+                      }
+                      @if (e.held) {
+                        <div class="text-warn" data-testid="fb-held">
+                          {{ 'fieldBook.heldEntry' | t }}
+                        </div>
+                      }
+                    }
+                    @if (e.firstEntry) {
+                      <div class="text-muted">{{ 'fieldBook.firstEntry' | t }}</div>
+                    }
+                  </td>
+                  <!-- crop -->
+                  <td class="py-1.5 pr-2">
+                    <select
+                      class="rounded-md border border-border bg-bg px-1.5 py-0.5 text-text"
+                      [disabled]="!editable(e)"
+                      (change)="select(e, 'FRUIT_TYPE', $event)"
+                      data-testid="fb-crop"
+                    >
+                      @if (!e.values.FRUIT_TYPE.value) {
+                        <option value="" selected>{{ 'fieldBook.chooseCrop' | t }}</option>
+                      }
+                      @for (c of v.crops; track c.name) {
+                        <option [value]="c.name" [selected]="c.name === e.values.FRUIT_TYPE.value">
+                          {{ cropLabel(c.name) }}
+                        </option>
+                      }
+                      @if (e.values.FRUIT_TYPE.value && !hasCrop(e.values.FRUIT_TYPE.value)) {
+                        <option [value]="e.values.FRUIT_TYPE.value" selected>
+                          {{ cropLabel($any(e.values.FRUIT_TYPE.value)) }}
+                        </option>
+                      }
+                    </select>
+                    <ng-container
+                      *ngTemplateOutlet="manual; context: { e: e, key: 'FRUIT_TYPE' }"
+                    />
+                  </td>
+                  <!-- product -->
+                  <td class="py-1.5 pr-2">
+                    <select
+                      class="rounded-md border border-border bg-bg px-1.5 py-0.5 text-text"
+                      [disabled]="!editable(e) || !products(e).length"
+                      (change)="select(e, 'FILL_TYPE', $event)"
+                      data-testid="fb-product"
+                    >
+                      @if (!e.values.FILL_TYPE.value) {
+                        <option value="" selected>{{ 'fieldBook.chooseProduct' | t }}</option>
+                      }
+                      @for (p of products(e); track p) {
+                        <option [value]="p" [selected]="p === e.values.FILL_TYPE.value">
+                          {{ p | label: 'fillType' }}
+                        </option>
+                      }
+                    </select>
+                    <ng-container *ngTemplateOutlet="manual; context: { e: e, key: 'FILL_TYPE' }" />
+                  </td>
+                  <!-- litres -->
+                  <td class="py-1.5 pr-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      class="w-24 rounded-md border border-border bg-bg px-1.5 py-0.5 text-text"
+                      [value]="e.values.LITERS.value ?? ''"
+                      [disabled]="!editable(e)"
+                      (change)="liters(e, $event)"
+                      data-testid="fb-liters"
+                    />
+                    <ng-container *ngTemplateOutlet="manual; context: { e: e, key: 'LITERS' }" />
+                  </td>
+                  <td class="py-1.5 pr-2 text-muted" data-testid="fb-per-ha">
+                    {{
+                      e.litersPerHectare !== null
+                        ? (e.litersPerHectare | num)
+                        : ('fieldBook.none' | t)
+                    }}
+                  </td>
+                  @for (tk of ticks(); track tk.key) {
+                    <td class="py-1.5 pr-2">
+                      @if (tk.key === 'ROLLED' && e.rollingNeeded === false) {
+                        <span class="text-muted" data-testid="fb-roll-not-needed">{{
+                          'fieldBook.notNeeded' | t
+                        }}</span>
+                      } @else {
+                        <input
+                          type="checkbox"
+                          [checked]="bool(e, tk.key)"
+                          [disabled]="!editable(e)"
+                          (change)="tick(e, tk.key, $event)"
+                          [attr.data-testid]="'fb-tick-' + tk.key"
+                        />
+                        <ng-container *ngTemplateOutlet="manual; context: { e: e, key: tk.key }" />
+                      }
+                    </td>
+                  }
+                  <td class="py-1.5 pr-2 text-muted" data-testid="fb-spray">
+                    @for (k of e.sprayTypes; track k; let last = $last) {
+                      {{ sprayType(k) }}
+                      @if (!last) {
+                        ,
+                      }
+                    } @empty {
+                      –
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td class="py-1.5 text-muted" colspan="12">{{ 'fieldBook.noEntries' | t }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-card>
+    }
+  } @else {
+    <p class="text-[12px] text-muted">{{ 'common.loading' | t }}</p>
+  }
+</section>
+
+<!-- "manuell" marker and ↺ (give the value back to the detection, owner decision 2026-10-09) -->
+<ng-template #manual let-e="e" let-key="key">
+  @if (e.values[key].manual) {
+    <div class="mt-0.5 flex items-center gap-1 text-[10px] text-accent" data-testid="fb-manual">
+      <span>{{ 'fieldBook.manual' | t }}</span>
+      @if (editable(e)) {
+        <button
+          type="button"
+          class="text-muted hover:text-text"
+          [attr.title]="'fieldBook.auto' | t"
+          [attr.aria-label]="'fieldBook.auto' | t"
+          (click)="set(e, key, null)"
+          data-testid="fb-auto"
+        >
+          ↺
+        </button>
+      }
+    </div>
+  }
+</ng-template>

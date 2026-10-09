@@ -40,7 +40,8 @@ test('feldbuch: fields with rolling and mulching levels, the crops of the map so
   const ctx = read(sim.paths.marketContext);
   assert.deepEqual(ctx.fruitTypes.map((t) => t.name), ['BARLEY', 'CANOLA', 'GRASS', 'MAIZE', 'POTATO', 'WHEAT']);
   assert.deepEqual(ctx.fruitTypes.find((t) => t.name === 'MAIZE'),
-    { name: 'MAIZE', fillType: 'MAIZE', title: 'Mais', regrows: false, products: ['CHAFF'] });
+    { name: 'MAIZE', fillType: 'MAIZE', title: 'Mais', regrows: false, needsRolling: true, products: ['CHAFF'] });
+  assert.equal(ctx.fruitTypes.find((t) => t.name === 'POTATO').needsRolling, false);
   assert.equal(ctx.fruitTypes.find((t) => t.name === 'GRASS').regrows, true);
   assert.deepEqual(facts.harvests, [{ farmlandId: 4, fruitType: 'GRASS', fillType: 'GRASS_WINDROW', liters: 18000 }]);
 });

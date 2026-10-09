@@ -15,13 +15,30 @@ is cancelled again) and lets every machine operator drive every vehicle. It also
 types and booking reasons (the neighbour trade and contracts then fail); the notice then says "Mod aktualisieren".
 The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q), for the booking reason
 `SEVERANCE` (severance before the first working day) and for the contractor work `FERTILIZE` (*Düngen*). Also for the
-Roadmap V3.2 instruction type `HUSBANDRY_TRANSFER` and the booking reasons `INVESTOR_*` (R32-Q).
+Roadmap V3.2 instruction type `HUSBANDRY_TRANSFER` and the booking reasons `INVESTOR_*` (R32-Q). The field book
+(R33-F) needs the current mod for rolling, mulching, the counted litres and the crops of the map; with an older mod
+the player enters them.
 
 The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
 filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
 
 ### Added
 
+- **Field book [R33-F]** (owner decisions 2026-10-08 / 2026-10-09 in `QUESTIONS.md`): new app *Feldbuch* (after the
+  *Flurkarte*, tab *Dokumentation*).
+  - Per own or leased field a running season and one entry per harvest year (FS25 year of the harvest): crop, harvest
+    product, litres, l/ha, 1st / 2nd fertilisation, lime, rolling, weed control, mulching and the kinds of fertiliser.
+  - Detected from the game: the field levels of every export (fertilisation = spray level 1 / 2, rolling 1 → 0,
+    mulching → 1, lime and weeds only with the soil rule on); a harvest ends the entry (ripe → harvested, gone, or cut
+    back for a crop that grows again); another crop ends it "ohne Ernte"; cuts of the same crop in one year are added,
+    a second crop is dropped, a harvest beats "ohne Ernte". The first entry of a field counts the levels found as done.
+  - Litres: new harvest counter in the mod - hooks on `Combine.addCutterArea` and, as the second way, around
+    `Cutter.onEndWorkAreaProcessing` (never twice), only on own farmland, saved in the mod savegame; the backend books
+    the difference per export (a falling counter is taken back). A contractor harvest adds its litres.
+  - Corrections win ("manuell") and can be given back (↺); "Ernte eintragen" when no harvest is detected; closing a
+    harvest year locks it, late litres wait as a notice until it is reopened; a rewind reopens entries that ended after
+    the loaded game time. Sold or leased-out fields keep their years.
+  - `market_context.fruitTypes` now carries `needsRolling` (crops that are not rolled show "nicht nötig").
 - **Roadmap V3.3 groundwork – bridge contract for the field book [R33-Q]** (owner decisions 2026-10-08 in
   `QUESTIONS.md`): Q fixes the contract only, like R31-Q; the mod reads the values in the game with R33-F.
   - `farm_facts.json`, optional: `fields[].rollerLevel` / `stubbleShredLevel` (FieldState levels of rolling and

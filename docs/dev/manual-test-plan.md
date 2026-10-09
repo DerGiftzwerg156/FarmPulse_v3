@@ -606,8 +606,8 @@ needed, switch the implementation to it.
 Every point of [`ROADMAP_V3.3.md`](../architecture/ROADMAP_V3.3.md) marked 🟡 ("Im Spiel prüfen") and every acceptance
 criterion has one row here. R33-Q fixes the contract only (owner decision 2026-10-08,
 [bridge protocol](bridge-protocol.md#roadmap-v33-fields-and-block-optional-r33-q1)): the mod reads the levels with
-R33-F2, counts the harvest with R33-F3 and lists the crops of the map with R33-F, so rows 29.1–29.9 can be checked once
-those are built, rows 29.10–29.12 with E and W. Without FS25 the bridge simulator scenario `feldbuch` shows the
+R33-F2, counts the harvest with R33-F3 and lists the crops of the map with R33-F4 - built since R33-F, so rows
+29.1–29.10 can be checked now, rows 29.11–29.12 with E and W. Without FS25 the bridge simulator scenario `feldbuch` shows the
 contract (control endpoints `POST /field` for the levels and `POST /harvest` for the counter). Note the result in the
 row's issue and, if the fallback is needed, switch the implementation to it.
 
@@ -618,7 +618,7 @@ row's issue and, if the fallback is needed, switch the implementation to it.
 | 29.3 | 🟡 Forage harvester, root crop harvesters, windrow pick-up (R33-Q1) | Harvest maize with a forage harvester, potatoes / sugar beet with their harvesters, pick up a grass swath with a forage harvester | note for each whether `harvests[]` grows and with which `fruitType` / `fillType` (e.g. `MAIZE` / `CHAFF`) | what is not counted the player enters himself (owner decision 2026-10-08) |
 | 29.4 | 🟡 Field border (R33-Q1) | Harvest along the border between two own fields | note whether litres land on the neighbouring farmland (vehicle position vs. cutter) | position of the cutter work area (`spec.workAreaParameters`); the rest is correctable |
 | 29.5 | Counter in the savegame (R33-Q1) | Harvest, save, harvest more, quit without saving and load | after loading `harvests[]` shows the saved value again | – |
-| 29.6 | Crops of the map (R33-Q1) | Look at `market_context.json` → `fruitTypes` on the base map and on a map with own crops | every crop of the map is listed; maize lists `CHAFF` in `products`, grass has `regrows: true` | without `products` the form offers the standard product and the products the counter reported |
+| 29.6 | Crops of the map (R33-Q1 / F4) | Look at `market_context.json` → `fruitTypes` on the base map and on a map with own crops | every crop of the map is listed; maize lists `CHAFF` in `products`, grass has `regrows: true`; note which crops have `needsRolling: false` | without `products` the form offers the standard product and the products the counter reported |
 | 29.7 | 🟡 Grass cut (R33-F1) | Mow an own grass field | note whether `fields[].growthState` drops below `minHarvestingGrowthState` with the crop unchanged | button "Ernte eintragen" |
 | 29.8 | 🟡 Spray level after the harvest and organic fertiliser (R33-F2) | Harvest a fertilised field and look at `sprayLevel`; spread slurry, manure and digestate on an unfertilised field | note whether the harvest resets `sprayLevel` to 0 and whether slurry / manure / digestate raise it | count each rise within the entry; the player ticks it himself |
 | 29.9 | 🟡 Weed control (R33-F2) | Spray herbicide on a weedy field, hoe another one | note which `weedState` values the field shows before and after | the player ticks it himself |

@@ -32,6 +32,7 @@
     "fruitTypes": { "type": "array", "items": { "type": "object", "required": ["name"],
       "properties": { "name": { "type": "string", "minLength": 1 }, "fillType": { "type": "string", "minLength": 1 },
         "title": { "type": "string", "minLength": 1 }, "regrows": { "type": "boolean" },
+        "needsRolling": { "type": "boolean" },
         "products": { "type": "array", "items": { "type": "string", "minLength": 1 } } } } }
   }
 }

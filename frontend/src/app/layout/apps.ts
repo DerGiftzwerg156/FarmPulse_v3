@@ -28,6 +28,8 @@ export const APPS: AppDef[] = [
   { id: 'insurance', label: 'nav.insurance', path: '/versicherung', icon: 'shieldCheck', tone: 'money' },
   { id: 'staff', label: 'nav.employees', path: '/employees', icon: 'userCheck', tone: 'farm' },
   { id: 'fields', label: 'nav.farmland', path: '/farmland', icon: 'map', tone: 'farm' },
+  // Roadmap V3.3 R33-F4 (owner decision 2026-10-09): right after the Flurkarte, own symbol
+  { id: 'fieldbook', label: 'nav.fieldBook', path: '/feldbuch', icon: 'clipboard', tone: 'farm' },
   { id: 'stable', label: 'nav.stable', path: '/stall', icon: 'barn', tone: 'farm' },
   { id: 'workshop', label: 'nav.workshop', path: '/werkstatt', icon: 'wrench', tone: 'farm' },
   // Roadmap V3 R3-H (owner decision: own app): trade and contracts of the neighbours

@@ -104,6 +104,10 @@ function RPSimBridge:exportFarmFacts()
         raw.fields, raw.fieldRules = fields.fields, fields.rules
         raw.npcFields = fields.npcFields -- Roadmap V3 R3-H1 (nil when switched off)
     end
+    -- Roadmap V3.3 R33-F3: only exported while a harvest hook is installed; otherwise the block stays missing
+    if self.harvestCounterEnabled and self.state.harvests ~= nil then
+        raw.harvests = RPSimHarvestCounter.toRaw(self.state.harvests)
+    end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
 end
 

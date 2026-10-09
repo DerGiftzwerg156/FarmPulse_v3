@@ -1721,3 +1721,58 @@ export interface InvestorsView {
   stalls: InvestorStallView[];
   fields: { farmlandId: number; name: string | null; hectares: number | null }[];
 }
+
+/** Roadmap V3.3 R33-F: a value of a field book entry; `manual` = corrected by the player. */
+export interface FieldBookValue {
+  value: string | number | boolean | null;
+  manual: boolean;
+}
+
+/** Keys of FieldBookEntryView.values (FieldBookService.Value). */
+export type FieldBookValueKey = 'FRUIT_TYPE' | 'FILL_TYPE' | 'LITERS' | 'FERT1' | 'FERT2' | 'LIMED' | 'ROLLED' | 'WEEDS' | 'MULCHED';
+
+export interface FieldBookEntryView {
+  id: number;
+  status: 'RUNNING' | 'HARVESTED' | 'NO_HARVEST';
+  harvestYear: number | null;
+  hectares: number | null;
+  firstEntry: boolean;
+  held: boolean;
+  locked: boolean;
+  litersPerHectare: number | null;
+  sprayTypes: string[];
+  /** false = the crop is not rolled (FS25 needsRolling), null = unknown. */
+  rollingNeeded: boolean | null;
+  values: Record<FieldBookValueKey, FieldBookValue>;
+}
+
+export interface FieldBookFieldView {
+  farmlandId: number;
+  name: string;
+  hectares: number | null;
+  state: 'ACTIVE' | 'LEASED_OUT' | 'LEASE_ENDED' | 'SOLD';
+  running: FieldBookEntryView | null;
+  entries: FieldBookEntryView[];
+}
+
+export interface FieldBookCropView {
+  name: string;
+  title: string | null;
+  fillType: string | null;
+  products: string[];
+  needsRolling: boolean | null;
+}
+
+/** Roadmap V3.3 R33-F: app "Feldbuch", tab "Dokumentation". */
+export interface FieldBookView {
+  fieldsTracked: boolean;
+  currentYear: number | null;
+  closedYears: number[];
+  years: number[];
+  showLime: boolean;
+  showWeeds: boolean;
+  cropsFromMap: boolean;
+  crops: FieldBookCropView[];
+  fields: FieldBookFieldView[];
+  notices: { entryId: number; farmlandId: number; harvestYear: number | null; liters: number }[];
+}

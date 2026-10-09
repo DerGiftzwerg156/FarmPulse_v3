@@ -145,6 +145,15 @@ that the adapter reads none of the values yet (Q fixes the contract only, owner 
 scenario, the counter with its control endpoint `POST /harvest` and its place in the savegame in
 `test/roadmap-v33.test.js`. Q brings no formula, no table and no configuration value; they come with F and E (owner
 decision 2026-10-08). In the game: manual test plan section 29.
+Roadmap V3.3 R33-F (field book): `FieldBookTest` covers the first entry (levels found count as done), a season from
+sowing to harvest with every measure, the harvest year and late litres, mulching in the next season, cuts of a grass
+field in one entry, the main crop and "harvest beats no harvest", the product of the counter and a falling counter, a
+sold field, corrections and "automatisch", "Ernte eintragen", a closed year with its notice and the reopening, the
+rewind and the fallback crops; `ApiIntegrationTest.fieldBookEndpoints` the REST endpoints;
+`SimulatorScenariosEndToEndTest.roadmapV33FieldsArriveFromTheFieldBookScenario` the running seasons and the counted
+grass of `feldbuch`. Mod: `test_roadmap_v33.lua` (levels, crops of the map once with `needsRolling` and the converter
+products, own farmland only, both hooks never counting twice, savegame and export). Frontend:
+`features/fieldbook/fieldbook.spec.ts`. In the game: manual test plan rows 29.1–29.10.
 Roadmap V3.2 R32-G (bulk orders): `BulkOrderTest` covers the request (sell point of the map without production, amount
 range and step, instant price = best price x 1.25, a new buyer per request, the call that becomes a mail), refusals and
 the factor, the instant delivery batch and its ack, the refused transfer, the delivery months with the fixed price

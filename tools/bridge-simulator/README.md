@@ -147,7 +147,7 @@ back (a loading station that reaches only part of the storage) is covered by the
 
 **Roadmap V3.3** (R33-Q2): only `feldbuch` exports the rolling and mulching levels of its fields
 (`fields[].rollerLevel` / `stubbleShredLevel`, changed with `POST /field`), the crops of the map
-(`market_context.fruitTypes`, sorted by name) and the harvest counter (`harvests` = `{ farmlandId, fruitType, fillType,
+(`market_context.fruitTypes`, sorted by name, with `needsRolling` - potatoes are not rolled) and the harvest counter (`harvests` = `{ farmlandId, fruitType, fillType,
 liters }`, cumulative whole litres, sorted); all other scenarios stand for a mod without them. `POST /harvest` adds the
 litres a harvesting machine got into its tank on an own field, like the planned hook of R33-F3; a contractor harvest
 (`FIELD_WORK HARVEST`) is not counted (in the game it is a state jump, not a combine). The counter is part of the

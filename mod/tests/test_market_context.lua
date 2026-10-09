@@ -105,16 +105,17 @@ function T.TestMarketContext:testFruitTypesAreOptionalAndNormalized()
     lu.assertNil(doc.fruitTypes)
     doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m", fruitTypes = {
         { name = "WHEAT", fillType = "WHEAT", title = "Weizen", regrows = false },
-        { name = "MAIZE", fillType = "MAIZE", title = "Mais", regrows = false,
+        { name = "MAIZE", fillType = "MAIZE", title = "Mais", regrows = false, needsRolling = true,
             products = { "CHAFF", "MAIZE", "", "CHAFF", 7, "SILAGE" } },
         { name = "GRASS", fillType = "GRASS_WINDROW", title = "", regrows = true, products = {} },
-        { name = "SPELT", fillType = "", regrows = "yes", products = "CHAFF" },
+        { name = "SPELT", fillType = "", regrows = "yes", needsRolling = 1, products = "CHAFF" },
         { name = "WHEAT", fillType = "BARLEY" },
         { name = "", fillType = "OAT" },
         { fillType = "OAT" } } })
     lu.assertEquals(doc.fruitTypes, {
         { name = "GRASS", fillType = "GRASS_WINDROW", regrows = true, products = {} },
-        { name = "MAIZE", fillType = "MAIZE", title = "Mais", regrows = false, products = { "CHAFF", "SILAGE" } },
+        { name = "MAIZE", fillType = "MAIZE", title = "Mais", regrows = false, needsRolling = true,
+            products = { "CHAFF", "SILAGE" } },
         { name = "SPELT" },
         { name = "WHEAT", fillType = "WHEAT", title = "Weizen", regrows = false } })
     -- an empty list is a real answer

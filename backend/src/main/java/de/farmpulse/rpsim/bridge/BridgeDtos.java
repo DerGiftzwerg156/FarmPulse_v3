@@ -423,10 +423,17 @@ public final class BridgeDtos {
      * Roadmap V3.3 (R33-Q1): a crop of the map (g_fruitTypeManager:getFruitTypes()) for the field book. {@code fillType}
      * = standard harvest product, {@code title} = display name of the game, {@code regrows} = grows again after a cut
      * (FruitTypeDesc.regrows), {@code products} = further harvest products from the fruit type converters (e.g. MAIZE
-     * -> CHAFF); all but {@code name} optional.
+     * -> CHAFF); all but {@code name} optional. R33-F4 (owner decision 2026-10-09): {@code needsRolling} = the crop is
+     * rolled after sowing (FruitTypeDesc.needsRolling); null = not read.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record FruitTypeEntry(String name, String fillType, String title, Boolean regrows, List<String> products) {
+    public record FruitTypeEntry(String name, String fillType, String title, Boolean regrows, List<String> products,
+                                 Boolean needsRolling) {
+
+        /** R33-Q contract without needsRolling (older mod). */
+        public FruitTypeEntry(String name, String fillType, String title, Boolean regrows, List<String> products) {
+            this(name, fillType, title, regrows, products, null);
+        }
     }
 
     /**

@@ -90,6 +90,7 @@ Ohne die neuen Werte hat das Feldbuch keine automatische Erfassung.
   - `name` (z. B. `WHEAT`), `fillType` (Standard-Ernteprodukt),
   - `title` (Anzeigename des Spiels, für Kulturen ohne deutsches Label in FarmPulse),
   - `regrows` (wächst nach dem Schnitt nach, z. B. Gras; für F1 „Schnitte summieren“),
+  - `needsRolling` (wird nach der Saat gewalzt; mit F4 ergänzt, Entscheidung 09.10.2026),
   - optional `products[]`: weitere Ernteprodukte der Kultur aus den Fruchtumwandlungen des Spiels (z. B. Mais →
     Häckselgut `CHAFF`).
 
@@ -170,7 +171,7 @@ Missionsfelder anderer Farmen zählen nicht. Fruchtsorte: `inputFruitType`. Fehl
 Stand 09.10.2026: Simulator, Mod- und Backend-Tests des Vertrags, Testplan und Doku umgesetzt. Tabellen kommen mit F,
 der Konfigwert mit E (Entscheidung 08.10.2026).
 
-- [ ] Neue Tabellen (Migration) – **mit F**:
+- [x] Neue Tabellen (Migration) – **mit F** (V43, dazu `field_book_counter` für den zuletzt gesehenen Zählerstand):
   - `field_book_entry`: je Feld und Saison ein Eintrag mit Feldname und Fläche, Status
     (`RUNNING`, `HARVESTED`, `NO_HARVEST`) und Erntejahr (leer, solange `RUNNING`). Dazu Kultur, Ernteprodukt, Liter,
     die sechs Maßnahmen und die gesehenen Düngerarten. Für die Erkennung kommen die Ausgangsstufen beim Start dazu und
@@ -202,6 +203,17 @@ der Konfigwert mit E (Entscheidung 08.10.2026).
 laufende Saison und die Einträge der Erntejahre. Fast alles füllt sich von selbst aus dem Spiel. Der Spieler kann jeden
 Wert korrigieren und ein Jahr abschließen.
 
+**Stand 09.10.2026: umgesetzt** (`field/FieldBookService`, `api/FieldBookController`, App „Feldbuch“, Migration V43,
+Mod: Walz- und Mulchstufe, Kulturen der Karte, Ernte-Zähler mit beiden Hooks). Entscheidungen vom 09.10.2026 zu den
+offenen Punkten (`QUESTIONS.md`): Eine Ernte schlägt „ohne Ernte“, von zwei Einträgen ohne Ernte bleibt der erste. Die
+laufende Saison eines verkauften oder verpachteten Feldes wird verworfen. Die Fläche wird beim Ende festgehalten und ist
+nicht änderbar. Die Liter-Zuordnung ist wie vorgeschlagen. Es gibt einen Knopf „automatisch“ (↺) je Wert. `needsRolling`
+wird exportiert (Erweiterung von Q1), Kulturen ohne Walzbedarf zeigen „nicht nötig“. Die App steht nach der Flurkarte
+mit eigenem Symbol (Klemmbrett) und hat nach F nur den Tab „Dokumentation“. Beim Zurückspulen werden Einträge, die nach
+dem geladenen Zeitpunkt endeten, wieder laufend, und danach begonnene Saisons fallen weg. Im ersten Eintrag eines Feldes
+zählen die vorgefundenen Stufen als erledigt. Ohne `fruitTypes` bietet das Dropdown die bekannten Kulturen an, ohne
+`fieldRules` werden Kalk und Unkraut angezeigt.
+
 **Entscheidungen 08.10.2026 (`QUESTIONS.md`):**
 - Datenquelle: **alles automatisch, korrigierbar**. Kultur und Maßnahmen kommen aus den Feldwerten, die Liter vom
   Ernte-Zähler.
@@ -232,27 +244,27 @@ Wert korrigieren und ein Jahr abschließen.
 
 ### R33-F1 Einträge und Saison
 
-- [ ] Für jedes Feld aus `fields[]` (eigen oder gepachtet) gibt es immer genau einen Eintrag `RUNNING`, die
+- [x] Für jedes Feld aus `fields[]` (eigen oder gepachtet) gibt es immer genau einen Eintrag `RUNNING`, die
   „laufende Saison“. Er beginnt beim ersten Export nach dem Update. Danach beginnt ein neuer nach jedem Ende des
   vorigen.
-- [ ] **Ende durch Ernte** (Status `HARVESTED`, Erntejahr = `calendar.year` in diesem Moment). Erkannt wird die Ernte so:
+- [x] **Ende durch Ernte** (Status `HARVESTED`, Erntejahr = `calendar.year` in diesem Moment). Erkannt wird die Ernte so:
   - wie heute in `FieldService` (Phase „erntereif“ gesehen, danach abgeerntet bzw. `cut`),
   - bei nachwachsenden Kulturen (`fruitTypes[].regrows`): `growthState` fällt nach „erntereif“ unter
     `minHarvestingGrowthState`, die Kultur bleibt gleich,
   - durch eine Lohnunternehmer-Ernte (`FIELD_WORK HARVEST` mit `APPLIED`, R31-A1),
   - durch den Knopf „Ernte eintragen“ (Fallback, siehe F4).
-- [ ] **Ende ohne Ernte** (Status `NO_HARVEST`): Auf dem Feld steht eine andere Kultur als im laufenden Eintrag. Das
+- [x] **Ende ohne Ernte** (Status `NO_HARVEST`): Auf dem Feld steht eine andere Kultur als im laufenden Eintrag. Das
   Erntejahr ist das FS25-Jahr dieses Moments. Der neue laufende Eintrag bekommt die neue Kultur.
-- [ ] **Schnitte summieren:** Endet ein Eintrag durch Ernte und gibt es für das Feld schon einen Eintrag `HARVESTED`
+- [x] **Schnitte summieren:** Endet ein Eintrag durch Ernte und gibt es für das Feld schon einen Eintrag `HARVESTED`
   mit derselben Kultur im selben Erntejahr, wird der neue in diesen eingerechnet. Die Liter werden addiert, die
   Maßnahmen zwischen den Schnitten mit „oder“ verknüpft.
-- [ ] **Nur Hauptkultur:** Endet ein Eintrag im selben Erntejahr mit einer **anderen** Kultur als der schon vorhandene
+- [x] **Nur Hauptkultur:** Endet ein Eintrag im selben Erntejahr mit einer **anderen** Kultur als der schon vorhandene
   Eintrag des Jahres, wird er verworfen. Er erscheint nicht im Feldbuch.
-- [ ] **Verkauf, Verpachtung, Pachtende:** Die abgeschlossenen Einträge bleiben (Entscheidung 08.10.2026). In der App
+- [x] **Verkauf, Verpachtung, Pachtende:** Die abgeschlossenen Einträge bleiben (Entscheidung 08.10.2026). In der App
   ist das Feld als „verkauft“ bzw. „verpachtet“ markiert (`FarmlandOwnershipService`, `LeaseService`, R3-L). Was mit
   dem laufenden Eintrag passiert, steht in [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung). Kommt das Feld
   zurück, beginnt ein neuer laufender Eintrag.
-- [ ] Ein Eintrag kennt Feld (`farmlandId` und Name), Fläche (aus `fields[].hectares`; wann sie festgehalten wird,
+- [x] Ein Eintrag kennt Feld (`farmlandId` und Name), Fläche (aus `fields[].hectares`; wann sie festgehalten wird,
   siehe [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung)), Kultur, Ernteprodukt, Liter, die sechs Maßnahmen
   und die Düngerarten.
 
@@ -278,9 +290,13 @@ Werte mit dem Stand beim Start des laufenden Eintrags. Ein gesetzter Haken bleib
 | Unkraut bekämpft | `weedState` sinkt im Eintrag | seit R2-C1 | ✅ R2-C1, 🟡 unten |
 | Gemulcht | `stubbleShredLevel` wechselt im Eintrag auf `1` | Q1 | ✅ Q1, 🟡 Q1 |
 
-- [ ] Ein Lohnunternehmer-Auftrag (R31-A1) setzt die Werte zusätzlich direkt mit dem `APPLIED` seiner `FIELD_WORK`:
-  `LIME` → gekalkt, `FERTILIZE` → nächste Düngung, `SOW` → Kultur.
-- [ ] Kalk und Unkraut werden nur ausgewertet und angezeigt, wenn `fieldRules.limeRequired` bzw.
+- [x] Ein Lohnunternehmer-Auftrag (R31-A1) setzt die Werte zusätzlich direkt mit dem `APPLIED` seiner `FIELD_WORK`:
+  `LIME` → gekalkt, `FERTILIZE` → nächste Düngung, `SOW` → Kultur. Umgesetzt: `LIME` über die Quittung (ein Haken
+  doppelt schadet nicht). `FERTILIZE` und `SOW` ändern den Feldzustand im Spiel, den der nächste Export zeigt. Sie
+  zählen deshalb nur über den Feldzustand, sonst würde eine Düngung doppelt gezählt.
+- [x] Die Düngerart wird bei jeder Erhöhung der Düngestufe aus `sprayType` übernommen (nicht bei einem bloß gesehenen
+  `sprayType`, der von der vorigen Saison stehen geblieben sein kann).
+- [x] Kalk und Unkraut werden nur ausgewertet und angezeigt, wenn `fieldRules.limeRequired` bzw.
   `fieldRules.weedsEnabled` an ist (Entscheidung 08.10.2026, „ausblenden“).
 
 **🟡 Im Spiel prüfen:**
@@ -299,54 +315,56 @@ Werte mit dem Stand beim Start des laufenden Eintrags. Ein gesetzter Haken bleib
 
 ### R33-F3 Automatische Erntemenge
 
-- [ ] Das Backend liest `harvests[]` bei jedem Export. Die Differenz zum zuletzt gesehenen Zählerstand je Feld,
+- [x] Das Backend liest `harvests[]` bei jedem Export. Die Differenz zum zuletzt gesehenen Zählerstand je Feld,
   Kultur und Produkt bucht es in einen Eintrag. Die Regel für die Zuordnung steht in
   [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung):
   - in den laufenden Eintrag, wenn er diese Kultur hat,
   - sonst in den Eintrag `HARVESTED` desselben Feldes, derselben Kultur und des laufenden Erntejahres. Das deckt späte
     Liter, halb geerntete Felder und weitere Schnitte ab.
-- [ ] Eine Lohnunternehmer-Ernte bucht die Liter ihres `STORAGE_TRANSFER IN` (`ContractorWorkService.harvestLiters`)
+- [x] Eine Lohnunternehmer-Ernte bucht die Liter ihres `STORAGE_TRANSFER IN` (`ContractorWorkService.harvestLiters`)
   mit dem `APPLIED` der `FIELD_WORK HARVEST` und mit dem Standardprodukt der Kultur.
-- [ ] Sinkt ein Zähler (Spielstand neu geladen, Zurückspulen), zieht das Backend die Differenz wieder ab, höchstens bis
+- [x] Sinkt ein Zähler (Spielstand neu geladen, Zurückspulen), zieht das Backend die Differenz wieder ab, höchstens bis
   `0`. Manuell korrigierte Liter bleiben unberührt (Korrektur gewinnt).
-- [ ] Ohne `harvests[]` (älterer Mod oder 🟡 aus Q1) bleibt die Liter-Spalte leer, bis der Spieler sie füllt.
-- [ ] Liter ohne passenden Eintrag (z. B. Kultur auf dem Feld nicht erkannt) gehen in den laufenden Eintrag. Ist dort
+- [x] Ohne `harvests[]` (älterer Mod oder 🟡 aus Q1) bleibt die Liter-Spalte leer, bis der Spieler sie füllt.
+- [x] Liter ohne passenden Eintrag (z. B. Kultur auf dem Feld nicht erkannt) gehen in den laufenden Eintrag. Ist dort
   keine Kultur gesetzt, übernimmt er die Kultur aus dem Zähler.
 
 **Beleg:** ✅ Q1 (Ernte-Zähler). 🟡 siehe Q1.
 
 ### R33-F4 App „Feldbuch“ – Tab „Dokumentation“
 
-- [ ] Neue App `fieldbook` in `frontend/src/app/layout/apps.ts` (Gruppe „farm“), Route `/feldbuch`, Tabs
-  `dokumentation` und `auswertung` (`app-tabs.ts`), Erst-Hinweis in `app-hints.ts`.
-- [ ] Liste aller Felder (aktuelle zuerst, dann verkaufte und verpachtete, markiert). Je Feld:
+- [x] Neue App `fieldbook` in `frontend/src/app/layout/apps.ts` (Gruppe „farm“, nach der Flurkarte, Symbol
+  „clipboard“), Route `/feldbuch`, Tab `dokumentation` (`app-tabs.ts`; `auswertung` kommt mit E, Entscheidung
+  09.10.2026), Erst-Hinweis in `app-hints.ts`.
+- [x] Liste aller Felder (aktuelle zuerst, dann verkaufte und verpachtete, markiert). Je Feld:
   - die **laufende Saison**: Kultur, Haken, bisher gezählte Liter, Knopf **„Ernte eintragen“**,
   - darunter die Einträge je **Erntejahr**, die „ohne Ernte“ markiert.
-- [ ] Jeder Wert ist im Eintrag änderbar:
+- [x] Jeder Wert ist im Eintrag änderbar:
   - **Kultur** als Dropdown aller Kulturen der Karte (`fruitTypes[]`; Name aus den FarmPulse-Labels, sonst `title`
     des Spiels),
   - **Ernteprodukt** als Dropdown (Standardprodukt, `products[]` und gemeldete Produkte),
   - **sechs Haken** für die Maßnahmen (Kalk und Unkraut nur bei aktiver Bodenregel),
-  - **Liter** als Zahl ≥ 0 oder leer.
+  - **Liter** als Zahl ≥ 0 (ein leeres Feld ändert nichts; „leer“ heißt: keine Liter gezählt und keine eingetragen).
 
   Ein geänderter Wert bekommt die Quelle `MANUAL` und das Zeichen „manuell“. Die Erkennung lässt ihn danach in Ruhe.
-- [ ] Knopf **„Ernte eintragen“** am laufenden Eintrag: beendet ihn als `HARVESTED` mit dem aktuellen FS25-Jahr. Die
+- [x] Knopf **„Ernte eintragen“** am laufenden Eintrag: beendet ihn als `HARVESTED` mit dem aktuellen FS25-Jahr. Die
   Regeln aus F1 (Schnitte summieren, nur Hauptkultur) gelten auch hier.
-- [ ] Die Düngerart erscheint neben den Dünge-Haken (z. B. „Mineraldünger, Gülle“).
-- [ ] Ohne Feld-Export (Mod ohne `fields[]`) gibt es keine Einträge. Die App sagt das in einem Hinweis.
+- [x] Die Düngerart erscheint als eigene Spalte (z. B. „Dünger, Gülle“; nur die im Code belegten Namen `FERTILIZER`,
+  `LIQUID_MANURE` und `MANURE` sind übersetzt, andere stehen mit dem Namen des Spiels da).
+- [x] Ohne Feld-Export (Mod ohne `fields[]`) gibt es keine Einträge. Die App sagt das in einem Hinweis.
 
 **Beleg:** – (Oberfläche).
 
 ### R33-F5 Jahr abschließen
 
-- [ ] Im Tab „Dokumentation“ wählt der Spieler ein Erntejahr und drückt **„Jahr abschließen“**. Alle Einträge dieses
+- [x] Im Tab „Dokumentation“ wählt der Spieler ein Erntejahr und drückt **„Jahr abschließen“**. Alle Einträge dieses
   Erntejahres sind dann gesperrt: keine manuelle Änderung und keine automatische Erfassung.
-- [ ] Erkennt das Spiel danach noch etwas für einen gesperrten Eintrag (späte Liter, ein Haken, ein weiterer Schnitt),
+- [x] Erkennt das Spiel danach noch etwas für einen gesperrten Eintrag (späte Liter, ein Haken, ein weiterer Schnitt),
   wird es nicht gebucht. Es erscheint als **Hinweis** am Eintrag (`field_book_notice`), z. B. „Spiel meldet
   +12.000 l Weizen nach dem Abschluss“.
-- [ ] **„Jahr wieder öffnen“** hebt die Sperre auf. Die gesammelten Hinweise werden dann übernommen, außer bei manuell
+- [x] **„Jahr wieder öffnen“** hebt die Sperre auf. Die gesammelten Hinweise werden dann übernommen, außer bei manuell
   korrigierten Werten (Korrektur gewinnt).
-- [ ] Laufende Einträge haben kein Jahr und sind nie gesperrt.
+- [x] Laufende Einträge haben kein Jahr und sind nie gesperrt.
 
 **Beleg:** – (Backend und Oberfläche).
 
@@ -432,15 +450,15 @@ in `QUESTIONS.md` mit Status `open`.
 | Punkt | Frage | Vorschlag |
 | --- | --- | --- |
 | Q1 ✅ 08.10.2026 wie vorgeschlagen | Wie kommen die Ernte-Liter ins Backend, und was passiert nach dem Zurückspulen? | Kumulativer Zähler je Feld, Kultur und Produkt, gespeichert im Mod-Spielstand (`FS25_RPSim.xml`). Das Backend bucht die Differenz. Sinkt der Zähler, zieht es die Differenz wieder ab (nicht unter 0, nie aus manuellen Werten). |
-| F1 | Erst beendeter, dann geernteter Eintrag im selben Jahr: Steht zuerst ein Eintrag „ohne Ernte“ (z. B. verdorrt) und wird im selben FS25-Jahr eine andere Kultur geerntet, welcher gilt als Hauptkultur? | Ein Eintrag mit Ernte schlägt einen ohne Ernte: Der Eintrag „ohne Ernte“ wird verworfen. Zwei Einträge ohne Ernte im selben Jahr: Der erste bleibt. |
-| F1 | Laufender Eintrag eines Feldes, das verkauft, verpachtet oder zurückgegeben wird | Wird verworfen (auf dem eigenen Hof gibt es keine Ernte mehr). Alternative: als „ohne Ernte“ im aktuellen Jahr behalten. |
-| F1 | Fläche für l/ha | Fläche aus `fields[].hectares` beim Ende des Eintrags, nicht änderbar. |
-| F3 | Zuordnung der Liter zu einem Eintrag | Wie in F3: laufender Eintrag mit dieser Kultur, sonst `HARVESTED`-Eintrag gleicher Kultur im laufenden Erntejahr, sonst der laufende Eintrag (übernimmt die Kultur). |
-| F4 | Kann der Spieler einen „manuell“-Wert wieder an die Erkennung zurückgeben? | Ja, kleiner Knopf „automatisch“ je Wert. Danach gilt wieder der erkannte Wert. |
-| F4 | Walzen bei Kulturen, die kein Walzen brauchen (`needsRolling = false`) | Haken bleibt sichtbar, wird aber nicht automatisch gesetzt (`rollerLevel` bleibt dort `0`). |
+| F1 ✅ 09.10.2026 wie vorgeschlagen | Erst beendeter, dann geernteter Eintrag im selben Jahr: Steht zuerst ein Eintrag „ohne Ernte“ (z. B. verdorrt) und wird im selben FS25-Jahr eine andere Kultur geerntet, welcher gilt als Hauptkultur? | Ein Eintrag mit Ernte schlägt einen ohne Ernte: Der Eintrag „ohne Ernte“ wird verworfen. Zwei Einträge ohne Ernte im selben Jahr: Der erste bleibt. |
+| F1 ✅ 09.10.2026: verwerfen | Laufender Eintrag eines Feldes, das verkauft, verpachtet oder zurückgegeben wird | Wird verworfen (auf dem eigenen Hof gibt es keine Ernte mehr). Alternative: als „ohne Ernte“ im aktuellen Jahr behalten. |
+| F1 ✅ 09.10.2026 wie vorgeschlagen | Fläche für l/ha | Fläche aus `fields[].hectares` beim Ende des Eintrags, nicht änderbar. |
+| F3 ✅ 09.10.2026 wie vorgeschlagen | Zuordnung der Liter zu einem Eintrag | Wie in F3: laufender Eintrag mit dieser Kultur, sonst `HARVESTED`-Eintrag gleicher Kultur im laufenden Erntejahr, sonst der laufende Eintrag (übernimmt die Kultur). |
+| F4 ✅ 09.10.2026 wie vorgeschlagen | Kann der Spieler einen „manuell“-Wert wieder an die Erkennung zurückgeben? | Ja, kleiner Knopf „automatisch“ je Wert. Danach gilt wieder der erkannte Wert. |
+| F4 ✅ 09.10.2026: `needsRolling` exportieren, „nicht nötig“ statt Haken | Walzen bei Kulturen, die kein Walzen brauchen (`needsRolling = false`) | Haken bleibt sichtbar, wird aber nicht automatisch gesetzt (`rollerLevel` bleibt dort `0`). |
 | E1 | Wird die Auswahl des Zeitraums gemerkt? | Ja, je Spielstand in den Einstellungen des Feldbuchs, bis der Spieler sie ändert. |
 | W1 | Zeigen Hofbericht, Chronik und Bank, woher die Liter kommen? | Ja: „gemessen“ (Ernte-Zähler oder Lohnunternehmer), „eingetragen“ (manuell) oder „geschätzt“ (wie bisher). |
-| F4 | Platz der App auf dem Startbildschirm und Symbol | Gleich nach „Flurkarte“, Gruppe „farm“, Symbol „book“ bzw. „clipboard“. |
+| F4 ✅ 09.10.2026: nach der Flurkarte, neues Symbol „clipboard“ | Platz der App auf dem Startbildschirm und Symbol | Gleich nach „Flurkarte“, Gruppe „farm“, Symbol „book“ bzw. „clipboard“. |
 
 ---
 

@@ -50,6 +50,7 @@ Homescreen.
 | **Versicherung** | Sturm- und Hagelversicherung (auch mit Baustein „Diebstahl“), Dürre-Index, Schäden melden, Wildschaden | Hofversicherung · Dürre-Index · Schäden |
 | **Personal** | Team, Helferstunden und Stellenausschreibungen | Team · Stellen & Bewerber · Ehemalige |
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen | Karte · Meine Felder · Verhandlungen · Pacht · Vorgänge |
+| **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge | Dokumentation |
 | **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl | Ställe · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
@@ -552,6 +553,36 @@ der Besitzer und verliert Vertrauen (höchstens einmal je Feld und Tag). Passier
 **Familienfeld:** Hast du im Onboarding eine Familie gewählt, kannst du in der Detailansicht eines eigenen Feldes
 **Als Familienfeld markieren** („Das Feld am Bach war schon beim Großvater in der Familie“). Verkaufst du es später –
 im Tool oder im Feldmenü des Spiels –, sinkt das Vertrauen der ganzen Familie deutlich.
+
+## Feldbuch
+
+Das **Feldbuch** ist deine Ackerschlagkartei. Für jedes eigene und gepachtete Feld steht dort eine **laufende Saison**
+und darunter je **Erntejahr** ein Eintrag mit Kultur, Ernteprodukt, Litern, Litern je Hektar, **1. und 2. Düngung**,
+**Kalk**, **Walzen**, **Unkraut bekämpft** und **Gemulcht** sowie der Düngerart.
+
+- **Fast alles von selbst:** FarmPulse liest die Kultur und die Maßnahmen aus dem Spiel. Erreicht die Düngestufe 1,
+  ist das die 1. Düngung, Stufe 2 die 2. Düngung – egal ob Mineraldünger, Gülle oder Mist. Die Liter zählt der Mod beim
+  Ernten mit (was im Tank der Erntemaschine landet, nur auf eigenen Feldern). Eine Ernte des Lohnunternehmers kommt
+  mit ihrer Literzahl dazu.
+- **Saison:** Mit der **Ernte** endet der Eintrag und bekommt das FS25-Jahr der Ernte. Alles danach – Mulchen oder
+  Kalken auf der Stoppel, Aussaat, Düngen – zählt schon zur nächsten Saison. Wird nichts geerntet und steht dann eine
+  andere Kultur auf dem Feld, endet der Eintrag „ohne Ernte“. Gras und andere Kulturen, die nachwachsen: Alle Schnitte
+  eines Jahres stehen in einem Eintrag. Je Feld und Erntejahr gibt es nur einen Eintrag (eine zweite Kultur im selben
+  Jahr zählt nicht; eine Ernte ersetzt einen Eintrag „ohne Ernte“).
+- **Korrigieren:** Jeden Wert kannst du ändern – Kultur und Produkt aus der Liste, Liter als Zahl, Maßnahmen als Haken.
+  Ein geänderter Wert ist „manuell“ markiert und wird nicht mehr automatisch überschrieben. Mit **↺** gibst du ihn der
+  Erkennung zurück.
+- **Ernte eintragen:** Erkennt das Spiel eine Ernte nicht, beendest du die laufende Saison mit diesem Knopf.
+- **Jahr abschließen:** Ein abgeschlossenes Erntejahr ist gesperrt, auch für die Erkennung. Meldet das Spiel danach
+  noch Liter, stehen sie als Hinweis oben und werden übernommen, wenn du das Jahr **wieder öffnest**.
+- **Kalk und Unkraut** erscheinen nur, wenn sie im Spielstand eingeschaltet sind. Kulturen ohne Walzbedarf zeigen
+  „nicht nötig“.
+- Verkaufte oder verpachtete Felder bleiben mit ihren Jahren im Feldbuch (markiert); ihre laufende Saison entfällt.
+- Der erste Eintrag nach dem Update zählt die Stufen, die er vorfindet, als erledigt.
+
+Das Feldbuch braucht die aktuelle Mod-Version. Ohne sie fehlen Walzen, Mulchen, die gezählten Liter und die
+Kulturen der Karte (zur Auswahl stehen dann die bekannten Kulturen). Ein Spielstand, den du ohne Speichern neu lädst,
+öffnet eine Ernte nach dem geladenen Zeitpunkt wieder.
 
 ## Agrarbörse
 

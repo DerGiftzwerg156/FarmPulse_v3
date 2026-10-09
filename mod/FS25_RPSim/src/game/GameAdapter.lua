@@ -569,7 +569,75 @@ function RPSimGameAdapter:collectMarketContext(conflictMods)
     end)
     -- Roadmap V3.1 R31-K1: field outlines for the map of the Flurkarte (read once per mission start)
     raw.fieldShapes = self:collectFieldShapes()
+    -- Roadmap V3.3 R33-F4: the crops of the map for the field book (read once per mission start)
+    raw.fruitTypes = self:collectFruitTypes()
     return raw
+end
+
+--- Roadmap V3.3 R33-F4 (contract R33-Q1): every crop of the map for the crop dropdown of the field book.
+-- g_fruitTypeManager:getFruitTypes() (LUADOC Fruits/FruitTypeManager.md); per fruit type: name and index
+-- (FruitTypeDesc), the standard product getFillTypeNameByFruitTypeIndex, the title of its fill type
+-- (FruitTypeDesc.fillType = the FillTypeDesc, FillTypeDesc.title), regrows and needsRolling (FruitTypeDesc.md). Further
+-- products come from the fruit type converters (g_fruitTypeManager.fruitTypeConverters): a converter is a table keyed
+-- by the fruit type index with { fillTypeIndex, conversionFactor }, read that way by the cutter
+-- (spec.fruitTypeConverters[fruitTypeIndex].fillTypeIndex, LUADOC Specializations/Cutter.md). The crops do not change
+-- during a game: read once and kept. nil without a fruit type manager.
+function RPSimGameAdapter:collectFruitTypes()
+    if self.fruitTypeCache ~= nil then
+        return self.fruitTypeCache
+    end
+    local fruitTypes = safe(function() return g_fruitTypeManager:getFruitTypes() end, nil)
+    if type(fruitTypes) ~= "table" then
+        return nil
+    end
+    local converters = safe(function() return g_fruitTypeManager.fruitTypeConverters end, nil)
+    local list = {}
+    for _, desc in pairs(fruitTypes) do
+        safe(function()
+            local e = { name = desc.name, regrows = desc.regrows == true, needsRolling = desc.needsRolling ~= false }
+            e.fillType = safe(function() return g_fruitTypeManager:getFillTypeNameByFruitTypeIndex(desc.index) end, nil)
+            e.title = safe(function() return desc.fillType.title end, nil)
+            local products = {}
+            for _, converter in pairs(type(converters) == "table" and converters or {}) do
+                local entry = type(converter) == "table" and converter[desc.index] or nil
+                if type(entry) == "table" and entry.fillTypeIndex ~= nil then
+                    products[#products + 1] = safe(function()
+                        return g_fillTypeManager:getFillTypeNameByIndex(entry.fillTypeIndex)
+                    end, nil)
+                end
+            end
+            e.products = products
+            list[#list + 1] = e
+            return true
+        end)
+    end
+    self.fruitTypeCache = list
+    return list
+end
+
+--- Roadmap V3.3 R33-F3: field, crop and product of litres a harvesting machine got into its tank, or nil when it does
+-- not stand on a farmland of the player farm (missions on other farms' fields, roads). Farmland at the position of the
+-- machine (getWorldTranslation(rootNode) as in Combine:addCutterArea, g_farmlandManager:getFarmlandIdAtWorldPosition,
+-- LUADOC Economy/FarmlandManager.md), owner getFarmlandOwner (WorkArea:getIsAccessibleAtWorldPosition). Crop =
+-- inputFruitType; without it the fruit type of the product (getFruitTypeIndexByFillTypeIndex), the same fallback
+-- Combine:addCutterArea uses for the straw (LUADOC Specializations/Combine.md).
+function RPSimGameAdapter:harvestEntry(combine, inputFruitType, outputFillType)
+    local x, _, z = getWorldTranslation(combine.rootNode)
+    local farmlandId = g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)
+    if type(farmlandId) ~= "number" or farmlandId <= 0
+        or g_farmlandManager:getFarmlandOwner(farmlandId) ~= self:getFarmId() then
+        return nil
+    end
+    local fruitIndex = inputFruitType
+    if fruitIndex == nil or (FruitType ~= nil and fruitIndex == FruitType.UNKNOWN) then
+        fruitIndex = g_fruitTypeManager:getFruitTypeIndexByFillTypeIndex(outputFillType)
+    end
+    local fruitType = fruitIndex ~= nil and g_fruitTypeManager:getFruitTypeNameByIndex(fruitIndex) or nil
+    local fillType = g_fillTypeManager:getFillTypeNameByIndex(outputFillType)
+    if type(fruitType) ~= "string" or type(fillType) ~= "string" then
+        return nil
+    end
+    return { farmlandId = farmlandId, fruitType = fruitType, fillType = fillType }
 end
 
 --- Roadmap V3.1 R31-K1: the outline of every field of the map - the nodes of field.polygonPoints (dump field/Field.lua)
@@ -1404,6 +1472,9 @@ function RPSimGameAdapter:collectFieldsWhere(accept)
             local e = { farmlandId = farmland.id, name = field:getName(), hectares = field.areaHa,
                 growthState = state.growthState, weedState = state.weedState, stoneLevel = state.stoneLevel,
                 sprayLevel = state.sprayLevel, limeLevel = state.limeLevel, plowLevel = state.plowLevel,
+                -- Roadmap V3.3 R33-F2: rolling / mulching levels of the same FieldState (FieldState.new, dump
+                -- field/FieldState.lua); left out by the normalisation when the state does not carry them
+                rollerLevel = state.rollerLevel, stubbleShredLevel = state.stubbleShredLevel,
                 groundType = RPSimGameAdapter.groundTypeName(state.groundType),
                 sprayType = RPSimGameAdapter.sprayTypeName(state.sprayType) }
             local index = state.fruitTypeIndex
