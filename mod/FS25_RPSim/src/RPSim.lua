@@ -6,9 +6,9 @@
 -- luacheck: globals g_currentMission g_modSettingsDirectory addModEventListener Utils getUserProfileAppPath
 -- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00 Farm AIJob AIJobFieldWork AIJobConveyor
 -- luacheck: globals AIJobGoTo AIJobDeliver AIJobLoadAndDeliver AISystem
--- luacheck: globals PlayerInputComponent InputAction g_inputBinding g_i18n
+-- luacheck: globals PlayerInputComponent InputAction g_inputBinding g_i18n Combine Cutter
 RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil, financeHook = false,
-    helperHooks = false, promptKeyHook = false }
+    helperHooks = false, promptKeyHook = false, harvestHook = false, harvestCounted = false }
 
 local XML_NAME = "FS25_RPSim.xml"
 
@@ -70,6 +70,7 @@ local function loadMapImpl(self)
     self.bridge.financeJournalEnabled = RPSim.financeHook
     self.bridge.workforceEnabled = RPSim.helperHooks
     self.bridge.promptKeyAvailable = RPSim.promptKeyHook
+    self.bridge.harvestCounterEnabled = RPSim.harvestHook
     self.bridge:bootstrap()
     if Mission00 == nil or Mission00.onStartMission == nil then
         -- No start hook available: start right away (degraded, first export may be incomplete).
@@ -448,6 +449,68 @@ if PlayerInputComponent ~= nil and PlayerInputComponent.registerGlobalPlayerActi
     PlayerInputComponent.registerGlobalPlayerActionEvents = Utils.appendedFunction(
         PlayerInputComponent.registerGlobalPlayerActionEvents, RPSim.registerPromptAction)
     RPSim.promptKeyHook = true
+end
+
+--- Roadmap V3.3 R33-F3: litres a harvesting machine got into its tank (the return value of Combine:addCutterArea,
+-- after the rain and damage reduction, less when the tank is full; LUADOC Specializations/Combine.md) are added to the
+-- harvest counter of the own field it stands on. A failure never disturbs the harvest.
+function RPSim.countHarvest(combine, liters, inputFruitType, outputFillType)
+    local bridge = RPSim.bridge
+    if bridge == nil or type(liters) ~= "number" or liters <= 0 then
+        return
+    end
+    local ok, entry = pcall(bridge.adapter.harvestEntry, bridge.adapter, combine, inputFruitType, outputFillType)
+    if ok and entry ~= nil then
+        RPSimHarvestCounter.add(bridge.state.harvests, entry.farmlandId, entry.fruitType, entry.fillType, liters)
+    end
+end
+
+--- Main way (owner decision 2026-10-08: both ways): hook on Combine.addCutterArea, called by the cutter with the
+-- litres of the cut area (Cutter:onEndWorkAreaProcessing, LUADOC Specializations/Cutter.md). harvestCounted tells the
+-- fallback below that this call was counted already.
+function RPSim.addCutterAreaHook(combine, superFunc, area, liters, inputFruitType, outputFillType, ...)
+    local applied = superFunc(combine, area, liters, inputFruitType, outputFillType, ...)
+    RPSim.harvestCounted = true
+    pcall(RPSim.countHarvest, combine, applied, inputFruitType, outputFillType)
+    return applied
+end
+
+--- Fallback (🟡 manual test plan 29.2): a vehicle type may keep the original Combine.addCutterArea when it was
+-- registered before the hook above (SpecializationUtil.registerFunction). Around Cutter.onEndWorkAreaProcessing the
+-- addCutterArea of the combine of this cutter (spec_cutter.workAreaParameters.combineVehicle) is wrapped; it counts
+-- only when the main way did not count the same call, so nothing is counted twice.
+function RPSim.cutterEndHook(cutter, superFunc, ...)
+    local combine = cutter ~= nil and cutter.spec_cutter ~= nil and cutter.spec_cutter.workAreaParameters ~= nil
+        and cutter.spec_cutter.workAreaParameters.combineVehicle or nil
+    if type(combine) ~= "table" or type(combine.addCutterArea) ~= "function" then
+        return superFunc(cutter, ...)
+    end
+    local own = rawget(combine, "addCutterArea")
+    local original = combine.addCutterArea
+    combine.addCutterArea = function(c, area, liters, inputFruitType, outputFillType, ...)
+        RPSim.harvestCounted = false
+        local applied = original(c, area, liters, inputFruitType, outputFillType, ...)
+        if not RPSim.harvestCounted then
+            pcall(RPSim.countHarvest, c, applied, inputFruitType, outputFillType)
+        end
+        RPSim.harvestCounted = false
+        return applied
+    end
+    local ok, a, b, c = pcall(superFunc, cutter, ...)
+    combine.addCutterArea = own
+    if not ok then
+        error(a, 0)
+    end
+    return a, b, c
+end
+
+if Combine ~= nil and Combine.addCutterArea ~= nil and Utils ~= nil then
+    Combine.addCutterArea = Utils.overwrittenFunction(Combine.addCutterArea, RPSim.addCutterAreaHook)
+    RPSim.harvestHook = true
+end
+if Cutter ~= nil and Cutter.onEndWorkAreaProcessing ~= nil and Utils ~= nil then
+    Cutter.onEndWorkAreaProcessing = Utils.overwrittenFunction(Cutter.onEndWorkAreaProcessing, RPSim.cutterEndHook)
+    RPSim.harvestHook = true
 end
 
 -- booking titles (rpsim_money_*) and AI texts are looked up by engine code in the global g_i18n

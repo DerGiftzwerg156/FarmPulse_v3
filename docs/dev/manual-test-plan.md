@@ -600,3 +600,28 @@ needed, switch the implementation to it.
 | 28.14a | Goods and animals (R32-I3, W1/W2/A1) | Package with goods or animals: *Liefern* an amount (from the silo; animals from a chosen stable) | the silo stock / the animals of the stable drop, no money is booked; the delivery counts in *Bank → Investoren* | – |
 | 28.14b | Rewind (R32-I3) | Deliver milk, goods or animals to an investor, then reload the save before the delivery | the delivery is executed again (same `instructionId`), the backend counts it once | – |
 | 28.14c | Veto (R32-I3, P1) | With a veto: offer a field in the field map, then ask for the consent; sell another field in the game menu | the sale offer is refused until the consent; the menu sale is a breach (reminder) | – |
+
+## 29. Roadmap V3.3 in the real FS25
+
+Every point of [`ROADMAP_V3.3.md`](../architecture/ROADMAP_V3.3.md) marked 🟡 ("Im Spiel prüfen") and every acceptance
+criterion has one row here. R33-Q fixes the contract only (owner decision 2026-10-08,
+[bridge protocol](bridge-protocol.md#roadmap-v33-fields-and-block-optional-r33-q1)): the mod reads the levels with
+R33-F2, counts the harvest with R33-F3 and lists the crops of the map with R33-F4 - built since R33-F, so rows
+29.1–29.10 can be checked now, rows 29.11–29.12 with E and W. Without FS25 the bridge simulator scenario `feldbuch` shows the
+contract (control endpoints `POST /field` for the levels and `POST /harvest` for the counter). Note the result in the
+row's issue and, if the fallback is needed, switch the implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 29.1 | 🟡 Rolling and mulching levels (R33-Q1) | Sow an own field, look at `fields[].rollerLevel` in `farm_facts.json`, roll it; harvest another one, mulch its stubble, look at `stubbleShredLevel` | `rollerLevel` goes from `1` to `0` after rolling, `stubbleShredLevel` from `0` to `1` after mulching (as the soil map shows); note how long it takes (`FieldManager` walks the fields round-robin) | own `FieldState.new()` with `fieldState:update(posX, posZ)` at the field centre (as R2-C1, 10.6); without values the player ticks rolling / mulching himself |
+| 29.2 | 🟡 Harvest hook on every vehicle type (R33-Q1 / F3) | Harvest a few metres of wheat with a combine, compare the tank fill level with `harvests[]` | the counter grows by the litres in the tank; note which hook counted (`Combine.addCutterArea` or the fallback `Cutter.onEndWorkAreaProcessing`) and that nothing is counted twice | both hooks are built (owner decision 2026-10-08); if neither works, `harvests` stays empty and the player enters the litres |
+| 29.3 | 🟡 Forage harvester, root crop harvesters, windrow pick-up (R33-Q1) | Harvest maize with a forage harvester, potatoes / sugar beet with their harvesters, pick up a grass swath with a forage harvester | note for each whether `harvests[]` grows and with which `fruitType` / `fillType` (e.g. `MAIZE` / `CHAFF`) | what is not counted the player enters himself (owner decision 2026-10-08) |
+| 29.4 | 🟡 Field border (R33-Q1) | Harvest along the border between two own fields | note whether litres land on the neighbouring farmland (vehicle position vs. cutter) | position of the cutter work area (`spec.workAreaParameters`); the rest is correctable |
+| 29.5 | Counter in the savegame (R33-Q1) | Harvest, save, harvest more, quit without saving and load | after loading `harvests[]` shows the saved value again | – |
+| 29.6 | Crops of the map (R33-Q1 / F4) | Look at `market_context.json` → `fruitTypes` on the base map and on a map with own crops | every crop of the map is listed; maize lists `CHAFF` in `products`, grass has `regrows: true`; note which crops have `needsRolling: false` | without `products` the form offers the standard product and the products the counter reported |
+| 29.7 | 🟡 Grass cut (R33-F1) | Mow an own grass field | note whether `fields[].growthState` drops below `minHarvestingGrowthState` with the crop unchanged | button "Ernte eintragen" |
+| 29.8 | 🟡 Spray level after the harvest and organic fertiliser (R33-F2) | Harvest a fertilised field and look at `sprayLevel`; spread slurry, manure and digestate on an unfertilised field | note whether the harvest resets `sprayLevel` to 0 and whether slurry / manure / digestate raise it | count each rise within the entry; the player ticks it himself |
+| 29.9 | 🟡 Weed control (R33-F2) | Spray herbicide on a weedy field, hoe another one | note which `weedState` values the field shows before and after | the player ticks it himself |
+| 29.10 | Acceptance F (R33-F) | Fertilise a wheat field twice, lime it, roll it, harvest it, mulch the stubble; cut grass three times in one year; correct a litre value; close a year | the entry shows the harvest year, all ticks and the counted litres; the mulching is in the next running season; the three cuts are one entry; the corrected value stays; the closed year takes no change and shows late detections as a notice | – |
+| 29.11 | Acceptance E (R33-E) | Open *Feldbuch → Auswertung* | the last 5 harvest years; "alle Jahre" shows older ones; the bar chart of one field; the comparison per crop with `n`; grain maize and chaff apart | – |
+| 29.12 | Acceptance W (R33-W) | Look at the farm report and the chronicle of a year with counted litres | they show the litres of the field book; fields without them keep the estimate | – |

@@ -35,6 +35,8 @@ const pages: Routes = [
   ...tabbed('bank', 'bank', () => import('./features/bank/bank').then((m) => m.Bank), 'nav.bank'),
   ...tabbed('staff', 'employees', () => import('./features/employees/employees').then((m) => m.Employees), 'nav.employees'),
   ...tabbed('fields', 'farmland', () => import('./features/farmland/farmland').then((m) => m.Farmland), 'nav.farmland'),
+  // Roadmap V3.3 R33-F
+  ...tabbed('fieldbook', 'feldbuch', () => import('./features/fieldbook/fieldbook').then((m) => m.FieldBook), 'nav.fieldBook'),
   ...tabbed('market', 'market', () => import('./features/market/market').then((m) => m.Market), 'nav.market'),
   ...tabbed('authorities', 'aemter', () => import('./features/authorities/authorities').then((m) => m.Authorities), 'nav.authorities'),
   ...tabbed('insurance', 'versicherung', () => import('./features/insurance/insurance').then((m) => m.Insurance), 'nav.insurance'),

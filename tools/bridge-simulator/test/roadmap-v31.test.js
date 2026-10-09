@@ -26,7 +26,7 @@ function setup(scenario) {
   return { sim, write, run };
 }
 // Roadmap V3.2 (R32-Q2): the V3.2 scenarios stand for a mod with the V3.1 contract too
-const V31 = ['winter-schnee', 'lohnunternehmer', 'viehhandel', 'grossauftrag', 'investor-milch'];
+const V31 = ['winter-schnee', 'lohnunternehmer', 'viehhandel', 'grossauftrag', 'investor-milch', 'feldbuch'];
 
 test('the Roadmap V3.1 scenarios export the new fields, all others leave them out (older mod)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {
@@ -40,7 +40,8 @@ test('the Roadmap V3.1 scenarios export the new fields, all others leave them ou
     assert.equal('dayTimeMs' in facts.calendar, isV31, scenario);
     assert.equal(facts.assets.vehicles.some((v) => 'category' in v || 'fuel' in v), isV31, scenario);
     assert.equal(facts.weather?.snowHeight !== undefined, isV31, scenario);
-    assert.equal((facts.fields ?? []).some((f) => 'sprayType' in f), scenario === 'lohnunternehmer', scenario);
+    assert.equal((facts.fields ?? []).some((f) => 'sprayType' in f), ['lohnunternehmer', 'feldbuch'].includes(scenario),
+      scenario);
     assert.equal('fieldShapes' in ctx, scenario === 'lohnunternehmer', scenario);
   }
 });

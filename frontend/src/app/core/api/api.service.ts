@@ -511,6 +511,23 @@ export class ApiService {
   agreeBulkOrder(caseId: number, leadMonths: number): Observable<M.BulkOrderView> {
     return this.post(`/trade/bulk-orders/${caseId}/term`, { leadMonths });
   }
+  /** Roadmap V3.3 R33-F: field book ("Feldbuch → Dokumentation"). */
+  fieldBook(): Observable<M.FieldBookView> {
+    return this.get('/field-book');
+  }
+  /** `value` null gives the value back to the detection ("automatisch"). */
+  setFieldBookValue(entryId: number, field: M.FieldBookValueKey, value: string | null): Observable<M.FieldBookView> {
+    return this.post(`/field-book/entries/${entryId}/values`, { field, value });
+  }
+  harvestFieldBook(farmlandId: number): Observable<M.FieldBookView> {
+    return this.post(`/field-book/fields/${farmlandId}/harvest`, {});
+  }
+  closeFieldBookYear(year: number): Observable<M.FieldBookView> {
+    return this.post(`/field-book/years/${year}/close`, {});
+  }
+  reopenFieldBookYear(year: number): Observable<M.FieldBookView> {
+    return this.post(`/field-book/years/${year}/reopen`, {});
+  }
   /** Roadmap V3.2 R32-I: large investors ("Bank → Investoren"). */
   investors(): Observable<M.InvestorsView> {
     return this.get('/investors');

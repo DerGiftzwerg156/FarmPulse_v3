@@ -321,4 +321,57 @@ function T.TestFarmFacts:testVehiclePositionsAreNormalized()
         { uniqueId = "veh_2", x = -312.5, z = 88, farmlandId = 7, onCrop = true } })
 end
 
+-- Roadmap V3.3 (R33-Q1): optional rolling / mulching levels of a field and the harvest counter, contract only (the mod
+-- reads them in the game with R33-F2 / F3)
+function T.TestFarmFacts:testRoadmapV33FieldLevelsAndHarvestsAreAbsentWhenNotCollected()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        fields = { { farmlandId = 1, name = "1", hectares = 1, growthState = 0, weedState = 0, stoneLevel = 0,
+            sprayLevel = 0, limeLevel = 0, plowLevel = 0 } } }, RPSimConfig.new())
+    lu.assertNil(doc.fields[1].rollerLevel)
+    lu.assertNil(doc.fields[1].stubbleShredLevel)
+    lu.assertNil(doc.harvests)
+    -- an empty list is a real answer
+    lu.assertStrContains(RPSimJson.encode(RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        harvests = {} }, RPSimConfig.new())), '"harvests":[]')
+end
+
+function T.TestFarmFacts:testRollerAndStubbleShredLevels()
+    local function field(id, extra)
+        local f = { farmlandId = id, name = tostring(id), hectares = 1, growthState = 0, weedState = 0, stoneLevel = 0,
+            sprayLevel = 0, limeLevel = 0, plowLevel = 0 }
+        for k, v in pairs(extra) do f[k] = v end
+        return f
+    end
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, fields = {
+        field(1, { rollerLevel = 1, stubbleShredLevel = 0 }),
+        field(2, { rollerLevel = 0.6, stubbleShredLevel = 1.2 }),
+        field(3, { rollerLevel = -1, stubbleShredLevel = 0 / 0 }),
+        field(4, { rollerLevel = "1", stubbleShredLevel = true }) },
+        npcFields = { field(5, { rollerLevel = 1, stubbleShredLevel = 1 }) } }, RPSimConfig.new())
+    lu.assertEquals({ doc.fields[1].rollerLevel, doc.fields[1].stubbleShredLevel }, { 1, 0 })
+    lu.assertEquals({ doc.fields[2].rollerLevel, doc.fields[2].stubbleShredLevel }, { 1, 1 })
+    lu.assertNil(doc.fields[3].rollerLevel)
+    lu.assertNil(doc.fields[3].stubbleShredLevel)
+    lu.assertNil(doc.fields[4].rollerLevel)
+    lu.assertNil(doc.fields[4].stubbleShredLevel)
+    -- neighbour fields carry the same entries as fields (R3-H1)
+    lu.assertEquals({ doc.npcFields[1].rollerLevel, doc.npcFields[1].stubbleShredLevel }, { 1, 1 })
+end
+
+function T.TestFarmFacts:testHarvestCounterIsNormalisedAndSorted()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, harvests = {
+        { farmlandId = 7, fruitType = "MAIZE", fillType = "MAIZE", liters = 1000 },
+        { farmlandId = 7, fruitType = "MAIZE", fillType = "CHAFF", liters = 52000.6 },
+        { farmlandId = 3, fruitType = "WHEAT", fillType = "WHEAT", liters = 0 },
+        { farmlandId = 4, fruitType = "", fillType = "WHEAT", liters = 10 },
+        { farmlandId = 4, fruitType = "WHEAT", fillType = "WHEAT", liters = -1 },
+        { farmlandId = 4, fruitType = "WHEAT", fillType = "WHEAT", liters = 0 / 0 },
+        { fruitType = "WHEAT", fillType = "WHEAT", liters = 10 },
+        { farmlandId = 4, fruitType = "WHEAT", liters = 10 } } }, RPSimConfig.new())
+    lu.assertEquals(doc.harvests, {
+        { farmlandId = 3, fruitType = "WHEAT", fillType = "WHEAT", liters = 0 },
+        { farmlandId = 7, fruitType = "MAIZE", fillType = "CHAFF", liters = 52001 },
+        { farmlandId = 7, fruitType = "MAIZE", fillType = "MAIZE", liters = 1000 } })
+end
+
 return T

@@ -273,4 +273,84 @@ class BridgeValidatorTest {
                 BridgeDtos.MarketContext.class);
         assertThat(BridgeValidator.validate(noSize)).singleElement().asString().startsWith("invalid fieldShapes");
     }
+
+    // Roadmap V3.3 (R33-Q1): rolling / mulching levels of a field, the harvest counter and the crops of the map are
+    // optional like the V2-V3.2 blocks
+
+    private static final String FIELD = """
+            "farmlandId": 4, "name": "4", "hectares": 3, "growthState": 0, "weedState": 0, "stoneLevel": 0,
+            "sprayLevel": 1, "limeLevel": 0, "plowLevel": 0""";
+
+    @Test
+    void roadmapV33FieldsAreNotPresentForAnOlderModAndEmptyWhenEmpty() {
+        FarmFacts old = facts("\"fields\": [{" + FIELD + "}]");
+        assertThat(BridgeValidator.validate(old)).isEmpty();
+        assertThat(old.fields().get(0).rollerLevel()).isNull();
+        assertThat(old.fields().get(0).stubbleShredLevel()).isNull();
+        assertThat(old.harvests()).isNull();
+        FarmFacts empty = facts("\"harvests\": []");
+        assertThat(BridgeValidator.validate(empty)).isEmpty();
+        assertThat(empty.harvests()).isEmpty();
+    }
+
+    @Test
+    void roadmapV33FieldsAreParsedAndChecked() {
+        FarmFacts f = facts("\"fields\": [{" + FIELD + ", \"rollerLevel\": 1, \"stubbleShredLevel\": 0 }],"
+                + " \"npcFields\": [{" + FIELD + ", \"rollerLevel\": 0, \"stubbleShredLevel\": 1 }],"
+                + " \"harvests\": [{ \"farmlandId\": 7, \"fruitType\": \"MAIZE\", \"fillType\": \"CHAFF\","
+                + " \"liters\": 52001 }]");
+        assertThat(BridgeValidator.validate(f)).isEmpty();
+        assertThat(f.fields().get(0).rollerLevel()).isEqualTo(1);
+        assertThat(f.fields().get(0).stubbleShredLevel()).isZero();
+        assertThat(f.npcFields().get(0).stubbleShredLevel()).isEqualTo(1);
+        var h = f.harvests().get(0);
+        assertThat(h.farmlandId()).isEqualTo(7);
+        assertThat(h.fruitType()).isEqualTo("MAIZE");
+        assertThat(h.fillType()).isEqualTo("CHAFF");
+        assertThat(h.liters()).isEqualTo(52001.0);
+
+        assertThat(BridgeValidator.validate(facts("\"fields\": [{" + FIELD + ", \"rollerLevel\": -1 }]")))
+                .singleElement().asString().startsWith("invalid field");
+        assertThat(BridgeValidator.validate(facts("\"npcFields\": [{" + FIELD + ", \"stubbleShredLevel\": -1 }]")))
+                .singleElement().asString().startsWith("invalid npc field");
+        for (String entry : new String[] {
+                "{ \"fruitType\": \"WHEAT\", \"fillType\": \"WHEAT\", \"liters\": 1 }",
+                "{ \"farmlandId\": 7, \"fruitType\": \" \", \"fillType\": \"WHEAT\", \"liters\": 1 }",
+                "{ \"farmlandId\": 7, \"fruitType\": \"WHEAT\", \"liters\": 1 }",
+                "{ \"farmlandId\": 7, \"fruitType\": \"WHEAT\", \"fillType\": \"WHEAT\", \"liters\": -1 }",
+                "{ \"farmlandId\": 7, \"fruitType\": \"WHEAT\", \"fillType\": \"WHEAT\" }"}) {
+            assertThat(BridgeValidator.validate(facts("\"harvests\": [" + entry + "]"))).as(entry)
+                    .singleElement().asString().startsWith("invalid harvest counter");
+        }
+    }
+
+    @Test
+    void fruitTypesAreOptionalInTheMarketContext() {
+        String base = """
+                "savegameId": "sg", "mapName": "Erlengrund", "sellPoints": [], "fillTypes": [], "farmlands": [],
+                "detectedMods": []""";
+        var old = JSON.readValue("{" + base + "}", BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(old)).isEmpty();
+        assertThat(old.fruitTypes()).isNull();
+        var ctx = JSON.readValue("{" + base + """
+                , "fruitTypes": [{ "name": "GRASS", "fillType": "GRASS_WINDROW", "regrows": true, "products": [] },
+                    { "name": "MAIZE", "fillType": "MAIZE", "title": "Mais", "regrows": false, "products": ["CHAFF"] },
+                    { "name": "SPELT" }] }""", BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(ctx)).isEmpty();
+        assertThat(ctx.fruitTypes()).hasSize(3);
+        var maize = ctx.fruitTypes().get(1);
+        assertThat(maize.title()).isEqualTo("Mais");
+        assertThat(maize.regrows()).isFalse();
+        assertThat(maize.products()).containsExactly("CHAFF");
+        assertThat(ctx.fruitTypes().get(0).regrows()).isTrue();
+        assertThat(ctx.fruitTypes().get(2).fillType()).isNull();
+        for (String entry : new String[] {
+                "{ \"fillType\": \"WHEAT\" }", "{ \"name\": \" \" }",
+                "{ \"name\": \"WHEAT\", \"fillType\": \"\" }",
+                "{ \"name\": \"MAIZE\", \"products\": [\"\"] }"}) {
+            var bad = JSON.readValue("{" + base + ", \"fruitTypes\": [" + entry + "] }", BridgeDtos.MarketContext.class);
+            assertThat(BridgeValidator.validate(bad)).as(entry).singleElement().asString()
+                    .startsWith("invalid fruit type");
+        }
+    }
 }

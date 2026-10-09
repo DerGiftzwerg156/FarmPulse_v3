@@ -410,6 +410,46 @@ type W3). The bridge simulator exports it only in the scenario `investor-milch`.
 `fillType` or with a value that is not a number. The backend validator refuses a blank `fillType` and a missing or
 negative `amount` / `capacity`. 🟡 Whether milk tank extensions in reach count too: manual test plan 28.1.
 
+### Roadmap V3.3 fields and block (optional, R33-Q1)
+
+More **optional** values for [`ROADMAP_V3.3.md`](../architecture/ROADMAP_V3.3.md) (field book), same rules as above
+(`schemaVersion` stays `1`, missing = older mod, an empty block is a real answer of the game). R33-Q1 fixed the
+contract (`BridgeDtos`, `BridgeValidator`, the simulator schemas, `RPSimFarmFacts.build` / `RPSimMarketContext.build`);
+**since R33-F the mod reads them in the game**: the levels with the fields (`RPSimGameAdapter:collectFields`), the
+harvest counter with its hooks and the crops of the map (`market_context.fruitTypes` below). The bridge simulator
+exports them only in the scenario `feldbuch`.
+
+```json
+{ "fields": [{ "farmlandId": 2, "name": "2", "hectares": 4.6, "fruitType": "WHEAT", "growthState": 8,
+               "weedState": 0, "stoneLevel": 0, "sprayLevel": 2, "limeLevel": 1, "plowLevel": 1,
+               "rollerLevel": 0, "stubbleShredLevel": 0 }],
+  "harvests": [{ "farmlandId": 5, "fruitType": "MAIZE", "fillType": "CHAFF", "liters": 52001 }] }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `fields[].rollerLevel` | Rolling level of the field (integer ≥ 0); the game's soil map shows state `1` as "needs rolling"; also in `npcFields` (same normalisation) | `FieldState.rollerLevel` (`FieldState.new`, dump `field/FieldState.lua`, LUADOC `Field/FieldState.md`); state `1` = `NEEDS_ROLLING` on `FieldDensityMap.ROLLER_LEVEL` (LUADOC `GUI/MapOverlayGenerator.md`); written by the roller (`FSDensityMapUtil.updateRollerArea`, LUADOC `Specializations/Roller.md`). 🟡 whether `field:getFieldState()` fills it: manual test plan 29.1 |
+| `fields[].stubbleShredLevel` | Mulching level of the field (integer ≥ 0); the soil map shows state `1` as "mulched"; also in `npcFields` | `FieldState.stubbleShredLevel` (same `FieldState.new`); state `1` = `MULCHED` on `FieldDensityMap.STUBBLE_SHRED_LEVEL` (`MapOverlayGenerator.md`); written by the mulcher (`FSDensityMapUtil.updateMulcherArea`, LUADOC `Specializations/Mulcher.md`). 🟡 as above, 29.1 |
+| `harvests` | Harvest counter, one entry per own field, crop and harvest product, sorted by `farmlandId`, `fruitType`, `fillType`; empty = nothing counted yet | see below |
+| `harvests[].farmlandId` | Farmland the harvesting machine stood on, only farmlands of the player farm | `g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)` (LUADOC `Economy/FarmlandManager.md`), owner `getFarmlandOwner` (LUADOC `Specializations/WorkArea.md`, `getIsAccessibleAtWorldPosition`); position `getWorldTranslation(self.rootNode)` as in `Combine:addCutterArea` |
+| `harvests[].fruitType` | Crop (FS25 fruit type name) | `inputFruitType` of `Combine:addCutterArea`; without it `g_fruitTypeManager:getFruitTypeIndexByFillTypeIndex(outputFillType)` - the same fallback `Combine:addCutterArea` uses for the straw (LUADOC `Specializations/Combine.md`) |
+| `harvests[].fillType` | Harvest product (FS25 fill type name, e.g. `MAIZE` or `CHAFF`) | `outputFillType` of `Combine:addCutterArea`, after the cutter's fruit type converter (LUADOC `Specializations/Cutter.md`, `onEndWorkAreaProcessing`) |
+| `harvests[].liters` | **Cumulative** litres (whole litres, ≥ 0) harvesting machines got into their tank on this field: the sum of the return values of `Combine:addCutterArea` (the litres booked into the tank after the rain and damage reduction; less when the tank is full). Kept in the mod savegame (`FS25_RPSim.xml`, `RPSimPersistence`, like `contractReports`): a reloaded older savegame brings back its older, lower value (owner decision 2026-10-08) | `Combine:addCutterArea` (LUADOC `Specializations/Combine.md`), called by `Cutter:onEndWorkAreaProcessing` (LUADOC `Specializations/Cutter.md`) |
+
+**Built (R33-Q1):** `RPSimFarmFacts.buildFields` adds the two levels when they are numbers ≥ 0 (rounded) and leaves
+them out otherwise; `RPSimFarmFacts.buildHarvests` keeps entries with a `farmlandId`, non-empty `fruitType` /
+`fillType` and `liters` ≥ 0 (whole litres) and sorts them. The backend validator refuses a negative level and a counter
+entry without `farmlandId`, with a blank `fruitType` / `fillType` or with missing or negative `liters`.
+
+**Built (R33-F3):** owner decision 2026-10-08, both ways: `RPSim.addCutterAreaHook` on `Combine.addCutterArea`
+(`Utils.overwrittenFunction`, counts its return value) and `RPSim.cutterEndHook` on `Cutter.onEndWorkAreaProcessing`,
+which wraps `addCutterArea` of the combine of the cutter (`spec_cutter.workAreaParameters.combineVehicle`) for the call
+and counts only when the main way did not (flag `RPSim.harvestCounted`), so nothing is counted twice (🟡 manual test plan
+29.2). `RPSimGameAdapter:harvestEntry` finds the farmland and owner as above. The counter (`RPSimHarvestCounter`,
+`state.harvests`) is saved in `FS25_RPSim.xml` (`harvests.counter(i)#farmlandId/fruitType/fillType/liters`) and
+exported only while a hook is installed. A contractor harvest (R31-A1) is a state jump of the field, not a combine: it
+is not counted here, the backend takes its litres from its own `STORAGE_TRANSFER IN` (R33-F3).
+
 ### Booking statement block (optional, owner decisions 2026-10-06)
 
 **`bookings`** ("Kontoauszug"): the single bookings behind `finances`. Filled by the same `Farm:changeBalance` hook, so
@@ -522,6 +562,30 @@ the block is left out.
 | `mapSize` | Size of the map in metres (the world origin lies in the map centre) | `g_currentMission.terrainSize` (LUADOC `Economy/FarmlandManager.md`) |
 | `fields[].farmlandId` / `name` | Farmland of the field and the field name the game shows | `field.farmland.id`, `field:getName()` (as for `fields`, R2-C1) |
 | `fields[].points` | Corners of the outline in world coordinates (x / z in metres), 3 to 64 points; 🟡 orientation to north on the map, manual test plan 21.7 | `field.polygonPoints` with `getWorldTranslation` per node (dump `field/Field.lua`, `Vehicle.lua`) |
+
+**`fruitTypes`** (optional, Roadmap V3.3, contract R33-Q1; read by the mod since R33-F4, once per mission start like
+`fieldShapes`, `RPSimGameAdapter:collectFruitTypes`). Every crop of the map, also
+those of map mods, for the crop dropdown of the field book (owner decision 2026-10-08: all crops of the map). Missing =
+not present (older mod or not built yet); the bridge simulator exports it only in the scenario `feldbuch`.
+
+```json
+{ "fruitTypes": [{ "name": "GRASS", "fillType": "GRASS_WINDROW", "title": "Gras", "regrows": true, "products": [] },
+                 { "name": "MAIZE", "fillType": "MAIZE", "title": "Mais", "regrows": false, "products": ["CHAFF"] }] }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| selection | All fruit types of the map, sorted by `name` | `g_fruitTypeManager:getFruitTypes()` (LUADOC `Fruits/FruitTypeManager.md`) |
+| `name` | Fruit type name (required, e.g. `WHEAT`) | `FruitTypeDesc.name` (LUADOC `Fruits/FruitTypeDesc.md`) |
+| `fillType` | Standard harvest product (optional) | `g_fruitTypeManager:getFillTypeNameByFruitTypeIndex(index)` (as `fields[].fillType`) |
+| `title` | Display name of the game, for crops without a German label in FarmPulse (optional) | `FruitTypeDesc.fillType` is the FillTypeDesc of the crop (`loadFromFoliageXMLFile`), its `title` (LUADOC `FillTypes/FillTypeDesc.md`) |
+| `regrows` | The crop grows again after a cut, e.g. grass (optional) | `FruitTypeDesc.regrows` (set by the foliage state `regrowthStart`, LUADOC `Fruits/FruitTypeDesc.md`) |
+| `needsRolling` | The crop is rolled after sowing (optional; owner decision 2026-10-09, R33-F4: the field book shows "nicht nötig" otherwise) | `FruitTypeDesc.needsRolling` (`seeding#needsRolling`, default `true`, LUADOC `Fruits/FruitTypeDesc.md`) |
+| `products` | Further harvest products from the fruit type converters, sorted, without `fillType` (optional, e.g. `MAIZE` → `CHAFF`) | `g_fruitTypeManager.fruitTypeConverters` (`addFruitTypeConverter`, `addFruitTypeConversion`); one converter = table keyed by the fruit type index with `{ fillTypeIndex, conversionFactor }` - read that way by the cutter (`spec.fruitTypeConverters[fruitTypeIndex].fillTypeIndex`, LUADOC `Specializations/Cutter.md`) |
+
+`RPSimMarketContext.buildFruitTypes` drops entries without `name` and repeated names, leaves out empty or wrongly typed
+optional values and removes empty, repeated and standard products. The backend validator refuses a blank `name`, a blank
+`fillType` and a blank product.
 
 
 ## `import/instructions.json` + `import/instructions.xml` (backend → mod)
@@ -647,6 +711,13 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   (the notice names `husbandryUniqueId`, `fillType` and `amount`); a missing `HUSBANDRY_TRANSFER` is sent again
   after a rewind since R32-I3 (owner decision 2026-10-08, see below). After an `INSUFFICIENT_FUNDS` ack the snapshot
   balance is not trusted until a newer `farm_facts.json` arrived.
+- **Field book** (Roadmap V3.3 R33-F, `FieldBookService`): every `farm_facts` export first opens a running season
+  for an own field without one, then books the difference of every `harvests` counter since the last export (a falling
+  counter is taken back; rule of the owner decision 2026-10-09: the running season with the crop, else the harvest of
+  the crop in the current FS25 year, else the running season), then compares every field with the last export
+  (measures, end by harvest or by another crop). The `APPLIED` ack of a contractor `STORAGE_TRANSFER` (harvest) adds its
+  litres, of a `FIELD_WORK LIME` ticks the lime. A rewind reopens the entries that ended after the loaded game time and
+  drops the seasons begun after it (owner decision 2026-10-09).
 - **Savegame reloaded without saving** (`RewindService`): `farm_facts.json` with a game time earlier than the last
   snapshot is a rewind. The next `instructions_ack.json` rebuilt by the mod from the reloaded savegame shows which
   acknowledged instructions are missing; an ack file still written before the reload (it contains acks later than

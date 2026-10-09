@@ -137,6 +137,23 @@ from the game, the execution with its failure codes and the booking back of a pa
 `test_roadmap_v32.lua`, validation and `NOT_SUPPORTED` in `test_instructions.lua`; the simulator the scenarios, the
 execution and the control endpoint in `test/roadmap-v32.test.js`. Q brings no formula; the tables, the values under
 `rpsim.formulas.bulk-order.*` / `investor.*` and their boundary tests come with G and I (owner decision 2026-10-08).
+Roadmap V3.3 (R33-Q2): `SimulatorScenariosEndToEndTest.roadmapV33FieldsArriveFromTheFieldBookScenario` checks that the
+rolling / mulching levels, the harvest counter and the crops of the map of `feldbuch` arrive (and stay `null` for
+`lohnunternehmer`); `BridgeValidatorTest` (the new fields, `harvests` and `fruitTypes`) covers the backend side. The
+mod covers the normalisation in `test_farm_facts.lua` and `test_market_context.lua` and, in `test_roadmap_v33.lua`,
+that the adapter reads none of the values yet (Q fixes the contract only, owner decision 2026-10-08); the simulator the
+scenario, the counter with its control endpoint `POST /harvest` and its place in the savegame in
+`test/roadmap-v33.test.js`. Q brings no formula, no table and no configuration value; they come with F and E (owner
+decision 2026-10-08). In the game: manual test plan section 29.
+Roadmap V3.3 R33-F (field book): `FieldBookTest` covers the first entry (levels found count as done), a season from
+sowing to harvest with every measure, the harvest year and late litres, mulching in the next season, cuts of a grass
+field in one entry, the main crop and "harvest beats no harvest", the product of the counter and a falling counter, a
+sold field, corrections and "automatisch", "Ernte eintragen", a closed year with its notice and the reopening, the
+rewind and the fallback crops; `ApiIntegrationTest.fieldBookEndpoints` the REST endpoints;
+`SimulatorScenariosEndToEndTest.roadmapV33FieldsArriveFromTheFieldBookScenario` the running seasons and the counted
+grass of `feldbuch`. Mod: `test_roadmap_v33.lua` (levels, crops of the map once with `needsRolling` and the converter
+products, own farmland only, both hooks never counting twice, savegame and export). Frontend:
+`features/fieldbook/fieldbook.spec.ts`. In the game: manual test plan rows 29.1–29.10.
 Roadmap V3.2 R32-G (bulk orders): `BulkOrderTest` covers the request (sell point of the map without production, amount
 range and step, instant price = best price x 1.25, a new buyer per request, the call that becomes a mail), refusals and
 the factor, the instant delivery batch and its ack, the refused transfer, the delivery months with the fixed price

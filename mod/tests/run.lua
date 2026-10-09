@@ -8,7 +8,7 @@ local suites = {
     "test_json", "test_scaffold", "test_farm_facts", "test_market_context", "test_instructions",
     "test_price_events", "test_storage", "test_farmland_transfer", "test_savegame_guard", "test_robustness",
     "test_persistence", "test_game_adapter", "test_startup", "test_finance_journal", "test_workforce", "test_prompts",
-    "test_roadmap_v31", "test_roadmap_v32", "test_booking_log",
+    "test_roadmap_v31", "test_roadmap_v32", "test_roadmap_v33", "test_booking_log",
 }
 for _, name in ipairs(suites) do
     local ok, suite = pcall(require, name)

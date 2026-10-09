@@ -181,6 +181,20 @@ function RPSimPersistence.save(writer, state)
             writer:setFloat(k .. "#expiresGameTime", prompts.handled[id])
         end
     end
+    -- Roadmap V3.3 R33-F3: harvest counter (loading an older savegame brings back its older values)
+    local harvests = RPSimHarvestCounter.toRaw(state.harvests)
+    table.sort(harvests, function(a, b)
+        if a.farmlandId ~= b.farmlandId then return a.farmlandId < b.farmlandId end
+        if a.fruitType ~= b.fruitType then return a.fruitType < b.fruitType end
+        return a.fillType < b.fillType
+    end)
+    for i, h in ipairs(harvests) do
+        local k = string.format("%s.harvests.counter(%d)", ROOT, i - 1)
+        writer:setInt(k .. "#farmlandId", h.farmlandId)
+        writer:setString(k .. "#fruitType", h.fruitType)
+        writer:setString(k .. "#fillType", h.fillType)
+        writer:setFloat(k .. "#liters", h.liters)
+    end
 end
 
 function RPSimPersistence.load(reader, state)
@@ -339,6 +353,17 @@ function RPSimPersistence.load(reader, state)
         local id = reader:getString(k .. "#id")
         if id == nil then break end
         state.prompts.handled[id] = reader:getFloat(k .. "#expiresGameTime") or 0
+        i = i + 1
+    end
+    -- Roadmap V3.3 R33-F3
+    state.harvests = RPSimHarvestCounter.new()
+    i = 0
+    while true do
+        local k = string.format("%s.harvests.counter(%d)", ROOT, i)
+        local farmlandId = reader:getInt(k .. "#farmlandId")
+        if farmlandId == nil then break end
+        RPSimHarvestCounter.add(state.harvests, farmlandId, reader:getString(k .. "#fruitType"),
+            reader:getString(k .. "#fillType"), reader:getFloat(k .. "#liters"))
         i = i + 1
     end
 end

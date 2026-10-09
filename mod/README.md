@@ -55,6 +55,12 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Exportiert für **Roadmap V3.2** (R32-Q1) je eigenem Stall mit Milch die Milch im Stall-Lager
   (`husbandries[].storage[]` = `{ fillType, amount, capacity }`, Sorten aus `spec_husbandryMilk.fillTypes`, Menge und
   Kapazität über `getHusbandryFillLevel` / `getHusbandryCapacity`, ganze Liter).
+- Exportiert für das **Feldbuch** (Roadmap V3.3, R33-F) je eigenem Feld die Walz- und Mulchstufe
+  (`fields[].rollerLevel` / `stubbleShredLevel` aus dem `FieldState`), einmal je Spielstart die Kulturen der Karte
+  (`market_context.fruitTypes[]` mit Standardprodukt, Anzeigename, `regrows`, `needsRolling` und den Produkten der
+  Fruchtumwandlungen) und den Ernte-Zähler (`harvests[]` = `{ farmlandId, fruitType, fillType, liters }`): Hooks auf
+  `Combine.addCutterArea` und – als zweiter Weg – um `Cutter.onEndWorkAreaProcessing` zählen die Liter, die im Tank
+  landen, nur auf eigenen Flurstücken und nie doppelt; der Zähler steht im Mod-Spielstand.
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben

@@ -188,11 +188,15 @@ function RPSimFarmFacts.buildHusbandries(raw)
 end
 
 local FIELD_LEVELS = { "growthState", "weedState", "stoneLevel", "sprayLevel", "limeLevel", "plowLevel" }
+-- Roadmap V3.3 (R33-Q1): optional levels of the same FieldState (rolling F2 "gewalzt", mulching F2 "gemulcht")
+local OPTIONAL_FIELD_LEVELS = { "rollerLevel", "stubbleShredLevel" }
 
 --- R2-C1: raw = { {farmlandId, name, hectares, fruitType?, minHarvestingGrowthState?, maxHarvestingGrowthState?,
 --   withered?, cut?, fillType?, litersPerSqm?, groundType?, growthState, weedState, stoneLevel, sprayLevel, limeLevel,
---   plowLevel, sprayType?} }. withered / cut / fillType / litersPerSqm only with a crop (Roadmap V2 R2-C, owner
---   decision). Roadmap V3.1 (R31-Q1, B3): sprayType = name from the game's FieldSprayType table incl. "NONE".
+--   plowLevel, sprayType?, rollerLevel?, stubbleShredLevel?} }. withered / cut / fillType / litersPerSqm only with a
+--   crop (Roadmap V2 R2-C, owner decision). Roadmap V3.1 (R31-Q1, B3): sprayType = name from the game's FieldSprayType
+--   table incl. "NONE". Roadmap V3.3 (R33-Q1): rollerLevel / stubbleShredLevel = FieldState levels (integers >= 0;
+--   the soil map shows state 1 as "needs rolling" / "mulched"), left out when missing, not a number or negative.
 function RPSimFarmFacts.buildFields(raw)
     local list = RPSimJson.array({})
     for _, f in ipairs(raw) do
@@ -229,6 +233,12 @@ function RPSimFarmFacts.buildFields(raw)
             if type(f.sprayType) == "string" and f.sprayType ~= "" then
                 e.sprayType = f.sprayType
             end
+            for _, key in ipairs(OPTIONAL_FIELD_LEVELS) do
+                local v = f[key]
+                if type(v) == "number" and v == v and v >= 0 then
+                    e[key] = round(v)
+                end
+            end
             list[#list + 1] = e
         end
     end
@@ -255,6 +265,28 @@ function RPSimFarmFacts.buildTradeStorage(raw)
         end
     end
     table.sort(list, function(a, b) return a.fillType < b.fillType end)
+    return list
+end
+
+--- Roadmap V3.3 (R33-Q1, contract; counted by the mod with R33-F3): harvest counter per own field, crop and harvest
+-- product = the litres harvesting machines got into their tank on that field, cumulative and kept in the mod savegame.
+-- raw = { {farmlandId, fruitType, fillType, liters} }. Whole litres; incomplete entries (no farmland, empty names,
+-- liters not a number >= 0) are dropped. Sorted by farmlandId, fruitType, fillType.
+function RPSimFarmFacts.buildHarvests(raw)
+    local list = RPSimJson.array({})
+    for _, h in ipairs(raw) do
+        if type(h) == "table" and type(h.farmlandId) == "number" and type(h.fruitType) == "string" and h.fruitType ~= ""
+            and type(h.fillType) == "string" and h.fillType ~= "" and type(h.liters) == "number"
+            and h.liters == h.liters and h.liters >= 0 then
+            list[#list + 1] = { farmlandId = h.farmlandId, fruitType = h.fruitType, fillType = h.fillType,
+                liters = round(h.liters) }
+        end
+    end
+    table.sort(list, function(a, b)
+        if a.farmlandId ~= b.farmlandId then return a.farmlandId < b.farmlandId end
+        if a.fruitType ~= b.fruitType then return a.fruitType < b.fruitType end
+        return a.fillType < b.fillType
+    end)
     return list
 end
 
@@ -339,7 +371,8 @@ end
 --   fieldRules, weather
 --   (see the build* functions above),
 --   Roadmap V3 (R3-Q1), each optional: npcFields (R3-H1, same entries as fields), tradeStorage (R3-H2),
---   Roadmap V3.1 (R31-Q1), optional: vehiclePositions (D5, see buildVehiclePositions) }
+--   Roadmap V3.1 (R31-Q1), optional: vehiclePositions (D5, see buildVehiclePositions),
+--   Roadmap V3.3 (R33-Q1), optional: harvests (F3, see buildHarvests) }
 function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
     local vehicles = RPSimJson.array({})
@@ -483,6 +516,10 @@ function RPSimFarmFacts.build(raw, cfg)
     -- Roadmap V3.1 (R31-Q1, D5): positions of the own vehicles being driven
     if type(raw.vehiclePositions) == "table" then
         doc.vehiclePositions = RPSimFarmFacts.buildVehiclePositions(raw.vehiclePositions)
+    end
+    -- Roadmap V3.3 (R33-Q1, F3): harvest counter per own field, crop and harvest product
+    if type(raw.harvests) == "table" then
+        doc.harvests = RPSimFarmFacts.buildHarvests(raw.harvests)
     end
     return doc
 end

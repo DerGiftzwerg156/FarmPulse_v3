@@ -263,6 +263,10 @@ export class BridgeSimulator {
     this.vehiclePositions = this.roadmapV31 ? structuredClone(preset.vehiclePositions ?? []) : null; // R31-D5
     this.fieldShapes = preset.fieldShapes ? structuredClone(preset.fieldShapes) : null; // R31-K1
     this.stables = preset.stables ? structuredClone(preset.stables) : null; // R31-A3
+    // Roadmap V3.3 (R33-Q2): the crops of the map (market_context.fruitTypes) and the harvest counter
+    // (farm_facts.harvests) only where the scenario has them; all other scenarios stand for a mod without them
+    this.fruitTypes = preset.fruitTypes ? structuredClone(preset.fruitTypes) : null;
+    this.harvests = preset.harvests ? structuredClone(preset.harvests) : null;
     this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
     this.prompts = []; // R2-F2: yes/no questions shown to the "player" (waiting for an answer)
     this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
@@ -286,7 +290,12 @@ export class BridgeSimulator {
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, processed: this.processed, priceEvents: this.priceEvents,
       contractReports: this.contractReports, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State(), ...this.roadmapV31State() });
+      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State() });
+  }
+
+  /** Roadmap V3.3 state the mod keeps in its savegame XML: the harvest counter (R33-Q1). */
+  roadmapV33State() {
+    return { harvests: this.harvests };
   }
 
   /** Roadmap V3.1 state that changes through instructions or the control API (positions R31-D5, stables R31-A3). */
@@ -359,7 +368,7 @@ export class BridgeSimulator {
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
         'storage', 'farmlands', 'calendar', 'finances', 'bookings', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
         'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions', 'missionLimitReached',
-        'vehiclePositions', 'stables']) {
+        'vehiclePositions', 'stables', 'harvests']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -372,7 +381,7 @@ export class BridgeSimulator {
       contractReports: this.contractReports, gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State(), ...this.roadmapV31State() };
+      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State() };
     this.writeJson(this.paths.savegame, s);
   }
 
@@ -994,6 +1003,41 @@ export class BridgeSimulator {
     }
   }
 
+  // --------------------------------------------------------------- Roadmap V3.3 (R33-Q2)
+  /** Adds the optional Roadmap V3.3 farm_facts block (harvest counter) when the scenario stands for a mod with it. */
+  roadmapV33Blocks() {
+    if (!this.harvests) return {};
+    return { harvests: this.harvests.map((h) => ({ farmlandId: h.farmlandId, fruitType: h.fruitType, fillType: h.fillType,
+      liters: Math.max(0, Math.round(h.liters)) }))
+      .sort((a, b) => a.farmlandId - b.farmlandId || a.fruitType.localeCompare(b.fruitType)
+        || a.fillType.localeCompare(b.fillType)) };
+  }
+
+  /**
+   * Control API (R33-Q2): a harvesting machine gets `liters` of `fillType` (crop `fruitType`) into its tank on an own
+   * field, like the planned hook on Combine.addCutterArea (R33-F3): the cumulative counter of field, crop and product
+   * grows. Only on farmlands the player owns; the counter is part of the savegame (a reload without saving takes it back).
+   */
+  addHarvest(farmlandId, fruitType, fillType, liters) {
+    if (!this.harvests) throw new Error(`scenario ${this.scenario} exports no harvests`);
+    if (!Number.isInteger(farmlandId)) throw new Error('farmlandId (integer) is required');
+    if (typeof fruitType !== 'string' || !fruitType) throw new Error('fruitType is required');
+    if (typeof fillType !== 'string' || !fillType) throw new Error('fillType is required');
+    if (typeof liters !== 'number' || !Number.isFinite(liters) || liters <= 0) throw new Error('liters must be > 0');
+    if (!this.farmlands.some((f) => f.farmlandId === farmlandId && f.ownerFarmId === 1)) {
+      throw new Error(`farmland ${farmlandId} is not owned by the player`);
+    }
+    let counter = this.harvests.find((h) => h.farmlandId === farmlandId && h.fruitType === fruitType
+      && h.fillType === fillType);
+    if (!counter) {
+      counter = { farmlandId, fruitType, fillType, liters: 0 };
+      this.harvests.push(counter);
+    }
+    counter.liters += liters;
+    this.log(`harvest field ${farmlandId} +${liters} l ${fillType} (${fruitType}), counter ${Math.round(counter.liters)} l`);
+    return this.roadmapV33Blocks().harvests;
+  }
+
   // --------------------------------------------------------------- exports
   buildFarmFacts() {
     const storage = Object.entries(this.storage).filter(([, s]) => s.amount > 0)
@@ -1038,6 +1082,7 @@ export class BridgeSimulator {
       ...this.roadmapV2Blocks(),
       ...this.roadmapV3Blocks(),
       ...this.roadmapV31Blocks(),
+      ...this.roadmapV33Blocks(),
     };
   }
 
@@ -1074,6 +1119,9 @@ export class BridgeSimulator {
         .sort((a, b) => a.xmlFilename.localeCompare(b.xmlFilename)) } : {}),
       // Roadmap V3.1 R31-K1: field outlines and map size, only in scenarios that have them
       ...(this.fieldShapes ? { fieldShapes: structuredClone(this.fieldShapes) } : {}),
+      // Roadmap V3.3 R33-Q1: the crops of the map, only in scenarios that have them
+      ...(this.fruitTypes ? { fruitTypes: structuredClone(this.fruitTypes)
+        .sort((a, b) => a.name.localeCompare(b.name)) } : {}),
     };
   }
 
