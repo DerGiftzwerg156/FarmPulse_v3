@@ -90,11 +90,28 @@ public class MemoryService {
             case COLLATERAL_CLAIM_OVERDUE -> "geforderte Sondertilgung nicht gezahlt";
             case FORWARD_CONTRACT_FULFILLED -> "Vorkontrakt voll geliefert";
             case FORWARD_CONTRACT_SHORTFALL -> "Vorkontrakt nicht voll geliefert";
+            case BULK_ORDER_FULFILLED -> "Großauftrag voll geliefert";
+            case BULK_ORDER_SHORTFALL -> "Großauftrag nicht voll geliefert";
             case LEASE_OUT_RECLAIMED -> "verpachtetes Feld im Spielmenü zurückgeholt";
             case CONTRACTOR_WORK -> "Lohnauftrag auf dem eigenen Feld erledigt"; // R31-A1
             case MACHINE_LOAN_DAMAGE -> "geliehene Maschine beschädigt zurückgegeben"; // R31-A2
             case MACHINE_LOAN_LOST -> "geliehene Maschine nicht zurückgegeben";
             case MACHINE_LOAN_RENT_MISSED -> "Miete für die geliehene Maschine nicht bezahlt";
+            case AUTHORITY_BILL_OVERDUE -> "Bescheid nicht fristgerecht bezahlt"; // R31-B2 / R31-B5
+            case INVESTOR_OFFER_IGNORED -> "Investorenangebot unbeantwortet gelassen"; // R32-I
+            case INVESTOR_FULFILLED -> "Gegenleistung an den Investor erfüllt";
+            case INVESTOR_REMINDER -> "Gegenleistung erst nach Mahnung erbracht";
+            case INVESTOR_COMPENSATION -> "Gegenleistung nicht erbracht, Ausgleich fällig";
+            case INVESTOR_TERMINATION -> "Investorenvertrag wegen Vertragsbruch gekündigt";
+            case INVESTOR_CLAIM_OVERDUE -> "Rückforderung des Investors nicht bezahlt";
+            case INVESTOR_CONTRACT_ENDED -> "Investorenvertrag ohne Bruch erfüllt";
+            case GET_WELL_WISHES -> "Genesungswünsche erhalten"; // R31-B5
+            case STAMMTISCH -> "gemeinsam am Stammtisch gesessen"; // R31-D3
+            case NIGHT_WORK -> "nachts von Maschinenlärm geweckt"; // R31-D4
+            case CROP_DAMAGE -> "Fahrspuren durchs bestellte Feld"; // R31-D5
+            case CROP_DAMAGE_CLAIM_DECLINED -> "Entschädigung für den Flurschaden verweigert";
+            case SCHOOL_VISIT -> "Schulklasse auf dem Hof empfangen"; // R31-D6
+            case COOP_BOARD_MISSED -> "Vorstandssitzung der Genossenschaft verpasst"; // R31-D7
             case FAMILY_FIELD_LEASED -> "Familienfeld verpachtet";
             case INITIAL -> "erste Begegnung";
             case OTHER -> e.getNote() == null ? "Begegnung" : e.getNote();

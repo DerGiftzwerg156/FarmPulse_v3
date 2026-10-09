@@ -9,9 +9,10 @@ RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLA
     -- Roadmap V3 (R3-Q1): validated now, executed with R3-H3/H4/M3 (STORAGE_TRANSFER), R3-H5 (MISSION_CREATE),
     -- R3-V2 (VEHICLE_SPAWN) and R3-V3 (VEHICLE_REMOVE); until then acknowledged FAILED / NOT_SUPPORTED
     STORAGE_TRANSFER = true, MISSION_CREATE = true, VEHICLE_SPAWN = true, VEHICLE_REMOVE = true,
-    -- Roadmap V3.1 (R31-Q1): validated now, executed with R31-A1 (FIELD_WORK), R31-A3 (ANIMAL_TRANSFER) and R31-D8
-    -- (VEHICLE_FUEL); until then acknowledged FAILED / NOT_SUPPORTED
-    FIELD_WORK = true, ANIMAL_TRANSFER = true, VEHICLE_FUEL = true }
+    -- Roadmap V3.1 (R31-Q1): executed with R31-A1 (FIELD_WORK), R31-A3 (ANIMAL_TRANSFER) and R31-D8 (VEHICLE_FUEL)
+    FIELD_WORK = true, ANIMAL_TRANSFER = true, VEHICLE_FUEL = true,
+    -- Roadmap V3.2 (R32-Q1): milk out of the storage of an own husbandry (executed since Q, used by R32-I3 type W3)
+    HUSBANDRY_TRANSFER = true }
 
 RPSimInstructions.MONEY_REASONS = {
     CREDIT_DISBURSEMENT = true, CREDIT_INSTALLMENT = true, CREDIT_PENALTY = true, CREDIT_CALLBACK = true,
@@ -35,6 +36,13 @@ RPSimInstructions.MONEY_REASONS = {
     CONTRACTOR_FEE = true, MACHINE_RENT = true, LIVESTOCK_PURCHASE = true, LIVESTOCK_SALE = true,
     WINTER_SERVICE = true, DIRECT_PAYMENT = true, INVESTMENT_GRANT = true, SOCIAL_INSURANCE = true,
     GUEST_INCOME = true, COOP_SHARES = true, COOP_DIVIDEND = true,
+    -- Roadmap V3.1 R31-D6 / R31-D8 (owner decision 2026-10-05)
+    FARM_HOLIDAY_SETUP = true, TANK_LOCK = true,
+    -- owner decision 2026-10-06: severance when a hired employee is cancelled before the first working day
+    SEVERANCE = true,
+    -- Roadmap V3.2 (R32-Q1): capital of a large investor (I2), buy-back / repayment (I4/I5), profit share or fixed
+    -- payout (I3, R1/R2), compensation for a shortfall or a missed obligation (I4)
+    INVESTOR_CAPITAL = true, INVESTOR_REPAYMENT = true, INVESTOR_PAYOUT = true, INVESTOR_COMPENSATION = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
@@ -47,7 +55,9 @@ RPSimInstructions.HELPER_WAGE_MODES = { EMPLOYEES = true, VANILLA = true }
 -- Roadmap V3 R3-H3/H4: IN = into the own silos (purchase), OUT = out of the own silos (sale)
 RPSimInstructions.STORAGE_DIRECTIONS = { IN = true, OUT = true }
 -- Roadmap V3.1 R31-A1: the works of the contractor (plow, cultivate, lime, sow, harvest)
-RPSimInstructions.FIELD_WORKS = { PLOW = true, CULTIVATE = true, LIME = true, SOW = true, HARVEST = true }
+-- FERTILIZE since the owner decisions 2026-10-06 (several contractor works at once, e.g. cultivate, sow, fertilise)
+RPSimInstructions.FIELD_WORKS = { PLOW = true, CULTIVATE = true, LIME = true, SOW = true, FERTILIZE = true,
+    HARVEST = true }
 -- Roadmap V3.1 R31-A3: IN = into the own husbandry (purchase), OUT = out of it (sale)
 RPSimInstructions.ANIMAL_DIRECTIONS = { IN = true, OUT = true }
 
@@ -193,6 +203,20 @@ local function validateAnimalTransfer(ins)
     return true
 end
 
+--- Roadmap V3.2 R32-Q1: milk (FS25 fill type name) taken out of the storage of an own husbandry; amount in litres.
+local function validateHusbandryTransfer(ins)
+    if not isNonEmptyString(ins.husbandryUniqueId) then
+        return false, "husbandryUniqueId is required"
+    end
+    if not isNonEmptyString(ins.fillType) then
+        return false, "fillType is required"
+    end
+    if not isNumber(ins.amount) or ins.amount <= 0 then
+        return false, "amount must be > 0"
+    end
+    return true
+end
+
 --- Validates one instruction. Returns true or false, reason.
 function RPSimInstructions.validate(ins)
     if type(ins) ~= "table" then
@@ -303,6 +327,8 @@ function RPSimInstructions.validate(ins)
         return validateFieldWork(ins)
     elseif ins.type == "ANIMAL_TRANSFER" then
         return validateAnimalTransfer(ins)
+    elseif ins.type == "HUSBANDRY_TRANSFER" then
+        return validateHusbandryTransfer(ins)
     elseif ins.type == "VEHICLE_FUEL" then
         -- Roadmap V3.1 R31-D8: diesel taken out of an own vehicle (uniqueId as in assets.vehicles), only negative
         if not isNonEmptyString(ins.vehicleId) then

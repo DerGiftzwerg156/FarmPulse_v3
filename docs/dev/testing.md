@@ -129,6 +129,51 @@ backend side. The mod covers normalisation, validation and `NOT_SUPPORTED` in `t
 `test_market_context.lua` and `test_instructions.lua` (every booking reason needs its title in `modDesc.xml`,
 `test_game_adapter.lua`), the simulator the scenarios, the execution and the control endpoints in
 `test/roadmap-v31.test.js`. Q brings no formula; the formula boundary tests come with the features.
+Roadmap V3.2 (R32-Q2): `SimulatorScenariosEndToEndTest` checks that the milk storage of `investor-milch` and the oil
+mill / canola silo of `grossauftrag` arrive (and that `viehhandel` has no storage) and that a `HUSBANDRY_TRANSFER` is
+applied and lowers the milk; `BridgeValidatorTest` (`husbandries[].storage[]`) and `FailedInstructionTest` (notice
+"Mod aktualisieren" for `HUSBANDRY_TRANSFER`) cover the backend side. The mod covers the normalisation, the export
+from the game, the execution with its failure codes and the booking back of a partly taken amount in
+`test_roadmap_v32.lua`, validation and `NOT_SUPPORTED` in `test_instructions.lua`; the simulator the scenarios, the
+execution and the control endpoint in `test/roadmap-v32.test.js`. Q brings no formula; the tables, the values under
+`rpsim.formulas.bulk-order.*` / `investor.*` and their boundary tests come with G and I (owner decision 2026-10-08).
+Roadmap V3.3 (R33-Q2): `SimulatorScenariosEndToEndTest.roadmapV33FieldsArriveFromTheFieldBookScenario` checks that the
+rolling / mulching levels, the harvest counter and the crops of the map of `feldbuch` arrive (and stay `null` for
+`lohnunternehmer`); `BridgeValidatorTest` (the new fields, `harvests` and `fruitTypes`) covers the backend side. The
+mod covers the normalisation in `test_farm_facts.lua` and `test_market_context.lua` and, in `test_roadmap_v33.lua`,
+that the adapter reads none of the values yet (Q fixes the contract only, owner decision 2026-10-08); the simulator the
+scenario, the counter with its control endpoint `POST /harvest` and its place in the savegame in
+`test/roadmap-v33.test.js`. Q brings no formula, no table and no configuration value; they come with F and E (owner
+decision 2026-10-08). In the game: manual test plan section 29.
+Roadmap V3.3 R33-F (field book): `FieldBookTest` covers the first entry (levels found count as done), a season from
+sowing to harvest with every measure, the harvest year and late litres, mulching in the next season, cuts of a grass
+field in one entry, the main crop and "harvest beats no harvest", the product of the counter and a falling counter, a
+sold field, corrections and "automatisch", "Ernte eintragen", a closed year with its notice and the reopening, the
+rewind and the fallback crops; `ApiIntegrationTest.fieldBookEndpoints` the REST endpoints;
+`SimulatorScenariosEndToEndTest.roadmapV33FieldsArriveFromTheFieldBookScenario` the running seasons and the counted
+grass of `feldbuch`. Mod: `test_roadmap_v33.lua` (levels, crops of the map once with `needsRolling` and the converter
+products, own farmland only, both hooks never counting twice, savegame and export). Frontend:
+`features/fieldbook/fieldbook.spec.ts`. In the game: manual test plan rows 29.1–29.10.
+Roadmap V3.2 R32-G (bulk orders): `BulkOrderTest` covers the request (sell point of the map without production, amount
+range and step, instant price = best price x 1.25, a new buyer per request, the call that becomes a mail), refusals and
+the factor, the instant delivery batch and its ack, the refused transfer, the delivery months with the fixed price
+(1.05 + 0.01 per month), one fixed price per pair and month (forward contract, bulk order, special offer), the limit,
+the liquidity plan, the calendar agenda, the settlement (penalty 25 %, trust, factor) and the moved pending
+instructions after a changed calendar (bulk orders and forward contracts; a running month keeps its end);
+`ApiIntegrationTest.bulkOrderEndpoints` the REST endpoints. Frontend: `features/trade/bulk-orders.spec.ts`. In the
+game: manual test plan rows 28.4–28.8b.
+Roadmap V3.2 R32-I (large investors): `InvestorTest` covers the formulas and their boundaries (amount limit, chance,
+profit share, payout rate, crop area, litres), the offer (2–3 equal-valued packages, different main considerations,
+term from the next FS25 year), the monthly trigger (farm report, loss, payment delay, one offer per year, switch), the
+acceptance (capital, discarded packages), an ignored and a declined offer, the bank view (silent partnership raises,
+subordinated loan lowers the equity ratio), deliveries of goods, milk and animals without money and their acks (a
+re-ack counts once, a refused one not), the staged breach (reminder, made up, compensation, termination, claim paid by
+button), the overdue claim (reminder per month, payment delay, no interest), A2 / A3 / A4, R1 / R2, P1 veto and
+consent, P2 / P4 requests, P3 holiday flat, P5 public action, the end of term (announcement, buy-back, claim without
+money, extension), a refused payment that stays open, tasks, calendar and the reminder a week before.
+`RewindIntegrationTest.lostInvestorDeliveriesAreResent` the re-send rule, `ApiIntegrationTest.investorEndpoints` the
+REST endpoints and the settings switch. Frontend: `features/bank/investors.spec.ts`. In the game: manual test plan rows
+28.9–28.14c.
 Roadmap V3 R3-M (market and marketing): `MarketingTest` covers the price alarm (best price, hint, mail, once,
 re-activation, cap), the forward contract (fixed price, delivery window, `PRICE_EVENT / FIXED` held back until the
 delivery month, one fixed price per pair, penalty and trust on the report, no double handling, liquidity plan) and
@@ -154,6 +199,43 @@ spawn at price 0 in `test_roadmap_v31.lua`, the seasonal worker in `test_workfor
 export and the borrowed machine in `test/roadmap-v31.test.js`. Frontend: `contractor-work-card.spec.ts`,
 `machine-loans-card.spec.ts`, `borrow-machine.spec.ts`, `animal-trade.spec.ts`. In the game: manual test plan
 sections 21 and 22.
+Roadmap V3.1 R31-B (authorities and grants): `DirectPaymentTest` covers the form in March (deadline end of May, own
+fields, crops), the late cut per day, the lapse after the grace days, the on-site check (deviating crop × 1.5,
+rotation repeat × 0.5, announcement) and the payment in December, and the switch; `InvestmentGrantTest` the
+application rules, purchases only after the approval (journal rises within the month and across months), the funded
+machines, the grant with its cap, the pro-rata repayment after a sale in the binding period, the expiry and the late
+fee of an authority bill; `FertilizerRulesTest` the closed period (organic type and rising level, grassland and
+mineral fertiliser excluded), warning then fine, the fallback without `sprayType`, the switch, the slurry warning and
+the October reminder; `AnimalDiseaseTest` the outbreak (only own animal types, idyllic world mode and switch), the
+vet check, the requirement with fine, the trade block, the lifting, the price recovery and the cooldown;
+`SickLeaveTest` the BG bill (formula, once a year, paid by button), sickness reported by the office clerk with
+`ON_LEAVE`, get-well wishes, the return, accidents only in the driving roles and the risk factor.
+`RepositorySmokeTest` saves the new entities. The mod exports the spray type (`test_game_adapter.lua`). Frontend:
+`direct-payment-card.spec.ts`, `investment-grant-card.spec.ts`. In the game: manual test plan sections 21 and 23.
+Roadmap V3.1 R31-D (village life): `VillageNewspaperTest` covers the issue at the period start (sections in print
+order, empty ones left out, the price change of the window, no amounts), the narrated articles (template without AI),
+the headline in the diary, once per period and a next issue only with new facts; `VillageChatTest` the groups and
+their members, the help request with its link (once per request, the daily limit, the next day), the announcements,
+gossip and congratulations, and the player post (tone, capped trust of one member, pacing, the answer job);
+`StammtischTest` the interval, attending (trust, rumour bonus used up by one rumour), the loner cap and the tip;
+`NightWorkTest` the night window, the friendly and the annoyed complaint, harvest time, daytime and idle helpers, the
+switch and the idyllic factor; `CropDamageTest` the row of samples, the hint, the complaint, the growing claim, pay and
+refuse, stubble, a running order, a lease and fields without owner; `FarmHolidaySchoolTest` the setup, the factors,
+the noise / smell cuts with the review and the school request (holidays, healthy animals, allowance, reputation);
+`CooperativeTest` buying within the limit, the notice and repayment, the price index and the cap of the dividend,
+the assembly vote, the board election, the rumour and forward-contract perks, the calendar dates and the removal
+after two missed meetings; `DieselTheftTest` the target (diesel level, driven, tank lock), the night of
+`VEHICLE_FUEL`, the police report and gossip, the insurance module, the retries and the switches.
+`NarrationPipelineTest` checks the templates and prompt tasks of the new event types. The mod covers `dayTimeMs`, the
+diesel export, the position samples and `VEHICLE_FUEL` in `test_roadmap_v31.lua`; the simulator the new money reasons
+in `test/roadmap-v31.test.js`. Frontend: `newspaper.spec.ts`, `chat.spec.ts`, `village-economy-cards.spec.ts`,
+`tank-lock-card.spec.ts`, `village-life-cases.spec.ts`. In the game: manual test plan sections 21.6 and 24.
+Roadmap V3.1 R31-K (field map): `FieldMapServiceTest` covers the outlines of `market_context.fieldShapes` with the
+kind (own, leased, leased out, neighbour with name, free), crop and phase of own fields and the symbols (order,
+auction, hints), and the empty map without outlines. The mod reads the outlines once per mission
+(`test_roadmap_v31.lua`). Frontend: `field-map.spec.ts` (coordinates, colours, hatching, border, labels, symbols,
+selection) and `farmland.spec.ts` (Karte / Tabelle, the field card on a click, the hint without outlines). In the game:
+manual test plan rows 21.7 and section 25.
 Roadmap V3 R3-L (leasing out own fields): `LeaseOutTest` covers the guide value, the neighbours' bids (capital,
 85–100 % of the desired rent, the land agent without interest), the fallback on the field phase (offer and demand),
 the bank's consent for a pledged field, the agreement (contract, `FARMLAND_TRANSFER FROM_PLAYER`, `LEASE_INCOME` also
@@ -207,6 +289,26 @@ PIN session cookie for API and live updates, game-PC-only settings, PIN format a
 session end after 30 days / new PIN / switch off); the test profile hashes with 1,000 PBKDF2 iterations to stay fast.
 Frontend: `app.spec.ts` (PIN login gate) and `features/lan/lan.spec.ts` (login, card, QR code, interceptor). Access from
 a real tablet: manual test plan section 12.
+Technical review 10/2026, Phase 0 (security hardening): `DatabaseCredentialsTest` (random password for a new H2 file
+database, migration of a database without password, crash between file and database, lost password file, configured
+password wins), `DatabasePasswordStartupTest` (full start on a Flyway-migrated database of 1.7.0 without password),
+`OwnerOnlyFilesTest` (POSIX `600` on the real file system and in Jimfs, Windows-style ACL with the owner alone in Jimfs),
+`AllowedHostsTest` and `HostHeaderFilterTest` (DNS rebinding: foreign `Host` → 403 `HOST_FORBIDDEN`, foreign `Origin` of
+writing requests → 403 `ORIGIN_FORBIDDEN`), `AiSettingsServiceTest` (a new `baseUrl` host without a new key discards
+the key, owner-only file), `LanAccessTest.aiSettingsAreReadOnlyOnATablet`, `ProfileHardeningTest` (no `AUTO_SERVER`,
+password file in `dev`/`prod`, no OpenAPI / Swagger UI in `prod`); frontend `features/settings/settings.spec.ts`
+(read-only AI form on a tablet). On real Windows: manual test plan section 27.
+Technical review 10/2026, Phase 1.1-1.3 (bridge cycle): `CycleResilienceTest` (written before the fix, red on 1.7.0:
+a failing day listener is retried and skipped after three attempts while the game goes on, a transient failure is
+retried without running any listener twice, a failing ack listener loses neither the ack nor its retry),
+`CycleInfrastructureTest` (every listener of every cycle event has its own journal key, every queued payload survives
+the database, only own records are deserialised); the bridge-simulator end-to-end tests (`BridgeSimulatorEndToEndTest`,
+`SimulatorScenariosEndToEndTest`) drive the rebuilt cycle with the real file protocol - they need
+`npm ci` in `tools/bridge-simulator`, otherwise they are skipped.
+Technical review 10/2026, Phase 1.4 (optimistic locking): `OptimisticLockingTest` (a stale write fails and the change
+saved in between survives - on the code before 1.4 the stale save overwrote it; a version conflict in REST is
+`409 CONCURRENT_UPDATE`; a cycle listener that loses a race runs again at once without counting as a failed attempt);
+frontend `core/api/concurrent-update.interceptor.spec.ts` (hint + reload on `CONCURRENT_UPDATE` only).
 Roadmap V2 R2-B: `FinanceJournalServiceTest` (classes, complete months, window boundaries), `CreditScoringServiceTest`
 (journal cash flow ignores investments, real leasing costs), `FinanceNarrationServiceTest` (bank early warning, record
 month) and `ApiIntegrationTest.financesFromTheBookingJournal`; the mod covers the journal in `test_finance_journal.lua`,

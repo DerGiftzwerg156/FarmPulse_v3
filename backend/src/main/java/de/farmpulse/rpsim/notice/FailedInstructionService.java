@@ -22,6 +22,7 @@ import de.farmpulse.rpsim.neighbor.NeighborTradeService;
 import de.farmpulse.rpsim.payroll.PayrollScheduler;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
+import de.farmpulse.rpsim.theft.DieselTheftService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -43,7 +44,7 @@ import tools.jackson.databind.json.JsonMapper;
  * Roadmap V3 (R3-Q1): an older mod refuses the new instruction types ({@link #ROADMAP_V3_TYPES}) with "unknown type …"
  * (REJECTED) or NOT_SUPPORTED; the notice then carries {@code modOutdated = true} and says "Mod aktualisieren". The
  * features that send these types cancel their deal themselves. Roadmap V3.1 (R31-Q1): the same for
- * {@link #ROADMAP_V31_TYPES}.
+ * {@link #ROADMAP_V31_TYPES}, Roadmap V3.2 (R32-Q1) for {@link #ROADMAP_V32_TYPES}.
  */
 @Service
 public class FailedInstructionService {
@@ -58,10 +59,15 @@ public class FailedInstructionService {
     public static final Set<InstructionType> ROADMAP_V31_TYPES = EnumSet.of(InstructionType.FIELD_WORK,
             InstructionType.ANIMAL_TRANSFER, InstructionType.VEHICLE_FUEL);
 
+    /** Roadmap V3.2 (R32-Q1): instruction types an older mod does not know. */
+    public static final Set<InstructionType> ROADMAP_V32_TYPES = EnumSet.of(InstructionType.HUSBANDRY_TRANSFER);
+
     private static final Logger log = LoggerFactory.getLogger(FailedInstructionService.class);
 
     private final OutboxInstructionRepository outbox;
     private final de.farmpulse.rpsim.neighbor.FarmShopService farmShop;
+    private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
+    private final de.farmpulse.rpsim.investor.InvestorService investors;
     private final SavegameRepository savegames;
     private final LoanService loans;
     private final PayrollScheduler payroll;
@@ -79,6 +85,7 @@ public class FailedInstructionService {
     private final de.farmpulse.rpsim.farmwork.ContractorWorkService contractorWork;
     private final de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans;
     private final de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade;
+    private final DieselTheftService dieselThefts;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
@@ -90,7 +97,13 @@ public class FailedInstructionService {
                                     de.farmpulse.rpsim.contract.LeaseOutService leaseOut,
                                     de.farmpulse.rpsim.farmwork.ContractorWorkService contractorWork,
                                     de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans,
-                                    de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade) {
+                                    de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade,
+                                    DieselTheftService dieselThefts,
+                                    de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
+                                    de.farmpulse.rpsim.investor.InvestorService investors) {
+        this.bulkOrders = bulkOrders;
+        this.investors = investors;
+        this.dieselThefts = dieselThefts;
         this.machineLoans = machineLoans;
         this.livestockTrade = livestockTrade;
         this.leaseOut = leaseOut;
@@ -171,12 +184,26 @@ public class FailedInstructionService {
             handled = contractorWork.onInstructionFailed(relatedId, ins.getAckMessage()); // R31-A1
         } else if (de.farmpulse.rpsim.farmwork.MachineLoanService.RELATED.equals(related) && relatedId != null) {
             handled = machineLoans.onInstructionFailed(relatedId, ins.getType(), ins.getAckMessage()); // R31-A2
+        } else if (DieselTheftService.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.VEHICLE_FUEL) {
+            handled = dieselThefts.onInstructionFailed(relatedId, ins.getAckMessage()); // R31-D8: next night again
         } else if (de.farmpulse.rpsim.neighbor.LivestockTradeService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.ANIMAL_TRANSFER) {
             handled = livestockTrade.onInstructionFailed(relatedId, ins.getAckMessage()); // R31-A3
         } else if (NeighborTradeService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = trade.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-H3 / R3-H4
+        } else if (de.farmpulse.rpsim.market.BulkOrderService.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.STORAGE_TRANSFER) {
+            handled = bulkOrders.onInstructionFailed(relatedId, ins.getAckMessage()); // R32-G2: the request stays open
+        } else if (de.farmpulse.rpsim.investor.InvestorService.DELIVERY_RELATED.equals(related) && relatedId != null) {
+            handled = investors.onDeliveryFailed(relatedId); // R32-I3: the delivery does not count
+        } else if (de.farmpulse.rpsim.investor.InvestorService.PURCHASE_RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.STORAGE_TRANSFER) {
+            handled = investors.onPurchaseFailed(relatedId); // R32-I3 P2: the request stays open
+        } else if (de.farmpulse.rpsim.investor.InvestorOfferService.PAYMENT_RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.MONEY_TRANSACTION) {
+            handled = investors.onPaymentFailed(relatedId); // R32-I: a refused payment stays open
         } else if (de.farmpulse.rpsim.neighbor.FarmShopService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.STORAGE_TRANSFER) {
             handled = farmShop.onInstructionFailed(relatedId, ins.getAckMessage()); // R3-M3
@@ -201,6 +228,9 @@ public class FailedInstructionService {
                 && ins.getType() == InstructionType.FARMLAND_TRANSFER) {
             handled = loans.onRealisationFailed(sg, relatedId); // R3-K1: realisation refused, the field stays
         }
+        if (handled && ins.getType() == InstructionType.VEHICLE_FUEL && !modOutdated(ins.getType(), ins.getAckMessage())) {
+            return; // R31-D8: a refused theft is tried again in the next night - the player does not learn of it
+        }
         Map<String, Object> d = new LinkedHashMap<>();
         d.put("instructionId", ins.getInstructionId());
         d.put("type", ins.getType().name());
@@ -215,7 +245,7 @@ public class FailedInstructionService {
             d.put("direction", p.path("direction").asString(""));
             d.put("price", p.path("price").asLong(0));
         } else if (newType(ins.getType())) {
-            // Roadmap V3 (R3-Q1) / V3.1 (R31-Q1): the payload fields that name the deal
+            // Roadmap V3 (R3-Q1) / V3.1 (R31-Q1) / V3.2 (R32-Q1): the payload fields that name the deal
             for (String field : new String[] { "direction", "fillType", "amount", "missionType", "farmlandId",
                     "storeXmlFilename", "price", "vehicleId", "work", "fruitType", "husbandryUniqueId", "subType",
                     "count", "delta" }) {
@@ -234,13 +264,13 @@ public class FailedInstructionService {
         notices.raise(sg, NoticeKind.INSTRUCTION_FAILED, d, RELATED, ins.getId());
     }
 
-    /** Roadmap V3 (R3-Q1) / V3.1 (R31-Q1): an instruction type an older mod does not know. */
+    /** Roadmap V3 (R3-Q1) / V3.1 (R31-Q1) / V3.2 (R32-Q1): an instruction type an older mod does not know. */
     static boolean newType(InstructionType type) {
-        return ROADMAP_V3_TYPES.contains(type) || ROADMAP_V31_TYPES.contains(type);
+        return ROADMAP_V3_TYPES.contains(type) || ROADMAP_V31_TYPES.contains(type) || ROADMAP_V32_TYPES.contains(type);
     }
 
     /**
-     * Roadmap V3 (R3-Q1): true when the mod refused a Roadmap V3 (or, R31-Q1, V3.1) instruction because it does not
+     * Roadmap V3 (R3-Q1): true when the mod refused a Roadmap V3 (or, R31-Q1, V3.1; R32-Q1, V3.2) instruction because it does not
      * know or execute the type yet (validation "unknown type …" → REJECTED, or an action missing in the mod →
      * NOT_SUPPORTED).
      */

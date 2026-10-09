@@ -2,11 +2,19 @@
 
 ## Das Backend startet nicht
 
+**Setup-Variante:** FarmPulse zeigt beim Start ein Fenster mit dem Grund. Die Einzelheiten stehen im Protokoll
+`<Benutzerordner>\.rpsim\logs\farmpulse.log` (auch über das Symbol im Infobereich → **Protokoll öffnen**).
+
 | Meldung / Symptom | Lösung |
 | --- | --- |
+| „Die Spieldaten sind bereits geöffnet“ | Es läuft schon ein FarmPulse, meist die ZIP-Variante über `start.bat`. Das andere Fenster schließen und FarmPulse erneut starten. |
+| Setup: „Der Computer wurde durch Windows geschützt“ | Das Setup ist nicht signiert: **Weitere Informationen → Trotzdem ausführen** |
+| Setup: kein Symbol im Infobereich, Browser öffnet sich nicht | Unter dem Pfeil **^** neben der Uhr nachsehen. Läuft FarmPulse schon, öffnet ein erneuter Start über das Startmenü den Browser. Sonst das Protokoll prüfen. Das Symbol taucht erst auf, wenn FarmPulse bereit ist (einige Sekunden). |
+| Setup: Browser öffnet eine andere Adresse als `localhost:8080` | Der Port war belegt, FarmPulse hat den nächsten freien genommen. Das Symbol zeigt die Adresse beim Darüberfahren. Fester Port: das andere Programm beenden oder im Setup einen anderen Port festlegen. |
 | `java` wird nicht gefunden, oder `UnsupportedClassVersionError` | Java 21 installieren (`java -version` muss 21 oder neuer zeigen) |
-| `Port 8080 was already in use` | anderes Programm auf Port 8080 beenden, oder in `application-local.yml` `server.port: 8090` setzen und dann <http://localhost:8090> öffnen |
-| Fenster schließt sich sofort | `start.bat` aus einer Eingabeaufforderung starten, um die Meldung zu lesen |
+| `Port 8080 was already in use` (ZIP-Variante) | anderes Programm auf Port 8080 beenden, oder in `application-local.yml` `server.port: 8090` setzen und dann <http://localhost:8090> öffnen |
+| Fenster schließt sich sofort (ZIP-Variante) | `start.bat` aus einer Eingabeaufforderung starten, um die Meldung zu lesen |
+| `The database … refuses the password from …\db.properties` | Die Datei `<Benutzerordner>\.rpsim\db.properties` gehört nicht (mehr) zur Datenbank – meist wurde sie gelöscht oder aus einer anderen Installation kopiert. Die passende `db.properties` aus einer Sicherung zurücklegen. Ohne sie ist die Datenbank nicht mehr zu öffnen: dann wie unter [Neu anfangen](#neu-anfangen) den Ordner `.rpsim` löschen. |
 
 ## Der Mod schreibt keine Daten
 
@@ -17,7 +25,8 @@ Oben im Browser steht dauerhaft *Kein Spielstand verknüpft*, und im Onboarding 
 3. Gibt es den Ordner `…\modSettings\FS25_RPSim\export\` mit einer frischen `farm_facts.json`? Der Mod schreibt
    etwa **jede Minute**, nur solange der Spielstand geladen ist.
 4. `Dokumente\My Games\FarmingSimulator2025\log.txt` nach `RPSim` durchsuchen – dort stehen Fehler des Mods.
-5. Sucht das Backend am richtigen Ort? Beim Start zeigt die Konsole den Bridge-Pfad. Bei umgeleitetem
+5. Sucht das Backend am richtigen Ort? Beim Start zeigt die Konsole (Setup: das Protokoll) den Bridge-Pfad. Setup: den
+   Austauschordner per *Setup erneut starten → Einstellungen neu festlegen* korrigieren. ZIP-Variante: bei umgeleitetem
    Dokumente-Ordner (OneDrive) den Pfad in `application-local.yml` eintragen, siehe
    [Installation](installation.md#eigene-einstellungen-optional).
 
@@ -60,8 +69,8 @@ Abläufe im Tool werden **nicht** zurückgedreht. Die Schwelle ist einstellbar
 
 ## Andere Mods mit Überschneidungen
 
-Die App **Aufgaben** zeigt unter *Hinweise aus dem Spiel* „Mods mit Überschneidungen erkannt“, wenn einer dieser Mods
-aktiv ist (Liste auch unter **Einstellungen → Spielstand**). FarmPulse schaltet nichts ab, aber die Effekte können
+Die App **Aufgaben** zeigt im Tab *Meldungen* unter *Hinweise aus dem Spiel* „Mods mit Überschneidungen erkannt“, wenn einer dieser Mods
+aktiv ist (Liste auch unter **Einstellungen → Im Spiel**). FarmPulse schaltet nichts ab, aber die Effekte können
 sich überlagern:
 
 | Mod | Was sich überschneidet |
@@ -90,6 +99,14 @@ persönliche Note.
 Antworten kommen außerdem nicht sofort: Charaktere melden sich in Spielzeit. Ist das Spiel pausiert, vergeht keine
 Spielzeit.
 
+## Hinweis „Verarbeitungsschritt übersprungen“
+
+Ein Teil der Spiellogik (z. B. die Dorfzeitung an einem Spieltag) ist dreimal hintereinander mit einem Fehler
+abgebrochen. FarmPulse hat diesen einen Schritt übersprungen, damit Buchungen, Gehälter und die Spielzeit
+weiterlaufen – der Rest des Tages ist normal verarbeitet. Der Hinweis nennt den Schritt und die Fehlermeldung; die
+Einzelheiten stehen im Backend-Fenster (`Cycle step … failed`). Bitte als Fehler melden (siehe unten) und den Hinweis
+mit *Verstanden* schließen.
+
 ## Oben steht „Offline“
 
 Die Live-Verbindung zum Backend ist unterbrochen. Läuft das Backend-Fenster noch? Nach einem Neustart verbindet
@@ -99,26 +116,35 @@ sich die Oberfläche von selbst wieder (nach 1 bis 30 Sekunden); notfalls die Se
 
 - **Seite lädt nicht (Zeitüberschreitung):** Meist blockiert die **Windows-Firewall**. Beim ersten Start fragt Windows,
   ob Java im Netzwerk kommunizieren darf – dort **Private Netzwerke** erlauben. Nachträglich: *Windows-Sicherheit →
-  Firewall- & Netzwerkschutz → Zugriff von Apps durch die Firewall zulassen* → *Java(TM) Platform SE binary* (bzw.
-  *OpenJDK Platform binary*) für **Privat** anhaken. Außerdem muss das WLAN des PCs in Windows als **privates** Netzwerk
+  Firewall- & Netzwerkschutz → Zugriff von Apps durch die Firewall zulassen* → *FarmPulse* (Setup) bzw.
+  *Java(TM) Platform SE binary* / *OpenJDK Platform binary* (ZIP-Variante) für **Privat** anhaken. Außerdem muss das WLAN des PCs in Windows als **privates** Netzwerk
   eingestellt sein, nicht als öffentliches.
 - **Tablet im Gast-WLAN:** Viele Router trennen das Gast-WLAN vom Heimnetz – das Tablet sieht den PC dann nicht. Das
   Tablet ins normale WLAN bringen (dasselbe Netz wie der Spiele-PC).
 - **Meldung „Zugriff nur vom Spiele-PC …“ (403):** Der Schalter **Im Heimnetz erreichbar** ist aus, oder das Gerät
   kommt nicht aus dem Heimnetz (z. B. über mobile Daten). Am Spiele-PC unter *Einstellungen → Tablet & Netzwerk*
   einschalten und das Tablet ins WLAN bringen.
-- **Adresse passt nicht mehr:** Der Router hat dem PC eine neue Adresse gegeben. Die aktuelle steht in der
-  Einstellungskarte und im Backend-Fenster.
+- **Meldung „Unbekannte Adresse …“ (403):** FarmPulse wurde über einen Namen aufgerufen, den es nicht kennt, z. B.
+  `mein-pc.fritz.box`. Das schützt vor fremden Webseiten (DNS-Rebinding). Die IP-Adresse aus der Einstellungskarte
+  oder den Rechnernamen verwenden – oder den Namen in `application-local.yml` unter `rpsim.web.allowed-hosts`
+  eintragen und das Backend neu starten.
+- **KI-Einstellungen lassen sich am Tablet nicht ändern:** Absicht. Anbieter, Schlüssel und Adresse ändert nur der
+  Spiele-PC, denn der Schlüssel wird an die eingestellte Adresse geschickt.
+- **Adresse passt nicht mehr:** Der Router hat dem PC eine neue Adresse gegeben – oder (Setup) der Port war belegt und
+  FarmPulse hat den nächsten freien genommen. Die aktuelle Adresse steht in der Einstellungskarte und im Backend-Fenster
+  bzw. im Protokoll.
 - **Immer wieder nach der PIN gefragt:** Die PIN wurde geändert oder der Heimnetz-Zugriff aus- und wieder eingeschaltet
   – dann meldet sich jedes Tablet neu an. Nach fünf falschen PINs fünf Minuten warten.
 
 ## Neu anfangen
 
 - **Neuer Spielstand:** einfach das Onboarding erneut durchlaufen und mit dem neuen FS25-Spielstand verknüpfen.
-- **Alles zurücksetzen:** Backend beenden und den Ordner `<Benutzerordner>\.rpsim\` löschen. Achtung: Damit sind
+- **Alles zurücksetzen:** Backend beenden (Setup: Symbol im Infobereich → **Beenden**) und den Ordner
+  `<Benutzerordner>\.rpsim\` löschen (Datenbank und ihr Passwort `db.properties` zusammen; bei der Setup-Variante auch
+  die Einstellungen des Setups und den KI-Schlüssel). Achtung: Damit sind
   alle Charaktere, Mails und Kredite aller Spielstände weg; das Spielgeld im FS25-Spielstand bleibt, wie es ist.
 
 ## Fehler melden
 
 Bitte ein Issue mit der Vorlage *Bug report* anlegen: was du getan hast, was passiert ist, Auszug aus der
-Backend-Konsole und dem `log.txt` des Spiels. **Niemals API-Schlüssel mitschicken.**
+Backend-Konsole (Setup: `<Benutzerordner>\.rpsim\logs\farmpulse.log`) und dem `log.txt` des Spiels. **Niemals API-Schlüssel mitschicken.**

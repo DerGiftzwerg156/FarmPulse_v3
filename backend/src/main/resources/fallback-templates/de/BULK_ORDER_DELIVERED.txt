@@ -1,0 +1,7 @@
+Großauftrag geliefert: {{fillType}}
+Guten Tag,
+
+die {{amount}} Liter {{fillType}} für {{sellPoint}} sind angekommen – {{price}} € sind gebucht. Vielen Dank für die schnelle Lieferung.
+
+Viele Grüße
+{{characterName}}

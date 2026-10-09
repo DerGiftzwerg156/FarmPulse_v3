@@ -18,7 +18,6 @@ import { QrCode } from './qr-code';
   template: `
     <app-card [title]="'lan.title' | t" data-testid="lan-settings">
       @if (status(); as s) {
-        <p class="mb-3 text-[12px] text-muted">{{ 'lan.intro' | t }}</p>
         <label class="flex items-center gap-2 text-[13px]">
           <input type="checkbox" [checked]="s.enabled" [disabled]="!s.gamePc || busy()"
             (change)="toggle($any($event.target).checked)" data-testid="lan-enabled" />

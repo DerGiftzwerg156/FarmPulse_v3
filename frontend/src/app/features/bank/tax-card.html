@@ -53,7 +53,6 @@
         <p class="text-[12px] text-muted" data-testid="tax-advisor-requested">{{ 'bank.tax.advisorRequested' | t }}</p>
       } @else {
         <app-button variant="secondary" [disabled]="busy()" (pressed)="requestAdvisor()" data-testid="tax-advisor-request">{{ 'bank.tax.requestAdvisor' | t }}</app-button>
-        <span class="text-[11px] text-muted">{{ 'bank.tax.advisorHint' | t }}</span>
       }
     </div>
     @if (actionError(); as msg) {

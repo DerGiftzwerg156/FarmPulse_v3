@@ -1,0 +1,4 @@
+{{sectionTitle}}: {{headline}}
+Dorfblatt Nr. {{issueNumber}} – {{sectionTitle}}
+
+{{items}}

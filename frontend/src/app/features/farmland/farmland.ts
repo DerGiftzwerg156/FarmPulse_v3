@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { FarmlandView, MessageView, NegotiationView } from '../../core/api/models';
+import { FarmlandView, FieldMapView, MessageView, NegotiationView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -15,6 +15,7 @@ import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
 import { ServiceCases } from '../contracts/service-cases';
 import { ContractorWorkCard } from './contractor-work-card';
+import { FieldMap } from './field-map';
 import { FieldTable } from './field-table';
 
 /** Amount the counterpart currently offers/demands and that the player can accept with one click. */
@@ -35,19 +36,25 @@ export function highestBid(n: NegotiationView): number | null {
 
 /**
  * Farmland & negotiation (AP-8.6): overview of all fields with owner, auctions/direct negotiations/sale offers with
- * a bid form (max. rounds visible), result and the AI narration (the related mails), selling own fields.
+ * a bid form (max. rounds visible), result and the AI narration (the related mails), selling own fields. Tabs (owner
+ * decision 2026-10-06): Karte, Meine Felder, Verhandlungen, Pacht, Vorgänge.
  */
 @Component({
   selector: 'app-farmland',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases, FieldTable, ContractorWorkCard],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, PageErrorView, ServiceCases, FieldTable, ContractorWorkCard,
+    FieldMap],
   templateUrl: './farmland.html',
 })
 export class Farmland {
   private readonly api = inject(ApiService);
   private readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
-  /** The first case list (claims, referrals, contractor jobs): reloaded after a contractor order. */
+  private readonly router = inject(Router);
+  /** The case list of the open tab: reloaded after a contractor order. */
   readonly casesView = viewChild(ServiceCases);
+
+  /** Tab of the route `/farmland/:tab`. */
+  readonly tab = input<string>('karte');
 
   /** `?negotiation=` selects a negotiation (link from mails / village). */
   readonly negotiation = input<string>();
@@ -73,6 +80,12 @@ export class Farmland {
   readonly leaseTerms = signal<number[]>([]);
   readonly leaseYears = signal<number | null>(null);
   readonly leaseRate = signal<number | null>(null);
+
+  /** Roadmap V3.1 R31-K1: the map and the switch Karte / Tabelle (Karte by default once outlines exist). */
+  readonly fieldMap = signal<FieldMapView | null>(null);
+  readonly chosenView = signal<'map' | 'table' | null>(null);
+  readonly hasMap = computed(() => (this.fieldMap()?.mapSize ?? null) !== null && (this.fieldMap()?.fields.length ?? 0) > 0);
+  readonly view = computed(() => (this.hasMap() ? (this.chosenView() ?? 'map') : 'table'));
 
   readonly field = computed(() => this.fields()?.find((f) => f.farmlandId === this.selectedField()) ?? null);
   readonly open = computed(() => (this.negotiations() ?? []).filter((n) => n.status === 'OPEN'));
@@ -104,6 +117,8 @@ export class Farmland {
   }
 
   load(): void {
+    // Roadmap V3.1 R31-K1: the field outlines of the map (empty with an older mod)
+    this.api.fieldMap().subscribe({ next: (m) => this.fieldMap.set(m), error: () => this.fieldMap.set(null) });
     forkJoin({ fields: this.api.farmlands(), negotiations: this.api.negotiations(), mails: this.api.mails(),
       leaseOut: this.api.leaseOut() }).subscribe({
       next: ({ fields, negotiations, mails, leaseOut }) => {
@@ -139,6 +154,12 @@ export class Farmland {
     this.clearMessages();
   }
 
+  /** Selects a negotiation and shows it in the tab "Verhandlungen". */
+  openNegotiation(id: number): void {
+    this.selectNegotiation(id);
+    if (this.tab() !== 'verhandlungen') this.router.navigate(['/farmland', 'verhandlungen']);
+  }
+
   negotiationFor(f: FarmlandView): NegotiationView | undefined {
     return this.open().find((n) => n.assetId === String(f.farmlandId));
   }
@@ -163,7 +184,7 @@ export class Farmland {
     if (!f.owner) return;
     this.run(this.api.startDirectNegotiation(f.owner.id, f.farmlandId), (n) => {
       this.upsert(n);
-      this.selectNegotiation(n.id);
+      this.openNegotiation(n.id);
       this.info.set(this.i18n.t('farmland.directStarted', { name: f.owner!.name }));
     });
   }
@@ -198,7 +219,7 @@ export class Farmland {
     }
     this.run(this.api.sellOffer(f.farmlandId, Math.round(price)), (list) => {
       list.forEach((n) => this.upsert(n));
-      if (list[0]) this.selectNegotiation(list[0].id);
+      if (list[0]) this.openNegotiation(list[0].id);
       this.info.set(this.i18n.t('farmland.saleOffered', { n: list.length }));
     });
   }
@@ -213,7 +234,7 @@ export class Farmland {
     }
     this.run(this.api.leaseOutOffer(f.farmlandId, years, Math.round(rate)), (list) => {
       list.forEach((n) => this.upsert(n));
-      if (list[0]) this.selectNegotiation(list[0].id);
+      if (list[0]) this.openNegotiation(list[0].id);
       this.info.set(this.i18n.t(list.length ? 'farmland.leaseOut.offered' : 'farmland.leaseOut.noInterest', { n: list.length }));
     });
   }

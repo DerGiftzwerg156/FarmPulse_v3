@@ -1,0 +1,6 @@
+Hast du schon gehört?
+Hallo,
+
+im Dorf redet man über nichts anderes: {{disease}}! Wer {{animalTypes}} hält, darf erst mal nichts verkaufen. Hoffentlich bleibt unser Dorf verschont.
+
+{{characterName}}

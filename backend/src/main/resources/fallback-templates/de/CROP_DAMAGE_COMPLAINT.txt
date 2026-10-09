@@ -1,0 +1,6 @@
+Fahrspuren auf meinem Feld
+Hallo,
+
+da sind ja Fahrspuren quer durch mein Feld {{farmlandId}}! Bitte fahr außen herum – da steht meine Frucht drauf.
+
+{{characterName}}

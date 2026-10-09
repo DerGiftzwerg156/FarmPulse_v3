@@ -65,9 +65,10 @@ describe('Diary', () => {
     expect(el.querySelector('[data-testid="diary-entry"]')?.textContent).toContain('Eintrag 3');
   });
 
-  it('adds a note that is marked as purely narrative', () => {
+  it('adds a note that is marked as a player note', () => {
     const { el, fixture, http } = setup([backstory]);
-    expect(el.querySelector('[data-testid="narrative-hint"]')?.textContent).toContain('keinerlei Auswirkung');
+    // "purely narrative" is explained once in the app hint (owner decision 2026-10-06)
+    expect(el.querySelector('[data-testid="narrative-hint"]')).toBeNull();
     const title = el.querySelector('[data-testid="note-title"]') as HTMLInputElement;
     title.value = 'Erste Ernte';
     title.dispatchEvent(new Event('input'));

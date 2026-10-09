@@ -1,12 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { API, advanceDays, press, waitForList } from './helpers';
+import { API, APP_IDS, advanceDays, markAppHintsSeen, press, waitForList } from './helpers';
 
 /**
  * Core flows of the work plan (AP-9.2) in one serial story: the backend starts empty (in-memory DB), the bridge
  * simulator plays the FS25 savegame "wohlhabender-hof", the FAKE AI provider writes the character texts.
  */
 test.describe.serial('FarmPulse core flows', () => {
-  test('complete onboarding and link the simulated savegame', async ({ page }) => {
+  test('complete onboarding and link the simulated savegame', async ({ page, request }) => {
+    // the mailbox shows its first-open hint in "answer a mail"; every other app's hint is confirmed up front
+    await markAppHintsSeen(request, APP_IDS.filter((id) => id !== 'mail'));
     await page.goto('/');
     await expect(page.getByTestId('welcome')).toBeVisible();
     await page.getByTestId('welcome-start').click();
@@ -52,6 +54,10 @@ test.describe.serial('FarmPulse core flows', () => {
   test('answer a mail', async ({ page, request }) => {
     await waitForList(request, '/mails', 1);
     await page.goto('/mailbox');
+    // first-open hint (owner decision 2026-10-06): once per installation, confirmed with "Verstanden"
+    await expect(page.getByTestId('app-hint')).toContainText('Spielzeit');
+    await press(page, 'app-hint-ok');
+    await expect(page.getByTestId('app-hint')).toBeHidden();
     const thread = page.getByTestId('mail-thread').filter({ hasNot: page.getByTestId('village-life-badge') }).last();
     await thread.click();
     await expect(page.getByTestId('mail-detail')).toBeVisible();
@@ -66,6 +72,8 @@ test.describe.serial('FarmPulse core flows', () => {
 
   test('apply for credit and wait for the decision', async ({ page, request }) => {
     await page.goto('/bank');
+    await expect(page).toHaveURL(/\/bank\/kredite$/);
+    await page.getByTestId('tab-antrag').click();
     await page.getByTestId('credit-amount').fill('60000');
     await page.getByTestId('credit-purpose').fill('Neuer Traktor');
     await page.getByTestId('credit-term').fill('36');
@@ -83,14 +91,20 @@ test.describe.serial('FarmPulse core flows', () => {
       await expect(application).toHaveAttribute('data-state', 'accepted');
     }
     if (state !== 'rejected') {
+      await page.getByTestId('tab-kredite').click();
       await expect(page.getByTestId('loan').first()).toBeVisible();
     }
   });
 
-  test('accept and decline incoming calls (interviews by phone)', async ({ page }) => {
-    await page.goto('/employees');
+  test('accept and decline incoming calls (interviews by phone)', async ({ page, request }) => {
+    await page.goto('/employees/stellen');
     await page.getByTestId('posting-role').selectOption('MACHINE_OPERATOR');
     await press(page, 'posting-create');
+    // owner decision 2026-10-06: the applications arrive the next game day
+    await expect(page.getByTestId('no-applicants')).toContainText('morgen');
+    await advanceDays(request, 2);
+    await page.goto('/employees/stellen');
+    await page.getByTestId('posting-toggle').first().click();
     await expect(page.getByTestId('applicant').first()).toBeVisible();
 
     // interview #1 by phone -> the applicant calls back -> accept
@@ -111,7 +125,7 @@ test.describe.serial('FarmPulse core flows', () => {
     await expect(page.getByTestId('state-completed')).toBeVisible();
 
     // interview #2 by phone -> decline
-    await page.goto('/employees');
+    await page.goto('/employees/stellen');
     await page.getByTestId('posting-toggle').first().click();
     await press(page, 'interview-open', 1);
     await page.getByTestId('interview-text').fill('Kannst du auch am Wochenende?');
@@ -129,14 +143,19 @@ test.describe.serial('FarmPulse core flows', () => {
     const staffBefore = all.filter((e) => e.status === 'ACTIVE').length; // initial staff from the onboarding
     await page.goto('/employees');
     await expect(page.getByTestId('employee')).toHaveCount(staffBefore);
+    await page.getByTestId('tab-stellen').click();
     await page.getByTestId('posting-toggle').first().click();
     await press(page, 'hire', 0);
-    await expect(page.getByTestId('employees-message')).toContainText('ist jetzt im Team');
+    // owner decision 2026-10-06: a new employee starts with the next month - before that only cancelling (severance)
+    await expect(page.getByTestId('employees-message')).toContainText('ist eingestellt und fängt am');
+    await page.getByTestId('tab-team').click();
     await expect(page.getByTestId('employee')).toHaveCount(staffBefore + 1);
+    await expect(page.getByTestId('starts-at')).toHaveCount(1);
 
     await press(page, 'dismiss-open', staffBefore);
+    await expect(page.getByTestId('dismiss-text')).toContainText('Abfindung');
     await press(page, 'dismiss-confirm');
-    await expect(page.getByTestId('employees-message')).toContainText('wurde gekündigt');
+    await expect(page.getByTestId('employees-message')).toContainText('zurückgenommen');
     await expect(page.getByTestId('employee')).toHaveCount(staffBefore);
   });
 
@@ -148,6 +167,8 @@ test.describe.serial('FarmPulse core flows', () => {
     await page.goto('/farmland');
     await page.getByTestId('field-tile').nth(fields.indexOf(target!)).click();
     await press(page, 'start-direct');
+    // the new negotiation opens in the tab "Verhandlungen"
+    await expect(page).toHaveURL(/\/farmland\/verhandlungen$/);
     await expect(page.getByTestId('negotiation-detail')).toContainText('Direktverhandlung');
     await expect(page.getByTestId('rounds')).toHaveText('0 / 3');
 
@@ -171,6 +192,7 @@ test.describe.serial('FarmPulse core flows', () => {
     await advanceDays(request, 2);
     await page.goto('/market');
     await expect(page.getByTestId('storage-item').first()).toBeVisible();
+    await page.getByTestId('tab-verlauf').click();
     await expect(page.getByTestId('chart-line').first()).toBeAttached(); // a flat series has a zero-height box
     await page.getByTestId('range-0').locator('button').click();
     await page.getByTestId('chart-toggle').click();
@@ -185,7 +207,7 @@ test.describe.serial('FarmPulse core flows', () => {
     await expect(page.getByTestId('weather')).toContainText('18');
     // every area is an app; the old addresses stay valid
     await page.getByTestId('app-grid').getByTestId('app-tasks').click();
-    await expect(page).toHaveURL(/\/aufgaben$/);
+    await expect(page).toHaveURL(/\/aufgaben\/aufgaben$/);
     await expect(page.getByTestId('app-title')).toHaveText('Aufgaben');
     await expect(page.getByTestId('task-filters')).toBeVisible();
     const tasks = (await (await request.get(`${API}/tasks`)).json()) as { items: unknown[] };
@@ -193,18 +215,19 @@ test.describe.serial('FarmPulse core flows', () => {
 
     await page.getByTestId('quick-bar').getByTestId('app-calendar').click();
     await expect(page.getByTestId('month-start')).toBeVisible();
+    await page.getByTestId('tab-jahr').click();
     await expect(page.getByTestId('year-month')).toHaveCount(12);
 
     await page.goto('/stall');
     await expect(page.getByTestId('barn').first()).toContainText('Rinder');
     await expect(page.getByTestId('barn-bar').first()).toBeVisible();
 
-    await page.goto('/farmland');
+    await page.goto('/farmland/felder');
     await expect(page.getByTestId('field-row')).toHaveCount(6);
 
     // a stored mail link to the former "Verträge & Vorgänge" lands in the tasks
     await page.goto('/contracts');
-    await expect(page).toHaveURL(/\/aufgaben$/);
+    await expect(page).toHaveURL(/\/aufgaben\/aufgaben$/);
     await page.getByTestId('back-to-start').click();
     await expect(page.getByTestId('clock')).toBeVisible();
   });

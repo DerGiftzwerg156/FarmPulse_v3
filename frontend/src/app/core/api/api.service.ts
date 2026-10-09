@@ -10,7 +10,7 @@ export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiBase;
 
-  private get<T>(path: string, params?: Record<string, string | number>): Observable<T> {
+  private get<T>(path: string, params?: Record<string, string | number | readonly string[]>): Observable<T> {
     return this.http.get<T>(this.base + path, { params });
   }
 
@@ -86,6 +86,9 @@ export class ApiService {
   }
   mail(id: number): Observable<M.ThreadView> {
     return this.get(`/mails/${id}`);
+  }
+  markMailsRead(ids: number[]): Observable<M.MarkReadView> {
+    return this.post('/mails/read', { ids });
   }
   reply(id: number, text: string): Observable<M.MessageView> {
     return this.post(`/mails/${id}/reply`, { text });
@@ -206,6 +209,10 @@ export class ApiService {
   timeOff(id: number, days: number): Observable<M.EmployeeView> {
     return this.post(`/employees/${id}/time-off`, { days });
   }
+  /** Roadmap V3.1 R31-B5: get-well wishes to a sick or injured employee. */
+  getWell(id: number): Observable<M.EmployeeView> {
+    return this.post(`/employees/${id}/get-well`, {});
+  }
   trainings(): Observable<M.TrainingOfferView[]> {
     return this.get('/trainings');
   }
@@ -252,6 +259,10 @@ export class ApiService {
   // Roadmap V2 R2-B4: farm bookkeeping
   finances(): Observable<M.FinanceOverview> {
     return this.get('/finances');
+  }
+  /** Booking statement of a game month (default: the latest month with entries). */
+  statement(year?: number, period?: number): Observable<M.StatementView> {
+    return this.get('/finances/statement', year != null && period != null ? { year, period } : undefined);
   }
 
   // Roadmap V2 R2-E1: tax office and tax advisor
@@ -347,11 +358,13 @@ export class ApiService {
   }
 
   // Roadmap V3.1 R31-A1 / R31-A2: contractor work, borrowed and demo machines
-  contractorQuote(farmlandId: number): Observable<M.ContractorQuoteView> {
-    return this.get(`/contractor-work/fields/${farmlandId}`);
+  /** `works` = the ticked works; the other options are checked as an addition to them. */
+  contractorQuote(farmlandId: number, works: readonly string[] = []): Observable<M.ContractorQuoteView> {
+    return this.get(`/contractor-work/fields/${farmlandId}`, works.length ? { works } : undefined);
   }
-  orderContractorWork(farmlandId: number, work: string, fruitType: string | null): Observable<M.CaseView> {
-    return this.post('/contractor-work', { farmlandId, work, fruitType });
+  /** 1 to `maxWorks` works of one field at once, done at the end of the next game day; one case per work. */
+  orderContractorWork(farmlandId: number, works: readonly string[], fruitType: string | null): Observable<M.CaseView[]> {
+    return this.post('/contractor-work', { farmlandId, works, fruitType });
   }
   machineLoans(): Observable<M.MachineLoanView[]> {
     return this.get('/machine-loans');
@@ -389,6 +402,14 @@ export class ApiService {
     return this.post('/lan/logout');
   }
 
+  // first-open hints of the apps (owner decision 2026-10-06)
+  appHints(): Observable<M.AppHintsView> {
+    return this.get('/app-hints');
+  }
+  markAppHintSeen(appId: string): Observable<M.AppHintsView> {
+    return this.http.put<M.AppHintsView>(`${this.base}/app-hints/${appId}`, {});
+  }
+
   // settings
   aiSettings(): Observable<M.AiSettingsView> {
     return this.get('/settings/ai');
@@ -421,6 +442,127 @@ export class ApiService {
   saveFieldSettings(r: { fieldHintsEnabled: boolean }): Observable<M.FieldSettingsView> {
     return this.http.put<M.FieldSettingsView>(`${this.base}/settings/fields`, r);
   }
+  /** Roadmap V3.1 R31-B: burdening events of the authorities. */
+  burdenSettings(): Observable<M.BurdenSettingsView> {
+    return this.get('/settings/burdening-events');
+  }
+  saveBurdenSettings(r: {
+    areaCheck: boolean;
+    fertilizer: boolean;
+    disease: boolean;
+    sickLeave: boolean;
+    nightWork: boolean;
+    cropDamage: boolean;
+    dieselTheft: boolean;
+    investors?: boolean;
+  }): Observable<M.BurdenSettingsView> {
+    return this.http.put<M.BurdenSettingsView>(`${this.base}/settings/burdening-events`, r);
+  }
+  /** Roadmap V3.1 R31-B1: area payment application. */
+  directPayment(): Observable<M.DirectPaymentStatusView> {
+    return this.get('/direct-payment');
+  }
+  submitDirectPayment(id: number, fields: { farmlandId: number; crop: string }[]): Observable<M.DirectPaymentView> {
+    return this.post(`/direct-payment/${id}/submit`, { fields });
+  }
+  /** Roadmap V3.1 R31-B2: investment grant. */
+  investmentGrants(): Observable<M.GrantStatusView> {
+    return this.get('/investment-grants');
+  }
+  applyGrant(kind: string, plannedSum: number): Observable<M.GrantView> {
+    return this.post('/investment-grants', { kind, plannedSum });
+  }
+  grantProof(id: number): Observable<M.GrantView> {
+    return this.post(`/investment-grants/${id}/proof`, {});
+  }
+  /** Roadmap V3.1 R31-B4: animal diseases and restricted zones. */
+  animalDiseases(): Observable<M.DiseaseStatusView> {
+    return this.get('/animal-diseases');
+  }
+  /** Roadmap V3.1 R31-D1: issues of the village newspaper. */
+  newspaper(): Observable<M.IssueView[]> {
+    return this.get('/newspaper');
+  }
+  /** Roadmap V3.1 R31-D2: village chat. */
+  chatGroups(): Observable<M.ChatGroupView[]> {
+    return this.get('/chat/groups');
+  }
+  chatMessages(groupId: number): Observable<M.ChatMessageView[]> {
+    return this.get(`/chat/groups/${groupId}/messages`);
+  }
+  postChat(groupId: number, text: string): Observable<M.ChatPostView> {
+    return this.post(`/chat/groups/${groupId}/messages`, { text });
+  }
+  /** Roadmap V3.1 R31-D6: farm holidays. */
+  farmHoliday(): Observable<M.FarmHolidayView> {
+    return this.get('/farm-holiday');
+  }
+  setupFarmHoliday(): Observable<M.FarmHolidayView> {
+    return this.post('/farm-holiday', {});
+  }
+  /** Roadmap V3.1 R31-D7: cooperative shares. */
+  // Roadmap V3.2 R32-G: bulk orders ("Sofort liefern" / "Ablehnen" go through caseAction)
+  bulkOrders(): Observable<M.BulkOrdersView> {
+    return this.get('/trade/bulk-orders');
+  }
+  bulkOrderMonths(caseId: number): Observable<M.BulkOrderMonthView[]> {
+    return this.get(`/trade/bulk-orders/${caseId}/months`);
+  }
+  agreeBulkOrder(caseId: number, leadMonths: number): Observable<M.BulkOrderView> {
+    return this.post(`/trade/bulk-orders/${caseId}/term`, { leadMonths });
+  }
+  /** Roadmap V3.3 R33-F: field book ("Feldbuch → Dokumentation"). */
+  fieldBook(): Observable<M.FieldBookView> {
+    return this.get('/field-book');
+  }
+  /** `value` null gives the value back to the detection ("automatisch"). */
+  setFieldBookValue(entryId: number, field: M.FieldBookValueKey, value: string | null): Observable<M.FieldBookView> {
+    return this.post(`/field-book/entries/${entryId}/values`, { field, value });
+  }
+  harvestFieldBook(farmlandId: number): Observable<M.FieldBookView> {
+    return this.post(`/field-book/fields/${farmlandId}/harvest`, {});
+  }
+  closeFieldBookYear(year: number): Observable<M.FieldBookView> {
+    return this.post(`/field-book/years/${year}/close`, {});
+  }
+  reopenFieldBookYear(year: number): Observable<M.FieldBookView> {
+    return this.post(`/field-book/years/${year}/reopen`, {});
+  }
+  /** Roadmap V3.2 R32-I: large investors ("Bank → Investoren"). */
+  investors(): Observable<M.InvestorsView> {
+    return this.get('/investors');
+  }
+  acceptInvestorPackage(caseId: number, contractId: number): Observable<M.InvestorContractView> {
+    return this.post(`/investors/offers/${caseId}/packages/${contractId}/accept`);
+  }
+  deliverToInvestor(obligationId: number, quantity: number, husbandryUniqueId: string | null): Observable<unknown> {
+    return this.post(`/investors/obligations/${obligationId}/deliver`, { quantity, husbandryUniqueId });
+  }
+  investorFieldConsent(contractId: number, farmlandId: number): Observable<M.InvestorContractView> {
+    return this.post(`/investors/contracts/${contractId}/field-consent`, { farmlandId });
+  }
+  payInvestorPayment(paymentId: number): Observable<M.InvestorPaymentView> {
+    return this.post(`/investors/payments/${paymentId}/pay`);
+  }
+  cooperative(): Observable<M.CooperativeView> {
+    return this.get('/cooperative');
+  }
+  buyShares(count: number): Observable<M.CooperativeView> {
+    return this.post('/cooperative/shares', { count });
+  }
+  cancelShares(count: number): Observable<M.CooperativeView> {
+    return this.post('/cooperative/notices', { count });
+  }
+  /** Roadmap V3.1 R31-D8: diesel theft, tank lock and the theft module of the insurance. */
+  dieselTheft(): Observable<M.DieselTheftView> {
+    return this.get('/diesel-theft');
+  }
+  buyTankLock(vehicleId: string): Observable<M.DieselTheftView> {
+    return this.post('/tank-locks', { vehicleId });
+  }
+  theftCover(contractId: number, enabled: boolean): Observable<M.ContractView> {
+    return this.post(`/contracts/${contractId}/theft-cover`, { enabled });
+  }
   gameSettings(): Observable<M.GameSettingsView> {
     return this.get('/settings/game');
   }
@@ -432,6 +574,10 @@ export class ApiService {
   }
   stables(): Observable<M.StablesView> {
     return this.get('/stables');
+  }
+  /** Roadmap V3.1 R31-K1: field outlines for the map of the Flurkarte. */
+  fieldMap(): Observable<M.FieldMapView> {
+    return this.get('/field-map');
   }
   fieldOverview(): Observable<M.FieldOverviewView> {
     return this.get('/field-overview');

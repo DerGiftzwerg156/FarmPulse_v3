@@ -6,6 +6,7 @@ import de.farmpulse.rpsim.bridge.BridgeDtos.FarmFacts;
 import de.farmpulse.rpsim.bridge.FactsService;
 import de.farmpulse.rpsim.character.CharacterLookup;
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.diary.ChronicleService;
 import de.farmpulse.rpsim.diary.DiaryService;
 import de.farmpulse.rpsim.domain.CharacterRole;
 import de.farmpulse.rpsim.domain.CommunicationCategory;
@@ -17,6 +18,7 @@ import de.farmpulse.rpsim.finance.FinanceJournalService.Month;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
+import de.farmpulse.rpsim.newspaper.VillageNewsService;
 import de.farmpulse.rpsim.repository.LoanRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.time.CalendarText;
@@ -51,10 +53,13 @@ public class FinanceNarrationService {
     private final TrustScoreService trust;
     private final DiaryService diary;
     private final RpsimProperties props;
+    private final VillageNewsService villageNews;
 
     public FinanceNarrationService(SavegameRepository savegames, FactsService facts, FinanceJournalService journal,
                                    LoanRepository loans, CharacterLookup lookup, NarrationRequestService narration,
-                                   TrustScoreService trust, DiaryService diary, RpsimProperties props) {
+                                   TrustScoreService trust, DiaryService diary, RpsimProperties props,
+                                   VillageNewsService villageNews) {
+        this.villageNews = villageNews;
         this.savegames = savegames;
         this.facts = facts;
         this.journal = journal;
@@ -149,5 +154,8 @@ public class FinanceNarrationService {
                 .category(CommunicationCategory.VILLAGE_LIFE).submit();
         diary.addAuto(sg, "MARKET", "Rekordmonat", "Ernteerlös von " + Math.round(revenue) + " € im "
                 + CalendarText.month(m.period()) + " - so viel wie nie zuvor.", null, null);
+        // Roadmap V3.1 R31-D1: public in the newspaper - without the amount (no private money matters)
+        villageNews.add(sg, VillageNewsService.Section.FARM, "RECORD_HARVEST", "Rekordernte: "
+                + ChronicleService.farmName(sg) + " meldet den besten Erntemonat seit Bestehen (" + CalendarText.month(m.period()) + ").");
     }
 }

@@ -28,8 +28,10 @@ import de.farmpulse.rpsim.narration.FallbackTemplates;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
+import de.farmpulse.rpsim.repository.BulkOrderRepository;
 import de.farmpulse.rpsim.repository.ForwardContractRepository;
 import de.farmpulse.rpsim.repository.MarketEventRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameTime;
 import de.farmpulse.rpsim.trust.TrustScoreService;
 import org.springframework.context.event.EventListener;
@@ -45,7 +47,9 @@ import org.springframework.transaction.annotation.Transactional;
  * {@code contractReports}. A shortfall costs shortfall x fixed price x penalty-share ({@code CONTRACT_PENALTY}) and
  * trust of the land agent, a full delivery gains trust. Only one fixed price per sell point and fill type: no
  * forward contract next to an open special offer or another forward contract there, and the event engine creates no
- * special offer on a pair with an open forward contract.
+ * special offer on a pair with an open forward contract. Roadmap V3.2 R32-G3 (owner decision 2026-10-08): an open bulk
+ * order with a delivery month counts like a forward contract here ({@link #openPairs}); "Tage je Periode" changed:
+ * a contract whose price instruction is still pending keeps its delivery month.
  */
 @Service
 public class ForwardContractService {
@@ -53,6 +57,7 @@ public class ForwardContractService {
     public static final String RELATED = "FORWARD_CONTRACT";
 
     private final ForwardContractRepository contracts;
+    private final BulkOrderRepository bulkOrders;
     private final MarketEventRepository events;
     private final FactsService facts;
     private final OutboxService outbox;
@@ -67,8 +72,9 @@ public class ForwardContractService {
     public ForwardContractService(ForwardContractRepository contracts, MarketEventRepository events, FactsService facts,
                                   OutboxService outbox, CharacterLookup lookup, TrustScoreService trust,
                                   NarrationRequestService narration, DiaryService diary, FallbackTemplates labels,
-                                  GameTime gameTime, RpsimProperties props) {
+                                  GameTime gameTime, RpsimProperties props, BulkOrderRepository bulkOrders) {
         this.contracts = contracts;
+        this.bulkOrders = bulkOrders;
         this.events = events;
         this.facts = facts;
         this.outbox = outbox;
@@ -90,6 +96,19 @@ public class ForwardContractService {
                         long deliveryStartGameTime, long deadlineGameTime, Integer deliveryPeriod, long expectedIncome) {
     }
 
+    /**
+     * Largest quantity of a forward contract; Roadmap V3.1 R31-D7: a board member of the cooperative may fix
+     * {@code coop-board.forward-contract-bonus} more (rounded down to the quantity step).
+     */
+    public long maxQuantity(Savegame sg) {
+        RpsimProperties.ForwardContract c = cfg();
+        if (!sg.isCoopBoard()) {
+            return c.getMaxQuantity();
+        }
+        long more = Math.round(c.getMaxQuantity() * (1 + props.getFormulas().getCoopBoard().getForwardContractBonus()));
+        return more - more % Math.max(1, c.getQuantityStep());
+    }
+
     @Transactional(readOnly = true)
     public Quote quote(Savegame sg, String fillType, String sellPoint, long quantity, int leadMonths) {
         RpsimProperties.ForwardContract c = cfg();
@@ -97,9 +116,10 @@ public class ForwardContractService {
             throw new BusinessRuleException("FORWARD_LEAD", "Der Liefermonat muss " + c.getMinLeadMonths() + " bis "
                     + c.getMaxLeadMonths() + " Monate voraus liegen.");
         }
-        if (quantity < c.getMinQuantity() || quantity > c.getMaxQuantity() || quantity % c.getQuantityStep() != 0) {
+        long max = maxQuantity(sg);
+        if (quantity < c.getMinQuantity() || quantity > max || quantity % c.getQuantityStep() != 0) {
             throw new BusinessRuleException("FORWARD_QUANTITY", "Die Menge muss zwischen " + c.getMinQuantity() + " und "
-                    + c.getMaxQuantity() + " Litern in " + c.getQuantityStep() + "er-Schritten liegen.");
+                    + max + " Litern in " + c.getQuantityStep() + "er-Schritten liegen.");
         }
         FarmFacts f = facts.latest(sg).orElse(null);
         double base = f == null || f.prices() == null ? 0 : f.prices().stream()
@@ -129,7 +149,7 @@ public class ForwardContractService {
         }
         if (fixedPricePairs(sg).contains(sellPoint + "|" + fillType)) {
             throw new BusinessRuleException("FORWARD_PAIR_BUSY", "Für " + labels.label(fillType) + " an dieser "
-                    + "Verkaufsstelle läuft schon ein Festpreis (Vorkontrakt oder Sonderkontrakt).");
+                    + "Verkaufsstelle läuft schon ein Festpreis (Vorkontrakt, Großauftrag oder Sonderkontrakt).");
         }
         ForwardContract fc = new ForwardContract();
         fc.setSavegame(sg);
@@ -153,10 +173,15 @@ public class ForwardContractService {
         return fc;
     }
 
-    /** "sellPoint|fillType" pairs with an open forward contract (no special offer there, R3-M2). */
+    /**
+     * "sellPoint|fillType" pairs with an open forward contract (no special offer there, R3-M2) - Roadmap V3.2 R32-G3: or
+     * an open bulk order with a delivery month (no forward contract, special offer or drought price event there).
+     */
     public Set<String> openPairs(Savegame sg) {
         Set<String> s = new HashSet<>();
         contracts.findBySavegameAndStatus(sg, ForwardContract.OPEN).forEach(c -> s.add(c.getSellPoint() + "|" + c.getFillType()));
+        bulkOrders.findBySavegameAndStatus(sg, de.farmpulse.rpsim.domain.BulkOrder.OPEN)
+                .forEach(o -> s.add(o.getSellPoint() + "|" + o.getFillType()));
         return s;
     }
 
@@ -215,6 +240,24 @@ public class ForwardContractService {
                 .category(CommunicationCategory.MARKET).related(RELATED, fc.getId()).submit();
         diary.addAuto(sg, "MARKET", "Vorkontrakt nicht erfüllt", delivered + " von " + fc.getQuantity() + " l " + what
                 + " geliefert, Strafe " + penalty + " €.", RELATED, fc.getId());
+    }
+
+    /**
+     * "Tage je Periode" changed (owner decision 2026-10-08, Roadmap V3.2 R32-G3): a contract whose price instruction the
+     * mod has not taken yet keeps its delivery month - start, end and the pending instruction move to the new month
+     * boundaries. In a running delivery month the mod keeps its end.
+     */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent e) {
+        for (ForwardContract fc : contracts.findBySavegame_IdAndStatus(e.savegameId(), ForwardContract.OPEN)) {
+            long start = e.remap(fc.getDeliveryStartGameTime());
+            long deadline = e.remap(fc.getDeadlineGameTime());
+            if (outbox.reschedulePending(fc.getInstructionId(), start, java.util.Map.<String, Object>of("deadlineGameTime", deadline))) {
+                fc.setDeliveryStartGameTime(start);
+                fc.setDeadlineGameTime(deadline);
+            }
+        }
     }
 
     public List<ForwardContract> list(Savegame sg) {

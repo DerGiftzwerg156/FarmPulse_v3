@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { DiaryView, TaskView } from '../../core/api/models';
@@ -15,7 +15,7 @@ type Filter = 'all' | 'today' | TaskCategory;
 
 /**
  * Hof-Tablet app "Aufgaben": every open decision of all apps in one list, grouped by deadline (today, this week,
- * later), with the notices of the hof system and the questions waiting in the game on the side.
+ * later); the notices of the hof system, the questions waiting in the game and today's diary in the tab "Meldungen".
  */
 @Component({
   selector: 'app-tasks',
@@ -27,6 +27,8 @@ export class Tasks {
   readonly store = inject(GameStateStore);
   readonly tasks = inject(TasksStore);
 
+  /** Tab of the route `/aufgaben/:tab` (owner decision 2026-10-06): Aufgaben, Meldungen. */
+  readonly tab = input<string>('aufgaben');
   readonly filter = signal<Filter>('all');
   readonly diary = signal<DiaryView[]>([]);
   readonly now = computed(() => this.store.savegame()?.gameTime ?? 0);

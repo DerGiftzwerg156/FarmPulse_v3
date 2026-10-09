@@ -1,0 +1,7 @@
+Zustimmung zum Verkauf von Feld {{farmlandId}}
+Guten Tag,
+
+ich bin einverstanden, dass Sie Feld {{farmlandId}} verkaufen.
+
+Viele Grüße
+{{characterName}}

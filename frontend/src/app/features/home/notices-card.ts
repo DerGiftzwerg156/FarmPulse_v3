@@ -101,6 +101,16 @@ export class NoticesCard {
       const amount = d['amount'] !== undefined ? formatMoney(Math.abs(num('amount'))) : d['price'] !== undefined ? formatMoney(num('price')) : '';
       return this.i18n.t('notices.INSTRUCTION_FAILED.text', { what, amount, reason });
     }
+    if (n.kind === 'CYCLE_STEP_SKIPPED') {
+      // review 10/2026 Phase 1.3: a listener of the bridge cycle failed three times and was skipped
+      const event = this.label('cycleEvent', String(d['event'] ?? ''));
+      return this.i18n.t('notices.CYCLE_STEP_SKIPPED.text', {
+        step: String(d['listener'] ?? ''),
+        event,
+        time: formatGameTime(n.gameTime),
+        error: String(d['error'] ?? ''),
+      });
+    }
     return this.i18n.t(`notices.${n.kind}.text`, {
       count: num('count'),
       money: formatMoney(num('moneyTotal')),

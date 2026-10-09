@@ -33,6 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
  * self-propelled machines / loaders need the matching training. A training costs money (MONEY_TRANSACTION TRAINING),
  * the employee is away for rpsim.formulas.training.duration-days (ON_LEAVE for the mod, no helper) and gains
  * appreciation. The qualification counts once the training is over.
+ * <p>
+ * Owner decision 2026-10-06: the employee works normally on the booking day and is away for whole game days from the
+ * start of the next game day (0:00) on. The booked training has precedence: no days off overlapping it and no sickness
+ * while it is booked.
  */
 @Service
 public class TrainingService {
@@ -89,13 +93,32 @@ public class TrainingService {
         return m;
     }
 
-    /** The employee is at a training right now. */
+    /** The employee is at a training right now (away, no helper). */
     public static boolean inTraining(Employee e, long now) {
+        return trainingBooked(e, now) && (e.getTrainingFromGameTime() == null || e.getTrainingFromGameTime() <= now);
+    }
+
+    /** A training is booked and not over yet - it may still lie ahead (the next game day). */
+    public static boolean trainingBooked(Employee e, long now) {
         return e.getTrainingInProgress() != null && e.getTrainingUntilGameTime() != null
                 && e.getTrainingUntilGameTime() > now;
     }
 
-    /** Books a training: money, absence of duration-days, appreciation and a thank-you mail. */
+    /** The booked training overlaps the period [from, until). */
+    public static boolean trainingOverlaps(Employee e, long from, long until) {
+        if (!trainingBooked(e, from)) {
+            return false;
+        }
+        long start = e.getTrainingFromGameTime() == null ? from : e.getTrainingFromGameTime();
+        return start < until && e.getTrainingUntilGameTime() > from;
+    }
+
+    /** Owner decision 2026-10-06: the training starts with the next game day (0:00). */
+    static long trainingStart(long now) {
+        return (GameTime.dayIndex(now) + 1) * GameTime.MS_PER_DAY;
+    }
+
+    /** Books a training: money, absence of duration-days from the next game day on, appreciation and a thank-you mail. */
     @Transactional
     public Employee book(Employee e, Training t) {
         Savegame sg = e.getSavegame();
@@ -111,7 +134,7 @@ public class TrainingService {
             throw new BusinessRuleException("TRAINING_DONE", "Diese Schulung hat der Mitarbeiter bereits.");
         }
         if (e.getTrainingInProgress() != null) {
-            throw new BusinessRuleException("TRAINING_RUNNING", "Der Mitarbeiter ist gerade schon auf einer Schulung.");
+            throw new BusinessRuleException("TRAINING_RUNNING", "Der Mitarbeiter ist schon für eine Schulung angemeldet.");
         }
         if (e.getStrikeSinceGameTime() != null) {
             throw new BusinessRuleException("TRAINING_STRIKE", "Während eines Streiks geht niemand auf eine Schulung.");
@@ -119,13 +142,18 @@ public class TrainingService {
         if (e.getTimeOffUntilGameTime() != null && e.getTimeOffUntilGameTime() > now) {
             throw new BusinessRuleException("TRAINING_ON_LEAVE", "Der Mitarbeiter hat gerade frei.");
         }
+        if (SickLeaveService.absent(e, now)) { // R31-B5
+            throw new BusinessRuleException("TRAINING_SICK", "Der Mitarbeiter ist gerade krank.");
+        }
         long cost = cost(t);
         if (cost > 0) {
             outbox.money(sg, -cost, MoneyReason.TRAINING, "Schulung " + t.title() + " – " + e.getCharacter().getName(),
                     new Related(SatisfactionService.RELATED, e.getId()));
         }
+        long from = trainingStart(now);
         e.setTrainingInProgress(t);
-        e.setTrainingUntilGameTime(now + GameTime.days(cfg().getDurationDays()));
+        e.setTrainingFromGameTime(from);
+        e.setTrainingUntilGameTime(from + GameTime.days(cfg().getDurationDays()));
         if (cfg().getAppreciationPoints() != 0) {
             satisfaction.record(e, SatisfactionCategory.APPRECIATION, cfg().getAppreciationPoints(), "Schulung " + t.title());
         }
@@ -133,9 +161,10 @@ public class TrainingService {
                 .facts(NarrationFacts.builder().put("reason", "TRAINING").put("training", t.title())
                         .put("salary", e.getMonthlySalary()).build())
                 .category(CommunicationCategory.EMPLOYEE).related(SatisfactionService.RELATED, e.getId()).submit();
-        diary.addAuto(sg, "EMPLOYEE", e.getCharacter().getName() + " auf Schulung",
-                "Schulung „" + t.title() + "“ gebucht (" + cost + " €).", SatisfactionService.RELATED, e.getId());
-        publisher.publishEvent(new RosterChangedEvent(sg.getId())); // away: ON_LEAVE for the mod
+        diary.addAuto(sg, "EMPLOYEE", e.getCharacter().getName() + " zur Schulung angemeldet",
+                "Schulung „" + t.title() + "“ gebucht (" + cost + " €), morgen den ganzen Tag.", SatisfactionService.RELATED,
+                e.getId());
+        publisher.publishEvent(new RosterChangedEvent(sg.getId())); // ON_LEAVE for the mod only from the next day on
         return e;
     }
 
@@ -145,10 +174,11 @@ public class TrainingService {
         long now = sg.getCurrentGameTime();
         boolean changed = false;
         for (Employee e : employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE)) {
-            if (e.getTrainingInProgress() != null && !inTraining(e, now)) {
+            if (e.getTrainingInProgress() != null && !trainingBooked(e, now)) {
                 Training t = e.getTrainingInProgress();
                 e.addTraining(t);
                 e.setTrainingInProgress(null);
+                e.setTrainingFromGameTime(null);
                 e.setTrainingUntilGameTime(null);
                 diary.addAuto(sg, "EMPLOYEE", e.getCharacter().getName() + " hat die Schulung abgeschlossen",
                         "Schulung „" + t.title() + "“ bestanden – ab jetzt als Helfer auf diesen Maschinen einsetzbar.",
@@ -180,6 +210,7 @@ public class TrainingService {
             e.removeTraining(t);
         }
         e.setTrainingInProgress(null);
+        e.setTrainingFromGameTime(null);
         e.setTrainingUntilGameTime(null);
         diary.addAuto(e.getSavegame(), "EMPLOYEE", "Schulung von " + e.getCharacter().getName() + " storniert",
                 "Die Buchung der Schulung „" + t.title() + "“ ist fehlgeschlagen.", SatisfactionService.RELATED, e.getId());

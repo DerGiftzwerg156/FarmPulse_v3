@@ -43,10 +43,13 @@ public class AiNarrationService {
     private final MemoryService memory;
     private final RpsimProperties props;
     private final JsonMapper json;
+    /** Roadmap V3.1 R31-D1 / R31-D2: receivers of texts that are no mail (newspaper article, chat message). */
+    private final java.util.List<NarrationSink> sinks;
 
     public AiNarrationService(AiProviderRegistry providers, PromptBuilder prompts, FallbackTemplates fallbacks,
                               CommunicationService communications, ToneClassifier toneClassifier, MemoryService memory,
-                              RpsimProperties props, JsonMapper json) {
+                              RpsimProperties props, JsonMapper json, java.util.List<NarrationSink> sinks) {
+        this.sinks = sinks;
         this.providers = providers;
         this.prompts = prompts;
         this.fallbacks = fallbacks;
@@ -70,7 +73,7 @@ public class AiNarrationService {
         boolean mechanical = job.getPlayerMessage() != null && toneClassifier.classify(job.getPlayerMessage()).mechanicalRequest();
         AiPrompt prompt = prompts.build(new PromptBuilder.Input(job.getCharacter(), job.getSavegame().getTonePreset(), type,
                 job.getChannel(), facts, memoryFacts, job.getPlayerMessage(), mechanical,
-                CalendarText.describe(job.getSavegame())));
+                CalendarText.describe(job.getSavegame()), job.getTargetType()));
         AiResult result = null;
         boolean fallback = false;
         AiProvider provider = providers.active();
@@ -91,6 +94,15 @@ public class AiNarrationService {
         if (result == null) {
             fallback = true;
             result = fallbacks.render(type, facts, job.getCharacter() == null ? null : job.getCharacter().getName());
+        }
+        if (job.getTargetType() != null) {
+            AiResult text = result;
+            boolean usedFallback = fallback;
+            sinks.stream().filter(s -> s.targetType().equals(job.getTargetType())).findFirst()
+                    .ifPresent(s -> s.deliver(job, text.subject(), text.body(), usedFallback));
+            job.setUsedFallback(fallback);
+            job.setStatus(fallback ? NarrationJobStatus.FALLBACK : NarrationJobStatus.DONE);
+            return null;
         }
         Communication c = communications.create(new CommunicationService.Draft(job.getSavegame(), job.getCharacter(),
                 job.getChannel(), CommunicationInitiator.CHARACTER, result.subject(), result.body(), job.getCategory(),

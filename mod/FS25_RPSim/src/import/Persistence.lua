@@ -125,6 +125,28 @@ function RPSimPersistence.save(writer, state)
             writer:setFloat(e .. "#amount", p.byType[name])
         end
     end
+    -- Booking statement: running number and the last single bookings (a reload without saving goes back to them)
+    local bookingLog = state.bookingLog
+    if bookingLog ~= nil then
+        writer:setInt(ROOT .. ".bookingLog#nextSeq", bookingLog.nextSeq)
+        for i, e in ipairs(bookingLog.entries) do
+            local k = string.format("%s.bookingLog.entry(%d)", ROOT, i - 1)
+            writer:setInt(k .. "#seq", e.seq)
+            writer:setFloat(k .. "#gameTime", e.gameTime or 0)
+            writer:setInt(k .. "#year", e.year)
+            writer:setInt(k .. "#period", e.period)
+            if e.day ~= nil then writer:setInt(k .. "#day", e.day) end
+            writer:setInt(k .. "#monotonicDay", e.monotonicDay or 0)
+            writer:setString(k .. "#category", e.category)
+            writer:setFloat(k .. "#amount", e.amount)
+            writer:setInt(k .. "#count", e.count or 1)
+            writer:setString(k .. "#single", tostring(e.single == true))
+            if e.liters ~= nil then writer:setFloat(k .. "#liters", e.liters) end
+            if e.fillType ~= nil then writer:setString(k .. "#fillType", e.fillType) end
+            if e.sellPoint ~= nil then writer:setString(k .. "#sellPoint", e.sellPoint) end
+            if e.note ~= nil then writer:setString(k .. "#note", e.note) end
+        end
+    end
     -- Roadmap V2 R2-F: waiting questions, unacknowledged answers and handled question ids
     local prompts = state.prompts
     if prompts ~= nil then
@@ -158,6 +180,20 @@ function RPSimPersistence.save(writer, state)
             writer:setString(k .. "#id", id)
             writer:setFloat(k .. "#expiresGameTime", prompts.handled[id])
         end
+    end
+    -- Roadmap V3.3 R33-F3: harvest counter (loading an older savegame brings back its older values)
+    local harvests = RPSimHarvestCounter.toRaw(state.harvests)
+    table.sort(harvests, function(a, b)
+        if a.farmlandId ~= b.farmlandId then return a.farmlandId < b.farmlandId end
+        if a.fruitType ~= b.fruitType then return a.fruitType < b.fruitType end
+        return a.fillType < b.fillType
+    end)
+    for i, h in ipairs(harvests) do
+        local k = string.format("%s.harvests.counter(%d)", ROOT, i - 1)
+        writer:setInt(k .. "#farmlandId", h.farmlandId)
+        writer:setString(k .. "#fruitType", h.fruitType)
+        writer:setString(k .. "#fillType", h.fillType)
+        writer:setFloat(k .. "#liters", h.liters)
     end
 end
 
@@ -268,6 +304,27 @@ function RPSimPersistence.load(reader, state)
         state.financeJournal.periods[#state.financeJournal.periods + 1] = p
         i = i + 1
     end
+    -- Booking statement
+    state.bookingLog = RPSimBookingLog.new()
+    state.bookingLog.nextSeq = reader:getInt(ROOT .. ".bookingLog#nextSeq") or 1
+    i = 0
+    while true do
+        local k = string.format("%s.bookingLog.entry(%d)", ROOT, i)
+        local seq = reader:getInt(k .. "#seq")
+        if seq == nil then break end
+        state.bookingLog.entries[#state.bookingLog.entries + 1] = { seq = seq,
+            gameTime = reader:getFloat(k .. "#gameTime") or 0, year = reader:getInt(k .. "#year") or 1,
+            period = reader:getInt(k .. "#period") or 1, day = reader:getInt(k .. "#day"),
+            monotonicDay = reader:getInt(k .. "#monotonicDay") or 0, category = reader:getString(k .. "#category") or "",
+            amount = reader:getFloat(k .. "#amount") or 0, count = reader:getInt(k .. "#count") or 1,
+            single = reader:getString(k .. "#single") == "true" or nil, liters = reader:getFloat(k .. "#liters"),
+            fillType = reader:getString(k .. "#fillType"), sellPoint = reader:getString(k .. "#sellPoint"),
+            note = reader:getString(k .. "#note") }
+        i = i + 1
+    end
+    if #state.bookingLog.entries > 0 then
+        state.bookingLog.nextSeq = math.max(state.bookingLog.nextSeq, state.bookingLog.entries[#state.bookingLog.entries].seq + 1)
+    end
     -- Roadmap V2 R2-F
     state.prompts = RPSimPrompts.new()
     i = 0
@@ -296,6 +353,17 @@ function RPSimPersistence.load(reader, state)
         local id = reader:getString(k .. "#id")
         if id == nil then break end
         state.prompts.handled[id] = reader:getFloat(k .. "#expiresGameTime") or 0
+        i = i + 1
+    end
+    -- Roadmap V3.3 R33-F3
+    state.harvests = RPSimHarvestCounter.new()
+    i = 0
+    while true do
+        local k = string.format("%s.harvests.counter(%d)", ROOT, i)
+        local farmlandId = reader:getInt(k .. "#farmlandId")
+        if farmlandId == nil then break end
+        RPSimHarvestCounter.add(state.harvests, farmlandId, reader:getString(k .. "#fruitType"),
+            reader:getString(k .. "#fillType"), reader:getFloat(k .. "#liters"))
         i = i + 1
     end
 end

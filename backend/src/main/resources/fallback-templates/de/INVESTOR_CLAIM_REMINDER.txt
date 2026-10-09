@@ -1,0 +1,6 @@
+Offene Rückforderung: {{claim}} €
+Guten Tag,
+
+meine Forderung über {{claim}} € ist seit {{overdueMonths}} Monat(en) überfällig. Bitte zahlen Sie in der App „Bank“ unter „Investoren“.
+
+{{characterName}}

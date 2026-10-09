@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import de.farmpulse.rpsim.common.GamePcOnlyException;
+
 /**
  * Roadmap V3 R3-N1 / R3-N3: classifies the sender address of a request and lists the addresses of this computer in
  * the home network. Only IP literals are parsed (no DNS lookup).
@@ -45,6 +47,13 @@ public final class NetworkAddresses {
 
     public static boolean isLoopback(String remoteAddr) {
         return classify(remoteAddr) == Origin.LOOPBACK;
+    }
+
+    /** Settings of the installation may only be changed on the gaming PC (loopback). */
+    public static void requireGamePc(String remoteAddr) {
+        if (!isLoopback(remoteAddr)) {
+            throw new GamePcOnlyException();
+        }
     }
 
     /** IPv6 unique local address fc00::/7. */

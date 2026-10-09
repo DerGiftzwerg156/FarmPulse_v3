@@ -26,7 +26,9 @@ public class LiquidityService {
     public static final Set<String> NON_OPERATING = Set.of("CREDIT_DISBURSEMENT", "CREDIT_INSTALLMENT", "CREDIT_PENALTY",
             "CREDIT_CALLBACK", "CREDIT_SPECIAL_REPAYMENT", "CREDIT_PREPAYMENT_FEE", "STARTING_CAPITAL_ADJUSTMENT", "FARMLAND_PURCHASE", "FARMLAND_SALE",
             // one-off damage/compensation bookings of simulated incidents (TODO T-20)
-            "DAMAGE", "INSURANCE_PAYOUT", "WILDLIFE_COMPENSATION");
+            "DAMAGE", "INSURANCE_PAYOUT", "WILDLIFE_COMPENSATION",
+            // Roadmap V3.2 R32-I: investor capital, repayment and payouts are financing (journal class FINANCING)
+            "INVESTOR_CAPITAL", "INVESTOR_REPAYMENT", "INVESTOR_PAYOUT");
 
     private final FactsSnapshotRepository snapshots;
     private final OutboxInstructionRepository outbox;

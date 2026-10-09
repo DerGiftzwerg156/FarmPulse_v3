@@ -220,9 +220,11 @@ class BridgeSimulatorEndToEndTest {
     @Test
     @Order(5)
     void hiringAndResignationEscalation() {
+        Long postingId = inTx(sg -> hiring.createPosting(sg, JobRole.MACHINE_OPERATOR).getId());
+        simulate("--advance-hours", "48"); // the applications arrive the next game day
         Long employeeId = inTx(sg -> {
-            var posting = hiring.createPosting(sg, JobRole.MACHINE_OPERATOR);
-            Employee e = hiring.hire(sg, posting.getId(), hiring.applications(sg, posting.getId()).get(0).getId());
+            // the employee starts with the next month (one day per period in the simulator)
+            Employee e = hiring.hire(sg, postingId, hiring.applications(sg, postingId).get(0).getId());
             e.setPayFairness(0);
             e.setWorkload(0);
             e.setAppreciation(0);

@@ -88,14 +88,18 @@ public class LivestockTradeService {
     private final RpsimProperties props;
     private final GameTime gameTime;
     private final de.farmpulse.rpsim.character.CharacterLookup lookup;
+    /** Roadmap V3.1 R31-B4: restricted zones of an animal disease. */
+    private final de.farmpulse.rpsim.authority.DiseaseZones zones;
 
     public LivestockTradeService(ServiceCaseRepository cases, SavegameRepository savegames, CharacterRepository characters,
                                  NeighborAnimalStockRepository stocks, NeighborService neighbors, OutboxService outbox,
                                  OutboxInstructionRepository instructions, LiquidityService liquidity,
                                  TrustScoreService trust, NarrationRequestService narration, DiaryService diary,
                                  RandomSource random, RpsimProperties props, GameTime gameTime,
-                                 de.farmpulse.rpsim.character.CharacterLookup lookup) {
+                                 de.farmpulse.rpsim.character.CharacterLookup lookup,
+                                 de.farmpulse.rpsim.authority.DiseaseZones zones) {
         this.lookup = lookup;
+        this.zones = zones;
         this.cases = cases;
         this.savegames = savegames;
         this.characters = characters;
@@ -190,18 +194,23 @@ public class LivestockTradeService {
         return count == 0 ? OptionalDouble.empty() : OptionalDouble.of(value / count);
     }
 
-    /** Price per animal when the neighbour sells (good trust = cheaper). */
+    /**
+     * Price per animal when the neighbour sells (good trust = cheaper); Roadmap V3.1 R31-B4: x the price factor after
+     * an animal disease.
+     */
     public OptionalDouble sellUnitPrice(FarmFacts f, Character n, String type) {
         OptionalDouble v = valuePerAnimal(f, type);
         double adj = neighbors.trustAdjustment(trust.getCurrentTrust(n));
-        return v.isEmpty() ? v : OptionalDouble.of(v.getAsDouble() * cfg().getNeighborSellShare() * (1 - adj));
+        return v.isEmpty() ? v : OptionalDouble.of(v.getAsDouble() * cfg().getNeighborSellShare() * (1 - adj)
+                * zones.priceFactor(n.getSavegame(), type));
     }
 
-    /** Price per animal when the neighbour buys (good trust = he pays more). */
+    /** Price per animal when the neighbour buys (good trust = he pays more); R31-B4 price factor as above. */
     public OptionalDouble buyUnitPrice(FarmFacts f, Character n, String type) {
         OptionalDouble v = valuePerAnimal(f, type);
         double adj = neighbors.trustAdjustment(trust.getCurrentTrust(n));
-        return v.isEmpty() ? v : OptionalDouble.of(v.getAsDouble() * cfg().getNeighborBuyShare() * (1 + adj));
+        return v.isEmpty() ? v : OptionalDouble.of(v.getAsDouble() * cfg().getNeighborBuyShare() * (1 + adj)
+                * zones.priceFactor(n.getSavegame(), type));
     }
 
     // ------------------------------------------------------------------------------------------ room and stock of the player
@@ -264,7 +273,7 @@ public class LivestockTradeService {
         for (Character n : neighbors.neighbors(sg)) {
             for (Stable s : stables(f)) {
                 if (!animalTypes(n).contains(s.type()) || s.supportedSubTypes().isEmpty()
-                        || sellUnitPrice(f, n, s.type()).isEmpty()) {
+                        || sellUnitPrice(f, n, s.type()).isEmpty() || zones.blocked(sg, s.type())) {
                     continue;
                 }
                 int max = Math.min(cfg().getCountMax(), Math.min(stockOf(sg, n, s.type()), freePlaces(sg, s)));
@@ -286,7 +295,8 @@ public class LivestockTradeService {
         List<Candidate> list = new ArrayList<>();
         for (Character n : neighbors.neighbors(sg)) {
             for (Stable s : stables(f)) {
-                if (!animalTypes(n).contains(s.type()) || buyUnitPrice(f, n, s.type()).isEmpty()) {
+                if (!animalTypes(n).contains(s.type()) || buyUnitPrice(f, n, s.type()).isEmpty()
+                        || zones.blocked(sg, s.type())) {
                     continue;
                 }
                 for (BridgeDtos.SubTypeCount st : s.subTypes()) {
@@ -314,6 +324,7 @@ public class LivestockTradeService {
         FarmFacts f = facts(sg);
         Stable s = stable(f, husbandryUniqueId);
         checkCount(count);
+        zones.requireOpen(sg, s.type()); // R31-B4
         if (!animalTypes(n).contains(s.type())) {
             throw new BusinessRuleException("ANIMAL_TYPE", n.getName() + " hält keine Tiere dieser Art.");
         }
@@ -343,6 +354,7 @@ public class LivestockTradeService {
         FarmFacts f = facts(sg);
         Stable s = stable(f, husbandryUniqueId);
         checkCount(count);
+        zones.requireOpen(sg, s.type()); // R31-B4
         if (!animalTypes(n).contains(s.type())) {
             throw new BusinessRuleException("ANIMAL_TYPE", n.getName() + " hält keine Tiere dieser Art.");
         }
@@ -427,6 +439,7 @@ public class LivestockTradeService {
         Stable s = stable(f, sc.getExternalId());
         int count = sc.getQuantity();
         Character n = sc.getCharacter();
+        zones.requireOpen(sg, sc.getTitle()); // R31-B4: restricted zone of an animal disease
         String what = count + " " + sc.getReference();
         Related related = new Related(RELATED, sc.getId());
         if (sc.getKind() == CaseKind.ANIMAL_OFFER) {

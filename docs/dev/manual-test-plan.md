@@ -52,6 +52,7 @@ curl -s localhost:8099/state
 | 1.2.4 | Filter *Ungelesen* | only unread threads |
 | 1.2.5 | Advance a few days until a *Dorfleben* mail arrives (invitation/gossip/congratulation) | it carries the grey *Dorfleben* badge |
 | 1.2.6 | Tagebuch | first entry *Vorgeschichte* on day 0; later automatic entries below |
+| 1.2.7 | With unread mails of several kinds: filter *Dorfleben*, *Alle als gelesen markieren*, confirm | the dialog names the number of unread mails in the filter; afterwards only the *Dorfleben* threads lose the unread dot, the *Post* badge decreases by that number, other unread mails stay unread; an open decision stays open (filter *Entscheidung*, *Aufgaben*); without unread mails in the filter the button is greyed out |
 
 ### 1.3 Bank
 
@@ -181,6 +182,7 @@ Scenario `wohlhabender-hof`, savegame linked.
 | 7.4 | `POST /days-per-period {"daysPerPeriod": 5}` | the next due date of a loan moves to the start of the next month under the new length (*Bank* → next installment) |
 | 7.5 | *Flurkarte* → farmland 16 | marked *nicht handelbar*, no actions |
 | 7.6 | Farm bookkeeping (Roadmap V2 R2-B4): scenario `ernte-herbst`, `POST /advance {"days": 4}`, then `POST /book {"moneyType":"SHOP_PROPERTY_BUY","amount":-90000}` and `POST /advance {"days": 2}` | *Bank* → *Hofbuchhaltung*: columns per month with *Ernteverkauf* above and *Kraftstoff* below zero, the monthly result as a white tick, the running month marked `*`; the purchase appears only in the *Tabelle* under *Investitionen*. With `voller-silobestand` the card says the mod is too old |
+| 7.6a | Booking statement (Kontoauszug): scenario `ernte-herbst`, `POST /advance {"days": 1}`, `POST /sell {"sellPoint":"MillNorth","fillType":"WHEAT","liters":2000}` twice, `POST /book {"moneyType":"SHOP_VEHICLE_BUY","amount":-90000,"vehicleName":"Fendt 942 Vario"}`, then `POST /book {"moneyType":"SHOP_VEHICLE_SELL","amount":40000,"vehicleId":"veh_00042"}` | *Bank* → *Kontoauszug*: one row *Produktverkauf · Weizen · 4.000 l · Mühle Nord* with *2 Buchungen an diesem Tag*, the daily sums without time, *Fahrzeugkauf* with time and *Fendt 942 Vario*, the vehicle sale with the name of `veh_00042`; the month and category filters change the rows and the sums *Eingänge / Ausgänge / Saldo*. `POST /save`, book again, `POST /reload-without-saving` → the bookings after the save disappear from the statement |
 | 7.7 | Helpers (Roadmap V2 R2-A2 / R2-A4): scenario `helfer-hof`, hire a *Maschinenführer:in*, `POST /advance {"days": 2}` | `GET /state` → `roster` lists the operator; the vanilla job 2 now carries its `employeeId`. *Personal*: the hint *Deine Maschinenführer fahren die Helfer im Spiel* and on the operator card *Als Helfer gefahren: … h in diesem Monat*; above 8 h per game day the workload bar drops |
 | 7.8 | Strike (R2-A5): same scenario, let the operator's score stay below 30 for 21 game days (or set `strike_since_game_time` in the H2 console) and advance 1 day | badge *Streikt*, mail *Ich lege die Arbeit nieder*; the simulator log shows `helper job … stopped: … is on strike` and the job is gone from `workforce.activeJobs` |
 | 7.9 | Helper settings (R2-A1 / R2-A3): *Personal* → *Helfer im Spiel*, switch on the strict mode | saved immediately; `GET /state` → `roster.strictHelperLimit` is `true` after the next import. With `wohlhabender-hof` the card says the mod reports no helpers yet |
@@ -271,7 +273,8 @@ the result in the row's issue and, if the fallback is needed, switch the impleme
 | 10.19 | Field menu purchase and price (R2-D2) | Buy a field that belongs to a character in the tool in the game's farmland menu, then sell an own field there | the purchase price equals `market_context.farmlands[].price` (the claim is 10 % of it); after the sale the field shows no owner farm in the export | take the paid amount from the booking journal (`FIELD_BUY`) instead |
 | 10.20 | Temperature in the status bar (Hof-Tablet) | Compare the outside temperature shown in a vehicle (or the weather page of the in-game menu) with `farm_facts.json` → `weather.temperature` and the status bar of the web app | the value matches in °C (one decimal) and follows day and night | if the unit or the value differs, convert or drop `temperature` in `RPSimGameAdapter:collectWeather`; the status bar then only shows rain / dry |
 | 10.21 | Training categories ("Schulungen") | Buy or pick a large tractor, a combine, a truck and a medium tractor; start a helper on each with only untrained operators and the strict helper limit on; read `FS25_RPSim` log / `FS25_RPSim.workforce` | the combine / truck / large tractor helper is refused with *Kein geschulter Maschinenführer frei* and a notification naming the training; the medium tractor starts with an operator. Without the strict mode all start (vanilla helper for the machines) | if a machine is not refused, its shop category differs from the defaults: add the real name (upper case, `StoreItem.categoryName`) to `rpsim.formulas.training.categories`; if only the dialog text is missing, the notification still explains it |
-| 10.22 | Strict helper limit with Courseplay / AutoDrive (R2-A3) | Enable `strictHelperLimit` with one active machine operator; start one vanilla helper, then start a second one with Courseplay (HUD start button) and with AutoDrive (destination / hotkey) | the second helper is refused (*Kein freier Maschinenführer (strenger Modus)*) or stops right after its start with `%s hält an: kein freier Maschinenführer (strenger Modus)` and a notification; the first keeps running | if a mod's helper keeps running, its job does not run through `AIJob:start` / `getIsStartable`: note how the mod starts it (log, its source) and hook that path |
+| 10.22 | Strict helper limit with Courseplay / AutoDrive (R2-A3) | Enable `strictHelperLimit` with one active machine operator; start one vanilla helper, then start a second one with Courseplay (HUD start button) and with AutoDrive (destination / hotkey) | Courseplay is refused (*Kein freier Maschinenführer (strenger Modus)* plus a notification); AutoDrive stops within about a second with the notification *… AutoDrive (…) wurde angehalten* and does not hand the vehicle over to Courseplay or a game helper; the first helper keeps running | if Courseplay starts anyway, the job type hook missed its class: check that `FIELDWORK_CP` is in `g_currentMission.aiJobTypeManager.jobTypes` at mission start; if AutoDrive keeps driving, note what `vehicle:stopAutoDrive()` did (log) |
+| 10.23 | Operators drive Courseplay and AutoDrive helpers | Normal mode, one active machine operator, *Helferlohn über das Gehalt* on; start a Courseplay helper and let it work one game hour, stop it; then drive with AutoDrive for one game hour | Courseplay: the stop message names the operator, `finances.periods[].byType.AI` does not grow, `farm_facts.json` → `workforce.activeJobs` has the job with `employeeId`; AutoDrive: `activeJobs` has a negative `jobId` with `employeeId`, the operator's hours grow on *Personal* (AutoDrive's wage follows its own *driverWages* setting) | if the Courseplay job gets no operator, the hook on `AISystem.startJobInternal` does not reach `g_currentMission.aiSystem` (log warning `AISystem.startJobInternal not found`?): note it; AutoDrive without `activeJobs` entry: check `vehicle.ad.stateModule:isActive()` |
 
 ## 11. Roadmap V3 in the real FS25
 
@@ -444,12 +447,14 @@ implementation to it.
 | # | Check (roadmap item) | How | Expected / note result | Fallback if not |
 | --- | --- | --- | --- | --- |
 | 21.1 | Field state taken over by the update task (R31-A1) | Let the contractor plow an own field (`FIELD_WORK` `PLOW`): the mod changes the field state and calls `createFieldUpdateTask()` like `PlowMission:getFieldFinishTask`; look at the field in the game and at `farm_facts.json` → `fields[]` | the field is plowed (`groundType` `PLOWED`, no crop, plow level full) right after the instruction | call the setters of the task directly (`setGroundType`, `setFruit`, `setPlowLevel` …, dump `field/FieldManager.lua`) - built since R31-A1 in addition to the changed state (a failing setter is skipped); note which of the two takes effect |
+| 21.1a | Several works in one cycle (owner decisions 2026-10-06) | Let the contractor cultivate, sow and fertilise a stubble field in one order (one batch with three `FIELD_WORK`) | the field ends sown and fertilised: `field:getFieldState()` is the same object for the three works, so each update task carries the state of the work before | read the state once per batch and hand it on between the works of the batch |
 | 21.2 | Straw after a harvest by state jump (R31-A1) | Let the contractor harvest a grain field (`FIELD_WORK` `HARVEST`), look at the field | note whether straw (swath) lies on the field afterwards | straw is no part of the service: only the main crop is stored (`STORAGE_TRANSFER IN`) |
 | 21.3 | New animals shown at once (R31-A3) | Buy calves from a neighbour (`ANIMAL_TRANSFER` `IN`), open the husbandry menu of the stable and look at `farm_facts.json` → `assets.animals[]` | the animals are shown immediately (`addPendingAddCluster` + `raiseActive`) and counted by the next export | the display follows with the next update of the stable; the export counts the animals only afterwards |
 | 21.4 | Snow height with snow switched off (R31-A4) | Read `farm_facts.json` → `weather.snowHeight` in a winter with snow and in a savegame with snow switched off in the savegame settings | with snow the value rises above 0 on a snow day; note what `g_currentMission.snowSystem.height` gives with snow off | the mod leaves `snowHeight` out with snow off; the authority then does not offer the winter service contract |
 | 21.5 | Spray type after spreading (R31-B3) | Spread liquid manure on an own field, read `farm_facts.json` → `fields[].sprayType` and `sprayLevel` over the following days until the next work | `sprayType` stays `LIQUID_MANURE` until the next work changes it | value only a rising `sprayLevel` in the closed period and leave the kind open; the authority writes "Düngung festgestellt" instead of "Gülle" |
 | 21.6 | False alarms of the crop damage sample (R31-D5) | Drive on field paths that cross a neighbour's farmland and to an own contract field through neighbour land; read `farm_facts.json` → `vehiclePositions[]` (`farmlandId`, `onCrop`) | note how many samples in a row land on a neighbour's field with a crop without real damage | off by default, raise the threshold of samples in a row, a hint before the first complaint ("Pass auf, wo du langfährst") |
 | 21.7 | Orientation of the field outlines (R31-K1) | Compare the map view of the Flurkarte with the map of the game (`market_context.json` → `fieldShapes`) | north is up and the fields lie where the game's map shows them | mirror the axis in the frontend (switch in the code, set once in the playtest) |
+| 21.8 | Slurry condition title (R31-B3) | Own a stable with a slurry pit, play with the game language German and then English; look at `farm_facts.json` → `husbandries[].conditions[].title` | the slurry entry is titled `Gülle` / `Slurry` (default of `rpsim.formulas.fertilizer-rules.slurry-condition-titles`); note the exact titles of other languages | add the titles of the played language to `slurry-condition-titles`; until then the slurry warning and the October reminder stay silent |
 
 ## 22. Work on the farm (Roadmap V3.1 R31-A)
 
@@ -460,8 +465,8 @@ scenarios `lohnunternehmer` (A1, A2), `viehhandel` (A3) and `winter-schnee` (A4)
 
 | # | Step | Expected |
 | --- | --- | --- |
-| 22.1 | Flurkarte → own harvested field → *Lohnunternehmer beauftragen* → *Pflügen* | only the works that fit the field are offered (price per field, reason for the others); the order shows the work day (1–3 game days, in the harvest months longer) |
-| 22.2 | Wait until the work day | the field is plowed in the game, *Lohnunternehmer* is booked, mail of the contractor, diary entry, the order is closed |
+| 22.1 | Flurkarte → own harvested field → *Lohnunternehmer beauftragen* → tick *Grubbern*, *Säen* (choose a fruit) and *Düngen* | only the works that fit the field are offered (price per field, reason for the others); *Säen* and *Düngen* become possible once *Grubbern* is ticked, a fourth work is refused (*Auftrag ist schon voll*); the form says the work is done by the end of the next game day |
+| 22.2 | Wait until the end of the next game day | the field is cultivated, sown and fertilised in the game (one batch), *Lohnunternehmer* is booked once per work, mails of the contractor, diary entries, the order is closed |
 | 22.3 | Order *Ernten* on a harvestable field | refused when the own silos cannot hold the whole yield; otherwise on the work day the field is on stubble and the yield lies in the silo (`STORAGE_TRANSFER IN`) |
 | 22.4 | *Kontakte* → neighbour → *Maschine leihen*, choose a combine for 2 days | the machine stands on the farm, the rent is booked per game day (*Maschinenmiete*); *Werkstatt* → *Leih- und Vorführmaschinen* lists it; the bank and the depreciation do not count it |
 | 22.5 | Keep sitting in the combine when the loan ends | reminder in the game, a new attempt the next day and rent + 50 % per late day; afterwards the machine disappears; with damage a compensation |
@@ -471,3 +476,152 @@ scenarios `lohnunternehmer` (A1, A2), `viehhandel` (A3) and `winter-schnee` (A4)
 | 22.9 | October with a medium or large tractor: accept the winter service in *Ämter* → *Gemeinde* | contract active; on a snow day the in-game hint "Schnee! Winterdienst ab 5 Uhr"; at the next month start base fee + 150 € per snow day as *Winterdienst* |
 | 22.10 | *Mitarbeiter* → *Erntehelfer:in* posting in June, hire one | outside June–October the posting is refused; at most 3; no raise and no training; he drives helpers like a machine operator; at the start of November he leaves with a farewell mail (last salary paid) |
 | 22.11 | Next June: post a seasonal job again after a worker left satisfied | the worker of last year applies again (same name, trust kept) |
+
+## 23. Authorities and grants (Roadmap V3.1 R31-B)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section B. Needs the current mod, own fields, an
+own stable with animals and at least one employee. Rows 21.5 and 21.8 check the game behaviour behind B3. To test the
+rare events, raise the chances in `application-local.yml` (e.g. `rpsim.formulas.direct-payment.check-probability: 1`,
+`animal-disease.probability-per-month: 1`, `sick-leave.sickness-probability-per-day: 1`).
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 23.1 | Start of March: *Ämter* → *Sammelantrag*; change one crop, *Antrag stellen* before the end of May | mail of the authority; the form lists the own fields with their crop (leased-out fields not); afterwards status *Gestellt* and a diary entry; the office clerk reminds a few days before the deadline while the application is open |
+| 23.2 | A year without application | 25 game days after the deadline mail "nicht gestellt", status *Versäumt*, no premium in December |
+| 23.3 | Start of December | *Flächenprämie* (250 € per declared ha, minus 1 % per late day) booked; mail of the authority |
+| 23.4 | On-site check (June–October): declare a crop other than the one in the field | announced inspection *Vor-Ort-Kontrolle Sammelantrag*; after the deadline the result mail with the cut; the December premium is lower by it |
+| 23.5 | *Ämter* → *Investitionsförderung*: machine, 100,000 €; buy a tractor in the shop **before** the approval | the purchase does not count (recognised 0) |
+| 23.6 | After the approval buy a tractor in the shop, *Nachweis einreichen* | grant 30 % of the price (max. 50,000 €) as *Investitionsförderung* |
+| 23.7 | Sell the funded tractor in the game within 24 months | bill *Rückforderung Investitionsförderung* under *Ämter* (pro rata), paid by button, late fees like a tax bill |
+| 23.8 | November: spread liquid manure on an own arable field | announced inspection *Düngeverordnung*; first time a warning, the second time a fine of 1,000 € and a loss of reputation |
+| 23.9 | Keep the slurry pit above 85 % for 5 game days; start of October | warning of the animal keeper (without one the cooperative); in October the reminder "Jetzt noch Gülle fahren, ab November ist Schluss" |
+| 23.10 | Animal disease breaks out | mails of the authority, the cooperative and the village; vet invoice per affected stable; *Handel* refuses animals of the type ("Sperrzone"); the trader offers none; requirement under *Kontrollen* (health ≥ 60 % within 10 days, otherwise 1,000 € fine) |
+| 23.11 | After 3 months | mail "Sperrzone aufgehoben"; animals of the type cost less at the neighbours for 3 months |
+| 23.12 | Start of April | bill of the *Berufsgenossenschaft* (300 € + 12 € per ha + 180 € per employee) under *Ämter*, paid by button |
+| 23.13 | An employee falls ill | mail (office clerk or the employee), badge *krank bis …* in *Mitarbeiter*, the employee drives no helper (`ON_LEAVE`); *Genesungswünsche* → thank-you mail; back after the days |
+| 23.14 | Settings → *Belastende Ereignisse*: switch everything off | no on-site check, fertiliser inspection, disease or sickness any more; application, premium, grant and the BG bill stay |
+
+## 24. Village life (Roadmap V3.1 R31-D)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section D. Needs the current mod, own fields and
+vehicles with a diesel tank, an own stable with healthy animals and some villagers and neighbours. Row 21.6 checks the
+false alarms of D5. To test the rare events, raise the chances in `application-local.yml` (e.g.
+`rpsim.formulas.diesel-theft.probability-per-month: 1`, `school-visit.probability-per-month: 1`,
+`stammtisch.interval-days: 1`) and switch *Flurschaden* on in the settings.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 24.1 | Wait for the start of a period | app *Dorfblatt*: a new issue with the sections of the past period (empty ones left out), e.g. new villagers, festivals, sponsoring, the three largest price changes, rumours "ohne Gewähr", deadlines and restricted zones; never a loan, balance or tax; the headline appears in the diary / chronicle; older issues stay selectable |
+| 24.2 | App *Dorfchat* | groups *Dorf*, *Nachbarn* and one per club with a chair; over some game days announcements and gossip (at most 3 character posts per game day); a new goods / animal / work request of a neighbour posts in *Nachbarn* with *Zur Anfrage* |
+| 24.3 | Write a friendly and then a second message in *Dorf* on the same game day | one member answers each time; the first message changes the trust of one member, the second shows the pacing note and changes nothing |
+| 24.4 | Invitation to the *Stammtisch* (every 14 game days) | case in *Kalender*; *Hingehen*: trust with three villagers, the next rumour is more often right; three invitations in a row declined or ignored: a small loss of reputation (at most −3) |
+| 24.5 | Let a helper work at night (22–6 h) for 3 game hours outside the harvest (no own field harvestable) | a villager complains politely (trust −1); again within 30 days: annoyed (−3) and a line in the next *Dorfblatt*; with a harvestable own field no complaint |
+| 24.6 | Drive across the sown field of a neighbour (3 exports in a row, *Flurschaden* on) | the first time only the in-game hint "Pass auf, wo du langfährst"; then a complaint of the owner; again within 60 days: claim of 150 € per sample in *Flurkarte*, pay or refuse (refusing costs trust) |
+| 24.7 | *Handel* → *Ferien auf dem Hof*: set up (20,000 €) | booking *Einrichtung Ferienwohnung*; at every month start *Ferien auf dem Hof* income (more in summer, with good reputation and healthy animals); night work or slurry in the summer months lower it and bring a review mail |
+| 24.8 | School request (month start outside June–August, a stable with health ≥ 70) | case in *Kalender*; *Zusagen*: 150 € *Ferien auf dem Hof*, reputation, a thank-you mail and a line in the *Dorfblatt* |
+| 24.9 | *Handel* → *Genossenschaftsanteile*: buy 40 shares, cancel 5 | booking *Genossenschaftsanteile* −20,000 €; the 5 are repaid at nominal after 12 months; at the start of March the *Genossenschaftsdividende* (4 % × price index, 0–8 %) |
+| 24.10 | Start of April with shares | invitation to the general assembly in *Kalender* (also as an in-game question when switched on); vote *Ja* / *Nein*; result mail and a line in the *Dorfblatt*; with 40 shares and trust ≥ 50 of the cooperative the farm joins the board (calendar shows the board meetings, forward contracts allow 10 % more) |
+| 24.11 | Board meeting (March, June, September, December): ignore two | trust −3 each; after the second the mail "aus dem Vorstand abgewählt" |
+| 24.12 | Diesel theft (month start, next night): park a vehicle with ≥ 100 l diesel | in the night 30–60 % (max. 300 l) of its diesel are gone in the game; mail of the police, a line in the *Dorfblatt*, gossip in *Dorfchat*; with the module *Diebstahl* of the storm / hail insurance (+8 € per month) a damage above 150 € is paid; a driven vehicle is not chosen (the mod refuses with `VEHICLE_IN_USE`, tried again the next night) |
+| 24.13 | *Werkstatt* → *Tankschloss* for the vehicle (250 €) | booking *Tankschloss*; this vehicle is chosen much more rarely |
+| 24.14 | Settings → *Belastende Ereignisse*: switch night work, crop damage and diesel theft off; world mode *idyllisch* | no complaints, claims or thefts any more; in the idyllic mode no diesel theft and half the trust losses of D4 / D5 |
+
+## 25. Field map (Roadmap V3.1 R31-K)
+
+Acceptance of [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md) section K. Needs the current mod, own, leased and
+leased-out fields and neighbours with fields. Row 21.7 checks the orientation.
+
+| # | Step | Expected |
+| --- | --- | --- |
+| 25.1 | Load the savegame, open *Flurkarte* | `market_context.json` → `fieldShapes` with `mapSize` and the outlines (at most 64 points each); the card *Feldübersicht* opens in the view **Karte** with all fields of the map in their real shape; **Tabelle** switches to the tiles |
+| 25.2 | Compare the map with the map of the game | the fields lie where the game shows them, north up (otherwise set `MIRROR_Z` in `field-map.ts`, row 21.7) |
+| 25.3 | Look at the own fields during a season | coloured by phase (empty grey, growing green, harvestable gold, harvested brown, withered red) with their number; leased fields hatched, leased-out fields with a thick border; neighbour fields pale with the owner's name, free fields pale and dashed; legend below |
+| 25.4 | Start a contractor job, wait for an auction and let weeds grow on an own field | symbols *A* (order), *V* (auction) and *!* (hint) on the field; the tooltip names them |
+| 25.5 | Click a field on the map | the field card opens below with its actions (sell, lease out, contractor, family field) |
+| 25.6 | Older mod without outlines | only the tiles with the hint that the map needs the current mod |
+
+## 26. Booking statement in the real FS25 (owner decisions 2026-10-06)
+
+The single bookings (`farm_facts.json` → `bookings`, see [bridge protocol](bridge-protocol.md#booking-statement-block-optional-owner-decisions-2026-10-06)).
+🟡 = only checkable in the running game.
+
+| # | Check | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 26.1 | Daily sums and single entries | Refuel, let a vanilla helper work for an hour, buy a building, let the tool book a salary; look at `bookings.entries` and *Bank* → *Kontoauszug* | fuel and helper wage as one entry per day with `count` > 1; the building purchase and the salary as single entries with time of day, the salary with its note | – |
+| 26.2 | 🟡 Sale details: the game books the sale inside `SellingStation:sellFillType` | Unload wheat at a selling station, wait for the next export | the sale entry (`SOLD_PRODUCTS` or `HARVEST_INCOME`) has `fillType`, `sellPoint` and `liters` ≈ the unloaded litres | if the entry has no `fillType`, the game books outside `sellFillType`: note where (e.g. a later `addMoney` call) and hook that function instead |
+| 26.3 | 🟡 Vehicle name of a shop purchase / sale | Buy a tractor in the shop; then sell another own vehicle in the shop | the purchase shows the tractor's name after at most `statement-vehicle-match-exports` exports (default 3, about 30 s); the sale shows the name of the sold vehicle. Note whether the vehicle appears in the same export as the booking or one later | if the vehicle appears **before** its booking (no name), the order is reversed: compare with the export before the previous one |
+| 26.4 | Two purchases at once | Buy two vehicles within 10 seconds | both purchases show both names with *nicht eindeutig zuordenbar* | – |
+| 26.5 | Reload without saving | Save, buy something, quit without saving and load the save again | the purchase disappears from the *Kontoauszug* after the first export | – |
+
+## 27. Security hardening on Windows (technical review 10/2026, Phase 0)
+
+The automated tests cover Linux and an in-memory Windows-style file system (Jimfs); these checks need a real Windows
+installation of the release. 🟡 = only checkable on Windows.
+
+| # | Check | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 27.1 | Existing installation is migrated | Install the release over a 1.7.0 installation with savegames, start `start.bat` | the backend starts, all savegames are there; `%USERPROFILE%\.rpsim\db.properties` exists; the window logs "Database … is protected with the password from …" once | – |
+| 27.2 | 🟡 No H2 port | While the backend runs: `netstat -ano \| findstr LISTENING` and compare with the PID of `java.exe` | the Java process listens on 8080 only (no second, random port of an H2 TCP server) | – |
+| 27.3 | 🟡 Permissions of `db.properties` | Explorer → *Eigenschaften → Sicherheit* of `%USERPROFILE%\.rpsim\db.properties`, or `icacls %USERPROFILE%\.rpsim\db.properties` | exactly one entry: the own user with full access (no *SYSTEM*, *Administratoren*, *Benutzer*); note whether `icacls` shows inherited entries `(I)` | if inherited entries remain, the ACL is re-inherited by Windows: note the output for a follow-up |
+| 27.4 | 🟡 Permissions of `ai-provider.properties` | Save the AI settings once, then as in 27.3 for `data\local-config\ai-provider.properties` next to `start.bat` | as in 27.3 | as in 27.3 |
+| 27.5 | Swagger is off | Open <http://localhost:8080/swagger-ui/index.html> and <http://localhost:8080/v3/api-docs> | 404 for both | – |
+| 27.6 | Foreign host name | `curl -H "Host: evil.example" http://localhost:8080/api/settings/ai` | 403 `HOST_FORBIDDEN`; without the header (or with `localhost`) 200 | – |
+| 27.7 | Own DNS name | Open the Hof-Tablet on the tablet via the router name of the PC (e.g. `http://mein-pc.fritz.box:8080`) | 403 `HOST_FORBIDDEN` until the name is entered in `rpsim.web.allowed-hosts` (`application-local.yml`); the IP address and the computer name always work | – |
+| 27.8 | AI settings on the tablet | Home-network access on, open *Einstellungen → KI* on the tablet | form read-only with "Nur am Spiele-PC änderbar …"; on the gaming PC editable | – |
+
+
+## 28. Roadmap V3.2 in the real FS25
+
+Every point of [`ROADMAP_V3.2.md`](../architecture/ROADMAP_V3.2.md) marked 🟡 ("Im Spiel prüfen") and every acceptance
+criterion has one row here. Rows 28.1–28.3 can be checked since R32-Q (the mod reads the milk storage and executes
+`HUSBANDRY_TRANSFER`, see [bridge protocol](bridge-protocol.md#roadmap-v32-field-optional-r32-q1)), rows 28.4–28.8b since
+R32-G, rows 28.9–28.14c since R32-I. Without FS25 the bridge simulator scenarios `grossauftrag`
+(G) and `investor-milch` (I3, type W3) show the same flow. Note the result in the row's issue and, if the fallback is
+needed, switch the implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 28.1 | 🟡 Milk tank extensions in reach (R32-Q1) | Own a cow stable with a milk tank extension placed in reach (the dump adds it to the loading and unloading stations of the husbandry); fill both, read `farm_facts.json` → `husbandries[].storage[]`, then send a `HUSBANDRY_TRANSFER` larger than the stable's own tank (bridge simulator control or a test build) | note whether `amount` / `capacity` include the extension and whether `removeHusbandryFillLevel` takes from it too | export and stock check only with what `getHusbandryFillLevel` gives; the take-out evaluates the rest (`INSUFFICIENT_STOCK` with booking back, built since R32-Q1) |
+| 28.2 | 🟡 Info box after the take-out (R32-Q1) | Open the info box of the stable, send a `HUSBANDRY_TRANSFER` of 1 000 l `MILK` | note whether the milk shown drops at once | the display with the next update is enough (like R3-H4) |
+| 28.3 | Partial take-out is booked back (R32-Q1) | Send a `HUSBANDRY_TRANSFER` to a stable whose loading station is missing or reaches only part of the storage (e.g. a mod stable), compare the milk before and after | ack `FAILED` / `INSUFFICIENT_STOCK`, the milk in the stable is the same as before | – |
+| 28.4 | Bulk request (R32-G1) | Wait for a bulk request (or force one) with canola and an oil mill on the map | a request over e.g. 500 000 l canola arrives in the inbox | – |
+| 28.5 | Instant delivery (R32-G2) | With the amount in the own silos: *Sofort liefern* | the silo stock drops by the amount, 125 % of the best market price is booked (`GOODS_SALE`) | – |
+| 28.6 | Delivery month (R32-G3) | Agree a later delivery month | the sell point shows the fixed price for exactly that month and not before or after | – |
+| 28.7 | Shortfall (R32-G4) | Deliver less than ordered within the delivery month | at the end of the month 25 % of the shortfall at the fixed price is booked (`CONTRACT_PENALTY`) | – |
+| 28.8 | Days per period changed (R32-G3) | Agree a delivery month 2 months ahead, then change *Tage je Periode* in the savegame settings before that month starts; look at the delivery window in *Handel → Großaufträge* and at the price of the sell point in the delivery month | the delivery stays in its month: the fixed price applies from its first to its last day (owner decision 2026-10-08: the pending instruction is moved) | – |
+| 28.8a | Days per period changed in the running delivery month (R32-G3) | Change *Tage je Periode* while the delivery month of a bulk order runs | note when the fixed price ends: the mod keeps the end it has (owner decision 2026-10-08) - with more days per period it ends before the month ends, with fewer it runs into the next month; the backend settles the report as it comes | – (documented limitation) |
+| 28.8b | Forward contract and days per period (R32-G3) | As 28.8 with a forward contract | the forward contract stays in its delivery month | – |
+| 28.9 | Investor offer (R32-I1/I2) | Play a good year, wait for (or force) an investor | an investor calls and offers 1 000 000 € in three packages | – |
+| 28.10 | Accept (R32-I2) | *Annehmen* on one package | the capital is booked (`INVESTOR_CAPITAL`) | – |
+| 28.11 | Milk delivery (R32-I3, type W3) | Package with *5 000 l Milch je Monat*: *Liefern* | `HUSBANDRY_TRANSFER` takes the milk out of the cow stable (see 28.1–28.3) | – |
+| 28.12 | Staged breach (R32-I4) | Deliver no milk until the end of the month, then let the grace period pass, repeat until the third breach | a reminder, after the grace period a compensation (`INVESTOR_COMPENSATION`), at the third breach the termination with the claim | – |
+| 28.13 | End of term (R32-I5) | Play until the last month of a silent partnership | the farm buys the shares back at face value (`INVESTOR_REPAYMENT`) | – |
+| 28.14 | Bank view (R32-I6) | Compare the equity ratio of the bank before and after a subordinated loan and a silent partnership | the subordinated loan lowers the equity ratio, the silent partnership raises it | – |
+| 28.14a | Goods and animals (R32-I3, W1/W2/A1) | Package with goods or animals: *Liefern* an amount (from the silo; animals from a chosen stable) | the silo stock / the animals of the stable drop, no money is booked; the delivery counts in *Bank → Investoren* | – |
+| 28.14b | Rewind (R32-I3) | Deliver milk, goods or animals to an investor, then reload the save before the delivery | the delivery is executed again (same `instructionId`), the backend counts it once | – |
+| 28.14c | Veto (R32-I3, P1) | With a veto: offer a field in the field map, then ask for the consent; sell another field in the game menu | the sale offer is refused until the consent; the menu sale is a breach (reminder) | – |
+
+## 29. Roadmap V3.3 in the real FS25
+
+Every point of [`ROADMAP_V3.3.md`](../architecture/ROADMAP_V3.3.md) marked 🟡 ("Im Spiel prüfen") and every acceptance
+criterion has one row here. R33-Q fixes the contract only (owner decision 2026-10-08,
+[bridge protocol](bridge-protocol.md#roadmap-v33-fields-and-block-optional-r33-q1)): the mod reads the levels with
+R33-F2, counts the harvest with R33-F3 and lists the crops of the map with R33-F4 - built since R33-F, so rows
+29.1–29.10 can be checked now, rows 29.11–29.12 with E and W. Without FS25 the bridge simulator scenario `feldbuch` shows the
+contract (control endpoints `POST /field` for the levels and `POST /harvest` for the counter). Note the result in the
+row's issue and, if the fallback is needed, switch the implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 29.1 | 🟡 Rolling and mulching levels (R33-Q1) | Sow an own field, look at `fields[].rollerLevel` in `farm_facts.json`, roll it; harvest another one, mulch its stubble, look at `stubbleShredLevel` | `rollerLevel` goes from `1` to `0` after rolling, `stubbleShredLevel` from `0` to `1` after mulching (as the soil map shows); note how long it takes (`FieldManager` walks the fields round-robin) | own `FieldState.new()` with `fieldState:update(posX, posZ)` at the field centre (as R2-C1, 10.6); without values the player ticks rolling / mulching himself |
+| 29.2 | 🟡 Harvest hook on every vehicle type (R33-Q1 / F3) | Harvest a few metres of wheat with a combine, compare the tank fill level with `harvests[]` | the counter grows by the litres in the tank; note which hook counted (`Combine.addCutterArea` or the fallback `Cutter.onEndWorkAreaProcessing`) and that nothing is counted twice | both hooks are built (owner decision 2026-10-08); if neither works, `harvests` stays empty and the player enters the litres |
+| 29.3 | 🟡 Forage harvester, root crop harvesters, windrow pick-up (R33-Q1) | Harvest maize with a forage harvester, potatoes / sugar beet with their harvesters, pick up a grass swath with a forage harvester | note for each whether `harvests[]` grows and with which `fruitType` / `fillType` (e.g. `MAIZE` / `CHAFF`) | what is not counted the player enters himself (owner decision 2026-10-08) |
+| 29.4 | 🟡 Field border (R33-Q1) | Harvest along the border between two own fields | note whether litres land on the neighbouring farmland (vehicle position vs. cutter) | position of the cutter work area (`spec.workAreaParameters`); the rest is correctable |
+| 29.5 | Counter in the savegame (R33-Q1) | Harvest, save, harvest more, quit without saving and load | after loading `harvests[]` shows the saved value again | – |
+| 29.6 | Crops of the map (R33-Q1 / F4) | Look at `market_context.json` → `fruitTypes` on the base map and on a map with own crops | every crop of the map is listed; maize lists `CHAFF` in `products`, grass has `regrows: true`; note which crops have `needsRolling: false` | without `products` the form offers the standard product and the products the counter reported |
+| 29.7 | 🟡 Grass cut (R33-F1) | Mow an own grass field | note whether `fields[].growthState` drops below `minHarvestingGrowthState` with the crop unchanged | button "Ernte eintragen" |
+| 29.8 | 🟡 Spray level after the harvest and organic fertiliser (R33-F2) | Harvest a fertilised field and look at `sprayLevel`; spread slurry, manure and digestate on an unfertilised field | note whether the harvest resets `sprayLevel` to 0 and whether slurry / manure / digestate raise it | count each rise within the entry; the player ticks it himself |
+| 29.9 | 🟡 Weed control (R33-F2) | Spray herbicide on a weedy field, hoe another one | note which `weedState` values the field shows before and after | the player ticks it himself |
+| 29.10 | Acceptance F (R33-F) | Fertilise a wheat field twice, lime it, roll it, harvest it, mulch the stubble; cut grass three times in one year; correct a litre value; close a year | the entry shows the harvest year, all ticks and the counted litres; the mulching is in the next running season; the three cuts are one entry; the corrected value stays; the closed year takes no change and shows late detections as a notice | – |
+| 29.11 | Acceptance E (R33-E) | Open *Feldbuch → Auswertung* | the last 5 harvest years; "alle Jahre" shows older ones; the bar chart of one field; the comparison per crop with `n`; grain maize and chaff apart | – |
+| 29.12 | Acceptance W (R33-W) | Look at the farm report and the chronicle of a year with counted litres | they show the litres of the field book; fields without them keep the estimate | – |

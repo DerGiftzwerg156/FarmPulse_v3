@@ -66,8 +66,11 @@ Entscheidungen, die KI formuliert nur. Details: [Architektur-Überblick](docs/ar
 
 ## Schnellstart
 
-**Spielen** ([Release](https://github.com/DerGiftzwerg156/FarmPulse_v3/releases)): `FarmPulse-<version>.zip` entpacken,
-`FS25_RPSim.zip` in den FS25-`mods`-Ordner kopieren, `start.bat` ausführen, <http://localhost:8080> öffnen – Schritt für Schritt in der [Installationsanleitung](docs/user-guide/installation.md).
+**Spielen** ([Release](https://github.com/DerGiftzwerg156/FarmPulse_v3/releases)): `FarmPulse-<version>-Setup.exe`
+ausführen – das Setup fragt KI-Anbieter, Austauschordner und Port ab, kopiert den Mod und bringt sein eigenes Java mit.
+FarmPulse läuft danach im Hintergrund (Symbol im Infobereich) und öffnet beim Start das Hof-Tablet im Browser.
+Für Experten bleibt `FarmPulse-<version>.zip` mit `start.bat` / `start.sh`. Schritt für Schritt in der
+[Installationsanleitung](docs/user-guide/installation.md).
 
 **Entwickeln** (ohne FS25, mit Bridge-Simulator; Java 21, Maven, Node ≥ 22.22.3):
 
@@ -87,14 +90,18 @@ Mehr in [`docs/dev/setup.md`](docs/dev/setup.md).
 | [Dein erster Spielstand](docs/user-guide/erster-spielstand.md) | [Architektur](docs/architecture/overview.md) · [Bridge-Zyklus](docs/architecture/file-bridge-sequence.md) · [Domänenmodell](docs/architecture/domain-model.md) · [Zwei-Ebenen-Prinzip](docs/architecture/two-tier-principle.md) · [Anruf-Automat](docs/architecture/call-state-machine.md) |
 | [Funktionen](docs/user-guide/funktionen.md) | [Bridge-Protokoll](docs/dev/bridge-protocol.md) · [Konfiguration](docs/dev/configuration-reference.md) · [KI-Anbieter](docs/dev/ai-providers.md) |
 | [Fehlerbehebung](docs/user-guide/fehlerbehebung.md) | [Tests](docs/dev/testing.md) · [Manueller Testplan](docs/dev/manual-test-plan.md) · [Frontend](docs/dev/frontend.md) · [Mod-Tests](docs/dev/mod-testing.md) |
-| [Mod-README](mod/README.md) | [Offene technische Punkte](docs/dev/offene-technische-punkte.md) · [Offene Fragen](docs/architecture/QUESTIONS.md) · [Konzepte](docs/concept/) |
+| [Mod-README](mod/README.md) | [Windows-Installer](docs/architecture/windows-installer.md) · [Offene technische Punkte](docs/dev/offene-technische-punkte.md) · [Technisches Review 10/2026](docs/architecture/TECHNICAL_REVIEW_2026-10.md) · [Offene Fragen](docs/architecture/QUESTIONS.md) · [Konzepte](docs/concept/) |
 
 Ausbauplan: [Roadmap V2](docs/architecture/ROADMAP_V2.md) – Mitarbeiter als FS25-Helfer, echte Hof-Finanzen, Felder & Wetter, neue
 Rollenspiel-Bereiche und Entscheidungen im Spiel.
 Nächster Ausbauplan: [Roadmap V3](docs/architecture/ROADMAP_V3.md) – Tablet im Heimnetz, Handel und echte Aufträge der
 Nachbarn, Verpachtung, Kreditsicherheiten, Vorkontrakte, Dürre, Gebrauchtmaschinen und mehr. Ergänzt durch
 [Roadmap V3.1](docs/architecture/ROADMAP_V3.1.md) – Lohnunternehmer, Viehhandel, Winterdienst, Behörden und Förderung,
-Dorfzeitung, Dorfchat, Stammtisch und Hofkarte.
+Dorfzeitung, Dorfchat, Stammtisch und Hofkarte. Geplant:
+[Roadmap V3.2](docs/architecture/ROADMAP_V3.2.md) – Großaufträge (sofort aus dem Silo oder zum Liefermonat) und
+Großinvestoren mit Gegenleistung.
+[Roadmap V3.3](docs/architecture/ROADMAP_V3.3.md) – Feldbuch: je Feld und Erntejahr Kultur, Düngung, Kalk, Walzen,
+Unkraut, Mulchen und Erntemenge, mit Auswertung über die letzten Jahre.
 
 Weitere Werkzeuge: [Bridge-Simulator](tools/bridge-simulator/README.md) ·
 [Screenshot-Generator](tools/screenshot-generator/README.md) · [Beitragen](CONTRIBUTING.md) ·

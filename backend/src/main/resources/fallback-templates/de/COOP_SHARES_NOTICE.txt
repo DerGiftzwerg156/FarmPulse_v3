@@ -1,0 +1,6 @@
+Kündigung Ihrer Anteile
+Guten Tag,
+
+wir bestätigen die Kündigung von {{shares}} Anteilen. Nach der Kündigungsfrist von {{noticeMonths}} Monaten zahlen wir {{amount}} € zum Nennwert zurück.
+
+{{characterName}}

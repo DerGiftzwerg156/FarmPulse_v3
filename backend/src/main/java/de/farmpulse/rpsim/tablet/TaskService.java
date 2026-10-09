@@ -57,11 +57,14 @@ public class TaskService {
     private final JobApplicationRepository jobApplications;
     private final GamePromptRepository prompts;
     private final ApiMapper mapper;
+    private final de.farmpulse.rpsim.investor.InvestorService investors;
 
     public TaskService(ServiceCaseRepository cases, ContractRepository contracts, CreditApplicationRepository applications,
                        CommunicationRepository communications, NegotiationRepository negotiations,
                        MarketEventRepository marketEvents, JobPostingRepository postings,
-                       JobApplicationRepository jobApplications, GamePromptRepository prompts, ApiMapper mapper) {
+                       JobApplicationRepository jobApplications, GamePromptRepository prompts, ApiMapper mapper,
+                       de.farmpulse.rpsim.investor.InvestorService investors) {
+        this.investors = investors;
         this.cases = cases;
         this.contracts = contracts;
         this.applications = applications;
@@ -113,12 +116,19 @@ public class TaskService {
                         e.getDeadlineGameTime(), e.getStartGameTime()).marketEvent(mapper.marketEvent(e)).build()));
         postings.findBySavegameOrderByIdDesc(sg).stream().filter(p -> p.getStatus() == JobPostingStatus.OPEN).forEach(p -> {
             int pending = (int) jobApplications.findByPostingOrderByIdAsc(p).stream()
-                    .filter(a -> a.getStatus() == JobApplicationStatus.PENDING).count();
+                    .filter(a -> a.getStatus() == JobApplicationStatus.PENDING
+                            && de.farmpulse.rpsim.employee.HiringService.arrived(a, sg.getCurrentGameTime())).count();
             if (pending > 0) {
                 items.add(task("posting-" + p.getId(), "POSTING", p.getJobRole().name(), null, p.getCreatedAtGameTime())
                         .posting(mapper.posting(p)).pendingApplicants(pending).build());
             }
         });
+        // Roadmap V3.2 R32-I4: open deliveries to an investor before the end of the period
+        for (var d : investors.due(sg)) {
+            items.add(task("investor-" + d.obligationId(), "INVESTOR_DUE", d.type(), d.deadlineGameTime(),
+                    sg.getCurrentGameTime()).investorDue(new de.farmpulse.rpsim.api.Views.InvestorDueView(d.contractId(),
+                    d.obligationId(), d.investor(), d.type(), d.fillType(), d.subType(), d.remaining())).build());
+        }
         items.sort(Comparator.comparing((TaskView t) -> t.deadlineGameTime() == null ? Long.MAX_VALUE : t.deadlineGameTime())
                 .thenComparing(TaskView::gameTime, Comparator.reverseOrder()));
         int waiting = prompts.findBySavegameAndStatusInAndExpiresGameTimeGreaterThanEqualOrderByIdAsc(sg,
@@ -145,6 +155,7 @@ public class TaskService {
         private de.farmpulse.rpsim.api.Views.MarketEventView marketEvent;
         private de.farmpulse.rpsim.api.Views.JobPostingView posting;
         private Integer pendingApplicants;
+        private de.farmpulse.rpsim.api.Views.InvestorDueView investorDue;
 
         private Builder(String key, String type, String kind, Long deadline, long gameTime) {
             this.key = key;
@@ -189,6 +200,11 @@ public class TaskService {
             return this;
         }
 
+        Builder investorDue(de.farmpulse.rpsim.api.Views.InvestorDueView v) {
+            this.investorDue = v;
+            return this;
+        }
+
         Builder pendingApplicants(int n) {
             this.pendingApplicants = n;
             return this;
@@ -196,7 +212,7 @@ public class TaskService {
 
         TaskView build() {
             return new TaskView(key, type, kind, deadline, gameTime, serviceCase, contract, application, call, negotiation,
-                    marketEvent, posting, pendingApplicants);
+                    marketEvent, posting, pendingApplicants, investorDue);
         }
     }
 }

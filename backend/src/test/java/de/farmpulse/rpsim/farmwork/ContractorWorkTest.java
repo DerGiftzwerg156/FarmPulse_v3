@@ -157,11 +157,12 @@ class ContractorWorkTest {
     void onlyWorksThatFitTheFieldAreOfferedAtThePricePerHectare() {
         var quote = contractor.quote(sg, 2);
         assertThat(quote.options()).extracting(ContractorWorkService.Option::work, ContractorWorkService.Option::reason)
-                .containsExactly(org.assertj.core.groups.Tuple.tuple("PLOW", "PHASE"),
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("HARVEST", null),
+                        org.assertj.core.groups.Tuple.tuple("PLOW", "PHASE"),
                         org.assertj.core.groups.Tuple.tuple("CULTIVATE", "PHASE"),
                         org.assertj.core.groups.Tuple.tuple("LIME", "PHASE"),
                         org.assertj.core.groups.Tuple.tuple("SOW", "PHASE"),
-                        org.assertj.core.groups.Tuple.tuple("HARVEST", null));
+                        org.assertj.core.groups.Tuple.tuple("FERTILIZE", "PHASE"));
         ContractorWorkService.Option harvest = option(2, "HARVEST");
         assertThat(harvest.price()).isEqualTo(720); // 4 ha x 180 €
         // 4 ha x 10 000 m² x 0.9 l/m² x 0.95 (sprayLevel 1) x 0.95 (weedState 1)
@@ -172,6 +173,10 @@ class ContractorWorkTest {
         assertThat(option(4, "SOW").reason()).isEqualTo("PHASE");
         assertThat(option(5, "SOW").reason()).isNull();
         assertThat(option(5, "LIME").reason()).isNull();
+        assertThat(option(5, "FERTILIZE").reason()).isNull();
+        assertThat(option(5, "FERTILIZE").price()).isEqualTo(175); // 2.5 ha x 70 €
+        assertThat(option(4, "FERTILIZE").reason()).isNull(); // stubble, spray level 1
+        assertThat(option(7, "FERTILIZE").reason()).isEqualTo("FERTILIZED"); // growing canola, spray level 2
         assertThat(contractor.quote(sg, 7).options()).allSatisfy(o -> assertThat(o.possible()).isFalse());
         assertThat(contractor.quote(sg, 5).fruitTypes()).contains("WHEAT", "SORGHUM");
         assertThatThrownBy(() -> contractor.quote(sg, 12)).isInstanceOf(BusinessRuleException.class)
@@ -179,12 +184,116 @@ class ContractorWorkTest {
     }
 
     @Test
-    void theWorkDayFollowsTheSeasonAndTheTrust() {
-        assertThat(contractor.leadDays(sg, contractorCharacter)).containsExactly(1, 3);
+    void theWorkIsDoneAtTheEndOfTheNextGameDay() {
+        long day = GameTime.dayIndex(sg.getCurrentGameTime());
+        long endOfNextDay = (day + 2) * GameTime.MS_PER_DAY;
+        assertThat(contractor.doneBy(day * GameTime.MS_PER_DAY)).isEqualTo(endOfNextDay);
+        assertThat(contractor.doneBy(endOfNextDay - GameTime.MS_PER_DAY - 1)).isEqualTo(endOfNextDay); // 23:59
+        assertThat(contractor.quote(sg, 4).doneByGameTime()).isEqualTo(endOfNextDay);
+        // neither the busy season nor the trust change it
         trustScores.recordEvent(contractorCharacter, 60, TrustReason.OTHER, "test");
-        assertThat(contractor.leadDays(sg, contractorCharacter)).containsExactly(1, 2);
-        props.getFormulas().getContractorWork().setHarvestPeriods(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12));
-        assertThat(contractor.leadDays(sg, contractorCharacter)).containsExactly(2, 4);
+        ServiceCase sc = contractor.order(sg, 4, "PLOW", null);
+        assertThat(sc.getDeadlineGameTime()).isEqualTo(endOfNextDay);
+        // the start of the next day is not yet the work day
+        sg.setCurrentGameTime((day + 1) * GameTime.MS_PER_DAY);
+        contractor.onDay(new GameDayPassedEvent(sg.getId(), day + 1, (day + 1) * GameTime.MS_PER_DAY));
+        assertThat(instructions(sc)).isEmpty();
+        workDay(sc);
+        assertThat(instructions(sc)).isNotEmpty();
+    }
+
+    // ------------------------------------------------------------------------------------------ several works at once
+
+    @Test
+    void cultivatingSowingAndFertilisingAreOrderedTogetherAndDoneInOneBatch() {
+        // harvested barley: sowing and fertilising only fit after cultivating
+        assertThat(option(4, "SOW").reason()).isEqualTo("PHASE");
+        var quote = contractor.quote(sg, 4, List.of("CULTIVATE"));
+        assertThat(quote.selected()).containsExactly("CULTIVATE");
+        assertThat(quote.maxWorks()).isEqualTo(3);
+        assertThat(quote.options()).filteredOn(o -> o.work().equals("SOW")).singleElement()
+                .satisfies(o -> assertThat(o.reason()).isNull());
+        assertThat(contractor.quote(sg, 4, List.of("CULTIVATE", "SOW", "FERTILIZE")).options())
+                .filteredOn(o -> o.work().equals("PLOW")).singleElement()
+                .satisfies(o -> assertThat(o.reason()).isEqualTo("MAX_WORKS"));
+
+        List<ServiceCase> order = contractor.order(sg, 4, List.of("FERTILIZE", "SOW", "CULTIVATE"), "WHEAT");
+        assertThat(order).extracting(ServiceCase::getReference).containsExactly("CULTIVATE", "SOW", "FERTILIZE");
+        assertThat(order).extracting(ServiceCase::getOfferAmount).containsExactly(240L, 300L, 210L);
+        assertThat(order).extracting(ServiceCase::getDeadlineGameTime).containsOnly(order.get(0).getDeadlineGameTime());
+        assertThat(order.get(1).getTitle()).isEqualTo("WHEAT");
+        assertThat(contractor.quote(sg, 4).openOrders()).hasSize(3);
+        assertThatThrownBy(() -> contractor.order(sg, 4, "LIME", null))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("schon ein Auftrag");
+
+        workDay(order.get(0));
+        List<OutboxInstruction> batch = outbox.findBySavegameOrderByIdAsc(sg).stream()
+                .filter(o -> o.getType() == InstructionType.FIELD_WORK).toList();
+        assertThat(batch).extracting(o -> json.readTree(o.getPayloadJson()).get("work").asString())
+                .containsExactly("CULTIVATE", "SOW", "FERTILIZE");
+        assertThat(order).extracting(ServiceCase::getExternalId).containsOnly(batch.get(0).getBatchId());
+        assertThat(outbox.findByBatchId(batch.get(0).getBatchId())).extracting(OutboxInstruction::getType)
+                .containsExactly(InstructionType.FIELD_WORK, InstructionType.MONEY_TRANSACTION,
+                        InstructionType.FIELD_WORK, InstructionType.MONEY_TRANSACTION,
+                        InstructionType.FIELD_WORK, InstructionType.MONEY_TRANSACTION);
+        for (ServiceCase sc : order) {
+            ack(ofType(sc, InstructionType.FIELD_WORK), "APPLIED", null);
+            assertThat(sc.getStatus()).isEqualTo(CaseStatus.SETTLED);
+        }
+    }
+
+    @Test
+    void anOrderHoldsAtMostThreeWorksThatFitOneAfterTheOther() {
+        assertThatThrownBy(() -> contractor.order(sg, 5, List.of("PLOW", "CULTIVATE", "LIME", "SOW"), "WHEAT"))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("Höchstens 3");
+        // harvested barley: sowing alone does not fit
+        assertThatThrownBy(() -> contractor.order(sg, 4, List.of("SOW", "FERTILIZE"), "WHEAT"))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("Säen passt nicht");
+        // ripe wheat: sowing fits only after harvesting and cultivating
+        assertThat(contractor.quote(sg, 2, List.of("HARVEST", "SOW")).options())
+                .extracting(ContractorWorkService.Option::work, ContractorWorkService.Option::reason)
+                .contains(org.assertj.core.groups.Tuple.tuple("HARVEST", null),
+                        org.assertj.core.groups.Tuple.tuple("SOW", "PHASE"),
+                        org.assertj.core.groups.Tuple.tuple("CULTIVATE", null));
+        assertThat(contractor.quote(sg, 2, List.of("HARVEST", "CULTIVATE")).options())
+                .filteredOn(o -> o.work().equals("SOW")).singleElement()
+                .satisfies(o -> assertThat(o.reason()).isNull());
+        assertThatThrownBy(() -> contractor.order(sg, 5, List.of("SOW"), null))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("Fruchtsorte");
+        facts(300, FIELDS + ", " + SILOS);
+        assertThatThrownBy(() -> contractor.order(sg, 5, List.of("LIME", "SOW"), "OAT"))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("Kontostand nicht (400 €)");
+        assertThat(contractor.order(sg, 5, List.of("LIME"), null)).hasSize(1);
+    }
+
+    @Test
+    void onTheWorkDayAWorkThatNoLongerFitsIsCancelledAndTheOthersAreDone() {
+        List<ServiceCase> order = contractor.order(sg, 4, List.of("CULTIVATE", "SOW"), "BARLEY");
+        // only enough money for the cultivating left: sowing is cancelled, cultivating is done
+        facts(300, FIELDS + ", " + SILOS);
+        workDay(order.get(0));
+        assertThat(order.get(0).getExternalId()).isNotNull();
+        assertThat(order.get(1).getStatus()).isEqualTo(CaseStatus.EXPIRED);
+        assertThat(order.get(1).getResolution()).isEqualTo("NO_FUNDS");
+        assertThat(instructions(order.get(1))).isEmpty();
+        // a refused work aborts the works after it in the batch
+        facts(250_000, FIELDS + ", " + SILOS);
+        List<ServiceCase> next = contractor.order(sg, 5, List.of("LIME", "FERTILIZE"), null);
+        workDay(next.get(0));
+        ack(ofType(next.get(0), InstructionType.FIELD_WORK), "FAILED", "MISSION_RUNNING");
+        ack(ofType(next.get(1), InstructionType.FIELD_WORK), "FAILED", "BATCH_ABORTED: x");
+        assertThat(next).extracting(ServiceCase::getStatus).containsOnly(CaseStatus.EXPIRED);
+        assertThat(next).extracting(ServiceCase::getResolution).containsOnly("FAILED");
+    }
+
+    @Test
+    void anOlderModThatDoesNotKnowFertilisingAsksForTheUpdate() {
+        ServiceCase sc = contractor.order(sg, 5, "FERTILIZE", null);
+        workDay(sc);
+        OutboxInstruction work = ofType(sc, InstructionType.FIELD_WORK);
+        assertThat(json.readTree(work.getPayloadJson()).get("work").asString()).isEqualTo("FERTILIZE");
+        ack(work, "REJECTED", work.getInstructionId() + ": unknown work FERTILIZE");
+        assertThat(sc.getResolution()).isEqualTo("MOD_OUTDATED");
     }
 
     // ------------------------------------------------------------------------------------------ order and work day
@@ -196,7 +305,7 @@ class ContractorWorkTest {
         assertThat(sc.getStatus()).isEqualTo(CaseStatus.IN_PROGRESS);
         assertThat(sc.getCharacter().getId()).isEqualTo(contractorCharacter.getId());
         assertThat(sc.getOfferAmount()).isEqualTo(330);
-        assertThat(sc.getDeadlineGameTime() - sc.getGameTime()).isBetween(GameTime.days(1), GameTime.days(3));
+        assertThat(sc.getDeadlineGameTime()).isEqualTo((GameTime.dayIndex(sc.getGameTime()) + 2) * GameTime.MS_PER_DAY);
         assertThat(instructions(sc)).isEmpty(); // nothing booked before the work day
         assertThatThrownBy(() -> contractor.order(sg, 4, "CULTIVATE", null))
                 .isInstanceOf(BusinessRuleException.class).hasMessageContaining("schon ein Auftrag");

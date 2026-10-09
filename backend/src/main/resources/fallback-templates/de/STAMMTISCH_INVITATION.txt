@@ -1,0 +1,6 @@
+Stammtisch in der Dorfkneipe
+Moin,
+
+am Stammtisch in der Dorfkneipe ist wieder ein Platz für dich frei. Sag in der App „Kalender“ innerhalb von {{answerDays}} Tagen zu oder ab.
+
+{{characterName}}

@@ -7,19 +7,28 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Exportiert alle 10 s (konfigurierbar) `farm_facts.json`: Kontostand, Fahrzeuge (Wert + Zustand), Gebäude,
   eigene Felder, Tierbestand, **Warenbestand (Silos, Silo-Erweiterungen, Produktionen, Fahrsilos)**, Vanilla-Kredit, laufende
   Verkaufspreise je Verkaufsstelle/Fruchtart.
-- Exportiert beim Spielstart (und nach jeder Feldübertragung sowie bei jeder inhaltlichen Änderung im
-  `farm_facts`-Takt) `market_context.json`: Kartenname, Verkaufsstellen (Produktionen gekennzeichnet), Fruchtarten,
+- Exportiert beim Spielstart, jede Minute (`marketContextIntervalMs`, auch ohne Änderung), nach jeder Feldübertragung
+  sowie bei jeder inhaltlichen Änderung im `farm_facts`-Takt `market_context.json`: Kartenname, Verkaufsstellen (Produktionen gekennzeichnet), Fruchtarten,
   alle Farmlands inkl. Besitzer und FS25-NPC.
 - Exportiert außerdem Kalender inkl. Jahreszeit, Leasing-Fahrzeuge und die Aufträge des Spiels (verfügbare und
   eigene; nur lesend).
 - Führt ein **Buchungsjournal** (Roadmap V2, R2-B1): Jede Buchung der Spieler-Farm (`Farm:changeBalance`) wird je
   FS25-Monat und Buchungsart summiert, die eigenen Buchungen unter `RPSIM_<GRUND>`. Die letzten
   `financeJournalPeriods` Monate stehen im Spielstand und in `farm_facts.json` (`finances`).
+- Führt dazu einen **Kontoauszug**: dieselben Buchungen einzeln mit Spieltag und Uhrzeit (`farm_facts.json` →
+  `bookings`). Laufende Buchungen werden je Spieltag und Buchungsart zusammengefasst, Verkäufe zusätzlich je Fruchtart
+  und Verkaufsstelle (mit Litern); Käufe und Verkäufe von Fahrzeugen, Gebäuden und Feldern sowie jede eigene Buchung
+  (mit Notiz) bleiben einzeln. Die letzten `bookingLogEntries` Einträge stehen im Spielstand, das Backend speichert
+  alles dauerhaft.
 - Lässt angestellte **Maschinenführer die FS25-Helfer fahren** (Roadmap V2, R2-A0..A5): Ein gestarteter Helfer der
   Spieler-Farm bekommt den ersten freien aktiven Maschinenführer der Mitarbeiterliste; die Spielmeldungen zeigen seinen
   Namen, im Lohnmodus `EMPLOYEES` bucht das Spiel für ihn keinen Helferlohn (`AIJob.getPricePerMs` = 0), im strengen
   Modus begrenzt der Mod `maxNumHirables` auf die Zahl der aktiven Maschinenführer. Die gefahrene Zeit je Mitarbeiter
-  steht im Spielstand und in `farm_facts.json` (`workforce`).
+  steht im Spielstand und in `farm_facts.json` (`workforce`). Das gilt auch für **Courseplay** (Hooks auf
+  `AISystem.startJobInternal` / `stopJobInternal` und auf allen beim AI-Job-Typ-Manager registrierten Job-Klassen) und
+  **AutoDrive** (fährt ohne AI-Job: aktive AutoDrive-Fahrzeuge werden jede Sekunde erkannt, belegen einen
+  Maschinenführer, zählen fürs strenge Limit und werden dort bei Überschreitung direkt wieder angehalten; den
+  AutoDrive-Lohn regelt AutoDrive selbst).
 - Exportiert den **Zustand der Ställe** (R2-A7, `husbandries`): Gesundheit, Produktivität, Futter und die
   Bedingungen (Wasser, Stroh …) je Stall.
 - Exportiert **Felder und Wetter** (R2-C, `fields`, `fieldRules`, `weather`): Kultur, Wachstum, Unkraut, Steine,
@@ -37,7 +46,21 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   höchstens `fieldShapeMaxPoints` Punkte je Feld). Ausgelesen werden die Werte erst mit den Funktionen (A4, B3, D4,
   D5, D8, K1); bis dahin fehlen sie im Export. Seit **Arbeit auf dem Hof** (R31-A) liest der Mod die Schneehöhe und
   die Shop-Kategorie der eigenen Maschinen und exportiert je Stall die Rassen, die möglichen Rassen und die freien
-  Plätze (`husbandries[].subTypes`, `supportedSubTypes`, `freeSlots`).
+  Plätze (`husbandries[].subTypes`, `supportedSubTypes`, `freeSlots`). Seit **Behörden und Förderung** (R31-B3) liest
+  er die Düngungsart je Feld (`FieldState.sprayType` als Name aus `FieldSprayType`). Seit **Dorfleben** (R31-D) liest
+  er die Tageszeit (`environment.dayTime`), den Dieselstand je Maschine (`getConsumerFillUnitIndex(FillType.DIESEL)`)
+  und die Positionen der gerade gefahrenen eigenen Maschinen mit Farmland und einer `FieldState`-Stichprobe, ob dort
+  Frucht steht. Seit der **Hofkarte** (R31-K1) liest er einmal je Spielstart die Feldumrisse (`field.polygonPoints`
+  über `getWorldTranslation`) und die Kartengröße (`terrainSize`).
+- Exportiert für **Roadmap V3.2** (R32-Q1) je eigenem Stall mit Milch die Milch im Stall-Lager
+  (`husbandries[].storage[]` = `{ fillType, amount, capacity }`, Sorten aus `spec_husbandryMilk.fillTypes`, Menge und
+  Kapazität über `getHusbandryFillLevel` / `getHusbandryCapacity`, ganze Liter).
+- Exportiert für das **Feldbuch** (Roadmap V3.3, R33-F) je eigenem Feld die Walz- und Mulchstufe
+  (`fields[].rollerLevel` / `stubbleShredLevel` aus dem `FieldState`), einmal je Spielstart die Kulturen der Karte
+  (`market_context.fruitTypes[]` mit Standardprodukt, Anzeigename, `regrows`, `needsRolling` und den Produkten der
+  Fruchtumwandlungen) und den Ernte-Zähler (`harvests[]` = `{ farmlandId, fruitType, fillType, liters }`): Hooks auf
+  `Combine.addCutterArea` und – als zweiter Weg – um `Cutter.onEndWorkAreaProcessing` zählen die Liter, die im Tank
+  landen, nur auf eigenen Flurstücken und nie doppelt; der Zähler steht im Mod-Spielstand.
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -77,13 +100,20 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     `missionId`); es wird mit im Spielstand gespeichert
   - `FIELD_WORK` (Roadmap V3.1, R31-A1) – der Lohnunternehmer bearbeitet ein eigenes Feld: Endzustand wie beim
     Abschluss eines Auftrags (`createFieldUpdateTask()`, zusätzlich die Setter der Task); Pflügen, Grubbern, Kalken,
-    Säen (Fruchtsorte) oder Ernten (Frucht auf Stoppel, die Ernte bucht der `STORAGE_TRANSFER` des Batches ins Silo).
+    Säen (Fruchtsorte), Düngen (Düngestufe +1 bis zum Maximum, `FieldSprayType.FERTILIZER`) oder Ernten (Frucht auf
+    Stoppel, die Ernte bucht der `STORAGE_TRANSFER` des Batches ins Silo). Mehrere Arbeiten eines Auftrags kommen als
+    ein Batch und bauen aufeinander auf (z. B. Grubbern, Säen, Düngen).
     `FAILED` mit `FIELD_NOT_FOUND`, `NOT_OWN_FIELD`, `MISSION_RUNNING` oder `UNKNOWN_FRUIT_TYPE`
   - `ANIMAL_TRANSFER` (Roadmap V3.1, R31-A3) – Tiere einer Rasse in einen eigenen Stall (`addAnimals`, freie Plätze
     und Tierart geprüft) oder heraus (`cluster:changeNumAnimals(-n)`); `FAILED` mit `NO_ANIMAL_SPACE`,
     `NOT_ENOUGH_ANIMALS`, `HUSBANDRY_NOT_FOUND`, `WRONG_ANIMAL_TYPE` oder `UNKNOWN_SUB_TYPE`
-  - `VEHICLE_FUEL` (Roadmap V3.1, R31-Q1) – wird geprüft (Fahrzeug und negative Menge) und bis R31-D8 mit `FAILED` /
-    `NOT_SUPPORTED` quittiert
+  - `VEHICLE_FUEL` (Roadmap V3.1, R31-D8) – zieht Diesel aus einer abgestellten eigenen Maschine (niemand drin, kein
+    Helfer, mit Dieseltank), höchstens den Tankinhalt (`addFillUnitFillLevel` mit negativer Menge); Quittung mit
+    `result.liters`; `FAILED` mit `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE`, `VEHICLE_IN_USE` oder `NO_DIESEL_TANK`
+  - `HUSBANDRY_TRANSFER` (Roadmap V3.2, R32-Q1) – nimmt Milch aus dem Lager eines eigenen Stalls
+    (`removeHusbandryFillLevel` über die Beladestation, nur Milch-Sorten des Stalls, Bestand vorher geprüft); bleibt
+    eine Restmenge, bucht der Mod das Entnommene zurück (`addHusbandryFillLevelFromTool`). `FAILED` mit
+    `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE`, `WRONG_FILLTYPE` oder `INSUFFICIENT_STOCK`
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.
@@ -108,7 +138,7 @@ Dokumente/My Games/FarmingSimulator2025/modSettings/FS25_RPSim/
   rpsim_config.xml           (optional, eigene Einstellungen)
   export/
     farm_facts.json          (Mod schreibt, alle 10 s)
-    market_context.json      (Mod schreibt, beim Spielstart + nach FARMLAND_TRANSFER + bei Änderung)
+    market_context.json      (Mod schreibt, beim Spielstart + jede Minute + nach FARMLAND_TRANSFER + bei Änderung)
   import/
     instructions.json        (Backend schreibt, lesbare Fassung für Tools/Simulator)
     instructions.xml         (Backend schreibt, dieselben Daten - diese Datei liest der Mod)
@@ -135,6 +165,7 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | Schlüssel | Standard | Bedeutung |
 | --- | --- | --- |
 | `exportIntervalMs` | 10000 | Export-Intervall `farm_facts.json` (Echtzeit-ms) |
+| `marketContextIntervalMs` | 60000 | So oft (Echtzeit-ms) wird `market_context.json` neu geschrieben, auch wenn sich nichts geändert hat; dazwischen wird sie im `farm_facts`-Takt nur bei Änderung geschrieben |
 | `importIntervalMs` | 5000 | Abfrage-Intervall `instructions.xml` |
 | `processedRetentionGameDays` | 30 | Aufbewahrung erledigter Instruktionen (Spieltage) |
 | `startFallbackMs` | 30000 | Sicherheitsnetz: Start der Bridge nach so vielen ms, falls der Spielstart-Hook nicht feuert |
@@ -143,6 +174,8 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | `conflictMods` | `FS25_MarketDynamics`, `FS25_UsedPlus`, `FS25_EnhancedLoanSystem`, `FS25_BetterContracts` | Mods mit überlappenden Funktionen; erkannte werden in `market_context.json` gemeldet (nur Warnung) |
 | `moneyTypeTitles` | `true` | Buchungen bekommen eigene Bezeichnungen (`MoneyType.register(statistik, "rpsim_money_<GRUND>")`, Texte in `modDesc.xml`); `false` = alles als „Sonstiges“ (`MoneyType.OTHER`) |
 | `financeJournalPeriods` | `13` | Roadmap V2 R2-B1: so viele FS25-Monate behält das Buchungsjournal (`farm_facts.finances`) |
+| `bookingLogEntries` | `200` | Kontoauszug: so viele Einzelbuchungen behält der Mod im Spielstand (`farm_facts.bookings`); das Backend speichert sie dauerhaft |
+| `bookingLogSingleTypes` | `SHOP_VEHICLE_BUY`, `SHOP_VEHICLE_SELL`, `SHOP_PROPERTY_BUY`, `SHOP_PROPERTY_SELL`, `FIELD_BUY`, `FIELD_SELL` | Kontoauszug: Buchungsarten, die immer einzeln erscheinen statt in der Tagessumme (eigene Buchungen `RPSIM_*` sind immer einzeln) |
 | `fieldExportIntervalMs` | `10000` | Roadmap V2 R2-C1: so oft (Echtzeit, ms) werden die Felder neu gelesen; jeder Export dazwischen übernimmt den letzten Stand |
 | `npcFieldExport` | `true` | Roadmap V3 R3-H1: die Felder der Nachbarn (ohne Besitzer) mit exportieren (`npcFields`, gleiche Taktung wie die eigenen Felder); aus = keine Ernte-Vorräte und keine Aufträge der Nachbarn |
 | `storeCatalogExport` | `true` | Roadmap V3 R3-V1: den Fahrzeug-Katalog des Shops einmal beim Spielstart exportieren (`storeVehicles`); aus = keine Gebrauchtmaschinen-Angebote |

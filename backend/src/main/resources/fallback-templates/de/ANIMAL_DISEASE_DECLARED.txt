@@ -1,0 +1,7 @@
+Tierseuche: Sperrzone eingerichtet
+Guten Tag,
+
+wegen eines Ausbruchs der {{disease}} in der Region richten wir eine Sperrzone für {{animalTypes}} ein, voraussichtlich für {{zoneMonths}} Monate. Handel und Verbringen der Tiere sind verboten. Jeder betroffene Bestand wird tierärztlich untersucht. Auflage: Die Tiergesundheit muss binnen {{requirementDays}} Tagen mindestens {{requirementHealth}} % erreichen, sonst droht ein Bußgeld.
+
+Mit freundlichen Grüßen
+{{characterName}}

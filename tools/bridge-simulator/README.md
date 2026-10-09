@@ -25,7 +25,7 @@ node src/cli.js --help
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--dir` | `./runtime/modSettings/FS25_RPSim` | Bridge folder (the backend `dev` profile points here) |
-| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods`, `helfer-hof`, `tierhof-krank`, `ernte-herbst`, `nachbarhandel`, `duerre-sommer`, `winter-schnee`, `lohnunternehmer`, `viehhandel` |
+| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods`, `helfer-hof`, `tierhof-krank`, `ernte-herbst`, `nachbarhandel`, `duerre-sommer`, `winter-schnee`, `lohnunternehmer`, `viehhandel`, `grossauftrag`, `investor-milch`, `feldbuch` |
 | `--interval` | `5000` | Real-time ms between cycles |
 | `--game-minutes-per-tick` | `60` | Game time advanced per cycle |
 | `--savegame-id` | `map_erlengrund_sim_<scenario>` | Simulated savegame id |
@@ -33,11 +33,13 @@ node src/cli.js --help
 | `--control-port` | `8099` | HTTP control API (`0` disables) |
 | `--once` | – | Export once, process instructions once, exit |
 | `--days-per-period` | `1` | FS25 "days per period" of the simulated calendar (exported as `calendar`) |
+| `--market-context-interval` | `60000` | Real-time ms after which `market_context.json` is rewritten even when unchanged (the mod's `marketContextIntervalMs`) |
 | `--reset` | – | Forget previous simulator state (processed instructions, balances) |
 
 Each cycle: game time advances, balance/prices/vehicle wear drift slightly, `instructions.json` is applied,
 `instructions_ack.json` and `farm_facts.json` are written. `market_context.json` is written on start, after
-every applied `FARMLAND_TRANSFER` and on every cycle in which its content changed. Like the mod, the simulator
+every applied `FARMLAND_TRANSFER`, on the first cycle after every `--market-context-interval` (real time, also when
+unchanged) and on every cycle in which its content changed. Like the mod, the simulator
 refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simulator state (the equivalent of the savegame XML) is kept in
 `simulator_savegame.json` inside the bridge folder.
 
@@ -59,6 +61,9 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | `winter-schnee` | Roadmap V3.1 (R31-A4, D5, D8): starts in December with 0.15 m snow (`weather.snowHeight`); a large and a medium tractor with shop category and diesel (`category`, `fuel`), a trailer without a diesel tank; time of day, empty `vehiclePositions` |
 | `lohnunternehmer` | Roadmap V3.1 (R31-A1, A2, B3, K1): starts in August; own fields with ripe wheat, harvested barley, an empty field after slurry and growing canola, each with `sprayType`; own silos with free capacity (`tradeStorage`); the field outlines `fieldShapes` and the shop catalog `storeVehicles` (machines to borrow) in `market_context.json` |
 | `viehhandel` | Roadmap V3.1 (R31-A3): a cow stable with free places (Holstein and Angus) and a full sheep stable; `husbandries[]` export the breeds, the possible breeds and the free places (`subTypes`, `supportedSubTypes`, `freeSlots`) from the simulator's model that `ANIMAL_TRANSFER` changes |
+| `grossauftrag` | Roadmap V3.2 (R32-G): a full canola silo (`tradeStorage` 600 000 l, no free capacity) and the oil mill "Ölmühle Nord" (`OilMillNorth`, canola, sunflower, soybean) as an extra sell point of the map in `market_context.json` and `prices` |
+| `investor-milch` | Roadmap V3.2 (R32-I3, type W3): a cow stable with 12 000 l milk in its storage (capacity 30 000 l); `husbandries[].storage[]` exports it, `HUSBANDRY_TRANSFER` takes it out |
+| `feldbuch` | Roadmap V3.3 (R33-Q): August; own fields with rolling / mulching levels (harvestable wheat, grass after the first cut, harvestable maize still to be rolled), the crops of the map in `market_context.fruitTypes` (grass grows again, maize also gives `CHAFF`) and the harvest counter `harvests` (18 000 l grass windrow on field 4) |
 | `ernte-herbst` | Roadmap V2 (R2-C): starts in September; `fields` with ready maize, growing potatoes, withered wheat and a weedy empty field (with the crop details `withered`, `cut`, `fillType`, `litersPerSqm`), `fieldRules` with every soil mechanic on, rain in `weather`, `finances` |
 
 All scenarios share the map "Erlengrund" with 16 farmlands; farmland 16 is the village area
@@ -112,10 +117,10 @@ created by `MISSION_CREATE` are part of the simulated savegame and go back on `/
 - Roadmap V3.1 R31-A2: `VEHICLE_SPAWN` with `price` 0 brings a borrowed or demo machine without a funds check and
   without a booking (game value = list price; in the V3.1 scenarios with its shop `category`).
 
-**Roadmap V3.1 fields and blocks** (R31-Q2): only `winter-schnee`, `lohnunternehmer` and `viehhandel` stand for a mod
-with the R31-Q1 contract. They export `calendar.dayTimeMs` (time of day of the game time), `vehiclePositions` (empty
+**Roadmap V3.1 fields and blocks** (R31-Q2): only `winter-schnee`, `lohnunternehmer` and `viehhandel` (and the V3.2
+scenarios `grossauftrag` and `investor-milch`, R32-Q2, and the V3.3 scenario `feldbuch`, R33-Q2) stand for a mod with the R31-Q1 contract. They export `calendar.dayTimeMs` (time of day of the game time), `vehiclePositions` (empty
 until `POST /vehicle-positions`), the shop `category` and the diesel `fuel` of the own vehicles and
-`weather.snowHeight`; `lohnunternehmer` also the `sprayType` of its fields and `fieldShapes` (15 outlines on a 4 × 4
+`weather.snowHeight`; `lohnunternehmer` and `feldbuch` also the `sprayType` of their fields and `fieldShapes` (15 outlines on a 4 × 4
 grid of a 2048 m map). All other scenarios leave them out. Vehicle positions and the stables are part of the simulated
 savegame and go back on `/reload-without-saving`. The values, fruit types and animal subtypes are simulated examples.
 
@@ -131,6 +136,23 @@ savegame and go back on `/reload-without-saving`. The values, fruit types and an
 - `VEHICLE_FUEL` takes at most the diesel in the tank, ack `result.liters`; `FAILED` with `VEHICLE_NOT_FOUND`,
   `NOT_OWN_VEHICLE`, `VEHICLE_IN_USE` (the vehicle is in `vehiclePositions`, i.e. driven) or `NO_DIESEL_TANK`.
 
+**Roadmap V3.2** (R32-Q2): only `investor-milch` exports the milk storage of a husbandry (`husbandries[].storage[]`
+= `{ fillType, amount, capacity }` in whole litres, entries with `amount + capacity > 0`, sorted by fill type, like
+the mod); all other scenarios stand for a mod without it. A scenario may add sell points of its own to the map
+(`sellPoints` of the preset; `grossauftrag`: the oil mill). The milk is part of the simulated savegame and goes back on
+`/reload-without-saving`. `HUSBANDRY_TRANSFER` is executed like the mod action: the whole amount or nothing out of the
+storage of the husbandry; `FAILED` with `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE` (a fill type the simulated game does
+not know), `WRONG_FILLTYPE` (no milk sort of the husbandry) or `INSUFFICIENT_STOCK`. The partial take-out with booking
+back (a loading station that reaches only part of the storage) is covered by the mod tests only.
+
+**Roadmap V3.3** (R33-Q2): only `feldbuch` exports the rolling and mulching levels of its fields
+(`fields[].rollerLevel` / `stubbleShredLevel`, changed with `POST /field`), the crops of the map
+(`market_context.fruitTypes`, sorted by name, with `needsRolling` - potatoes are not rolled) and the harvest counter (`harvests` = `{ farmlandId, fruitType, fillType,
+liters }`, cumulative whole litres, sorted); all other scenarios stand for a mod without them. `POST /harvest` adds the
+litres a harvesting machine got into its tank on an own field, like the planned hook of R33-F3; a contractor harvest
+(`FIELD_WORK HARVEST`) is not counted (in the game it is a state jump, not a combine). The counter is part of the
+simulated savegame and goes back on `/reload-without-saving`. The values, crops and titles are simulated examples.
+
 ## Control API (manual testing / E2E)
 
 | Request | Effect |
@@ -144,7 +166,7 @@ savegame and go back on `/reload-without-saving`. The values, fruit types and an
 | `POST /save` | "Save the game" in FS25 (snapshot of the game state incl. the mod's processed list) |
 | `POST /reload-without-saving` | Quit without saving and load the last save: game time, money and processed instructions go back (TODO T-02) |
 | `POST /mission {"uniqueId":"mission_001","status":"FINISHED","success":true}` | The player takes / finishes a vanilla contract (TODO T-22) |
-| `POST /book {"moneyType":"SHOP_PROPERTY_BUY","amount":-90000}` | A booking of the game (R2-B1): changes the balance and lands in `finances` under that FS25 money type (scenarios with a journal only) |
+| `POST /book {"moneyType":"SHOP_PROPERTY_BUY","amount":-90000}` | A booking of the game (R2-B1): changes the balance and lands in `finances` under that FS25 money type (scenarios with a journal only) and in the booking statement `bookings`. With `"moneyType":"SHOP_VEHICLE_BUY"` and `"vehicleName":"Fendt 942 Vario"` the vehicle is delivered too; with `"moneyType":"SHOP_VEHICLE_SELL"` and `"vehicleId":"veh_00042"` it is removed (vehicle names in the statement) |
 | `POST /weather {"raining":true,"rainFallScale":0.8}` | Change the exported weather (Roadmap V2 scenarios only) |
 | `POST /husbandry {"husbandryUniqueId":"hus_00001","health":80,"food":0.6}` | Change the values of a husbandry (`tierhof-krank`) |
 | `POST /field {"farmlandId":7,"weedState":0}` | Change the state of a field (`ernte-herbst`), e.g. `{"farmlandId":2,"growthState":9,"cut":true}` = harvested |
@@ -154,6 +176,8 @@ savegame and go back on `/reload-without-saving`. The values, fruit types and an
 | `POST /snow {"height": 0.4}` | Roadmap V3.1 R31-A4: the snow height of the world changes (metres, `weather.snowHeight`) |
 | `POST /vehicle-positions {"positions":[{"uniqueId":"veh_00001","x":-312.5,"z":88,"farmlandId":7,"onCrop":true}]}` | Roadmap V3.1 R31-D5: the own vehicles being driven right now (replaces the last sample; a listed vehicle counts as in use for `VEHICLE_FUEL`) |
 | `POST /fuel {"uniqueId":"veh_00002","liters":150}` | Roadmap V3.1 R31-D8: the diesel level of an own vehicle with a diesel tank changes (kept within 0..capacity) |
+| `POST /husbandry-milk {"husbandryUniqueId":"hus_00001","fillType":"MILK","amount":20000}` | Roadmap V3.2 R32-Q2: the milk in the storage of a husbandry changes (litres, capped at the capacity; only milk sorts of the husbandry) |
+| `POST /harvest {"farmlandId":5,"fruitType":"MAIZE","fillType":"CHAFF","liters":30000}` | Roadmap V3.3 R33-Q2: a harvesting machine gets litres into its tank on an own field (`feldbuch`); the counter of field, crop and product grows (only farmlands the player owns, litres > 0) |
 | `POST /vanilla-loan {"change": 30000}` | Roadmap V2 R2-D1: the player takes (positive) or repays (negative) the vanilla loan in the finance menu; the balance moves by the same amount |
 | `POST /vanilla-farmland {"farmlandId": 13, "toPlayer": true}` | Roadmap V2 R2-D2: the player buys (`true`) or sells a farmland in the game's field menu at its price (booked as `FIELD_BUY` / `FIELD_SELL`), market context re-exported |
 | `POST /answer {"promptId":"prm_…","answer":"YES"}` | Roadmap V2 R2-F: the player answers a yes/no question in the game (`YES` / `NO`); 400 for an unknown question |

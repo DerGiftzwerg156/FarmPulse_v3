@@ -40,6 +40,8 @@ export class Stable {
   private readonly api = inject(ApiService);
   private readonly store = inject(GameStateStore);
 
+  /** Tab of the route `/stall/:tab` (owner decision 2026-10-06): Ställe, Handel & Tierarzt. */
+  readonly tab = input<string>('staelle');
   readonly case = input<string>();
   readonly highlightedCase = computed(() => Number(this.case()) || null);
   readonly stables = signal<StablesView | null>(null);

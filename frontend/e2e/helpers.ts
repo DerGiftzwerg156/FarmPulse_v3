@@ -20,3 +20,14 @@ export async function waitForList(request: APIRequestContext, path: string, min:
     .poll(async () => ((await (await request.get(`${API}${path}`)).json()) as never[]).filter(predicate).length, { timeout: 30_000 })
     .toBeGreaterThanOrEqual(min);
 }
+
+/** App ids of `layout/apps.ts` - every app has a first-open hint (owner decision 2026-10-06). */
+export const APP_IDS = ['mail', 'phone', 'contacts', 'newspaper', 'chat', 'tasks', 'calendar', 'bank', 'authorities', 'market',
+  'insurance', 'staff', 'fields', 'stable', 'workshop', 'trade', 'diary', 'settings'];
+
+/** Confirms the first-open hints like "Verstanden" would, so they do not cover the flows (stored per installation). */
+export async function markAppHintsSeen(request: APIRequestContext, ids: string[]): Promise<void> {
+  for (const id of ids) {
+    expect((await request.put(`${API}/app-hints/${id}`)).ok()).toBeTruthy();
+  }
+}

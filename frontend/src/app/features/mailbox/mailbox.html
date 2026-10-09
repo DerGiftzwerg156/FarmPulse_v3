@@ -6,6 +6,7 @@
       <app-button [variant]="filter() === 'decision' ? 'primary' : 'secondary'" (pressed)="filter.set('decision')" data-testid="filter-decision">{{ 'mailbox.formRequired' | t }}</app-button>
       <app-button [variant]="filter() === 'villageLife' ? 'primary' : 'secondary'" (pressed)="filter.set('villageLife')" data-testid="filter-village-life">{{ 'mailbox.villageLife' | t }}</app-button>
     </div>
+    <app-button variant="secondary" [disabled]="visibleUnreadIds().length === 0" (pressed)="openMarkAll()" data-testid="mark-all-read">{{ 'mailbox.markAllRead' | t }}</app-button>
   </header>
 
   @if (error(); as err) {
@@ -78,8 +79,7 @@
                 @if (replyError()) {
                   <p class="text-[12px] text-danger" data-testid="reply-error">{{ replyError() }}</p>
                 }
-                <div class="flex items-center justify-between gap-2">
-                  <span class="text-[11px] text-muted">{{ 'mailbox.replyHint' | t }}</span>
+                <div class="flex items-center justify-end gap-2">
                   <app-button type="submit" [disabled]="sending() || !replyText().trim()" data-testid="reply-send">
                     <app-icon name="send" size="h-3.5 w-3.5" /> {{ 'common.send' | t }}
                   </app-button>
@@ -97,4 +97,15 @@
       </div>
     </div>
   }
+
+  <app-modal [open]="confirmMarkAll()" [title]="'mailbox.markAllReadTitle' | t" (closed)="confirmMarkAll.set(false)">
+    <p class="font-body text-sm text-text" data-testid="mark-all-read-text">{{ 'mailbox.markAllReadText' | t: { n: visibleUnreadIds().length } }}</p>
+    @if (markAllError()) {
+      <p class="mt-2 text-[12px] text-danger" data-testid="mark-all-read-error">{{ markAllError() }}</p>
+    }
+    <div class="mt-4 flex justify-end gap-2">
+      <app-button variant="secondary" (pressed)="confirmMarkAll.set(false)">{{ 'common.cancel' | t }}</app-button>
+      <app-button [disabled]="markingAll() || visibleUnreadIds().length === 0" (pressed)="markAllRead()" data-testid="mark-all-read-confirm">{{ 'mailbox.markAllRead' | t }}</app-button>
+    </div>
+  </app-modal>
 </section>

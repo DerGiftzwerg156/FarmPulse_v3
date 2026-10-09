@@ -2,7 +2,9 @@ package de.farmpulse.rpsim.api;
 
 import java.util.List;
 
+import de.farmpulse.rpsim.api.Requests.MarkReadRequest;
 import de.farmpulse.rpsim.api.Requests.TextRequest;
+import de.farmpulse.rpsim.api.Views.MarkReadView;
 import de.farmpulse.rpsim.api.Views.MessageView;
 import de.farmpulse.rpsim.api.Views.ThreadView;
 import de.farmpulse.rpsim.communication.ConversationService;
@@ -52,6 +54,20 @@ public class MailController {
         Communication c = conversations.get(context.requireActive(), id);
         c.setReadFlag(true);
         return new ThreadView(mapper.message(c), conversations.thread(c).stream().map(mapper::message).toList());
+    }
+
+    /**
+     * Marks the given mails as read ("Alle als gelesen markieren", owner decision 2026-10-06: the frontend sends the
+     * unread mails of the active filter). Ids of other savegames or of calls are ignored.
+     */
+    @PostMapping("/read")
+    @Transactional
+    public MarkReadView markRead(@Valid @RequestBody MarkReadRequest r) {
+        List<Communication> unread = communications
+                .findBySavegameAndChannelAndIdIn(context.requireActive(), Channel.MAIL, r.ids()).stream()
+                .filter(c -> !c.isReadFlag()).toList();
+        unread.forEach(c -> c.setReadFlag(true));
+        return new MarkReadView(unread.size());
     }
 
     @PostMapping("/{id}/reply")

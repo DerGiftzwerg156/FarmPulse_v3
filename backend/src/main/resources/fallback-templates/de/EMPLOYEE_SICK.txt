@@ -1,0 +1,6 @@
+Ausfall: {{employeeName}}
+Hallo,
+
+{{employeeName}} ist {{kind}} und fällt voraussichtlich {{days}} Tage aus. In der Zeit fährt niemand für {{employeeName}} als Helfer.
+
+{{characterName}}

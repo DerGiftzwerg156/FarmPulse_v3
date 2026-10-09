@@ -20,6 +20,11 @@ public class Savegame {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Technical review 10/2026, Phase 1.4 (R-2): optimistic locking - an outdated write fails instead of overwriting. */
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     @Column(name = "bridge_savegame_id", unique = true, length = 255)
     private String bridgeSavegameId;
 
@@ -286,6 +291,18 @@ public class Savegame {
     @Column(name = "farm_shop_factor", nullable = false)
     private double farmShopFactor = 1.0;
 
+    /** Roadmap V3.2 R32-G1: factor on the bulk-order request probability (refusals lower it, full deliveries raise it). */
+    @Column(name = "bulk_order_factor", nullable = false)
+    private double bulkOrderFactor = 1.0;
+
+    /** Roadmap V3.2 R32-I1: large investors switched per savegame (settings, events; default on). */
+    @Column(name = "investors_enabled", nullable = false)
+    private boolean investorsEnabled = true;
+
+    /** Roadmap V3.2 R32-I1: FS25 year of the last investor offer (at most one per year; extensions do not count). */
+    @Column(name = "investor_offer_year")
+    private Integer investorOfferYear;
+
     /** Roadmap V3 R3-W1: dry growth months in a row of the current series (0 = no series). */
     @Column(name = "drought_dry_months", nullable = false)
     private int droughtDryMonths;
@@ -309,4 +326,88 @@ public class Savegame {
     /** Roadmap V3 R3-T2: optional farm name (settings, onboarding); heads the chronicle. */
     @Column(name = "farm_name", length = 60)
     private String farmName;
+
+    /** Roadmap V3.1 R31-B: burdening events switched per savegame (settings, default on). */
+    @Column(name = "burden_area_check", nullable = false)
+    private boolean burdenAreaCheck = true;
+
+    @Column(name = "burden_fertilizer", nullable = false)
+    private boolean burdenFertilizer = true;
+
+    @Column(name = "burden_disease", nullable = false)
+    private boolean burdenDisease = true;
+
+    @Column(name = "burden_sick_leave", nullable = false)
+    private boolean burdenSickLeave = true;
+
+    /** Roadmap V3.1 R31-B3: confirmed findings of the fertiliser rules (the first one is a warning, later ones a fine). */
+    @Column(name = "fertilizer_violations", nullable = false)
+    private int fertilizerViolations;
+
+    /** Roadmap V3.1 R31-D: burdening events of D (crop damage off by default, roadmap fallback). */
+    @Column(name = "burden_night_work", nullable = false)
+    private boolean burdenNightWork = true;
+
+    @Column(name = "burden_crop_damage", nullable = false)
+    private boolean burdenCropDamage = false;
+
+    @Column(name = "burden_diesel_theft", nullable = false)
+    private boolean burdenDieselTheft = true;
+
+    /** Roadmap V3.1 R31-D2: character posts of the current game day in the village chat. */
+    @Column(name = "chat_posts_day")
+    private Long chatPostsDay;
+
+    @Column(name = "chat_posts_count", nullable = false)
+    private int chatPostsCount;
+
+    /** Roadmap V3.1 R31-D3: next invitation, missed invitations in a row, loner reputation so far, rumour bonus. */
+    @Column(name = "stammtisch_next_game_time")
+    private Long stammtischNextGameTime;
+
+    @Column(name = "stammtisch_missed", nullable = false)
+    private int stammtischMissed;
+
+    @Column(name = "stammtisch_loner_sum", nullable = false)
+    private double stammtischLonerSum;
+
+    @Column(name = "stammtisch_rumor_bonus", nullable = false)
+    private boolean stammtischRumorBonus;
+
+    /** Roadmap V3.1 R31-D4: game time of the last export, night time counted from, last complaint. */
+    @Column(name = "night_last_facts_game_time")
+    private Long nightLastFactsGameTime;
+
+    @Column(name = "night_counted_from")
+    private Long nightCountedFrom;
+
+    @Column(name = "last_night_complaint_game_time")
+    private Long lastNightComplaintGameTime;
+
+    /** Roadmap V3.1 R31-D5: the hint before the first complaint was shown. */
+    @Column(name = "crop_damage_hint_sent", nullable = false)
+    private boolean cropDamageHintSent;
+
+    /** Roadmap V3.1 R31-D6: holiday flat set up since; last organic fertilising seen (smell complaint). */
+    @Column(name = "farm_holiday_since")
+    private Long farmHolidaySince;
+
+    @Column(name = "last_organic_spread_game_time")
+    private Long lastOrganicSpreadGameTime;
+
+    /** Roadmap V3.1 R31-D7: shares, board seat, missed board meetings, effects of the last general assembly. */
+    @Column(name = "coop_shares", nullable = false)
+    private int coopShares;
+
+    @Column(name = "coop_board", nullable = false)
+    private boolean coopBoard;
+
+    @Column(name = "coop_board_missed", nullable = false)
+    private int coopBoardMissed;
+
+    @Column(name = "coop_dividend_bonus", nullable = false)
+    private double coopDividendBonus;
+
+    @Column(name = "coop_grain_store", nullable = false)
+    private boolean coopGrainStore;
 }

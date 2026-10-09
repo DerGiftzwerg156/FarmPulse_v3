@@ -27,14 +27,14 @@ describe('ContractsRedirect (old /contracts links in stored mails)', () => {
     const { router, http } = await open('/contracts?case=7');
     http.expectOne('/api/cases').flush([{ id: 7, kind: 'TAX_BILL' }]);
     await new Promise((r) => setTimeout(r));
-    expect(router.url).toBe('/aemter?case=7');
+    expect(router.url).toBe('/aemter/finanzamt?case=7');
   });
 
   it('forwards a lease contract to the field map', async () => {
     const { router, http } = await open('/contracts?contract=3');
     http.expectOne('/api/contracts').flush([{ id: 3, kind: 'LEASE' }]);
     await new Promise((r) => setTimeout(r));
-    expect(router.url).toBe('/farmland?contract=3');
+    expect(router.url).toBe('/farmland/pacht?contract=3');
   });
 
   it('forwards a link without entry to the tasks', async () => {

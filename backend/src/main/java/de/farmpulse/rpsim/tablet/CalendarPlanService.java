@@ -50,10 +50,15 @@ public class CalendarPlanService {
     private final FactsService facts;
     private final GameTime gameTime;
     private final RpsimProperties props;
+    private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
+    private final de.farmpulse.rpsim.investor.InvestorService investors;
 
     public CalendarPlanService(EmployeeRepository employees, LoanRepository loans, ContractRepository contracts,
                                FamilyService family, TaxService tax, FactsService facts, GameTime gameTime,
-                               RpsimProperties props) {
+                               RpsimProperties props, de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
+                               de.farmpulse.rpsim.investor.InvestorService investors) {
+        this.bulkOrders = bulkOrders;
+        this.investors = investors;
         this.employees = employees;
         this.loans = loans;
         this.contracts = contracts;
@@ -75,7 +80,9 @@ public class CalendarPlanService {
         Integer nextPeriod = calendar == null ? null : anchor.periodOf(monthIndex + 1);
         Integer year = calendar == null ? null : calendar.year();
 
-        List<Employee> staff = employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE);
+        // salaries: hired employees who start next month are paid on their first working day (owner decision 2026-10-06)
+        List<Employee> staff = employees.findBySavegameAndStatusIn(sg,
+                java.util.EnumSet.of(EmployeeStatus.ACTIVE, EmployeeStatus.PENDING_START));
         List<Loan> activeLoans = loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE);
         List<Contract> activeContracts = contracts.findBySavegameAndStatusOrderByIdAsc(sg, ContractStatus.ACTIVE);
         List<Character> members = props.getFormulas().getFamily().isEnabled() ? family.members(sg) : List.of();
@@ -138,6 +145,18 @@ public class CalendarPlanService {
             if (PREPAYMENT_PERIODS.contains(period)) {
                 out.add(new AgendaEntryView(start, period == 1 ? "TAX_ASSESSMENT" : "TAX_PREPAYMENT", null, null, null, null));
             }
+            // Roadmap V3.1 R31-D7: general assembly of the members, board meetings
+            if (sg.getCoopShares() > 0 && period == props.getFormulas().getCoopAssembly().getPeriod()) {
+                out.add(new AgendaEntryView(start, "COOP_ASSEMBLY", null, null, null, null));
+            }
+            if (sg.isCoopBoard() && props.getFormulas().getCoopBoard().getMeetingPeriods().contains(period)) {
+                out.add(new AgendaEntryView(start, "COOP_BOARD_MEETING", null, null, null, null));
+            }
+        }
+        // Roadmap V3.1 R31-D3: the next regulars' table invitation
+        Long stammtisch = sg.getStammtischNextGameTime();
+        if (props.getFormulas().getStammtisch().isEnabled() && stammtisch != null && stammtisch > now && stammtisch <= until) {
+            out.add(new AgendaEntryView(stammtisch, "STAMMTISCH", null, null, null, null));
         }
         for (Loan l : activeLoans) {
             if (l.getNextDueGameTime() > now && l.getNextDueGameTime() <= until) {
@@ -162,6 +181,34 @@ public class CalendarPlanService {
                         c.getFarmlandId() == null ? null : String.valueOf(c.getFarmlandId())));
             }
         }
+        // Roadmap V3.2 R32-G3: delivery month of a bulk order - start and end (title = sell point, reference = fill type)
+        for (var o : bulkOrders.open(sg)) {
+            String where = bulkOrders.sellPointName(sg, o.getSellPoint());
+            long income = Math.round(o.getQuantity() / 1000.0 * o.getFixedPrice());
+            if (o.getDeliveryStartGameTime() > now && o.getDeliveryStartGameTime() <= until) {
+                out.add(new AgendaEntryView(o.getDeliveryStartGameTime(), "BULK_ORDER_START", null, where, income,
+                        o.getFillType()));
+            }
+            if (o.getDeadlineGameTime() > now && o.getDeadlineGameTime() <= until) {
+                out.add(new AgendaEntryView(o.getDeadlineGameTime(), "BULK_ORDER_END", null, where, o.getQuantity(),
+                        o.getFillType()));
+            }
+        }
+        // Roadmap V3.2 R32-I4 / I5: open deliveries to an investor (end of the period) and the buy-back / repayment
+        for (var d : investors.due(sg)) {
+            if (d.deadlineGameTime() > now && d.deadlineGameTime() <= until) {
+                out.add(new AgendaEntryView(d.deadlineGameTime(), "INVESTOR_DELIVERY", d.type(), d.investor(),
+                        d.remaining(), d.subType() != null ? d.subType() : d.fillType()));
+            }
+        }
+        for (var c : investors.contracts(sg)) {
+            long at = gameTime.monthStart(sg, c.getEndMonthIndex());
+            if ("ACTIVE".equals(c.getStatus()) && !c.isRepaymentDue() && c.getExtendedBy() == null && at > now
+                    && at <= until) {
+                out.add(new AgendaEntryView(at, "INVESTOR_REPAYMENT", c.getCapitalType(),
+                        c.getCharacter() == null ? null : c.getCharacter().getName(), c.getAmount(), c.getKind()));
+            }
+        }
         out.sort(Comparator.comparingLong(AgendaEntryView::gameTime));
         return out;
     }
@@ -175,6 +222,15 @@ public class CalendarPlanService {
         }
         out.add(new YearEventView(1, "TAX_ASSESSMENT", null));
         out.add(new YearEventView(1, "ROTATION_CHECK", null));
+        // Roadmap V3.1 R31-D7: assembly and dividend of the cooperative for members, board meetings
+        if (sg.getCoopShares() > 0) {
+            out.add(new YearEventView(props.getFormulas().getCoopAssembly().getPeriod(), "COOP_ASSEMBLY", null));
+            out.add(new YearEventView(props.getFormulas().getCoopShares().getDividendPeriod(), "COOP_DIVIDEND", null));
+        }
+        if (sg.isCoopBoard()) {
+            props.getFormulas().getCoopBoard().getMeetingPeriods()
+                    .forEach(p -> out.add(new YearEventView(p, "COOP_BOARD_MEETING", null)));
+        }
         if (year != null && tax.quarterlyPrepayment(sg, year) > 0) {
             PREPAYMENT_PERIODS.forEach(p -> out.add(new YearEventView(p, "TAX_PREPAYMENT", null)));
         }

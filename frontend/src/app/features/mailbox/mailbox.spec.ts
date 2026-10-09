@@ -48,6 +48,59 @@ describe('Mailbox', () => {
     expect(el.querySelectorAll('[data-testid="mail-thread"]').length).toBe(1);
   });
 
+  it('marks the unread mails of the active filter as read after confirmation', () => {
+    const { http, el, fixture, flushSavegame } = setup();
+    const gossip = message({ id: 4, subject: 'Neues aus dem Dorf', category: 'VILLAGE_LIFE', gameTime: 40 });
+    http.expectOne('/api/mails').flush([credit, invite, gossip]);
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="filter-village-life"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="mark-all-read"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="mark-all-read-text"]')?.textContent).toContain('1');
+    (el.querySelector('[data-testid="mark-all-read-confirm"] button') as HTMLButtonElement).click();
+    const req = http.expectOne('/api/mails/read');
+    expect(req.request.body).toEqual({ ids: [4] });
+    req.flush({ marked: 1 });
+    flushSavegame();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="mark-all-read-text"]')).toBeNull();
+    (el.querySelector('[data-testid="filter-all"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const rows = el.querySelectorAll('[data-testid="mail-thread"]');
+    // the credit mail is outside the village-life filter and stays unread
+    expect(rows[0].querySelector('[data-testid="unread-dot"]')).not.toBeNull();
+    expect([...rows].filter((r) => r.querySelector('[data-testid="unread-dot"]')).length).toBe(1);
+  });
+
+  it('cancels marking all as read without a request and disables the button without unread mails', () => {
+    const { http, el, fixture } = setup();
+    http.expectOne('/api/mails').flush([credit, invite]);
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="mark-all-read"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="modal-close"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="mark-all-read-text"]')).toBeNull();
+    http.expectNone('/api/mails/read');
+    (el.querySelector('[data-testid="filter-village-life"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect((el.querySelector('[data-testid="mark-all-read"] button') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('keeps the dialog open and shows the error when marking all as read fails', () => {
+    const { http, el, fixture } = setup();
+    http.expectOne('/api/mails').flush([credit]);
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="mark-all-read"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="mark-all-read-confirm"] button') as HTMLButtonElement).click();
+    http.expectOne('/api/mails/read').flush({ code: 'X', message: 'Speichern fehlgeschlagen', fields: {} }, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="mark-all-read-error"]')?.textContent).toContain('Speichern fehlgeschlagen');
+    expect(el.querySelector('[data-testid="mail-thread"] [data-testid="unread-dot"]')).not.toBeNull();
+  });
+
   it('reloads the list on a live mail event', () => {
     const { http, el, fixture, store } = setup();
     http.expectOne('/api/mails').flush([invite]);

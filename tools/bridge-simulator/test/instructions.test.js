@@ -317,6 +317,7 @@ test('the instruction schema describes the new types (R2-Q1)', () => {
   assert.notEqual(validate('instructions', doc({ type: 'EMPLOYEE_ROSTER', employees: [], helperWageMode: 'EMPLOYEES',
     strictHelperLimit: false, trainingCategories: { COMBINE: 'HARVESTERS' } })), null);
   assert.equal(validate('instructions', doc({ type: 'MONEY_TRANSACTION', amount: -3000, reason: 'TRAINING' })), null);
+  assert.equal(validate('instructions', doc({ type: 'MONEY_TRANSACTION', amount: -3600, reason: 'SEVERANCE' })), null);
   assert.notEqual(validate('instructions', doc({ type: 'REPAIR_VEHICLE', vehicleId: 'v', targetDamage: 2 })), null);
 });
 

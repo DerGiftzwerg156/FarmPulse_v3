@@ -55,11 +55,35 @@
       <span class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-tile sm:flex" [class]="tone(a)">
         <app-icon [name]="a.icon" size="h-[22px] w-[22px]" />
       </span>
-      <div class="min-w-0">
+      <div class="min-w-0 flex-1">
         <h1 class="font-display text-lg font-bold tracking-[0.08em] text-text md:text-xl" data-testid="app-title">{{ a.label | t }}</h1>
         <div class="truncate text-[13px] text-[#8FA39A]">{{ 'apps.' + a.id | t }}</div>
       </div>
+      @if (hintKeys().length) {
+        <button type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-border text-[#B9C8C2] hover:border-accent/60 hover:text-text"
+          (click)="openHint(a)" [attr.aria-label]="'appHints.open' | t" [attr.title]="'appHints.open' | t" data-testid="app-hint-open">
+          <app-icon name="help" size="h-[18px] w-[18px]" />
+        </button>
+      }
     </div>
+    @if (hasTabs()) {
+      <app-tab-bar class="fp-no-print" [app]="a" />
+    }
+    <app-modal [open]="hintOpen()" [title]="a.label | t" (closed)="closeHint(a)">
+      <div class="max-h-[60vh] space-y-2.5 overflow-y-auto font-body text-[13px] leading-relaxed text-text" data-testid="app-hint">
+        @for (h of hintKeys(); track h.text) {
+          <div>
+            @if (h.heading) {
+              <div class="fp-label mb-0.5 text-accent">{{ h.heading | t }}</div>
+            }
+            <p>{{ h.text | t }}</p>
+          </div>
+        }
+      </div>
+      <div class="mt-4 flex justify-end">
+        <app-button (pressed)="confirmHint(a)" data-testid="app-hint-ok">{{ 'appHints.ok' | t }}</app-button>
+      </div>
+    </app-modal>
   }
 
   <main class="mx-auto w-full max-w-[1500px] flex-1 px-3 pt-4 md:px-8" [class.pb-28]="true">

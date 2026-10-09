@@ -57,6 +57,27 @@ function RPSimFarmFacts.buildFinances(raw)
     return { periods = periods }
 end
 
+--- Booking statement: raw = { nextSeq, entries = { {seq, gameTime, year, period, day, category, amount, count, single,
+-- liters?, fillType?, sellPoint?, note?} } } -> amounts and litres rounded, entries sorted by seq, incomplete dropped.
+function RPSimFarmFacts.buildBookings(raw)
+    local entries = RPSimJson.array({})
+    for _, e in ipairs(raw.entries or {}) do
+        if type(e.seq) == "number" and type(e.year) == "number" and type(e.period) == "number"
+            and type(e.category) == "string" and type(e.amount) == "number" then
+            local out = { seq = e.seq, gameTime = round(e.gameTime or 0), year = e.year, period = e.period,
+                category = e.category, amount = round(e.amount), count = e.count or 1, single = e.single == true }
+            if type(e.day) == "number" then out.day = e.day end
+            if type(e.liters) == "number" then out.liters = round(e.liters) end
+            if type(e.fillType) == "string" then out.fillType = e.fillType end
+            if type(e.sellPoint) == "string" then out.sellPoint = e.sellPoint end
+            if type(e.note) == "string" and e.note ~= "" then out.note = e.note end
+            entries[#entries + 1] = out
+        end
+    end
+    table.sort(entries, function(a, b) return a.seq < b.seq end)
+    return { nextSeq = type(raw.nextSeq) == "number" and raw.nextSeq or 1, entries = entries }
+end
+
 --- R2-A4: raw = { activeJobs = { {jobId, employeeId?, title?} }, workedGameMs = { [employeeId] = ms } }
 function RPSimFarmFacts.buildWorkforce(raw)
     local jobs = RPSimJson.array({})
@@ -117,8 +138,30 @@ local function buildNames(raw)
     return list
 end
 
+--- Roadmap V3.2 R32-Q1: milk sorts in the storage of a husbandry (raw = { {fillType, amount, capacity} }) like
+-- tradeStorage: whole litres, only entries with amount + capacity > 0, sorted by fillType; nil when not a table.
+local function buildHusbandryStorage(raw)
+    if type(raw) ~= "table" then
+        return nil
+    end
+    local list = RPSimJson.array({})
+    for _, e in ipairs(raw) do
+        if type(e) == "table" and type(e.fillType) == "string" and e.fillType ~= "" and type(e.amount) == "number"
+            and type(e.capacity) == "number" and e.amount == e.amount and e.capacity == e.capacity then
+            local amount = math.max(0, round(e.amount))
+            local capacity = math.max(0, round(e.capacity))
+            if amount + capacity > 0 then
+                list[#list + 1] = { fillType = e.fillType, amount = amount, capacity = capacity }
+            end
+        end
+    end
+    table.sort(list, function(a, b) return a.fillType < b.fillType end)
+    return list
+end
+
 --- R2-A7: raw = { {husbandryUniqueId, health, productivity?, food, conditions = { {title, ratio} }} }
 -- Roadmap V3.1 R31-A3, each optional: subTypes = { {name, count} }, supportedSubTypes = { name }, freeSlots.
+-- Roadmap V3.2 R32-Q1, optional: storage = { {fillType, amount, capacity} } (milk sorts, missing without milk).
 function RPSimFarmFacts.buildHusbandries(raw)
     local list = RPSimJson.array({})
     for _, h in ipairs(raw) do
@@ -136,6 +179,7 @@ function RPSimFarmFacts.buildHusbandries(raw)
             if type(h.freeSlots) == "number" and h.freeSlots == h.freeSlots then
                 e.freeSlots = math.max(0, round(h.freeSlots))
             end
+            e.storage = buildHusbandryStorage(h.storage)
             list[#list + 1] = e
         end
     end
@@ -144,11 +188,15 @@ function RPSimFarmFacts.buildHusbandries(raw)
 end
 
 local FIELD_LEVELS = { "growthState", "weedState", "stoneLevel", "sprayLevel", "limeLevel", "plowLevel" }
+-- Roadmap V3.3 (R33-Q1): optional levels of the same FieldState (rolling F2 "gewalzt", mulching F2 "gemulcht")
+local OPTIONAL_FIELD_LEVELS = { "rollerLevel", "stubbleShredLevel" }
 
 --- R2-C1: raw = { {farmlandId, name, hectares, fruitType?, minHarvestingGrowthState?, maxHarvestingGrowthState?,
 --   withered?, cut?, fillType?, litersPerSqm?, groundType?, growthState, weedState, stoneLevel, sprayLevel, limeLevel,
---   plowLevel, sprayType?} }. withered / cut / fillType / litersPerSqm only with a crop (Roadmap V2 R2-C, owner
---   decision). Roadmap V3.1 (R31-Q1, B3): sprayType = name from the game's FieldSprayType table incl. "NONE".
+--   plowLevel, sprayType?, rollerLevel?, stubbleShredLevel?} }. withered / cut / fillType / litersPerSqm only with a
+--   crop (Roadmap V2 R2-C, owner decision). Roadmap V3.1 (R31-Q1, B3): sprayType = name from the game's FieldSprayType
+--   table incl. "NONE". Roadmap V3.3 (R33-Q1): rollerLevel / stubbleShredLevel = FieldState levels (integers >= 0;
+--   the soil map shows state 1 as "needs rolling" / "mulched"), left out when missing, not a number or negative.
 function RPSimFarmFacts.buildFields(raw)
     local list = RPSimJson.array({})
     for _, f in ipairs(raw) do
@@ -185,6 +233,12 @@ function RPSimFarmFacts.buildFields(raw)
             if type(f.sprayType) == "string" and f.sprayType ~= "" then
                 e.sprayType = f.sprayType
             end
+            for _, key in ipairs(OPTIONAL_FIELD_LEVELS) do
+                local v = f[key]
+                if type(v) == "number" and v == v and v >= 0 then
+                    e[key] = round(v)
+                end
+            end
             list[#list + 1] = e
         end
     end
@@ -211,6 +265,28 @@ function RPSimFarmFacts.buildTradeStorage(raw)
         end
     end
     table.sort(list, function(a, b) return a.fillType < b.fillType end)
+    return list
+end
+
+--- Roadmap V3.3 (R33-Q1, contract; counted by the mod with R33-F3): harvest counter per own field, crop and harvest
+-- product = the litres harvesting machines got into their tank on that field, cumulative and kept in the mod savegame.
+-- raw = { {farmlandId, fruitType, fillType, liters} }. Whole litres; incomplete entries (no farmland, empty names,
+-- liters not a number >= 0) are dropped. Sorted by farmlandId, fruitType, fillType.
+function RPSimFarmFacts.buildHarvests(raw)
+    local list = RPSimJson.array({})
+    for _, h in ipairs(raw) do
+        if type(h) == "table" and type(h.farmlandId) == "number" and type(h.fruitType) == "string" and h.fruitType ~= ""
+            and type(h.fillType) == "string" and h.fillType ~= "" and type(h.liters) == "number"
+            and h.liters == h.liters and h.liters >= 0 then
+            list[#list + 1] = { farmlandId = h.farmlandId, fruitType = h.fruitType, fillType = h.fillType,
+                liters = round(h.liters) }
+        end
+    end
+    table.sort(list, function(a, b)
+        if a.farmlandId ~= b.farmlandId then return a.farmlandId < b.farmlandId end
+        if a.fruitType ~= b.fruitType then return a.fruitType < b.fruitType end
+        return a.fillType < b.fillType
+    end)
     return list
 end
 
@@ -291,10 +367,12 @@ end
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
 --   prices = { {sellPoint, fillType, pricePerLiter, trend?} },
 --   calendar = { period, dayInPeriod, daysPerPeriod, year, monotonicDay, periodName?, season?, dayTimeMs? } | nil,
---   Roadmap V2, each optional (nil = not collected): finances, workforce, husbandries, fields, fieldRules, weather
+--   Roadmap V2, each optional (nil = not collected): finances, bookings (statement), workforce, husbandries, fields,
+--   fieldRules, weather
 --   (see the build* functions above),
 --   Roadmap V3 (R3-Q1), each optional: npcFields (R3-H1, same entries as fields), tradeStorage (R3-H2),
---   Roadmap V3.1 (R31-Q1), optional: vehiclePositions (D5, see buildVehiclePositions) }
+--   Roadmap V3.1 (R31-Q1), optional: vehiclePositions (D5, see buildVehiclePositions),
+--   Roadmap V3.3 (R33-Q1), optional: harvests (F3, see buildHarvests) }
 function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
     local vehicles = RPSimJson.array({})
@@ -406,6 +484,9 @@ function RPSimFarmFacts.build(raw, cfg)
     if type(raw.finances) == "table" then
         doc.finances = RPSimFarmFacts.buildFinances(raw.finances)
     end
+    if type(raw.bookings) == "table" then
+        doc.bookings = RPSimFarmFacts.buildBookings(raw.bookings)
+    end
     if type(raw.workforce) == "table" then
         doc.workforce = RPSimFarmFacts.buildWorkforce(raw.workforce)
     end
@@ -435,6 +516,10 @@ function RPSimFarmFacts.build(raw, cfg)
     -- Roadmap V3.1 (R31-Q1, D5): positions of the own vehicles being driven
     if type(raw.vehiclePositions) == "table" then
         doc.vehiclePositions = RPSimFarmFacts.buildVehiclePositions(raw.vehiclePositions)
+    end
+    -- Roadmap V3.3 (R33-Q1, F3): harvest counter per own field, crop and harvest product
+    if type(raw.harvests) == "table" then
+        doc.harvests = RPSimFarmFacts.buildHarvests(raw.harvests)
     end
     return doc
 end

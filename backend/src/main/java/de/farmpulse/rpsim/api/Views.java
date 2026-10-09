@@ -51,6 +51,10 @@ public final class Views {
     public record ThreadView(MessageView message, List<MessageView> thread) {
     }
 
+    /** Result of marking mails as read: how many were unread before. */
+    public record MarkReadView(int marked) {
+    }
+
     /**
      * Roadmap V3 R3-K1: {@code collateralFarmlandIds} chosen by the player, {@code proposedFarmlandIds} named by the bank
      * (counter offer "mit Grundschuld", {@code collateralRequired}); value, coverage and discount once decided.
@@ -110,7 +114,9 @@ public final class Views {
                                        int remainingInstallments, boolean paidOff) {
     }
 
-    public record JobPostingView(Long id, String jobRole, String status, long createdAtGameTime, Long filledEmployeeId) {
+    /** applicationsAwaited = applications still on their way (they arrive the next game day, owner decision 2026-10-06). */
+    public record JobPostingView(Long id, String jobRole, String status, long createdAtGameTime, Long filledEmployeeId,
+                                 boolean applicationsAwaited) {
     }
 
     /** training = the training a machine operator applicant brings along ("Schulungen"), null = none. */
@@ -130,13 +136,17 @@ public final class Views {
      * Roadmap V2 R2-A: onStrike (A5); hoursThisMonth / hoursLastMonth = hours driven as FS25 helper (A4), null when the mod
      * reports no worked time or the employee is no machine operator. "Schulungen": finished trainings, the running one
      * and its end (the employee is away until then). Roadmap V3.1 R31-A5: contractEndsAtGameTime = end of a seasonal
-     * worker's fixed-term contract.
+     * worker's fixed-term contract. Owner decisions 2026-10-06: trainingFromGameTime = start of the absence for the booked
+     * training (the next game day); startsAtGameTime / startsAtPeriod = first working day (FS25 period, 1 = March) of a
+     * PENDING_START employee and severance = what cancelling him costs (null otherwise).
      */
     public record EmployeeView(Long id, CharacterRef character, String jobRole, int skill, long monthlySalary, String status,
                                NeedsView needs, boolean warningSent, boolean salaryOverdue, Long timeOffUntilGameTime,
                                boolean onStrike, Double hoursThisMonth, Double hoursLastMonth, List<String> trainings,
                                String trainingInProgress, Long trainingUntilGameTime, Long apprenticeshipEndsAtGameTime,
-                               Long contractEndsAtGameTime) {
+                               Long contractEndsAtGameTime, String absenceKind, Long absenceUntilGameTime,
+                               boolean getWellSent, Long trainingFromGameTime, Long startsAtGameTime, Integer startsAtPeriod,
+                               Long severance) {
     }
 
     /** Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame; workforceTracked = the mod reports helper jobs. */
@@ -182,6 +192,15 @@ public final class Views {
 
     /** Roadmap V2 R2-C6: field work hints of the cooperative; fieldsTracked = the mod reports the fields. */
     public record FieldSettingsView(boolean fieldHintsEnabled, boolean fieldsTracked) {
+    }
+
+    /**
+     * Roadmap V3.1 R31-B: switches of the burdening events; tonePreset and idyllicFactor explain the world mode (in
+     * IDYLLIC the animal disease is off and the rest scaled).
+     */
+    public record BurdenSettingsView(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave,
+                                     boolean nightWork, boolean cropDamage, boolean dieselTheft,
+                                     String tonePreset, double idyllicFactor, boolean investors) {
     }
 
     /** Roadmap V3 R3-T2: optional farm name; {@code mapName} is the fallback shown when it is empty. */
@@ -252,7 +271,9 @@ public final class Views {
     public record ReputationView(String tier, String label) {
     }
 
-    public record AiSettingsView(String provider, String model, String baseUrl, boolean apiKeySet, List<String> providers) {
+    /** {@code editable}: false on other devices than the gaming PC (review 10/2026 Phase 0.4, read-only there). */
+    public record AiSettingsView(String provider, String model, String baseUrl, boolean apiKeySet, List<String> providers,
+                                 boolean editable) {
     }
 
     public record GameSettingsView(String tonePreset, String toneLabel) {
@@ -268,7 +289,7 @@ public final class Views {
                                long monthlyAmount, Integer coveragePercent, Long deductible, Integer termMonths,
                                Long startedAtGameTime, Long endsAtGameTime, Long nextDueGameTime, Long offerExpiresAtGameTime,
                                int missedPayments, boolean paymentOverdue, String endReason, Long renewalAmount,
-                               Long purchasePrice, Integer snowDays, Integer snowDaysTotal) {
+                               Long purchasePrice, Integer snowDays, Integer snowDaysTotal, Boolean theftCover) {
     }
 
     /** TODO T-20 / T-22: simulated incident or one-off offer of a service character. */
@@ -300,6 +321,28 @@ public final class Views {
     }
 
     /**
+     * Booking statement ("Kontoauszug"): the entries of one game month ({@code year}/{@code period}, null when there is
+     * none) and the months that have entries. {@code available} = the mod exports single bookings.
+     */
+    public record StatementView(boolean available, Integer year, Integer period, List<StatementMonthView> months,
+                                List<StatementEntryView> entries) {
+    }
+
+    public record StatementMonthView(int year, int period, long entries) {
+    }
+
+    /**
+     * One entry: a single booking or the daily sum of {@code count} bookings. {@code sellPointName} from the market
+     * context; {@code vehicleMatch} (PENDING / MATCHED / AMBIGUOUS / NONE) and {@code vehicleNames} only for shop
+     * vehicle purchases and sales.
+     */
+    public record StatementEntryView(long seq, long gameTime, int year, int period, Integer day, String category,
+                                     String financeClass, long amount, int count, boolean single, Long liters,
+                                     String fillType, String sellPoint, String sellPointName, String note,
+                                     String vehicleMatch, String vehicleNames) {
+    }
+
+    /**
      * Hof-Tablet "Aufgaben": one open decision (or announced deadline) of any area. {@code type} names the source and
      * which of the optional payloads is set: CASE, CONTRACT_OFFER, LEASE_RENEWAL, CREDIT_COUNTER, CALL, NEGOTIATION,
      * MARKET_OFFER, POSTING. {@code kind} is the case / contract / event kind where there is one.
@@ -307,7 +350,12 @@ public final class Views {
     public record TaskView(String key, String type, String kind, Long deadlineGameTime, long gameTime, CaseView serviceCase,
                            ContractView contract, CreditApplicationView application, MessageView call,
                            NegotiationView negotiation, MarketEventView marketEvent, JobPostingView posting,
-                           Integer pendingApplicants) {
+                           Integer pendingApplicants, InvestorDueView investorDue) {
+    }
+
+    /** Roadmap V3.2 R32-I4: a delivery still due to an investor in the current period (task "INVESTOR_DUE"). */
+    public record InvestorDueView(Long contractId, Long obligationId, String investor, String type, String fillType,
+                                  String subType, long remaining) {
     }
 
     /** Open tasks sorted by deadline (none last) plus the number of yes/no questions waiting in the game. */
@@ -332,7 +380,8 @@ public final class Views {
     }
 
     /** One fixed date of the FS25 year: FESTIVAL, TAX_ASSESSMENT, TAX_PREPAYMENT, FAMILY_BIRTHDAY, FAMILY_WEDDING_DAY,
-     * SCHOOL_START, ROTATION_CHECK. {@code reference} = festival key or family member name. */
+     * SCHOOL_START, ROTATION_CHECK, Roadmap V3.1 R31-D7 COOP_ASSEMBLY, COOP_DIVIDEND, COOP_BOARD_MEETING. {@code reference} =
+     * festival key or family member name. */
     public record YearEventView(int period, String kind, String reference) {
     }
 

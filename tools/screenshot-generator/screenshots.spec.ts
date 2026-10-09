@@ -25,12 +25,17 @@ async function press(page: Page, testId: string, nth = 0): Promise<void> {
   await page.getByTestId(testId).nth(nth).locator('button').click();
 }
 
+/** App ids of `layout/apps.ts`: their first-open hints (owner decision 2026-10-06) would cover the screenshots. */
+const APP_IDS = ['mail', 'phone', 'contacts', 'newspaper', 'chat', 'tasks', 'calendar', 'bank', 'authorities', 'market',
+  'insurance', 'staff', 'fields', 'stable', 'workshop', 'trade', 'diary', 'settings'];
+
 async function advance(request: APIRequestContext, days: number): Promise<void> {
   expect((await request.post(`${SIM}/advance`, { data: { days } })).ok()).toBeTruthy();
 }
 
 test.describe.serial('screenshots', () => {
-  test('onboarding', async ({ page }) => {
+  test('onboarding', async ({ page, request }) => {
+    for (const id of APP_IDS) expect((await request.put(`${API}/app-hints/${id}`)).ok()).toBeTruthy();
     await page.goto('/');
     await shot(page, '00-willkommen', false);
     await page.getByTestId('welcome-start').click();
@@ -58,7 +63,7 @@ test.describe.serial('screenshots', () => {
 
   test('play a few days to fill every page', async ({ page, request }) => {
     // credit application (decision after the processing time)
-    await page.goto('/bank');
+    await page.goto('/bank/antrag');
     await page.getByTestId('credit-amount').fill('80000');
     await page.getByTestId('credit-purpose').fill('Neuer Mähdrescher');
     await page.getByTestId('credit-term').fill('48');
@@ -69,15 +74,17 @@ test.describe.serial('screenshots', () => {
     await press(page, 'credit-submit');
     await advance(request, 3);
 
-    // staff: a posting with applicants and one hire
-    await page.goto('/employees');
+    // staff: a posting with applicants and one hire; the applications arrive the next game day (owner decision 2026-10-06)
+    await page.goto('/employees/stellen');
     await page.getByTestId('posting-role').selectOption('MACHINE_OPERATOR');
     await press(page, 'posting-create');
-    await expect(page.getByTestId('applicant').first()).toBeVisible();
-    await press(page, 'hire', 0);
     await page.getByTestId('posting-role').selectOption('ANIMAL_KEEPER');
     await press(page, 'posting-create');
+    await advance(request, 2);
+    await page.goto('/employees/stellen');
+    await page.getByTestId('posting-toggle').nth(1).click(); // newest first: the machine operator posting is second
     await expect(page.getByTestId('applicant').first()).toBeVisible();
+    await press(page, 'hire', 0);
 
     // a direct land negotiation with one counter offer
     const fields = (await (await request.get(`${API}/farmlands`)).json()) as { farmlandId: number; ownerType: string; referencePrice: number; owner: { id: number } | null }[];
@@ -113,11 +120,11 @@ test.describe.serial('screenshots', () => {
     await shot(page, '25-aemter');
 
     await page.goto('/stall');
-    await expect(page.getByTestId('stable-cases')).toBeVisible();
+    await expect(page.getByTestId('barns')).toBeVisible();
     await shot(page, '26-stall');
 
     await page.goto('/werkstatt');
-    await expect(page.getByTestId('maintenance')).toBeVisible();
+    await expect(page.getByTestId('mechanics')).toBeVisible();
     await shot(page, '27-werkstatt');
 
     await page.goto('/mailbox');
@@ -125,25 +132,20 @@ test.describe.serial('screenshots', () => {
     await expect(page.getByTestId('mail-detail')).toBeVisible();
     await shot(page, '11-post', false);
 
-    await page.goto('/bank');
+    await page.goto('/bank/antrag');
     await expect(page.getByTestId('application').first()).not.toHaveAttribute('data-state', 'processing');
     await shot(page, '12-bank');
 
-    await page.goto('/employees');
+    await page.goto('/employees/stellen');
     await page.getByTestId('posting-toggle').first().click();
     await expect(page.getByTestId('applicant').first()).toBeVisible();
     await shot(page, '13-personal');
 
-    await page.goto('/farmland');
-    await expect(page.getByTestId('field-tile').first()).toBeVisible();
-    if (await page.getByTestId('closed-toggle').count()) {
-      await page.getByTestId('closed-toggle').click();
-      await page.getByTestId('closed-row').first().click();
-      await expect(page.getByTestId('negotiation-detail')).toBeVisible();
-    }
+    await page.goto('/farmland/karte');
+    await expect(page.getByTestId('field-map')).toBeVisible();
     await shot(page, '14-flurkarte');
 
-    await page.goto('/market');
+    await page.goto('/market/verlauf');
     await expect(page.getByTestId('chart-line').first()).toBeAttached(); // a flat series has a zero-height box
     await shot(page, '15-agrarboerse');
 
@@ -163,7 +165,7 @@ test.describe.serial('screenshots', () => {
   });
 
   test('incoming call and conversation', async ({ page }) => {
-    await page.goto('/employees');
+    await page.goto('/employees/stellen');
     await page.getByTestId('posting-toggle').first().click();
     await press(page, 'interview-open', 0);
     await page.getByTestId('interview-text').fill('Hast du schon mit Milchkühen gearbeitet?');

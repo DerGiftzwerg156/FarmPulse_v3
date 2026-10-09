@@ -5,20 +5,21 @@ import { provideRouter } from '@angular/router';
 import { AiSettingsView, BypassSettingsView, FieldSettingsView, PromptSettingsView } from '../../core/api/models';
 import { Settings } from './settings';
 
-const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, apiKeySet: true, providers: ['NONE', 'OPENAI', 'ANTHROPIC', 'GEMINI', 'OLLAMA'] };
+const ai: AiSettingsView = { provider: 'ANTHROPIC', model: null, baseUrl: null, apiKeySet: true, providers: ['NONE', 'OPENAI', 'ANTHROPIC', 'GEMINI', 'OLLAMA'], editable: true };
 
 describe('Settings', () => {
   function setup(game: unknown = { tonePreset: 'REALISTIC', toneLabel: 'realistisch-ausgewogen' },
     fields: FieldSettingsView = { fieldHintsEnabled: true, fieldsTracked: true },
     bypass: BypassSettingsView = { reactionsEnabled: true, interestSurchargePercent: 0 },
-    prompts: PromptSettingsView = { available: true, kinds: ['CALL'], allKinds: ['CALL', 'CONTRACT_OFFER', 'TAX_BILL'] }) {
+    prompts: PromptSettingsView = { available: true, kinds: ['CALL'], allKinds: ['CALL', 'CONTRACT_OFFER', 'TAX_BILL'] },
+    aiView: AiSettingsView = ai) {
     TestBed.configureTestingModule({
       imports: [Settings],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     const fixture = TestBed.createComponent(Settings);
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne('/api/settings/ai').flush(ai);
+    http.expectOne('/api/settings/ai').flush(aiView);
     const g = http.expectOne('/api/settings/game');
     if (game) g.flush(game);
     else g.flush({ code: 'NO_ACTIVE_SAVEGAME', message: 'x', fields: {} }, { status: 409, statusText: 'Conflict' });
@@ -34,7 +35,12 @@ describe('Settings', () => {
       i.dispatchEvent(new Event(i.tagName === 'SELECT' ? 'change' : 'input'));
       fixture.detectChanges();
     };
-    return { fixture, http, el, input };
+    /** Tabs (owner decision 2026-10-06): KI, Hof, Ereignisse, Im Spiel, Tablet & Netzwerk. */
+    const toTab = (tab: string) => {
+      fixture.componentRef.setInput('tab', tab);
+      fixture.detectChanges();
+    };
+    return { fixture, http, el, input, toTab };
   }
 
   it('shows the active provider and a stored key without ever showing it', () => {
@@ -44,6 +50,20 @@ describe('Settings', () => {
     expect(key.type).toBe('password');
     expect(key.value).toBe('');
     expect(key.placeholder).toContain('hinterlegt');
+  });
+
+  it('is read-only on a tablet: the gaming PC alone changes provider, key and address (review 10/2026 Phase 0.4)', () => {
+    const { el } = setup(undefined, undefined, undefined, undefined, { ...ai, editable: false });
+    expect(el.querySelector('[data-testid="ai-readonly"]')?.textContent).toContain('Nur am Spiele-PC');
+    expect((el.querySelector('[data-testid="provider"]') as HTMLSelectElement).disabled).toBe(true);
+    expect((el.querySelector('[data-testid="api-key"]') as HTMLInputElement).disabled).toBe(true);
+    expect((el.querySelector('[data-testid="settings-save"] button') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('is editable on the gaming PC', () => {
+    const { el } = setup();
+    expect(el.querySelector('[data-testid="ai-readonly"]')).toBeNull();
+    expect((el.querySelector('[data-testid="api-key"]') as HTMLInputElement).disabled).toBe(false);
   });
 
   it('saves provider, model and key, then clears the key field', () => {
@@ -82,18 +102,21 @@ describe('Settings', () => {
   });
 
   it('shows the tone preset read-only', () => {
-    const { el } = setup();
+    const { toTab, el } = setup();
+    toTab('hof');
     expect(el.querySelector('[data-testid="tone"]')?.textContent).toContain('Realistisch');
     expect(el.querySelector('[data-testid="game-settings"] select, [data-testid="game-settings"] input')).toBeNull();
   });
 
   it('works without an active savegame', () => {
-    const { el } = setup(null);
+    const { toTab, el } = setup(null);
+    toTab('hof');
     expect(el.querySelector('[data-testid="tone"]')?.textContent).toContain('–');
   });
   // Roadmap V2 R2-C6
   it('switches the field work hints off', () => {
-    const { el, http, fixture } = setup();
+    const { toTab, el, http, fixture } = setup();
+    toTab('ereignisse');
     const box = el.querySelector('[data-testid="field-hints"]') as HTMLInputElement;
     expect(box.checked).toBe(true);
     box.checked = false;
@@ -107,7 +130,8 @@ describe('Settings', () => {
 
   // Roadmap V2 R2-D
   it('switches the reactions to the game menus off', () => {
-    const { el, http, fixture } = setup(undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });
+    const { toTab, el, http, fixture } = setup(undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });
+    toTab('ereignisse');
     const box = el.querySelector('[data-testid="bypass-reactions"]') as HTMLInputElement;
     box.checked = false;
     box.dispatchEvent(new Event('change'));
@@ -120,7 +144,8 @@ describe('Settings', () => {
 
   // Roadmap V2 R2-F2
   it('switches the occasions asked in the game one by one', () => {
-    const { el, http, fixture } = setup();
+    const { toTab, el, http, fixture } = setup();
+    toTab('spiel');
     const boxes = () => Array.from(el.querySelectorAll('[data-testid="prompt-kind"]')) as HTMLInputElement[];
     expect(boxes().map((b) => b.checked)).toEqual([true, false, false]);
     expect(el.querySelector('[data-testid="prompt-settings"]')?.textContent).toContain('Steuerbescheide bezahlen');
@@ -137,15 +162,17 @@ describe('Settings', () => {
   });
 
   it('says when the questions in the game are switched off in the configuration', () => {
-    const { el } = setup(undefined, undefined, undefined,
+    const { toTab, el } = setup(undefined, undefined, undefined,
       { available: false, kinds: ['CALL'], allKinds: ['CALL'] });
+    toTab('spiel');
     expect(el.querySelector('[data-testid="prompts-off"]')).not.toBeNull();
     expect((el.querySelector('[data-testid="prompt-kind"]') as HTMLInputElement).disabled).toBe(true);
   });
 
   // Roadmap V3 R3-T2
   it('saves the farm name, the map name is the placeholder', () => {
-    const { el, http, input } = setup();
+    const { toTab, el, http, input } = setup();
+    toTab('hof');
     expect((el.querySelector('[data-testid="farm-name"]') as HTMLInputElement).placeholder).toBe('Erlengrund');
     input('farm-name', '  Hof Lindenhain ');
     (el.querySelector('[data-testid="farm-save"] button') as HTMLButtonElement).click();

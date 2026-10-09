@@ -29,6 +29,7 @@ import de.farmpulse.rpsim.domain.TrustReason;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
+import de.farmpulse.rpsim.newspaper.VillageNewsService;
 import de.farmpulse.rpsim.repository.CharacterRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
@@ -74,12 +75,15 @@ public class ClubService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final VillageNewsService villageNews;
 
     public ClubService(SavegameRepository savegames, CharacterRepository characters, ServiceCaseRepository cases,
                        CharacterGeneratorService generator, CharacterLookup lookup, VillageReputationService reputation,
                        PublicActionService publicActions, LiquidityService liquidity, OutboxService outbox,
                        NarrationRequestService narration, TrustScoreService trust, DiaryService diary,
-                       RandomSource random, RpsimProperties props, GameTime gameTime) {
+                       RandomSource random, RpsimProperties props, GameTime gameTime,
+                       VillageNewsService villageNews) {
+        this.villageNews = villageNews;
         this.savegames = savegames;
         this.characters = characters;
         this.cases = cases;
@@ -168,6 +172,8 @@ public class ClubService {
                             .put("rsvpDays", Math.round(cfg().getInvitationDays())).build())
                     .category(CommunicationCategory.VILLAGE_LIFE).related(RELATED, sc.getId())
                     .formLink("/kalender?case=" + sc.getId()).submit();
+            villageNews.add(sg, VillageNewsService.Section.VILLAGE, "FESTIVAL", host.get().getName() + " lädt zum "
+                    + label(f.getKey()) + " ein.");
             any = true;
         }
         return any;
@@ -278,6 +284,8 @@ public class ClubService {
                 .category(CommunicationCategory.VILLAGE_LIFE).related(RELATED, sc.getId()).submit();
         diary.addAuto(sg, "ROTATION", "Sponsoring: " + label(sc.getReference()), amount + " € für den Verein.",
                 RELATED, sc.getId());
+        villageNews.add(sg, VillageNewsService.Section.VILLAGE, "CLUB_SPONSORING", "Der Verein \"" + label(sc.getReference())
+                + "\" freut sich über einen Sponsor aus der Landwirtschaft.");
         return sc;
     }
 
@@ -313,7 +321,7 @@ public class ClubService {
         }
     }
 
-    static String label(String key) {
+    public static String label(String key) {
         return switch (key == null ? "" : key) {
             case "MAIBAUM" -> "Maibaumaufstellen";
             case "SCHUETZENFEST" -> "Schützenfest";

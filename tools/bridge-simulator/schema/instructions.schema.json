@@ -17,7 +17,7 @@
         "gameTimeEarliest": { "type": "number" },
         "type": { "enum": ["MONEY_TRANSACTION", "PRICE_EVENT", "FARMLAND_TRANSFER", "NOTIFICATION", "REPAIR_VEHICLE",
           "EMPLOYEE_ROSTER", "PROMPT", "STORAGE_TRANSFER", "MISSION_CREATE", "VEHICLE_SPAWN", "VEHICLE_REMOVE",
-          "FIELD_WORK", "ANIMAL_TRANSFER", "VEHICLE_FUEL"] }
+          "FIELD_WORK", "ANIMAL_TRANSFER", "VEHICLE_FUEL", "HUSBANDRY_TRANSFER"] }
       },
       "allOf": [
         { "if": { "properties": { "type": { "const": "MONEY_TRANSACTION" } } },
@@ -30,7 +30,8 @@
               "FAMILY", "SPONSORING", "COMPENSATION", "TRAINING", "LEASE_INCOME", "GOODS_PURCHASE", "GOODS_SALE",
               "VEHICLE_PURCHASE", "VEHICLE_SALE", "CONTRACT_PENALTY", "CONTRACTOR_FEE", "MACHINE_RENT",
               "LIVESTOCK_PURCHASE", "LIVESTOCK_SALE", "WINTER_SERVICE", "DIRECT_PAYMENT", "INVESTMENT_GRANT",
-              "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND"] }, "note": { "type": "string" } } } },
+              "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND", "FARM_HOLIDAY_SETUP", "TANK_LOCK", "SEVERANCE",
+              "INVESTOR_CAPITAL", "INVESTOR_REPAYMENT", "INVESTOR_PAYOUT", "INVESTOR_COMPENSATION"] }, "note": { "type": "string" } } } },
         { "if": { "properties": { "type": { "const": "PRICE_EVENT" }, "priceMode": { "const": "MULTIPLIER" } } },
           "then": { "required": ["fillType", "sellPoint", "peakMultiplier", "rampUpHours", "holdHours", "decayHours"] } },
         { "if": { "properties": { "type": { "const": "PRICE_EVENT" }, "priceMode": { "const": "FIXED" } } },
@@ -79,12 +80,13 @@
                 "FAMILY", "SPONSORING", "COMPENSATION", "TRAINING", "LEASE_INCOME", "GOODS_PURCHASE", "GOODS_SALE",
               "VEHICLE_PURCHASE", "VEHICLE_SALE", "CONTRACT_PENALTY", "CONTRACTOR_FEE", "MACHINE_RENT",
               "LIVESTOCK_PURCHASE", "LIVESTOCK_SALE", "WINTER_SERVICE", "DIRECT_PAYMENT", "INVESTMENT_GRANT",
-              "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND"] } } } },
+              "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND", "FARM_HOLIDAY_SETUP", "TANK_LOCK", "SEVERANCE",
+              "INVESTOR_CAPITAL", "INVESTOR_REPAYMENT", "INVESTOR_PAYOUT", "INVESTOR_COMPENSATION"] } } } },
         { "if": { "properties": { "type": { "const": "VEHICLE_REMOVE" } } },
           "then": { "required": ["vehicleId"], "properties": { "vehicleId": { "type": "string", "minLength": 1 } } } },
         { "if": { "properties": { "type": { "const": "FIELD_WORK" } } },
           "then": { "required": ["farmlandId", "work"], "properties": { "farmlandId": { "type": "integer" },
-            "work": { "enum": ["PLOW", "CULTIVATE", "LIME", "SOW", "HARVEST"] },
+            "work": { "enum": ["PLOW", "CULTIVATE", "LIME", "SOW", "FERTILIZE", "HARVEST"] },
             "fruitType": { "type": "string", "minLength": 1 } },
             "if": { "properties": { "work": { "const": "SOW" } } },
             "then": { "required": ["fruitType"] }, "else": { "not": { "required": ["fruitType"] } } } },
@@ -96,6 +98,10 @@
         { "if": { "properties": { "type": { "const": "VEHICLE_FUEL" } } },
           "then": { "required": ["vehicleId", "delta"], "properties": { "vehicleId": { "type": "string", "minLength": 1 },
             "delta": { "type": "number", "exclusiveMaximum": 0 } } } },
+        { "if": { "properties": { "type": { "const": "HUSBANDRY_TRANSFER" } } },
+          "then": { "required": ["husbandryUniqueId", "fillType", "amount"], "properties": {
+            "husbandryUniqueId": { "type": "string", "minLength": 1 }, "fillType": { "type": "string", "minLength": 1 },
+            "amount": { "type": "number", "exclusiveMinimum": 0 } } } },
         { "if": { "properties": { "type": { "const": "NOTIFICATION" } } },
           "then": { "required": ["text"], "properties": { "text": { "type": "string", "minLength": 1 },
             "level": { "enum": ["INFO", "OK", "CRITICAL"] }, "expiresAtGameTime": { "type": "number" } } } }

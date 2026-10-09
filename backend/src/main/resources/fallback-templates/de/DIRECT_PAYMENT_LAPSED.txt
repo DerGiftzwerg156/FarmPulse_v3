@@ -1,0 +1,7 @@
+Sammelantrag {{cropYear}} nicht gestellt
+Guten Tag,
+
+für das Jahr {{cropYear}} ist kein Sammelantrag bei uns eingegangen, auch nicht in der Nachfrist. Eine Flächenprämie kann daher in diesem Jahr nicht gezahlt werden.
+
+Mit freundlichen Grüßen
+{{characterName}}

@@ -4,7 +4,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.farmpulse.rpsim.common.BusinessRuleException;
+import de.farmpulse.rpsim.common.GamePcOnlyException;
 import de.farmpulse.rpsim.common.NotFoundException;
+import jakarta.persistence.OptimisticLockException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -23,6 +26,23 @@ public class ApiExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiError> notFound(NotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError("NOT_FOUND", e.getMessage(), Map.of()));
+    }
+
+    /** Roadmap V3 R3-N1 / review 10/2026 Phase 0.4: settings of the installation only on the gaming PC. */
+    @ExceptionHandler(GamePcOnlyException.class)
+    public ResponseEntity<ApiError> gamePcOnly(GamePcOnlyException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError("LAN_GAME_PC_ONLY", e.getMessage(), Map.of()));
+    }
+
+    /**
+     * Review 10/2026 Phase 1.4 (R-2): the data was changed in between (another device or the bridge cycle) - nothing
+     * was saved; the frontend shows a hint and reloads.
+     */
+    @ExceptionHandler({OptimisticLockingFailureException.class, OptimisticLockException.class})
+    public ResponseEntity<ApiError> concurrentUpdate(Exception e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiError("CONCURRENT_UPDATE",
+                "Die Daten wurden inzwischen geändert – die Ansicht wurde neu geladen. Bitte die Eingabe prüfen und "
+                        + "erneut absenden.", Map.of()));
     }
 
     @ExceptionHandler(BusinessRuleException.class)

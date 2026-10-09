@@ -1,5 +1,6 @@
 import { TaskView } from '../core/api/models';
 import { APPS, AppDef } from './apps';
+import { caseTabOf, contractTabOf, isTab } from './app-tabs';
 
 /** App of a service case kind (where the case lives after the split of "Verträge & Vorgänge"). */
 const CASE_APP: Record<string, string> = {
@@ -26,6 +27,14 @@ const CASE_APP: Record<string, string> = {
   ANNUAL_REVIEW_OFFER: 'bank',
   // Roadmap V3 R3-M3
   FARM_SHOP_ORDER: 'trade',
+  // Roadmap V3.2 R32-G1
+  BULK_ORDER: 'trade',
+  // Roadmap V3.2 R32-I
+  INVESTOR_OFFER: 'bank',
+  INVESTOR_REMINDER: 'bank',
+  INVESTOR_CLAIM: 'bank',
+  INVESTOR_PURCHASE: 'bank',
+  INVESTOR_VISIT: 'bank',
   // Roadmap V3 R3-W2
   DROUGHT_AID: 'authorities',
   // Roadmap V3 R3-P2
@@ -35,6 +44,15 @@ const CASE_APP: Record<string, string> = {
   MACHINE_DEMO_OFFER: 'workshop',
   ANIMAL_OFFER: 'trade',
   ANIMAL_REQUEST: 'trade',
+  // Roadmap V3.1 R31-B
+  GRANT_REPAYMENT: 'authorities',
+  SOCIAL_INSURANCE_BILL: 'authorities',
+  // Roadmap V3.1 R31-D (owner decision: like the festivals in the calendar; the crop damage claim like R2-D2)
+  STAMMTISCH_INVITATION: 'calendar',
+  SCHOOL_VISIT: 'calendar',
+  COOP_ASSEMBLY: 'calendar',
+  COOP_BOARD_MEETING: 'calendar',
+  CROP_DAMAGE_CLAIM: 'fields',
 };
 
 const CONTRACT_APP: Record<string, string> = {
@@ -53,6 +71,7 @@ const TYPE_APP: Record<string, string> = {
   NEGOTIATION: 'fields',
   MARKET_OFFER: 'market',
   POSTING: 'staff',
+  INVESTOR_DUE: 'bank', // Roadmap V3.2 R32-I4
 };
 
 /** Where an unknown kind shows up: the task list itself. */
@@ -79,30 +98,67 @@ export function taskAppId(t: TaskView): string {
   return known(TYPE_APP[t.type] ?? FALLBACK_APP);
 }
 
+/** Tab of the task inside its app (badge on the tab and the deep link); undefined for apps without tabs. */
+export function taskTabId(t: TaskView): string | undefined {
+  const appId = taskAppId(t);
+  let tab: string | undefined;
+  switch (t.type) {
+    case 'CASE':
+      tab = caseTabOf(t.kind ?? '');
+      break;
+    case 'CONTRACT_OFFER':
+      tab = contractTabOf(t.kind ?? '', t.contract?.level);
+      break;
+    case 'LEASE_RENEWAL':
+      tab = 'pacht';
+      break;
+    case 'CREDIT_COUNTER':
+      tab = 'antrag';
+      break;
+    case 'NEGOTIATION':
+      tab = t.negotiation?.assetType === 'VEHICLE' ? 'gebraucht' : 'verhandlungen';
+      break;
+    case 'MARKET_OFFER':
+      tab = 'ereignisse';
+      break;
+    case 'POSTING':
+      tab = 'stellen';
+      break;
+    case 'INVESTOR_DUE':
+      tab = 'investoren';
+      break;
+  }
+  return isTab(appId, tab) ? tab : undefined;
+}
+
 export function taskApp(t: TaskView): AppDef {
   const id = taskAppId(t);
   return APPS.find((a) => a.id === id)!;
 }
 
-/** Link into the app with the entry highlighted (the pages read these query parameters). */
+/** Link into the app's tab with the entry highlighted (the pages read these query parameters). */
 export function taskLink(t: TaskView): { path: string; query: Record<string, number> } {
   const app = taskApp(t);
+  const tab = taskTabId(t);
+  const path = tab ? `${app.path}/${tab}` : app.path;
   const id = (v: { id: number } | null) => v?.id ?? 0;
   switch (t.type) {
     case 'CASE':
-      return { path: app.path, query: { case: id(t.serviceCase) } };
+      return { path, query: { case: id(t.serviceCase) } };
     case 'CONTRACT_OFFER':
     case 'LEASE_RENEWAL':
-      return { path: app.path, query: { contract: id(t.contract) } };
+      return { path, query: { contract: id(t.contract) } };
     case 'CREDIT_COUNTER':
-      return { path: app.path, query: { application: id(t.application) } };
+      return { path, query: { application: id(t.application) } };
     case 'CALL':
-      return { path: app.path, query: { id: id(t.call) } };
+      return { path, query: { id: id(t.call) } };
     case 'NEGOTIATION':
-      return { path: app.path, query: { negotiation: id(t.negotiation) } };
+      return { path, query: { negotiation: id(t.negotiation) } };
     case 'MARKET_OFFER':
-      return { path: app.path, query: { event: id(t.marketEvent) } };
+      return { path, query: { event: id(t.marketEvent) } };
     case 'POSTING':
-      return { path: app.path, query: { posting: id(t.posting) } };
+      return { path, query: { posting: id(t.posting) } };
+    case 'INVESTOR_DUE':
+      return { path, query: {} };
   }
 }

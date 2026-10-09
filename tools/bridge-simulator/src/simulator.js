@@ -23,14 +23,23 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   'LEASE_INCOME', 'GOODS_PURCHASE', 'GOODS_SALE', 'VEHICLE_PURCHASE', 'VEHICLE_SALE', 'CONTRACT_PENALTY',
   // Roadmap V3.1 (R31-Q1)
   'CONTRACTOR_FEE', 'MACHINE_RENT', 'LIVESTOCK_PURCHASE', 'LIVESTOCK_SALE', 'WINTER_SERVICE', 'DIRECT_PAYMENT',
-  'INVESTMENT_GRANT', 'SOCIAL_INSURANCE', 'GUEST_INCOME', 'COOP_SHARES', 'COOP_DIVIDEND']);
+  'INVESTMENT_GRANT', 'SOCIAL_INSURANCE', 'GUEST_INCOME', 'COOP_SHARES', 'COOP_DIVIDEND',
+  'FARM_HOLIDAY_SETUP', 'TANK_LOCK',
+  // owner decision 2026-10-06: severance before the first working day
+  'SEVERANCE',
+  // Roadmap V3.2 (R32-Q1)
+  'INVESTOR_CAPITAL', 'INVESTOR_REPAYMENT', 'INVESTOR_PAYOUT', 'INVESTOR_COMPENSATION']);
 // Roadmap V3.1 R31-A1: works of the contractor
-const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'HARVEST'];
+const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'FERTILIZE', 'HARVEST'];
 // crop details a field loses when the contractor plows, cultivates or sows (R2-C1 fields of a standing crop)
 const CROP_KEYS = ['fruitType', 'minHarvestingGrowthState', 'maxHarvestingGrowthState', 'withered', 'cut', 'fillType',
   'litersPerSqm'];
 // Roadmap V2 R2-B1: number of FS25 periods kept in the booking journal (proposed mod config financeJournalPeriods)
 export const FINANCE_JOURNAL_PERIODS = 13;
+// Booking statement (owner decisions 2026-10-06): like the mod config bookingLogEntries / bookingLogSingleTypes
+export const BOOKING_LOG_ENTRIES = 200;
+export const BOOKING_LOG_SINGLE_TYPES = ['SHOP_VEHICLE_BUY', 'SHOP_VEHICLE_SELL', 'SHOP_PROPERTY_BUY',
+  'SHOP_PROPERTY_SELL', 'FIELD_BUY', 'FIELD_SELL'];
 
 /** Small deterministic PRNG (mulberry32) so scenario runs are reproducible. */
 export function rng(seed) {
@@ -165,6 +174,12 @@ export function validateInstruction(ins) {
       if (typeof ins.vehicleId !== 'string' || !ins.vehicleId) return 'vehicleId is required';
       if (!num(ins.delta) || ins.delta >= 0) return 'delta must be < 0';
       return null;
+    // Roadmap V3.2 (R32-Q1): same checks as RPSimInstructions.validate
+    case 'HUSBANDRY_TRANSFER':
+      if (typeof ins.husbandryUniqueId !== 'string' || !ins.husbandryUniqueId) return 'husbandryUniqueId is required';
+      if (typeof ins.fillType !== 'string' || !ins.fillType) return 'fillType is required';
+      if (!num(ins.amount) || ins.amount <= 0) return 'amount must be > 0';
+      return null;
     default:
       return `unknown type ${ins.type}`;
   }
@@ -179,7 +194,8 @@ export function fundsCover(balance, items) {
 
 export class BridgeSimulator {
   constructor({ dir, scenario = 'wohlhabender-hof', savegameId, seed = 42, startGameTime = MS_PER_GAME_DAY,
-    retentionGameDays = 30, daysPerPeriod = 1, reset = false, log = () => {} } = {}) {
+    retentionGameDays = 30, daysPerPeriod = 1, marketContextIntervalMs = 60000, now = () => Date.now(), reset = false,
+    log = () => {} } = {}) {
     const preset = SCENARIOS[scenario];
     if (!preset) throw new Error(`unknown scenario '${scenario}' (${Object.keys(SCENARIOS).join(', ')})`);
     this.dir = dir;
@@ -216,7 +232,9 @@ export class BridgeSimulator {
       : { daysPerPeriod, anchorDay: 0, anchorIndex: 0 };
     this.priceWalk = {};
     this.priceTrend = {};
-    for (const sp of MAP.sellPoints) for (const ft of sp.acceptedFillTypes) this.priceWalk[`${sp.id}|${ft}`] = 1;
+    // Roadmap V3.2 (R32-Q2): a scenario may add sell points of its own to the map (grossauftrag: the oil mill)
+    this.sellPoints = [...MAP.sellPoints, ...(preset.sellPoints ?? [])];
+    for (const sp of this.sellPoints) for (const ft of sp.acceptedFillTypes) this.priceWalk[`${sp.id}|${ft}`] = 1;
     this.processed = {};
     this.priceEvents = [];
     this.contractReports = [];
@@ -226,6 +244,7 @@ export class BridgeSimulator {
     // Roadmap V2 (R2-Q2): optional farm_facts blocks - null = not exported (like a mod without the block)
     this.journal = preset.journal ?? null;
     this.finances = preset.journal ? { periods: [] } : null;
+    this.bookings = preset.journal ? { nextSeq: 1, entries: [] } : null; // booking statement, same hook as the journal
     this.workforce = preset.workforce ? structuredClone(preset.workforce) : null;
     this.husbandries = preset.husbandries ? structuredClone(preset.husbandries) : null;
     this.fields = preset.fields ? structuredClone(preset.fields) : null;
@@ -244,11 +263,19 @@ export class BridgeSimulator {
     this.vehiclePositions = this.roadmapV31 ? structuredClone(preset.vehiclePositions ?? []) : null; // R31-D5
     this.fieldShapes = preset.fieldShapes ? structuredClone(preset.fieldShapes) : null; // R31-K1
     this.stables = preset.stables ? structuredClone(preset.stables) : null; // R31-A3
+    // Roadmap V3.3 (R33-Q2): the crops of the map (market_context.fruitTypes) and the harvest counter
+    // (farm_facts.harvests) only where the scenario has them; all other scenarios stand for a mod without them
+    this.fruitTypes = preset.fruitTypes ? structuredClone(preset.fruitTypes) : null;
+    this.harvests = preset.harvests ? structuredClone(preset.harvests) : null;
     this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
     this.prompts = []; // R2-F2: yes/no questions shown to the "player" (waiting for an answer)
     this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
     this.handledPrompts = {}; // R2-F1: answered / withdrawn questions (promptId -> expiresGameTime)
     this.lastMarketContextJson = null;
+    // Like the mod's marketContextIntervalMs: market_context.json is rewritten every interval (real time), changed or not
+    this.marketContextIntervalMs = marketContextIntervalMs;
+    this.now = now;
+    this.marketContextRefreshedAt = now();
     // --reset: forget the previous run before loading, otherwise its state (e.g. without the blocks of a newer
     // scenario) would survive in memory
     if (reset) this.reset();
@@ -263,7 +290,12 @@ export class BridgeSimulator {
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, processed: this.processed, priceEvents: this.priceEvents,
       contractReports: this.contractReports, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State(), ...this.roadmapV31State() });
+      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State() });
+  }
+
+  /** Roadmap V3.3 state the mod keeps in its savegame XML: the harvest counter (R33-Q1). */
+  roadmapV33State() {
+    return { harvests: this.harvests };
   }
 
   /** Roadmap V3.1 state that changes through instructions or the control API (positions R31-D5, stables R31-A3). */
@@ -279,7 +311,7 @@ export class BridgeSimulator {
 
   /** Roadmap V2 state the mod keeps in its savegame XML (journal R2-B1, worked time R2-A4, roster R2-A0). */
   roadmapV2State() {
-    return { finances: this.finances, workforce: this.workforce, husbandries: this.husbandries, fields: this.fields,
+    return { finances: this.finances, bookings: this.bookings, workforce: this.workforce, husbandries: this.husbandries, fields: this.fields,
       weather: this.weather, roster: this.roster, prompts: this.prompts, responses: this.responses,
       handledPrompts: this.handledPrompts };
   }
@@ -334,9 +366,9 @@ export class BridgeSimulator {
       Object.assign(this, { processed: s.processed ?? {}, priceEvents: s.priceEvents ?? [],
         contractReports: s.contractReports ?? [] });
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
-        'storage', 'farmlands', 'calendar', 'finances', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
+        'storage', 'farmlands', 'calendar', 'finances', 'bookings', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
         'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions', 'missionLimitReached',
-        'vehiclePositions', 'stables']) {
+        'vehiclePositions', 'stables', 'harvests']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -349,7 +381,7 @@ export class BridgeSimulator {
       contractReports: this.contractReports, gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State(), ...this.roadmapV31State() };
+      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State() };
     this.writeJson(this.paths.savegame, s);
   }
 
@@ -396,7 +428,7 @@ export class BridgeSimulator {
     if (stock) stock.amount = Math.max(0, stock.amount - liters);
     const revenue = Math.round((price * liters) / 1000);
     this.balance += revenue;
-    if (this.journal) this.book(this.journal.income, revenue);
+    if (this.journal) this.book(this.journal.income, revenue, { fillType, sellPoint, liters });
     return price;
   }
 
@@ -451,9 +483,10 @@ export class BridgeSimulator {
 
   // --------------------------------------------------------------- Roadmap V2 blocks (R2-Q2)
   /** R2-B1: cumulative sum per FS25 period and money type; only the last FINANCE_JOURNAL_PERIODS periods are kept. */
-  book(moneyType, amount) {
+  book(moneyType, amount, detail = {}) {
     if (!this.finances || !moneyType || !amount) return;
-    const { year, period } = this.buildCalendar();
+    const { year, period, dayInPeriod } = this.buildCalendar();
+    this.recordSingleBooking(year, period, dayInPeriod, moneyType, amount, detail);
     let entry = this.finances.periods.find((p) => p.year === year && p.period === period);
     if (!entry) {
       entry = { year, period, byType: {} };
@@ -464,9 +497,45 @@ export class BridgeSimulator {
     entry.byType[moneyType] = (entry.byType[moneyType] ?? 0) + amount;
   }
 
+  /**
+   * Booking statement, like RPSimBookingLog.record: tool bookings and BOOKING_LOG_SINGLE_TYPES are single entries, the
+   * rest is summed per game day and money type (sales also per fill type and sell point, with litres).
+   */
+  recordSingleBooking(year, period, day, category, amount, detail) {
+    if (!this.bookings) return;
+    const monotonicDay = this.monotonicDay();
+    const single = category.startsWith('RPSIM_') || BOOKING_LOG_SINGLE_TYPES.includes(category);
+    const liters = detail.liters > 0 ? detail.liters : undefined;
+    if (!single) {
+      const e = [...this.bookings.entries].reverse().find((x) => !x.single && x.monotonicDay === monotonicDay
+        && x.category === category && x.fillType === detail.fillType && x.sellPoint === detail.sellPoint);
+      if (e) {
+        e.amount += amount;
+        e.count += 1;
+        if (liters !== undefined) e.liters = (e.liters ?? 0) + liters;
+        return;
+      }
+    }
+    this.bookings.entries.push({ seq: this.bookings.nextSeq++, gameTime: this.gameTime, year, period, day,
+      monotonicDay, category, amount, count: 1, single, liters, fillType: detail.fillType,
+      sellPoint: detail.sellPoint, note: detail.note });
+    this.bookings.entries = this.bookings.entries.slice(-BOOKING_LOG_ENTRIES);
+  }
+
   /** Adds the optional blocks the scenario has; the others stay absent. */
   roadmapV2Blocks() {
     const blocks = {};
+    if (this.bookings) {
+      blocks.bookings = { nextSeq: this.bookings.nextSeq, entries: this.bookings.entries.map((e) => {
+        const out = { seq: e.seq, gameTime: Math.round(e.gameTime), year: e.year, period: e.period, day: e.day,
+          category: e.category, amount: Math.round(e.amount), count: e.count, single: e.single };
+        if (e.liters !== undefined) out.liters = Math.round(e.liters);
+        if (e.fillType !== undefined) out.fillType = e.fillType;
+        if (e.sellPoint !== undefined) out.sellPoint = e.sellPoint;
+        if (e.note) out.note = e.note;
+        return out;
+      }) };
+    }
     if (this.finances) {
       blocks.finances = { periods: this.finances.periods.map((p) => ({ year: p.year, period: p.period,
         byType: Object.fromEntries(Object.entries(p.byType).map(([k, v]) => [k, Math.round(v)])) })) };
@@ -478,7 +547,11 @@ export class BridgeSimulator {
         workedGameMs: Object.fromEntries(Object.entries(this.workforce.workedGameMs).map(([k, v]) => [k, Math.round(v)])) };
     }
     if (this.husbandries) {
-      blocks.husbandries = this.husbandries.map((h) => ({ ...structuredClone(h), ...this.stableExport(h.husbandryUniqueId) }))
+      blocks.husbandries = this.husbandries.map((h) => ({ ...structuredClone(h), ...this.stableExport(h.husbandryUniqueId),
+        // R32-Q1: milk sorts in the storage like the mod (whole litres, only amount + capacity > 0, sorted)
+        ...(h.storage ? { storage: h.storage.map((s) => ({ fillType: s.fillType, amount: Math.max(0, Math.round(s.amount)),
+          capacity: Math.max(0, Math.round(s.capacity)) })).filter((s) => s.amount + s.capacity > 0)
+          .sort((a, b) => a.fillType.localeCompare(b.fillType)) } : {}) }))
         .sort((a, b) => a.husbandryUniqueId.localeCompare(b.husbandryUniqueId));
     }
     if (this.fields) {
@@ -585,7 +658,7 @@ export class BridgeSimulator {
     if (ins.price > 0) {
       this.balance -= ins.price;
       this.moneyLog.push({ id: ins.instructionId, amount: -ins.price, reason: ins.moneyReason, note: item.name });
-      this.book(`RPSIM_${ins.moneyReason}`, -ins.price);
+      this.book(`RPSIM_${ins.moneyReason}`, -ins.price, { note: 'Gebrauchtmaschine' });
     }
     this.applyResult = { vehicleId: uniqueId };
     this.log(`${ins.price > 0 ? 'used vehicle' : 'borrowed vehicle'} ${item.name} delivered as ${uniqueId}`);
@@ -659,7 +732,8 @@ export class BridgeSimulator {
   /**
    * R31-A1 like the planned mod action: end state of the work on an own field (AbstractFieldMission:finishField). The
    * values are simulated: plowing / cultivating remove the crop, liming sets the lime level and sprayType LIME, sowing
-   * starts the crop, harvesting cuts it (HARVESTED). The harvest goes into the silo by the STORAGE_TRANSFER of the batch.
+   * starts the crop, fertilising raises the spray level by one (at most 2, sprayType FERTILIZER), harvesting cuts it
+   * (HARVESTED). The harvest goes into the silo by the STORAGE_TRANSFER of the batch.
    */
   fieldWork(ins) {
     const field = this.fields?.find((f) => f.farmlandId === ins.farmlandId);
@@ -685,6 +759,9 @@ export class BridgeSimulator {
         break;
       case 'LIME':
         Object.assign(field, { limeLevel: 1, sprayType: 'LIME' });
+        break;
+      case 'FERTILIZE':
+        Object.assign(field, { sprayLevel: Math.min(2, (field.sprayLevel ?? 0) + 1), sprayType: 'FERTILIZER' });
         break;
       case 'SOW':
         clearCrop();
@@ -741,12 +818,55 @@ export class BridgeSimulator {
   }
 
   /**
+   * R32-Q1 like the mod action (RPSimGameAdapter:husbandryTransfer): milk out of the storage of an own husbandry. The
+   * storage entries of the husbandry are its milk sorts (spec_husbandryMilk.fillTypes in the game).
+   * HUSBANDRY_NOT_FOUND, UNKNOWN_FILLTYPE (a fill type the simulated game does not know), WRONG_FILLTYPE (no milk sort of
+   * this husbandry), INSUFFICIENT_STOCK (the whole amount or nothing).
+   */
+  husbandryTransfer(ins) {
+    const h = this.husbandries?.find((x) => x.husbandryUniqueId === ins.husbandryUniqueId);
+    if (!h) return 'HUSBANDRY_NOT_FOUND';
+    const milk = (h.storage ?? []).find((s) => s.fillType === ins.fillType);
+    if (!milk) return this.knowsFillType(ins.fillType) ? 'WRONG_FILLTYPE' : 'UNKNOWN_FILLTYPE';
+    if (milk.amount + 0.001 < ins.amount) return 'INSUFFICIENT_STOCK';
+    milk.amount -= ins.amount;
+    this.log(`husbandry ${ins.husbandryUniqueId} -${ins.amount} l ${ins.fillType}`);
+    return null;
+  }
+
+  /** The fill types the simulated game knows: prices of the map, fruit types and the milk sorts of the stables. */
+  knowsFillType(fillType) {
+    return MAP.basePrices[fillType] !== undefined || FRUIT_TYPES.includes(fillType)
+      || (this.husbandries ?? []).some((h) => (h.storage ?? []).some((s) => s.fillType === fillType));
+  }
+
+  /** Control API (R32-Q2): the milk of a husbandry changes in the game (milking, selling it at the dairy). */
+  setHusbandryMilk(husbandryUniqueId, fillType, amount) {
+    const h = this.husbandries?.find((x) => x.husbandryUniqueId === husbandryUniqueId);
+    if (!h) throw new Error(`unknown husbandry ${husbandryUniqueId}`);
+    const milk = (h.storage ?? []).find((s) => s.fillType === fillType);
+    if (!milk) throw new Error(`husbandry ${husbandryUniqueId} has no milk sort ${fillType}`);
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) throw new Error('amount (number >= 0) is required');
+    milk.amount = Math.min(amount, milk.capacity);
+    return { husbandryUniqueId, fillType, amount: milk.amount, capacity: milk.capacity };
+  }
+
+  /**
    * Control API: a booking of the game (R2-B1), e.g. a vehicle purchase or leasing costs. It changes the balance and
    * lands in the journal under its FS25 money type, like Farm:changeBalance in the mod.
    */
-  bookGame(moneyType, amount) {
+  bookGame(moneyType, amount, vehicle = {}) {
     if (typeof moneyType !== 'string' || !moneyType || typeof amount !== 'number' || !Number.isFinite(amount)) {
       throw new Error('moneyType (string) and amount (number) are required');
+    }
+    // booking statement: a shop purchase with vehicleName delivers that vehicle, a sale with vehicleId removes it
+    if (moneyType === 'SHOP_VEHICLE_BUY' && vehicle.vehicleName) {
+      const next = Math.max(0, ...this.vehicles.map((v) => Number(v.uniqueId.replace(/\D/g, '')) || 0)) + 1;
+      this.vehicles.push({ uniqueId: `veh_${String(next).padStart(5, '0')}`, value: Math.abs(amount), damage: 0,
+        name: vehicle.vehicleName });
+    }
+    if (moneyType === 'SHOP_VEHICLE_SELL' && vehicle.vehicleId) {
+      this.vehicles = this.vehicles.filter((v) => v.uniqueId !== vehicle.vehicleId);
     }
     this.balance += amount;
     this.book(moneyType, amount);
@@ -883,13 +1003,48 @@ export class BridgeSimulator {
     }
   }
 
+  // --------------------------------------------------------------- Roadmap V3.3 (R33-Q2)
+  /** Adds the optional Roadmap V3.3 farm_facts block (harvest counter) when the scenario stands for a mod with it. */
+  roadmapV33Blocks() {
+    if (!this.harvests) return {};
+    return { harvests: this.harvests.map((h) => ({ farmlandId: h.farmlandId, fruitType: h.fruitType, fillType: h.fillType,
+      liters: Math.max(0, Math.round(h.liters)) }))
+      .sort((a, b) => a.farmlandId - b.farmlandId || a.fruitType.localeCompare(b.fruitType)
+        || a.fillType.localeCompare(b.fillType)) };
+  }
+
+  /**
+   * Control API (R33-Q2): a harvesting machine gets `liters` of `fillType` (crop `fruitType`) into its tank on an own
+   * field, like the planned hook on Combine.addCutterArea (R33-F3): the cumulative counter of field, crop and product
+   * grows. Only on farmlands the player owns; the counter is part of the savegame (a reload without saving takes it back).
+   */
+  addHarvest(farmlandId, fruitType, fillType, liters) {
+    if (!this.harvests) throw new Error(`scenario ${this.scenario} exports no harvests`);
+    if (!Number.isInteger(farmlandId)) throw new Error('farmlandId (integer) is required');
+    if (typeof fruitType !== 'string' || !fruitType) throw new Error('fruitType is required');
+    if (typeof fillType !== 'string' || !fillType) throw new Error('fillType is required');
+    if (typeof liters !== 'number' || !Number.isFinite(liters) || liters <= 0) throw new Error('liters must be > 0');
+    if (!this.farmlands.some((f) => f.farmlandId === farmlandId && f.ownerFarmId === 1)) {
+      throw new Error(`farmland ${farmlandId} is not owned by the player`);
+    }
+    let counter = this.harvests.find((h) => h.farmlandId === farmlandId && h.fruitType === fruitType
+      && h.fillType === fillType);
+    if (!counter) {
+      counter = { farmlandId, fruitType, fillType, liters: 0 };
+      this.harvests.push(counter);
+    }
+    counter.liters += liters;
+    this.log(`harvest field ${farmlandId} +${liters} l ${fillType} (${fruitType}), counter ${Math.round(counter.liters)} l`);
+    return this.roadmapV33Blocks().harvests;
+  }
+
   // --------------------------------------------------------------- exports
   buildFarmFacts() {
     const storage = Object.entries(this.storage).filter(([, s]) => s.amount > 0)
       .map(([fillType, s]) => ({ fillType, amount: Math.round(s.amount), capacity: Math.round(s.capacity) }))
       .sort((a, b) => a.fillType.localeCompare(b.fillType));
     const prices = [];
-    for (const sp of MAP.sellPoints) {
+    for (const sp of this.sellPoints) {
       for (const ft of sp.acceptedFillTypes) {
         prices.push({ sellPoint: sp.id, fillType: ft, currentPrice: Math.round(this.effectivePrice(sp.id, ft)),
           trend: this.priceTrend[`${sp.id}|${ft}`] ?? 'STABLE' });
@@ -927,6 +1082,7 @@ export class BridgeSimulator {
       ...this.roadmapV2Blocks(),
       ...this.roadmapV3Blocks(),
       ...this.roadmapV31Blocks(),
+      ...this.roadmapV33Blocks(),
     };
   }
 
@@ -948,11 +1104,11 @@ export class BridgeSimulator {
   }
 
   buildMarketContext() {
-    const fillTypes = [...new Set(MAP.sellPoints.flatMap((s) => s.acceptedFillTypes))].sort();
+    const fillTypes = [...new Set(this.sellPoints.flatMap((s) => s.acceptedFillTypes))].sort();
     return {
       savegameId: this.savegameId,
       mapName: MAP.mapName,
-      sellPoints: MAP.sellPoints.map((s) => ({ id: s.id, name: s.name, acceptedFillTypes: [...s.acceptedFillTypes].sort(),
+      sellPoints: this.sellPoints.map((s) => ({ id: s.id, name: s.name, acceptedFillTypes: [...s.acceptedFillTypes].sort(),
         ...(s.production ? { production: true, ownedByPlayer: s.ownedByPlayer === true } : {}) })),
       fillTypes,
       farmlands: this.farmlands.map((f) => ({ ...f, showOnFarmlandsScreen: f.showOnFarmlandsScreen !== false,
@@ -963,6 +1119,9 @@ export class BridgeSimulator {
         .sort((a, b) => a.xmlFilename.localeCompare(b.xmlFilename)) } : {}),
       // Roadmap V3.1 R31-K1: field outlines and map size, only in scenarios that have them
       ...(this.fieldShapes ? { fieldShapes: structuredClone(this.fieldShapes) } : {}),
+      // Roadmap V3.3 R33-Q1: the crops of the map, only in scenarios that have them
+      ...(this.fruitTypes ? { fruitTypes: structuredClone(this.fruitTypes)
+        .sort((a, b) => a.name.localeCompare(b.name)) } : {}),
     };
   }
 
@@ -974,7 +1133,10 @@ export class BridgeSimulator {
     return doc;
   }
 
-  /** Like the mod: written on start / after FARMLAND_TRANSFER (force) and otherwise only when its content changed. */
+  /**
+   * Like the mod: written on start / after FARMLAND_TRANSFER / every marketContextIntervalMs (force) and otherwise only
+   * when its content changed.
+   */
   exportMarketContext(force = true) {
     const doc = this.buildMarketContext();
     const err = validate('marketContext', doc);
@@ -993,7 +1155,7 @@ export class BridgeSimulator {
         this.balance += ins.amount;
         this.moneyLog.push({ id: ins.instructionId, amount: ins.amount, reason: ins.reason, note: ins.note });
         // R2-B1: bookings of the tool are marked RPSIM_<REASON> instead of an FS25 money type
-        this.book(`RPSIM_${ins.reason}`, ins.amount);
+        this.book(`RPSIM_${ins.reason}`, ins.amount, { note: ins.note });
         return null;
       case 'FARMLAND_TRANSFER': {
         const f = this.farmlands.find((x) => x.farmlandId === ins.farmlandId);
@@ -1066,6 +1228,9 @@ export class BridgeSimulator {
         return this.animalTransfer(ins);
       case 'VEHICLE_FUEL':
         return this.vehicleFuel(ins);
+      // Roadmap V3.2 (R32-Q2): executed like the mod action
+      case 'HUSBANDRY_TRANSFER':
+        return this.husbandryTransfer(ins);
       default:
         return 'unsupported type';
     }
@@ -1232,6 +1397,7 @@ export class BridgeSimulator {
   start() {
     this.bootstrap();
     this.exportMarketContext();
+    this.marketContextRefreshedAt = this.now();
     this.exportFarmFacts();
     this.writeAck();
     this.writeResponses(); // R2-F1: the file follows the loaded savegame
@@ -1242,7 +1408,9 @@ export class BridgeSimulator {
     this.advance(gameMs);
     const res = this.processInstructions();
     this.exportFarmFacts();
-    this.exportMarketContext(false);
+    const due = this.now() - this.marketContextRefreshedAt >= this.marketContextIntervalMs;
+    if (due) this.marketContextRefreshedAt = this.now();
+    this.exportMarketContext(due);
     return res;
   }
 

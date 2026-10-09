@@ -11,6 +11,7 @@ import de.farmpulse.rpsim.api.Views.ApplicationView;
 import de.farmpulse.rpsim.api.Views.EmployeeView;
 import de.farmpulse.rpsim.api.Views.JobPostingView;
 import de.farmpulse.rpsim.api.Views.TrainingOfferView;
+import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.domain.Employee;
 import de.farmpulse.rpsim.domain.EmployeeStatus;
@@ -38,9 +39,12 @@ public class EmployeeController {
     private final TrainingService training;
     private final EmployeeRepository employees;
     private final ApiMapper mapper;
+    private final de.farmpulse.rpsim.employee.SickLeaveService sickLeave;
 
     public EmployeeController(SavegameContext context, HiringService hiring, SatisfactionService satisfaction,
-                              TrainingService training, EmployeeRepository employees, ApiMapper mapper) {
+                              TrainingService training, EmployeeRepository employees, ApiMapper mapper,
+                              de.farmpulse.rpsim.employee.SickLeaveService sickLeave) {
+        this.sickLeave = sickLeave;
         this.training = training;
         this.context = context;
         this.hiring = hiring;
@@ -87,8 +91,13 @@ public class EmployeeController {
     }
 
     private Employee active(Savegame sg, Long id) {
-        return employees.findById(id).filter(e -> e.getSavegame().getId().equals(sg.getId())
-                && e.getStatus() == EmployeeStatus.ACTIVE).orElseThrow(() -> new NotFoundException("employee " + id));
+        Employee e = employees.findById(id).filter(x -> x.getSavegame().getId().equals(sg.getId())
+                && x.getStatus() != EmployeeStatus.TERMINATED).orElseThrow(() -> new NotFoundException("employee " + id));
+        if (e.getStatus() == EmployeeStatus.PENDING_START) {
+            // owner decision 2026-10-06: no actions before the first working day
+            throw new BusinessRuleException("EMPLOYEE_NOT_STARTED", "Der Mitarbeiter hat noch nicht angefangen.");
+        }
+        return e;
     }
 
     @PostMapping("/api/employees/{id}/raise")
@@ -107,6 +116,14 @@ public class EmployeeController {
         return mapper.employee(e);
     }
 
+    /** Roadmap V3.1 R31-B5: get-well wishes to a sick or injured employee (once per absence). */
+    @PostMapping("/api/employees/{id}/get-well")
+    @Transactional
+    public EmployeeView getWell(@PathVariable Long id) {
+        Savegame sg = context.requireActive();
+        return mapper.employee(sickLeave.getWell(sg, active(sg, id)));
+    }
+
     /** "Schulungen": catalog of the trainings with price and unlocked FS25 shop categories. */
     @GetMapping("/api/trainings")
     public List<TrainingOfferView> trainings() {
@@ -114,7 +131,7 @@ public class EmployeeController {
                 .map(o -> new TrainingOfferView(o.training().name(), o.cost(), o.categories())).toList();
     }
 
-    /** "Schulungen": books a training for a machine operator (money, one game day away, appreciation). */
+    /** "Schulungen": books a training for a machine operator (money, the whole next game day away, appreciation). */
     @PostMapping("/api/employees/{id}/training")
     @Transactional
     public EmployeeView train(@PathVariable Long id, @Valid @RequestBody TrainingRequest r) {

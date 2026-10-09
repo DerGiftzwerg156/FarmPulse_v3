@@ -15,8 +15,10 @@ import de.farmpulse.rpsim.domain.HelperWageMode;
 import de.farmpulse.rpsim.domain.PromptKind;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.WorkforceService;
+import de.farmpulse.rpsim.lan.NetworkAddresses;
 import de.farmpulse.rpsim.prompt.PromptService;
 import de.farmpulse.rpsim.savegame.SavegameContext;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,9 +39,12 @@ public class SettingsController {
     private final WorkforceService workforce;
     private final VanillaBypassService bypass;
     private final PromptService prompts;
+    private final de.farmpulse.rpsim.config.RpsimProperties props;
 
     public SettingsController(AiSettingsService settings, AiProviderRegistry registry, SavegameContext context,
-                              WorkforceService workforce, VanillaBypassService bypass, PromptService prompts) {
+                              WorkforceService workforce, VanillaBypassService bypass, PromptService prompts,
+                              de.farmpulse.rpsim.config.RpsimProperties props) {
+        this.props = props;
         this.settings = settings;
         this.registry = registry;
         this.context = context;
@@ -125,6 +130,43 @@ public class SettingsController {
         return new Views.FieldSettingsView(sg.isFieldHintsEnabled(), sg.isFieldsTracked());
     }
 
+    /** Roadmap V3.1 R31-B: burdening events of the authorities, switched per savegame. */
+    @GetMapping("/api/settings/burdening-events")
+    @Transactional(readOnly = true)
+    public Views.BurdenSettingsView burdeningEvents() {
+        return burdenView(context.requireActive());
+    }
+
+    @PutMapping("/api/settings/burdening-events")
+    @Transactional
+    public Views.BurdenSettingsView saveBurdeningEvents(@Valid @RequestBody Requests.BurdenSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setBurdenAreaCheck(r.areaCheck());
+        sg.setBurdenFertilizer(r.fertilizer());
+        sg.setBurdenDisease(r.disease());
+        sg.setBurdenSickLeave(r.sickLeave());
+        if (r.nightWork() != null) { // Roadmap V3.1 R31-D (null = unchanged, older clients)
+            sg.setBurdenNightWork(r.nightWork());
+        }
+        if (r.cropDamage() != null) {
+            sg.setBurdenCropDamage(r.cropDamage());
+        }
+        if (r.dieselTheft() != null) {
+            sg.setBurdenDieselTheft(r.dieselTheft());
+        }
+        if (r.investors() != null) { // Roadmap V3.2 R32-I1: large investors (not a burden, same settings card)
+            sg.setInvestorsEnabled(r.investors());
+        }
+        return burdenView(sg);
+    }
+
+    private Views.BurdenSettingsView burdenView(Savegame sg) {
+        return new Views.BurdenSettingsView(sg.isBurdenAreaCheck(), sg.isBurdenFertilizer(), sg.isBurdenDisease(),
+                sg.isBurdenSickLeave(), sg.isBurdenNightWork(), sg.isBurdenCropDamage(), sg.isBurdenDieselTheft(),
+                sg.getTonePreset().name(),
+                props.getFormulas().getBurdeningEvents().getIdyllicFactor(), sg.isInvestorsEnabled());
+    }
+
     /** Roadmap V3 R3-T2: optional farm name, heads the chronicle (without it the map name). */
     @GetMapping("/api/settings/farm")
     @Transactional(readOnly = true)
@@ -141,20 +183,26 @@ public class SettingsController {
         return new Views.FarmSettingsView(sg.getFarmName(), sg.getMapName());
     }
 
-    private AiSettingsView view(AiSettingsService.View v) {
+    private AiSettingsView view(AiSettingsService.View v, HttpServletRequest req) {
         List<String> providers = registry.ids().stream().filter(id -> !"FAKE".equals(id)).toList();
-        return new AiSettingsView(v.provider(), v.model(), v.baseUrl(), v.apiKeySet(), providers);
+        return new AiSettingsView(v.provider(), v.model(), v.baseUrl(), v.apiKeySet(), providers,
+                NetworkAddresses.isLoopback(req.getRemoteAddr()));
     }
 
     @GetMapping("/api/settings/ai")
-    public AiSettingsView ai() {
-        return view(settings.view());
+    public AiSettingsView ai(HttpServletRequest req) {
+        return view(settings.view(), req);
     }
 
+    /**
+     * Review 10/2026 Phase 0.4 (S-2): only on the gaming PC - the key goes to the configured address, so a device in
+     * the home network must not be able to redirect it.
+     */
     @PutMapping("/api/settings/ai")
-    public AiSettingsView save(@Valid @RequestBody AiSettingsRequest r) {
+    public AiSettingsView save(@Valid @RequestBody AiSettingsRequest r, HttpServletRequest req) {
+        NetworkAddresses.requireGamePc(req.getRemoteAddr());
         registry.byId(r.provider()); // validates the id
-        return view(settings.save(r.provider(), r.model(), r.apiKey(), r.baseUrl()));
+        return view(settings.save(r.provider(), r.model(), r.apiKey(), r.baseUrl()), req);
     }
 
     /** Tone preset is fixed since the onboarding (read-only). */

@@ -1,0 +1,9 @@
+Ihr Hof gefällt mir – Angebot über {{amount}} €
+Guten Tag,
+
+ich bin für {{investorKind}} unterwegs und habe mir Ihren Hof genauer angesehen. Ihr letztes Jahr hat mich überzeugt: Ich würde gern {{amount}} € in Ihren Betrieb investieren. In der App „Bank“ unter „Investoren“ finden Sie {{packages}} Pakete mit Kapitalart, Laufzeit und Gegenleistung – wählen Sie eins oder lehnen Sie ab.
+
+Bitte geben Sie mir in den nächsten {{answerDays}} Tagen Bescheid.
+
+Viele Grüße
+{{characterName}}

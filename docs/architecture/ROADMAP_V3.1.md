@@ -123,8 +123,8 @@ Entscheidungen in `QUESTIONS.md` (02.10.2026). Der Mod führt `FIELD_WORK` und `
 nimmt `VEHICLE_SPAWN` mit Preis 0 (Leih-/Vorführmaschine, ohne Buchung) an und kennt die Rolle `SEASONAL_WORKER`.
 Bei den 🟡-Punkten nutzt der Mod den Hauptweg und den Fallback (A1: `createFieldUpdateTask()` und zusätzlich die
 Setter der Task). Nach dem Laden eines älteren Spielstands (R2-G) werden `FIELD_WORK` und `ANIMAL_TRANSFER` mit
-ihrem ganzen Batch erneut gesendet. Offen bleibt nur die Sperre des Viehhandels während einer Tierseuche: sie kommt
-mit B4. Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitt 21.
+ihrem ganzen Batch erneut gesendet. Die Sperre des Viehhandels während einer Tierseuche ist seit B4 (05.10.2026)
+umgesetzt. Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitt 21.
 
 ### R31-A1 Lohnunternehmer bearbeitet dein Feld
 
@@ -211,7 +211,7 @@ Maschine zur Probe hin.
   - Nicht genug Platz oder Tiere: `FAILED` mit `NO_ANIMAL_SPACE` / `NOT_ENOUGH_ANIMALS`.
 - [x] Der Viehhändler (`LIVESTOCK_TRADER`) bleibt für Geschäfte außerhalb des Dorfs. Die Nachbarn sind persönlicher,
   und es gibt Klatsch.
-- [ ] Während einer Tierseuche (B4) ist der Handel mit der betroffenen Tierart gesperrt. *(folgt mit B4)*
+- [x] Während einer Tierseuche (B4) ist der Handel mit der betroffenen Tierart gesperrt. *(seit B4)*
 - [x] Offene Entscheidung (`QUESTIONS.md`): Bieten Nachbarn von sich aus an, oder nur auf Anfrage?
 
 **Beleg:**
@@ -275,27 +275,37 @@ steht auf dem Hof und verschwindet am Ende der Leihzeit. An einem Schneetag zahl
 Alle Punkte folgen dem V2-Muster der Ämter (R2-E): Mail mit Frist, Vorgang unter **Ämter**, Bezahlen oder Beantragen
 per Knopf, Säumnis und Kontrolle mit Vorankündigung. Werte unter `rpsim.formulas.authority.*` bzw. eigenen Blöcken.
 
+**Stand 05.10.2026: umgesetzt** (Backend, Mod, Hof-Tablet, Doku). Die Werte stehen unter
+`rpsim.formulas.burdening-events`, `direct-payment`, `investment-grant`, `fertilizer-rules`, `animal-disease`,
+`social-insurance` und `sick-leave`; Entscheidungen in `QUESTIONS.md` (05.10.2026), darunter die offene Frage
+R31-B / R31-D für B: jedes belastende Ereignis ist je Spielstand schaltbar (Einstellungen → *Belastende Ereignisse*),
+im Weltmodus „idyllisch“ gibt es keine Tierseuche und Kontrollen, Kürzungen, Bußgelder der Düngeverordnung und
+Ausfälle nur mit Faktor 0,5. Der Mod exportiert `fields[].sprayType` (B3); beim 🟡-Punkt wertet das Backend ohne
+`sprayType` bzw. mit `fertilizer-rules.require-spray-type: false` den Fallback (nur `sprayLevel`). Rückforderungen der
+Förderung und der Beitrag der Berufsgenossenschaft (neue Rolle `SOCIAL_INSURANCE`) laufen wie ein Steuerbescheid.
+Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitte 21 (21.5, 21.8) und 23.
+
 ### R31-B1 Sammelantrag und Flächenprämie
 
-- [ ] Einmal im FS25-Jahr ein **Sammelantrag** mit Stichtag (Konfig-Periode, Vorschlag Mai = Periode 3). Das Formular
+- [x] Einmal im FS25-Jahr ein **Sammelantrag** mit Stichtag (Konfig-Periode, Vorschlag Mai = Periode 3). Das Formular
   ist mit den eigenen Feldern und Kulturen vorbefüllt (R2-C1). Der Spieler bestätigt oder korrigiert die Kultur je Feld
   aus einer Liste. Verpachtete Felder (R3-L) gehören nicht dazu, gepachtete schon.
-- [ ] Auszahlung der **Flächenprämie** je Hektar (`DIRECT_PAYMENT`) zu einem festen Termin (Konfig-Periode).
-- [ ] **Vor-Ort-Kontrolle:** Ein Anteil der Anträge wird geprüft (Wahrscheinlichkeit aus der Konfig). Weicht die
+- [x] Auszahlung der **Flächenprämie** je Hektar (`DIRECT_PAYMENT`) zu einem festen Termin (Konfig-Periode).
+- [x] **Vor-Ort-Kontrolle:** Ein Anteil der Anträge wird geprüft (Wahrscheinlichkeit aus der Konfig). Weicht die
   angegebene Kultur von der exportierten ab, wird gekürzt, im Wiederholungsfall stärker. Die Fruchtfolge-Regeln
   (R2-E2) fließen als Auflagen ein.
-- [ ] Verspätet → Abzug je Tag, nicht gestellt → keine Prämie.
+- [x] Verspätet → Abzug je Tag, nicht gestellt → keine Prämie.
 
 **Beleg:** – (Daten aus R2-C1, Ablauf wie R2-E1/E2).
 
 ### R31-B2 Investitionsförderung
 
-- [ ] Vor einem Kauf stellt der Spieler beim Amt einen **Förderantrag**: Art (Stall/Gebäude oder Maschine), geplante
+- [x] Vor einem Kauf stellt der Spieler beim Amt einen **Förderantrag**: Art (Stall/Gebäude oder Maschine), geplante
   Summe, Frist. Nach der Bewilligung (Bearbeitungszeit, mit Bürokraft kürzer, R3-P1) muss er innerhalb der Frist
   wirklich kaufen.
-- [ ] Nachweis aus dem Buchungsjournal: `SHOP_PROPERTY_BUY` bzw. `SHOP_VEHICLE_BUY` (R2-B, im Spiel geprüft) summiert ab
+- [x] Nachweis aus dem Buchungsjournal: `SHOP_PROPERTY_BUY` bzw. `SHOP_VEHICLE_BUY` (R2-B, im Spiel geprüft) summiert ab
   der Bewilligung. Ein Kauf **vor** der Bewilligung zählt nicht (vorzeitiger Maßnahmenbeginn).
-- [ ] Zuschuss = Förderquote × anerkannte Summe, gedeckelt (Konfig), als `INVESTMENT_GRANT`. Wer das gekaufte Objekt
+- [x] Zuschuss = Förderquote × anerkannte Summe, gedeckelt (Konfig), als `INVESTMENT_GRANT`. Wer das gekaufte Objekt
   innerhalb einer Bindungsfrist verkauft (`SHOP_VEHICLE_SELL` im Journal), muss anteilig zurückzahlen (Rechnung wie
   `TAX_BILL`).
 
@@ -303,14 +313,14 @@ per Knopf, Säumnis und Kontrolle mit Vorankündigung. Werte unter `rpsim.formul
 
 ### R31-B3 Düngeverordnung
 
-- [ ] **Sperrfrist:** In den Konfig-Perioden des Winters ist organischer Dünger auf Ackerland verboten. Der Mod
+- [x] **Sperrfrist:** In den Konfig-Perioden des Winters ist organischer Dünger auf Ackerland verboten. Der Mod
   exportiert je eigenem Feld `sprayType` als Namen aus der Tabelle `FieldSprayType` (z. B. `LIQUID_MANURE`, `MANURE`,
   `LIME`). Wechselt ein Feld in der Sperrfrist auf `LIQUID_MANURE` oder `MANURE` und steigt `sprayLevel`, kündigt das
   Amt eine Kontrolle an. Im Wiederholungsfall folgt ein Bußgeld (`FINE`) und Ansehensverlust.
-- [ ] **Güllelager:** Steht der Füllgrad des Güllelagers eines Stalls (Bedingung aus `husbandries[].conditions`, R2-A7)
+- [x] **Güllelager:** Steht der Füllgrad des Güllelagers eines Stalls (Bedingung aus `husbandries[].conditions`, R2-A7)
   lange über der Schwelle, warnt der Tierpfleger bzw. die Genossenschaft. Kurz vor der Sperrfrist kommt eine Erinnerung
   („Jetzt noch Gülle fahren, ab November ist Schluss“).
-- [ ] Alle Schwellen und Perioden als Platzhalter in `rpsim.formulas.fertilizer-rules.*`.
+- [x] Alle Schwellen und Perioden als Platzhalter in `rpsim.formulas.fertilizer-rules.*`.
 
 **Beleg:** ✅ `field/FieldState.lua` (Dump): Feld `sprayType`. ✅ `field/FieldManager.lua`: Werte
 `FieldSprayType.NONE`, `LIQUID_MANURE`, `MANURE`, `LIME`. ✅ Güllelager als Eintrag von `getConditionInfos` (R2-A7,
@@ -322,14 +332,14 @@ zurück? **Fallback:** Nur `sprayLevel`-Anstieg in der Sperrfrist werten und die
 
 ### R31-B4 Tierseuche und Sperrzone
 
-- [ ] Seltenes Ereignis (Konfig, im idyllischen Weltmodus aus): Eine Seuche (z. B. Afrikanische Schweinepest,
+- [x] Seltenes Ereignis (Konfig, im idyllischen Weltmodus aus): Eine Seuche (z. B. Afrikanische Schweinepest,
   Geflügelpest) trifft eine Tierart in der Region. Das Amt richtet eine Sperrzone für eine Anzahl Perioden ein.
-- [ ] Folgen im Tool:
+- [x] Folgen im Tool:
   - Viehhandel (A3) und Angebote des Viehhändlers für diese Tierart sind gesperrt.
   - Tierarzt-Pflichtuntersuchung (`VET_INVOICE`).
   - Auflagen mit Frist (Stall mit guter Gesundheit, R2-A7).
   - Nachrichten und Klatsch.
-- [ ] Die Tierpreise des Spiels ändert das Tool **nicht** (nicht geprüft, siehe
+- [x] Die Tierpreise des Spiels ändert das Tool **nicht** (nicht geprüft, siehe
   [Bewusst nicht aufgenommen](#bewusst-nicht-aufgenommen)). Die Preise im Handel mit den Nachbarn (A3) sinken nach
   Formel.
 
@@ -337,12 +347,12 @@ zurück? **Fallback:** Nur `sprayLevel`-Anstieg in der Sperrfrist werten und die
 
 ### R31-B5 Berufsgenossenschaft, Arbeitsunfall und Krankheit
 
-- [ ] Jahresbeitrag der landwirtschaftlichen Berufsgenossenschaft (Konfig: Grundbetrag + je Hektar + je Mitarbeiter)
+- [x] Jahresbeitrag der landwirtschaftlichen Berufsgenossenschaft (Konfig: Grundbetrag + je Hektar + je Mitarbeiter)
   als `SOCIAL_INSURANCE`, Bescheid unter **Ämter**.
-- [ ] **Krankheit und Arbeitsunfall:** Selten (Konfig), ein Mitarbeiter fällt für einige Spieltage aus. Er ist in dieser
+- [x] **Krankheit und Arbeitsunfall:** Selten (Konfig), ein Mitarbeiter fällt für einige Spieltage aus. Er ist in dieser
   Zeit `ON_LEAVE` in `EMPLOYEE_ROSTER`, das Gehalt läuft weiter. Unfälle werden wahrscheinlicher bei hoher
   Arbeitsbelastung (Stunden aus R2-A4) und schlechtem Maschinenzustand (`condition`). Gute Bedingungen senken das Risiko.
-- [ ] Genesungswünsche als Wertschätzung, Tagebucheintrag.
+- [x] Genesungswünsche als Wertschätzung, Tagebucheintrag.
 
 **Beleg:** – (Backend; `ON_LEAVE` gibt es seit R2-A0).
 
@@ -354,56 +364,69 @@ Kontrollankündigung. Ein kranker Mitarbeiter fährt ein paar Tage keinen Helfer
 
 ## D – Dorfleben
 
+**Stand 06.10.2026: umgesetzt** (Backend, Mod, Simulator, Hof-Tablet, Doku). Die Werte stehen unter
+`rpsim.formulas.village-newspaper`, `village-chat`, `stammtisch`, `night-work`, `crop-damage`, `farm-holiday`,
+`school-visit`, `coop-shares`, `coop-assembly`, `coop-board` und `diesel-theft`; Entscheidungen in `QUESTIONS.md`
+(05.10.2026). Nachtarbeit (D4), Flurschaden (D5, anfangs aus) und Dieselklau (D8) sind wie B je Spielstand schaltbar;
+im Weltmodus „idyllisch“ gibt es keinen Dieselklau, Vertrauensverluste und Entschädigungen von D4/D5 zählen halb. Neue
+Apps **Dorfblatt** und **Dorfchat**; Stammtisch, Schulbesuch, Generalversammlung und Vorstandssitzung laufen als
+Vorgänge im **Kalender**, Ferien auf dem Hof und Genossenschaftsanteile als Karten im **Handel**, das Tankschloss in der
+**Werkstatt**, der Baustein „Diebstahl“ in der **Versicherung**, die Flurschaden-Forderung in der **Flurkarte**. Neue
+Rollen `POLICE` und `SCHOOL`, neue Buchungsgründe `FARM_HOLIDAY_SETUP` und `TANK_LOCK`. Der Mod exportiert
+`calendar.dayTimeMs`, `vehiclePositions` (mit `FieldState`-Stichprobe) und `assets.vehicles[].fuel` und führt
+`VEHICLE_FUEL` aus. Bei den 🟡-Punkten von D5 gilt der Fallback (standardmäßig aus, Hinweis vor der ersten Beschwerde).
+Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitte 21.6 und 24.
+
 ### R31-D1 Dorfzeitung
 
-- [ ] Neue App **„Dorfblatt“**: eine Ausgabe je FS25-Periode, optional zusätzlich zur Monatsmitte. Rubriken:
+- [x] Neue App **„Dorfblatt“**: eine Ausgabe je FS25-Periode, optional zusätzlich zur Monatsmitte. Rubriken:
   - Aus dem Dorf: Feste, Zu- und Wegzüge, Vereine.
   - Vom Hof: deine öffentlichen Taten, z. B. Sponsoring, Hofladen, Rekordernte, Winterdienst.
   - Markt: Preisentwicklung aus `prices`, Gerüchte ohne Gewähr.
   - Amtliches: Stichtage, Sperrzonen, Kontrollen.
   - Kleinanzeigen: offene Angebote von Nachbarn (R3-H, A2, A3).
-- [ ] **Fakten aus dem Backend, Text von der KI**, ohne KI mit Vorlagen. Die Zeitung nennt nur, was öffentlich ist
+- [x] **Fakten aus dem Backend, Text von der KI**, ohne KI mit Vorlagen. Die Zeitung nennt nur, was öffentlich ist
   (`PublicActionEvent`). Private Geldsachen erscheinen nie. Ausnahme: Öffentlich gewordene Zahlungsausfälle, wie beim
   Dorf-Ansehen.
-- [ ] Ältere Ausgaben bleiben lesbar. Die Chronik-Datei (R3-T2) kann die Titelzeilen übernehmen.
+- [x] Ältere Ausgaben bleiben lesbar. Die Chronik-Datei (R3-T2) kann die Titelzeilen übernehmen.
 
 **Beleg:** – (Backend und Oberfläche).
 
 ### R31-D2 Dorf-Gruppenchat
 
-- [ ] Neue App **„Dorfchat“** im Stil eines Messengers: Gruppe „Dorf“ plus Gruppen für Vereine (R2-E4) und Nachbarn.
-- [ ] Nachrichten der Charaktere:
+- [x] Neue App **„Dorfchat“** im Stil eines Messengers: Gruppe „Dorf“ plus Gruppen für Vereine (R2-E4) und Nachbarn.
+- [x] Nachrichten der Charaktere:
   - kurze Ankündigungen („Morgen Grünschnittabfuhr“),
   - Hilfegesuche (Links auf R3-H4, R3-H5 und A3),
   - Klatsch und Glückwünsche.
 
   Ton und Häufigkeit wie beim Dorfleben (`VillageLifeService`), Obergrenze je Tag.
-- [ ] Der Spieler kann in Gruppen schreiben. Es gelten die Regeln von „Nachricht verfassen“: Ton-Klassifikator,
+- [x] Der Spieler kann in Gruppen schreiben. Es gelten die Regeln von „Nachricht verfassen“: Ton-Klassifikator,
   Pacing-Limit, keine Mechanik über Freitext.
 
 **Beleg:** – (Backend und Oberfläche).
 
 ### R31-D3 Stammtisch
 
-- [ ] Wiederkehrende Einladung in die Dorfkneipe (feste Periode oder alle N Spieltage, Konfig). Zusage per Knopf oder
+- [x] Wiederkehrende Einladung in die Dorfkneipe (feste Periode oder alle N Spieltage, Konfig). Zusage per Knopf oder
   als Frage im Spiel (F2).
-- [ ] Wer hingeht:
+- [x] Wer hingeht:
   - Vertrauensbonus bei den Anwesenden,
   - das nächste Gerücht (`MarketEventType.RUMOR`) ist mit höherer Wahrscheinlichkeit richtig
     (Aufschlag auf `rpsim.formulas.market.rumor-accurate-probability`, heute 0,7),
   - ab und zu ein Tipp auf eine anstehende Versteigerung oder einen verkaufsbereiten Feldbesitzer.
-- [ ] Wer nie kommt, gilt irgendwann als „eigenbrötlerisch“: kleiner Abzug beim Dorf-Ansehen, gedeckelt.
+- [x] Wer nie kommt, gilt irgendwann als „eigenbrötlerisch“: kleiner Abzug beim Dorf-Ansehen, gedeckelt.
 
 **Beleg:** – (Backend; Gerüchte aus `MarketEventEngine`).
 
 ### R31-D4 Beschwerden über Nachtarbeit
 
-- [ ] Laufen Helfer der Spieler-Farm (`workforce.activeJobs`, R2-A4) in der Nacht (Tageszeit aus
+- [x] Laufen Helfer der Spieler-Farm (`workforce.activeJobs`, R2-A4) in der Nacht (Tageszeit aus
   `environment.dayTime`, Konfig z. B. 22–6 Uhr), sammelt das Backend Nachtstunden.
-- [ ] In der **Erntezeit** (eigene Felder `HARVESTABLE`) zeigt das Dorf Verständnis, und es gibt keine Beschwerde.
+- [x] In der **Erntezeit** (eigene Felder `HARVESTABLE`) zeigt das Dorf Verständnis, und es gibt keine Beschwerde.
   Sonst kommt nach einer Schwelle eine Beschwerde eines Dorfbewohners, erst freundlich, dann genervt. Folgen: kleiner
   Vertrauensverlust, Klatsch in der Dorfzeitung.
-- [ ] Abschaltbar, Werte in `rpsim.formulas.night-work.*`.
+- [x] Abschaltbar, Werte in `rpsim.formulas.night-work.*`.
 
 **Beleg:** ✅ `workforce.activeJobs` (R2-A4) und die Tageszeit (`environment.dayTime`, heute schon in
 `RPSimGameAdapter:getGameTime`) werden exportiert. Der Export muss die Tageszeit als eigenes Feld mitgeben
@@ -411,15 +434,15 @@ Kontrollankündigung. Ein kranker Mitarbeiter fährt ein paar Tage keinen Helfer
 
 ### R31-D5 Flurschaden
 
-- [ ] Der Mod exportiert alle 10 s eine Stichprobe der Positionen eigener Fahrzeuge, die gerade gefahren werden
+- [x] Der Mod exportiert alle 10 s eine Stichprobe der Positionen eigener Fahrzeuge, die gerade gefahren werden
   (`getIsControlled()` oder `getIsAIActive()`). Für jede Position bestimmt er:
   - `farmlandId` über `g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)`,
   - ob dort ein Feld mit Frucht steht, über eine Stichprobe mit `FieldState` an dieser Stelle (wie der V2-Fallback
     `fieldState:update(x, z)`).
-- [ ] Backend: Mehrere Stichproben in Folge auf dem **bestellten Feld eines Nachbarn**, ohne laufenden Auftrag auf
+- [x] Backend: Mehrere Stichproben in Folge auf dem **bestellten Feld eines Nachbarn**, ohne laufenden Auftrag auf
   diesem Feld, ergeben eine Beschwerde des Besitzers („Da sind ja Fahrspuren quer durch meinen Raps!“). Folgen:
   Vertrauensverlust, bei Wiederholung eine Entschädigungsforderung (Formular zahlen/ablehnen, wie R2-D2).
-- [ ] Mindestens N Stichproben in Folge (Konfig), damit kurzes Abkürzen am Feldrand nicht zählt. Abschaltbar.
+- [x] Mindestens N Stichproben in Folge (Konfig), damit kurzes Abkürzen am Feldrand nicht zählt. Abschaltbar.
 
 **Beleg:** ✅ `Economy/FarmlandManager.md` (LUADOC): `getFarmlandIdAtWorldPosition(worldPosX, worldPosZ)`. ✅
 Fahrzeugposition über `getWorldTranslation(self.rootNode)` (Dump `Vehicle.lua`). ✅ `FieldState:update(x, z)` als
@@ -431,49 +454,49 @@ Beschwerde („Pass auf, wo du langfährst“).
 
 ### R31-D6 Ferien auf dem Bauernhof und Hofführungen
 
-- [ ] **Ferien auf dem Bauernhof:** einmalige Einrichtung (Konfig-Betrag, Formular), danach monatliche Gäste. Die
+- [x] **Ferien auf dem Bauernhof:** einmalige Einrichtung (Konfig-Betrag, Formular), danach monatliche Gäste. Die
   Einnahmen (`GUEST_INCOME`) hängen ab von:
   - Saison: Sommer und Ferien höher,
   - Dorf-Ansehen,
   - Tieren auf dem Hof mit guter Gesundheit (R2-A7).
-- [ ] Die Gäste reagieren auf echte Werte:
+- [x] Die Gäste reagieren auf echte Werte:
   - schlechte Stallwerte → schlechte Bewertungen,
   - Nachtarbeit (D4) → Beschwerde über Lärm,
   - Güllefahren in der Hauptsaison (B3-Daten) → Beschwerde über den Geruch.
-- [ ] **Hofführungen für Schulklassen:** Anfragen der Schule, Zusage per Knopf. Stärkt das Dorf-Ansehen und bringt eine
+- [x] **Hofführungen für Schulklassen:** Anfragen der Schule, Zusage per Knopf. Stärkt das Dorf-Ansehen und bringt eine
   kleine Aufwandsentschädigung. Voraussetzung sind Tiere mit guter Gesundheit.
 
 **Beleg:** – (Backend; Daten aus R2-A7, D4, B3).
 
 ### R31-D7 Genossenschaftsanteile
 
-- [ ] Anteile an der Genossenschaft (`COOPERATIVE`) zeichnen (Formular, feste Stückelung). Jährliche Dividende nach
+- [x] Anteile an der Genossenschaft (`COOPERATIVE`) zeichnen (Formular, feste Stückelung). Jährliche Dividende nach
   dem Jahresabschluss (`COOP_DIVIDEND`), abhängig von der Marktlage (Durchschnitt der Preise im Jahr, Konfig).
-- [ ] **Generalversammlung** einmal im Jahr: Abstimmung über ein Thema (Ja/Nein, auch als Frage im Spiel, F2), z. B. ein
+- [x] **Generalversammlung** einmal im Jahr: Abstimmung über ein Thema (Ja/Nein, auch als Frage im Spiel, F2), z. B. ein
   neues Getreidelager oder eine höhere Dividende. Das Ergebnis bestimmt eine Formel aus den Stimmen der Charaktere und
   deiner.
-- [ ] Ab einer Anteilszahl und gutem Vertrauen: **Wahl in den Vorstand**. Das bringt Vorteile nach Formel, z. B. frühere
+- [x] Ab einer Anteilszahl und gutem Vertrauen: **Wahl in den Vorstand**. Das bringt Vorteile nach Formel, z. B. frühere
   Gerüchte, Vorrang bei Vorkontrakten (R3-M2) und etwas Ansehen, aber auch Pflichttermine im Kalender.
-- [ ] Kündigung der Anteile mit Frist (Konfig), Rückzahlung zum Nennwert.
+- [x] Kündigung der Anteile mit Frist (Konfig), Rückzahlung zum Nennwert.
 
 **Beleg:** – (Backend).
 
 ### R31-D8 Dieselklau
 
-- [ ] Seltenes Ereignis (Konfig, im idyllischen Weltmodus aus): Nachts fehlt Diesel in einer abgestellten eigenen
+- [x] Seltenes Ereignis (Konfig, im idyllischen Weltmodus aus): Nachts fehlt Diesel in einer abgestellten eigenen
   Maschine.
-- [ ] Neue Anweisung `VEHICLE_FUEL { vehicleId, delta }` (nur negativ). Der Mod prüft:
+- [x] Neue Anweisung `VEHICLE_FUEL { vehicleId, delta }` (nur negativ). Der Mod prüft:
   - das Fahrzeug gehört der Spieler-Farm, niemand sitzt drin, kein Helfer fährt,
   - es hat einen Diesel-Tank (`getConsumerFillUnitIndex(FillType.DIESEL)`).
 
   Dann zieht er höchstens den vorhandenen Stand ab (`getFillUnitFillLevel`,
   `addFillUnitFillLevel(farmId, fillUnitIndex, -menge, FillType.DIESEL, ToolType.UNDEFINED, nil)`). Elektrische und
   Methan-Fahrzeuge bleiben verschont.
-- [ ] Danach Mail der Polizei bzw. Klatsch („Bei Müllers haben sie auch schon abgezapft“). Ist der Schaden groß, zahlt
+- [x] Danach Mail der Polizei bzw. Klatsch („Bei Müllers haben sie auch schon abgezapft“). Ist der Schaden groß, zahlt
   die Versicherung (Sturm/Hagel-Vertrag, neuer Baustein „Diebstahl“, Konfig).
-- [ ] Gegenmaßnahme: **Tankschloss** bei der Werkstatt kaufen (Formular, einmalig je Fahrzeug). Es senkt die
+- [x] Gegenmaßnahme: **Tankschloss** bei der Werkstatt kaufen (Formular, einmalig je Fahrzeug). Es senkt die
   Wahrscheinlichkeit für dieses Fahrzeug stark.
-- [ ] `assets.vehicles[].fuel` (Dieselstand) wird exportiert, damit das Backend nur Fahrzeuge mit genug Diesel wählt.
+- [x] `assets.vehicles[].fuel` (Dieselstand) wird exportiert, damit das Backend nur Fahrzeuge mit genug Diesel wählt.
 
 **Beleg:**
 - ✅ `Specializations/FillUnit.md` (LUADOC): `addFillUnitFillLevel(farmId, fillUnitIndex, delta, fillType, toolType,
@@ -489,22 +512,30 @@ Beschwerde. Nach einem Dieselklau fehlt der Diesel im Tank der Maschine.
 
 ## K – Hofkarte
 
+**Stand 06.10.2026: umgesetzt** (Mod, Backend, Hof-Tablet, Doku). Entscheidungen in `QUESTIONS.md` (06.10.2026): In der
+Karte *Feldübersicht* der Flurkarte schaltet **Karte / Tabelle** zwischen der neuen SVG-Karte und den bisherigen
+Kacheln um (Karte als Standard, sobald Umrisse da sind; ein älterer Mod zeigt nur die Kacheln mit Hinweis). Der Mod
+liest die Umrisse einmal je Spielstart, das Backend liefert sie unter `GET /api/field-map` mit Besitzer, Phase und den
+Symbolen (Auftrag, Versteigerung, Hinweis). Beim 🟡-Punkt startet der Schalter `MIRROR_Z` mit `false` (wie die
+Ingame-Karte: x nach rechts, z nach unten). Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Zeile 21.7 und
+Abschnitt 25.
+
 ### R31-K1 Felder als Karte
 
-- [ ] Der Mod exportiert beim Missionsstart `market_context.fieldShapes[]`:
+- [x] Der Mod exportiert beim Missionsstart `market_context.fieldShapes[]`:
   - je Feld die Eckpunkte des Umrisses (`field.polygonPoints`, Weltkoordinaten x/z über `getWorldTranslation`,
     vereinfacht auf höchstens N Punkte),
   - `farmlandId` und `name`,
   - dazu `mapSize` = `g_currentMission.terrainSize`.
 
   Die Umrisse ändern sich nicht, ein Export je Missionsstart genügt.
-- [ ] Neue Ansicht in der Flurkarte: **Karte** neben **Tabelle** (SVG, keine Kartenbibliothek). Farben:
+- [x] Neue Ansicht in der Flurkarte: **Karte** neben **Tabelle** (SVG, keine Kartenbibliothek). Farben:
   - eigene Felder nach Phase (`EMPTY` / `GROWING` / `HARVESTABLE` / `HARVESTED` / `WITHERED`),
   - gepachtete Felder schraffiert,
   - verpachtete Felder (R3-L) umrandet,
   - Nachbarfelder (R3-H1) blass mit Namen des Besitzers,
   - Aufträge, Versteigerungen und Hinweise als Symbole.
-- [ ] Klick auf ein Feld öffnet die bekannte Feldkarte mit den Aktionen: Verkaufen, Verpachten, Lohnunternehmer (A1),
+- [x] Klick auf ein Feld öffnet die bekannte Feldkarte mit den Aktionen: Verkaufen, Verpachten, Lohnunternehmer (A1),
   Familienfeld.
 
 **Beleg:** ✅ `field/Field.lua` (Dump): `self.polygonPoints` (Knoten des Feldumrisses), `self.posX`/`posZ` über

@@ -60,7 +60,9 @@ class FinanceNarrationServiceTest {
     }
 
     private List<String> messages() {
-        return jobs.findBySavegameOrderByIdAsc(sg).stream().map(NarrationJob::getEventType).toList();
+        // Roadmap V3.1 R31-D2: the village chat congratulates as well - not a message of the finance figures
+        return jobs.findBySavegameOrderByIdAsc(sg).stream().map(NarrationJob::getEventType)
+                .filter(t -> !t.startsWith("CHAT_")).toList();
     }
 
     @Test

@@ -8,6 +8,7 @@
 -- luacheck: globals g_i18n g_fieldManager g_fruitTypeManager FruitType FieldGroundType Platform
 -- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
 -- luacheck: globals StoreSpecies StoreItemUtil VehicleLoadingData VehicleLoadingState FieldSprayType
+-- luacheck: globals FillType ToolType FieldState getWorldTranslation
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -177,6 +178,8 @@ function RPSimGameAdapter:collectCalendar()
             year = env.currentYear or 1,
             monotonicDay = env.currentMonotonicDay or env.currentDay or 0,
             periodName = name,
+            -- Roadmap V3.1 R31-D4: time of day in ms since midnight (environment.dayTime, as in getGameTime)
+            dayTimeMs = env.dayTime,
         }
     end, nil)
 end
@@ -295,6 +298,18 @@ function RPSimGameAdapter:currentPeriod()
         return nil
     end
     return env.currentYear or 1, env.currentPeriod
+end
+
+--- Booking statement: game time, day in the period and continuous day of a booking (cheap - called for every
+-- booking). Fields are nil when the environment does not know them.
+function RPSimGameAdapter:currentBookingTime()
+    local env = safe(function() return g_currentMission.environment end, nil)
+    if env == nil then
+        return {}
+    end
+    local day = env.currentMonotonicDay or env.currentDay
+    return { gameTime = (day or 0) * RPSimConfig.MS_PER_GAME_DAY + (env.dayTime or 0),
+        day = env.currentDayInPeriod, monotonicDay = day }
 end
 
 function RPSimGameAdapter.seasonName(current)
@@ -422,7 +437,9 @@ function RPSimGameAdapter:collectFarmFacts()
                         xmlFilename = v.configFileName, category = safe(function()
                             local item = g_storeManager:getItemByXMLFilename(v.configFileName)
                             return item ~= nil and item.categoryName or nil
-                        end, nil) }
+                        end, nil),
+                        -- Roadmap V3.1 R31-D8: diesel level and tank capacity
+                        fuel = safe(function() return RPSimGameAdapter.dieselFuel(v) end, nil) }
                 elseif state == "LEASED" then
                     -- Leasing costs per vehicle have no documented API yet (manual test plan) - list only.
                     raw.leasedVehicles[#raw.leasedVehicles + 1] = { uniqueId = v:getUniqueId() }
@@ -493,6 +510,8 @@ function RPSimGameAdapter:collectFarmFacts()
             return true
         end)
     end
+    -- Roadmap V3.1 R31-D5: positions of the own vehicles being driven
+    raw.vehiclePositions = self:collectVehiclePositions()
     -- Roadmap V3 R3-H2 / R3-H5
     raw.tradeStorage = self:collectTradeStorage()
     raw.missionLimitReached = self:missionLimitReached()
@@ -548,7 +567,110 @@ function RPSimGameAdapter:collectMarketContext(conflictMods)
         end
         return true
     end)
+    -- Roadmap V3.1 R31-K1: field outlines for the map of the Flurkarte (read once per mission start)
+    raw.fieldShapes = self:collectFieldShapes()
+    -- Roadmap V3.3 R33-F4: the crops of the map for the field book (read once per mission start)
+    raw.fruitTypes = self:collectFruitTypes()
     return raw
+end
+
+--- Roadmap V3.3 R33-F4 (contract R33-Q1): every crop of the map for the crop dropdown of the field book.
+-- g_fruitTypeManager:getFruitTypes() (LUADOC Fruits/FruitTypeManager.md); per fruit type: name and index
+-- (FruitTypeDesc), the standard product getFillTypeNameByFruitTypeIndex, the title of its fill type
+-- (FruitTypeDesc.fillType = the FillTypeDesc, FillTypeDesc.title), regrows and needsRolling (FruitTypeDesc.md). Further
+-- products come from the fruit type converters (g_fruitTypeManager.fruitTypeConverters): a converter is a table keyed
+-- by the fruit type index with { fillTypeIndex, conversionFactor }, read that way by the cutter
+-- (spec.fruitTypeConverters[fruitTypeIndex].fillTypeIndex, LUADOC Specializations/Cutter.md). The crops do not change
+-- during a game: read once and kept. nil without a fruit type manager.
+function RPSimGameAdapter:collectFruitTypes()
+    if self.fruitTypeCache ~= nil then
+        return self.fruitTypeCache
+    end
+    local fruitTypes = safe(function() return g_fruitTypeManager:getFruitTypes() end, nil)
+    if type(fruitTypes) ~= "table" then
+        return nil
+    end
+    local converters = safe(function() return g_fruitTypeManager.fruitTypeConverters end, nil)
+    local list = {}
+    for _, desc in pairs(fruitTypes) do
+        safe(function()
+            local e = { name = desc.name, regrows = desc.regrows == true, needsRolling = desc.needsRolling ~= false }
+            e.fillType = safe(function() return g_fruitTypeManager:getFillTypeNameByFruitTypeIndex(desc.index) end, nil)
+            e.title = safe(function() return desc.fillType.title end, nil)
+            local products = {}
+            for _, converter in pairs(type(converters) == "table" and converters or {}) do
+                local entry = type(converter) == "table" and converter[desc.index] or nil
+                if type(entry) == "table" and entry.fillTypeIndex ~= nil then
+                    products[#products + 1] = safe(function()
+                        return g_fillTypeManager:getFillTypeNameByIndex(entry.fillTypeIndex)
+                    end, nil)
+                end
+            end
+            e.products = products
+            list[#list + 1] = e
+            return true
+        end)
+    end
+    self.fruitTypeCache = list
+    return list
+end
+
+--- Roadmap V3.3 R33-F3: field, crop and product of litres a harvesting machine got into its tank, or nil when it does
+-- not stand on a farmland of the player farm (missions on other farms' fields, roads). Farmland at the position of the
+-- machine (getWorldTranslation(rootNode) as in Combine:addCutterArea, g_farmlandManager:getFarmlandIdAtWorldPosition,
+-- LUADOC Economy/FarmlandManager.md), owner getFarmlandOwner (WorkArea:getIsAccessibleAtWorldPosition). Crop =
+-- inputFruitType; without it the fruit type of the product (getFruitTypeIndexByFillTypeIndex), the same fallback
+-- Combine:addCutterArea uses for the straw (LUADOC Specializations/Combine.md).
+function RPSimGameAdapter:harvestEntry(combine, inputFruitType, outputFillType)
+    local x, _, z = getWorldTranslation(combine.rootNode)
+    local farmlandId = g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)
+    if type(farmlandId) ~= "number" or farmlandId <= 0
+        or g_farmlandManager:getFarmlandOwner(farmlandId) ~= self:getFarmId() then
+        return nil
+    end
+    local fruitIndex = inputFruitType
+    if fruitIndex == nil or (FruitType ~= nil and fruitIndex == FruitType.UNKNOWN) then
+        fruitIndex = g_fruitTypeManager:getFruitTypeIndexByFillTypeIndex(outputFillType)
+    end
+    local fruitType = fruitIndex ~= nil and g_fruitTypeManager:getFruitTypeNameByIndex(fruitIndex) or nil
+    local fillType = g_fillTypeManager:getFillTypeNameByIndex(outputFillType)
+    if type(fruitType) ~= "string" or type(fillType) ~= "string" then
+        return nil
+    end
+    return { farmlandId = farmlandId, fruitType = fruitType, fillType = fillType }
+end
+
+--- Roadmap V3.1 R31-K1: the outline of every field of the map - the nodes of field.polygonPoints (dump field/Field.lua)
+-- as world x / z via getWorldTranslation, the farmland (field.farmland) and the field name, plus the map size
+-- g_currentMission.terrainSize (LUADOC Economy/FarmlandManager.md). The outlines do not change during a game: they are
+-- read once and kept for the following exports. nil without a field manager or map size (normalised by
+-- RPSimMarketContext.buildFieldShapes, which also thins the points out).
+function RPSimGameAdapter:collectFieldShapes()
+    if self.fieldShapeCache ~= nil then
+        return self.fieldShapeCache
+    end
+    local mapSize = safe(function() return g_currentMission.terrainSize end, nil)
+    local fields = safe(function() return g_fieldManager.fields end, nil)
+    if type(mapSize) ~= "number" or mapSize <= 0 or fields == nil then
+        return nil
+    end
+    local list = {}
+    for _, field in pairs(fields) do
+        safe(function()
+            if field.farmland == nil or type(field.polygonPoints) ~= "table" then
+                return true
+            end
+            local points = {}
+            for _, node in ipairs(field.polygonPoints) do
+                local x, _, z = getWorldTranslation(node)
+                points[#points + 1] = { x = x, z = z }
+            end
+            list[#list + 1] = { farmlandId = field.farmland.id, name = field:getName(), points = points }
+            return true
+        end)
+    end
+    self.fieldShapeCache = { mapSize = mapSize, fields = list }
+    return self.fieldShapeCache
 end
 
 --- Current balance of the player farm (farm.money, as read in collectFarmFacts and by FS25_UsedPlus).
@@ -593,10 +715,12 @@ end
 -- RPSIM_<REASON> instead of the FS25 money type.
 function RPSimGameAdapter:addMoney(amount, reason, note)
     self.bookingReason = reason
+    self.bookingNote = note -- booking statement: the note of the tool booking
     local ok, err = pcall(function()
         g_currentMission:addMoney(amount, self:getFarmId(), self:moneyTypeFor(reason), true, true)
     end)
     self.bookingReason = nil
+    self.bookingNote = nil
     if not ok then
         return false, tostring(err)
     end
@@ -779,6 +903,114 @@ function RPSimGameAdapter:removeVehicle(vehicleId)
     return true
 end
 
+-- ---------------------------------------------------------------------------------------------- Roadmap V3.1 R31-D
+
+--- R31-D8: diesel of a vehicle with a diesel tank - the consumer fill unit of FillType.DIESEL (LUADOC
+-- Specializations/Motorized.md getConsumerFillUnitIndex, pattern of Vehicles/VehicleSystem.md) with its level and
+-- capacity (Specializations/FillUnit.md getFillUnitFillLevel / getFillUnitCapacity). nil without a diesel tank
+-- (electric and methane vehicles, implements).
+function RPSimGameAdapter.dieselFuel(v)
+    if v.getConsumerFillUnitIndex == nil or FillType == nil or FillType.DIESEL == nil then
+        return nil
+    end
+    local index = v:getConsumerFillUnitIndex(FillType.DIESEL)
+    if index == nil then
+        return nil
+    end
+    return { liters = v:getFillUnitFillLevel(index), capacity = v:getFillUnitCapacity(index) }
+end
+
+--- R31-D5 / R31-D8: driven right now - somebody sits in it (Enterable:getIsControlled) or a helper drives
+-- (Vehicle:getIsAIActive).
+function RPSimGameAdapter.isDriven(v)
+    local controlled = safe(function() return v.getIsControlled ~= nil and v:getIsControlled() end, false)
+    local ai = safe(function() return v.getIsAIActive ~= nil and v:getIsAIActive() end, false)
+    return controlled == true or ai == true
+end
+
+--- R31-D5: a crop stands at x / z - an own FieldState sampled at the position (FieldState.new() and
+-- fieldState:update(x, z), dump field/FieldState.lua, the R2-C1 fallback) with a fruit, a growth state above 0 and not
+-- cut (FruitTypeDesc:getIsCut). nil when it cannot be read.
+function RPSimGameAdapter.cropAt(x, z)
+    return safe(function()
+        local state = FieldState.new()
+        state:update(x, z)
+        if not state.isValid then
+            return false
+        end
+        local index = state.fruitTypeIndex
+        if index == nil or (FruitType ~= nil and index == FruitType.UNKNOWN) or (state.growthState or 0) <= 0 then
+            return false
+        end
+        local desc = g_fruitTypeManager:getFruitTypeByIndex(index)
+        if desc ~= nil and desc.getIsCut ~= nil and desc:getIsCut(state.growthState) then
+            return false
+        end
+        return true
+    end, nil)
+end
+
+--- R31-D5: the own vehicles being driven at export time with their position (getWorldTranslation(vehicle.rootNode),
+-- dump Vehicle.lua), the farmland there (g_farmlandManager:getFarmlandIdAtWorldPosition, LUADOC
+-- Economy/FarmlandManager.md) and the crop sample. Normalised by RPSimFarmFacts.buildVehiclePositions.
+function RPSimGameAdapter:collectVehiclePositions()
+    local farmId = self:getFarmId()
+    local out = {}
+    for _, v in pairs(vehicleList()) do
+        safe(function()
+            if v:getOwnerFarmId() ~= farmId or v.rootNode == nil or not RPSimGameAdapter.isDriven(v) then
+                return true
+            end
+            local x, _, z = getWorldTranslation(v.rootNode)
+            out[#out + 1] = { uniqueId = v:getUniqueId(), x = x, z = z,
+                farmlandId = safe(function() return g_farmlandManager:getFarmlandIdAtWorldPosition(x, z) end, nil),
+                onCrop = RPSimGameAdapter.cropAt(x, z) }
+            return true
+        end)
+    end
+    return out
+end
+
+--- R31-D8: VEHICLE_FUEL - diesel taken out of a parked vehicle of the player farm: nobody inside, no helper, a diesel
+-- tank; at most the level in the tank (addFillUnitFillLevel(farmId, fillUnitIndex, -amount, FillType.DIESEL,
+-- ToolType.UNDEFINED, nil), LUADOC Specializations/FillUnit.md). Result { liters } = diesel actually taken.
+function RPSimGameAdapter:vehicleFuel(ins)
+    local v = safe(function() return g_currentMission.vehicleSystem:getVehicleByUniqueId(ins.vehicleId) end, nil)
+    if v == nil then
+        return false, "VEHICLE_NOT_FOUND"
+    end
+    local farmId = self:getFarmId()
+    if safe(function() return v:getOwnerFarmId() end, nil) ~= farmId then
+        return false, "NOT_OWN_VEHICLE"
+    end
+    if RPSimGameAdapter.isDriven(v) then
+        return false, "VEHICLE_IN_USE"
+    end
+    local index = safe(function()
+        if v.getConsumerFillUnitIndex == nil or FillType == nil or FillType.DIESEL == nil then
+            return nil
+        end
+        return v:getConsumerFillUnitIndex(FillType.DIESEL)
+    end, nil)
+    if index == nil then
+        return false, "NO_DIESEL_TANK"
+    end
+    local level = safe(function() return v:getFillUnitFillLevel(index) end, 0) or 0
+    local amount = math.min(level, -ins.delta)
+    if amount > 0 then
+        local ok, err = pcall(function()
+            v:addFillUnitFillLevel(farmId, index, -amount, FillType.DIESEL, ToolType.UNDEFINED, nil)
+        end)
+        if not ok then
+            return false, tostring(err)
+        end
+    end
+    local after = safe(function() return v:getFillUnitFillLevel(index) end, nil) or (level - amount)
+    local taken = math.max(0, math.floor(level - after + 0.5))
+    RPSimLog.info("Diesel taken from %s: %d l", tostring(ins.vehicleId), taken)
+    return true, nil, { liters = taken }
+end
+
 -- ---------------------------------------------------------------------------------------------- Roadmap V3.1 R31-A
 
 --- The field of a farmland (g_fieldManager.fields, field.farmland set by FieldManager:loadMapData), nil if none.
@@ -795,12 +1027,13 @@ end
 -- AbstractFieldMission:finishField / PlowMission:getFieldFinishTask (LUADOC Field/AbstractFieldMission.md,
 -- Field/PlowMission.md): the values of field:getFieldState() are changed, state:createFieldUpdateTask(),
 -- task:setField(field), g_fieldManager:addFieldUpdateTask(task). The changed values are also set with the setters of
--- the task (dump field/FieldManager.lua: setFruit, setGroundType, setSprayType, setLimeLevel, setPlowLevel) - the
--- fallback of manual test plan 21.1, harmless when the task already carries them.
+-- the task (dump field/FieldManager.lua: setFruit, setGroundType, setSprayType, setSprayLevel, setLimeLevel,
+-- setPlowLevel) - the fallback of manual test plan 21.1, harmless when the task already carries them.
 --   PLOW      no crop, groundType PLOWED, plow level full (g_fieldManager.plowLevelMaxValue)
 --   CULTIVATE no crop, groundType CULTIVATED
 --   LIME      lime level full (limeLevelMaxValue), sprayType LIME
 --   SOW       setFruit(fruitIndex, 1), groundType SOWN (g_fruitTypeManager:getFruitTypeByName)
+--   FERTILIZE spray level +1 up to sprayLevelMaxValue, sprayType FERTILIZER (mineral fertiliser)
 --   HARVEST   the crop on its cutState (Fruits/FruitTypeDesc.md); the yield goes into the silo with the batch's
 --             STORAGE_TRANSFER
 -- FAILED with FIELD_NOT_FOUND, NOT_OWN_FIELD, MISSION_RUNNING (field.currentMission) or UNKNOWN_FRUIT_TYPE.
@@ -850,6 +1083,12 @@ function RPSimGameAdapter:fieldWork(ins)
             state.groundType = FieldGroundType.SOWN
             setters[#setters + 1] = function(task) task:setFruit(sowIndex, 1) end
             setters[#setters + 1] = function(task) task:setGroundType(FieldGroundType.SOWN) end
+        elseif ins.work == "FERTILIZE" then
+            local max = g_fieldManager.sprayLevelMaxValue or 2
+            state.sprayLevel = math.min(max, (state.sprayLevel or 0) + 1)
+            state.sprayType = FieldSprayType.FERTILIZER
+            setters[#setters + 1] = function(task) task:setSprayLevel(state.sprayLevel) end
+            setters[#setters + 1] = function(task) task:setSprayType(FieldSprayType.FERTILIZER) end
         else -- HARVEST
             local desc = g_fruitTypeManager:getFruitTypeByIndex(state.fruitTypeIndex)
             if desc == nil or desc.cutState == nil then
@@ -1009,8 +1248,85 @@ function RPSimGameAdapter.husbandryState(p)
             return list
         end, nil)
         state.freeSlots = safe(function() return p:getNumOfFreeAnimalSlots() end, nil)
+        state.storage = RPSimGameAdapter.husbandryMilkStorage(p)
         return state
     end, nil)
+end
+
+--- Roadmap V3.2 R32-Q1: the milk sorts in the storage of a husbandry (dump animals/husbandry/placeables, LUADOC
+-- Specializations/PlaceableHusbandry.md and PlaceableHusbandryMilk.md): the sorts are spec_husbandryMilk.fillTypes
+-- (subType.output.milk.fillType of every subtype), amount = getHusbandryFillLevel(fillTypeIndex, farmId) and capacity =
+-- getHusbandryCapacity(fillTypeIndex, farmId) (both read the storage through the unloading station, 0 without one).
+-- Returns { {fillType, amount, capacity} } or nil without the milk specialization.
+function RPSimGameAdapter.husbandryMilkStorage(p)
+    return safe(function()
+        local spec = p.spec_husbandryMilk
+        if spec == nil or spec.fillTypes == nil then
+            return nil
+        end
+        local farmId = p:getOwnerFarmId()
+        local list = {}
+        for _, index in ipairs(spec.fillTypes) do
+            local name = safe(function() return g_fillTypeManager:getFillTypeNameByIndex(index) end, nil)
+            if name ~= nil then
+                list[#list + 1] = { fillType = name,
+                    amount = safe(function() return p:getHusbandryFillLevel(index, farmId) end, 0),
+                    capacity = safe(function() return p:getHusbandryCapacity(index, farmId) end, 0) }
+            end
+        end
+        return list
+    end, nil)
+end
+
+--- R32-Q1: HUSBANDRY_TRANSFER - milk out of the storage of an own husbandry (only taking out; used by R32-I3 type W3).
+-- The sort from g_fillTypeManager:getFillTypeIndexByName must be one of spec_husbandryMilk.fillTypes; the stock is
+-- checked with getHusbandryFillLevel, then removeHusbandryFillLevel(farmId, amount, fillTypeIndex) takes it out through
+-- the loading station and returns the amount NOT taken (the whole amount without a loading station; the game evaluates
+-- it the same way in PlaceableHusbandryWater / PlaceableHusbandryStraw). With a rest > 0 the taken part is booked back
+-- with addHusbandryFillLevelFromTool (as PlaceableHusbandryMilk:updateOutput adds the milk) and the result is
+-- INSUFFICIENT_STOCK. FAILED with HUSBANDRY_NOT_FOUND, UNKNOWN_FILLTYPE, WRONG_FILLTYPE or INSUFFICIENT_STOCK.
+function RPSimGameAdapter:husbandryTransfer(ins)
+    local p = self:husbandryByUniqueId(ins.husbandryUniqueId)
+    if p == nil then
+        return false, "HUSBANDRY_NOT_FOUND"
+    end
+    local index = safe(function() return g_fillTypeManager:getFillTypeIndexByName(ins.fillType) end, nil)
+    if index == nil then
+        return false, "UNKNOWN_FILLTYPE"
+    end
+    local milk = false
+    for _, i in ipairs(safe(function() return p.spec_husbandryMilk.fillTypes end, {})) do
+        if i == index then
+            milk = true
+            break
+        end
+    end
+    if not milk then
+        return false, "WRONG_FILLTYPE"
+    end
+    local farmId = self:getFarmId()
+    local level = safe(function() return p:getHusbandryFillLevel(index, farmId) end, 0)
+    if level + 0.001 < ins.amount then
+        return false, "INSUFFICIENT_STOCK"
+    end
+    local ok, rest = pcall(function() return p:removeHusbandryFillLevel(farmId, ins.amount, index) end)
+    if not ok then
+        return false, tostring(rest)
+    end
+    if type(rest) ~= "number" or rest ~= rest then
+        -- not documented as anything else; derive the rest from the stock so nothing is lost
+        rest = ins.amount - (level - safe(function() return p:getHusbandryFillLevel(index, farmId) end, level))
+    end
+    if rest > 0.001 then
+        local taken = ins.amount - rest
+        if taken > 0 then
+            safe(function() return p:addHusbandryFillLevelFromTool(farmId, taken, index, nil, nil, nil) end, nil)
+        end
+        return false, "INSUFFICIENT_STOCK"
+    end
+    RPSimLog.info("Husbandry transfer %s l %s (husbandry %s)", tostring(ins.amount), tostring(ins.fillType),
+        tostring(ins.husbandryUniqueId))
+    return true
 end
 
 -- ------------------------------------------------------------------------ Roadmap V2 R2-A: employees as helpers
@@ -1019,15 +1335,12 @@ end
 -- AIJobGoTo, AIJobDeliver, AIJobLoadAndDeliver, AIJobConveyor; dump ai/jobs/*.lua) keeps it in
 -- job.vehicleParameter:getVehicle() (AIParameterVehicle); the store item of vehicle.configFileName
 -- (g_storeManager:getItemByXMLFilename, LUADOC script/Shop/StoreManager.md) carries categoryNames and categoryName (the
--- first entry, upper case). Returns { farmId, categories = { ... }, name } or nil without a vehicle.
-function RPSimGameAdapter:jobVehicleInfo(job)
+-- first entry, upper case). Returns { farmId, categories = { ... }, name } or nil without a vehicle (categories stay
+-- empty when the store item cannot be read).
+local function vehicleInfo(vehicle)
     return safe(function()
-        local vehicle = job.vehicleParameter ~= nil and job.vehicleParameter:getVehicle() or nil
-        if vehicle == nil then
-            return nil
-        end
         local categories = {}
-        local item = g_storeManager:getItemByXMLFilename(vehicle.configFileName)
+        local item = safe(function() return g_storeManager:getItemByXMLFilename(vehicle.configFileName) end, nil)
         if item ~= nil then
             for _, c in ipairs(item.categoryNames or {}) do
                 categories[#categories + 1] = string.upper(c)
@@ -1039,6 +1352,57 @@ function RPSimGameAdapter:jobVehicleInfo(job)
         return { farmId = safe(function() return vehicle:getOwnerFarmId() end, nil), categories = categories,
             name = safe(function() return vehicle:getFullName() end, nil) }
     end, nil)
+end
+
+function RPSimGameAdapter:jobVehicleInfo(job)
+    local vehicle = safe(function() return job.vehicleParameter:getVehicle() end, nil)
+    if vehicle == nil then
+        return nil
+    end
+    return vehicleInfo(vehicle)
+end
+
+--- AutoDrive (FS25_AutoDrive, scripts/Specialization.lua) drives without an AIJob: AutoDrive:startAutoDrive (server)
+-- sets vehicle.ad.stateModule:setActive(true), ADStateModule:isActive() reads it, the vehicle never shows up in
+-- AISystem:getActiveJobs(). Active AutoDrive vehicles of the player farm: { {vehicle, categories, name} }.
+function RPSimGameAdapter:collectAutoDriveVehicles()
+    local farmId = self:getFarmId()
+    local list = {}
+    for _, v in pairs(vehicleList()) do
+        if self:isAutoDriveActive(v) then
+            local info = vehicleInfo(v)
+            if info ~= nil and info.farmId == farmId then
+                list[#list + 1] = { vehicle = v, categories = info.categories, name = info.name }
+            end
+        end
+    end
+    return list
+end
+
+function RPSimGameAdapter:isAutoDriveActive(vehicle)
+    return safe(function() return vehicle.ad.stateModule:isActive() == true end, false)
+end
+
+--- Stops an AutoDrive vehicle the way AutoDrive's own start/stop key does (ADInputManager:input_start_stop):
+-- ad.isStoppingWithError = true keeps AutoDrive from handing the vehicle over to Courseplay or a game helper
+-- (AutoDrive:stopAutoDrive), then vehicle:stopAutoDrive() (server only). Returns true when stopped.
+function RPSimGameAdapter:stopAutoDrive(vehicle, text)
+    local ok, err = pcall(function()
+        if not vehicle.ad.stateModule:isActive() then
+            return
+        end
+        vehicle.ad.isStoppingWithError = true
+        vehicle.ad.stateModule:setLoopsDone(0)
+        vehicle:stopAutoDrive()
+    end)
+    if not ok then
+        RPSimLog.warning("Could not stop AutoDrive: %s", tostring(err))
+        return false
+    end
+    if text ~= nil then
+        self:notify(text, "CRITICAL")
+    end
+    return true
 end
 
 --- Running helper jobs of the player farm: AISystem:getActiveJobs() (FS25 ai/AISystem.lua), job.jobId (set by
@@ -1069,6 +1433,8 @@ end
 -- (FieldState.lua), g_fruitTypeManager:getFruitTypeNameByIndex / getFruitTypeByIndex /
 -- getFillTypeNameByFruitTypeIndex (FruitTypeManager), FruitTypeDesc min/maxHarvestingGrowthState, literPerSqm,
 -- getIsWithered / getIsCut (FruitTypeDesc). Fields without a valid state are left out. nil = no field manager.
+-- Roadmap V3.1 R31-B3: sprayType = name of FieldState.sprayType in the FieldSprayType table (FieldState.lua,
+-- FieldManager.lua: NONE, FERTILIZER, LIQUID_MANURE, MANURE, LIME ...), left out when not readable.
 function RPSimGameAdapter:collectFields()
     local farmId = self:getFarmId()
     return self:collectFieldsWhere(function(field)
@@ -1106,7 +1472,11 @@ function RPSimGameAdapter:collectFieldsWhere(accept)
             local e = { farmlandId = farmland.id, name = field:getName(), hectares = field.areaHa,
                 growthState = state.growthState, weedState = state.weedState, stoneLevel = state.stoneLevel,
                 sprayLevel = state.sprayLevel, limeLevel = state.limeLevel, plowLevel = state.plowLevel,
-                groundType = RPSimGameAdapter.groundTypeName(state.groundType) }
+                -- Roadmap V3.3 R33-F2: rolling / mulching levels of the same FieldState (FieldState.new, dump
+                -- field/FieldState.lua); left out by the normalisation when the state does not carry them
+                rollerLevel = state.rollerLevel, stubbleShredLevel = state.stubbleShredLevel,
+                groundType = RPSimGameAdapter.groundTypeName(state.groundType),
+                sprayType = RPSimGameAdapter.sprayTypeName(state.sprayType) }
             local index = state.fruitTypeIndex
             if index ~= nil and (FruitType == nil or index ~= FruitType.UNKNOWN) then
                 local desc = g_fruitTypeManager:getFruitTypeByIndex(index)
@@ -1300,6 +1670,20 @@ function RPSimGameAdapter.groundTypeName(value)
         return nil
     end
     for name, v in pairs(FieldGroundType) do
+        if v == value and type(name) == "string" and type(v) == "number" then
+            return name
+        end
+    end
+    return nil
+end
+
+--- Roadmap V3.1 R31-B3: name of a field spray type in the global FieldSprayType table (reverse lookup, numbers
+-- only), nil if unknown.
+function RPSimGameAdapter.sprayTypeName(value)
+    if value == nil or FieldSprayType == nil or type(FieldSprayType) ~= "table" then
+        return nil
+    end
+    for name, v in pairs(FieldSprayType) do
         if v == value and type(name) == "string" and type(v) == "number" then
             return name
         end

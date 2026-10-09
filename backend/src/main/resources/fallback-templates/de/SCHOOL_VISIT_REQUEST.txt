@@ -1,0 +1,6 @@
+Besuch einer Schulklasse
+Guten Tag,
+
+unsere Klasse würde gern einen Bauernhof mit Tieren besuchen. Hätten Sie Zeit für eine Hofführung? Als kleine Aufwandsentschädigung zahlen wir {{allowance}} €. Bitte sagen Sie in der App „Kalender“ innerhalb von {{answerDays}} Tagen zu oder ab.
+
+{{characterName}}

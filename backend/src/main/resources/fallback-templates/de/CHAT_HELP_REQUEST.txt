@@ -1,0 +1,2 @@
+Hilfe gesucht
+Kann mir jemand helfen? Ich suche Unterstützung: {{requestKind}} {{quantity}} {{what}}{{work}}. Details stehen unter dem Link.

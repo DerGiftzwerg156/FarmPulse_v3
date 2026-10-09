@@ -106,14 +106,25 @@ public class Employee extends SavegameScoped {
     @Column(name = "trainings", nullable = false, length = 255)
     private String trainings = "";
 
-    /** The training the employee is attending right now (away until trainingUntilGameTime), null = none. */
+    /**
+     * The booked training (away from trainingFromGameTime until trainingUntilGameTime - owner decision 2026-10-06: the
+     * whole next game day), null = none.
+     */
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "training_in_progress", length = 32)
     private Training trainingInProgress;
 
+    /** Start of the absence for the booked training (null = an older booking that started at once). */
+    @Column(name = "training_from_game_time")
+    private Long trainingFromGameTime;
+
     @Column(name = "training_until_game_time")
     private Long trainingUntilGameTime;
+
+    /** Owner decision 2026-10-06: first working day (start of a month) of a PENDING_START employee, then kept. */
+    @Column(name = "starts_at_game_time")
+    private Long startsAtGameTime;
 
     /** Roadmap V3 R3-P2: end of the training of an apprentice (null = no apprentice). */
     @Column(name = "apprenticeship_ends_at_game_time")
@@ -126,6 +137,17 @@ public class Employee extends SavegameScoped {
     /** Roadmap V3.1 R31-A5: satisfaction when the season ended (decides the application of the next year). */
     @Column(name = "season_end_satisfaction")
     private Double seasonEndSatisfaction;
+
+    /** Roadmap V3.1 R31-B5: SICKNESS or ACCIDENT until the game time (ON_LEAVE for the mod, salary continues). */
+    @Column(name = "absence_kind", length = 32)
+    private String absenceKind;
+
+    @Column(name = "absence_until_game_time")
+    private Long absenceUntilGameTime;
+
+    /** Roadmap V3.1 R31-B5: get-well wishes sent for the running absence. */
+    @Column(name = "get_well_sent", nullable = false)
+    private boolean getWellSent;
 
     public Set<Training> trainingSet() {
         Set<Training> set = EnumSet.noneOf(Training.class);

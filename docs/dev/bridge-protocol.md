@@ -139,15 +139,30 @@ investment, divestment, financing, ignore; unknown names count as operating by t
 
 | Field | Meaning | Source |
 | --- | --- | --- |
-| `activeJobs[].jobId` | Id of the running FS25 helper job | `AIJob.jobId` (`AIJob:setId`, dump `ai/jobs/AIJob.lua`); jobs from `g_currentMission.aiSystem:getActiveJobs()` (LUADOC `script/AI/AISystem.md`) |
+| `activeJobs[].jobId` | Id of the running FS25 helper job; **negative** = an AutoDrive drive (own id of the mod, new for every drive, not saved) | `AIJob.jobId` (`AIJob:setId`, dump `ai/jobs/AIJob.lua`); jobs from `g_currentMission.aiSystem:getActiveJobs()` (LUADOC `script/AI/AISystem.md`); AutoDrive vehicles: `vehicle.ad.stateModule:isActive()` (FS25_AutoDrive `scripts/Modules/StateModule.lua`) |
 | `activeJobs[].employeeId` | Tool employee assigned to the job (R2-A2); missing = helper without employee (R2-D3) | mod state |
 | `activeJobs[].title` | Title of the job; missing when the game returns an empty title | `job:getTitle()`: vehicle name for field work (`AIJobFieldWork:getTitle` → `vehicle:getName()`), helper name otherwise (`AIJob:getTitle` → `helper.title`) |
 | `workedGameMs` | Cumulative game time (ms) each employee drove a helper; key = `employeeId` as text | game time between two exports (`RPSimGameAdapter:getGameTime()`), stored in the savegame |
 
 **Built (R2-A0..A5):** the mod keeps the last `EMPLOYEE_ROSTER` (stored in the savegame, `FS25_RPSim.workforce`) and
-hooks `AIJob` with `Utils`:
+hooks the helper jobs with `Utils`. Three kinds of helpers are covered:
 
-- `AIJob.start` (appended): a job started by the player farm gets a free `ACTIVE` `MACHINE_OPERATOR` of the list
+- **Game helper** (`AIJobFieldWork`, `AIJobGoTo`, `AIJobDeliver`, `AIJobLoadAndDeliver`, `AIJobConveyor`): the methods
+  below are hooked on these classes when the mod's sources run.
+- **Courseplay** (`Courseplay_FS25`): its jobs (`CpAIJobFieldWork`, `CpAIJobBaleFinder`, `CpAIJobCombineUnloader`,
+  `CpAIJobSiloLoader`, `CpAIJobBunkerSilo`) are built with `CpObject(AIJob)` - a *shallow copy* of `AIJob`
+  (`scripts/CpObject.lua`) - and `CpAIJob` replaces `start` and `getIsStartable` without calling `AIJob`'s
+  (`scripts/ai/jobs/CpAIJob.lua`). Hooks on `AIJob` therefore never reached them (before this fix a Courseplay helper
+  got its operator only with the next export, no name, no strict limit, no training check). Now `RPSim.onStartMission`
+  hooks every class registered in `g_currentMission.aiJobTypeManager.jobTypes[i].classObject` (dump
+  `ai/AIJobTypeManager.lua`; Courseplay registers its jobs in its `loadMap`), and start / stop are hooked on `AISystem`
+  (below), which every job class passes. Methods copied from an already hooked class are not hooked twice.
+- **AutoDrive** (`FS25_AutoDrive`): drives **without an `AIJob`** (`AutoDrive:startAutoDrive` →
+  `vehicle.ad.stateModule:setActive(true)`, `scripts/Specialization.lua`), so no job hook sees it, and it books its own
+  wage in `AutoDrive:onUpdateTick` (setting *driverWages*). See *AutoDrive* below.
+
+- `AISystem.startJobInternal` (appended; dump `ai/AISystem.lua`: `job:start(startFarmId)`, then `addJob`;
+  `AISystem:startJob` sets `job.jobId` before): a job started by the player farm gets a free `ACTIVE` `MACHINE_OPERATOR` of the list
   (the backend sends the list sorted by skill, descending). "Schulungen": the operator must have every training the
   vehicle needs (see below); among the qualified ones the one with the fewest trainings drives (specialists stay free
   for their machines), ties in list order. No free (qualified) operator = vanilla helper. Job ids are new after
@@ -165,26 +180,43 @@ hooks `AIJob` with `Utils`:
   `CRITICAL` in-game notification naming the vehicle and the training. `getIsStartErrorText` returns
   `rpsim_ai_noTraining` for that state (🟡 the calling menu is not in the dump; the hook accepts a static and an
   instance call). Without the strict mode the vanilla helper drives as before.
-- `AIJob.getHelperName` (overwritten): returns the employee's name; the game messages (`AIMessage:getMessage`) use it.
+- `AIJob.getHelperName` (overwritten, also on the Courseplay classes): returns the employee's name; the game messages (`AIMessage:getMessage`) use it.
   🟡 whether HUD and map show the same name ([manual test plan 10.3](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)).
-- `AIJob.getPricePerMs` (overwritten, also on `AIJobFieldWork` / `AIJobConveyor`, which define their own): `0` for a
+- `AIJob.getPricePerMs` (overwritten, also on `AIJobFieldWork` / `AIJobConveyor`, which define their own, and on the
+  Courseplay classes, whose wage modifier multiplies `AIJob.getPricePerMs`): `0` for a
   job driven by an employee while `helperWageMode` is `EMPLOYEES`, so `AIJob:updateCost` books no game wage (the salary
   runs through the tool). `VANILLA` keeps the game wage.
-- `AIJob.stop` (appended): the employee is free again after the stop message.
+- `AISystem.stopJobInternal` (appended; calls `job:stop(aiMessage)`, which shows the stop message): the employee is free
+  again after the stop message. Without `AISystem` the mod falls back to `AIJob.start` / `AIJob.stop` (game helpers
+  only) and logs a warning. 🟡 that the hooks on the class `AISystem` reach `g_currentMission.aiSystem` (an instance of
+  `Class(AISystem)`; Courseplay hooks `AIJobTypeManager.getJobTypeIndex` the same way) - [manual test plan 10.22](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25).
+- **AutoDrive** (owner decisions 2026-10-06): every second (`RPSimBridge.AUTODRIVE_CHECK_MS`) the mod compares the active
+  AutoDrive vehicles of the player farm with the known drives. A new drive gets its own negative `jobId` and a free
+  operator by the same rules as a game helper ("Schulungen" included); it counts as a running helper for the strict
+  limit (also when a game helper or Courseplay asks `getIsStartable`), is exported in `activeJobs` (worked time, night
+  work, helpers without employee) and is stopped when its employee strikes. With `strictHelperLimit` a new drive over
+  the limit or without a free trained operator is stopped right away (AutoDrive has no documented hook before its
+  start): `vehicle.ad.isStoppingWithError = true`, `vehicle.ad.stateModule:setLoopsDone(0)`, `vehicle:stopAutoDrive()` -
+  the same calls as AutoDrive's own start/stop key (`ADInputManager:input_start_stop`), so AutoDrive does not hand the
+  vehicle over to Courseplay or a game helper - plus a `CRITICAL` notification; a vehicle is stopped once per drive. An
+  ended drive frees its operator before the next job starts (`AutoDrive:stopAutoDrive` deactivates the vehicle before
+  it hands it over). The AutoDrive **wage is not touched** - set *driverWages* in AutoDrive's settings (0 = no wage).
 - `strictHelperLimit`: `g_currentMission.maxNumHirables` = min(original value, active machine operators); the original
   value is remembered and written back when the switch is off or the map is unloaded. 🟡 whether the game resets it.
   The game only reads `maxNumHirables` in `AISystem:getAILimitedReached()`, which the map menu and the key in the
   vehicle ask before a start; mods like Courseplay or AutoDrive start helpers their own way. So the mod enforces the
   limit itself as well: `getIsStartable` refuses a job of the player farm with the own state `202`
   (`rpsim_ai_helperLimitStart`, plus a `CRITICAL` notification) while the farm already runs as many helpers as it has
-  active operators; and `AIJob.start` (appended) queues a job of the player farm started over that limit on the server,
+  active operators; and the start hook (`AISystem.startJobInternal`) queues a job of the player farm started over that limit on the server,
   which `RPSim:update` stops in the next frame (not inside `AISystem:startJob`) with the own AI message
   `RPSIM_HELPER_LIMIT` ("%s hält an: kein freier Maschinenführer (strenger Modus)"; fallback: the unknown-error message)
-  plus a notification. That job gets no operator. 🟡 whether the Courseplay / AutoDrive jobs run through `AIJob:start`
-  ([manual test plan 10.22](manual-test-plan.md#10-roadmap-v2-in-the-real-fs25)).
+  plus a notification. That job gets no operator. Courseplay starts through `AIJobStartRequestEvent` (its HUD and key,
+  `scripts/specializations/CpAIWorker.lua`), so its own `getIsStartable` (hooked via the job type manager) already
+  refuses; the stop after the start catches `AISystem:startJob` calls that skip it (AutoDrive's hand-over to a game
+  helper, `AutoDrive.passToExternalMod_AI`).
 - Worked time: at every export the game time since the last export is credited to the employees driving a running job
-  of the player farm (`aiSystem:getActiveJobs()`, `job.startedFarmId`). A rewound game time only resets the sample
-  point.
+  of the player farm (`aiSystem:getActiveJobs()`, `job.startedFarmId`) or an AutoDrive drive. A rewound game time only
+  resets the sample point.
 
 The backend counts the worked hours per game day (`WorkforceService`, R2-A4): above `workload.target-hours-per-day` the
 WORKLOAD need drops per extra hour, below it recovers; the positive monthly effect of an operator scales with the
@@ -323,8 +355,8 @@ More **optional** values for [`ROADMAP_V3.1.md`](../architecture/ROADMAP_V3.1.md
 blocks: `schemaVersion` stays `1`, a missing field or block means "not present" (older mod, or the feature is not
 built yet), an empty block is a real answer of the game. R31-Q1 fixes the contract only (`BridgeDtos`,
 `BridgeValidator`, the simulator schemas, `RPSimFarmFacts.build` / `RPSimMarketContext.build`). The mod **reads the
-values in the game with the features** (A4 `snowHeight` and `category` - read since R31-A4 -, B3 `sprayType`, D4
-`dayTimeMs`, D5 `vehiclePositions`, D8 `fuel`, K1 `fieldShapes`); until then they are missing. The bridge simulator exports them only in
+values in the game with the features** (A4 `snowHeight` and `category` - read since R31-A4 -, B3 `sprayType` - read since R31-B3 -, D4
+`dayTimeMs`, D5 `vehiclePositions` and D8 `fuel` - read since R31-D -, K1 `fieldShapes` - read since R31-K1 -); until then they are missing. The bridge simulator exports them only in
 the scenarios `winter-schnee`, `lohnunternehmer` and `viehhandel` (`fieldShapes` only in `lohnunternehmer`).
 
 ```json
@@ -349,7 +381,7 @@ the scenarios `winter-schnee`, `lohnunternehmer` and `viehhandel` (`fieldShapes`
 | `vehiclePositions` (D5) | Sample of the own vehicles **being driven** at export time (the export runs every 10 s), sorted by `uniqueId`; empty = none is driven | selection: `getIsControlled()` (LUADOC `Specializations/Enterable.md`) or `getIsAIActive()` (`Vehicles/Vehicle.md`) |
 | `vehiclePositions[].x` / `z` | World position in metres, rounded to 0.1 | `getWorldTranslation(vehicle.rootNode)` (dump `Vehicle.lua`) |
 | `vehiclePositions[].farmlandId` | Farmland at the position; missing for 0 (no farmland) | `g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)` (LUADOC `Economy/FarmlandManager.md`) |
-| `vehiclePositions[].onCrop` | A field with a crop stands at the position (optional) | sample `fieldState:update(x, z)` (dump `field/FieldState.lua`, R2-C1 fallback) |
+| `vehiclePositions[].onCrop` | A field with a crop stands at the position (optional): an own `FieldState.new()` sampled there is valid, has a fruit, a growth state above 0 and is not cut; missing when it cannot be read | sample `fieldState:update(x, z)` (dump `field/FieldState.lua`, R2-C1 fallback), `FruitTypeDesc:getIsCut` |
 
 `RPSimFarmFacts.build` leaves out a vehicle's `category` when empty and its `fuel` when incomplete or without a tank
 (`capacity` 0), a `dayTimeMs` outside one day, a `snowHeight` that is not a number (a negative one becomes 0), and
@@ -357,7 +389,110 @@ position entries without `uniqueId`, `x` or `z`. The backend validator refuses a
 `fuel` with `liters > capacity` or `capacity ≤ 0`, a negative `snowHeight`, a `dayTimeMs` outside one day and a position
 without `x` / `z` or with `farmlandId < 1`.
 
-## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, and on every `farm_facts` cycle when its content changed)
+### Roadmap V3.2 field (optional, R32-Q1)
+
+One more **optional** value for [`ROADMAP_V3.2.md`](../architecture/ROADMAP_V3.2.md), same rules as above
+(`schemaVersion` stays `1`, missing = older mod or a husbandry without milk). Unlike R3-Q / R31-Q the mod **reads it in
+the game since R32-Q** (owner decision 2026-10-08); it is needed only for the milk delivery to an investor (R32-I3,
+type W3). The bridge simulator exports it only in the scenario `investor-milch`.
+
+```json
+{ "husbandries": [{ "husbandryUniqueId": "hus_00003", "health": 90, "food": 0.75, "conditions": [],
+                    "storage": [{ "fillType": "MILK", "amount": 12000, "capacity": 30000 }] }] }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `husbandries[].storage[]` | The milk sorts in the storage of the husbandry: `{ fillType, amount, capacity }` in whole litres, like `tradeStorage`: only entries with `amount + capacity > 0`, sorted by `fillType` (FS25 fill type name, e.g. `MILK`); missing for a husbandry without milk | sorts: `spec_husbandryMilk.fillTypes` (`subType.output.milk.fillType` of every subtype, dump `animals/husbandry/placeables/PlaceableHusbandryMilk.lua`, LUADOC `Specializations/PlaceableHusbandryMilk.md`); `amount` = `getHusbandryFillLevel(fillTypeIndex, farmId)`, `capacity` = `getHusbandryCapacity(fillTypeIndex, farmId)` (both read the husbandry storage `spec.storage` through its unloading station, 0 without one; dump `PlaceableHusbandry.lua`, LUADOC `Specializations/PlaceableHusbandry.md`); name `g_fillTypeManager:getFillTypeNameByIndex` |
+
+**Built (R32-Q1):** `RPSimGameAdapter.husbandryMilkStorage` while the husbandries are collected
+(`RPSimGameAdapter.husbandryState`); `RPSimFarmFacts.build` rounds and filters as above and leaves out entries without
+`fillType` or with a value that is not a number. The backend validator refuses a blank `fillType` and a missing or
+negative `amount` / `capacity`. 🟡 Whether milk tank extensions in reach count too: manual test plan 28.1.
+
+### Roadmap V3.3 fields and block (optional, R33-Q1)
+
+More **optional** values for [`ROADMAP_V3.3.md`](../architecture/ROADMAP_V3.3.md) (field book), same rules as above
+(`schemaVersion` stays `1`, missing = older mod, an empty block is a real answer of the game). R33-Q1 fixed the
+contract (`BridgeDtos`, `BridgeValidator`, the simulator schemas, `RPSimFarmFacts.build` / `RPSimMarketContext.build`);
+**since R33-F the mod reads them in the game**: the levels with the fields (`RPSimGameAdapter:collectFields`), the
+harvest counter with its hooks and the crops of the map (`market_context.fruitTypes` below). The bridge simulator
+exports them only in the scenario `feldbuch`.
+
+```json
+{ "fields": [{ "farmlandId": 2, "name": "2", "hectares": 4.6, "fruitType": "WHEAT", "growthState": 8,
+               "weedState": 0, "stoneLevel": 0, "sprayLevel": 2, "limeLevel": 1, "plowLevel": 1,
+               "rollerLevel": 0, "stubbleShredLevel": 0 }],
+  "harvests": [{ "farmlandId": 5, "fruitType": "MAIZE", "fillType": "CHAFF", "liters": 52001 }] }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `fields[].rollerLevel` | Rolling level of the field (integer ≥ 0); the game's soil map shows state `1` as "needs rolling"; also in `npcFields` (same normalisation) | `FieldState.rollerLevel` (`FieldState.new`, dump `field/FieldState.lua`, LUADOC `Field/FieldState.md`); state `1` = `NEEDS_ROLLING` on `FieldDensityMap.ROLLER_LEVEL` (LUADOC `GUI/MapOverlayGenerator.md`); written by the roller (`FSDensityMapUtil.updateRollerArea`, LUADOC `Specializations/Roller.md`). 🟡 whether `field:getFieldState()` fills it: manual test plan 29.1 |
+| `fields[].stubbleShredLevel` | Mulching level of the field (integer ≥ 0); the soil map shows state `1` as "mulched"; also in `npcFields` | `FieldState.stubbleShredLevel` (same `FieldState.new`); state `1` = `MULCHED` on `FieldDensityMap.STUBBLE_SHRED_LEVEL` (`MapOverlayGenerator.md`); written by the mulcher (`FSDensityMapUtil.updateMulcherArea`, LUADOC `Specializations/Mulcher.md`). 🟡 as above, 29.1 |
+| `harvests` | Harvest counter, one entry per own field, crop and harvest product, sorted by `farmlandId`, `fruitType`, `fillType`; empty = nothing counted yet | see below |
+| `harvests[].farmlandId` | Farmland the harvesting machine stood on, only farmlands of the player farm | `g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)` (LUADOC `Economy/FarmlandManager.md`), owner `getFarmlandOwner` (LUADOC `Specializations/WorkArea.md`, `getIsAccessibleAtWorldPosition`); position `getWorldTranslation(self.rootNode)` as in `Combine:addCutterArea` |
+| `harvests[].fruitType` | Crop (FS25 fruit type name) | `inputFruitType` of `Combine:addCutterArea`; without it `g_fruitTypeManager:getFruitTypeIndexByFillTypeIndex(outputFillType)` - the same fallback `Combine:addCutterArea` uses for the straw (LUADOC `Specializations/Combine.md`) |
+| `harvests[].fillType` | Harvest product (FS25 fill type name, e.g. `MAIZE` or `CHAFF`) | `outputFillType` of `Combine:addCutterArea`, after the cutter's fruit type converter (LUADOC `Specializations/Cutter.md`, `onEndWorkAreaProcessing`) |
+| `harvests[].liters` | **Cumulative** litres (whole litres, ≥ 0) harvesting machines got into their tank on this field: the sum of the return values of `Combine:addCutterArea` (the litres booked into the tank after the rain and damage reduction; less when the tank is full). Kept in the mod savegame (`FS25_RPSim.xml`, `RPSimPersistence`, like `contractReports`): a reloaded older savegame brings back its older, lower value (owner decision 2026-10-08) | `Combine:addCutterArea` (LUADOC `Specializations/Combine.md`), called by `Cutter:onEndWorkAreaProcessing` (LUADOC `Specializations/Cutter.md`) |
+
+**Built (R33-Q1):** `RPSimFarmFacts.buildFields` adds the two levels when they are numbers ≥ 0 (rounded) and leaves
+them out otherwise; `RPSimFarmFacts.buildHarvests` keeps entries with a `farmlandId`, non-empty `fruitType` /
+`fillType` and `liters` ≥ 0 (whole litres) and sorts them. The backend validator refuses a negative level and a counter
+entry without `farmlandId`, with a blank `fruitType` / `fillType` or with missing or negative `liters`.
+
+**Built (R33-F3):** owner decision 2026-10-08, both ways: `RPSim.addCutterAreaHook` on `Combine.addCutterArea`
+(`Utils.overwrittenFunction`, counts its return value) and `RPSim.cutterEndHook` on `Cutter.onEndWorkAreaProcessing`,
+which wraps `addCutterArea` of the combine of the cutter (`spec_cutter.workAreaParameters.combineVehicle`) for the call
+and counts only when the main way did not (flag `RPSim.harvestCounted`), so nothing is counted twice (🟡 manual test plan
+29.2). `RPSimGameAdapter:harvestEntry` finds the farmland and owner as above. The counter (`RPSimHarvestCounter`,
+`state.harvests`) is saved in `FS25_RPSim.xml` (`harvests.counter(i)#farmlandId/fruitType/fillType/liters`) and
+exported only while a hook is installed. A contractor harvest (R31-A1) is a state jump of the field, not a combine: it
+is not counted here, the backend takes its litres from its own `STORAGE_TRANSFER IN` (R33-F3).
+
+### Booking statement block (optional, owner decisions 2026-10-06)
+
+**`bookings`** ("Kontoauszug"): the single bookings behind `finances`. Filled by the same `Farm:changeBalance` hook, so
+it is exported - and missing - together with `finances`. Required: `nextSeq` (≥ 1) and `entries[]`.
+
+```json
+{ "bookings": { "nextSeq": 43, "entries": [
+    { "seq": 40, "gameTime": 3459600000, "year": 2, "period": 8, "day": 2, "category": "AI", "amount": -1250,
+      "count": 37, "single": false },
+    { "seq": 41, "gameTime": 3466800000, "year": 2, "period": 8, "day": 2, "category": "SOLD_PRODUCTS", "amount": 5200,
+      "count": 6, "single": false, "liters": 24000, "fillType": "WHEAT", "sellPoint": "MillNorth" },
+    { "seq": 42, "gameTime": 3470400000, "year": 2, "period": 8, "day": 2, "category": "RPSIM_SALARY_PAYMENT",
+      "amount": -2400, "count": 1, "single": true, "note": "Gehalt Anna Berger" } ] } }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `nextSeq` | Running number the next entry gets. Entries at or after it no longer exist in the game (reload without saving) | mod state, stored in the savegame |
+| `entries[].seq` | Running number of the entry (unique per savegame, < `nextSeq`). An entry that is still summed up keeps its `seq`, so the backend updates it in place | mod |
+| `entries[].gameTime` | Game time of the first booking of the entry (`currentMonotonicDay` × 86 400 000 + `dayTime`) | `g_currentMission.environment` (as `getGameTime`) |
+| `entries[].year` / `.period` | FS25 year and period, like `finances` | `environment.currentYear` / `currentPeriod` |
+| `entries[].day` | Day in the period (optional) | `environment.currentDayInPeriod` |
+| `entries[].category` | Money type name as in `finances.byType` (`RPSIM_<REASON>` for tool bookings, `UNKNOWN` when not found) | as `finances` |
+| `entries[].amount` / `.count` | Sum (signed, rounded) and number of the bookings in the entry | hook |
+| `entries[].single` | `true`: a single booking - every tool booking and the money types of the mod config `bookingLogSingleTypes` (default `SHOP_VEHICLE_BUY`, `SHOP_VEHICLE_SELL`, `SHOP_PROPERTY_BUY`, `SHOP_PROPERTY_SELL`, `FIELD_BUY`, `FIELD_SELL`). `false`: the sum of a game day per money type, sales also per `fillType` and `sellPoint` | mod config |
+| `entries[].fillType` / `.sellPoint` / `.liters` | Only for bookings made while the game sells at a selling station: fill type name, sell point id (as in `prices`) and the litres sold (sum of `fillDelta`). 🟡 that the game books the sale inside `SellingStation:sellFillType` (manual test plan 26.2) - otherwise the booking stays without these fields | hook on `SellingStation.sellFillType` (already used for the FIXED contracts, T-05) sets the context around the original call |
+| `entries[].note` | Note of a tool booking (the `note` of its `MONEY_TRANSACTION`) | `RPSimGameAdapter:addMoney` |
+
+**Built:** the mod keeps the last `bookingLogEntries` entries (mod config, default 200) in the savegame
+(`FS25_RPSim.bookingLog`); the backend stores them permanently (`booking_entry`), updates entries in place by `seq` and
+deletes stored entries at or after `nextSeq`. A shop vehicle purchase (`SHOP_VEHICLE_BUY`) or sale
+(`SHOP_VEHICLE_SELL`) gets the names (`assets.vehicles[].name`) of the own vehicles that appeared or disappeared since
+the previous export - the rule of the investment grant (R31-B2); borrowed machines (R31-A2) and used machines of the
+neighbours (R3-V) do not count. One waiting purchase (sale): assigned. Several waiting: the names are shown on each
+as not assignable. Nothing within `rpsim.formulas.finance.statement-vehicle-match-exports` exports: no name. 🟡 the
+order of booking and vehicle spawn (manual test plan 26.3). The backend validator refuses entries without `seq`,
+`year`, `period` (1..12), `category` or `amount`, a `seq` ≥ `nextSeq` and a missing `nextSeq` / `entries`.
+
+## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, every 60 s, and on every `farm_facts` cycle when its content changed)
+
+The mod rewrites the file every `marketContextIntervalMs` (mod config, default 60 s real time) even when its content
+did not change; between two such writes it is written on every `farm_facts` cycle in which its content changed. The
+backend only processes a file whose text differs from the last one it read.
 
 ```json
 { "savegameId": "...", "mapName": "Erlengrund",
@@ -407,8 +542,11 @@ an older mod or the switch off (the simulator exports it only in `nachbarhandel`
 | `motorized` | Engine present (optional; 🟡 missing when the specs could not be read - the backend then uses the factor for motorised vehicles) | `storeItem.specs.power ~= nil` after `StoreItemUtil.loadSpecsFromXML(storeItem)` (dump `Vehicle.lua`, `Vehicle.calculateSellPrice`) |
 
 **`fieldShapes`** (optional, Roadmap V3.1 R31-K1, contract R31-Q1). Outline of every field of the map and the map
-size, read once at the mission start with K1 (the outlines never change); until then and with an older mod missing (the
-simulator exports it only in `lohnunternehmer`). `RPSimMarketContext.buildFieldShapes` rounds `x` / `z` to 0.1, keeps
+size, read once per mission since K1 (the outlines never change; later exports reuse them): the nodes of
+`field.polygonPoints` (dump `field/Field.lua`) as world x / z via `getWorldTranslation`, `field.farmland.id`,
+`field:getName()` and `mapSize` = `g_currentMission.terrainSize` (LUADOC `Economy/FarmlandManager.md`); with an older
+mod missing (the simulator exports it only in `lohnunternehmer`). The backend serves it with owner, phase and symbols
+at `GET /api/field-map` for the map of the Flurkarte. `RPSimMarketContext.buildFieldShapes` rounds `x` / `z` to 0.1, keeps
 at most `fieldShapeMaxPoints` (mod config, default 64) points per field - picked evenly along the outline, the first
 point stays -, drops fields with fewer than 3 points and sorts by `farmlandId`, then `name`; without a `mapSize > 0`
 the block is left out.
@@ -424,6 +562,30 @@ the block is left out.
 | `mapSize` | Size of the map in metres (the world origin lies in the map centre) | `g_currentMission.terrainSize` (LUADOC `Economy/FarmlandManager.md`) |
 | `fields[].farmlandId` / `name` | Farmland of the field and the field name the game shows | `field.farmland.id`, `field:getName()` (as for `fields`, R2-C1) |
 | `fields[].points` | Corners of the outline in world coordinates (x / z in metres), 3 to 64 points; 🟡 orientation to north on the map, manual test plan 21.7 | `field.polygonPoints` with `getWorldTranslation` per node (dump `field/Field.lua`, `Vehicle.lua`) |
+
+**`fruitTypes`** (optional, Roadmap V3.3, contract R33-Q1; read by the mod since R33-F4, once per mission start like
+`fieldShapes`, `RPSimGameAdapter:collectFruitTypes`). Every crop of the map, also
+those of map mods, for the crop dropdown of the field book (owner decision 2026-10-08: all crops of the map). Missing =
+not present (older mod or not built yet); the bridge simulator exports it only in the scenario `feldbuch`.
+
+```json
+{ "fruitTypes": [{ "name": "GRASS", "fillType": "GRASS_WINDROW", "title": "Gras", "regrows": true, "products": [] },
+                 { "name": "MAIZE", "fillType": "MAIZE", "title": "Mais", "regrows": false, "products": ["CHAFF"] }] }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| selection | All fruit types of the map, sorted by `name` | `g_fruitTypeManager:getFruitTypes()` (LUADOC `Fruits/FruitTypeManager.md`) |
+| `name` | Fruit type name (required, e.g. `WHEAT`) | `FruitTypeDesc.name` (LUADOC `Fruits/FruitTypeDesc.md`) |
+| `fillType` | Standard harvest product (optional) | `g_fruitTypeManager:getFillTypeNameByFruitTypeIndex(index)` (as `fields[].fillType`) |
+| `title` | Display name of the game, for crops without a German label in FarmPulse (optional) | `FruitTypeDesc.fillType` is the FillTypeDesc of the crop (`loadFromFoliageXMLFile`), its `title` (LUADOC `FillTypes/FillTypeDesc.md`) |
+| `regrows` | The crop grows again after a cut, e.g. grass (optional) | `FruitTypeDesc.regrows` (set by the foliage state `regrowthStart`, LUADOC `Fruits/FruitTypeDesc.md`) |
+| `needsRolling` | The crop is rolled after sowing (optional; owner decision 2026-10-09, R33-F4: the field book shows "nicht nötig" otherwise) | `FruitTypeDesc.needsRolling` (`seeding#needsRolling`, default `true`, LUADOC `Fruits/FruitTypeDesc.md`) |
+| `products` | Further harvest products from the fruit type converters, sorted, without `fillType` (optional, e.g. `MAIZE` → `CHAFF`) | `g_fruitTypeManager.fruitTypeConverters` (`addFruitTypeConverter`, `addFruitTypeConversion`); one converter = table keyed by the fruit type index with `{ fillTypeIndex, conversionFactor }` - read that way by the cutter (`spec.fruitTypeConverters[fruitTypeIndex].fillTypeIndex`, LUADOC `Specializations/Cutter.md`) |
+
+`RPSimMarketContext.buildFruitTypes` drops entries without `name` and repeated names, leaves out empty or wrongly typed
+optional values and removes empty, repeated and standard products. The backend validator refuses a blank `name`, a blank
+`fillType` and a blank product.
 
 
 ## `import/instructions.json` + `import/instructions.xml` (backend → mod)
@@ -457,22 +619,23 @@ optional `savegameId`.
 
 | type | fields |
 | --- | --- |
-| `MONEY_TRANSACTION` | `amount` (signed), `reason` ∈ `CREDIT_DISBURSEMENT, CREDIT_INSTALLMENT, CREDIT_PENALTY, CREDIT_CALLBACK, SALARY_PAYMENT, EMPLOYEE_EFFECT, SUBSIDY, STARTING_CAPITAL_ADJUSTMENT, FARMLAND_PURCHASE, FARMLAND_SALE, OTHER`, since TODO T-20/T-22 also `INSURANCE_PREMIUM, INSURANCE_PAYOUT, DAMAGE, WILDLIFE_COMPENSATION, VET_INVOICE, LIVESTOCK_PREMIUM, LEASE_PAYMENT, MAINTENANCE_FEE`, since Roadmap V2 (R2-Q1) also `TAX_PAYMENT, TAX_REFUND, FINE, FAMILY, SPONSORING, COMPENSATION`, since the Sondertilgung also `CREDIT_SPECIAL_REPAYMENT, CREDIT_PREPAYMENT_FEE` (the fee is sent in the same batch as the repayment; an older mod rejects the unknown reason and the backend reverses the Sondertilgung), since the "Schulungen" also `TRAINING` (a refused booking cancels the training), since Roadmap V3 (R3-Q1) also `LEASE_INCOME` (R3-L1), `GOODS_PURCHASE`, `GOODS_SALE` (R3-H3/H4, R3-M3), `VEHICLE_PURCHASE`, `VEHICLE_SALE` (R3-V2/V3) and `CONTRACT_PENALTY` (R3-M2), since Roadmap V3.1 (R31-Q1) also `CONTRACTOR_FEE` (R31-A1), `MACHINE_RENT` (A2), `LIVESTOCK_PURCHASE`, `LIVESTOCK_SALE` (A3), `WINTER_SERVICE` (A4), `DIRECT_PAYMENT` (B1), `INVESTMENT_GRANT` (B2), `SOCIAL_INSURANCE` (B5), `GUEST_INCOME` (D6), `COOP_SHARES` and `COOP_DIVIDEND` (D7); `note`. Each reason has its booking title `rpsim_money_<REASON>` in `modDesc.xml` |
+| `MONEY_TRANSACTION` | `amount` (signed), `reason` ∈ `CREDIT_DISBURSEMENT, CREDIT_INSTALLMENT, CREDIT_PENALTY, CREDIT_CALLBACK, SALARY_PAYMENT, EMPLOYEE_EFFECT, SUBSIDY, STARTING_CAPITAL_ADJUSTMENT, FARMLAND_PURCHASE, FARMLAND_SALE, OTHER`, since TODO T-20/T-22 also `INSURANCE_PREMIUM, INSURANCE_PAYOUT, DAMAGE, WILDLIFE_COMPENSATION, VET_INVOICE, LIVESTOCK_PREMIUM, LEASE_PAYMENT, MAINTENANCE_FEE`, since Roadmap V2 (R2-Q1) also `TAX_PAYMENT, TAX_REFUND, FINE, FAMILY, SPONSORING, COMPENSATION`, since the Sondertilgung also `CREDIT_SPECIAL_REPAYMENT, CREDIT_PREPAYMENT_FEE` (the fee is sent in the same batch as the repayment; an older mod rejects the unknown reason and the backend reverses the Sondertilgung), since the "Schulungen" also `TRAINING` (a refused booking cancels the training), since Roadmap V3 (R3-Q1) also `LEASE_INCOME` (R3-L1), `GOODS_PURCHASE`, `GOODS_SALE` (R3-H3/H4, R3-M3), `VEHICLE_PURCHASE`, `VEHICLE_SALE` (R3-V2/V3) and `CONTRACT_PENALTY` (R3-M2), since Roadmap V3.1 (R31-Q1) also `CONTRACTOR_FEE` (R31-A1), `MACHINE_RENT` (A2), `LIVESTOCK_PURCHASE`, `LIVESTOCK_SALE` (A3), `WINTER_SERVICE` (A4), `DIRECT_PAYMENT` (B1), `INVESTMENT_GRANT` (B2), `SOCIAL_INSURANCE` (B5), `GUEST_INCOME` (D6), `COOP_SHARES` and `COOP_DIVIDEND` (D7), since R31-D also `FARM_HOLIDAY_SETUP` (D6) and `TANK_LOCK` (D8), since the owner decisions 2026-10-06 also `SEVERANCE` (severance when a hiring is cancelled before the first working day), since Roadmap V3.2 (R32-Q1) also `INVESTOR_CAPITAL` (R32-I2), `INVESTOR_REPAYMENT` (I4/I5), `INVESTOR_PAYOUT` (I3) and `INVESTOR_COMPENSATION` (I4); `note`. Each reason has its booking title `rpsim_money_<REASON>` in `modDesc.xml` |
 | `PRICE_EVENT` / `MULTIPLIER` | `fillType`, `sellPoint`, `peakMultiplier`, `rampUpHours`, `holdHours`, `decayHours` (start = `gameTimeEarliest` or time of application) |
-| `PRICE_EVENT` / `FIXED` | `fillType`, `sellPoint`, `fixedPrice` (per 1000 l), `maxQuantity` (l), `deadlineGameTime`; precedence over `MULTIPLIER` for the same sell point/fill type. Roadmap V3 R3-M2: a forward contract sends it with `gameTimeEarliest` = start of the delivery month and `deadlineGameTime` = its end; the backend allows only one fixed price per sell point and fill type at a time |
+| `PRICE_EVENT` / `FIXED` | `fillType`, `sellPoint`, `fixedPrice` (per 1000 l), `maxQuantity` (l), `deadlineGameTime`; precedence over `MULTIPLIER` for the same sell point/fill type. Roadmap V3 R3-M2: a forward contract sends it with `gameTimeEarliest` = start of the delivery month and `deadlineGameTime` = its end; the backend allows only one fixed price per sell point and fill type at a time. Roadmap V3.2 R32-G3: a bulk order with a delivery month sends it the same way (`maxQuantity` = the whole order); a month in which the pair already carries a fixed price cannot be chosen. "Tage je Periode" changed (owner decision 2026-10-08): while the instruction is still pending (the mod waits for `gameTimeEarliest`), the backend moves `gameTimeEarliest` and `deadlineGameTime` to the new month boundaries (`OutboxService.reschedulePending`; the file is rebuilt from the pending instructions in every cycle) - for bulk orders and forward contracts; once the mod has it, it keeps its end |
 | `FARMLAND_TRANSFER` | `farmlandId`, `direction` ∈ `TO_PLAYER, FROM_PLAYER`, `price` (reference only). Without money (no batch) for the lease of an NPC field (TODO T-22) and - Roadmap V3 R3-L1 - the lease-out of an own field: `FROM_PLAYER` at the start (the game farms it as NPC field), `TO_PLAYER` at the end |
 | `REPAIR_VEHICLE` (TODO T-22) | `vehicleId` (uniqueId of an own vehicle), optional `targetDamage` (0..1, R2-A6, default `0`). The mod calls `Wearable:setDamageAmount(min(targetDamage, getDamageAmount()), true)` - the damage part of the game's `repairVehicle()` without its repair booking (the maintenance contract pays); a repair never raises the damage. `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` or `NOT_WEARABLE`. Not re-sent after a rewind (the next monthly service repairs again). Sent with `targetDamage` by the maintenance contract and, since R2-A6, by an employed mechanic (partial repair up to the mechanic's monthly capacity). |
-| `NOTIFICATION` (TODO T-21) | `text` (German, ≤ 120 characters), optional `level` ∈ `INFO, OK, CRITICAL` (`FSBaseMission.INGAME_NOTIFICATION_*`), optional `expiresAtGameTime`. Shown with `g_currentMission:addIngameNotification`; processed after `expiresAtGameTime` it is acknowledged `APPLIED` with `message: "EXPIRED"` and not shown. Never re-sent after a reload without saving, a failure creates no notice. |
-| `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) | `employees[]` with `employeeId` (tool id, integer), `name`, `role` (`JobRole` name; `MACHINE_OPERATOR` and - Roadmap V3 R3-P2 - `APPRENTICE` drive helpers, apprentices without trainings and only when no machine operator is free; Roadmap V3.1 R31-A5: `SEASONAL_WORKER` drives without trainings, after the machine operators and before the apprentices; an older mod ignores `APPRENTICE` / `SEASONAL_WORKER`), `status` ∈ `ACTIVE, ON_LEAVE, STRIKE` (an employee at a training is `ON_LEAVE`), optional `trainings` (array of `Training` names: `LARGE_TRACTOR, COMBINE, FORAGE_HARVESTER, SPECIAL_HARVESTER, TRUCK, SELF_PROPELLED`); `helperWageMode` ∈ `EMPLOYEES, VANILLA` (R2-A1); `strictHelperLimit` (boolean, R2-A3); optional `trainingCategories` (object training → array of FS25 shop categories, from `rpsim.formulas.training.categories`; "Schulungen"). The complete list, sorted by assignment priority (skill, descending); the mod replaces its list (idempotent) and `APPLIED`s it. Running helpers of a `STRIKE` employee are stopped with the own AI message `RPSIM_STRIKE` ("%s legt die Arbeit nieder", R2-A5; fallback: the game's unknown-error message plus an in-game notification). Helpers of an employee no longer `ACTIVE` or no longer listed keep running as vanilla helpers. The backend sends the list after every change of an employee (hire, dismissal, leave, strike, settings) and again after a rewind; a failure raises no notice (the next change resends). |
+| `NOTIFICATION` (TODO T-21) | `text` (German, ≤ 120 characters), optional `level` ∈ `INFO, OK, CRITICAL` (`FSBaseMission.INGAME_NOTIFICATION_*`), optional `expiresAtGameTime`; Roadmap V3.2 R32-G3: the hint of a bulk order's delivery month carries `gameTimeEarliest` = start of the month (moved with it while pending). Shown with `g_currentMission:addIngameNotification`; processed after `expiresAtGameTime` it is acknowledged `APPLIED` with `message: "EXPIRED"` and not shown. Never re-sent after a reload without saving, a failure creates no notice. |
+| `EMPLOYEE_ROSTER` (Roadmap V2, R2-A0) | `employees[]` with `employeeId` (tool id, integer), `name`, `role` (`JobRole` name; `MACHINE_OPERATOR` and - Roadmap V3 R3-P2 - `APPRENTICE` drive helpers, apprentices without trainings and only when no machine operator is free; Roadmap V3.1 R31-A5: `SEASONAL_WORKER` drives without trainings, after the machine operators and before the apprentices; an older mod ignores `APPRENTICE` / `SEASONAL_WORKER`), `status` ∈ `ACTIVE, ON_LEAVE, STRIKE` (an employee at a training is `ON_LEAVE` - owner decision 2026-10-06: from the start of the game day after the booking; a hired employee who starts next month is not listed until his first working day), optional `trainings` (array of `Training` names: `LARGE_TRACTOR, COMBINE, FORAGE_HARVESTER, SPECIAL_HARVESTER, TRUCK, SELF_PROPELLED`); `helperWageMode` ∈ `EMPLOYEES, VANILLA` (R2-A1); `strictHelperLimit` (boolean, R2-A3); optional `trainingCategories` (object training → array of FS25 shop categories, from `rpsim.formulas.training.categories`; "Schulungen"). The complete list, sorted by assignment priority (skill, descending); the mod replaces its list (idempotent) and `APPLIED`s it. Running helpers of a `STRIKE` employee are stopped with the own AI message `RPSIM_STRIKE` ("%s legt die Arbeit nieder", R2-A5; fallback: the game's unknown-error message plus an in-game notification). Helpers of an employee no longer `ACTIVE` or no longer listed keep running as vanilla helpers. The backend sends the list after every change of an employee (hire, dismissal, leave, strike, settings) and again after a rewind; a failure raises no notice (the next change resends). |
 | `PROMPT` (Roadmap V2, R2-F2) | `promptId`, `title`, `text`, optional `yesLabel` / `noLabel`, `expiresGameTime`. Yes/no question: the mod queues it (`APPLIED`; processed after `expiresGameTime` it is acknowledged with `message: "EXPIRED"`, a promptId already queued, answered or withdrawn with `message: "DUPLICATE"`) and shows one at a time with `YesNoDialog.show(callback, nil, text, title)` as soon as no menu or dialog is open (`g_gui:getIsGuiVisible()`) - with mod config `promptsInVehicle = false` only on foot. Custom button texts are not evidenced in the FS25 code: the dialog shows the game's yes / no buttons and the mod appends "Ja = `yesLabel` · Nein = `noLabel`" to the text. The answer goes to `export/player_responses.json` at once. The queue, the open answers and the handled promptIds are stored in the savegame. An older mod acknowledges `FAILED` / `NOT_SUPPORTED` - the decision stays in the browser, no notice. Sent again after a reload without saving while the question is still open. |
 
-| `STORAGE_TRANSFER` (Roadmap V3, R3-Q1) | `direction` ∈ `IN` (into the own silos, purchase), `OUT` (out of the own silos, sale); `fillType`; `amount` (litres, > 0). Always in a batch before its `MONEY_TRANSACTION` (`GOODS_PURCHASE` / `GOODS_SALE`). Executed with R3-H3/H4 (M3 uses it too): the mod spreads the amount over the own silo storages like `PlaceableSilo:refillAmount` (`getFreeCapacity` → `setFillLevel(getFillLevel ± moved, fillTypeIndex)`, LUADOC `Specializations/PlaceableSilo.md`) but without the game booking `BOUGHT_MATERIALS`; `FAILED` with `NO_CAPACITY` (IN) or `INSUFFICIENT_STOCK` (OUT) for the whole amount, `UNKNOWN_FILLTYPE` for a fill type the game does not know (`g_fillTypeManager:getFillTypeIndexByName`) - the batch books nothing. Only storages of the own farm (`RPSimGameAdapter:ownSiloStorages`, the same as `tradeStorage`). Executed since R3-H (`RPSimGameAdapter:transferStorage`); a mod with R3-Q only acknowledges `FAILED` / `NOT_SUPPORTED`. |
+| `STORAGE_TRANSFER` (Roadmap V3, R3-Q1) | `direction` ∈ `IN` (into the own silos, purchase), `OUT` (out of the own silos, sale); `fillType`; `amount` (litres, > 0). In a batch before its `MONEY_TRANSACTION` (`GOODS_PURCHASE` / `GOODS_SALE`); Roadmap V3.2 R32-I3: the delivery of goods to an investor (W1 / W2) is a lone `OUT` without money (a lone instruction is a batch of its own, `RPSimInstructions.groupBatches`). Executed with R3-H3/H4 (M3 uses it too): the mod spreads the amount over the own silo storages like `PlaceableSilo:refillAmount` (`getFreeCapacity` → `setFillLevel(getFillLevel ± moved, fillTypeIndex)`, LUADOC `Specializations/PlaceableSilo.md`) but without the game booking `BOUGHT_MATERIALS`; `FAILED` with `NO_CAPACITY` (IN) or `INSUFFICIENT_STOCK` (OUT) for the whole amount, `UNKNOWN_FILLTYPE` for a fill type the game does not know (`g_fillTypeManager:getFillTypeIndexByName`) - the batch books nothing. Only storages of the own farm (`RPSimGameAdapter:ownSiloStorages`, the same as `tradeStorage`). Executed since R3-H (`RPSimGameAdapter:transferStorage`); a mod with R3-Q only acknowledges `FAILED` / `NOT_SUPPORTED`. |
 | `MISSION_CREATE` (Roadmap V3, R3-Q1) | `missionType` (name for `g_missionManager:getMissionType(name)`), `farmlandId`. Executed with R3-H5: the mod checks that the field has no owner (`getHasOwner()`), no running contract (`field.currentMission == nil`) and that the type fits the field (`<class>.isAvailableForField(field, nil)`), then creates the contract like the game (`classObject.new(true, g_client ~= nil)` → `mission:init(field)` → `mission:setDefaultEndDate()` → `g_missionManager:registerMission(mission, missionType)`; LUADOC `Field/PlowMission.md`, `Field/StonePickMission.md`, `Missions/MissionManager.md`). `result.missionId` = the contract's `uniqueId`; `FAILED` with `NOT_AVAILABLE` (field owned, contract running, type does not fit, `canRun` false), `UNKNOWN_MISSION_TYPE` when the game knows no such type. `PLOW` / `STONE_PICK` (the types evidenced in the LUADOC, the only ones the backend sends) use the class `PlowMission` / `StonePickMission` and the type entry `g_missionManager:getMissionType(<class>.NAME)`; any other name goes through `g_missionManager:getMissionType(name).classObject`. Executed since R3-H (`RPSimGameAdapter:createMission`); a mod with R3-Q only acknowledges `FAILED` / `NOT_SUPPORTED`. |
 | `VEHICLE_SPAWN` (Roadmap V3, R3-Q1 / R3-V2) | `storeXmlFilename` (from `storeVehicles`), `ageMonths` (≥ 0), `operatingHours` (≥ 0), `damage` and `wear` (0..1), `price` (≥ 0, the mod books `-price`; Roadmap V3.1 R31-A2: `0` = a borrowed or demo machine, no funds check and no booking, the backend sends `MACHINE_RENT` as `moneyReason` and books the rent itself), `moneyReason` (a known reason, the backend sends `VEHICLE_PURCHASE` for a used machine). Not in a batch: loading is asynchronous, so the mod books the price itself in the loading callback (R3-V2): funds check, `VehicleLoadingData` like `AbstractMission:spawnVehicle` (LUADOC `Missions/AbstractMission.md`), used values in the callback (`setOperatingTime`, `age`, `setDamageAmount`, `addWearAmount`; dump `Vehicle.lua`, LUADOC `Specializations/Wearable.md`). `result.vehicleId` = the vehicle's `uniqueId`; `FAILED` with `NO_SPACE` (no free shop place, from `setLoadingPlace` or the loading state), `UNKNOWN_STORE_ITEM`, `INSUFFICIENT_FUNDS` or `LOAD_FAILED`, nothing booked. While loading the instruction is `PENDING` in the mod: no ack, skipped as duplicate, not written to the savegame (after a reload the backend sends it again). Executed since R3-V2. |
 | `VEHICLE_REMOVE` (Roadmap V3, R3-Q1 / R3-V3) | `vehicleId` (uniqueId of an own vehicle). In a batch before its `MONEY_TRANSACTION` (`VEHICLE_SALE`). Executed with R3-V3: `vehicleSystem:getVehicleByUniqueId(id)` (dump `VehicleSystem.lua`), own farm, `propertyState == OWNED`, nobody inside (`getIsControlled()`, LUADOC `Specializations/Enterable.md`), no helper (`getIsAIActive()`), and - until the playtest of manual test plan 11.9 - only a root vehicle with nothing attached (`getRootVehicle() == vehicle`, `getAttachedImplements()` empty), then `vehicle:delete()` (dump `Vehicle.lua`); `FAILED` with `VEHICLE_IN_USE`, `NOT_OWN_VEHICLE`, `VEHICLE_NOT_FOUND` or `VEHICLE_ATTACHED` ("Bitte erst abkoppeln"). Executed since R3-V3. |
-| `FIELD_WORK` (Roadmap V3.1, R31-Q1 / R31-A1) | `farmlandId`, `work` ∈ `PLOW, CULTIVATE, LIME, SOW, HARVEST`, `fruitType` (FS25 fruit type name, e.g. `WHEAT`; required for `SOW`, not allowed otherwise). In a batch before its `MONEY_TRANSACTION` (`CONTRACTOR_FEE`); a harvest also carries the `STORAGE_TRANSFER IN` of the yield. Executed with R31-A1: the mod takes the field of the own farmland, checks that it belongs to the player farm and has no running contract, then sets the end state like `AbstractFieldMission:finishField` (`task = field:getFieldState():createFieldUpdateTask()` → values → `task:setField(field)` → `g_fieldManager:addFieldUpdateTask(task)`; LUADOC `Field/AbstractFieldMission.md`, `Field/PlowMission.md`, dump `field/FieldManager.lua`, `Fruits/FruitTypeDesc.md` `cutState`); `FAILED` with `FIELD_NOT_FOUND`, `NOT_OWN_FIELD`, `MISSION_RUNNING` or `UNKNOWN_FRUIT_TYPE`. Executed since R31-A1 (`RPSimGameAdapter:fieldWork`): the mod changes the field state before `createFieldUpdateTask()` and also calls the task's setters (`setFruit`, `setGroundType`, `setPlowLevel`, `setLimeLevel`, `setSprayType`; the 🟡 fallback, manual test plan 21); a harvest leaves the crop on its `cutState` (straw is not part of the work). A mod with R31-Q only acknowledges `FAILED` / `NOT_SUPPORTED`. |
-| `ANIMAL_TRANSFER` (Roadmap V3.1, R31-Q1 / R31-A3) | `husbandryUniqueId` (as in `assets.animals`), `subType` (FS25 animal subtype name), `count` (whole number > 0), optional `age` (months, ≥ 0), `direction` ∈ `IN` (purchase), `OUT` (sale). In a batch before its `MONEY_TRANSACTION` (`LIVESTOCK_PURCHASE` / `LIVESTOCK_SALE`). Executed with R31-A3: **IN** checks the free places (`getNumOfFreeAnimalSlots()`) and the animal type of the husbandry, then `addAnimals(subTypeIndex, count, age)` with the index from `g_currentMission.animalSystem:getSubTypeByName`; **OUT** takes the animals from the clusters of this subtype with `cluster:changeNumAnimals(-n)` (LUADOC `Specializations/PlaceableHusbandryAnimals.md`, `Specializations/Rideable.md`); `FAILED` with `NO_ANIMAL_SPACE`, `NOT_ENOUGH_ANIMALS`, `HUSBANDRY_NOT_FOUND`, `WRONG_ANIMAL_TYPE` or `UNKNOWN_SUB_TYPE`. Executed since R31-A3 (`RPSimGameAdapter:animalTransfer`); a mod with R31-Q only acknowledges `FAILED` / `NOT_SUPPORTED`. |
-| `VEHICLE_FUEL` (Roadmap V3.1, R31-Q1 / R31-D8) | `vehicleId` (uniqueId of an own vehicle), `delta` (litres, < 0). Not in a batch (no money). Executed with R31-D8: own vehicle, nobody inside (`getIsControlled()`), no helper (`getIsAIActive()`), a diesel tank (`getConsumerFillUnitIndex(FillType.DIESEL)`), then at most the level in the tank is taken (`getFillUnitFillLevel`, `addFillUnitFillLevel(farmId, fillUnitIndex, -amount, FillType.DIESEL, ToolType.UNDEFINED, nil)`; LUADOC `Specializations/FillUnit.md`, `Specializations/Motorized.md`, `Vehicles/VehicleSystem.md`); the ack `result` carries `{ "liters": <taken> }`. `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE`, `VEHICLE_IN_USE` or `NO_DIESEL_TANK`. Until R31-D8 `FAILED` / `NOT_SUPPORTED`. |
+| `FIELD_WORK` (Roadmap V3.1, R31-Q1 / R31-A1) | `farmlandId`, `work` ∈ `PLOW, CULTIVATE, LIME, SOW, FERTILIZE, HARVEST` (`FERTILIZE` since the owner decisions 2026-10-06: spray level +1 up to `g_fieldManager.sprayLevelMaxValue`, `sprayType` `FERTILIZER`, task setters `setSprayLevel` / `setSprayType`), `fruitType` (FS25 fruit type name, e.g. `WHEAT`; required for `SOW`, not allowed otherwise). In a batch before its `MONEY_TRANSACTION` (`CONTRACTOR_FEE`); a harvest also carries the `STORAGE_TRANSFER IN` of the yield. Since the owner decisions 2026-10-06 one contractor order holds up to 3 works of one field: they come as **one** batch in their order (e.g. `FIELD_WORK CULTIVATE`, its fee, `FIELD_WORK SOW`, its fee, `FIELD_WORK FERTILIZE`, its fee) and build on the field state the work before left; a refused work aborts the works after it. Executed with R31-A1: the mod takes the field of the own farmland, checks that it belongs to the player farm and has no running contract, then sets the end state like `AbstractFieldMission:finishField` (`task = field:getFieldState():createFieldUpdateTask()` → values → `task:setField(field)` → `g_fieldManager:addFieldUpdateTask(task)`; LUADOC `Field/AbstractFieldMission.md`, `Field/PlowMission.md`, dump `field/FieldManager.lua`, `Fruits/FruitTypeDesc.md` `cutState`); `FAILED` with `FIELD_NOT_FOUND`, `NOT_OWN_FIELD`, `MISSION_RUNNING` or `UNKNOWN_FRUIT_TYPE`. Executed since R31-A1 (`RPSimGameAdapter:fieldWork`): the mod changes the field state before `createFieldUpdateTask()` and also calls the task's setters (`setFruit`, `setGroundType`, `setPlowLevel`, `setLimeLevel`, `setSprayType`; the 🟡 fallback, manual test plan 21); a harvest leaves the crop on its `cutState` (straw is not part of the work). A mod with R31-Q only acknowledges `FAILED` / `NOT_SUPPORTED`. |
+| `ANIMAL_TRANSFER` (Roadmap V3.1, R31-Q1 / R31-A3) | `husbandryUniqueId` (as in `assets.animals`), `subType` (FS25 animal subtype name), `count` (whole number > 0), optional `age` (months, ≥ 0), `direction` ∈ `IN` (purchase), `OUT` (sale). In a batch before its `MONEY_TRANSACTION` (`LIVESTOCK_PURCHASE` / `LIVESTOCK_SALE`); Roadmap V3.2 R32-I3: the animal delivery to an investor (A1) is a lone `OUT` without money. Executed with R31-A3: **IN** checks the free places (`getNumOfFreeAnimalSlots()`) and the animal type of the husbandry, then `addAnimals(subTypeIndex, count, age)` with the index from `g_currentMission.animalSystem:getSubTypeByName`; **OUT** takes the animals from the clusters of this subtype with `cluster:changeNumAnimals(-n)` (LUADOC `Specializations/PlaceableHusbandryAnimals.md`, `Specializations/Rideable.md`); `FAILED` with `NO_ANIMAL_SPACE`, `NOT_ENOUGH_ANIMALS`, `HUSBANDRY_NOT_FOUND`, `WRONG_ANIMAL_TYPE` or `UNKNOWN_SUB_TYPE`. Executed since R31-A3 (`RPSimGameAdapter:animalTransfer`); a mod with R31-Q only acknowledges `FAILED` / `NOT_SUPPORTED`. |
+| `HUSBANDRY_TRANSFER` (Roadmap V3.2, R32-Q1) | `husbandryUniqueId` (as in `husbandries[]` / `assets.animals`), `fillType` (FS25 fill type name of a milk sort of the husbandry, e.g. `MILK`), `amount` (litres, > 0). Only taking out; no money (the milk delivery to an investor is the consideration, R32-I3 type W3). An own type instead of a field of `STORAGE_TRANSFER`: an older mod would skip an unknown field and book from the silos, an unknown type is refused. Executed since R32-Q1 (`RPSimGameAdapter:husbandryTransfer`): own husbandry (`husbandryByUniqueId`), sort from `g_fillTypeManager:getFillTypeIndexByName` and checked against `spec_husbandryMilk.fillTypes`, stock `getHusbandryFillLevel(fillTypeIndex, farmId)` ≥ `amount`, then `removeHusbandryFillLevel(farmId, amount, fillTypeIndex)`; it takes the milk out through the loading station of the husbandry and returns the amount **not** taken (the whole amount without a loading station; the game evaluates it the same way for water and straw, LUADOC `Specializations/PlaceableHusbandryWater.md`, `PlaceableHusbandryStraw.md`). With a rest > 0 the mod books the taken part back with `addHusbandryFillLevelFromTool(farmId, taken, fillTypeIndex, nil, nil, nil)` (as `PlaceableHusbandryMilk:updateOutput` adds the milk) and reports `INSUFFICIENT_STOCK`. `FAILED` with `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE`, `WRONG_FILLTYPE` (no milk sort of this husbandry, also a husbandry without milk) or `INSUFFICIENT_STOCK`. 🟡 manual test plan 28.1 / 28.2. |
+| `VEHICLE_FUEL` (Roadmap V3.1, R31-Q1 / R31-D8) | `vehicleId` (uniqueId of an own vehicle), `delta` (litres, < 0). Not in a batch (no money). Executed with R31-D8: own vehicle, nobody inside (`getIsControlled()`), no helper (`getIsAIActive()`), a diesel tank (`getConsumerFillUnitIndex(FillType.DIESEL)`), then at most the level in the tank is taken (`getFillUnitFillLevel`, `addFillUnitFillLevel(farmId, fillUnitIndex, -amount, FillType.DIESEL, ToolType.UNDEFINED, nil)`; LUADOC `Specializations/FillUnit.md`, `Specializations/Motorized.md`, `Vehicles/VehicleSystem.md`); the ack `result` carries `{ "liters": <taken> }`. `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE`, `VEHICLE_IN_USE` or `NO_DIESEL_TANK`. The backend sends it for a diesel theft with `gameTimeEarliest` = the next night start (22 h) and tries a refused theft again in the next night (at most 3 times); a refused theft raises no notice (an older mod's `NOT_SUPPORTED` does). |
 
 **Older mod (Roadmap V3, R3-Q1):** a mod older than R3-Q rejects the four types during validation
 (`message` = `"<instructionId>: unknown type <TYPE>"`, status `REJECTED`, the whole batch is rejected) and an unknown
@@ -484,6 +647,11 @@ cases the backend's notice says "Mod aktualisieren" (see *Backend reactions*).
 reasons: a mod older than R31-Q rejects them (`unknown type …` / `unknown reason …`, `REJECTED`), a mod with R31-Q but
 without the feature acknowledges the type `FAILED` / `NOT_SUPPORTED` and aborts its batch before the
 `MONEY_TRANSACTION`.
+
+**Older mod (Roadmap V3.2, R32-Q1):** the same for `HUSBANDRY_TRANSFER` and the money reasons `INVESTOR_CAPITAL`,
+`INVESTOR_REPAYMENT`, `INVESTOR_PAYOUT`, `INVESTOR_COMPENSATION`: a mod older than R32-Q rejects them
+(`unknown type …` / `unknown reason …`, `REJECTED`); an adapter without the action acknowledges `FAILED` /
+`NOT_SUPPORTED`.
 
 **Batches:** instructions sharing a `batchId` are validated together and applied in the same cycle, or all
 rejected. The backend always sends a purchase or sale `FARMLAND_TRANSFER` + its `MONEY_TRANSACTION` as one batch.
@@ -539,8 +707,17 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   `modOutdated = true` in the notice, which then says "Mod aktualisieren"; the money part of such a batch is reported
   together with its instruction (one notice per deal). Cancelling the deal itself is part of each feature. Roadmap V3.1
   (R31-Q1): the same for `FIELD_WORK`, `ANIMAL_TRANSFER` and `VEHICLE_FUEL`; the notice also names `work`, `fruitType`,
-  `husbandryUniqueId`, `subType`, `count` and `delta`. After an `INSUFFICIENT_FUNDS` ack the snapshot
+  `husbandryUniqueId`, `subType`, `count` and `delta`. Roadmap V3.2 (R32-Q1): the same for `HUSBANDRY_TRANSFER`
+  (the notice names `husbandryUniqueId`, `fillType` and `amount`); a missing `HUSBANDRY_TRANSFER` is sent again
+  after a rewind since R32-I3 (owner decision 2026-10-08, see below). After an `INSUFFICIENT_FUNDS` ack the snapshot
   balance is not trusted until a newer `farm_facts.json` arrived.
+- **Field book** (Roadmap V3.3 R33-F, `FieldBookService`): every `farm_facts` export first opens a running season
+  for an own field without one, then books the difference of every `harvests` counter since the last export (a falling
+  counter is taken back; rule of the owner decision 2026-10-09: the running season with the crop, else the harvest of
+  the crop in the current FS25 year, else the running season), then compares every field with the last export
+  (measures, end by harvest or by another crop). The `APPLIED` ack of a contractor `STORAGE_TRANSFER` (harvest) adds its
+  litres, of a `FIELD_WORK LIME` ticks the lime. A rewind reopens the entries that ended after the loaded game time and
+  drops the seasons begun after it (owner decision 2026-10-09).
 - **Savegame reloaded without saving** (`RewindService`): `farm_facts.json` with a game time earlier than the last
   snapshot is a rewind. The next `instructions_ack.json` rebuilt by the mod from the reloaded savegame shows which
   acknowledged instructions are missing; an ack file still written before the reload (it contains acks later than
@@ -548,6 +725,9 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   `FARMLAND_TRANSFER` instructions go back to `PENDING` with the **same** `instructionId`; the mod executes them
   again because they are not in its reloaded `processedInstructions`. Roadmap V3.1: a missing `FIELD_WORK` or
   `ANIMAL_TRANSFER` goes back together with its whole batch (money and, for a contractor harvest, the
-  `STORAGE_TRANSFER IN`), so the work and its payment happen again as one unit (owner decision). Rewinds up to
+  `STORAGE_TRANSFER IN`), so the work and its payment happen again as one unit (owner decision). Roadmap V3.2 R32-I3 (owner
+  decision 2026-10-08): the deliveries to an investor go again too - a missing `HUSBANDRY_TRANSFER`, an `ANIMAL_TRANSFER`
+  without money (A1) and a `STORAGE_TRANSFER` of a W1 / W2 delivery (`relatedEntityType` `INVESTOR_DELIVERY`); the
+  backend counts a delivery only once, with its first ack. Rewinds up to
   `rpsim.bridge.rewind-auto-resend-max-hours` are handled automatically, deeper ones wait for the player's decision
   on the dashboard. All other tool state (mails, trust, negotiations) is not rolled back.

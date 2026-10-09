@@ -203,6 +203,37 @@
             <en>Cooperative dividend</en>
             <de>Genossenschaftsdividende</de>
         </text>
+        <!-- Roadmap V3.1 R31-D6 / R31-D8: holiday flat setup and tank lock -->
+        <text name="rpsim_money_FARM_HOLIDAY_SETUP">
+            <en>Holiday flat setup</en>
+            <de>Einrichtung Ferienwohnung</de>
+        </text>
+        <text name="rpsim_money_TANK_LOCK">
+            <en>Tank lock</en>
+            <de>Tankschloss</de>
+        </text>
+        <!-- owner decision 2026-10-06: severance when a hiring is cancelled before the first working day -->
+        <text name="rpsim_money_SEVERANCE">
+            <en>Severance pay</en>
+            <de>Abfindung</de>
+        </text>
+        <!-- Roadmap V3.2 (R32-Q1): large investors (I2-I5) -->
+        <text name="rpsim_money_INVESTOR_CAPITAL">
+            <en>Investor capital</en>
+            <de>Investorenkapital</de>
+        </text>
+        <text name="rpsim_money_INVESTOR_REPAYMENT">
+            <en>Investor repayment</en>
+            <de>Rückzahlung an Investor</de>
+        </text>
+        <text name="rpsim_money_INVESTOR_PAYOUT">
+            <en>Investor payout</en>
+            <de>Ausschüttung an Investor</de>
+        </text>
+        <text name="rpsim_money_INVESTOR_COMPENSATION">
+            <en>Investor compensation</en>
+            <de>Ausgleichszahlung an Investor</de>
+        </text>
         <!-- Schulungen: start of a helper refused in the strict mode (no free machine operator with the training) -->
         <text name="rpsim_ai_noTraining">
             <en>No trained machine operator available</en>

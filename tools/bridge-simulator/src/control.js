@@ -66,14 +66,18 @@ export function startControlServer(sim, port, log = () => {}) {
         return send(200, m);
       }
       // Roadmap V2 (R2-Q2): change the optional farm_facts blocks of the scenario
-      const patches = { '/book': (b) => sim.bookGame(b.moneyType, Number(b.amount)),
+      const patches = { '/book': (b) => sim.bookGame(b.moneyType, Number(b.amount), { vehicleName: b.vehicleName, vehicleId: b.vehicleId }),
         '/weather': (b) => sim.setWeather(b), '/husbandry': (b) => sim.setHusbandry(b),
         '/field': (b) => sim.setField(b), '/field-rules': (b) => sim.setFieldRules(b), '/jobs': (b) => sim.setActiveJobs(b.activeJobs ?? []),
         // Roadmap V3 R3-H1 / R3-H5 (scenario nachbarhandel)
         '/npc-field': (b) => sim.setNpcField(b), '/mission-limit': (b) => sim.setMissionLimit(b.reached),
         // Roadmap V3.1 (R31-Q2)
         '/snow': (b) => sim.setSnow(b.height), '/vehicle-positions': (b) => sim.setVehiclePositions(b.positions),
-        '/fuel': (b) => sim.setFuel(b.uniqueId, b.liters) };
+        '/fuel': (b) => sim.setFuel(b.uniqueId, b.liters),
+        // Roadmap V3.2 (R32-Q2): milk in the storage of a husbandry
+        '/husbandry-milk': (b) => sim.setHusbandryMilk(b.husbandryUniqueId, b.fillType, b.amount),
+        // Roadmap V3.3 (R33-Q2): litres harvested on an own field (harvest counter)
+        '/harvest': (b) => sim.addHarvest(b.farmlandId, b.fruitType, b.fillType, b.liters) };
       if (req.method === 'POST' && patches[url.pathname]) {
         const result = patches[url.pathname](await body(req));
         sim.exportFarmFacts();

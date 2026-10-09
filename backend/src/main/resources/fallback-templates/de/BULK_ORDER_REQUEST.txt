@@ -1,0 +1,9 @@
+Großauftrag: {{amount}} Liter {{fillType}}
+Guten Tag,
+
+ich kaufe für {{sellPoint}} ein und suche {{amount}} Liter {{fillType}}. Liegt die Menge schon in Ihren Silos, nehme ich sie sofort ab – {{instantPrice}} € ({{instantUnitPrice}} € je 1.000 Liter). Sonst vereinbaren wir gern einen Liefermonat, in dem Sie die Ware selbst zu {{sellPoint}} bringen; den Festpreis dafür nennt Ihnen die App „Handel“ unter „Großaufträge“.
+
+Bitte geben Sie mir in den nächsten {{answerDays}} Tagen Bescheid.
+
+Viele Grüße
+{{characterName}}

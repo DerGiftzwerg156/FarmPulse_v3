@@ -70,6 +70,28 @@ test('market_context is re-written on a regular tick only when it changed (TODO 
   assert.notEqual(sim.exportMarketContext(false), null);
 });
 
+test('market_context is re-written unchanged every marketContextIntervalMs of real time', () => {
+  let clock = 0;
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof', marketContextIntervalMs: 60000,
+    now: () => clock });
+  sim.start();
+  const write = sim.writeJson.bind(sim);
+  let writes = 0;
+  sim.writeJson = (path, doc) => { if (path === sim.paths.marketContext) writes += 1; write(path, doc); };
+  clock = 59999;
+  sim.tick(0);
+  assert.equal(writes, 0);
+  clock = 60000;
+  sim.tick(0);
+  assert.equal(writes, 1);
+  clock = 119999;
+  sim.tick(0);
+  assert.equal(writes, 1); // the interval starts again
+  clock = 120000;
+  sim.tick(0);
+  assert.equal(writes, 2);
+});
+
 test('the FS25 calendar is exported and follows a change of days per period (TODO T-08)', () => {
   const sim = new BridgeSimulator({ dir: tmp(), scenario: 'wohlhabender-hof', daysPerPeriod: 3 });
   sim.gameTime = 40 * MS_PER_GAME_DAY + 1000; // day 40: period index 13 -> period 2 (April) of year 2, day 2
@@ -120,7 +142,11 @@ const V2_SCENARIOS = { 'wohlhabender-hof': ['finances', 'husbandries', 'fields',
   'duerre-sommer': ['fields', 'fieldRules', 'weather'],
   // Roadmap V3.1 (R31-Q2): snow height, spray type and the stables use the V2 blocks weather, fields and husbandries
   'winter-schnee': ['weather'], lohnunternehmer: ['fields', 'fieldRules', 'weather'],
-  viehhandel: ['husbandries', 'weather'] };
+  viehhandel: ['husbandries', 'weather'],
+  // Roadmap V3.2 (R32-Q2): the bulk order farm has the V3.1 weather, the dairy farm the husbandries with milk storage
+  grossauftrag: ['weather'], 'investor-milch': ['husbandries', 'weather'],
+  // Roadmap V3.3 (R33-Q2): the field book farm has fields with rolling / mulching levels
+  feldbuch: ['fields', 'fieldRules', 'weather'] };
 
 test('Roadmap V2: the new scenarios export their blocks, all others leave them out (older mod)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {
@@ -254,4 +280,30 @@ test('reset forgets the previous run before loading its savegame', () => {
   const fresh = new BridgeSimulator({ dir, scenario: 'wohlhabender-hof', reset: true });
   assert.equal(fresh.balance, 2400000);
   assert.equal(fresh.buildFarmFacts().weather.temperature, 18);
+});
+
+test('Booking statement: single bookings, daily sums and sales per fill type and sell point', () => {
+  const sim = new BridgeSimulator({ dir: tmp(), scenario: 'helfer-hof' });
+  sim.advance(MS_PER_GAME_HOUR);
+  sim.advance(MS_PER_GAME_HOUR); // the daily helper wage is summed up
+  sim.sell('MillNorth', 'WHEAT', 1000);
+  sim.sell('MillNorth', 'WHEAT', 500);
+  sim.bookGame('SHOP_VEHICLE_BUY', -90000, { vehicleName: 'Fendt 942 Vario' });
+  sim.applyOne({ type: 'MONEY_TRANSACTION', instructionId: 'i1', amount: -2400, reason: 'SALARY_PAYMENT',
+    note: 'Gehalt Anna' });
+  const facts = sim.buildFarmFacts();
+  assert.equal(validate('farmFacts', facts), null);
+  const { nextSeq, entries } = facts.bookings;
+  assert.equal(nextSeq, entries.length + 1);
+  const by = (c) => entries.filter((e) => e.category === c);
+  assert.equal(by('AI').length, 1);
+  assert.equal(by('AI')[0].count, 2);
+  // the scenario's daily drift is booked as SOLD_PRODUCTS without a sale; the sales get their own entry
+  const wheat = by('SOLD_PRODUCTS').filter((e) => e.fillType === 'WHEAT');
+  assert.equal(wheat.length, 1);
+  assert.equal(wheat[0].liters, 1500);
+  assert.equal(wheat[0].sellPoint, 'MillNorth');
+  assert.equal(by('SHOP_VEHICLE_BUY')[0].single, true);
+  assert.equal(by('RPSIM_SALARY_PAYMENT')[0].note, 'Gehalt Anna');
+  assert.ok(facts.assets.vehicles.some((v) => v.name === 'Fendt 942 Vario'));
 });

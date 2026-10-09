@@ -77,12 +77,17 @@ class VillageLifeServiceTest {
         assertThat(count("VILLAGE_CONGRATULATION")).isZero();
     }
 
+    /** The last festival invitation (Roadmap V3.1 R31-D2: the village chat announces the festival too). */
+    private NarrationJob invitation() {
+        return jobs.findBySavegameAndEventTypeOrderByIdAsc(sg, "VILLAGE_INVITATION").getLast();
+    }
+
     @Test
     void invitationsFollowTheFestivalCalendar() {
         assertThat(life.invite(sg)).isFalse(); // day 10 = period 11: no festival
         sg.setCurrentGameTime(GameTime.days(103));  // fallback (1 day per period): day 103 = period 8 -> Erntedankfest
         assertThat(life.invite(sg)).isTrue();
-        assertThat(jobs.findBySavegameOrderByIdAsc(sg).getLast().getFactsJson()).contains("ERNTEDANKFEST");
+        assertThat(invitation().getFactsJson()).contains("ERNTEDANKFEST");
         assertThat(life.season(sg, GameTime.days(0))).isEqualTo(VillageLifeService.Season.SPRING);
         assertThat(life.season(sg, GameTime.days(11))).isEqualTo(VillageLifeService.Season.WINTER);
     }

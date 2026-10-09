@@ -1,7 +1,8 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ApiService } from '../../core/api/api.service';
-import { FarmReportView } from '../../core/api/models';
+import { FarmReportInvestorLine, FarmReportView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
 import { MoneyPipe, NumberPipe } from '../../shared/format/format.pipes';
 import { LabelPipe } from '../../shared/format/label.pipe';
@@ -76,6 +77,22 @@ import { Card } from '../../shared/ui/card';
               @if (r.welfareInspections > 0) {
                 <p class="mt-1 text-[11px] text-warn">{{ 'credit.report.inspections' | t: { n: r.welfareInspections } }}</p>
               }
+              @if (r.investors?.length) {
+                <!-- Roadmap V3.2 R32-I6: section "Investoren" -->
+                <div class="mt-2" data-testid="report-investors">
+                  <div class="fp-label mb-1">{{ 'credit.report.investors' | t }}</div>
+                  @for (i of r.investors; track i.contractId) {
+                    <div class="text-[12px] text-text">{{ 'credit.report.investorLine' | t: { name: i.investor ?? '–', kind: (i.kind | label: 'investorKind'), amount: (i.amount | money), capital: ('investors.capital.' + i.capitalType | t) } }}</div>
+                    <div class="text-[11px] text-muted">{{ 'credit.report.investorMoney' | t: { capital: (i.capital | money), payouts: (i.payouts | money), compensations: (i.compensations | money), repayments: (i.repayments | money) } }}</div>
+                    @if (i.delivered.length) {
+                      <div class="text-[11px] text-muted">{{ 'credit.report.investorDelivered' | t: { items: delivered(i) } }}</div>
+                    }
+                    @if (i.breaches > 0) {
+                      <div class="text-[11px] text-warn">{{ 'credit.report.investorBreaches' | t: { n: i.breaches } }}</div>
+                    }
+                  }
+                </div>
+              }
               <ul class="mt-2 flex flex-wrap gap-1.5" data-testid="report-trust">
                 @for (t of r.snapshot.trust; track t.characterId) {
                   <li class="rounded-sm border border-border px-1.5 py-0.5 text-[11px] text-text">{{ t.name }}: {{ t.level | label: 'trustLevel' }}@if (previousLevel(r, t.characterId); as before) { ({{ before | label: 'trustLevel' }}) }</li>
@@ -93,6 +110,7 @@ import { Card } from '../../shared/ui/card';
 export class FarmReportCard {
   private readonly api = inject(ApiService);
   private readonly store = inject(GameStateStore);
+  private readonly i18n = inject(TranslationService);
 
   readonly reports = signal<FarmReportView[] | null>(null);
   readonly year = signal<number | null>(null);
@@ -111,6 +129,15 @@ export class FarmReportCard {
 
   load(): void {
     this.api.farmReports().subscribe({ next: (r) => this.reports.set(r), error: () => this.reports.set([]) });
+  }
+
+  /** Roadmap V3.2 R32-I6: delivered goods, milk and animals of an investor, e.g. "60.000 l Weizen, 5 HOLSTEIN". */
+  delivered(i: FarmReportInvestorLine): string {
+    return i.delivered.map((d) => {
+      const key = `enums.fillType.${d.what}`;
+      const what = d.what && this.i18n.has(key) ? this.i18n.t(key) : (d.what ?? '');
+      return `${d.quantity.toLocaleString('de-DE')}${d.type === 'A1' ? '' : ' l'} ${what}`;
+    }).join(', ');
   }
 
   previousLevel(r: FarmReportView, characterId: number): string | null {

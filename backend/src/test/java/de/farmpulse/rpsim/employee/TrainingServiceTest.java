@@ -47,6 +47,7 @@ class TrainingServiceTest {
     @Autowired HiringService hiring;
     @Autowired TrainingService training;
     @Autowired WorkforceService workforce;
+    @Autowired SatisfactionService satisfaction;
     @Autowired FailedInstructionService failed;
     @Autowired OutboxInstructionRepository outbox;
     @Autowired NarrationJobRepository jobs;
@@ -88,10 +89,11 @@ class TrainingServiceTest {
     }
 
     @Test
-    void aTrainingCostsMoneyTakesOneDayAndQualifiesAfterwards() {
+    void aTrainingCostsMoneyTakesTheWholeNextDayAndQualifiesAfterwards() {
+        sg.setCurrentGameTime(sg.getCurrentGameTime() + GameTime.hours(10)); // booked at 10 o'clock
         Employee e = employee(JobRole.MACHINE_OPERATOR);
         double appreciation = e.getAppreciation();
-        long start = sg.getCurrentGameTime();
+        long tomorrow = (GameTime.dayIndex(sg.getCurrentGameTime()) + 1) * GameTime.MS_PER_DAY;
 
         training.book(e, Training.COMBINE);
 
@@ -99,20 +101,28 @@ class TrainingServiceTest {
         JsonNode payload = json.readTree(trainingBookings().getFirst().getPayloadJson());
         assertThat(payload.path("amount").asLong()).isEqualTo(-9000);
         assertThat(e.getTrainingInProgress()).isEqualTo(Training.COMBINE);
-        assertThat(e.getTrainingUntilGameTime()).isEqualTo(start + GameTime.days(1));
+        assertThat(e.getTrainingFromGameTime()).as("owner decision 2026-10-06: the next game day").isEqualTo(tomorrow);
+        assertThat(e.getTrainingUntilGameTime()).isEqualTo(tomorrow + GameTime.days(1));
         assertThat(e.hasTraining(Training.COMBINE)).as("only after the training").isFalse();
         assertThat(e.getAppreciation()).isCloseTo(appreciation + 8, within(1e-6));
         assertThat(jobs.findBySavegameOrderByIdAsc(sg)).extracting(NarrationJob::getEventType).contains("EMPLOYEE_THANKS");
-        assertThat(lastRoster().path("employees").get(0).path("status").asString()).as("away: no helper")
-                .isEqualTo("ON_LEAVE");
+        assertThat(lastRoster().path("employees").get(0).path("status").asString()).as("works on the booking day")
+                .isEqualTo("ACTIVE");
         assertThatThrownBy(() -> training.book(e, Training.TRUCK)).isInstanceOf(BusinessRuleException.class)
-                .hasMessageContaining("gerade schon");
+                .hasMessageContaining("schon");
 
-        sg.setCurrentGameTime(start + GameTime.days(0.9));
+        sg.setCurrentGameTime(tomorrow - 1);
+        assertThat(workforce.sync(sg)).isFalse();
+        sg.setCurrentGameTime(tomorrow);
+        assertThat(workforce.sync(sg)).isTrue();
+        assertThat(lastRoster().path("employees").get(0).path("status").asString()).as("away the whole day: no helper")
+                .isEqualTo("ON_LEAVE");
+
+        sg.setCurrentGameTime(tomorrow + GameTime.days(0.99));
         assertThat(workforce.sync(sg)).isFalse();
         assertThat(e.hasTraining(Training.COMBINE)).isFalse();
 
-        sg.setCurrentGameTime(start + GameTime.days(1));
+        sg.setCurrentGameTime(tomorrow + GameTime.days(1));
         assertThat(workforce.sync(sg)).isTrue();
         assertThat(e.hasTraining(Training.COMBINE)).isTrue();
         assertThat(e.getTrainingInProgress()).isNull();
@@ -135,6 +145,24 @@ class TrainingServiceTest {
         onLeave.setTimeOffUntilGameTime(sg.getCurrentGameTime() + GameTime.days(2));
         assertThatThrownBy(() -> training.book(onLeave, Training.TRUCK)).isInstanceOf(BusinessRuleException.class);
         assertThat(trainingBookings()).isEmpty();
+    }
+
+    @Test
+    void theBookedTrainingHasPrecedenceOverDaysOffAndSickness() {
+        Employee e = employee(JobRole.MACHINE_OPERATOR);
+        training.book(e, Training.TRUCK);
+        // booked at 0:00: one day off ends right before the training day, two days off overlap it
+        satisfaction.timeOff(e, 1);
+        e.setTimeOffUntilGameTime(null);
+        assertThatThrownBy(() -> satisfaction.timeOff(e, 2)).isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("Schulung");
+        assertThat(e.getTimeOffUntilGameTime()).isNull();
+        assertThat(TrainingService.trainingBooked(e, sg.getCurrentGameTime())).isTrue();
+        assertThat(TrainingService.inTraining(e, sg.getCurrentGameTime())).isFalse();
+        sg.setCurrentGameTime(e.getTrainingUntilGameTime());
+        training.completeDue(sg);
+        satisfaction.timeOff(e, 1); // after the training again possible
+        assertThat(e.getTimeOffUntilGameTime()).isNotNull();
     }
 
     @Test
@@ -177,6 +205,7 @@ class TrainingServiceTest {
         JobApplication withTraining = null;
         for (int i = 0; i < 20 && withTraining == null; i++) {
             JobPosting p = hiring.createPosting(sg, JobRole.MACHINE_OPERATOR);
+            sg.setCurrentGameTime(sg.getCurrentGameTime() + GameTime.days(2)); // the applications arrive the next day
             withTraining = hiring.applications(sg, p.getId()).stream().filter(a -> a.getTraining() != null)
                     .findFirst().orElse(null);
         }
@@ -184,6 +213,10 @@ class TrainingServiceTest {
         Training t = Objects.requireNonNull(withTraining).getTraining();
         Employee e = hiring.hire(sg, withTraining.getPosting().getId(), withTraining.getId());
         assertThat(e.trainingSet()).containsExactly(t);
+        assertThat(workforce.roster(sg)).as("not in the list before the first working day")
+                .noneMatch(m -> e.getId().equals(m.get("employeeId")));
+        sg.setCurrentGameTime(e.getStartsAtGameTime());
+        hiring.startDue(sg);
         JsonNode hired = null;
         for (JsonNode n : lastRoster().path("employees")) {
             if (n.path("employeeId").asLong() == e.getId()) {

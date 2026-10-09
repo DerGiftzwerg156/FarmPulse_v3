@@ -75,6 +75,8 @@ class ApiIntegrationTest {
     @Autowired CommunicationService communications;
     @Autowired MarketEventEngine market;
     @Autowired RpsimProperties props;
+    @Autowired de.farmpulse.rpsim.employee.HiringService hiring;
+    @Autowired de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
 
     Savegame sg;
     Character bank;
@@ -163,6 +165,26 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void markMailsRead() throws Exception {
+        Communication first = mailFrom(bank, Channel.MAIL);
+        Communication second = mailFrom(bank, Channel.MAIL);
+        Communication other = mailFrom(bank, Channel.MAIL);
+        Communication call = mailFrom(bank, Channel.CALL);
+        // only the sent mails; a call id, an unknown id and an already read mail are not counted
+        postJson("/api/mails/read", java.util.Map.of("ids", List.of(first.getId(), second.getId(), call.getId(), 987654321L)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.marked").value(2));
+        postJson("/api/mails/read", java.util.Map.of("ids", List.of(first.getId())))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.marked").value(0));
+        mvc.perform(get("/api/mails")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + first.getId() + ")].read", hasItem(true)))
+                .andExpect(jsonPath("$[?(@.id == " + second.getId() + ")].read", hasItem(true)))
+                .andExpect(jsonPath("$[?(@.id == " + other.getId() + ")].read", hasItem(false)));
+        mvc.perform(get("/api/calls")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + call.getId() + ")].read", hasItem(false)));
+        postJson("/api/mails/read", java.util.Map.of("ids", List.of())).andExpect(status().isBadRequest());
+    }
+
+    @Test
     void callEndpoints() throws Exception {
         Communication ring = mailFrom(bank, Channel.CALL);
         mvc.perform(get("/api/calls/pending")).andExpect(status().isOk())
@@ -224,16 +246,27 @@ class ApiIntegrationTest {
         JsonNode posting = read(postJson("/api/job-postings", java.util.Map.of("jobRole", "ANIMAL_KEEPER"))
                 .andExpect(status().isOk()));
         long pid = posting.get("id").asLong();
-        mvc.perform(get("/api/job-postings")).andExpect(status().isOk());
+        // owner decision 2026-10-06: the applications arrive the next game day
+        mvc.perform(get("/api/job-postings")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].applicationsAwaited").value(true));
+        mvc.perform(get("/api/job-postings/" + pid + "/applications")).andExpect(jsonPath("$", hasSize(0)));
+        sg.setCurrentGameTime(sg.getCurrentGameTime() + de.farmpulse.rpsim.time.GameTime.days(2));
+        mvc.perform(get("/api/job-postings")).andExpect(jsonPath("$[0].applicationsAwaited").value(false));
         JsonNode apps = read(mvc.perform(get("/api/job-postings/" + pid + "/applications")).andExpect(status().isOk()));
         long aid = apps.get(0).get("id").asLong();
         postJson("/api/job-postings/" + pid + "/applications/" + aid + "/interview-question",
                 java.util.Map.of("question", "Warum wir?", "channel", "CALL")).andExpect(status().isOk());
         JsonNode emp = read(mvc.perform(post("/api/job-postings/" + pid + "/applications/" + aid + "/hire"))
-                .andExpect(status().isOk()));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("PENDING_START"))
+                .andExpect(jsonPath("$.severance").isNumber()).andExpect(jsonPath("$.startsAtGameTime").isNumber()));
         long eid = emp.get("id").asLong();
         mvc.perform(get("/api/employees")).andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].needs.satisfaction").exists());
+        // no actions before the first working day (start of the next month)
+        postJson("/api/employees/" + eid + "/raise", java.util.Map.of("newSalary", 99999))
+                .andExpect(jsonPath("$.code").value("EMPLOYEE_NOT_STARTED"));
+        sg.setCurrentGameTime(emp.get("startsAtGameTime").asLong());
+        hiring.startDue(sg);
         postJson("/api/employees/" + eid + "/raise", java.util.Map.of("newSalary", 99999)).andExpect(status().isOk());
         postJson("/api/employees/" + eid + "/time-off", java.util.Map.of("days", 2)).andExpect(status().isOk());
         postJson("/api/employees/" + eid + "/time-off", java.util.Map.of("days", 0)).andExpect(status().isBadRequest());
@@ -296,6 +329,79 @@ class ApiIntegrationTest {
     }
 
     // ------------------------------------------------------------------ storage & prices
+
+    /** Roadmap V3.2 R32-G: requests, delivery months and the agreed order in "Handel → Großaufträge". */
+    @Test
+    void bulkOrderEndpoints() throws Exception {
+        var request = bulkOrders.spawnRequest(sg).orElseThrow();
+        mvc.perform(get("/api/trade/bulk-orders")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.silosTracked").value(false))
+                .andExpect(jsonPath("$.maxOpen").value(3))
+                .andExpect(jsonPath("$.instantMarkupPercent").value(25.0))
+                .andExpect(jsonPath("$.penaltySharePercent").value(25.0))
+                .andExpect(jsonPath("$.requests[0].kind").value("BULK_ORDER"))
+                .andExpect(jsonPath("$.requests[0].title").value(request.getTitle()))
+                .andExpect(jsonPath("$.orders").isEmpty());
+        mvc.perform(get("/api/trade/bulk-orders/" + request.getId() + "/months")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(12))
+                .andExpect(jsonPath("$[0].leadMonths").value(1))
+                .andExpect(jsonPath("$[0].available").value(true));
+        postJson("/api/trade/bulk-orders/" + request.getId() + "/term", java.util.Map.of("leadMonths", 2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OPEN"))
+                .andExpect(jsonPath("$.leadMonths").value(2))
+                .andExpect(jsonPath("$.sellPointName").value(request.getTitle()));
+        mvc.perform(get("/api/trade/bulk-orders")).andExpect(jsonPath("$.open").value(1))
+                .andExpect(jsonPath("$.orders[0].quantity").value(request.getQuantity()))
+                .andExpect(jsonPath("$.requests[0].status").value("SETTLED"));
+        // the request is done: no instant delivery anymore, and the lead must be a whole number > 0
+        mvc.perform(post("/api/cases/" + request.getId() + "/accept")).andExpect(status().is4xxClientError());
+        postJson("/api/trade/bulk-orders/" + request.getId() + "/term", java.util.Map.of("leadMonths", 0))
+                .andExpect(status().is4xxClientError());
+    }
+
+    /** Roadmap V3.3 R33-F: app "Feldbuch", tab "Dokumentation" (corrections, harvest button, closing a year). */
+    @Test
+    void fieldBookEndpoints() throws Exception {
+        mvc.perform(get("/api/field-book")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.fieldsTracked").value(false))
+                .andExpect(jsonPath("$.showLime").value(true))
+                .andExpect(jsonPath("$.showWeeds").value(true))
+                .andExpect(jsonPath("$.cropsFromMap").value(false))
+                .andExpect(jsonPath("$.crops[0].name").exists())
+                .andExpect(jsonPath("$.fields").isEmpty());
+        mvc.perform(post("/api/field-book/fields/12/harvest")).andExpect(status().isNotFound());
+        mvc.perform(post("/api/field-book/years/1/close")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.closedYears[0]").value(1));
+        mvc.perform(post("/api/field-book/years/1/reopen")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.closedYears").isEmpty());
+        postJson("/api/field-book/entries/999999/values", java.util.Map.of("field", "LIMED", "value", "true"))
+                .andExpect(status().isNotFound());
+        postJson("/api/field-book/entries/999999/values", java.util.Map.of("value", "true"))
+                .andExpect(status().is4xxClientError());
+    }
+
+    /** Roadmap V3.2 R32-I: app "Bank", area "Investoren", and the switch in settings -> events. */
+    @Test
+    void investorEndpoints() throws Exception {
+        mvc.perform(get("/api/investors")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.savegameEnabled").value(true))
+                .andExpect(jsonPath("$.maxActive").value(2))
+                .andExpect(jsonPath("$.breachesToTerminate").value(3))
+                .andExpect(jsonPath("$.offers").isEmpty())
+                .andExpect(jsonPath("$.contracts").isEmpty());
+        mvc.perform(get("/api/settings/burdening-events")).andExpect(jsonPath("$.investors").value(true));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/settings/burdening-events")
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of(
+                                "areaCheck", true, "fertilizer", true, "disease", true, "sickLeave", true,
+                                "investors", false))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.investors").value(false));
+        mvc.perform(get("/api/investors")).andExpect(jsonPath("$.savegameEnabled").value(false));
+        mvc.perform(post("/api/investors/offers/999999/packages/1/accept")).andExpect(status().isNotFound());
+        postJson("/api/investors/obligations/999999/deliver", java.util.Map.of("quantity", 0))
+                .andExpect(status().isBadRequest());
+    }
 
     @Test
     void storageAndPrices() throws Exception {
@@ -386,7 +492,7 @@ class ApiIntegrationTest {
         // E1: tax overview without a booking journal, advisor offer as a contract
         mvc.perform(get("/api/tax")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.journalAvailable").value(false))
-                .andExpect(jsonPath("$.ratePercent").value(25.0))
+                .andExpect(jsonPath("$.ratePercent").value(19.0))
                 .andExpect(jsonPath("$.lastAssessment").value(nullValue()))
                 .andExpect(jsonPath("$.openBills").value(0));
         mvc.perform(post("/api/tax/advisor/offer")).andExpect(status().isOk())

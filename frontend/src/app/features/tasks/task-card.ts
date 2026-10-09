@@ -107,6 +107,12 @@ import { dueLabel, isUrgent } from './task-groups';
             <app-button variant="secondary" [disabled]="busy()" (pressed)="run(api.participate(e.id, false))" data-testid="task-decline">{{ 'market.decline' | t }}</app-button>
           </div>
         }
+        @case ('INVESTOR_DUE') {
+          <!-- Roadmap V3.2 R32-I4: a delivery still due to an investor in the current period -->
+          @let d = t.investorDue!;
+          <div class="text-[15px] font-semibold text-text">{{ 'tasks.investorDue' | t: { name: d.investor ?? '–' } }}</div>
+          <div class="text-[12px] text-[#8FA39A]" data-testid="investor-due">{{ 'investors.due' | t: { remaining: (d.remaining | num), unit: (d.type === 'A1' ? ('investors.animals' | t) : 'l'), what: ((d.subType ?? d.fillType ?? '') | label: 'fillType') } }}</div>
+        }
         @case ('POSTING') {
           <div class="text-[15px] font-semibold text-text">{{ 'tasks.applicants' | t: { role: (t.kind | label: 'jobRole'), n: t.pendingApplicants } }}</div>
           <div class="text-[12px] text-[#8FA39A]">{{ 'tasks.applicantsHint' | t }}</div>

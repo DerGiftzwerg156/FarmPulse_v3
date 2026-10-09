@@ -1,0 +1,7 @@
+Sammelantrag {{cropYear}}
+Guten Tag,
+
+der Sammelantrag für das Jahr {{cropYear}} ist ab sofort in der App „Ämter“ möglich. Bitte bestätigen oder korrigieren Sie dort die Kultur jedes Feldes. Stichtag ist das Ende des Monats {{deadlineMonth}}. Die Flächenprämie beträgt {{premiumPerHa}} € je Hektar (derzeit {{hectares}} ha) und wird im {{paymentMonth}} ausgezahlt. Verspätete Anträge werden gekürzt.
+
+Mit freundlichen Grüßen
+{{characterName}}

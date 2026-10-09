@@ -1,0 +1,7 @@
+Auf gute Zusammenarbeit
+Guten Tag,
+
+die {{amount}} € sind auf dem Weg ({{capitalType}}, {{years}} Jahre ab dem Jahr {{startYear}}). Als Gegenleistung haben wir vereinbart: {{considerations}}.
+
+Viele Grüße
+{{characterName}}

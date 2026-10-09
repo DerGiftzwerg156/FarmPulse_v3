@@ -6,6 +6,9 @@ RPSimConfig.DEFAULTS = {
     -- Technical concept "Datei-Bridge": farm_facts.json is overwritten every 10 s (real time), so the backend is at
     -- most ~10 s behind the game.
     exportIntervalMs = 10000,
+    -- market_context.json is rewritten every marketContextIntervalMs (real time, ms) even when its content did not
+    -- change (owner decision 2026-10-06); in between, every farm_facts export still writes it as soon as it changed.
+    marketContextIntervalMs = 60000,
     -- Safety net for T-01: if Mission00.onStartMission never reaches the bridge, it starts after this many ms
     -- of frame updates (Farm Dashboard uses the same "ready after a delay" pattern).
     startFallbackMs = 30000,
@@ -34,6 +37,15 @@ RPSimConfig.DEFAULTS = {
     -- Roadmap V2 R2-B1: number of FS25 periods (game months) kept in the booking journal (farm_facts.finances).
     -- 13 = one year plus the current month.
     financeJournalPeriods = 13,
+    -- Booking statement (owner decision 2026-10-06): the mod keeps only the last N single bookings
+    -- (farm_facts.bookings); the backend stores them permanently, so N only has to cover the bookings between two
+    -- exports and a reload without saving.
+    bookingLogEntries = 200,
+    -- Booking statement: FS25 money types that always get an own entry instead of the daily sum (purchases and sales
+    -- of vehicles, buildings and fields - names classified in rpsim.formulas.finance.categories). Bookings of the
+    -- tool (RPSIM_<REASON>) are always single entries.
+    bookingLogSingleTypes = { "SHOP_VEHICLE_BUY", "SHOP_VEHICLE_SELL", "SHOP_PROPERTY_BUY", "SHOP_PROPERTY_SELL",
+        "FIELD_BUY", "FIELD_SELL" },
     -- Roadmap V2 R2-C1: how often the fields are sampled (real time, ms); every farm_facts export in between carries
     -- the last sample. 10 s = every export carries fresh fields (the roadmap proposed 5 min to save frame time).
     fieldExportIntervalMs = 10000,

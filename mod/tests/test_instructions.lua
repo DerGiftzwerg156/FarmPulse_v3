@@ -17,7 +17,9 @@ function T.TestInstructions:testAllMoneyReasonsAccepted()
         "FARMLAND_SALE", "OTHER", "TAX_PAYMENT", "TAX_REFUND", "FINE", "FAMILY", "SPONSORING", "COMPENSATION",
         "LEASE_INCOME", "GOODS_PURCHASE", "GOODS_SALE", "VEHICLE_PURCHASE", "VEHICLE_SALE", "CONTRACT_PENALTY",
         "CONTRACTOR_FEE", "MACHINE_RENT", "LIVESTOCK_PURCHASE", "LIVESTOCK_SALE", "WINTER_SERVICE", "DIRECT_PAYMENT",
-        "INVESTMENT_GRANT", "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND" }) do
+        "INVESTMENT_GRANT", "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND", "FARM_HOLIDAY_SETUP",
+        "TANK_LOCK", "SEVERANCE", "INVESTOR_CAPITAL", "INVESTOR_REPAYMENT", "INVESTOR_PAYOUT",
+        "INVESTOR_COMPENSATION" }) do
         lu.assertTrue(RPSimInstructions.validate(money("i", 1, r)), r)
     end
     local ok, why = RPSimInstructions.validate(money("i", 1, "FREE_MONEY"))
@@ -429,7 +431,7 @@ local function fuel(extra)
 end
 
 function T.TestInstructions:testFieldWorkValidation()
-    for _, w in ipairs({ "PLOW", "CULTIVATE", "LIME", "HARVEST" }) do
+    for _, w in ipairs({ "PLOW", "CULTIVATE", "LIME", "FERTILIZE", "HARVEST" }) do
         lu.assertTrue(RPSimInstructions.validate(fieldWork({ work = w })), w)
     end
     lu.assertTrue(RPSimInstructions.validate(fieldWork({ work = "SOW", fruitType = "WHEAT" })))
@@ -506,6 +508,42 @@ function T.TestInstructions:testRoadmapV31ActionsAndFuelResult()
     local byId = {}
     for _, a in ipairs(ack.acks) do byId[a.instructionId] = a end
     lu.assertEquals(byId.ins_vf.result, { liters = 80 })
+end
+
+-- Roadmap V3.2 (R32-Q1): HUSBANDRY_TRANSFER
+local function milk(extra)
+    local ins = { instructionId = "ins_ht", type = "HUSBANDRY_TRANSFER", husbandryUniqueId = "hus_00001",
+        fillType = "MILK", amount = 5000 }
+    for k, v in pairs(extra or {}) do ins[k] = v end
+    return ins
+end
+
+function T.TestInstructions:testHusbandryTransferValidation()
+    lu.assertTrue(RPSimInstructions.validate(milk()))
+    lu.assertTrue(RPSimInstructions.validate(milk({ amount = 0.5 })))
+    for _, c in ipairs({ { husbandryUniqueId = "" }, { husbandryUniqueId = 1 }, { fillType = "" }, { amount = 0 },
+        { amount = -10 }, { amount = "5000" }, { amount = 0 / 0 } }) do
+        local ok, why = RPSimInstructions.validate(milk(c))
+        lu.assertFalse(ok, why)
+    end
+end
+
+function T.TestInstructions:testHusbandryTransferIsNotSupportedWithoutItsAction()
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    RPSimProcessor.process(state, { savegameId = SG, instructions = { milk() } },
+        { savegameId = SG, gameTime = 1000, actions = {} })
+    lu.assertEquals(state.processed.ins_ht.status, "FAILED")
+    lu.assertEquals(state.processed.ins_ht.message, "NOT_SUPPORTED")
+end
+
+function T.TestInstructions:testHusbandryTransferActionAndFailureCode()
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    local seen
+    RPSimProcessor.process(state, { savegameId = SG, instructions = { milk() } },
+        { savegameId = SG, gameTime = 1000, actions = {
+            husbandryTransfer = function(ins) seen = ins.amount; return false, "INSUFFICIENT_STOCK" end } })
+    lu.assertEquals(seen, 5000)
+    lu.assertEquals(state.processed.ins_ht.message, "INSUFFICIENT_STOCK")
 end
 
 return T

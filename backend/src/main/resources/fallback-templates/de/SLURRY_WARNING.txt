@@ -1,0 +1,6 @@
+Güllelager fast voll
+Hallo,
+
+das Güllelager im {{stable}} ist zu {{percent}} % voll, und das schon seit ein paar Tagen. Wir sollten bald Gülle fahren – ab {{closedFrom}} gilt die Sperrfrist, dann darf nichts mehr auf den Acker.
+
+{{characterName}}

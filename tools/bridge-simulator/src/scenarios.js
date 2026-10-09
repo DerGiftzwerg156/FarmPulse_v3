@@ -376,6 +376,97 @@ Object.assign(SCENARIOS, {
   },
 });
 
+// Roadmap V3.2 (R32-Q2): grossauftrag has a full canola silo and an oil mill of the map as sell point (bulk orders,
+// R32-G); investor-milch has a cow stable with milk in its storage (husbandries[].storage[], HUSBANDRY_TRANSFER for the
+// milk delivery to an investor, R32-I3 type W3). Only investor-milch exports the milk storage; all other scenarios stand
+// for a mod without it. All numbers and names are simulated examples, not values read from FS25.
+Object.assign(SCENARIOS, {
+  grossauftrag: {
+    description: 'Großauftrag: volles Raps-Silo, Ölmühle als Verkaufsstelle der Karte (R32-G).',
+    balance: 130000, vanillaLoan: 0, ownedFarmlands: [2, 4], roadmapV31: true,
+    vehicles: [
+      { ...vehicle(1, 160000, 0.2), name: 'Fendt 700 Vario', xmlFilename: 'data/vehicles/fendt/vario700/vario700.xml',
+        category: 'TRACTORSL', fuel: { liters: 300, capacity: 400 } },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 120000 }],
+    animals: [],
+    storage: { CANOLA: { amount: 600000, capacity: 600000 }, WHEAT: { amount: 30000, capacity: 100000 } },
+    tradeStorage: { CANOLA: { amount: 600000, capacity: 600000 }, WHEAT: { amount: 30000, capacity: 100000 } },
+    sellPoints: [{ id: 'OilMillNorth', name: 'Ölmühle Nord', acceptedFillTypes: ['CANOLA', 'SUNFLOWER', 'SOYBEAN'] }],
+    drift: { income: 2500, expense: 2000 },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.3, temperature: 16, snowHeight: 0 },
+  },
+  'investor-milch': {
+    description: 'Milchviehhof: Kuhstall mit Milch im Lager des Stalls (R32-I3, Typ W3).',
+    balance: 110000, vanillaLoan: 0, ownedFarmlands: [3], roadmapV31: true,
+    vehicles: [
+      { ...vehicle(1, 90000, 0.3), name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml',
+        category: 'TRACTORSM', fuel: { liters: 80, capacity: 150 } },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 180000 }],
+    animals: [{ husbandryUniqueId: 'hus_00001', type: 'COW', count: 40, estimatedValue: 160000 }],
+    stables: { hus_00001: { capacity: 60, valuePerAnimal: 4000, subTypes: { COW_HOLSTEIN: 40 } } },
+    storage: { WHEAT: { amount: 10000, capacity: 40000 } },
+    drift: { income: 2400, expense: 2000 },
+    husbandries: [
+      { husbandryUniqueId: 'hus_00001', health: 90, productivity: 0.85, food: 0.75,
+        conditions: [{ title: 'Wasser', ratio: 0.9 }, { title: 'Stroh', ratio: 0.7 }, { title: 'Gülle', ratio: 0.3 },
+          { title: 'Milch', ratio: 0.4 }],
+        storage: [{ fillType: 'MILK', amount: 12000, capacity: 30000 }] },
+    ],
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.3, temperature: 14, snowHeight: 0 },
+  },
+});
+
+// Roadmap V3.3 (R33-Q2): feldbuch stands for a mod with the R33-Q1 contract - own fields carry the rolling and
+// mulching levels (fields[].rollerLevel / stubbleShredLevel), market_context lists the crops of the map (fruitTypes,
+// grass grows again, maize also gives chaff) and farm_facts the harvest counter (harvests, raised with POST /harvest).
+// All other scenarios leave them out and stand for a mod without them. All numbers, names and titles are simulated
+// examples, not values read from FS25.
+Object.assign(SCENARIOS, {
+  feldbuch: {
+    description: 'Feldbuch: Weizen mit Walz- und Mulchstufe, Gras nach dem ersten Schnitt, Mais vor der Ernte, '
+      + 'Kulturen der Karte und Ernte-Zähler (R33-Q).',
+    balance: 125000, vanillaLoan: 0, ownedFarmlands: [2, 4, 5], startPeriod: 6, roadmapV31: true,
+    vehicles: [
+      { ...vehicle(1, 150000, 0.2), name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml',
+        category: 'TRACTORSM', fuel: { liters: 120, capacity: 150 } },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 90000 }],
+    animals: [],
+    storage: { WHEAT: { amount: 10000, capacity: 150000 }, MAIZE: { amount: 0, capacity: 100000 } },
+    drift: { income: 2500, expense: 2100 },
+    fields: [
+      // harvestable wheat: fertilised twice, limed, rolled, not mulched
+      { farmlandId: 2, fruitType: 'WHEAT', growthState: 8, minHarvestingGrowthState: 8, maxHarvestingGrowthState: 8,
+        withered: false, cut: false, fillType: 'WHEAT', litersPerSqm: 0.95,
+        weedState: 0, stoneLevel: 0, sprayLevel: 2, limeLevel: 1, plowLevel: 1, groundType: 'SOWN',
+        sprayType: 'FERTILIZER', rollerLevel: 0, stubbleShredLevel: 0 },
+      // grass growing again after the first cut (the counter holds the first cut)
+      { farmlandId: 4, fruitType: 'GRASS', growthState: 2, minHarvestingGrowthState: 3, maxHarvestingGrowthState: 4,
+        withered: false, cut: false, fillType: 'GRASS_WINDROW', litersPerSqm: 0.9,
+        weedState: 0, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN',
+        sprayType: 'LIQUID_MANURE', rollerLevel: 0, stubbleShredLevel: 0 },
+      // harvestable maize, still to be rolled
+      { farmlandId: 5, fruitType: 'MAIZE', growthState: 7, minHarvestingGrowthState: 7, maxHarvestingGrowthState: 7,
+        withered: false, cut: false, fillType: 'MAIZE', litersPerSqm: 0.8,
+        weedState: 1, stoneLevel: 0, sprayLevel: 1, limeLevel: 0, plowLevel: 1, groundType: 'SOWN',
+        sprayType: 'MANURE', rollerLevel: 1, stubbleShredLevel: 0 },
+    ],
+    fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.2, temperature: 22, snowHeight: 0 },
+    fruitTypes: [
+      { name: 'WHEAT', fillType: 'WHEAT', title: 'Weizen', regrows: false, needsRolling: true, products: [] },
+      { name: 'BARLEY', fillType: 'BARLEY', title: 'Gerste', regrows: false, needsRolling: true, products: [] },
+      { name: 'CANOLA', fillType: 'CANOLA', title: 'Raps', regrows: false, needsRolling: true, products: [] },
+      { name: 'MAIZE', fillType: 'MAIZE', title: 'Mais', regrows: false, needsRolling: true, products: ['CHAFF'] },
+      { name: 'GRASS', fillType: 'GRASS_WINDROW', title: 'Gras', regrows: true, needsRolling: true, products: [] },
+      { name: 'POTATO', fillType: 'POTATO', title: 'Kartoffeln', regrows: false, needsRolling: false, products: [] },
+    ],
+    harvests: [{ farmlandId: 4, fruitType: 'GRASS', fillType: 'GRASS_WINDROW', liters: 18000 }],
+  },
+});
+
 // Simulated vanilla contracts (TODO T-22); the mod reads them from g_missionManager:getMissions().
 export const MISSIONS = [
   { uniqueId: 'mission_001', title: 'Ernte', typeName: 'harvestMission', field: '7', npcIndex: 3, npcTitle: 'Otto Wendler',

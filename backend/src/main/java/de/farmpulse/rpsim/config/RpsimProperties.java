@@ -26,6 +26,34 @@ public class RpsimProperties {
     private Ai ai = new Ai();
     private Formulas formulas = new Formulas();
     private Web web = new Web();
+    private Db db = new Db();
+    private Desktop desktop = new Desktop();
+
+    /**
+     * Background mode of {@code FarmPulse.exe} from the Windows installer (docs/architecture/windows-installer.md): tray
+     * icon, browser on start, single instance, free port. Off for {@code start.bat}, development and tests.
+     */
+    @Getter @Setter
+    public static class Desktop {
+        /** Set by the installer's launcher ({@code -Drpsim.desktop.enabled=true}), never in a configuration file. */
+        private boolean enabled = false;
+        /** Open the browser on the tablet as soon as the server is ready. */
+        private boolean openBrowser = true;
+        /** Configured port in use: the next free port up to {@code server.port} + this value is used instead. */
+        private int portSearchRange = 20;
+        /** Folder of the setup settings, the lock and the URL file; set by the launcher ({@code ~/.rpsim}). */
+        private String dataDir = "";
+    }
+
+    /** Technical review 10/2026, Phase 0.1 (S-1): password of the H2 file database. */
+    @Getter @Setter
+    public static class Db {
+        /**
+         * Properties file with the database password (owner-only permissions), created on the first start. Empty =
+         * the password from {@code spring.datasource.password} is used as it is (in-memory databases of tests/e2e).
+         */
+        private String passwordFile = "";
+    }
 
     @Getter @Setter
     public static class Web {
@@ -34,6 +62,12 @@ public class RpsimProperties {
          * SPA fallback to index.html, so players only start one process. Empty = API only (dev: ng serve).
          */
         private String staticDir = "";
+        /**
+         * Technical review 10/2026, Phase 0.2 (S-2): host names accepted in the {@code Host} header besides
+         * {@code localhost}, IP addresses and the name of this computer, e.g. {@code mein-pc.fritz.box}. Protects
+         * against DNS rebinding: a web page cannot point one of these names at this computer.
+         */
+        private List<String> allowedHosts = new ArrayList<>();
         /** Roadmap V3 R3-N1/N2: access from devices in the home network (tablet). */
         private Lan lan = new Lan();
     }
@@ -66,6 +100,11 @@ public class RpsimProperties {
         private String path = "../tools/bridge-simulator/runtime/modSettings/FS25_RPSim";
         /** Real-time polling interval of the bridge reader (ms). */
         private long pollIntervalMs = 2000;
+        /**
+         * Technical review 10/2026, Phase 1.3: a listener of the bridge cycle that fails is retried by the next cycles;
+         * after this many failed attempts it is skipped for that event and the player gets a notice.
+         */
+        private int stepMaxAttempts = 3;
         /** Whether the bridge scheduler runs (disabled in unit tests). */
         private boolean enabled = true;
         /**
@@ -157,6 +196,8 @@ public class RpsimProperties {
         private PriceAlarm priceAlarm = new PriceAlarm();
         private ForwardContract forwardContract = new ForwardContract();
         private FarmShop farmShop = new FarmShop();
+        private BulkOrder bulkOrder = new BulkOrder();
+        private Investor investor = new Investor();
         private Finance finance = new Finance();
         private LiquidityPlan liquidityPlan = new LiquidityPlan();
         private Drought drought = new Drought();
@@ -171,6 +212,24 @@ public class RpsimProperties {
         private LivestockTrade livestockTrade = new LivestockTrade();
         private WinterService winterService = new WinterService();
         private SeasonalWorker seasonalWorker = new SeasonalWorker();
+        private BurdeningEvents burdeningEvents = new BurdeningEvents();
+        private DirectPayment directPayment = new DirectPayment();
+        private InvestmentGrant investmentGrant = new InvestmentGrant();
+        private FertilizerRules fertilizerRules = new FertilizerRules();
+        private AnimalDisease animalDisease = new AnimalDisease();
+        private SocialInsurance socialInsurance = new SocialInsurance();
+        private SickLeave sickLeave = new SickLeave();
+        private VillageNewspaper villageNewspaper = new VillageNewspaper();
+        private VillageChat villageChat = new VillageChat();
+        private Stammtisch stammtisch = new Stammtisch();
+        private NightWork nightWork = new NightWork();
+        private CropDamage cropDamage = new CropDamage();
+        private FarmHoliday farmHoliday = new FarmHoliday();
+        private SchoolVisit schoolVisit = new SchoolVisit();
+        private CoopShares coopShares = new CoopShares();
+        private CoopAssembly coopAssembly = new CoopAssembly();
+        private CoopBoard coopBoard = new CoopBoard();
+        private DieselTheft dieselTheft = new DieselTheft();
         private Fields fields = new Fields();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
@@ -507,6 +566,18 @@ public class RpsimProperties {
                 "MACHINE_OPERATOR", 2400.0, "MECHANIC", 2700.0, "ANIMAL_KEEPER", 2200.0, "OFFICE_CLERK", 2300.0));
         /** Expected salary = baseSalary * (1 + salarySkillFactor * (skill - 50) / 50). */
         private double salarySkillFactor = 0.3;
+        /**
+         * Owner decision 2026-10-06: the applications arrive the next game day, each at a random time between
+         * application-hour-min and application-hour-max o'clock.
+         */
+        private int applicationHourMin = 8;
+        private int applicationHourMax = 17;
+        /**
+         * Owner decision 2026-10-06: cancelling a hired employee before the first working day costs severance-factor x
+         * the agreed monthly salary (SEVERANCE), in the world mode HARSH severance-factor-harsh x.
+         */
+        private double severanceFactor = 1.5;
+        private double severanceFactorHarsh = 3.0;
     }
 
     /**
@@ -1021,6 +1092,213 @@ public class RpsimProperties {
         private int reputationMaxPerYear = 4;
     }
 
+    /** Roadmap V3.2 R32-G: bulk orders of bulk buyers at a sell point of the map (owner decisions 2026-10-08). */
+    @Getter @Setter
+    public static class BulkOrder {
+        private boolean enabled = true;
+        /** Fill types a bulk buyer orders (only with a sell point of the map that accepts them, no production). */
+        private List<String> fillTypes = new ArrayList<>(List.of("WHEAT", "BARLEY", "CANOLA", "SUNFLOWER", "SOYBEAN",
+                "MAIZE", "POTATO", "SUGARBEET"));
+        /** Fixed amount range per fill type (litres), independent of the farm size; fill types without entry: none. */
+        private Map<String, Amount> amounts = defaultAmounts();
+        /** At most this many requests per month, each with probability x the refusal factor of the savegame. */
+        private int maxRequestsPerMonth = 1;
+        private double probability = 0.3;
+        /** Each refused, ignored or short order multiplies the factor with this; a full delivery divides by it (max 1). */
+        private double refusalFactor = 0.75;
+        private double minFactor = 0.1;
+        private double answerDays = 5;
+        /** Share of the requests that come as a call instead of a mail. */
+        private double callShare = 0.1;
+        /** Instant delivery from the own silos: best market price x instant-markup. */
+        private double instantMarkup = 1.25;
+        /** Delivery month: today's price of the sell point x (1 + term-base-markup + term-markup-per-month x months). */
+        private double termBaseMarkup = 0.05;
+        private double termMarkupPerMonth = 0.01;
+        private int minLeadMonths = 1;
+        private int maxLeadMonths = 12;
+        /** At most this many open orders with a delivery month per savegame. */
+        private int maxOpen = 3;
+        /** Shortfall x fixed price x penalty-share as CONTRACT_PENALTY. */
+        private double penaltyShare = 0.25;
+        /** Trust of the bulk buyer for a full delivery (instant or delivery month) and for a shortfall. */
+        private double fulfilledTrustDelta = 3;
+        private double shortfallTrustDelta = -5;
+
+        /** Amount range of one fill type: min..max in steps of step. */
+        @Getter @Setter
+        public static class Amount {
+            private long min;
+            private long max;
+            private long step;
+
+            static Amount of(long min, long max, long step) {
+                Amount a = new Amount();
+                a.setMin(min);
+                a.setMax(max);
+                a.setStep(step);
+                return a;
+            }
+        }
+
+        /** Owner decision 2026-10-08: 50,000-500,000 l in steps of 10,000 l, potatoes / sugar beet up to 300,000 l. */
+        private static Map<String, Amount> defaultAmounts() {
+            Map<String, Amount> m = new LinkedHashMap<>();
+            for (String fillType : List.of("WHEAT", "BARLEY", "CANOLA", "SUNFLOWER", "SOYBEAN", "MAIZE")) {
+                m.put(fillType, Amount.of(50_000, 500_000, 10_000));
+            }
+            m.put("POTATO", Amount.of(50_000, 300_000, 10_000));
+            m.put("SUGARBEET", Amount.of(50_000, 300_000, 10_000));
+            return m;
+        }
+    }
+
+    /** Roadmap V3.2 R32-I: large investors with 2-3 packages of considerations (owner decisions 2026-10-08). */
+    @Getter @Setter
+    public static class Investor {
+        private boolean enabled = true;
+        /** I1: at most this many running investor contracts. */
+        private int maxActive = 2;
+        /** I1: amount = random step between amount-min and min(amount-max, asset-share x assets in bank view). */
+        private long amountMin = 250_000;
+        private long amountMax = 2_500_000;
+        private long amountStep = 50_000;
+        private double assetShare = 0.5;
+        /** I1: credit score of a loan over the amount (credit-term-months, base rate of the bank) at least this. */
+        private double minCreditScore = 50;
+        private int creditTermMonths = 60;
+        /** I1: no payment delay within these months and no running call-back of a loan. */
+        private int delayLookbackMonths = 12;
+        /** I1: chance per month = base + per milestone (capped) + good reputation - controversial reputation. */
+        private double baseProbability = 0.05;
+        private double milestoneBonus = 0.02;
+        private double milestoneBonusMax = 0.06;
+        private double goodReputationBonus = 0.02;
+        private double controversialReputationMalus = 0.02;
+        /** Share of the offers that come as a call; a missed or declined call also brings the mail. */
+        private double callShare = 0.5;
+        private double answerDays = 10;
+        /** Trust of the investor when an offer is left unanswered (declining costs nothing). */
+        private double ignoredTrustDelta = -3;
+        /** I2: packages per offer and term in FS25 years (random per package). */
+        private int minPackages = 2;
+        private int maxPackages = 3;
+        private int minYears = 2;
+        private int maxYears = 5;
+        private int maxSideConsiderations = 2;
+        /** I3: goods and milk quantities are rounded to this many litres. */
+        private long litersStep = 1_000;
+        /** I3 R1: profit share = value per year / operating result, rounded to step, between min and max. */
+        private double profitShareMin = 0.02;
+        private double profitShareMax = 0.30;
+        private double profitShareStep = 0.005;
+        /** I3 R2: fixed payout rounded to this step of the amount. */
+        private double payoutRateStep = 0.001;
+        /** I3: fixed value per year of the term of the obligations and rights (EUR; P4 per date). */
+        private Map<String, Long> values = defaultValues();
+        /** I3 P2: per year the investor asks for amount x share / market price at market price x (1 - discount). */
+        private double purchaseAmountShare = 0.10;
+        private double purchaseDiscount = 0.10;
+        private double purchaseAnswerDays = 5;
+        /** I3 P3: FS25 periods the holiday flat is kept free for the investor (5 = July, 6 = August). */
+        private List<Integer> holidayPeriods = new ArrayList<>(List.of(5, 6));
+        /** I3 P4: dates per year; days to accept the invitation. */
+        private int visitsPerYear = 1;
+        private double visitAnswerDays = 3;
+        /** I3 A2: mean health of the stables with animals over the exports of a month at least this. */
+        private double welfareMinHealth = 70;
+        /** I3 A4: target = today's own area (or animals) x growth-factor by the end of the first term year. */
+        private double growthFactor = 1.2;
+        /** I3 A3: crop obligation = crop-area-share x own area, rounded to crop-area-step ha, at least crop-area-min. */
+        private double cropAreaShare = 0.30;
+        private double cropAreaStep = 0.5;
+        private double cropAreaMin = 1.0;
+        /** I4: reminder this many game days before the end of a month (or the year for yearly considerations). */
+        private double reminderDaysBeforeEnd = 7;
+        /** I4 stage 1: grace period of a reminder. */
+        private double graceDays = 5;
+        /** I4 stage 2: compensation = shortfall x market price (animals: game value) x markup, or value per year x markup. */
+        private double compensationMarkup = 1.25;
+        /** I4 stage 3: the investor terminates at this breach within the term. */
+        private int breachesToTerminate = 3;
+        /** I4 / I5: days to pay a claim (like a tax bill); trust per overdue month. */
+        private double claimDays = 10;
+        private double claimOverdueTrustDelta = -5;
+        /** I5: announcement this many months before the end; chance of an extension offer without a breach. */
+        private int announceMonths = 3;
+        private double extensionProbability = 0.5;
+        /** I6: a subordinated loan counts with this factor as debt in the bank view. */
+        private double subordinatedDebtFactor = 1.0;
+        /** Trust of the investor: made up in the grace, compensation, termination, period fulfilled, end without breach. */
+        private double reminderTrustDelta = -2;
+        private double compensationTrustDelta = -5;
+        private double terminationTrustDelta = -10;
+        private double fulfilledTrustDelta = 1;
+        private double endTrustDelta = 5;
+        /** I3 P5: a breach or the termination of an investor named in the village paper is public too. */
+        private double publicBreachDelta = -2;
+        /** I1: kinds of investors (key = InvestorKind). */
+        private Map<String, Kind> kinds = defaultKinds();
+
+        /** One kind of investor: weight of the draw, target return p.a., main considerations, fill types, crop, P5. */
+        @Getter @Setter
+        public static class Kind {
+            private String label;
+            private double weight = 1;
+            private double targetReturn;
+            /** Main considerations the kind prefers (W1, W2, W3, A1, R1, R2). */
+            private List<String> main = new ArrayList<>();
+            /** Fill types of W1 / W2 / P2 (only with an own silo entry for the sort). */
+            private List<String> fillTypes = new ArrayList<>();
+            /** Fruit type of the crop obligation A3 (none = no A3). */
+            private String crop;
+            /** Village reputation of the name in the village paper (P5) at the signing. */
+            private double reputationDelta;
+
+            static Kind of(String label, double weight, double targetReturn, List<String> main, List<String> fillTypes,
+                           String crop, double reputationDelta) {
+                Kind k = new Kind();
+                k.setLabel(label);
+                k.setWeight(weight);
+                k.setTargetReturn(targetReturn);
+                k.setMain(new ArrayList<>(main));
+                k.setFillTypes(new ArrayList<>(fillTypes));
+                k.setCrop(crop);
+                k.setReputationDelta(reputationDelta);
+                return k;
+            }
+        }
+
+        /** Owner decision 2026-10-08: values per year of the term. */
+        private static Map<String, Long> defaultValues() {
+            Map<String, Long> m = new LinkedHashMap<>();
+            m.put("A2", 8_000L);
+            m.put("A3", 12_000L);
+            m.put("A4", 15_000L);
+            m.put("P1", 10_000L);
+            m.put("P4", 3_000L);
+            m.put("P5", 4_000L);
+            return m;
+        }
+
+        /** Owner decisions 2026-10-08: the kinds of the roadmap table (brewery and oil mill share one row). */
+        private static Map<String, Kind> defaultKinds() {
+            Map<String, Kind> m = new LinkedHashMap<>();
+            m.put("AGRI_FUND", Kind.of("Agrarfonds", 1, 0.10, List.of("R1", "R2"), List.of(), null, -1));
+            m.put("FOOD_CHAIN", Kind.of("Regionale Lebensmittelkette", 1, 0.08, List.of("W1", "W2"),
+                    List.of("WHEAT", "POTATO"), "WHEAT", 2));
+            m.put("DAIRY", Kind.of("Molkerei-Unternehmer", 1, 0.08, List.of("W3", "A1"), List.of(), null, 2));
+            m.put("BREWERY", Kind.of("Brauerei", 0.5, 0.07, List.of("W1", "W2"), List.of("BARLEY"), "BARLEY", 2));
+            m.put("OIL_MILL", Kind.of("Ölmühle", 0.5, 0.07, List.of("W1", "W2"), List.of("CANOLA", "SUNFLOWER"),
+                    "CANOLA", 2));
+            m.put("ENERGY", Kind.of("Energieunternehmen", 1, 0.09, List.of("W1", "W2", "R2"), List.of("MAIZE"),
+                    "MAIZE", -2));
+            m.put("PRIVATE", Kind.of("Privatinvestorin / Familienstiftung", 1, 0.06, List.of("R1", "A1"), List.of(),
+                    null, 1));
+            return m;
+        }
+    }
+
     @Getter @Setter
     public static class NeighborMissions {
         /** Tool names of the evidenced contract types (the mod maps them to PlowMission / StonePickMission). */
@@ -1122,15 +1400,12 @@ public class RpsimProperties {
         private boolean enabled = true;
         /** Price in EUR per hectare and work, material (lime, seed) included. */
         private Map<String, Double> pricePerHa = defaultWorkPrices();
-        /** The work is done after lead-days-min..lead-days-max game days. */
-        private int leadDaysMin = 1;
-        private int leadDaysMax = 3;
-        /** FS25 periods of the busy season (July-October): the work takes harvest-extra-days longer. */
-        private List<Integer> harvestPeriods = new ArrayList<>(List.of(5, 6, 7, 8));
-        private int harvestExtraDays = 2;
-        /** Trust to the contractor from trust-threshold shortens the wait by trust-days-less (at least 1 day). */
-        private double trustThreshold = 50;
-        private int trustDaysLess = 1;
+        /** The work is done at the end of the game day done-after-days days after the order day (1 = the next day). */
+        private int doneAfterDays = 1;
+        /** At most this many works of one field in one order, done on the same day. */
+        private int maxWorksPerOrder = 3;
+        /** Fertilising is offered below this spray level (FS25 sprayLevelMaxValue). */
+        private int maxSprayLevel = 2;
         private double doneTrustDelta = 2;
         /** Fruit types offered for sowing (FS25 fruit type names). */
         private List<String> sowFruitTypes = new ArrayList<>(List.of("WHEAT", "BARLEY", "OAT", "CANOLA", "MAIZE",
@@ -1156,6 +1431,7 @@ public class RpsimProperties {
             m.put("CULTIVATE", 80.0);
             m.put("LIME", 60.0);
             m.put("SOW", 100.0);
+            m.put("FERTILIZE", 70.0);
             m.put("HARVEST", 180.0);
             return m;
         }
@@ -1282,6 +1558,317 @@ public class RpsimProperties {
     }
 
     /**
+     * Roadmap V3.1 R31-B: burdening events (on-site check B1, fertiliser checks B3, animal disease B4, sickness and
+     * accident B5) are switched per savegame; in the world mode IDYLLIC their probabilities, cuts and fines are scaled
+     * by idyllic-factor and the animal disease is off (owner decision 2026-10-05).
+     */
+    @Getter @Setter
+    public static class BurdeningEvents {
+        private double idyllicFactor = 0.5;
+    }
+
+    /**
+     * Roadmap V3.1 R31-B1: area payment application and premium (owner decisions 2026-10-05, placeholders). The rotation
+     * cut of a check uses authority.rotation-cut-share, the announcement authority.inspection-days.
+     */
+    @Getter @Setter
+    public static class DirectPayment {
+        private boolean enabled = true;
+        /** FS25 periods: mail and form from open-period, deadline = end of deadline-period, payment at payment-period. */
+        private int openPeriod = 1;
+        private int deadlinePeriod = 3;
+        private int paymentPeriod = 10;
+        /** A late application loses late-cut-per-day of the premium per started game day; after late-max-days none. */
+        private double lateCutPerDay = 0.01;
+        private int lateMaxDays = 25;
+        private double premiumPerHa = 250;
+        /** On-site check: chance per application, rolled at the first month start of check-periods. */
+        private double checkProbability = 0.1;
+        private List<Integer> checkPeriods = new ArrayList<>(List.of(4, 5, 6, 7, 8));
+        /** Cut = premium of the deviating area x cut-factor (x cut-factor-repeat when the savegame deviated before). */
+        private double cutFactor = 1.5;
+        private double cutFactorRepeat = 3.0;
+        /** Crops offered per field (plus the fruit types of the own fields and BRACHE = fallow). */
+        private List<String> crops = new ArrayList<>(List.of("WHEAT", "BARLEY", "OAT", "CANOLA", "MAIZE", "SUNFLOWER",
+                "SOYBEAN", "SORGHUM", "GRASS"));
+    }
+
+    /**
+     * Roadmap V3.1 R31-B2: investment grant (owner decisions 2026-10-05, placeholders). Bills of a repayment follow
+     * tax.payment-days / tax.late-fee-rate like a tax bill.
+     */
+    @Getter @Setter
+    public static class InvestmentGrant {
+        private boolean enabled = true;
+        private long minSum = 10000;
+        /** Processing time; with an office clerk x (1 - clerk-reduction-max x effective skill / 100). */
+        private double processingDays = 10;
+        private double clerkReductionMax = 0.5;
+        /** The purchase must follow within purchase-months game months after the approval. */
+        private int purchaseMonths = 6;
+        private int maxOpenPerKind = 1;
+        /** Grant = grant-share x min(recognised, planned sum), at most grant-max. */
+        private double grantShare = 0.3;
+        private long grantMax = 50000;
+        /** Funded machines sold within binding-months game months after the payment are repaid pro rata. */
+        private int bindingMonths = 24;
+    }
+
+    /** Roadmap V3.1 R31-B3: fertiliser rules (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class FertilizerRules {
+        private boolean enabled = true;
+        /** FS25 periods of the closed period for organic fertiliser on arable land (November-January). */
+        private List<Integer> closedPeriods = new ArrayList<>(List.of(9, 10, 11));
+        private List<String> organicSprayTypes = new ArrayList<>(List.of("LIQUID_MANURE", "MANURE"));
+        /** Fruit types that are grassland, not arable land. */
+        private List<String> excludedFruitTypes = new ArrayList<>(List.of("GRASS"));
+        /** False = fallback of the manual test plan: every rise of sprayLevel counts ("Düngung festgestellt"). */
+        private boolean requireSprayType = true;
+        /** Fine of a repeated finding (the first one is a warning) and the loss of village reputation. */
+        private long fine = 1000;
+        private double reputationDelta = -3;
+        /** Slurry store: condition titles of getConditionInfos (localised, like livestock.water-condition-titles). */
+        private List<String> slurryConditionTitles = new ArrayList<>(List.of("Gülle", "Slurry", "Liquid Manure"));
+        private double slurryWarningRatio = 0.85;
+        private double slurryWarningDays = 5;
+        private double slurryWarningCooldownDays = 10;
+        /** At the start of reminder-period every farm with a slurry store from reminder-min-ratio is reminded. */
+        private int reminderPeriod = 8;
+        private double reminderMinRatio = 0.5;
+    }
+
+    /** Roadmap V3.1 R31-B4: animal disease and restricted zone (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class AnimalDisease {
+        private boolean enabled = true;
+        private double probabilityPerMonth = 0.02;
+        /** Months after the lifting before the next disease can break out. */
+        private int cooldownMonths = 12;
+        private int zoneMonths = 3;
+        private List<Disease> diseases = new ArrayList<>(List.of(new Disease("ASP", new ArrayList<>(List.of("PIG"))),
+                new Disease("AVIAN_FLU", new ArrayList<>(List.of("CHICKEN"))),
+                new Disease("BLUETONGUE", new ArrayList<>(List.of("SHEEP", "COW")))));
+        /** Compulsory vet check per stable = (livestock.vet-base-fee + vet-fee-per-animal x animals) x vet-fee-factor. */
+        private double vetFeeFactor = 2.0;
+        /** Requirement per affected stable: health from requirement-health within requirement-days, else a fine. */
+        private double requirementHealth = 60;
+        private double requirementDays = 10;
+        private long requirementFine = 1000;
+        /** After the lifting the neighbour trade (A3) of the type starts at price-factor-after, back to 1 linearly. */
+        private double priceFactorAfter = 0.8;
+        private int priceRecoveryMonths = 3;
+    }
+
+    @Getter @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Disease {
+        private String key;
+        private List<String> animalTypes = new ArrayList<>();
+    }
+
+    /** Roadmap V3.1 R31-B5: annual fee of the agricultural social insurance (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class SocialInsurance {
+        private boolean enabled = true;
+        /** Fee = base-fee + fee-per-ha x hectares of own fields + fee-per-employee x active employees. */
+        private long baseFee = 300;
+        private double feePerHa = 12;
+        private long feePerEmployee = 180;
+        /** FS25 period of the bill (April). */
+        private int billPeriod = 2;
+    }
+
+    /** Roadmap V3.1 R31-B5: sickness and work accidents of employees (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class SickLeave {
+        private boolean enabled = true;
+        private double sicknessProbabilityPerDay = 0.005;
+        private double accidentProbabilityPerDay = 0.003;
+        private List<String> accidentRoles = new ArrayList<>(List.of("MACHINE_OPERATOR", "SEASONAL_WORKER", "APPRENTICE"));
+        /** Accident risk x risk-bad-factor for each of the needs workload / working conditions below risk-bad-threshold. */
+        private double riskBadThreshold = 40;
+        private double riskBadFactor = 1.5;
+        /** ... and x risk-good-factor when both are from risk-good-threshold. */
+        private double riskGoodThreshold = 70;
+        private double riskGoodFactor = 0.5;
+        private int sicknessDaysMin = 2;
+        private int sicknessDaysMax = 5;
+        private int accidentDaysMin = 3;
+        private int accidentDaysMax = 10;
+        /** Get-well wishes (once per absence). */
+        private double getWellAppreciation = 8;
+        private double getWellTrustDelta = 2;
+    }
+
+    /** Roadmap V3.1 R31-D1: village newspaper "Dorfblatt" (owner decisions 2026-10-05). */
+    @Getter @Setter
+    public static class VillageNewspaper {
+        private boolean enabled = true;
+        /** An extra issue at the middle of the month (besides the one at every period start). */
+        private boolean midMonthIssue = false;
+        /** Market section: the fill types with the largest price change against the previous period. */
+        private int marketTopCount = 3;
+        /** At most this many entries per section (classifieds, deeds ...). */
+        private int maxItemsPerSection = 6;
+    }
+
+    /** Roadmap V3.1 R31-D2: village group chat "Dorfchat" (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class VillageChat {
+        private boolean enabled = true;
+        private double dailyPostProbability = 0.3;
+        private int maxPostsPerDay = 3;
+        private List<String> topics = new ArrayList<>(List.of("GREEN_WASTE", "FIRE_BRIGADE_DRILL", "LOST_DOG",
+                "CHURCH_BAZAAR", "ROAD_WORKS", "WEATHER_WARNING"));
+        /** Random villagers in a club group besides the chair. */
+        private int clubGroupVillagers = 3;
+        /** A player post changes trust only once per group within these game days. */
+        private double pacingDays = 1;
+    }
+
+    /** Roadmap V3.1 R31-D3: regulars' table in the village pub (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class Stammtisch {
+        private boolean enabled = true;
+        private double intervalDays = 14;
+        private double answerDays = 2;
+        private int attendees = 3;
+        private double attendTrustDelta = 2;
+        /** Added to market.rumor-accurate-probability for the next rumour after an evening. */
+        private double rumorAccuracyBonus = 0.15;
+        private double tipProbability = 0.3;
+        private int lonerAfterMissed = 3;
+        private double lonerReputationDelta = -1;
+        private double lonerReputationCap = -3;
+    }
+
+    /** Roadmap V3.1 R31-D4: complaints about night work (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class NightWork {
+        private boolean enabled = true;
+        private int nightStartHour = 22;
+        private int nightEndHour = 6;
+        private double thresholdHours = 3;
+        private double windowDays = 7;
+        private double annoyedWithinDays = 30;
+        private double friendlyTrustDelta = -1;
+        private double annoyedTrustDelta = -3;
+        /** Game time between two exports counts at most this long (a pause or a loaded save is no night work). */
+        private double maxSampleGapMinutes = 60;
+    }
+
+    /** Roadmap V3.1 R31-D5: crop damage on neighbour fields (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class CropDamage {
+        private boolean enabled = true;
+        private int minSamples = 3;
+        private double trustDelta = -3;
+        private double repeatDays = 60;
+        private long compensationPerSample = 150;
+        private double declineTrustDelta = -5;
+        private double decisionDays = 7;
+        private String hintText = "Pass auf, wo du langfährst – das ist ein bestelltes Feld eines Nachbarn.";
+    }
+
+    /** Roadmap V3.1 R31-D6: farm holidays (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class FarmHoliday {
+        private boolean enabled = true;
+        private long setupCost = 20000;
+        private double baseIncomePerMonth = 800;
+        /** Season factor per FS25 period of the month that ended; other periods other-season-factor. */
+        private Map<Integer, Double> seasonFactors = new LinkedHashMap<>(Map.of(4, 1.5, 5, 1.5, 6, 1.5, 10, 1.2));
+        private double otherSeasonFactor = 0.7;
+        private Map<String, Double> reputationFactors = new LinkedHashMap<>(Map.of("GOOD", 1.2, "NEUTRAL", 1.0,
+                "CONTROVERSIAL", 0.7));
+        private double goodHealth = 70;
+        private double goodHealthFactor = 1.2;
+        private double badHealth = 40;
+        private double badHealthFactor = 0.6;
+        private double noiseCut = 0.1;
+        private double smellCut = 0.1;
+        private List<Integer> smellPeriods = new ArrayList<>(List.of(4, 5, 6));
+    }
+
+    /** Roadmap V3.1 R31-D6: school visits (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class SchoolVisit {
+        private boolean enabled = true;
+        private double probabilityPerMonth = 0.25;
+        private List<Integer> excludedPeriods = new ArrayList<>(List.of(4, 5, 6));
+        private double minHealth = 70;
+        private double answerDays = 5;
+        private long allowance = 150;
+        private double reputationDelta = 2;
+        private double trustDelta = 2;
+    }
+
+    /** Roadmap V3.1 R31-D7: cooperative shares and dividend (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class CoopShares {
+        private boolean enabled = true;
+        private long sharePrice = 500;
+        private int maxShares = 200;
+        /** Rate = base-dividend-rate x price index of the year, capped to [min-rate, max-rate]. */
+        private double baseDividendRate = 0.04;
+        private double minRate = 0.0;
+        private double maxRate = 0.08;
+        private int dividendPeriod = 1;
+        private int noticeMonths = 12;
+    }
+
+    /** Roadmap V3.1 R31-D7: general assembly of the cooperative (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class CoopAssembly {
+        private int period = 2;
+        private double answerDays = 5;
+        private List<String> topics = new ArrayList<>(List.of("DIVIDEND_UP", "GRAIN_STORE", "FESTIVAL_SPONSORING"));
+        /** Votes per active character; a character votes yes with yes-base + trust / yes-trust-divisor. */
+        private int characterVotes = 10;
+        private double yesBase = 0.5;
+        private double yesTrustDivisor = 200;
+        /** Effects of an approved topic until the next assembly. */
+        private double dividendUpPoints = 0.01;
+        private double grainStoreRumorBonus = 0.05;
+        private double festivalSponsoringReputation = 1;
+    }
+
+    /** Roadmap V3.1 R31-D7: board of the cooperative (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class CoopBoard {
+        private int minShares = 40;
+        private double minTrust = 50;
+        private double rumorDaysEarlier = 2;
+        private double forwardContractBonus = 0.1;
+        private double reputationPerYear = 2;
+        /** FS25 periods of the quarterly board meetings (mandatory dates in the calendar). */
+        private List<Integer> meetingPeriods = new ArrayList<>(List.of(1, 4, 7, 10));
+        private double meetingAnswerDays = 5;
+        private double missedTrustDelta = -3;
+        private int removedAfterMissed = 2;
+    }
+
+    /** Roadmap V3.1 R31-D8: diesel theft (owner decisions 2026-10-05, placeholders). */
+    @Getter @Setter
+    public static class DieselTheft {
+        private boolean enabled = true;
+        private double probabilityPerMonth = 0.05;
+        private double minLiters = 100;
+        private double shareMin = 0.3;
+        private double shareMax = 0.6;
+        private double maxLiters = 300;
+        private double dieselPricePerLiter = 1.6;
+        /** Insurance module "Diebstahl" of the storm / hail contract. */
+        private long insurancePremiumPerMonth = 8;
+        private long insuranceMinDamage = 150;
+        private long tankLockPrice = 250;
+        private double tankLockFactor = 0.1;
+        private int maxAttempts = 3;
+    }
+
+    /**
      * Roadmap V3 R3-V2 / R3-V3: used machines bought from the workshop or a neighbour and own machines sold to neighbours
      * (owner decisions, placeholders). The used price follows the game's formula (Vehicle.calculateSellPrice).
      */
@@ -1387,6 +1974,11 @@ public class RpsimProperties {
         private List<String> recordCategories = new ArrayList<>(List.of("HARVEST_INCOME", "SOLD_PRODUCTS"));
         private int recordMinMonths = 3;
         private double recordTrustDelta = 2;
+        /**
+         * Booking statement: a shop vehicle purchase / sale waits at most this many farm_facts exports (every 10 s) for
+         * its vehicle to appear / disappear in assets.vehicles; afterwards it stays without vehicle name.
+         */
+        private int statementVehicleMatchExports = 3;
 
         private static Map<String, FinanceClass> defaultCategories() {
             Map<String, FinanceClass> m = new LinkedHashMap<>();
@@ -1407,12 +1999,15 @@ public class RpsimProperties {
             m.put("RPSIM_INVESTMENT_GRANT", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_GUEST_INCOME", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_COOP_DIVIDEND", FinanceClass.OPERATING_INCOME); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_FARM_HOLIDAY_SETUP", FinanceClass.INVESTMENT); // Roadmap V3.1 R31-D6
+            m.put("RPSIM_TANK_LOCK", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 R31-D8
             m.put("PURCHASE_FUEL", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_SEEDS", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_FERTILIZER", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_WATER", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_PALLETS", FinanceClass.OPERATING_EXPENSE);
             m.put("PURCHASE_CONSUMABLES", FinanceClass.OPERATING_EXPENSE);
+            m.put("PRODUCTION_COSTS", FinanceClass.OPERATING_EXPENSE);
             m.put("BOUGHT_MATERIALS", FinanceClass.OPERATING_EXPENSE);
             m.put("VEHICLE_RUNNING_COSTS", FinanceClass.OPERATING_EXPENSE);
             m.put("VEHICLE_REPAIR", FinanceClass.OPERATING_EXPENSE);
@@ -1431,12 +2026,14 @@ public class RpsimProperties {
             m.put("RPSIM_SPONSORING", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_COMPENSATION", FinanceClass.OPERATING_EXPENSE);
             m.put("RPSIM_TRAINING", FinanceClass.OPERATING_EXPENSE);
+            m.put("RPSIM_SEVERANCE", FinanceClass.OPERATING_EXPENSE); // owner decision 2026-10-06
             m.put("RPSIM_GOODS_PURCHASE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_CONTRACT_PENALTY", FinanceClass.OPERATING_EXPENSE); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_CONTRACTOR_FEE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_MACHINE_RENT", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_LIVESTOCK_PURCHASE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_SOCIAL_INSURANCE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_INVESTOR_COMPENSATION", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.2 (R32-Q1)
             m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_BUY", FinanceClass.INVESTMENT);
@@ -1456,6 +2053,9 @@ public class RpsimProperties {
             m.put("RPSIM_CREDIT_PREPAYMENT_FEE", FinanceClass.FINANCING);
             m.put("RPSIM_STARTING_CAPITAL_ADJUSTMENT", FinanceClass.FINANCING);
             m.put("RPSIM_COOP_SHARES", FinanceClass.FINANCING); // Roadmap V3.1 (R31-Q1)
+            m.put("RPSIM_INVESTOR_CAPITAL", FinanceClass.FINANCING); // Roadmap V3.2 (R32-Q1)
+            m.put("RPSIM_INVESTOR_REPAYMENT", FinanceClass.FINANCING); // Roadmap V3.2 (R32-Q1)
+            m.put("RPSIM_INVESTOR_PAYOUT", FinanceClass.FINANCING); // Roadmap V3.2 (R32-Q1, owner decision 2026-10-08)
             m.put("RPSIM_DAMAGE", FinanceClass.IGNORE);
             m.put("RPSIM_INSURANCE_PAYOUT", FinanceClass.IGNORE);
             m.put("RPSIM_WILDLIFE_COMPENSATION", FinanceClass.IGNORE);

@@ -1,0 +1,7 @@
+Mahnung: {{what}}
+Guten Tag,
+
+die vereinbarte Gegenleistung ist nicht erbracht: {{what}} ({{shortfall}} offen). Ich gebe Ihnen {{graceDays}} Tage Nachfrist. Das ist der {{breaches}}. Vertragsbruch in der Laufzeit.
+
+Viele Grüße
+{{characterName}}

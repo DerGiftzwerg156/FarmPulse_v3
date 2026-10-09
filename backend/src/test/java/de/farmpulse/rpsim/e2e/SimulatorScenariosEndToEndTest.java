@@ -53,6 +53,7 @@ class SimulatorScenariosEndToEndTest {
     @Autowired TransactionTemplate tx;
     @Autowired de.farmpulse.rpsim.repository.GrowingFieldMonthRepository growing;
     @Autowired de.farmpulse.rpsim.time.GameTime gameTime;
+    @Autowired de.farmpulse.rpsim.field.FieldBookService fieldBook;
 
     @BeforeEach
     void requireSimulator() {
@@ -221,6 +222,104 @@ class SimulatorScenariosEndToEndTest {
             OutboxInstruction done = outbox.findByInstructionId(instructionId).orElseThrow();
             assertThat(done.getStatus()).isEqualTo(InstructionStatus.APPLIED);
             assertThat(outboxService.ackResult(done)).containsEntry("liters", 90);
+        });
+    }
+
+    /**
+     * Roadmap V3.2 (R32-Q2): the milk storage of investor-milch and the oil mill of grossauftrag reach the backend; an
+     * older scenario exports its husbandries without the storage.
+     */
+    @Test
+    void roadmapV32FieldsArriveFromTheNewScenarios() {
+        Savegame dairy = link("investor-milch", "sim_milch_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            var h = facts.latest(savegames.findById(dairy.getId()).orElseThrow()).orElseThrow().husbandries().get(0);
+            assertThat(h.storage()).singleElement().satisfies(m -> {
+                assertThat(m.fillType()).isEqualTo("MILK");
+                assertThat(m.amount()).isEqualTo(12000.0);
+                assertThat(m.capacity()).isEqualTo(30000.0);
+            });
+        });
+        Savegame bulk = link("grossauftrag", "sim_gross_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(bulk.getId()).orElseThrow();
+            assertThat(facts.marketContext(sg).orElseThrow().sellPoints())
+                    .anySatisfy(p -> assertThat(p.acceptedFillTypes()).contains("CANOLA"));
+            assertThat(facts.latest(sg).orElseThrow().tradeStorage())
+                    .anySatisfy(t -> assertThat(t.fillType()).isEqualTo("CANOLA"));
+        });
+        Savegame old = link("viehhandel", "sim_alt32_" + System.nanoTime());
+        tx.executeWithoutResult(s -> assertThat(facts.latest(savegames.findById(old.getId()).orElseThrow()).orElseThrow()
+                .husbandries()).allSatisfy(h -> assertThat(h.storage()).isNull()));
+    }
+
+    /**
+     * Roadmap V3.3 (R33-Q2): the rolling / mulching levels, the harvest counter and the crops of the map of feldbuch
+     * reach the backend; an older scenario leaves them out.
+     */
+    @Test
+    void roadmapV33FieldsArriveFromTheFieldBookScenario() {
+        Savegame book = link("feldbuch", "sim_feldbuch_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(book.getId()).orElseThrow();
+            var f = facts.latest(sg).orElseThrow();
+            assertThat(f.fields()).extracting(fd -> fd.rollerLevel()).containsExactly(0, 0, 1);
+            assertThat(f.fields()).extracting(fd -> fd.stubbleShredLevel()).containsExactly(0, 0, 0);
+            assertThat(f.harvests()).singleElement().satisfies(h -> {
+                assertThat(h.farmlandId()).isEqualTo(4);
+                assertThat(h.fruitType()).isEqualTo("GRASS");
+                assertThat(h.fillType()).isEqualTo("GRASS_WINDROW");
+                assertThat(h.liters()).isEqualTo(18000.0);
+            });
+            var crops = facts.marketContext(sg).orElseThrow().fruitTypes();
+            assertThat(crops).extracting(t -> t.name())
+                    .containsExactly("BARLEY", "CANOLA", "GRASS", "MAIZE", "POTATO", "WHEAT");
+            assertThat(crops).filteredOn(t -> t.name().equals("MAIZE")).singleElement()
+                    .satisfies(t -> assertThat(t.products()).containsExactly("CHAFF"));
+            // Roadmap V3.3 R33-F: the field book opened a running season per own field; the counted grass went to the
+            // running grass season of field 4 (F3 rule 1)
+            assertThat(fieldBook.all(sg)).extracting(de.farmpulse.rpsim.domain.FieldBookEntry::getFarmlandId)
+                    .containsExactlyInAnyOrder(2, 4, 5);
+            assertThat(fieldBook.all(sg)).filteredOn(x -> x.getFarmlandId() == 4).singleElement().satisfies(x -> {
+                assertThat(x.fruitType()).isEqualTo("GRASS");
+                assertThat(x.liters()).isEqualTo(18000.0);
+                assertThat(x.isFirstEntry()).isTrue();
+            });
+        });
+        Savegame old = link("lohnunternehmer", "sim_alt33_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(old.getId()).orElseThrow();
+            var f = facts.latest(sg).orElseThrow();
+            assertThat(f.harvests()).isNull();
+            assertThat(f.fields()).allSatisfy(fd -> assertThat(fd.rollerLevel()).isNull());
+            assertThat(facts.marketContext(sg).orElseThrow().fruitTypes()).isNull();
+        });
+    }
+
+    /** Roadmap V3.2 (R32-Q2): a HUSBANDRY_TRANSFER goes out, the simulator takes the milk out of the stable. */
+    @Test
+    void husbandryTransferTakesTheMilkOutOfTheStable() {
+        String id = "sim_milk_" + System.nanoTime();
+        Savegame sg = link("investor-milch", id);
+        String instructionId = tx.execute(s -> {
+            OutboxInstruction o = new OutboxInstruction();
+            o.setSavegame(savegames.findById(sg.getId()).orElseThrow());
+            o.setInstructionId(OutboxService.newInstructionId());
+            o.setType(de.farmpulse.rpsim.domain.InstructionType.HUSBANDRY_TRANSFER);
+            o.setPayloadJson("{\"husbandryUniqueId\":\"hus_00001\",\"fillType\":\"MILK\",\"amount\":5000}");
+            o.setStatus(InstructionStatus.PENDING);
+            o.setCreatedAtGameTime(0);
+            o.setCreatedAt(java.time.Instant.now());
+            return outbox.save(o).getInstructionId();
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "investor-milch", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            assertThat(outbox.findByInstructionId(instructionId).orElseThrow().getStatus())
+                    .isEqualTo(InstructionStatus.APPLIED);
+            var h = facts.latest(savegames.findById(sg.getId()).orElseThrow()).orElseThrow().husbandries().get(0);
+            assertThat(h.storage().get(0).amount()).isEqualTo(7000.0);
         });
     }
 

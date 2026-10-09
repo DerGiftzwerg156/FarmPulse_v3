@@ -213,4 +213,17 @@ class LanAccessTest {
         lan.setEnabled(false);
         assertThat(lan.sessionValid(token)).isFalse();
     }
+
+    /** Review 10/2026 Phase 0.4 (S-2): the AI key goes to the configured address - only the gaming PC may change it. */
+    @Test
+    void aiSettingsAreReadOnlyOnATablet() throws Exception {
+        lan.setEnabled(true);
+        mvc.perform(get("/api/settings/ai").with(from(TABLET))).andExpect(status().isOk())
+                .andExpect(jsonPath("$.editable").value(false));
+        mvc.perform(json(put("/api/settings/ai"), "{\"provider\":\"OPENAI\",\"baseUrl\":\"https://evil.example\"}")
+                        .with(from(TABLET)))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("LAN_GAME_PC_ONLY"))
+                .andExpect(jsonPath("$.message").value("Nur am Spiele-PC änderbar"));
+        mvc.perform(get("/api/settings/ai")).andExpect(jsonPath("$.editable").value(true));
+    }
 }

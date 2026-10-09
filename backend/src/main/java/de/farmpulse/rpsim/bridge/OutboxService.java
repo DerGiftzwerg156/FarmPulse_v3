@@ -249,7 +249,20 @@ public class OutboxService {
     public List<OutboxInstruction> fieldWorkDeal(Savegame sg, int farmlandId, String work, String fruitType,
                                                  String harvestFillType, long harvestLiters, long price, String note,
                                                  Related related) {
-        String batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        return fieldWorkDeal(sg, null, farmlandId, work, fruitType, harvestFillType, harvestLiters, price, note, related);
+    }
+
+    /**
+     * The same, appended to the batch {@code batchId} (null = a new batch): the works of one contractor order go to the
+     * mod as one batch in their order, so a refused work aborts the works after it (owner decisions 2026-10-06).
+     */
+    @Transactional
+    public List<OutboxInstruction> fieldWorkDeal(Savegame sg, String batchId, int farmlandId, String work,
+                                                 String fruitType, String harvestFillType, long harvestLiters, long price,
+                                                 String note, Related related) {
+        if (batchId == null) {
+            batchId = "batch_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        }
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("farmlandId", farmlandId);
         p.put("work", work);
@@ -291,6 +304,54 @@ public class OutboxService {
         return List.of(transfer, money);
     }
 
+    /**
+     * Roadmap V3.2 R32-I3 (W1 / W2): goods out of the own silos without money - the delivery is the consideration to an
+     * investor (like the contractor's harvest, R31-A1, a STORAGE_TRANSFER without its own booking).
+     */
+    @Transactional
+    public OutboxInstruction storageTransfer(Savegame sg, boolean in, String fillType, long liters, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("direction", in ? "IN" : "OUT");
+        p.put("fillType", fillType);
+        p.put("amount", liters);
+        return enqueue(sg, InstructionType.STORAGE_TRANSFER, p, null, null, related);
+    }
+
+    /** Roadmap V3.2 R32-I3 (W3): milk out of the storage of an own husbandry (HUSBANDRY_TRANSFER, R32-Q1), no money. */
+    @Transactional
+    public OutboxInstruction husbandryTransfer(Savegame sg, String husbandryUniqueId, String fillType, long liters,
+                                               Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("husbandryUniqueId", husbandryUniqueId);
+        p.put("fillType", fillType);
+        p.put("amount", liters);
+        return enqueue(sg, InstructionType.HUSBANDRY_TRANSFER, p, null, null, related);
+    }
+
+    /** Roadmap V3.2 R32-I3 (A1): animals out of an own husbandry without money (ANIMAL_TRANSFER OUT, R31-A3). */
+    @Transactional
+    public OutboxInstruction animalTransfer(Savegame sg, String husbandryUniqueId, String subType, int count,
+                                            Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("husbandryUniqueId", husbandryUniqueId);
+        p.put("subType", subType);
+        p.put("count", count);
+        p.put("direction", "OUT");
+        return enqueue(sg, InstructionType.ANIMAL_TRANSFER, p, null, null, related);
+    }
+
+    /**
+     * Roadmap V3.1 R31-D8: takes diesel from a parked own vehicle ({@code delta} litres, negative) - not before
+     * {@code gameTimeEarliest}; the ack result carries the litres taken.
+     */
+    @Transactional
+    public OutboxInstruction vehicleFuel(Savegame sg, String vehicleId, long delta, Long gameTimeEarliest, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("vehicleId", vehicleId);
+        p.put("delta", delta);
+        return enqueue(sg, InstructionType.VEHICLE_FUEL, p, null, gameTimeEarliest, related);
+    }
+
     /** Roadmap V3 R3-H5: a real contract of the game on the field of an NPC farmland (result.missionId in the ack). */
     @Transactional
     public OutboxInstruction missionCreate(Savegame sg, String missionType, int farmlandId, Related related) {
@@ -305,11 +366,39 @@ public class OutboxService {
      * showing when the game time is past {@code expiresAtGameTime} (e.g. processed late after loading a savegame).
      */
     public OutboxInstruction notification(Savegame sg, String text, String level, long expiresAtGameTime, Related related) {
+        return notification(sg, text, level, expiresAtGameTime, null, related);
+    }
+
+    /** Roadmap V3.2 R32-G3: the same, shown not before {@code gameTimeEarliest} (e.g. the start of a delivery month). */
+    public OutboxInstruction notification(Savegame sg, String text, String level, long expiresAtGameTime,
+                                          Long gameTimeEarliest, Related related) {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("text", text);
         p.put("level", level);
         p.put("expiresAtGameTime", expiresAtGameTime);
-        return enqueue(sg, InstructionType.NOTIFICATION, p, null, null, related);
+        return enqueue(sg, InstructionType.NOTIFICATION, p, null, gameTimeEarliest, related);
+    }
+
+    /**
+     * Roadmap V3.2 R32-G3: moves an instruction the mod has not taken yet ("Tage je Periode" changed): new
+     * {@code gameTimeEarliest} and the given payload fields. The instructions file is rebuilt from the pending
+     * instructions in every cycle, so the mod reads the new values. False when the instruction is unknown or no longer
+     * pending (the mod keeps what it has).
+     */
+    @SuppressWarnings("unchecked")
+    public boolean reschedulePending(String instructionId, Long gameTimeEarliest, Map<String, Object> payloadChanges) {
+        if (instructionId == null) {
+            return false;
+        }
+        OutboxInstruction o = repo.findByInstructionId(instructionId).orElse(null);
+        if (o == null || o.getStatus() != InstructionStatus.PENDING) {
+            return false;
+        }
+        Map<String, Object> p = json.readValue(o.getPayloadJson(), LinkedHashMap.class);
+        p.putAll(payloadChanges);
+        o.setPayloadJson(json.writeValueAsString(p));
+        o.setGameTimeEarliest(gameTimeEarliest);
+        return true;
     }
 
     /**

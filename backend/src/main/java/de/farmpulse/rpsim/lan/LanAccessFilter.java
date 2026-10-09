@@ -25,10 +25,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
  *   <li>any other address: always 403 - a port forwarding on the router does not open the tool to the internet.</li>
  * </ul>
  * {@code server.address} stays unset; the sender address is the TCP peer ({@code getRemoteAddr()}), forwarding
- * headers are ignored.
+ * headers are ignored. The {@link HostHeaderFilter} runs first (DNS rebinding reaches this filter from loopback).
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class LanAccessFilter extends OncePerRequestFilter {
 
     static final String FORBIDDEN = "{\"code\":\"LAN_FORBIDDEN\",\"message\":\"Zugriff nur vom Spiele-PC oder - wenn in den "

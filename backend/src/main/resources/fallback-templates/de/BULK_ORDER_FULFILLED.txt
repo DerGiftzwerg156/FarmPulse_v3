@@ -1,0 +1,7 @@
+Großauftrag erfüllt: {{fillType}}
+Guten Tag,
+
+Ihr Großauftrag für {{sellPoint}} ist vollständig erfüllt: {{delivered}} Liter {{fillType}} zum Festpreis von {{fixedPrice}} € je 1.000 Liter. Vielen Dank – auf Sie ist Verlass.
+
+Viele Grüße
+{{characterName}}

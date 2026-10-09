@@ -79,13 +79,18 @@ public class NegotiationEngine {
     public record VehicleAgreed(Long savegameId, Long negotiationId) {
     }
 
+    /** Roadmap V3.2 R32-I3 P1: an investor's veto on field sales. */
+    private final de.farmpulse.rpsim.investor.InvestorLedger investorLedger;
+
     public NegotiationEngine(NegotiationRepository negotiations, NegotiationOfferRepository offers,
                              FarmlandOwnershipService ownership, SavegameRepository savegames, OutboxService outbox,
                              LiquidityService liquidity, NarrationRequestService narration, CharacterLookup lookup,
                              TrustScoreService trust, DiaryService diary, RandomSource random, RpsimProperties props,
                              de.farmpulse.rpsim.credit.CollateralService collateral,
                              org.springframework.context.ApplicationEventPublisher events,
-                             de.farmpulse.rpsim.contract.LeaseOutPhase leaseOutPhase) {
+                             de.farmpulse.rpsim.contract.LeaseOutPhase leaseOutPhase,
+                             de.farmpulse.rpsim.investor.InvestorLedger investorLedger) {
+        this.investorLedger = investorLedger;
         this.events = events;
         this.leaseOutPhase = leaseOutPhase;
         this.negotiations = negotiations;
@@ -251,6 +256,7 @@ public class NegotiationEngine {
             throw new BusinessRuleException("FIELD_LEASED_OUT", "Feld " + farmlandId + " ist verpachtet.");
         }
         collateral.requireSellable(sg, farmlandId); // R3-K1: a Grundschuld needs the bank's consent first
+        investorLedger.requireSellable(sg, farmlandId); // R32-I3 P1: an investor's veto needs his consent first
         if (askingPrice <= 0) {
             throw new BusinessRuleException("INVALID_PRICE", "Der Wunschpreis muss positiv sein.");
         }

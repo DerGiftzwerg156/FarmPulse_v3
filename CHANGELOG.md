@@ -13,13 +13,191 @@ versions or this changelog do not match.
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training
 is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
 types and booking reasons (the neighbour trade and contracts then fail); the notice then says "Mod aktualisieren".
-The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q).
+The same holds for the Roadmap V3.1 instruction types and booking reasons (R31-Q), for the booking reason
+`SEVERANCE` (severance before the first working day) and for the contractor work `FERTILIZE` (*Düngen*). Also for the
+Roadmap V3.2 instruction type `HUSBANDRY_TRANSFER` and the booking reasons `INVESTOR_*` (R32-Q). The field book
+(R33-F) needs the current mod for rolling, mulching, the counted litres and the crops of the map; with an older mod
+the player enters them.
 
 The profile `prod` no longer sets `server.address: 0.0.0.0`; it stays unset (all interfaces) and the new home-network
 filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC reaches FarmPulse.
 
 ### Added
 
+- **Field book [R33-F]** (owner decisions 2026-10-08 / 2026-10-09 in `QUESTIONS.md`): new app *Feldbuch* (after the
+  *Flurkarte*, tab *Dokumentation*).
+  - Per own or leased field a running season and one entry per harvest year (FS25 year of the harvest): crop, harvest
+    product, litres, l/ha, 1st / 2nd fertilisation, lime, rolling, weed control, mulching and the kinds of fertiliser.
+  - Detected from the game: the field levels of every export (fertilisation = spray level 1 / 2, rolling 1 → 0,
+    mulching → 1, lime and weeds only with the soil rule on); a harvest ends the entry (ripe → harvested, gone, or cut
+    back for a crop that grows again); another crop ends it "ohne Ernte"; cuts of the same crop in one year are added,
+    a second crop is dropped, a harvest beats "ohne Ernte". The first entry of a field counts the levels found as done.
+  - Litres: new harvest counter in the mod - hooks on `Combine.addCutterArea` and, as the second way, around
+    `Cutter.onEndWorkAreaProcessing` (never twice), only on own farmland, saved in the mod savegame; the backend books
+    the difference per export (a falling counter is taken back). A contractor harvest adds its litres.
+  - Corrections win ("manuell") and can be given back (↺); "Ernte eintragen" when no harvest is detected; closing a
+    harvest year locks it, late litres wait as a notice until it is reopened; a rewind reopens entries that ended after
+    the loaded game time. Sold or leased-out fields keep their years.
+  - `market_context.fruitTypes` now carries `needsRolling` (crops that are not rolled show "nicht nötig").
+- **Roadmap V3.3 groundwork – bridge contract for the field book [R33-Q]** (owner decisions 2026-10-08 in
+  `QUESTIONS.md`): Q fixes the contract only, like R31-Q; the mod reads the values in the game with R33-F.
+  - `farm_facts.json`, optional: `fields[].rollerLevel` / `stubbleShredLevel` (FieldState levels of rolling and
+    mulching, also in `npcFields`) and the block `harvests` = `{ farmlandId, fruitType, fillType, liters }`, a
+    cumulative harvest counter per own field, crop and harvest product that the mod will keep in its savegame.
+  - `market_context.json`, optional: `fruitTypes` = every crop of the map with standard product, title, `regrows` and
+    further products from the fruit type converters (e.g. maize → chaff).
+  - Normalised in `RPSimFarmFacts.build` / `RPSimMarketContext.build`; `BridgeDtos` / `BridgeValidator` read and check
+    them. No table and no configuration value yet (they come with F and E).
+  - Bridge simulator: scenario `feldbuch`, control endpoint `POST /harvest`; the counter is part of the simulated
+    savegame.
+  - Docs: bridge protocol with FS25 sources, manual test plan section 29, testing, READMEs and the roadmap status.
+- **Roadmap V3.3 (`docs/architecture/ROADMAP_V3.3.md`):** plan for the new app *Feldbuch*, checked against the FS25
+  code. Per field and harvest year it records crop and harvest product, 1st / 2nd fertilisation, liming, rolling, weed
+  control, mulching and the harvested litres - captured automatically from the field values and a new harvest counter
+  (hook on `Combine.addCutterArea`), correctable, with lockable years. The tab *Auswertung* shows a field × year table,
+  litres per hectare, a bar chart per field and averages with / without each measure per crop over a selectable
+  period (default 5 years). Measured litres replace the yield estimate in farm report, chronicle and bank review.
+  Owner decisions and open proposals are in `QUESTIONS.md` (2026-10-08).
+- **Large investors [R32-I]** (owner decisions 2026-10-08 in `QUESTIONS.md`): new tab *Bank → Investoren* and switch
+  *Großinvestoren* in settings → events (default on).
+  - Offer: checked once per FS25 month - only with a farm report in profit, no payment delay within 12 months, no
+    running call-back and a credit score ≥ 50 for the amount; chance 5 % + 2 % per milestone (max +6 %) ± 2 % by
+    village reputation; at most one offer per FS25 year and 2 running investors. A new investor (`INVESTOR`) of one of
+    seven kinds offers 250,000–2,500,000 € (at most 50 % of the farm assets in the bank view) as a call (50 %, a missed
+    call also brings the mail) or mail, 10 days to answer (ignored −3 trust, declining costs nothing).
+  - 2–3 packages for the same amount: silent partnership or subordinated loan, 2–5 full FS25 years from the next year
+    start, a main consideration of the kind and 0–2 side considerations whose value adds up to amount × target return
+    (6–10 %) × years. Catalogue: goods over the term or per month, milk per month from a stable
+    (`HUSBANDRY_TRANSFER`), profit share, fixed payout, animals per year, animal welfare, crop obligation, growth target,
+    veto on field sales, right of first refusal, holiday flat in July/August, a visit per year, name in the village
+    paper. Accepting books `INVESTOR_CAPITAL`.
+  - *Liefern* (amount, stable) sends goods, milk and animals without money; deliveries count with the mod's ack and are
+    sent again after a rewind. Checks at the month or FS25 year change; a reminder a week before the end. A breach:
+    reminder with 5 days grace, then a compensation (market value × 1.25, obligations: value per year × 1.25), the
+    third breach terminates with a claim of the full amount (pay by button like a tax bill, then monthly reminders,
+    trust −5, payment delay, no interest). A payment refused for lack of money stays open and can be paid by button.
+  - End of term: announcement 3 months before, buy-back / repayment in the last month (`INVESTOR_REPAYMENT`, else a
+    claim); without a breach an extension offer with 50 % chance replaces the repayment.
+  - Bank: a silent partnership counts as asset (equity ratio up), a subordinated loan as asset and debt (down); the
+    advisor names new investors in the annual review. Liquidity plan, calendar, tasks, farm report section
+    "Investoren", chronicle (diary). Values under `rpsim.formulas.investor.*`; tables `investor_contract`,
+    `investor_obligation`, `investor_period`, `investor_delivery`, `investor_payment` (migration V42).
+- **Bulk orders [R32-G]** (owner decisions 2026-10-08 in `QUESTIONS.md`): about once a month (0.3 x a refusal factor)
+  a new bulk buyer of a sell point of the map (no production) asks for 50,000-500,000 l of wheat, barley, canola,
+  sunflower, soybean or maize (potatoes and sugar beet 50,000-300,000 l), as a mail or - 10 % - a call (a missed or
+  declined call also brings the mail). New tab *Handel → Großaufträge*, the request is also a task (5 days to answer):
+  - *Sofort liefern* with the whole amount in the own silos at the best market price x 1.25 (`STORAGE_TRANSFER OUT` +
+    `GOODS_SALE`, like the farm shop); a refused transfer books nothing and leaves the request open.
+  - *Termin vereinbaren*: a delivery month 1-12 months ahead at today's price of the sell point x (1.05 + 0.01 per
+    month), sent as `PRICE_EVENT / FIXED` for that whole month with an in-game hint at its start; months with a fixed
+    price at the pair (forward contract, bulk order, special offer) cannot be chosen, at most 3 open orders, no
+    withdrawal. The liquidity plan shows the expected income, the calendar the start and end of the delivery month.
+  - Shortfall at the end of the month: 25 % of the shortfall at the fixed price as `CONTRACT_PENALTY`; full delivery
+    +3 trust, shortfall -5; declining, ignoring and shortfalls make requests rarer (x 0.75, at least 0.1), full
+    deliveries more frequent again. Every request has its own buyer, who leaves when the order ends.
+  - An open bulk order with a delivery month blocks forward contracts, special offers and drought price events at its
+    pair, like a forward contract. Values under `rpsim.formulas.bulk-order.*`; table `bulk_order` (migration V41).
+- **Roadmap V3.2 groundwork - bridge contract for bulk orders and investors [R32-Q]:** not visible to players yet.
+  - Mod: `farm_facts.json` exports the milk in the storage of every own husbandry (`husbandries[].storage[]` =
+    `{ fillType, amount, capacity }`, milk sorts of `spec_husbandryMilk.fillTypes`, `getHusbandryFillLevel` /
+    `getHusbandryCapacity`; whole litres like `tradeStorage`). New instruction `HUSBANDRY_TRANSFER { husbandryUniqueId,
+    fillType, amount }` takes milk out of an own husbandry (`removeHusbandryFillLevel`); a partly taken amount is booked
+    back (`addHusbandryFillLevelFromTool`). Failure codes `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE`, `WRONG_FILLTYPE`,
+    `INSUFFICIENT_STOCK`.
+  - New booking reasons `INVESTOR_CAPITAL`, `INVESTOR_REPAYMENT`, `INVESTOR_PAYOUT` (financing) and
+    `INVESTOR_COMPENSATION` (operating expense) with booking titles, UI and chronicle labels; `INVESTOR_PAYOUT` counts
+    as appropriation of profit (owner decision 2026-10-08).
+  - Backend: roles `BULK_BUYER` (*Großabnehmer*) and `INVESTOR` (*Investor/in*), case kinds `BULK_ORDER`,
+    `INVESTOR_OFFER`, `INVESTOR_REMINDER`, `INVESTOR_CLAIM`; DTO and validator for the milk storage; a refused
+    `HUSBANDRY_TRANSFER` raises the notice "Mod aktualisieren".
+  - Bridge simulator: scenarios `grossauftrag` (full canola silo, oil mill as sell point) and `investor-milch` (cow
+    stable with milk), control endpoint `POST /husbandry-milk`; `HUSBANDRY_TRANSFER` is executed like in the mod.
+  - Docs: bridge protocol with FS25 sources, configuration reference, manual test plan section 28.
+- **Roadmap V3.2 (`docs/architecture/ROADMAP_V3.2.md`):** plan for bulk orders and large investors, checked against
+  the FS25 code. Bulk buyers tied to a sell point order large amounts, delivered at once from the own silos (best
+  price × 1.25) or in an agreed whole month at their sell point (fixed price, penalty on shortfall). Rarely an
+  investor offers 250,000–2,500,000 € as silent partnership or subordinated loan, with 2–3 packages of consideration
+  (goods, milk from the husbandry storage, profit share, animals, obligations, rights) and a staged breach procedure.
+  Owner decisions and open proposals are in `QUESTIONS.md` (2026-10-08).
+- **Windows setup `FarmPulse-<version>-Setup.exe`** (owner decisions 2026-10-08 in `QUESTIONS.md`, concept
+  `docs/architecture/windows-installer.md`); the ZIP bundle with `start.bat` / `start.sh` stays unchanged for experts:
+  - The setup brings its own Java runtime (`jpackage`), installs "only for me" (no admin rights) or "for all users",
+    and asks for the AI provider (key, model, Ollama address – merged into the same `ai-provider.properties` the
+    settings page writes), the exchange folder and the FS25 `mods` folder (pre-filled from the real *Documents*
+    folder, also with a OneDrive redirect), the port and "Browser beim Start öffnen". Tasks: copy the mod, start with
+    Windows, desktop shortcut (all preselected). German only, not code-signed yet (SmartScreen hint in the guide).
+  - Update: keep the previous settings or set them again (pre-filled; an empty key keeps the stored key). Uninstall
+    asks whether to delete savegames and settings in `%USERPROFILE%\.rpsim` (default no); the mod stays.
+  - Desktop mode of the backend (`de.farmpulse.rpsim.desktop`, only with `-Drpsim.desktop.enabled=true`, profiles
+    `prod,desktop`): runs without a console window, tray icon (open, log, quit), opens the browser when ready, one
+    instance per user (a second start opens the browser), takes the next free port when the configured one is in use,
+    shows start errors in a dialog, logs to `~/.rpsim/logs/farmpulse.log`. New keys `rpsim.desktop.*`; settings of
+    the setup in `~/.rpsim/farmpulse-setup.yml`, overridden by `~/.rpsim/application-local.yml`.
+  - Release workflow: jobs `build` → `windows-installer` (`tools/release/build-installer.ps1`, Inno Setup
+    `tools/release/installer/FarmPulse.iss`) → `publish`; releases and the snapshot get the setup. Pull requests that
+    touch the release tooling or the desktop mode build the setup without publishing.
+- **Lohnunternehmer: done the next day, up to 3 works at once, new work "Düngen"** (owner decisions 2026-10-06 in
+  `QUESTIONS.md`):
+  - A contractor job is always done at the end of the game day after the order day
+    (`rpsim.formulas.contractor-work.done-after-days`); the random 1–3 days, the busy season and the trust no longer
+    change it (keys `lead-days-min` / `-max`, `harvest-periods`, `harvest-extra-days`, `trust-threshold`,
+    `trust-days-less` removed).
+  - Up to 3 works of one field are ordered at once (`max-works-per-order`), e.g. *Grubbern*, *Säen* and *Düngen*. The
+    form has check boxes; each work is checked on the field as the works before leave it. On the work day the works go
+    to the mod as one batch in a fixed order (harvest, plow, cultivate, lime, sow, fertilise). Each work stays its own
+    case. `GET /api/contractor-work/fields/{id}?works=…` checks the other works together with the ticked ones
+    (`selected`, `maxWorks`, `doneByGameTime`, `openOrders` instead of `daysMin` / `daysMax` / `openOrder`);
+    `POST /api/contractor-work` takes `works` and answers the list of cases.
+  - New work `FERTILIZE` (*Düngen*, 70 € per hectare): spray level +1, `sprayType` `FERTILIZER`, in mod, bridge
+    simulator and schema. An older mod rejects it; the job is then cancelled with "Mod aktualisieren".
+- **Machine operators drive Courseplay and AutoDrive helpers too** (owner decisions 2026-10-06 in `QUESTIONS.md`):
+  - **Courseplay:** its jobs are shallow copies of `AIJob` that replace `start` and `getIsStartable`, so the helper
+    hooks never reached them (no operator until the next export, game helper name, no strict limit, no training
+    check). Start and stop are now hooked on `AISystem.startJobInternal` / `stopJobInternal`, and every job class
+    registered with the AI job type manager (Courseplay's included) gets the start check, the name and the wage hook.
+  - **AutoDrive** drives without an AI job: the mod now tracks active AutoDrive vehicles every second. A drive gets a
+    free (trained) operator, counts against the strict helper limit together with all other helpers, is exported in
+    `workforce.activeJobs` with a negative `jobId` (worked hours, night work) and stops when its driver strikes. In the
+    strict mode a drive over the limit or without a free trained operator is stopped right after its start. The
+    AutoDrive wage stays AutoDrive's own setting (*driverWages*).
+- **Applications the next day, start with the next month, training the next day** (owner decisions 2026-10-06 in
+  `QUESTIONS.md`):
+  - Applications arrive the next game day at a random time between 8 and 17 o'clock (mail and list entry,
+    `rpsim.formulas.hiring.application-hour-min` / `-max`); the posting says when they come
+    (`JobPostingView.applicationsAwaited`).
+  - A hired employee starts on the first day of the next month (new status `PENDING_START`: no helper, no salary, no
+    actions; the first salary on the first working day); seasonal workers start at once. Cancelling before the first
+    working day costs a severance of 1.5 monthly salaries (world mode *Hart*: 3) with the new booking reason
+    `SEVERANCE` and a mail of the candidate (`HIRING_CANCELLED`). Migration V38.
+  - A training no longer starts at once: the employee works on the booking day and is away the whole next game day;
+    the training has precedence over days off and sickness.
+- **Post: "Alle als gelesen markieren"** (owner decisions 2026-10-06 in `QUESTIONS.md`): a button on the right of the
+  filter bar marks the unread mails of the active filter as read after a confirmation; open decisions stay open. New
+  endpoint `POST /api/mails/read` (`{ "ids": [...] }`, answers `{ "marked": n }`).
+- **Tabs and first-open hints in the apps** (owner decisions 2026-10-06 in `QUESTIONS.md`):
+  - Larger apps are split into tabs with their own address (`/bank/kontoauszug`): Bank, Ämter, Flurkarte, Personal,
+    Agrarbörse, Werkstatt, Handel, Kontakte (with the profile sub tabs Profil / Nachricht), Versicherung, Stall,
+    Kalender, Aufgaben and Einstellungen. Old links and mail links open the tab of the entry; without a link the app opens
+    on the tab last used on this device. Tabs show the number of open decisions.
+  - The fixed explanation texts left the app pages: each app explains itself once in a dialog on first opening; after
+    "Verstanden" it does not show again on any device (backend table `app_hint_seen`, migration V37,
+    `GET /api/app-hints`, `PUT /api/app-hints/{appId}`). The "?" in the app header opens it again. Explanations in the
+    case cards and state-dependent warnings stay where they are.
+- **Booking statement ("Kontoauszug"):** the bank shows what was booked when and what it cost or brought - not only the
+  month sums of the farm bookkeeping (owner decisions 2026-10-06 in `QUESTIONS.md`).
+  - Mod: the `Farm:changeBalance` hook also writes single bookings (`farm_facts.json` → optional block `bookings`):
+    running bookings summed per game day and money type, sales additionally per fill type and sell point with the
+    litres (context of the `SellingStation.sellFillType` hook), purchases and sales of vehicles, buildings and fields and
+    every tool booking (with its note) as single entries with time of day. New mod settings `bookingLogEntries` (200)
+    and `bookingLogSingleTypes`; the buffer is stored in the savegame.
+  - Backend: entries are stored permanently (table `booking_entry`, migration V36) and updated in place by their running
+    number; after a reload without saving the entries the game no longer has are deleted. Shop vehicle purchases and
+    sales get the names of the vehicles that appeared / disappeared in `assets.vehicles` (several at once: shown as not
+    assignable; new setting `rpsim.formulas.finance.statement-vehicle-match-exports`). New endpoint
+    `GET /api/finances/statement?year=&period=`.
+  - Frontend: new card *Kontoauszug* on the bank page with month and category filter, incoming / outgoing / balance.
+  - Bridge simulator: exports `bookings`; `POST /book` takes `vehicleName` / `vehicleId` for shop vehicle purchases and
+    sales. Manual test plan rows 7.6a and section 26 (🟡 sale details and vehicle order in the real game).
 - **Roadmap V3 (`docs/architecture/ROADMAP_V3.md`):** plan for the next features, each checked against the FS25 code -
   tablet access inside the home network (PIN, address, home-screen icon), trade with neighbours from and into own silos
   for every fill type with a silo, real field contracts created by neighbours, leasing out own fields, loan collateral,
@@ -79,6 +257,71 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   - After loading an older save, `FIELD_WORK` and `ANIMAL_TRANSFER` are sent again together with their batch. Bridge
     simulator: stables export breeds and free places, `VEHICLE_SPAWN` at price 0, `lohnunternehmer` with the shop
     catalogue. Manual test plan section 22.
+- **Authorities and grants (Roadmap V3.1, R31-B):** owner decisions of 2026-10-05 in `QUESTIONS.md`.
+  - **Area payment application (B1):** every March the authority sends the form (*Ämter* → *Sammelantrag*): the own
+    fields with their crop, confirmed or corrected per field; deadline end of May, late 1 % less per game day, after 25
+    days no premium. In December 250 € per declared hectare as `DIRECT_PAYMENT`. On-site check of 10 % of the
+    applications (announced): a crop other than the main crop of the crop history costs 1.5 × the premium of the area
+    (3 × when it happened before), a field with the crop of the year before half its premium.
+  - **Investment grant (B2):** apply before buying (building or machine, planned sum from 10,000 €); approved after 10
+    game days (shorter with an office clerk); purchases in the game count from the approval for 6 months (rises of
+    `SHOP_PROPERTY_BUY` / `SHOP_VEHICLE_BUY` in the journal). Grant 30 %, at most 50,000 €, as `INVESTMENT_GRANT` by
+    *Nachweis einreichen* or at the end of the deadline. A funded machine sold within 24 months is repaid pro rata
+    (bill like a tax bill).
+  - **Fertiliser rules (B3):** the mod now exports `fields[].sprayType`. Organic fertiliser (liquid manure, manure) on
+    arable land in November–January leads to an announced inspection: a warning the first time, then a fine of 1,000 €
+    and a loss of reputation. The animal keeper (or the cooperative) warns of a full slurry store; in October a
+    reminder "Jetzt noch Gülle fahren, ab November ist Schluss".
+  - **Animal disease (B4):** rarely a disease (African swine fever, avian flu, bluetongue) hits an animal type of the
+    player; restricted zone for 3 months: livestock trade with neighbours and the trader blocked, compulsory vet check
+    per stable, requirement "health 60 % within 10 days". Afterwards the prices of the neighbour trade recover from
+    × 0.8 within 3 months. The game's animal prices stay untouched.
+  - **Berufsgenossenschaft and sick leave (B5):** new service character *Berufsgenossenschaft* with an annual bill in
+    April (300 € + 12 € per ha + 180 € per employee, `SOCIAL_INSURANCE`, paid by button). Employees fall ill or have a
+    work accident (more often with a high workload and worn machines): `ON_LEAVE` for some days, no helper, salary
+    continues; button *Genesungswünsche* in *Mitarbeiter*.
+  - Settings → *Belastende Ereignisse*: on-site check, fertiliser checks, animal disease and sickness can be switched
+    off per savegame; in the idyllic world mode there is no animal disease and the rest happens half as often / half as
+    hard. Manual test plan section 23.
+- **Field map (Roadmap V3.1, R31-K1):** owner decisions of 2026-10-06 in `QUESTIONS.md`. The mod reads the field
+  outlines (`field.polygonPoints`) and the map size once per mission into `market_context.fieldShapes`; the backend
+  serves them with owner, crop, phase and symbols at `GET /api/field-map`. Flurkarte → *Feldübersicht*: switch
+  **Karte / Tabelle** - an SVG map of all fields in their real shape (own fields by phase with their number, leased
+  hatched, leased-out with a thick border, neighbours pale with the owner's name, free fields dashed; symbols for an
+  order, an auction and a hint); a click opens the field card with its actions. Without outlines (older mod) only the
+  tiles. Manual test plan row 21.7 and section 25.
+- **Village life (Roadmap V3.1, R31-D):** owner decisions of 2026-10-05 in `QUESTIONS.md`.
+  - **Village newspaper (D1):** new app *Dorfblatt* - an issue at every period start (an extra mid-month issue by
+    config) with the public facts of the past period in the sections *Aus dem Dorf*, *Vom Hof*, *Markt* (the 3 largest
+    price changes, rumours "ohne Gewähr"), *Amtliches* and *Kleinanzeigen*; written by the AI per section (templates
+    without AI), empty sections left out, never private money matters; the headline goes into the diary / chronicle.
+  - **Village group chat (D2):** new app *Dorfchat* with the groups *Dorf*, *Nachbarn* and one per club; announcements,
+    gossip, congratulations (at most 3 character posts per game day) and a help request with a link for every request
+    of a neighbour; the player writes with the rules of *Nachricht verfassen* (tone, capped trust of one member, pacing
+    per group and game day), one member answers.
+  - **Regulars' table (D3):** invitation every 14 game days (case in *Kalender*, in-game question `STAMMTISCH`):
+    trust with 3 attendees, the next rumour accurate with 0.7 + 0.15, sometimes a tip on an auction or a sell-willing
+    field owner; 3 missed in a row cost reputation (at most −3).
+  - **Night work (D4):** helpers working at night (22–6 h, `calendar.dayTimeMs`) outside the harvest: from 3 hours in 7
+    days a complaint of a villager, friendly and then annoyed with a line in the newspaper.
+  - **Crop damage (D5):** samples of the driven vehicles (`vehiclePositions` with a `FieldState` sample): 3 in a row on a
+    neighbour's field with a crop - first a hint, then a complaint, repeated a compensation claim of 150 € per sample in
+    *Flurkarte* (pay / refuse like R2-D2). Off by default.
+  - **Farm holidays and school visits (D6):** setup 20,000 € (`FARM_HOLIDAY_SETUP`), monthly guests
+    (`GUEST_INCOME` = 800 € × season × reputation × animals, cuts for night work and slurry in the summer, review
+    mails); requests of the village school (new role `SCHOOL`) for a farm tour: 150 €, reputation.
+  - **Cooperative shares (D7):** shares of 500 € (at most 200, `COOP_SHARES`), dividend in March after the price index
+    (`COOP_DIVIDEND`, 0–8 %), cancellation with 12 months notice; general assembly in April with a vote; board from 40
+    shares and trust 50 (earlier rumours, +10 % forward-contract quantity, reputation; quarterly meetings, voted out
+    after two missed ones). Calendar dates for the assembly, the dividend and the board meetings.
+  - **Diesel theft (D8):** rarely at a month start, in the next night a parked own vehicle loses 30–60 % of its diesel
+    (max. 300 l, `VEHICLE_FUEL` now executed by the mod, retried at most 3 times); mail of the police (new role
+    `POLICE`), gossip; insurance module *Diebstahl* (+8 € per month) pays damages above 150 €; tank lock at the workshop
+    250 € per vehicle (`TANK_LOCK`).
+  - The mod exports `calendar.dayTimeMs`, `vehiclePositions` and `assets.vehicles[].fuel`. Settings → *Belastende
+    Ereignisse*: night work, crop damage and diesel theft switchable per savegame; idyllic world mode: no diesel theft,
+    half the trust losses and compensations of D4 / D5. New booking reasons `FARM_HOLIDAY_SETUP` and `TANK_LOCK` (an
+    older mod refuses them). Manual test plan section 24.
 - **Leasing out own fields (Roadmap V3, R3-L):**
   - Flurkarte → own field → **Verpachten**: term 1–3 FS25 years and a desired rent per ha and month (guide value =
     field price × 5 % / 12 per ha). Up to three active neighbours with enough capital answer with a first bid
@@ -260,8 +503,31 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   diary entry. Machine operator applicants bring a training along with 30 % and expect 8 % more salary. Employees hired
   before have no training.
 
+### Changed
+
+- **`market_context.json` every minute** (owner decision 2026-10-06 in `QUESTIONS.md`): the mod rewrites the file every
+  60 s real time even when its content did not change (new mod setting `marketContextIntervalMs` = 60000). It is still
+  written on the mission start, after every `FARMLAND_TRANSFER` and on every `farm_facts` cycle in which it changed. The
+  bridge simulator does the same (`--market-context-interval`). The backend needs no change: it ignores an unchanged file.
+- Settings only in the app "Einstellungen": the card "Helfer im Spiel" moved from "Personal" to *Einstellungen → Im
+  Spiel*; the settings are split into the tabs KI, Hof, Ereignisse, Im Spiel and Tablet & Netzwerk.
+
 ### Fixed
 
+- **Long affiliations of characters** (R32-I / R32-G): the investor kind "Privatinvestorin / Familienstiftung" or
+  a long sell point name of a bulk buyer no longer exceeds the column (`game_character.affiliation` now 128 characters).
+- **Forward contracts keep their delivery month when "Tage je Periode" changes** (owner decision 2026-10-08, R32-G3):
+  as long as the mod has not taken the `PRICE_EVENT`, start, end and the pending instruction move to the new month
+  boundaries. In a running delivery month the mod keeps the end it has. Before, the window stayed on the old game
+  times.
+- **Finances: FS25 production chain costs** (`unknown category 'PRODUCTION_COSTS'`): the FS25 money type
+  `PRODUCTION_COSTS` is now classified as an operating expense (label "Produktionskosten"). Before, it counted as
+  operating only by its sign, and the tax audit treated it as a disputed expense under an unknown category.
+  The class is now also in the Java defaults and in the configuration reference (the config consistency tests
+  failed on `main`).
+- **Tax rates:** the new rates of the owner (19 % on the profit above an allowance of 50,000 €, harsh 25 % above
+  25,000 €) were only in the Java defaults; `application.yml` still set 25 % / 20,000 € (harsh 30 % / 10,000 €), so the
+  game kept the old rates and the config consistency tests failed. The new rates now apply everywhere.
 - **Mod: missing booking titles in the money popup** (`Missing 'rpsim_money_TRAINING' in l10n_de.xml`): FS25 loads
   the texts of `modDesc.xml` only into the i18n of the mod environment, while the HUD looks booking titles up in the
   global `g_i18n`. The mod now copies its texts into the global text table at load time (existing game texts are never
@@ -271,6 +537,39 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
   operators) only lowered `maxNumHirables`, which the game checks in its own start menu and key only; mods that start
   helpers their own way could exceed it. The mod now refuses such a start itself (*Kein freier Maschinenführer (strenger
   Modus)*) and stops a helper started over the limit right away with its own message.
+
+- **Bridge cycle (technical review 10/2026, Phase 1.1-1.3, R-1):** one failing listener no longer loses data or stops
+  the game. Before, the whole cycle was one transaction and the file was remembered as read before it committed: a
+  single failure of any of the ~130 listeners rolled everything back, and the acknowledgement or the game days of that
+  file were lost for good (a listener that always failed stopped all game logic). Now every read stores its data and
+  enqueues its events in one transaction (`cycle_event`), and every listener runs in its own transaction with a
+  journal (`cycle_step`): a failure is retried by the next cycle in the same order, nothing runs twice, and after
+  `rpsim.bridge.step-max-attempts` (3) failures the step is skipped and reported as the notice *Verarbeitungsschritt
+  übersprungen*. A long catch-up of game days resumes where it stopped, also after a restart.
+
+- **Lost updates (technical review 10/2026, Phase 1.4, R-2):** a change based on an outdated read no longer silently
+  overwrites a change saved in between (e.g. an input on the tablet while the game logic of a day runs). Every
+  changeable table has a version counter (`@Version`, Flyway V40): the outdated write fails instead. In the Hof-Tablet
+  the hint *Die Daten wurden inzwischen geändert – die Ansicht wurde neu geladen …* appears and the pages reload; in
+  the bridge cycle the listener simply runs again on the fresh data.
+
+### Security
+
+Technical review 10/2026, Phase 0 ([`docs/architecture/TECHNICAL_REVIEW_2026-10.md`](docs/architecture/TECHNICAL_REVIEW_2026-10.md)):
+
+- **Database (S-1):** the H2 file database no longer starts an H2 TCP server (`AUTO_SERVER=TRUE` removed from `dev`
+  and `prod`; H2 opened it with `-tcpAllowOthers` on all interfaces - a connection still needed the random key from
+  `rpsim.lock.db`, but user `sa` had no password).
+  The database gets a random password in an owner-only file (`rpsim.db.password-file`, `prod`:
+  `~/.rpsim/db.properties`); an existing database without password is switched over on the first start.
+- **DNS rebinding (S-2):** requests with a `Host` header other than `localhost`, an IP address, the computer name or
+  `rpsim.web.allowed-hosts` get `403 HOST_FORBIDDEN`; writing requests from a foreign `Origin` get
+  `403 ORIGIN_FORBIDDEN`.
+- **AI key (S-2):** the AI settings can only be changed on the gaming PC (a tablet sees them read-only), and a new
+  `baseUrl` host without a new key discards the stored key.
+- **Files and endpoints (S-3):** `ai-provider.properties` and `db.properties` are readable by the owner only; the
+  `prod` profile serves no OpenAPI document and no Swagger UI.
+- **Repository (S-4):** Dependabot (weekly, minor/patch grouped) and CodeQL code scanning (Java, JavaScript/TypeScript).
 
 ## [1.7.0] - 2026-09-30
 

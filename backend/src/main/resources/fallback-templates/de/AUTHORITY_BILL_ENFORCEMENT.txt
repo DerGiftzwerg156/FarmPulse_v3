@@ -1,0 +1,7 @@
+Letzte Mahnung: {{billTitle}}
+Guten Tag,
+
+„{{billTitle}}“ über {{amount}} € ist seit {{overdueMonths}} Monaten überfällig, der Säumniszuschlag beträgt inzwischen {{lateFees}} €. Zahlen Sie bitte sofort in der App „Ämter“, sonst müssen wir die Vollstreckung einleiten.
+
+Mit freundlichen Grüßen
+{{characterName}}

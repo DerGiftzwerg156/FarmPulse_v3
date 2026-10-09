@@ -246,6 +246,7 @@ class StaffTest {
     @Test
     void apprenticeApplicantsAreCheapAndLimitedToTwo() {
         JobPosting p = hiring.createPosting(sg, JobRole.APPRENTICE);
+        sg.setCurrentGameTime(11 * DAY + GameTime.hours(18)); // the applications arrive the next game day
         List<JobApplication> apps = hiring.applications(sg, p.getId());
         assertThat(apps).isNotEmpty().allSatisfy(a -> {
             assertThat(a.getSkill()).isBetween(10, 30);
@@ -254,11 +255,15 @@ class StaffTest {
         });
         Employee a = hiring.hire(sg, p.getId(), apps.getFirst().getId());
         assertThat(a.getJobRole()).isEqualTo(JobRole.APPRENTICE);
-        assertThat(a.getApprenticeshipEndsAtGameTime()).isEqualTo(34 * DAY); // day 10 + 2 FS25 years of 1-day months
-        employee(JobRole.APPRENTICE, 20, "Tim Lehrling");
+        assertThat(a.getStatus()).isEqualTo(EmployeeStatus.PENDING_START);
+        // starts on day 12 (next month) + 2 FS25 years of 1-day months
+        assertThat(a.getApprenticeshipEndsAtGameTime()).isEqualTo(36 * DAY);
+        employee(JobRole.APPRENTICE, 20, "Tim Lehrling"); // with the one starting next month: two
         assertThatThrownBy(() -> hiring.createPosting(sg, JobRole.APPRENTICE)).isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("2 Azubis");
-        // in the roster the apprentice is a driver without trainings
+        // from his first working day on the apprentice is a driver without trainings in the roster
+        sg.setCurrentGameTime(a.getStartsAtGameTime());
+        hiring.startDue(sg);
         Map<String, Object> entry = workforce.roster(sg).stream().filter(m -> m.get("employeeId").equals(a.getId()))
                 .findFirst().orElseThrow();
         assertThat(entry.get("role")).isEqualTo("APPRENTICE");

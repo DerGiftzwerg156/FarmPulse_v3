@@ -19,7 +19,9 @@ import { ServiceCases } from '../contracts/service-cases';
 import { CollateralPicker } from './collateral-picker';
 import { FarmReportCard } from './farm-report-card';
 import { FinanceCard } from './finance-card';
+import { StatementCard } from './statement-card';
 import { LiquidityPlanCard } from './liquidity-plan-card';
+import { InvestorsPanel } from './investors-panel';
 
 export type ApplicationState = 'processing' | 'approved' | 'counter' | 'rejected' | 'accepted' | 'declined';
 
@@ -45,12 +47,13 @@ export const STATE_BADGE: Record<ApplicationState, BadgeVariant> = {
 /**
  * Bank & credit (AP-8.4): application form (numbers only via form fields), processing state until the decision
  * is visible, result with coarse reason category (never a score), counter-offer handling, running loans with
- * repayment plan/history, deferral requests and Sondertilgungen (same installment, shorter term).
+ * repayment plan/history, deferral requests and Sondertilgungen (same installment, shorter term). Tabs: Kredite,
+ * Kreditantrag, Kontoauszug, Betriebsergebnis, Planung & Jahresbericht, Investoren (Roadmap V3.2 R32-I).
  */
 @Component({
   selector: 'app-bank',
-  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard,
-    CollateralPicker, LiquidityPlanCard, FarmReportCard, ServiceCases],
+  imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard, StatementCard,
+    CollateralPicker, LiquidityPlanCard, FarmReportCard, ServiceCases, InvestorsPanel],
   templateUrl: './bank.html',
 })
 export class Bank {
@@ -58,6 +61,8 @@ export class Bank {
   private readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
 
+  /** Tab of the route `/bank/:tab` (owner decision 2026-10-06). */
+  readonly tab = input<string>('kredite');
   /** `?application=` highlights an application (link from the bank's mail). */
   readonly application = input<string>();
   /** `?case=` highlights a claim, an invitation to the annual review or a rate-cut offer (R3-K). */

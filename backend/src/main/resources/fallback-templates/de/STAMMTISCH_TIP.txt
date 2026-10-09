@@ -1,0 +1,6 @@
+Ein Tipp vom Stammtisch
+Moin,
+
+unter uns gesagt, beim Stammtisch kam das zur Sprache: {{tip}}
+
+{{characterName}}

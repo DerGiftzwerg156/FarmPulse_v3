@@ -149,6 +149,31 @@ class RewindIntegrationTest {
         assertThat(status(sale.get(1))).isEqualTo(InstructionStatus.PENDING);
     }
 
+    /**
+     * Roadmap V3.2 R32-I3 (owner decision 2026-10-08): deliveries to an investor - milk, goods and animals without money
+     * - are sent again; another lone STORAGE_TRANSFER is not.
+     */
+    @Test
+    void lostInvestorDeliveriesAreResent() {
+        facts(10 * DAY - 2 * HOUR);
+        OutboxService.Related delivery = new OutboxService.Related("INVESTOR_DELIVERY", 999_999L);
+        OutboxInstruction milk = outboxService.husbandryTransfer(sg, "hus_00003", "MILK", 5_000, delivery);
+        OutboxInstruction goods = outboxService.storageTransfer(sg, false, "WHEAT", 20_000, delivery);
+        OutboxInstruction animals = outboxService.animalTransfer(sg, "hus_00003", "HOLSTEIN", 2, delivery);
+        OutboxInstruction other = outboxService.storageTransfer(sg, false, "WHEAT", 1_000, OutboxService.Related.none());
+        sync.runCycle();
+        ack(applied(milk, 10 * DAY + HOUR), applied(goods, 10 * DAY + HOUR), applied(animals, 10 * DAY + HOUR),
+                applied(other, 10 * DAY + HOUR));
+        facts(10 * DAY + 5 * HOUR);
+        facts(10 * DAY); // reloaded the save of day 10
+        ack();
+        assertThat(rewind().getStatus()).isEqualTo(RewindStatus.RESENT);
+        assertThat(status(milk)).isEqualTo(InstructionStatus.PENDING);
+        assertThat(status(goods)).isEqualTo(InstructionStatus.PENDING);
+        assertThat(status(animals)).isEqualTo(InstructionStatus.PENDING);
+        assertThat(status(other)).isEqualTo(InstructionStatus.APPLIED);
+    }
+
     @Test
     void deepRewindAsksThePlayerAndResendsOnDecision() {
         OutboxInstruction[] ins = playAndApply();

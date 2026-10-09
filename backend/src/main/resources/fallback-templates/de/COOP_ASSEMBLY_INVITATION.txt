@@ -1,0 +1,6 @@
+Einladung zur Generalversammlung
+Guten Tag,
+
+die Generalversammlung der Genossenschaft stimmt über folgendes Thema ab: {{topic}}. Bitte stimmen Sie in der App „Kalender“ innerhalb von {{answerDays}} Tagen mit Ja oder Nein ab.
+
+{{characterName}}

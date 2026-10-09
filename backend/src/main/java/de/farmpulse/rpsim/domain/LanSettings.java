@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,11 @@ public class LanSettings {
 
     @Id
     private Long id;
+
+    /** Technical review 10/2026, Phase 1.4 (R-2): optimistic locking - an outdated write fails instead of overwriting. */
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     /** Switch "Im Heimnetz erreichbar" (default off: only the gaming PC via loopback). */
     @Column(name = "enabled", nullable = false)

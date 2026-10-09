@@ -47,11 +47,16 @@ public class CreditScoringService {
     /** Roadmap V3.1 R31-A2: borrowed and demo machines are no asset of the farm. */
     private final de.farmpulse.rpsim.farmwork.LoanedVehicles loaned;
 
+    /** Roadmap V3.2 R32-I6: investor capital in the bank view. */
+    private final de.farmpulse.rpsim.investor.InvestorLedger investors;
+
     public CreditScoringService(FactsService facts, FactsSnapshotRepository snapshots, LoanRepository loans,
                                 LoanPaymentRepository payments, LiquidityService liquidity, CharacterLookup lookup,
                                 TrustScoreService trust, CreditConfigResolver configs, GameTime gameTime,
                                 FinanceJournalService journal, FieldService fields,
-                                FarmlandOwnershipRepository farmlands, de.farmpulse.rpsim.farmwork.LoanedVehicles loaned) {
+                                FarmlandOwnershipRepository farmlands, de.farmpulse.rpsim.farmwork.LoanedVehicles loaned,
+                                de.farmpulse.rpsim.investor.InvestorLedger investors) {
+        this.investors = investors;
         this.farmlands = farmlands;
         this.loaned = loaned;
         this.facts = facts;
@@ -103,6 +108,9 @@ public class CreditScoringService {
         // R31-A2: borrowed and demo machines are no asset of the farm
         double assets = f == null ? 0 : facts.totalAssetValue(f) - loaned.value(sg, f) + standingCropValue(f, cfg)
                 + leasedOutValue(sg);
+        // R32-I6 (owner decision 2026-10-08): a running silent partnership counts as paid-in equity (asset), a
+        // subordinated loan as asset and debt (factor), an unpaid investor claim as asset and debt
+        assets += investors.bankAssets(sg);
         List<Loan> active = new java.util.ArrayList<>(loans.findBySavegameAndStatus(sg, LoanStatus.ACTIVE));
         // T-03: an uncollected call-back is still debt
         active.addAll(loans.findBySavegameAndStatus(sg, LoanStatus.DEFAULTED));
@@ -147,7 +155,7 @@ public class CreditScoringService {
                 payments.countBySavegameAndType(sg, LoanPaymentType.MISSED), cfg);
         double trustScore = lookup.bank(sg).map(trust::getCurrentTrust).orElse(0.0);
         return new CreditFormula.Inputs(monthlyCashflow, hasHistory, existingInstallments, newInstallment, assets,
-                loanDebt + vanilla, balance, amount, history, trustScore, collateralValue);
+                loanDebt + vanilla + investors.bankDebt(sg), balance, amount, history, trustScore, collateralValue);
     }
 
     /** Roadmap V2 R2-C5: value of the standing crops in the credit check (0 without field export). */

@@ -1,0 +1,6 @@
+Diebstahl: Erstattung
+Guten Tag,
+
+der Baustein „Diebstahl“ Ihrer Sturm- und Hagelversicherung übernimmt den Schaden: {{payout}} € für {{liters}} Liter Diesel.
+
+{{characterName}}

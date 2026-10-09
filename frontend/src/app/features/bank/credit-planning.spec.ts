@@ -71,9 +71,8 @@ describe('Bank with collateral (R3-K1)', () => {
     return { fixture, http, el: fixture.nativeElement as HTMLElement };
   }
 
-  it('shows the counter offer "mit Grundschuld" and asks the bank to allow a sale', () => {
+  it('asks the bank to allow a sale of the pledged field', () => {
     const { el, http, fixture } = setup([loan()]);
-    expect(el.querySelector('[data-testid="counter-collateral"]')?.textContent).toContain('Feld 14');
     expect(el.querySelector('[data-testid="loan-collateral"]')?.textContent).toContain('Feld 12');
     expect(el.querySelector('[data-testid="loan-rate-cut"]')?.textContent).toContain('0,25');
     (el.querySelector('[data-testid="sale-consent-request"] button') as HTMLButtonElement).click();
@@ -83,6 +82,16 @@ describe('Bank with collateral (R3-K1)', () => {
     http.match('/api/settings/vanilla-bypass').forEach((r) => r.flush({ reactionsEnabled: true, interestSurchargePercent: 0 }));
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="sale-consent"]')).not.toBeNull();
+  });
+
+  it('shows the counter offer "mit Grundschuld" in the tab of the application', () => {
+    const { el, http, fixture } = setup([loan()]);
+    fixture.componentRef.setInput('tab', 'antrag');
+    fixture.detectChanges();
+    http.match('/api/credit/collateral').forEach((r) => r.flush({ loanToValuePercent: 60, requiredAboveSharePercent: 50,
+      maxInterestDiscountPercent: 1, requiredAboveAmount: 280000, eligible: [], pledged: [] }));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="counter-collateral"]')?.textContent).toContain('Feld 14');
   });
 
   // Roadmap V3 R3-L1

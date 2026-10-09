@@ -18,8 +18,10 @@ function RPSimProcessor.newState(cfg)
         contractReports = {},  -- list of ended FIXED contract reports (kept until retention)
         priceEvents = RPSimPriceEvents.new(cfg),
         financeJournal = RPSimFinanceJournal.new(), -- Roadmap V2 R2-B1
+        bookingLog = RPSimBookingLog.new(), -- booking statement (single bookings)
         workforce = RPSimWorkforce.new(), -- Roadmap V2 R2-A0..A5
         prompts = RPSimPrompts.new(), -- Roadmap V2 R2-F1 / R2-F2
+        harvests = RPSimHarvestCounter.new(), -- Roadmap V3.3 R33-F3
     }
 end
 
@@ -188,10 +190,12 @@ function RPSimProcessor.applyOne(state, ins, ctx)
             return false, "NOT_SUPPORTED"
         end
         return action(ins)
-    elseif RPSimProcessor.V3_ACTIONS[ins.type] ~= nil or RPSimProcessor.V31_ACTIONS[ins.type] ~= nil then
-        -- Roadmap V3 (R3-Q1) / V3.1 (R31-Q1): executed once the feature brings its adapter action; until then
-        -- NOT_SUPPORTED
-        local action = ctx.actions[RPSimProcessor.V3_ACTIONS[ins.type] or RPSimProcessor.V31_ACTIONS[ins.type]]
+    elseif RPSimProcessor.V3_ACTIONS[ins.type] ~= nil or RPSimProcessor.V31_ACTIONS[ins.type] ~= nil
+            or RPSimProcessor.V32_ACTIONS[ins.type] ~= nil then
+        -- Roadmap V3 (R3-Q1) / V3.1 (R31-Q1) / V3.2 (R32-Q1): executed once the feature brings its adapter action;
+        -- until then NOT_SUPPORTED
+        local action = ctx.actions[RPSimProcessor.V3_ACTIONS[ins.type] or RPSimProcessor.V31_ACTIONS[ins.type]
+            or RPSimProcessor.V32_ACTIONS[ins.type]]
         if action == nil then
             return false, "NOT_SUPPORTED"
         end
@@ -207,9 +211,13 @@ RPSimProcessor.V3_ACTIONS = { STORAGE_TRANSFER = "storageTransfer", MISSION_CREA
     VEHICLE_SPAWN = "vehicleSpawn", VEHICLE_REMOVE = "vehicleRemove" }
 
 --- Roadmap V3.1 (R31-Q1): the same for FIELD_WORK (R31-A1), ANIMAL_TRANSFER (R31-A3) and VEHICLE_FUEL (R31-D8, result
--- { liters } = diesel actually taken). No action yet: acknowledged FAILED / NOT_SUPPORTED.
+-- { liters } = diesel actually taken). Without an action: acknowledged FAILED / NOT_SUPPORTED.
 RPSimProcessor.V31_ACTIONS = { FIELD_WORK = "fieldWork", ANIMAL_TRANSFER = "animalTransfer",
     VEHICLE_FUEL = "vehicleFuel" }
+
+--- Roadmap V3.2 (R32-Q1): HUSBANDRY_TRANSFER (milk out of an own husbandry, used by R32-I3 type W3). Executed since Q;
+-- an adapter without the action acknowledges FAILED / NOT_SUPPORTED.
+RPSimProcessor.V32_ACTIONS = { HUSBANDRY_TRANSFER = "husbandryTransfer" }
 
 --- Roadmap V3 R3-V2: records the outcome of an asynchronous action (see PENDING). Ignored when the instruction already
 -- has a final status. Returns true when recorded.

@@ -32,6 +32,8 @@ export class Insurance {
   private readonly i18n = inject(TranslationService);
 
   /** `?contract=` / `?case=` highlight an entry (links from mails and "Aufgaben"). */
+  /** Tab of the route `/versicherung/:tab` (owner decision 2026-10-06): Hofversicherung, Dürre-Index, Schäden. */
+  readonly tab = input<string>('hof');
   readonly contract = input<string>();
   readonly case = input<string>();
 
@@ -109,6 +111,11 @@ export class Insurance {
 
   requestOffer(level: string): void {
     this.run(this.api.requestInsuranceOffer(level));
+  }
+
+  /** Roadmap V3.1 R31-D8: module "Diebstahl" of the storm / hail insurance on or off. */
+  theftCover(c: ContractView, enabled: boolean): void {
+    this.run(this.api.theftCover(c.id, enabled));
   }
 
   contractAction(c: ContractView, action: string): void {

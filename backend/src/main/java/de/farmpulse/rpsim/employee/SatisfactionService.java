@@ -175,8 +175,14 @@ public class SatisfactionService {
         if (days <= 0) {
             throw new de.farmpulse.rpsim.common.BusinessRuleException("INVALID_DAYS", "Mindestens ein freier Tag.");
         }
+        long now = e.getSavegame().getCurrentGameTime();
+        if (TrainingService.trainingOverlaps(e, now, now + GameTime.days(days))) {
+            // owner decision 2026-10-06: the booked training has precedence
+            throw new de.farmpulse.rpsim.common.BusinessRuleException("TIME_OFF_TRAINING",
+                    "In dieser Zeit ist der Mitarbeiter auf einer Schulung.");
+        }
         record(e, SatisfactionCategory.WORKLOAD, days * cfg().getTimeOffPointsPerDay(), days + " freie Tage");
-        e.setTimeOffUntilGameTime(e.getSavegame().getCurrentGameTime() + GameTime.days(days));
+        e.setTimeOffUntilGameTime(now + GameTime.days(days));
         thanks(e, "TIME_OFF");
         publisher.publishEvent(new RosterChangedEvent(e.getSavegame().getId())); // R2-A0: ON_LEAVE
     }

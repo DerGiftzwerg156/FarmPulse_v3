@@ -29,7 +29,6 @@ export function loanEndKey(reason: string | null): string | null {
   imports: [TranslatePipe, LabelPipe, MoneyPipe, GameTimePipe, Badge, Button, Card],
   template: `
     <app-card [title]="'workshop.loans.title' | t" data-testid="machine-loans">
-      <p class="mb-3 text-[12px] text-muted">{{ 'workshop.loans.intro' | t }}</p>
       @if (demo(); as d) {
         @if (d.choices.length) {
           <form class="flex flex-wrap items-end gap-2" (submit)="$event.preventDefault(); requestDemo()" data-testid="demo-form">

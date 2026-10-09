@@ -13,6 +13,9 @@ import { PageErrorView } from '../../shared/ui/page-error';
 import { ServiceCases } from '../contracts/service-cases';
 import { TrustMeter } from '../village/trust-meter';
 import { AnimalTrade } from './animal-trade';
+import { BulkOrdersCard } from './bulk-orders-card';
+import { CoopSharesCard } from './coop-shares-card';
+import { FarmHolidayCard } from './farm-holiday-card';
 
 /** One fill type the player can ask a neighbour for: his stock with a price and room in an own silo. */
 export interface Requestable {
@@ -32,10 +35,13 @@ export function requestables(n: TradeNeighborView, t: TradeView): Requestable[] 
 /**
  * Hof-Tablet app "Handel" (Roadmap V3 R3-H, owner decision): the own silo goods, the neighbours with role, stock and
  * needs, "Ware anfragen" (H3), "Nach Arbeit fragen" (H5) and the offers, requests and contracts of the neighbours.
+ * Tabs (owner decision 2026-10-06): Nachbarn & Ware, Tierhandel, Hofladen, Großaufträge (Roadmap V3.2 R32-G),
+ * Ferienwohnung, Genossenschaft.
  */
 @Component({
   selector: 'app-trade',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, Card, Button, TrustMeter, PageErrorView, ServiceCases, AnimalTrade],
+  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, Card, Button, TrustMeter, PageErrorView, ServiceCases, AnimalTrade,
+    FarmHolidayCard, CoopSharesCard, BulkOrdersCard],
   templateUrl: './trade.html',
 })
 export class Trade {
@@ -43,6 +49,8 @@ export class Trade {
   private readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
   readonly casesView = viewChild(ServiceCases);
+  /** Tab of the route `/handel/:tab`. */
+  readonly tab = input<string>('nachbarn');
 
   /** `?neighbor=` highlights a neighbour (link from "Kontakte"). */
   readonly neighbor = input<string>();

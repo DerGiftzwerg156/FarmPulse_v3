@@ -63,6 +63,8 @@ export interface ContractView {
   /** Roadmap V3.1 R31-A4: snow days of the running winter month and of the whole winter (winter service only). */
   snowDays?: number | null;
   snowDaysTotal?: number | null;
+  /** R31-D8: module "Diebstahl" of the storm / hail insurance (null for other contracts). */
+  theftCover?: boolean | null;
 }
 
 /** Simulated incident or one-off offer of a service character (TODO T-20 / T-22). */
@@ -155,7 +157,7 @@ export interface DroughtStatusView {
 /** Dashboard notice of the fact layer (TODO T-02 rewind, T-03 bookings the game did not execute). */
 export interface NoticeView {
   id: number;
-  kind: 'REWIND_DECISION' | 'REWIND_RESENT' | 'INSTRUCTION_FAILED' | string;
+  kind: 'REWIND_DECISION' | 'REWIND_RESENT' | 'INSTRUCTION_FAILED' | 'CYCLE_STEP_SKIPPED' | string;
   status: string;
   gameTime: number;
   details: Record<string, unknown>;
@@ -234,6 +236,10 @@ export interface MessageView {
 export interface ThreadView {
   message: MessageView;
   thread: MessageView[];
+}
+
+export interface MarkReadView {
+  marked: number;
 }
 
 export interface CreditApplicationView {
@@ -344,6 +350,22 @@ export interface FarmReportSnapshot {
   trust: { characterId: number; name: string; role: string | null; level: string }[];
 }
 
+/** Roadmap V3.2 R32-I6: section "Investoren" of a farm report (amounts of the year). */
+export interface FarmReportInvestorLine {
+  contractId: number;
+  investor: string | null;
+  kind: string;
+  amount: number;
+  capitalType: string;
+  status: string;
+  delivered: { type: string; what: string | null; quantity: number }[];
+  capital: number;
+  payouts: number;
+  compensations: number;
+  repayments: number;
+  breaches: number;
+}
+
 export interface FarmReportView {
   year: number;
   months: number;
@@ -357,6 +379,8 @@ export interface FarmReportView {
   welfareInspections: number;
   snapshot: FarmReportSnapshot;
   previous: FarmReportSnapshot | null;
+  /** null in reports written before R32-I. */
+  investors?: FarmReportInvestorLine[] | null;
 }
 
 export interface LoanPaymentView {
@@ -421,6 +445,8 @@ export interface JobPostingView {
   status: string;
   createdAtGameTime: number;
   filledEmployeeId: number | null;
+  /** Owner decision 2026-10-06: applications are still on their way (they arrive the next game day). */
+  applicationsAwaited?: boolean;
 }
 
 export interface ApplicationView {
@@ -474,6 +500,16 @@ export interface EmployeeView {
   apprenticeshipEndsAtGameTime?: number | null;
   /** Roadmap V3.1 R31-A5: end of a seasonal worker's fixed-term contract. */
   contractEndsAtGameTime?: number | null;
+  /** Roadmap V3.1 R31-B5: SICKNESS / ACCIDENT while the employee is away (ON_LEAVE), its end, wishes sent. */
+  absenceKind?: string | null;
+  absenceUntilGameTime?: number | null;
+  getWellSent?: boolean;
+  /** Owner decision 2026-10-06: start of the absence for the booked training (the whole next game day). */
+  trainingFromGameTime?: number | null;
+  /** Owner decision 2026-10-06: first working day of a PENDING_START employee and the severance to cancel him. */
+  startsAtGameTime?: number | null;
+  startsAtPeriod?: number | null;
+  severance?: number | null;
 }
 
 /** Roadmap V2 R2-A1 / R2-A3: who pays the FS25 helpers, strict helper limit. */
@@ -753,6 +789,43 @@ export interface FinanceOverview {
   months: FinanceMonthView[];
 }
 
+/** Booking statement ("Kontoauszug"): one entry - a single booking or the daily sum of `count` bookings. */
+export interface StatementEntryView {
+  seq: number;
+  gameTime: number;
+  year: number;
+  period: number;
+  day: number | null;
+  category: string;
+  financeClass: FinanceClass;
+  amount: number;
+  count: number;
+  single: boolean;
+  liters: number | null;
+  fillType: string | null;
+  sellPoint: string | null;
+  sellPointName: string | null;
+  note: string | null;
+  /** Shop vehicle purchases / sales only. */
+  vehicleMatch: 'PENDING' | 'MATCHED' | 'AMBIGUOUS' | 'NONE' | null;
+  vehicleNames: string | null;
+}
+
+export interface StatementMonthView {
+  year: number;
+  period: number;
+  entries: number;
+}
+
+export interface StatementView {
+  /** false: the latest export has no single bookings (older mod version). */
+  available: boolean;
+  year: number | null;
+  period: number | null;
+  months: StatementMonthView[];
+  entries: StatementEntryView[];
+}
+
 export interface StorageOverview {
   gameTime: number;
   totalValue: number;
@@ -927,6 +1000,11 @@ export interface TradeView {
 }
 
 /** Roadmap V3 R3-N1..N3: home-network access (card "Tablet & Netzwerk", PIN login). */
+/** First-open hints of the apps that were confirmed (once per installation, owner decision 2026-10-06). */
+export interface AppHintsView {
+  seen: string[];
+}
+
 export interface LanStatusView {
   enabled: boolean;
   pinSet: boolean;
@@ -951,6 +1029,8 @@ export interface AiSettingsView {
   baseUrl: string | null;
   apiKeySet: boolean;
   providers: string[];
+  /** Review 10/2026 Phase 0.4: false on a tablet - only the gaming PC may change provider, key and address. */
+  editable: boolean;
 }
 
 export interface GameSettingsView {
@@ -965,7 +1045,8 @@ export interface ApiError {
 }
 
 /** Hof-Tablet "Aufgaben": one open decision of any area (type names the payload that is set). */
-export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING';
+export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING'
+  | 'INVESTOR_DUE';
 
 export interface TaskView {
   key: string;
@@ -981,6 +1062,18 @@ export interface TaskView {
   marketEvent: MarketEventView | null;
   posting: JobPostingView | null;
   pendingApplicants: number | null;
+  /** Roadmap V3.2 R32-I4: a delivery still due to an investor (type INVESTOR_DUE). */
+  investorDue?: InvestorDueView | null;
+}
+
+export interface InvestorDueView {
+  contractId: number;
+  obligationId: number;
+  investor: string | null;
+  type: string;
+  fillType: string | null;
+  subType: string | null;
+  remaining: number;
 }
 
 export interface TasksView {
@@ -1095,24 +1188,29 @@ export interface RotationPreviewView {
 
 /** R31-A1: one work of the contractor form; `reason` = why it is not possible (null = possible). */
 export interface WorkOptionView {
-  work: 'PLOW' | 'CULTIVATE' | 'LIME' | 'SOW' | 'HARVEST' | string;
+  work: 'HARVEST' | 'PLOW' | 'CULTIVATE' | 'LIME' | 'SOW' | 'FERTILIZE' | string;
   price: number;
   harvestLiters: number | null;
   fillType: string | null;
   reason: string | null;
 }
 
-/** R31-A1: "Lohnunternehmer beauftragen" for an own field. */
+/**
+ * R31-A1: "Lohnunternehmer beauftragen" for an own field. The options are checked together with `selected` (up to
+ * `maxWorks` works done on the same day); the work is done by `doneByGameTime` (end of the next game day).
+ * `openOrders` = the open order of the field, one case per work.
+ */
 export interface ContractorQuoteView {
   farmlandId: number;
   fieldName: string | null;
   hectares: number;
   phase: string;
   options: WorkOptionView[];
+  selected: string[];
   fruitTypes: string[];
-  daysMin: number;
-  daysMax: number;
-  openOrder: CaseView | null;
+  maxWorks: number;
+  doneByGameTime: number;
+  openOrders: CaseView[];
 }
 
 /** R31-A2: a machine to choose from; `dailyRent` 0 for a demo. */
@@ -1185,4 +1283,496 @@ export interface AnimalTradeView {
   stables: StableView[];
   neighbors: AnimalNeighborView[];
   cases: CaseView[];
+}
+
+/** R31-B: switches of the burdening events; world mode and its factor (IDYLLIC: animal disease off). */
+export interface BurdenSettingsView {
+  areaCheck: boolean;
+  fertilizer: boolean;
+  disease: boolean;
+  sickLeave: boolean;
+  /** R31-D4 / D5 / D8 */
+  nightWork: boolean;
+  cropDamage: boolean;
+  dieselTheft: boolean;
+  tonePreset: string;
+  idyllicFactor: number;
+  /** Roadmap V3.2 R32-I1: large investors (not a burden, same card). */
+  investors: boolean;
+}
+
+/** R31-B1: one field of an area payment application. */
+export interface DirectPaymentFieldView {
+  farmlandId: number;
+  fieldName: string;
+  hectares: number;
+  declaredCrop: string;
+  actualCrop: string | null;
+  rotationRepeat: boolean;
+}
+
+export interface DirectPaymentFormFieldView {
+  farmlandId: number;
+  fieldName: string;
+  hectares: number;
+  suggestedCrop: string;
+}
+
+/** R31-B1: area payment application of an FS25 year (OPEN, SUBMITTED, LAPSED, PAID). */
+export interface DirectPaymentView {
+  id: number;
+  cropYear: number;
+  status: string;
+  openedGameTime: number;
+  deadlineGameTime: number;
+  lateLimitGameTime: number;
+  submittedGameTime: number | null;
+  lateDays: number;
+  checkStatus: string;
+  deviatingHectares: number | null;
+  deviationCut: number | null;
+  rotationCut: number | null;
+  lateCut: number | null;
+  premium: number | null;
+  paidAmount: number | null;
+  fields: DirectPaymentFieldView[];
+}
+
+export interface DirectPaymentStatusView {
+  enabled: boolean;
+  premiumPerHa: number;
+  lateCutPercentPerDay: number;
+  lateMaxDays: number;
+  crops: string[];
+  form: DirectPaymentFormFieldView[];
+  applications: DirectPaymentView[];
+}
+
+/** R31-B2: a machine bought with a grant (binding period). */
+export interface GrantObjectView {
+  vehicleUniqueId: string;
+  value: number;
+  soldGameTime: number | null;
+  repayment: number | null;
+}
+
+/** R31-B2: investment grant (APPLIED, APPROVED, PAID, EXPIRED). */
+export interface GrantView {
+  id: number;
+  kind: string;
+  status: string;
+  plannedSum: number;
+  appliedGameTime: number;
+  approvalDueGameTime: number;
+  approvedGameTime: number | null;
+  purchaseDeadlineGameTime: number | null;
+  recognisedSum: number;
+  grantAmount: number | null;
+  paidGameTime: number | null;
+  bindingEndsGameTime: number | null;
+  repaidAmount: number;
+  objects: GrantObjectView[];
+}
+
+export interface GrantStatusView {
+  enabled: boolean;
+  minSum: number;
+  grantPercent: number;
+  grantMax: number;
+  purchaseMonths: number;
+  bindingMonths: number;
+  processingDays: number;
+  grants: GrantView[];
+}
+
+/** R31-B4: an animal disease with its restricted zone. */
+export interface DiseaseView {
+  id: number;
+  diseaseKey: string;
+  animalTypes: string[];
+  status: string;
+  declaredGameTime: number;
+  endsGameTime: number;
+  liftedGameTime: number | null;
+}
+
+export interface DiseaseStatusView {
+  possible: boolean;
+  diseases: DiseaseView[];
+}
+
+// ------------------------------------------------------------------------------------------ Roadmap V3.1 R31-D
+
+/** R31-D1: an article of the village newspaper; `pending` while the text is being written. */
+export interface ArticleView {
+  id: number;
+  section: string;
+  sectionTitle: string;
+  position: number;
+  headline: string | null;
+  body: string | null;
+  fallback: boolean;
+  pending: boolean;
+}
+
+/** R31-D1: an issue of the "Dorfblatt" (newest first). */
+export interface IssueView {
+  id: number;
+  issueNumber: number;
+  midMonth: boolean;
+  period: number | null;
+  cropYear: number | null;
+  fromGameTime: number;
+  publishedGameTime: number;
+  headline: string | null;
+  articles: ArticleView[];
+}
+
+/** R31-D2: a message of the village chat; `character` null = the player, `pending` while written. */
+export interface ChatMessageView {
+  id: number;
+  groupId: number;
+  character: CharacterRef | null;
+  kind: string;
+  topic: string | null;
+  text: string | null;
+  tone: string | null;
+  link: string | null;
+  gameTime: number;
+  pending: boolean;
+}
+
+export interface ChatGroupView {
+  id: number;
+  key: string;
+  name: string;
+  members: CharacterRef[];
+  last: ChatMessageView | null;
+}
+
+export interface ChatPostView {
+  message: ChatMessageView;
+  pacingActive: boolean;
+}
+
+/** R31-D6: one month of the farm holidays. */
+export interface HolidayMonthView {
+  monthIndex: number;
+  period: number;
+  income: number;
+  seasonFactor: number;
+  reputationFactor: number;
+  animalFactor: number;
+  noise: boolean;
+  smell: boolean;
+  badReview: boolean;
+  gameTime: number;
+}
+
+export interface HolidayPreviewView {
+  period: number;
+  seasonFactor: number;
+  reputationFactor: number;
+  animalFactor: number;
+  noise: boolean;
+  smell: boolean;
+  badReview: boolean;
+  income: number;
+}
+
+export interface FarmHolidayView {
+  enabled: boolean;
+  setupCost: number;
+  baseIncomePerMonth: number;
+  /** Game time of the setup, null = not set up. */
+  since: number | null;
+  preview: HolidayPreviewView;
+  months: HolidayMonthView[];
+}
+
+/** R31-D7: a cancellation of cooperative shares. */
+export interface CoopNoticeView {
+  id: number;
+  shares: number;
+  noticedGameTime: number;
+  dueGameTime: number;
+  paidGameTime: number | null;
+}
+
+/** Roadmap V3.2 R32-G3: an order with a delivery month (fixed price per 1000 l). */
+export interface BulkOrderView {
+  id: number;
+  caseId: number;
+  fillType: string;
+  sellPoint: string;
+  sellPointName: string;
+  buyerName: string | null;
+  quantity: number;
+  fixedPrice: number;
+  expectedIncome: number;
+  leadMonths: number;
+  deliveryStartGameTime: number;
+  deadlineGameTime: number;
+  deliveryPeriod: number | null;
+  status: 'OPEN' | 'FULFILLED' | 'SHORTFALL' | string;
+  deliveredQuantity: number | null;
+  penalty: number | null;
+}
+
+/** Roadmap V3.2 R32-G: the requests of the bulk buyers and the orders with a delivery month. */
+export interface BulkOrdersView {
+  silosTracked: boolean;
+  minLeadMonths: number;
+  maxLeadMonths: number;
+  maxOpen: number;
+  open: number;
+  instantMarkupPercent: number;
+  penaltySharePercent: number;
+  requests: CaseView[];
+  orders: BulkOrderView[];
+}
+
+/** Roadmap V3.2 R32-G3: one selectable delivery month of a request; reason = NO_PRICE / FIXED_PRICE_BUSY. */
+export interface BulkOrderMonthView {
+  leadMonths: number;
+  monthIndex: number;
+  period: number | null;
+  startGameTime: number;
+  deadlineGameTime: number;
+  fixedPrice: number;
+  expectedIncome: number;
+  available: boolean;
+  reason: string | null;
+}
+
+export interface CooperativeView {
+  enabled: boolean;
+  sharePrice: number;
+  maxShares: number;
+  shares: number;
+  noticedShares: number;
+  board: boolean;
+  boardMissed: number;
+  boardMinShares: number;
+  dividendRatePercent: number;
+  dividendBonusPercent: number;
+  grainStore: boolean;
+  noticeMonths: number;
+  notices: CoopNoticeView[];
+}
+
+/** R31-D8: an own vehicle with its diesel and tank lock. */
+export interface FuelVehicleView {
+  vehicleId: string;
+  name: string | null;
+  fuelLiters: number | null;
+  fuelCapacity: number | null;
+  tankLock: boolean;
+}
+
+export interface TheftView {
+  id: number;
+  vehicleId: string;
+  vehicleName: string | null;
+  status: string;
+  stolenLiters: number | null;
+  damage: number | null;
+  insurancePayout: number | null;
+  closedGameTime: number | null;
+}
+
+export interface DieselTheftView {
+  enabled: boolean;
+  tankLockPrice: number;
+  insurancePremiumPerMonth: number;
+  insuranceMinDamage: number;
+  vehicles: FuelVehicleView[];
+  thefts: TheftView[];
+}
+
+// ------------------------------------------------------------------------------------------ Roadmap V3.1 R31-K
+
+export interface ShapePoint {
+  x: number;
+  z: number;
+}
+
+/** R31-K1: one field outline of the map; `kind` OWN (also leased), NEIGHBOR or FREE; hints as codes. */
+export interface MapFieldView {
+  farmlandId: number;
+  name: string;
+  points: ShapePoint[];
+  kind: 'OWN' | 'NEIGHBOR' | 'FREE' | string;
+  ownerName: string | null;
+  leased: boolean;
+  leasedOut: boolean;
+  fruitType: string | null;
+  phase: string | null;
+  orders: string[];
+  auction: boolean;
+  hints: string[];
+}
+
+/** R31-K1: `mapSize` null = no outlines exported (older mod). */
+export interface FieldMapView {
+  mapSize: number | null;
+  fields: MapFieldView[];
+}
+
+/** Roadmap V3.2 R32-I: one billing period; A3 required / delivered in hectares x 100. */
+export interface InvestorPeriodView {
+  periodKey: number;
+  monthly: boolean;
+  year: number;
+  required: number | null;
+  delivered: number;
+  status: string;
+  graceUntil: number | null;
+  compensation: number | null;
+  checkedGameTime: number | null;
+}
+
+/** Roadmap V3.2 R32-I3: one consideration (W1-W3, R1/R2, A1-A4, P1-P5). */
+export interface InvestorObligationView {
+  id: number;
+  type: string;
+  main: boolean;
+  fillType: string | null;
+  subType: string | null;
+  quantity: number | null;
+  minPerYear: number | null;
+  hectares: number | null;
+  rate: number | null;
+  target: number | null;
+  targetKind: string | null;
+  unitPrice: number | null;
+  valuePerYear: number;
+  totalValue: number;
+  deliveredTotal: number;
+  consents: number[];
+  current: InvestorPeriodView | null;
+  outstanding: number;
+  breaches: InvestorPeriodView[];
+}
+
+export interface InvestorPaymentView {
+  id: number;
+  kind: string;
+  amount: number;
+  year: number | null;
+  gameTime: number;
+  status: string;
+  claimCaseId: number | null;
+  note: string | null;
+}
+
+/** Roadmap V3.2 R32-I2: a package of an offer or a running / finished contract. */
+export interface InvestorContractView {
+  id: number;
+  caseId: number;
+  characterId: number | null;
+  investor: string | null;
+  kind: string;
+  kindLabel: string;
+  packageNo: number;
+  amount: number;
+  capitalType: string;
+  years: number;
+  startYear: number;
+  endYear: number;
+  targetReturn: number;
+  targetValue: number;
+  status: string;
+  breaches: number;
+  announced: boolean;
+  repaymentDue: boolean;
+  extensionOf: number | null;
+  extendedBy: number | null;
+  endReason: string | null;
+  considerations: InvestorObligationView[];
+  payments: InvestorPaymentView[];
+}
+
+export interface InvestorOfferView {
+  offer: CaseView;
+  extension: boolean;
+  packages: InvestorContractView[];
+}
+
+export interface InvestorStallView {
+  husbandryUniqueId: string;
+  animalType: string | null;
+  milk: { fillType: string; amount: number }[];
+  subTypes: { name: string; count: number }[];
+}
+
+/** Roadmap V3.2 R32-I: app "Bank", area "Investoren". */
+export interface InvestorsView {
+  enabled: boolean;
+  savegameEnabled: boolean;
+  maxActive: number;
+  running: number;
+  breachesToTerminate: number;
+  graceDays: number;
+  compensationMarkup: number;
+  offers: InvestorOfferView[];
+  contracts: InvestorContractView[];
+  cases: CaseView[];
+  stalls: InvestorStallView[];
+  fields: { farmlandId: number; name: string | null; hectares: number | null }[];
+}
+
+/** Roadmap V3.3 R33-F: a value of a field book entry; `manual` = corrected by the player. */
+export interface FieldBookValue {
+  value: string | number | boolean | null;
+  manual: boolean;
+}
+
+/** Keys of FieldBookEntryView.values (FieldBookService.Value). */
+export type FieldBookValueKey = 'FRUIT_TYPE' | 'FILL_TYPE' | 'LITERS' | 'FERT1' | 'FERT2' | 'LIMED' | 'ROLLED' | 'WEEDS' | 'MULCHED';
+
+export interface FieldBookEntryView {
+  id: number;
+  status: 'RUNNING' | 'HARVESTED' | 'NO_HARVEST';
+  harvestYear: number | null;
+  hectares: number | null;
+  firstEntry: boolean;
+  held: boolean;
+  locked: boolean;
+  litersPerHectare: number | null;
+  sprayTypes: string[];
+  /** false = the crop is not rolled (FS25 needsRolling), null = unknown. */
+  rollingNeeded: boolean | null;
+  values: Record<FieldBookValueKey, FieldBookValue>;
+}
+
+export interface FieldBookFieldView {
+  farmlandId: number;
+  name: string;
+  hectares: number | null;
+  state: 'ACTIVE' | 'LEASED_OUT' | 'LEASE_ENDED' | 'SOLD';
+  running: FieldBookEntryView | null;
+  entries: FieldBookEntryView[];
+}
+
+export interface FieldBookCropView {
+  name: string;
+  title: string | null;
+  fillType: string | null;
+  products: string[];
+  needsRolling: boolean | null;
+}
+
+/** Roadmap V3.3 R33-F: app "Feldbuch", tab "Dokumentation". */
+export interface FieldBookView {
+  fieldsTracked: boolean;
+  currentYear: number | null;
+  closedYears: number[];
+  years: number[];
+  showLime: boolean;
+  showWeeds: boolean;
+  cropsFromMap: boolean;
+  crops: FieldBookCropView[];
+  fields: FieldBookFieldView[];
+  notices: { entryId: number; farmlandId: number; harvestYear: number | null; liters: number }[];
 }

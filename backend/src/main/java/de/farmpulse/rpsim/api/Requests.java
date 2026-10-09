@@ -11,6 +11,7 @@ import de.farmpulse.rpsim.domain.VillageRelation;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -54,6 +55,10 @@ public final class Requests {
     }
 
     public record TextRequest(@NotBlank @Size(max = 4000) String text) {
+    }
+
+    /** Ids of the mails to mark as read (the unread mails of the active mailbox filter). */
+    public record MarkReadRequest(@NotEmpty List<@NotNull Long> ids) {
     }
 
     public record ProactiveRequest(@NotBlank @Size(max = 4000) String text, Channel channel) {
@@ -120,6 +125,11 @@ public final class Requests {
     }
 
     /** Roadmap V2 R2-C6: switch of the field work hints. */
+    /** Roadmap V3.1 R31-B: switches of the burdening events. */
+    public record BurdenSettingsRequest(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave,
+                                        Boolean nightWork, Boolean cropDamage, Boolean dieselTheft, Boolean investors) {
+    }
+
     public record FieldSettingsRequest(boolean fieldHintsEnabled) {
     }
 

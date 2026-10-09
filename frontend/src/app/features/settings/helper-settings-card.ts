@@ -6,7 +6,7 @@ import { Card } from '../../shared/ui/card';
 
 /**
  * Roadmap V2 R2-A1 / R2-A3: helper switches of the savegame (who pays the FS25 helpers, strict helper limit).
- * Lives in the app "Personal" next to the hours of the machine operators.
+ * Lives in the settings, tab "Im Spiel" (owner decision 2026-10-06: settings only in the settings app).
  */
 @Component({
   selector: 'app-helper-settings-card',
@@ -14,8 +14,7 @@ import { Card } from '../../shared/ui/card';
   template: `
     <app-card [title]="'settings.helpers.title' | t" data-testid="helper-settings">
       @if (helpers(); as h) {
-        <p class="text-[12px] text-muted">{{ 'settings.helpers.intro' | t }}</p>
-        <label class="mt-2 flex items-start gap-2 text-[12px] text-text">
+        <label class="flex items-start gap-2 text-[12px] text-text">
           <input type="checkbox" [checked]="h.helperWageMode === 'EMPLOYEES'" (change)="save({ helperWageMode: $any($event.target).checked ? 'EMPLOYEES' : 'VANILLA', strictHelperLimit: h.strictHelperLimit })" data-testid="helper-wage" />
           <span>{{ 'settings.helpers.wage' | t }}</span>
         </label>
@@ -23,7 +22,6 @@ import { Card } from '../../shared/ui/card';
           <input type="checkbox" [checked]="h.strictHelperLimit" (change)="save({ helperWageMode: h.helperWageMode, strictHelperLimit: $any($event.target).checked })" data-testid="helper-strict" />
           <span>{{ 'settings.helpers.strict' | t }}</span>
         </label>
-        <p class="mt-1 text-[11px] text-muted">{{ 'settings.helpers.strictHint' | t }}</p>
         @if (!h.workforceTracked) {
           <p class="mt-1 text-[11px] text-warn" data-testid="helper-untracked">{{ 'settings.helpers.untracked' | t }}</p>
         }

@@ -25,6 +25,7 @@ function RPSimBridge.new(cfg, paths, adapter, state)
     self.state = state or RPSimProcessor.newState(cfg)
     self.exportTimer = 0
     self.importTimer = 0
+    self.marketContextTimer = 0
     self.bootstrapped = false
     -- The bridge only starts exporting/importing once the mission has started (T-01): during loadMap the
     -- farms, vehicles, placeables and selling stations of the savegame are not loaded yet.
@@ -33,6 +34,9 @@ function RPSimBridge.new(cfg, paths, adapter, state)
     -- Roadmap V2 R2-C1: fields are sampled every fieldExportIntervalMs and carried into every farm_facts export
     self.fieldCache = nil
     self.fieldTimer = 0
+    -- AutoDrive drives (no AIJob): vehicle -> {jobId (own, negative), name, categories}; refused = stopped by the strict
+    -- mode and not yet seen inactive
+    self.autoDrive = { drives = {}, nextId = -1, refused = {}, timer = 0 }
     return self
 end
 
@@ -88,6 +92,10 @@ function RPSimBridge:exportFarmFacts()
     if self.financeJournalEnabled and self.state.financeJournal ~= nil then
         raw.finances = RPSimFinanceJournal.toRaw(self.state.financeJournal)
     end
+    -- Booking statement: filled by the same hook, so it is exported (and missing) together with the journal
+    if self.financeJournalEnabled and self.state.bookingLog ~= nil then
+        raw.bookings = RPSimBookingLog.toRaw(self.state.bookingLog)
+    end
     if self.workforceEnabled then
         raw.workforce = self:sampleWorkforce(raw.gameTime)
     end
@@ -95,6 +103,10 @@ function RPSimBridge:exportFarmFacts()
     if fields ~= nil then
         raw.fields, raw.fieldRules = fields.fields, fields.rules
         raw.npcFields = fields.npcFields -- Roadmap V3 R3-H1 (nil when switched off)
+    end
+    -- Roadmap V3.3 R33-F3: only exported while a harvest hook is installed; otherwise the block stays missing
+    if self.harvestCounterEnabled and self.state.harvests ~= nil then
+        raw.harvests = RPSimHarvestCounter.toRaw(self.state.harvests)
     end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
 end
@@ -125,10 +137,7 @@ end
 -- strict mode is set again (in case the game reset it).
 function RPSimBridge:sampleWorkforce(gameTime)
     local wf = self.state.workforce
-    local ok, jobs = pcall(self.adapter.collectAIJobs, self.adapter)
-    if not ok or jobs == nil then
-        jobs = {}
-    end
+    local jobs = self:helperJobs()
     local ids = {}
     for _, j in ipairs(jobs) do
         RPSimWorkforce.assign(wf, j.jobId, RPSimWorkforce.requiredTrainings(wf, j.categories))
@@ -141,6 +150,109 @@ function RPSimBridge:sampleWorkforce(gameTime)
     return RPSimWorkforce.toRaw(wf, jobs)
 end
 
+--- Running helpers of the player farm: the AIJobs (game helper, Courseplay, ...; adapter.collectAIJobs) plus the
+-- AutoDrive drives under their own negative job ids, sorted by job id. { {jobId, title, categories} }.
+function RPSimBridge:helperJobs()
+    self:pruneAutoDrive()
+    local ok, jobs = pcall(self.adapter.collectAIJobs, self.adapter)
+    if not ok or jobs == nil then
+        jobs = {}
+    end
+    for _, d in pairs(self.autoDrive.drives) do
+        jobs[#jobs + 1] = { jobId = d.jobId, title = d.name, categories = d.categories }
+    end
+    table.sort(jobs, function(a, b) return a.jobId < b.jobId end)
+    return jobs
+end
+
+RPSimBridge.AUTODRIVE_CHECK_MS = 1000
+
+--- Frees the operators of AutoDrive drives that ended since the last check. AutoDrive:stopAutoDrive deactivates the
+-- vehicle before it hands it over to Courseplay or a game helper, so the follow-up job neither counts the ended drive
+-- against the strict limit nor finds its operator busy.
+function RPSimBridge:pruneAutoDrive()
+    local adapter = self.adapter
+    if adapter.isAutoDriveActive == nil then
+        return
+    end
+    for vehicle, d in pairs(self.autoDrive.drives) do
+        if not adapter:isAutoDriveActive(vehicle) then
+            RPSimWorkforce.release(self.state.workforce, d.jobId)
+            self.autoDrive.drives[vehicle] = nil
+        end
+    end
+end
+
+--- AutoDrive drives like a helper but without an AIJob, so no start hook sees it. Every AUTODRIVE_CHECK_MS the active
+-- AutoDrive vehicles of the player farm are compared with the known drives: a new drive gets its own negative job id
+-- and a free machine operator (same rules as a game helper, "Schulungen" included), an ended drive frees him again.
+-- Strict mode (R2-A3, owner decision): a new drive over the helper limit or without a free trained operator is stopped
+-- right away - AutoDrive has no documented hook before its start. The AutoDrive wage stays AutoDrive's own setting.
+function RPSimBridge:trackAutoDrive()
+    local adapter = self.adapter
+    if adapter.collectAutoDriveVehicles == nil then
+        return
+    end
+    local wf = self.state.workforce
+    local ad = self.autoDrive
+    local ok, list = pcall(adapter.collectAutoDriveVehicles, adapter)
+    if not ok or list == nil then
+        list = {}
+    end
+    local seen = {}
+    for _, v in ipairs(list) do
+        seen[v.vehicle] = true
+        if ad.drives[v.vehicle] == nil and not ad.refused[v.vehicle] then
+            local required = RPSimWorkforce.requiredTrainings(wf, v.categories)
+            local full = RPSimWorkforce.limitReached(wf, #self:helperJobs())
+            if adapter:isServer() and (full or RPSimWorkforce.startBlocked(wf, required)) then
+                ad.refused[v.vehicle] = true
+                adapter:stopAutoDrive(v.vehicle, self:autoDriveRefusal(v, full, required))
+            else
+                local jobId = ad.nextId
+                ad.nextId = jobId - 1
+                ad.drives[v.vehicle] = { jobId = jobId, name = v.name, categories = v.categories }
+                RPSimWorkforce.assign(wf, jobId, required)
+            end
+        end
+    end
+    for vehicle, d in pairs(ad.drives) do
+        if not seen[vehicle] then
+            RPSimWorkforce.release(wf, d.jobId)
+            ad.drives[vehicle] = nil
+        end
+    end
+    for vehicle, _ in pairs(ad.refused) do
+        if not seen[vehicle] then
+            ad.refused[vehicle] = nil
+        end
+    end
+end
+
+function RPSimBridge:autoDriveRefusal(v, full, required)
+    if full then
+        return string.format("FarmPulse: Kein freier Maschinenführer – im strengen Modus fahren höchstens %d Helfer. "
+            .. "AutoDrive (%s) wurde angehalten.", RPSimWorkforce.activeOperators(self.state.workforce),
+            tostring(v.name or "Fahrzeug"))
+    end
+    local titles = {}
+    for _, t in ipairs(required) do
+        titles[#titles + 1] = RPSimWorkforce.trainingTitle(t)
+    end
+    return string.format("FarmPulse: Für %s ist kein Maschinenführer mit der Schulung „%s“ frei. AutoDrive wurde "
+        .. "angehalten.", tostring(v.name or "dieses Fahrzeug"), table.concat(titles, "“, „"))
+end
+
+--- The AutoDrive vehicle of an own (negative) job id, nil when unknown.
+function RPSimBridge:autoDriveVehicle(jobId)
+    for vehicle, d in pairs(self.autoDrive.drives) do
+        if d.jobId == jobId then
+            return vehicle
+        end
+    end
+    return nil
+end
+
 --- Roadmap V2 R2-A0: the complete employee list from the backend. Helpers of striking employees are stopped (R2-A5),
 -- the helper limit follows the new list (R2-A3).
 function RPSimBridge:applyRoster(ins)
@@ -148,7 +260,13 @@ function RPSimBridge:applyRoster(ins)
     local strike = RPSimWorkforce.setRoster(wf, ins)
     for _, jobId in ipairs(strike) do
         local name = RPSimWorkforce.helperName(wf, jobId)
-        if self.adapter.stopStrikingJob ~= nil then
+        local adVehicle = self:autoDriveVehicle(jobId)
+        if adVehicle ~= nil then
+            if self.adapter.stopAutoDrive ~= nil then
+                self.adapter:stopAutoDrive(adVehicle,
+                    string.format("FarmPulse: %s streikt und hat die Arbeit niedergelegt.", tostring(name)))
+            end
+        elseif self.adapter.stopStrikingJob ~= nil then
             self.adapter:stopStrikingJob(jobId, name)
         end
         RPSimWorkforce.release(wf, jobId)
@@ -173,12 +291,32 @@ function RPSimBridge:recordBooking(farmId, amount, moneyType)
     end
     local name = RPSimFinanceJournal.nameOf(self.adapter.bookingReason, moneyType, RPSimGameAdapter ~= nil
         and RPSimGameAdapter.moneyTypeName or nil)
-    return RPSimFinanceJournal.record(self.state.financeJournal, year, period, name, amount,
+    local recorded = RPSimFinanceJournal.record(self.state.financeJournal, year, period, name, amount,
         self.cfg.financeJournalPeriods)
+    if recorded then
+        self:recordSingleBooking(year, period, name, amount)
+    end
+    return recorded
+end
+
+--- Booking statement: the same booking as a single entry with its game time, the note of a tool booking and - while
+-- the sellFillType hook runs (self.saleContext) - fill type, sell point and litres of the sale.
+function RPSimBridge:recordSingleBooking(year, period, name, amount)
+    if self.state.bookingLog == nil then
+        self.state.bookingLog = RPSimBookingLog.new()
+    end
+    local t = self.adapter.currentBookingTime ~= nil and self.adapter:currentBookingTime() or {}
+    local sale = self.saleContext or {}
+    return RPSimBookingLog.record(self.state.bookingLog, { gameTime = t.gameTime or self.adapter:getGameTime(),
+        year = year, period = period, day = t.day, monotonicDay = t.monotonicDay or 0, category = name,
+        amount = amount, note = self.adapter.bookingReason ~= nil and self.adapter.bookingNote or nil,
+        fillType = sale.fillType, sellPoint = sale.sellPoint, liters = sale.liters },
+        { maxEntries = self.cfg.bookingLogEntries, singleTypes = self.cfg.bookingLogSingleTypes })
 end
 
 --- Writes market_context.json, but only when its content changed since the last successful write (the
--- context is re-checked on every farm_facts export, T-01). force = true writes unconditionally.
+-- context is re-checked on every farm_facts export, T-01). force = true writes unconditionally (mission start,
+-- FARMLAND_TRANSFER and every marketContextIntervalMs).
 -- Returns true when the file was written, false when unchanged or on error.
 function RPSimBridge:exportMarketContext(force)
     local ok, raw = pcall(self.adapter.collectMarketContext, self.adapter, self.cfg.conflictMods)
@@ -215,6 +353,7 @@ function RPSimBridge:onSavegameLoaded()
     self.started = true
     self.exportTimer = 0
     self.importTimer = 0
+    self.marketContextTimer = 0
     if self.workforceEnabled and self.adapter.registerStrikeMessage ~= nil then
         self.adapter:registerStrikeMessage() -- R2-A5: the AI message manager exists once the mission runs
     end
@@ -323,10 +462,15 @@ function RPSimBridge:pollInstructions()
                     end or nil,
                     vehicleRemove = adapter.removeVehicle ~= nil
                         and function(ins) return adapter:removeVehicle(ins.vehicleId) end or nil,
-                    -- Roadmap V3.1 R31-A1 and R31-A3 (VEHICLE_FUEL follows with R31-D8)
+                    -- Roadmap V3.1 R31-A1, R31-A3 and R31-D8
                     fieldWork = adapter.fieldWork ~= nil and function(ins) return adapter:fieldWork(ins) end or nil,
                     animalTransfer = adapter.animalTransfer ~= nil
                         and function(ins) return adapter:animalTransfer(ins) end or nil,
+                    vehicleFuel = adapter.vehicleFuel ~= nil
+                        and function(ins) return adapter:vehicleFuel(ins) end or nil,
+                    -- Roadmap V3.2 R32-Q1
+                    husbandryTransfer = adapter.husbandryTransfer ~= nil
+                        and function(ins) return adapter:husbandryTransfer(ins) end or nil,
                 },
             })
             -- R2-F1 / R2-F2: processed answers and questions decided in the browser
@@ -361,15 +505,31 @@ function RPSimBridge:update(dtMs)
     self.exportTimer = self.exportTimer + dtMs
     self.importTimer = self.importTimer + dtMs
     self.fieldTimer = self.fieldTimer + dtMs
+    self.marketContextTimer = self.marketContextTimer + dtMs
     if self.importTimer >= self.cfg.importIntervalMs then
         self.importTimer = 0
         self:pollInstructions()
     end
+    local marketContextDue = self.marketContextTimer >= self.cfg.marketContextIntervalMs
     if self.exportTimer >= self.cfg.exportIntervalMs then
         self.exportTimer = 0
         self:exportFarmFacts()
         -- Keeps sell points/farmlands current (e.g. placeables bought later); written only when changed.
-        self:exportMarketContext()
+        if not marketContextDue then
+            self:exportMarketContext()
+        end
+    end
+    if marketContextDue then
+        -- Owner decision 2026-10-06: rewritten every marketContextIntervalMs, changed or not.
+        self.marketContextTimer = 0
+        self:exportMarketContext(true)
+    end
+    if self.workforceEnabled then
+        self.autoDrive.timer = self.autoDrive.timer + dtMs
+        if self.autoDrive.timer >= RPSimBridge.AUTODRIVE_CHECK_MS then
+            self.autoDrive.timer = 0
+            self:trackAutoDrive()
+        end
     end
     self:updatePrompts(false)
 end

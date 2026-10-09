@@ -1,0 +1,7 @@
+Beitragsbescheid Berufsgenossenschaft
+Guten Tag,
+
+Ihr Jahresbeitrag zur landwirtschaftlichen Berufsgenossenschaft beträgt {{amount}} €: Grundbetrag {{baseFee}} €, {{hectares}} ha zu je {{feePerHa}} € und {{employees}} Beschäftigte zu je {{feePerEmployee}} €. Bitte zahlen Sie innerhalb von {{paymentDays}} Tagen in der App „Ämter“.
+
+Mit freundlichen Grüßen
+{{characterName}}
