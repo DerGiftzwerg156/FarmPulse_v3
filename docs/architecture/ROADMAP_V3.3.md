@@ -52,7 +52,7 @@ Punkt-IDs: `R33-<Bereich><Nummer>`, z. B. `R33-F2`. Alle Pfade sind relativ zum 
 
 | Phase | Bereich | Inhalt | Mod-Eingriff | Hängt ab von |
 | --- | --- | --- | --- | --- |
-| 0 | [Q – Querschnitt](#q--querschnitt) | Walz- und Mulchstufe, Kulturen-Katalog, Ernte-Zähler, Tabellen, Simulator, Testplan | ja | R2-C1 |
+| 0 | [Q – Querschnitt](#q--querschnitt) | Vertrag für Walz- und Mulchstufe, Kulturen-Katalog und Ernte-Zähler, Simulator, Testplan | ja (nur Normalisierung) | R2-C1 |
 | 1 | [F – Feldbuch](#f--feldbuch) | Einträge und Saison, automatische Erfassung, Korrektur, Jahr abschließen, App „Feldbuch“ | F3: ja (über Q1) | Q, R2-C, R31-A1 |
 | 2 | [E – Auswertung](#e--auswertung) | Zeitraum, Tabelle Feld × Jahr, Liter je Hektar, Diagramm, Vergleich mit/ohne Maßnahme | nein | F |
 | 3 | [W – Wirkung auf Hofbericht, Chronik und Bank](#w--wirkung-auf-hofbericht-chronik-und-bank) | Gemessene Liter ersetzen die Schätzung | nein | F, R3-K3, R3-T2 |
@@ -64,17 +64,28 @@ Q1); dann fehlen nur Walzen, Mulchen und die gemessenen Liter, und der Spieler t
 
 ## Q – Querschnitt
 
-Wie R31-Q und R32-Q legt Q den Vertrag an: Schemas, DTOs, Validator, Normalisierung im Mod, Simulator und Doku. Anders
-als R31-Q liest der Mod die neuen Werte gleich im Spiel aus. Ohne diese Werte hat das Feldbuch keine automatische
-Erfassung.
+**Stand 09.10.2026: umgesetzt.** Q legt wie R31-Q **nur den Vertrag** an (Entscheidung 08.10.2026): Schemas, DTOs,
+Validator, Normalisierung im Mod (`RPSimFarmFacts.build`, `RPSimMarketContext.build`), Simulator und Doku. Das Auslesen
+im Spiel folgt mit F2 (Walz- und Mulchstufe), F3 (Ernte-Zähler samt Speichern im Mod-Spielstand) und F4
+(`fruitTypes[]`); bis dahin fehlen die Werte. Weitere Entscheidungen vom 08.10.2026 (`QUESTIONS.md`):
+- Ernte-Liter: **fortlaufender Zähler** je Feld, Kultur und Ernteprodukt im Mod-Spielstand (Vorschlag aus den offenen
+  Punkten); das Backend rechnet mit F3 die Differenz.
+- Tabellen kommen **mit F**, der Konfigwert `field-book.default-years` **mit E** (wie in V3.2: erst mit den
+  Fach-Bereichen).
+- Hook: **beide Wege** werden mit F3 gebaut, `Combine.addCutterArea` und der Plan B `Cutter.onEndWorkAreaProcessing`;
+  der Mod nimmt den, der greift, und zählt nie doppelt.
+
+Ohne die neuen Werte hat das Feldbuch keine automatische Erfassung.
 
 ### R33-Q1 Bridge erweitern
 
-- [ ] `farm_facts.json`, neue optionale Felder an `fields[]` (gleiche Normalisierung wie die vorhandenen Stufen, ganze
+- [x] `farm_facts.json`, neue optionale Felder an `fields[]` (gleiche Normalisierung wie die vorhandenen Stufen, ganze
   Zahlen):
   - `rollerLevel`: Walzstufe, `1` = „muss gewalzt werden“ (für F2, Walzen),
   - `stubbleShredLevel`: Mulchstufe, `1` = „gemulcht“ (für F2, Mulchen).
-- [ ] `market_context.json`, neuer optionaler Block `fruitTypes[]` mit allen Kulturen der Karte, auch denen von
+
+  Umgesetzt (Vertrag): auch in `npcFields` (gleiche Normalisierung), fehlt, wenn kein Wert ≥ 0 da ist.
+- [x] `market_context.json`, neuer optionaler Block `fruitTypes[]` mit allen Kulturen der Karte, auch denen von
   Map-Mods (Entscheidung 08.10.2026: Dropdown = alle Kulturen der Karte). Je Eintrag:
   - `name` (z. B. `WHEAT`), `fillType` (Standard-Ernteprodukt),
   - `title` (Anzeigename des Spiels, für Kulturen ohne deutsches Label in FarmPulse),
@@ -82,13 +93,16 @@ Erfassung.
   - optional `products[]`: weitere Ernteprodukte der Kultur aus den Fruchtumwandlungen des Spiels (z. B. Mais →
     Häckselgut `CHAFF`).
 
-  Der Block wird beim Laden der Karte einmal gebaut, weil sich die Kulturen im laufenden Spiel nicht ändern.
-- [ ] `farm_facts.json`, neuer optionaler Block `harvests[]` = `{ farmlandId, fruitType, fillType, liters }`. Das ist ein
+  Der Block wird beim Laden der Karte einmal gebaut, weil sich die Kulturen im laufenden Spiel nicht ändern (mit F4).
+  Umgesetzt (Vertrag): sortiert nach `name`, doppelte Namen und leere Werte fallen weg, `products[]` ohne das
+  Standardprodukt.
+- [x] `farm_facts.json`, neuer optionaler Block `harvests[]` = `{ farmlandId, fruitType, fillType, liters }`. Das ist ein
   **kumulativer Zähler** je eigenem Feld, Kultur und Ernteprodukt: die Liter, die Erntemaschinen auf diesem Feld in
   ihren Tank bekommen haben (für F3). Der Mod speichert die Zähler im eigenen Spielstand (`FS25_RPSim.xml`,
   `RPSimPersistence`, wie `contractReports`). Lädt der Spieler einen älteren Spielstand, sind die Zähler auf dem
-  Stand dieses Spielstands.
-- [ ] `docs/dev/bridge-protocol.md` je Feld und Block mit Quelle im FS25-Code.
+  Stand dieses Spielstands. Umgesetzt (Vertrag): ganze Liter, sortiert nach Feld, Kultur und Produkt; Zählen und
+  Speichern kommen mit F3.
+- [x] `docs/dev/bridge-protocol.md` je Feld und Block mit Quelle im FS25-Code.
 
 **Beleg (Walzen, Mulchen):**
 - ✅ `Field/FieldState.md` (LUADOC) und `field/FieldState.lua` (Dump): `FieldState.new` hat `rollerLevel` und
@@ -103,7 +117,10 @@ Erfassung.
 **Beleg (Kulturen-Katalog):**
 - ✅ `Fruits/FruitTypeManager.md`: `getFruitTypes()` gibt alle Kulturen zurück. `getFillTypeNameByFruitTypeIndex`
   liefert das Ernteprodukt (wie `fields[].fillType`). `addFruitTypeConverter` / `addFruitTypeConversion` /
-  `getConverterDataByName` führen Umwandlungen Kultur → Ernteprodukt mit Faktor.
+  `getConverterDataByName` führen Umwandlungen Kultur → Ernteprodukt mit Faktor (`fruitTypeConverters`).
+- ✅ `Specializations/Cutter.md` (geprüft 08.10.2026): Ein Umwandler ist eine Tabelle mit dem Fruchtsorten-Index als
+  Schlüssel und `{ fillTypeIndex, conversionFactor }` als Wert; das Schneidwerk liest sie genau so
+  (`spec.fruitTypeConverters[fruitTypeIndex].fillTypeIndex`). Damit ist `products[]` belegt.
 - ✅ `Fruits/FruitTypeDesc.md`: `name`, `regrows` / `firstRegrowthState` (Zustand `regrowthStart` in der Foliage-XML),
   `needsRolling`, `resetsSpray`, `allowsSeeding`.
 - ✅ `FillTypes/FillTypeDesc.md`: `title` (Anzeigename aus der XML).
@@ -120,8 +137,9 @@ Erfassung.
 - ✅ `Economy/FarmlandManager.md`: `getFarmlandIdAtWorldPosition(x, z)`; `Specializations/WorkArea.md`
   (`getIsAccessibleAtWorldPosition`): `getFarmlandOwner(farmlandId)` nennt den Besitzer.
 
-**Mod-Ablauf Ernte-Zähler:** Ein Hook auf `Combine.addCutterArea` (`Utils.overwrittenFunction`) ruft das Original auf
-und nimmt dessen Rückgabe als Liter. Gezählt wird nur auf dem Server (`isServer`, wie `Cutter`) und nur, wenn
+**Mod-Ablauf Ernte-Zähler (mit F3):** Ein Hook auf `Combine.addCutterArea` (`Utils.overwrittenFunction`) ruft das
+Original auf und nimmt dessen Rückgabe als Liter. Dazu kommt der Plan B auf `Cutter.onEndWorkAreaProcessing`
+(Entscheidung 08.10.2026: beide Wege); der Mod nimmt den, der greift, und zählt nie doppelt. Gezählt wird nur auf dem Server (`isServer`, wie `Cutter`) und nur, wenn
 `getFarmlandIdAtWorldPosition` an der Position der Erntemaschine (`getWorldTranslation(self.rootNode)`) ein Flurstück
 der Spieler-Farm liefert. Gepachtete Felder gehören im Spiel der Spieler-Farm (`FARMLAND_TRANSFER TO_PLAYER`).
 Missionsfelder anderer Farmen zählen nicht. Fruchtsorte: `inputFruitType`. Fehlt sie, gilt
@@ -134,38 +152,46 @@ Missionsfelder anderer Farmen zählen nicht. Fruchtsorte: `inputFruitType`. Fehl
   sie selbst ab.
 - Wirkt der Hook auf `Combine.addCutterArea` auf alle Fahrzeugtypen? Die Funktion wird per
   `SpecializationUtil.registerFunction` am Fahrzeugtyp eingetragen, der Hook muss also vor dem Eintragen sitzen.
-  **Fallback:** Hook auf `Cutter.onEndWorkAreaProcessing`, die Liter aus `spec.workAreaParameters` vor dem Aufruf.
-  Klappt keiner der beiden, bleibt `harvests[]` leer, und der Spieler trägt die Liter selbst ein.
+  **Fallback:** Hook auf `Cutter.onEndWorkAreaProcessing`, die Liter aus `spec.workAreaParameters` vor dem Aufruf
+  (wird mit F3 gleich mitgebaut, Entscheidung 08.10.2026). Klappt keiner der beiden, bleibt `harvests[]` leer, und der
+  Spieler trägt die Liter selbst ein.
 - Laufen Feldhäcksler, Kartoffel- und Rübenroder sowie die Schwad-Aufnahme (Gras) auch über
   `Cutter` → `Combine:addCutterArea`? **Fallback:** Was nicht gezählt wird, trägt der Spieler selbst ein
   (Entscheidung 08.10.2026, „Liter manuell oder leer“).
 - Fahrzeugmitte statt Schneidwerk: Am Feldrand kann eine Schwade dem Nachbar-Flurstück zugeordnet werden.
   **Fallback:** Position des Schneidwerks (`spec.workAreaParameters`, Arbeitsbereich des Cutters). Der Rest ist
   korrigierbar.
-- Lassen sich die Umwandlungen je Kultur (`products[]`) aus `fruitTypeConverters` lesen? Die Ladefunktion
-  `loadConvertersFromXML` ist nicht dokumentiert. **Fallback:** `products[]` fehlt. Die Auswahl im Formular zeigt dann
-  das Standard-Ernteprodukt und alle Produkte, die der Ernte-Zähler für diese Kultur schon gemeldet hat.
+- ~~Lassen sich die Umwandlungen je Kultur (`products[]`) aus `fruitTypeConverters` lesen?~~ Belegt (siehe Beleg
+  Kulturen-Katalog, `Cutter.md`). Fehlt `products[]` trotzdem (älterer Mod), zeigt die Auswahl das Standard-Ernteprodukt
+  und alle Produkte, die der Ernte-Zähler für diese Kultur schon gemeldet hat.
 
 ### R33-Q2 Domäne, Simulator, Tests, Konfiguration, Doku, Testplan
 
-- [ ] Neue Tabellen (Migration):
+Stand 09.10.2026: Simulator, Mod- und Backend-Tests des Vertrags, Testplan und Doku umgesetzt. Tabellen kommen mit F,
+der Konfigwert mit E (Entscheidung 08.10.2026).
+
+- [ ] Neue Tabellen (Migration) – **mit F**:
   - `field_book_entry`: je Feld und Saison ein Eintrag mit Feldname und Fläche, Status
     (`RUNNING`, `HARVESTED`, `NO_HARVEST`) und Erntejahr (leer, solange `RUNNING`). Dazu Kultur, Ernteprodukt, Liter,
     die sechs Maßnahmen und die gesehenen Düngerarten. Für die Erkennung kommen die Ausgangsstufen beim Start dazu und
     für die Korrektur je Wert die Quelle (`AUTO` / `MANUAL`).
   - `field_book_year`: abgeschlossene Erntejahre je Spielstand.
   - `field_book_notice`: Hinweise auf späte Erkennungen in abgeschlossenen Jahren (F5).
-- [ ] Bridge-Simulator: Szenario `feldbuch` mit Weizenfeld (Walz- und Mulchstufe), Grasfeld (`regrows`), Maisfeld mit
+- [x] Bridge-Simulator: Szenario `feldbuch` mit Weizenfeld (Walz- und Mulchstufe), Grasfeld (`regrows`), Maisfeld mit
   `products[]` und steigendem `harvests[]`-Zähler. Dazu ein Steuer-Endpunkt für Feldstufen und Ernte-Liter.
-- [ ] Mod-Tests mit gemockten FS25-Globals: Normalisierung von `rollerLevel`, `stubbleShredLevel`, `fruitTypes[]` und
-  `harvests[]`. Dazu der Hook: nur eigene Flurstücke, Rückfall auf die Fruchtsorte aus dem Produkt, Speichern und
-  Laden der Zähler.
-- [ ] Backend: Tests je Erkennungsregel (F2, F3), je Saisonregel (F1), Korrektur-Vorrang, Abschluss und Wiederöffnen
-  (F5) sowie Auswertung (E), dazu `BridgeValidatorTest` und `SimulatorScenariosEndToEndTest`.
+  Umgesetzt: Feldstufen über das vorhandene `POST /field`, Ernte-Liter über `POST /harvest` (nur eigene Felder); der
+  Zähler gehört zum simulierten Spielstand.
+- [x] Mod-Tests mit gemockten FS25-Globals: Normalisierung von `rollerLevel`, `stubbleShredLevel`, `fruitTypes[]` und
+  `harvests[]` (`test_farm_facts.lua`, `test_market_context.lua`); `test_roadmap_v33.lua` hält fest, dass der Adapter
+  die Werte noch nicht liest. Die Tests des Hooks (nur eigene Flurstücke, Rückfall auf die Fruchtsorte aus dem
+  Produkt, Speichern und Laden der Zähler) kommen mit F3.
+- [x] Backend: `BridgeValidatorTest` und `SimulatorScenariosEndToEndTest`. Die Tests je Erkennungsregel (F2, F3), je
+  Saisonregel (F1), Korrektur-Vorrang, Abschluss und Wiederöffnen (F5) sowie Auswertung (E) kommen mit F und E.
 - [ ] Neue Werte unter `rpsim.formulas.field-book.*` samt `docs/dev/configuration-reference.md`
-  (`ConfigurationReferenceDocTest`), z. B. `default-years` (**5**).
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`.
-- [ ] `docs/dev/manual-test-plan.md`: Abschnitt **„29. Roadmap V3.3 im echten FS25“**, eine Zeile je 🟡 und je
+  (`ConfigurationReferenceDocTest`), z. B. `default-years` (**5**) – **mit E**.
+- [x] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`. Q ist für Spieler nicht sichtbar, daher nur der
+  `CHANGELOG`-Eintrag.
+- [x] `docs/dev/manual-test-plan.md`: Abschnitt **„29. Roadmap V3.3 im echten FS25“**, eine Zeile je 🟡 und je
   Akzeptanzkriterium.
 
 ---
@@ -405,7 +431,7 @@ in `QUESTIONS.md` mit Status `open`.
 
 | Punkt | Frage | Vorschlag |
 | --- | --- | --- |
-| Q1 | Wie kommen die Ernte-Liter ins Backend, und was passiert nach dem Zurückspulen? | Kumulativer Zähler je Feld, Kultur und Produkt, gespeichert im Mod-Spielstand (`FS25_RPSim.xml`). Das Backend bucht die Differenz. Sinkt der Zähler, zieht es die Differenz wieder ab (nicht unter 0, nie aus manuellen Werten). |
+| Q1 ✅ 08.10.2026 wie vorgeschlagen | Wie kommen die Ernte-Liter ins Backend, und was passiert nach dem Zurückspulen? | Kumulativer Zähler je Feld, Kultur und Produkt, gespeichert im Mod-Spielstand (`FS25_RPSim.xml`). Das Backend bucht die Differenz. Sinkt der Zähler, zieht es die Differenz wieder ab (nicht unter 0, nie aus manuellen Werten). |
 | F1 | Erst beendeter, dann geernteter Eintrag im selben Jahr: Steht zuerst ein Eintrag „ohne Ernte“ (z. B. verdorrt) und wird im selben FS25-Jahr eine andere Kultur geerntet, welcher gilt als Hauptkultur? | Ein Eintrag mit Ernte schlägt einen ohne Ernte: Der Eintrag „ohne Ernte“ wird verworfen. Zwei Einträge ohne Ernte im selben Jahr: Der erste bleibt. |
 | F1 | Laufender Eintrag eines Feldes, das verkauft, verpachtet oder zurückgegeben wird | Wird verworfen (auf dem eigenen Hof gibt es keine Ernte mehr). Alternative: als „ohne Ernte“ im aktuellen Jahr behalten. |
 | F1 | Fläche für l/ha | Fläche aus `fields[].hectares` beim Ende des Eintrags, nicht änderbar. |

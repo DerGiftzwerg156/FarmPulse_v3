@@ -19,6 +19,7 @@ public final class BridgeDtos {
      * {@code npcFields} (R3-H1) and {@code tradeStorage} (R3-H2) follow the same rule. {@code missionLimitReached}
      * (R3-H5): the game's contract limit of the player farm (MissionManager:hasFarmReachedMissionLimit), null = unknown.
      * Roadmap V3.1 (R31-Q1): {@code vehiclePositions} (R31-D5) follows the same rule as the optional blocks.
+     * Roadmap V3.3 (R33-Q1): {@code harvests} (R33-F3) likewise.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
@@ -26,7 +27,19 @@ public final class BridgeDtos {
                             Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
                             Weather weather, FieldRules fieldRules, List<Field> npcFields,
                             List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached,
-                            List<VehiclePosition> vehiclePositions, Bookings bookings) {
+                            List<VehiclePosition> vehiclePositions, Bookings bookings, List<HarvestCounter> harvests) {
+
+        /** Contract with the booking statement, without the harvest counter of Roadmap V3.3 (older mod). */
+        public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
+                         Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
+                         Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
+                         Weather weather, FieldRules fieldRules, List<Field> npcFields,
+                         List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached,
+                         List<VehiclePosition> vehiclePositions, Bookings bookings) {
+            this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, missions, finances,
+                    workforce, husbandries, fields, weather, fieldRules, npcFields, tradeStorage, missionLimitReached,
+                    vehiclePositions, bookings, null);
+        }
 
         /** Roadmap V3.1 contract without the booking statement (older mod). */
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
@@ -182,12 +195,25 @@ public final class BridgeDtos {
      * crop details ({@code withered}, {@code cut}, {@code fillType}, {@code litersPerSqm}; older mods omit them) are
      * missing on a field without a crop. Roadmap V3.1 (R31-Q1, B3): {@code sprayType} = name from the game's
      * FieldSprayType table (e.g. {@code NONE}, {@code LIQUID_MANURE}, {@code MANURE}, {@code LIME}); null with an older mod.
+     * Roadmap V3.3 (R33-Q1): {@code rollerLevel} / {@code stubbleShredLevel} = FieldState levels of rolling and mulching
+     * (the soil map shows state 1 as "needs rolling" / "mulched", MapOverlayGenerator); null = not read.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Field(Integer farmlandId, String name, Double hectares, String fruitType, Integer growthState,
                         Integer minHarvestingGrowthState, Integer maxHarvestingGrowthState, Integer weedState,
                         Integer stoneLevel, Integer sprayLevel, Integer limeLevel, Integer plowLevel, String groundType,
-                        Boolean withered, Boolean cut, String fillType, Double litersPerSqm, String sprayType) {
+                        Boolean withered, Boolean cut, String fillType, Double litersPerSqm, String sprayType,
+                        Integer rollerLevel, Integer stubbleShredLevel) {
+
+        /** Roadmap V3.1 contract without the rolling and mulching levels of Roadmap V3.3 (older mod). */
+        public Field(Integer farmlandId, String name, Double hectares, String fruitType, Integer growthState,
+                     Integer minHarvestingGrowthState, Integer maxHarvestingGrowthState, Integer weedState,
+                     Integer stoneLevel, Integer sprayLevel, Integer limeLevel, Integer plowLevel, String groundType,
+                     Boolean withered, Boolean cut, String fillType, Double litersPerSqm, String sprayType) {
+            this(farmlandId, name, hectares, fruitType, growthState, minHarvestingGrowthState, maxHarvestingGrowthState,
+                    weedState, stoneLevel, sprayLevel, limeLevel, plowLevel, groundType, withered, cut, fillType,
+                    litersPerSqm, sprayType, null, null);
+        }
 
         /** R2-C contract without the spray type of Roadmap V3.1 (older mod). */
         public Field(Integer farmlandId, String name, Double hectares, String fruitType, Integer growthState,
@@ -242,6 +268,15 @@ public final class BridgeDtos {
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record TradeStorageEntry(String fillType, Double amount, Double freeCapacity) {
+    }
+
+    /**
+     * Roadmap V3.3 R33-F3 (contract R33-Q1): harvest counter of an own field = litres harvesting machines got into their
+     * tank on it (return of Combine:addCutterArea), per crop ({@code fruitType}) and harvest product ({@code fillType}).
+     * Cumulative and kept in the mod savegame: a reloaded older savegame brings back the older, lower value.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record HarvestCounter(Integer farmlandId, String fruitType, String fillType, Double liters) {
     }
 
     /**
@@ -340,12 +375,19 @@ public final class BridgeDtos {
 
     /**
      * Roadmap V3 (R3-Q1): {@code storeVehicles} (R3-V1) is optional; null = not present (older mod or switched off).
-     * Roadmap V3.1 (R31-Q1): {@code fieldShapes} (R31-K1) likewise.
+     * Roadmap V3.1 (R31-Q1): {@code fieldShapes} (R31-K1) likewise. Roadmap V3.3 (R33-Q1): {@code fruitTypes} likewise.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
                                 List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles,
-                                FieldShapes fieldShapes) {
+                                FieldShapes fieldShapes, List<FruitTypeEntry> fruitTypes) {
+
+        /** Roadmap V3.1 contract without the crops of the map of Roadmap V3.3 (older mod). */
+        public MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
+                             List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles,
+                             FieldShapes fieldShapes) {
+            this(savegameId, mapName, sellPoints, fillTypes, farmlands, detectedMods, storeVehicles, fieldShapes, null);
+        }
 
         /** Contract without the vehicle catalog (older mod). */
         public MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
@@ -375,6 +417,16 @@ public final class BridgeDtos {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ShapePoint(Double x, Double z) {
+    }
+
+    /**
+     * Roadmap V3.3 (R33-Q1): a crop of the map (g_fruitTypeManager:getFruitTypes()) for the field book. {@code fillType}
+     * = standard harvest product, {@code title} = display name of the game, {@code regrows} = grows again after a cut
+     * (FruitTypeDesc.regrows), {@code products} = further harvest products from the fruit type converters (e.g. MAIZE
+     * -> CHAFF); all but {@code name} optional.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FruitTypeEntry(String name, String fillType, String title, Boolean regrows, List<String> products) {
     }
 
     /**

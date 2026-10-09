@@ -99,4 +99,27 @@ function T.TestMarketContext:testFieldShapesAreThinnedOutToTheConfiguredMaximum(
     lu.assertEquals(#doc.fieldShapes.fields[1].points, 8)
 end
 
+-- Roadmap V3.3 (R33-Q1): the crops of the map for the field book, optional (read by the mod with R33-F)
+function T.TestMarketContext:testFruitTypesAreOptionalAndNormalized()
+    local doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "Erlengrund" })
+    lu.assertNil(doc.fruitTypes)
+    doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m", fruitTypes = {
+        { name = "WHEAT", fillType = "WHEAT", title = "Weizen", regrows = false },
+        { name = "MAIZE", fillType = "MAIZE", title = "Mais", regrows = false,
+            products = { "CHAFF", "MAIZE", "", "CHAFF", 7, "SILAGE" } },
+        { name = "GRASS", fillType = "GRASS_WINDROW", title = "", regrows = true, products = {} },
+        { name = "SPELT", fillType = "", regrows = "yes", products = "CHAFF" },
+        { name = "WHEAT", fillType = "BARLEY" },
+        { name = "", fillType = "OAT" },
+        { fillType = "OAT" } } })
+    lu.assertEquals(doc.fruitTypes, {
+        { name = "GRASS", fillType = "GRASS_WINDROW", regrows = true, products = {} },
+        { name = "MAIZE", fillType = "MAIZE", title = "Mais", regrows = false, products = { "CHAFF", "SILAGE" } },
+        { name = "SPELT" },
+        { name = "WHEAT", fillType = "WHEAT", title = "Weizen", regrows = false } })
+    -- an empty list is a real answer
+    doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m", fruitTypes = {} })
+    lu.assertStrContains(RPSimJson.encode(doc), '"fruitTypes":[]')
+end
+
 return T

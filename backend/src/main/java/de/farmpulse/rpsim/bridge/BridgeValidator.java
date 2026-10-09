@@ -79,7 +79,20 @@ public final class BridgeValidator {
         validateRoadmapV2(f, e);
         validateRoadmapV3(f, e);
         validateRoadmapV31(f, e);
+        validateRoadmapV33(f, e);
         return e;
+    }
+
+    /** Roadmap V3.3 (R33-Q1, F3): the optional harvest counter is only checked when present. */
+    private static void validateRoadmapV33(FarmFacts f, List<String> e) {
+        if (f.harvests() != null) {
+            f.harvests().forEach(h -> {
+                if (h == null || h.farmlandId() == null || blank(h.fruitType()) || blank(h.fillType())
+                        || negativeOrNull(h.liters())) {
+                    e.add("invalid harvest counter " + h);
+                }
+            });
+        }
     }
 
     /** Roadmap V3.1 (R31-Q1, D5): the optional block is only checked when present. */
@@ -125,7 +138,8 @@ public final class BridgeValidator {
                 || Stream.of(fd.growthState(), fd.weedState(), fd.stoneLevel(), fd.sprayLevel(), fd.limeLevel(),
                 fd.plowLevel()).anyMatch(v -> v == null || v < 0)
                 || (fd.litersPerSqm() != null && fd.litersPerSqm() < 0)
-                || (fd.sprayType() != null && fd.sprayType().isBlank()); // Roadmap V3.1 (R31-Q1, B3)
+                || (fd.sprayType() != null && fd.sprayType().isBlank()) // Roadmap V3.1 (R31-Q1, B3)
+                || Stream.of(fd.rollerLevel(), fd.stubbleShredLevel()).anyMatch(v -> v != null && v < 0); // R33-Q1
     }
 
     /** Roadmap V2 (R2-Q1): the optional blocks are only checked when present; a missing block is no error. */
@@ -250,6 +264,14 @@ public final class BridgeValidator {
                     }
                 });
             }
+        }
+        if (m.fruitTypes() != null) { // Roadmap V3.3 (R33-Q1)
+            m.fruitTypes().forEach(t -> {
+                if (t == null || blank(t.name()) || (t.fillType() != null && t.fillType().isBlank())
+                        || (t.products() != null && t.products().stream().anyMatch(BridgeValidator::blank))) {
+                    e.add("invalid fruit type " + t);
+                }
+            });
         }
         return e;
     }

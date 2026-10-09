@@ -22,6 +22,18 @@ filter decides: without switching on *Tablet & Netzwerk*, only the gaming PC rea
 
 ### Added
 
+- **Roadmap V3.3 groundwork – bridge contract for the field book [R33-Q]** (owner decisions 2026-10-08 in
+  `QUESTIONS.md`): Q fixes the contract only, like R31-Q; the mod reads the values in the game with R33-F.
+  - `farm_facts.json`, optional: `fields[].rollerLevel` / `stubbleShredLevel` (FieldState levels of rolling and
+    mulching, also in `npcFields`) and the block `harvests` = `{ farmlandId, fruitType, fillType, liters }`, a
+    cumulative harvest counter per own field, crop and harvest product that the mod will keep in its savegame.
+  - `market_context.json`, optional: `fruitTypes` = every crop of the map with standard product, title, `regrows` and
+    further products from the fruit type converters (e.g. maize → chaff).
+  - Normalised in `RPSimFarmFacts.build` / `RPSimMarketContext.build`; `BridgeDtos` / `BridgeValidator` read and check
+    them. No table and no configuration value yet (they come with F and E).
+  - Bridge simulator: scenario `feldbuch`, control endpoint `POST /harvest`; the counter is part of the simulated
+    savegame.
+  - Docs: bridge protocol with FS25 sources, manual test plan section 29, testing, READMEs and the roadmap status.
 - **Roadmap V3.3 (`docs/architecture/ROADMAP_V3.3.md`):** plan for the new app *Feldbuch*, checked against the FS25
   code. Per field and harvest year it records crop and harvest product, 1st / 2nd fertilisation, liming, rolling, weed
   control, mulching and the harvested litres - captured automatically from the field values and a new harvest counter

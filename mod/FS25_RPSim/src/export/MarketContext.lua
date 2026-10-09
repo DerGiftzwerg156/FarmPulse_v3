@@ -96,12 +96,54 @@ function RPSimMarketContext.buildFieldShapes(raw, maxPoints)
     return { mapSize = math.floor(raw.mapSize + 0.5), fields = fields }
 end
 
+--- Roadmap V3.3 (R33-Q1, contract; read by the mod with R33-F): every crop of the map (g_fruitTypeManager:getFruitTypes())
+-- for the crop dropdown of the field book. raw = { {name, fillType?, title?, regrows?, products? = { fillType names }} }:
+-- name = fruit type name (required), fillType = its standard harvest product, title = display name of the game,
+-- regrows = grows again after a cut (FruitTypeDesc.regrows), products = further harvest products from the fruit type
+-- converters (e.g. MAIZE -> CHAFF; sorted, unique, without the standard product). Optional values that are empty or of
+-- the wrong type are left out; entries without a name and repeated names are dropped. Sorted by name.
+function RPSimMarketContext.buildFruitTypes(raw)
+    local list = RPSimJson.array({})
+    local seen = {}
+    for _, f in ipairs(raw) do
+        if type(f) == "table" and type(f.name) == "string" and f.name ~= "" and not seen[f.name] then
+            seen[f.name] = true
+            local e = { name = f.name }
+            if type(f.fillType) == "string" and f.fillType ~= "" then
+                e.fillType = f.fillType
+            end
+            if type(f.title) == "string" and f.title ~= "" then
+                e.title = f.title
+            end
+            if type(f.regrows) == "boolean" then
+                e.regrows = f.regrows
+            end
+            if type(f.products) == "table" then
+                local products = RPSimJson.array({})
+                local unique = {}
+                for _, p in ipairs(f.products) do
+                    if type(p) == "string" and p ~= "" and p ~= e.fillType and not unique[p] then
+                        unique[p] = true
+                        products[#products + 1] = p
+                    end
+                end
+                table.sort(products)
+                e.products = products
+            end
+            list[#list + 1] = e
+        end
+    end
+    table.sort(list, function(a, b) return a.name < b.name end)
+    return list
+end
+
 --- raw: { savegameId, mapName, sellPoints = { {id, name, acceptedFillTypes = {..}} }, fillTypes = {..},
 --         farmlands = { {farmlandId, hectares, price, ownerFarmId, showOnFarmlandsScreen, defaultFarmProperty,
 --                      npc = {index, name, title}} },
 --         detectedMods = { "FS25_..." },
 --         storeVehicles = <see buildStoreVehicles> | nil (Roadmap V3, nil = not collected),
---         fieldShapes = <see buildFieldShapes> | nil (Roadmap V3.1, nil = not collected) }
+--         fieldShapes = <see buildFieldShapes> | nil (Roadmap V3.1, nil = not collected),
+--         fruitTypes = <see buildFruitTypes> | nil (Roadmap V3.3, nil = not collected) }
 -- cfg: RPSimConfig (fieldShapeMaxPoints), defaults when missing.
 function RPSimMarketContext.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
@@ -154,6 +196,9 @@ function RPSimMarketContext.build(raw, cfg)
     end
     if type(raw.fieldShapes) == "table" then
         doc.fieldShapes = RPSimMarketContext.buildFieldShapes(raw.fieldShapes, cfg.fieldShapeMaxPoints)
+    end
+    if type(raw.fruitTypes) == "table" then
+        doc.fruitTypes = RPSimMarketContext.buildFruitTypes(raw.fruitTypes)
     end
     return doc
 end

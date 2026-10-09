@@ -252,6 +252,40 @@ class SimulatorScenariosEndToEndTest {
                 .husbandries()).allSatisfy(h -> assertThat(h.storage()).isNull()));
     }
 
+    /**
+     * Roadmap V3.3 (R33-Q2): the rolling / mulching levels, the harvest counter and the crops of the map of feldbuch
+     * reach the backend; an older scenario leaves them out.
+     */
+    @Test
+    void roadmapV33FieldsArriveFromTheFieldBookScenario() {
+        Savegame book = link("feldbuch", "sim_feldbuch_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(book.getId()).orElseThrow();
+            var f = facts.latest(sg).orElseThrow();
+            assertThat(f.fields()).extracting(fd -> fd.rollerLevel()).containsExactly(0, 0, 1);
+            assertThat(f.fields()).extracting(fd -> fd.stubbleShredLevel()).containsExactly(0, 0, 0);
+            assertThat(f.harvests()).singleElement().satisfies(h -> {
+                assertThat(h.farmlandId()).isEqualTo(4);
+                assertThat(h.fruitType()).isEqualTo("GRASS");
+                assertThat(h.fillType()).isEqualTo("GRASS_WINDROW");
+                assertThat(h.liters()).isEqualTo(18000.0);
+            });
+            var crops = facts.marketContext(sg).orElseThrow().fruitTypes();
+            assertThat(crops).extracting(t -> t.name())
+                    .containsExactly("BARLEY", "CANOLA", "GRASS", "MAIZE", "POTATO", "WHEAT");
+            assertThat(crops).filteredOn(t -> t.name().equals("MAIZE")).singleElement()
+                    .satisfies(t -> assertThat(t.products()).containsExactly("CHAFF"));
+        });
+        Savegame old = link("lohnunternehmer", "sim_alt33_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(old.getId()).orElseThrow();
+            var f = facts.latest(sg).orElseThrow();
+            assertThat(f.harvests()).isNull();
+            assertThat(f.fields()).allSatisfy(fd -> assertThat(fd.rollerLevel()).isNull());
+            assertThat(facts.marketContext(sg).orElseThrow().fruitTypes()).isNull();
+        });
+    }
+
     /** Roadmap V3.2 (R32-Q2): a HUSBANDRY_TRANSFER goes out, the simulator takes the milk out of the stable. */
     @Test
     void husbandryTransferTakesTheMilkOutOfTheStable() {
