@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 four-part form `MAJOR.MINOR.PATCH.0` in `modDesc.xml`. `tools/release/build-release.sh` refuses to build when the
 versions or this changelog do not match.
 
-## [Unreleased]
+## [2.0.0] - 2026-10-09
 
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training
 is cancelled again) and lets every machine operator drive every vehicle. It also rejects the Roadmap V3 instruction
