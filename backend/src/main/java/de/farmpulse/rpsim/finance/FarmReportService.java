@@ -22,10 +22,12 @@ import de.farmpulse.rpsim.domain.CharacterStatus;
 import de.farmpulse.rpsim.domain.Employee;
 import de.farmpulse.rpsim.domain.EmployeeStatus;
 import de.farmpulse.rpsim.domain.FarmReport;
+import de.farmpulse.rpsim.domain.FieldBookEntry;
 import de.farmpulse.rpsim.domain.FieldCropHistory;
 import de.farmpulse.rpsim.domain.FieldRecord;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.TaxYear;
+import de.farmpulse.rpsim.field.FieldBookService;
 import de.farmpulse.rpsim.field.FieldService;
 import de.farmpulse.rpsim.finance.FinanceJournalService.Month;
 import de.farmpulse.rpsim.repository.CharacterRepository;
@@ -74,6 +76,7 @@ public class FarmReportService {
     private final DiaryService diary;
     private final AnnualReviewService annualReview;
     private final InvestorLedger investors;
+    private final FieldBookService fieldBook;
     private final GameTime gameTime;
     private final RpsimProperties props;
     private final JsonMapper json;
@@ -83,8 +86,10 @@ public class FarmReportService {
                              RainPeriodRepository rain, StableService stables, ServiceCaseRepository cases,
                              EmployeeRepository employees, CharacterRepository characters, TrustScoreService trust,
                              VillageReputationService reputation, DiaryService diary, AnnualReviewService annualReview,
-                             GameTime gameTime, RpsimProperties props, JsonMapper json, InvestorLedger investors) {
+                             GameTime gameTime, RpsimProperties props, JsonMapper json, InvestorLedger investors,
+                             FieldBookService fieldBook) {
         this.investors = investors;
+        this.fieldBook = fieldBook;
         this.savegames = savegames;
         this.reports = reports;
         this.facts = facts;
@@ -116,9 +121,26 @@ public class FarmReportService {
     public record TaxLine(String status, Long profit, Long tax) {
     }
 
-    /** {@code yieldLiters} null = not recorded (crops before R3-K3, or not harvested). */
+    /**
+     * {@code yieldLiters} null = not recorded (crops before R3-K3, or not harvested). Roadmap V3.3 R33-W1 (owner
+     * decisions 2026-10-12): {@code product} = harvest product of the field book litres when it is not the standard
+     * product of the crop (e.g. {@code CHAFF} for maize), else null; {@code yieldSource} = {@link #MEASURED} (field book,
+     * counted by the game or the contractor), {@link #ENTERED} (field book, typed in by the player) or
+     * {@link #ESTIMATED} (area x litres per m² of the last ripe sighting), null without litres and in reports written
+     * before.
+     */
     public record FieldLine(int farmlandId, String fruitType, Double hectares, boolean harvested, boolean withered,
-                            Long yieldLiters) {
+                            Long yieldLiters, String product, String yieldSource) {
+
+        public static final String MEASURED = "MEASURED";
+        public static final String ENTERED = "ENTERED";
+        public static final String ESTIMATED = "ESTIMATED";
+
+        /** A line without the field book (reports written before R33-W). */
+        public FieldLine(int farmlandId, String fruitType, Double hectares, boolean harvested, boolean withered,
+                         Long yieldLiters) {
+            this(farmlandId, fruitType, hectares, harvested, withered, yieldLiters, null, null);
+        }
     }
 
     public record RainLine(int period, double rainHours, double observedHours) {
@@ -220,10 +242,13 @@ public class FarmReportService {
         for (FieldRecord rec : fields.records(sg)) {
             hectares.put(rec.getFarmlandId(), rec.getHectares());
         }
+        Map<List<Object>, FieldBookEntry> measured = measuredLiters(sg, year);
+        Map<String, FieldBookService.Crop> crops = new LinkedHashMap<>();
+        fieldBook.crops(sg).forEach(c -> crops.put(c.name(), c));
         List<FieldLine> fieldLines = fields.cropsOfYear(sg, year).stream()
                 .sorted(Comparator.comparingInt(FieldCropHistory::getFarmlandId).thenComparing(FieldCropHistory::getFruitType))
-                .map(h -> new FieldLine(h.getFarmlandId(), h.getFruitType(), hectares.get(h.getFarmlandId()), h.isHarvested(),
-                        h.isWithered(), h.getYieldLiters() == null ? null : Math.round(h.getYieldLiters())))
+                .map(h -> fieldLine(h, hectares.get(h.getFarmlandId()),
+                        h.isHarvested() ? measured.get(List.of(h.getFarmlandId(), h.getFruitType())) : null, crops))
                 .toList();
 
         List<RainLine> rainLines = new ArrayList<>();
@@ -249,6 +274,40 @@ public class FarmReportService {
                 .map(p -> json.readValue(p.getReportJson(), Report.class).snapshot()).orElse(null);
         return new Report(year, months.size(), lines(income), lines(expenses), totals, tax, fieldLines, rainLines,
                 stableLines, inspections, snapshot, previous, investors.reportLines(sg, year));
+    }
+
+    /**
+     * R33-W1: the harvested field book entries of the harvest year with litres, keyed by field and crop. An entry held
+     * back in a closed year is not part of the field book yet (R33-F5) and does not count.
+     */
+    private Map<List<Object>, FieldBookEntry> measuredLiters(Savegame sg, int year) {
+        Map<List<Object>, FieldBookEntry> m = new LinkedHashMap<>();
+        for (FieldBookEntry e : fieldBook.all(sg)) {
+            if (e.getStatus() == FieldBookEntry.Status.HARVESTED && !e.isHeld() && Integer.valueOf(year).equals(e.getHarvestYear())
+                    && e.fruitType() != null && e.liters() != null) {
+                m.put(List.of(e.getFarmlandId(), e.fruitType()), e);
+            }
+        }
+        return m;
+    }
+
+    /**
+     * R33-W1 (owner decisions 2026-10-12): the litres of the field book replace the estimate only in a line of the crop
+     * history with the same field, year and crop that is harvested; otherwise the line stays as it was.
+     */
+    private static FieldLine fieldLine(FieldCropHistory h, Double hectares, FieldBookEntry book,
+                                       Map<String, FieldBookService.Crop> crops) {
+        if (book == null) {
+            Long estimate = h.getYieldLiters() == null ? null : Math.round(h.getYieldLiters());
+            return new FieldLine(h.getFarmlandId(), h.getFruitType(), hectares, h.isHarvested(), h.isWithered(), estimate,
+                    null, estimate == null ? null : FieldLine.ESTIMATED);
+        }
+        FieldBookService.Crop crop = crops.get(h.getFruitType());
+        String fill = book.fillType();
+        String product = fill == null || fill.equals(h.getFruitType()) || (crop != null && fill.equals(crop.fillType()))
+                ? null : fill;
+        return new FieldLine(h.getFarmlandId(), h.getFruitType(), hectares, true, h.isWithered(), Math.round(book.liters()),
+                product, book.getLitersManual() != null ? FieldLine.ENTERED : FieldLine.MEASURED);
     }
 
     private static List<CategoryLine> lines(Map<String, Double> m) {

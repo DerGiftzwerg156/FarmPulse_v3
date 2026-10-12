@@ -16,7 +16,8 @@ const CHRONICLE: ChronicleView = {
   reports: [{
     year: 1, months: 12, operatingIncome: 30000, operatingExpense: -4000, operatingResult: 26000, taxStatus: 'OPEN',
     profit: null, tax: null, income: [{ label: 'Ernteverkauf', amount: 30000 }], expenses: [{ label: 'Kraftstoff', amount: -4000 }],
-    fields: [{ farmlandId: 12, fruit: 'Weizen', hectares: 4.5, harvested: true, withered: false, yieldLiters: 42750 }],
+    fields: [{ farmlandId: 12, fruit: 'Weizen', hectares: 4.5, harvested: true, withered: false, yieldLiters: 42750 },
+      { farmlandId: 13, fruit: 'Mais (Häckselgut)', hectares: 4, harvested: true, withered: false, yieldLiters: 200000, yieldSource: 'ENTERED' }],
   }],
 };
 
@@ -54,7 +55,10 @@ describe('ChroniclePrint', () => {
     expect(entries[0].textContent).toContain('eigene Notiz');
     expect(entries[1].textContent).toContain('Meilenstein');
     expect(el.querySelector('[data-testid="chronicle-tax"]')?.textContent).toContain('offen');
-    expect(el.querySelector('[data-testid="chronicle-field"]')?.textContent).toContain('42.750 l');
+    const fields = el.querySelectorAll('[data-testid="chronicle-field"]');
+    expect(fields[0].textContent).toContain('42.750 l');
+    expect(fields[0].textContent).not.toContain('(');
+    expect(fields[1].textContent).toContain('200.000 l (eingetragen)'); // R33-W1
     expect(el.querySelector('[data-testid="print-actions"]')?.classList).toContain('fp-no-print');
   });
 

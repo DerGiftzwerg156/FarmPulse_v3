@@ -373,7 +373,17 @@ export interface FarmReportView {
   expenses: { category: string; amount: number }[];
   totals: { operatingIncome: number; operatingExpense: number; operatingResult: number; investment: number; divestment: number; financing: number };
   tax: { status: string; profit: number | null; tax: number | null } | null;
-  fields: { farmlandId: number; fruitType: string; hectares: number | null; harvested: boolean; withered: boolean; yieldLiters: number | null }[];
+  /** R33-W1: `product` = harvest product when not the standard one; `yieldSource` null in reports written before. */
+  fields: {
+    farmlandId: number;
+    fruitType: string;
+    hectares: number | null;
+    harvested: boolean;
+    withered: boolean;
+    yieldLiters: number | null;
+    product?: string | null;
+    yieldSource?: YieldSource | null;
+  }[];
   rain: { period: number; rainHours: number; observedHours: number }[];
   stables: { type: string; count: number; health: number | null; productivity: number | null }[];
   welfareInspections: number;
@@ -565,7 +575,15 @@ export interface ChronicleReport {
   tax: number | null;
   income: { label: string; amount: number }[];
   expenses: { label: string; amount: number }[];
-  fields: { farmlandId: number; fruit: string; hectares: number | null; harvested: boolean; withered: boolean; yieldLiters: number | null }[];
+  fields: {
+    farmlandId: number;
+    fruit: string;
+    hectares: number | null;
+    harvested: boolean;
+    withered: boolean;
+    yieldLiters: number | null;
+    yieldSource?: YieldSource | null;
+  }[];
 }
 
 export interface FieldSettingsView {
@@ -1811,3 +1829,6 @@ export interface FieldBookEvaluationView {
   fields: { farmlandId: number; name: string; cells: FieldBookEvaluationCell[] }[];
   comparisons: { fruitType: string; fillType: string | null; measures: FieldBookMeasureComparison[] }[];
 }
+
+/** Roadmap V3.3 R33-W1: where the litres of a field in the farm report come from. */
+export type YieldSource = 'MEASURED' | 'ENTERED' | 'ESTIMATED';

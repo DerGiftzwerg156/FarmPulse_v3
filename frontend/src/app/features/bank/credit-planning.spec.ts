@@ -172,7 +172,9 @@ describe('FarmReportCard (R3-K3)', () => {
       year: 2, months: 12, income: [{ category: 'HARVEST_INCOME', amount: 30000 }], expenses: [{ category: 'PURCHASE_FUEL', amount: -4000 }],
       totals: { operatingIncome: 30000, operatingExpense: -4000, operatingResult: 26000, investment: 0, divestment: 0, financing: 0 },
       tax: { status: 'ASSESSED', profit: 26000, tax: 3000 },
-      fields: [{ farmlandId: 12, fruitType: 'WHEAT', hectares: 4.5, harvested: true, withered: false, yieldLiters: 42750 }],
+      fields: [{ farmlandId: 12, fruitType: 'WHEAT', hectares: 4.5, harvested: true, withered: false, yieldLiters: 42750 },
+        { farmlandId: 13, fruitType: 'MAIZE', hectares: 4, harvested: true, withered: false, yieldLiters: 200000, product: 'CHAFF', yieldSource: 'MEASURED' },
+        { farmlandId: 14, fruitType: 'WHEAT', hectares: 4, harvested: true, withered: false, yieldLiters: 30000, product: null, yieldSource: 'ESTIMATED' }],
       rain: [{ period: 3, rainHours: 12, observedHours: 24 }], stables: [], welfareInspections: 0,
       snapshot, previous: { ...snapshot, staff: 1, reputationTier: 'NEUTRAL' },
     };
@@ -180,7 +182,14 @@ describe('FarmReportCard (R3-K3)', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('[data-testid="report-tax"]')?.textContent).toContain('3.000');
-    expect(el.querySelector('[data-testid="report-fields"]')?.textContent).toContain('42.750 l');
+    const fields = el.querySelectorAll('[data-testid="report-fields"] li');
+    expect(fields[0].textContent).toContain('42.750 l');
+    // a report written before R33-W has no source
+    expect(fields[0].querySelector('[data-testid="report-yield-source"]')).toBeNull();
+    // R33-W1: the field book litres with their product and source, the estimate marked as such
+    expect(fields[1].textContent).toContain('Mais (Häckselgut)');
+    expect(fields[1].textContent).toContain('200.000 l (gemessen)');
+    expect(fields[2].textContent).toContain('30.000 l (geschätzt)');
     expect(el.querySelector('[data-testid="report-compare"]')?.textContent).toContain('Vorjahr');
     expect(el.querySelector('[data-testid="report-rain"]')?.textContent).toContain('12');
   });

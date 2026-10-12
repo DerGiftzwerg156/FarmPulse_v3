@@ -221,7 +221,11 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   Bankberaterin vorab (einmal je Engpass).
 - **Hofbericht und Jahresgespräch:** Zum Jahreswechsel (Februar → März) schreibt die Bank den Hofbericht des Jahres:
   Einnahmen und Ausgaben je Kategorie, Steuer, Kultur und Ertrag je Feld, Regen, Tiere, Personal, Vertrauen und
-  Ansehen im Dorf im Vergleich zum Vorjahr. Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
+  Ansehen im Dorf im Vergleich zum Vorjahr. Beim Ertrag steht, woher die Liter kommen: **gemessen** (vom Spiel oder
+  dem Lohnunternehmer gezählt, aus dem Feldbuch), **eingetragen** (im Feldbuch von dir korrigiert) oder **geschätzt**
+  (Fläche × Ertrag je m², wenn das Feldbuch keine Liter hat). Sind die Feldbuch-Liter ein anderes Produkt als üblich,
+  steht es dabei, z. B. „Mais (Häckselgut)“. Es gilt der Stand zum Jahreswechsel; spätere Korrekturen im Feldbuch
+  ändern einen geschriebenen Hofbericht nicht. Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
   bietet sie eine Zinssenkung auf deine laufenden Kredite an (0,25 Prozentpunkte, die Rate sinkt). Lief es schlecht,
   wird es ein ernstes Gespräch, an deinen Verträgen ändert sich aber nichts. Absagen hat keine Folgen.
   Ist ein Investor neu eingestiegen oder ist eine Rückforderung offen, spricht sie das in der Einladung an.
@@ -583,6 +587,9 @@ und darunter je **Erntejahr** ein Eintrag mit Kultur, Ernteprodukt, Litern, Lite
 Das Feldbuch braucht die aktuelle Mod-Version. Ohne sie fehlen Walzen, Mulchen, die gezählten Liter und die
 Kulturen der Karte (zur Auswahl stehen dann die bekannten Kulturen). Ein Spielstand, den du ohne Speichern neu lädst,
 öffnet eine Ernte nach dem geladenen Zeitpunkt wieder.
+
+Die Liter des Feldbuchs nutzt auch der **Hofbericht** (und damit Chronik und Jahresgespräch) statt der Schätzung –
+für jedes geerntete Feld mit derselben Kultur im Erntejahr (siehe *Bank → Hofbericht*).
 
 ### Auswertung
 

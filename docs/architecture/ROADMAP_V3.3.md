@@ -437,14 +437,28 @@ nicht mit.
 **Entscheidung 08.10.2026 (`QUESTIONS.md`):** **Ja, ersetzen.** Wo das Feldbuch Liter hat, nutzen Hofbericht, Chronik
 und Bank-Jahresgespräch diesen Wert statt der Schätzung.
 
+**Stand 12.10.2026: umgesetzt** (`finance/FarmReportService`, `diary/ChronicleService`, Hofbericht in der App „Bank“,
+Druckansicht der Chronik). Entscheidungen vom 12.10.2026 (`QUESTIONS.md`): Die Berichte zeigen die **Herkunft** der
+Liter: „gemessen“, „eingetragen“ oder „geschätzt“ (Offener Punkt W1 wie vorgeschlagen). Es gilt der **Stand beim
+Schreiben** des Hofberichts zum Jahreswechsel; spätere Korrekturen im Feldbuch und Berichte, die vor dem Update
+geschrieben wurden, bleiben, wie sie sind (ohne Herkunft). Weicht das Produkt der Feldbuch-Liter vom Standardprodukt der
+Kultur ab, ersetzen sie die Schätzung trotzdem und das Produkt wird genannt („Mais (Häckselgut)“). Die Liter gehen **nur
+in passende Zeilen** der Kultur-Historie (gleiches Feld, Jahr und Kultur, „geerntet“); „nicht geerntet“ bleibt, und es
+kommen keine Zeilen dazu.
+
 ### R33-W1 Gemessene Liter statt Schätzung
 
-- [ ] Heute ist `field_crop_history.yieldLiters` = Fläche × `litersPerSqm` der letzten Sichtung „erntereif“ (R3-K3,
+- [x] Heute ist `field_crop_history.yieldLiters` = Fläche × `litersPerSqm` der letzten Sichtung „erntereif“ (R3-K3,
   Migration V26). Das ist der Grundertrag ohne Düngung, Kalk und die anderen Faktoren.
-- [ ] `FarmReportService`, `ChronicleService` und `AnnualReviewService` nehmen für ein Feld und FS25-Jahr die Liter des
+- [x] `FarmReportService`, `ChronicleService` und `AnnualReviewService` nehmen für ein Feld und FS25-Jahr die Liter des
   Feldbuch-Eintrags `HARVESTED` mit diesem Erntejahr und derselben Kultur, wenn dort Liter stehen. Sonst bleibt die
   Schätzung. Weil das Erntejahr das FS25-Jahr der Ernte ist, passt es zum Jahr der Ernte in `field_crop_history`.
-- [ ] Ob die Berichte zeigen, woher die Zahl kommt, steht in [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung).
+  Umgesetzt im Hofbericht (`FarmReportService.build`); Chronik und Jahresgespräch lesen den Hofbericht und nehmen die
+  Zahl von dort. Ein Eintrag, der in einem abgeschlossenen Jahr als Hinweis wartet, gehört noch nicht zum Feldbuch
+  (F5) und zählt nicht.
+- [x] Die Berichte zeigen, woher die Zahl kommt (Entscheidung 12.10.2026): `FieldLine.yieldSource` = `MEASURED`
+  („gemessen“: Ernte-Zähler oder Lohnunternehmer), `ENTERED` („eingetragen“: Liter im Feldbuch korrigiert) oder
+  `ESTIMATED` („geschätzt“), dazu `FieldLine.product` bei einem anderen Produkt als dem Standardprodukt.
 
 **Beleg:** – (Backend).
 
@@ -468,7 +482,7 @@ in `QUESTIONS.md` mit Status `open`.
 | F4 ✅ 09.10.2026 wie vorgeschlagen | Kann der Spieler einen „manuell“-Wert wieder an die Erkennung zurückgeben? | Ja, kleiner Knopf „automatisch“ je Wert. Danach gilt wieder der erkannte Wert. |
 | F4 ✅ 09.10.2026: `needsRolling` exportieren, „nicht nötig“ statt Haken | Walzen bei Kulturen, die kein Walzen brauchen (`needsRolling = false`) | Haken bleibt sichtbar, wird aber nicht automatisch gesetzt (`rollerLevel` bleibt dort `0`). |
 | E1 ✅ 09.10.2026: je Spielstand auf dem Server | Wird die Auswahl des Zeitraums gemerkt? | Ja, je Spielstand in den Einstellungen des Feldbuchs, bis der Spieler sie ändert. |
-| W1 | Zeigen Hofbericht, Chronik und Bank, woher die Liter kommen? | Ja: „gemessen“ (Ernte-Zähler oder Lohnunternehmer), „eingetragen“ (manuell) oder „geschätzt“ (wie bisher). |
+| W1 ✅ 12.10.2026 wie vorgeschlagen | Zeigen Hofbericht, Chronik und Bank, woher die Liter kommen? | Ja: „gemessen“ (Ernte-Zähler oder Lohnunternehmer), „eingetragen“ (manuell) oder „geschätzt“ (wie bisher). |
 | F4 ✅ 09.10.2026: nach der Flurkarte, neues Symbol „clipboard“ | Platz der App auf dem Startbildschirm und Symbol | Gleich nach „Flurkarte“, Gruppe „farm“, Symbol „book“ bzw. „clipboard“. |
 
 ---

@@ -55,9 +55,18 @@ public class ChronicleService {
     public record AmountLine(String label, long amount) {
     }
 
-    /** {@code fruit} is the German label; {@code yieldLiters} null = not recorded. */
+    /**
+     * {@code fruit} is the German label, with the harvest product when it is not the standard one ("Mais
+     * (Häckselgut)"); {@code yieldLiters} null = not recorded; {@code yieldSource} MEASURED / ENTERED / ESTIMATED
+     * (R33-W1), null in reports written before.
+     */
     public record FieldLine(int farmlandId, String fruit, Double hectares, boolean harvested, boolean withered,
-                            Long yieldLiters) {
+                            Long yieldLiters, String yieldSource) {
+
+        public FieldLine(int farmlandId, String fruit, Double hectares, boolean harvested, boolean withered,
+                         Long yieldLiters) {
+            this(farmlandId, fruit, hectares, harvested, withered, yieldLiters, null);
+        }
     }
 
     /** {@code taxStatus} OPEN / ASSESSED, null without a tax year; profit and tax only when assessed. */
@@ -136,8 +145,15 @@ public class ChronicleService {
                 r.totals().operatingResult(), r.tax() == null ? null : r.tax().status(),
                 r.tax() == null ? null : r.tax().profit(), r.tax() == null ? null : r.tax().tax(),
                 amounts(r.income()), amounts(r.expenses()),
-                r.fields().stream().map(f -> new FieldLine(f.farmlandId(), labels.label(f.fruitType()), f.hectares(),
-                        f.harvested(), f.withered(), f.yieldLiters())).toList());
+                r.fields().stream().map(f -> new FieldLine(f.farmlandId(), fruit(f), f.hectares(),
+                        f.harvested(), f.withered(), f.yieldLiters(), f.yieldSource())).toList());
+    }
+
+    /** R33-W1: "Mais (Häckselgut)" when the field book litres are of another product than the standard one. */
+    private String fruit(FarmReportService.FieldLine f) {
+        String crop = labels.label(f.fruitType());
+        String product = labels.label(f.product());
+        return product == null || product.equals(crop) ? crop : crop + " (" + product + ")";
     }
 
     private List<AmountLine> amounts(List<CategoryLine> lines) {
@@ -245,8 +261,25 @@ public class ChronicleService {
         if (!f.harvested()) {
             return "nicht geerntet";
         }
-        return f.yieldLiters() == null ? "geerntet" : NumberFormat.getIntegerInstance(Locale.GERMANY)
-                .format(f.yieldLiters()) + " l";
+        if (f.yieldLiters() == null) {
+            return "geerntet";
+        }
+        String liters = NumberFormat.getIntegerInstance(Locale.GERMANY).format(f.yieldLiters()) + " l";
+        String source = source(f.yieldSource());
+        return source == null ? liters : liters + " (" + source + ")";
+    }
+
+    /** R33-W1 (owner decision 2026-10-12): where the litres come from. */
+    static String source(String yieldSource) {
+        if (yieldSource == null) {
+            return null;
+        }
+        return switch (yieldSource) {
+            case FarmReportService.FieldLine.MEASURED -> "gemessen";
+            case FarmReportService.FieldLine.ENTERED -> "eingetragen";
+            case FarmReportService.FieldLine.ESTIMATED -> "geschätzt";
+            default -> null;
+        };
     }
 
     private static String cell(String s) {

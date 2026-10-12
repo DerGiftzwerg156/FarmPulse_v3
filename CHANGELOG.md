@@ -21,6 +21,11 @@ versions or this changelog do not match.
   back in a closed year; entries without litres count in no average; rolling is not compared for crops that are not
   rolled; lime and weeds only while their soil rule is on. New endpoints `GET /api/field-book/evaluation` and
   `POST /api/field-book/evaluation/period`.
+- **Field book litres in the farm report [R33-W]** (owner decisions 2026-10-08 / 2026-10-12 in `QUESTIONS.md`): where the
+  field book has litres for a harvested field, crop and harvest year, the farm report uses them instead of the
+  estimate (area × litres per m²) - and with it the chronicle and the annual review of the bank. Each field line says
+  where the litres come from ("gemessen", "eingetragen" or "geschätzt") and names a product that is not the standard
+  one ("Mais (Häckselgut)"). The report keeps the state of the year change; reports written before stay unchanged.
 
 ## [2.0.0] - 2026-10-09
 

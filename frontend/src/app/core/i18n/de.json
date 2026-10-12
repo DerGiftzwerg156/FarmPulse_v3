@@ -1088,6 +1088,11 @@
       "OIL_MILL": "Ölmühle",
       "ENERGY": "Energieunternehmen",
       "PRIVATE": "Privatinvestorin / Familienstiftung"
+    },
+    "yieldSource": {
+      "MEASURED": "gemessen",
+      "ENTERED": "eingetragen",
+      "ESTIMATED": "geschätzt"
     }
   },
   "onboarding": {

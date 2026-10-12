@@ -52,8 +52,8 @@ import { Card } from '../../shared/ui/card';
                 <div class="fp-label mb-1">{{ 'credit.report.fields' | t }}</div>
                 <ul class="space-y-0.5 text-[12px]" data-testid="report-fields">
                   @for (f of r.fields; track $index) {
-                    <li class="flex justify-between"><span class="text-text">{{ 'farmland.fieldLabel' | t: { id: f.farmlandId } }} · {{ f.fruitType | label: 'fillType' }}</span>
-                      <span class="font-mono">{{ f.yieldLiters === null ? (f.harvested ? ('credit.report.harvested' | t) : ('credit.report.notHarvested' | t)) : ((f.yieldLiters | num) + ' l') }}</span></li>
+                    <li class="flex justify-between"><span class="text-text">{{ 'farmland.fieldLabel' | t: { id: f.farmlandId } }} · {{ f.fruitType | label: 'fillType' }}@if (f.product && (f.product | label: 'fillType') !== (f.fruitType | label: 'fillType')) { ({{ f.product | label: 'fillType' }})}</span>
+                      <span class="font-mono">{{ f.yieldLiters === null ? (f.harvested ? ('credit.report.harvested' | t) : ('credit.report.notHarvested' | t)) : ((f.yieldLiters | num) + ' l') }}@if (f.yieldLiters !== null && f.yieldSource) {<span class="text-muted" data-testid="report-yield-source"> ({{ f.yieldSource | label: 'yieldSource' }})</span>}</span></li>
                   } @empty {
                     <li class="text-muted">{{ 'credit.report.noFields' | t }}</li>
                   }

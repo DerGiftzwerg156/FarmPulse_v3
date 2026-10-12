@@ -161,6 +161,12 @@ for `n = 0`, entries without litres nowhere), weeds left out when off, rolling l
 and lime / weeds shown when the rules are unknown; `ApiIntegrationTest.fieldBookEndpoints` the evaluation endpoints.
 Frontend: `features/fieldbook/fieldbook-evaluation.spec.ts` (period, table, bars and tooltip, legend with "Sonstige",
 comparison). In the game: manual test plan row 29.11.
+Roadmap V3.3 R33-W (field book litres in the reports): `FarmReportFieldBookTest` covers measured and entered litres
+replacing the estimate, the estimate staying without field book litres, only a harvested line of the same field, year
+and crop taking the litres (no new line, held entries, other crops and years left out), the product named in the
+report and the chronicle, and a report written before without a source; `ChronicleTest` and `CreditPlanningTest`
+(report and annual review) pass without change. Frontend: `features/bank/credit-planning.spec.ts` (source and product in the farm report
+card) and `features/diary/chronicle-print.spec.ts`. In the game: manual test plan row 29.12.
 Roadmap V3.2 R32-G (bulk orders): `BulkOrderTest` covers the request (sell point of the map without production, amount
 range and step, instant price = best price x 1.25, a new buyer per request, the call that becomes a mail), refusals and
 the factor, the instant delivery batch and its ack, the refused transfer, the delivery months with the fixed price

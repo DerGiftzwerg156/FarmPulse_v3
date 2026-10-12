@@ -172,6 +172,9 @@ export class ChroniclePrint {
   fieldYield(f: ChronicleReport['fields'][number]): string {
     if (f.withered) return this.i18n.t('diary.printView.withered');
     if (!f.harvested) return this.i18n.t('diary.printView.notHarvested');
-    return f.yieldLiters === null ? this.i18n.t('diary.printView.harvested') : `${new Intl.NumberFormat('de-DE').format(f.yieldLiters)} l`;
+    if (f.yieldLiters === null) return this.i18n.t('diary.printView.harvested');
+    const liters = `${new Intl.NumberFormat('de-DE').format(f.yieldLiters)} l`;
+    // R33-W1: where the litres come from (not in reports written before)
+    return f.yieldSource ? `${liters} (${this.i18n.t('enums.yieldSource.' + f.yieldSource)})` : liters;
   }
 }

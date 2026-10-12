@@ -607,7 +607,7 @@ Every point of [`ROADMAP_V3.3.md`](../architecture/ROADMAP_V3.3.md) marked 🟡 
 criterion has one row here. R33-Q fixes the contract only (owner decision 2026-10-08,
 [bridge protocol](bridge-protocol.md#roadmap-v33-fields-and-block-optional-r33-q1)): the mod reads the levels with
 R33-F2, counts the harvest with R33-F3 and lists the crops of the map with R33-F4 - built since R33-F, so rows
-29.1–29.11 can be checked now (29.11 since R33-E), row 29.12 with W. Without FS25 the bridge simulator scenario `feldbuch` shows the
+29.1–29.12 can be checked now (29.11 since R33-E, 29.12 since R33-W). Without FS25 the bridge simulator scenario `feldbuch` shows the
 contract (control endpoints `POST /field` for the levels and `POST /harvest` for the counter). Note the result in the
 row's issue and, if the fallback is needed, switch the implementation to it.
 
@@ -624,4 +624,4 @@ row's issue and, if the fallback is needed, switch the implementation to it.
 | 29.9 | 🟡 Weed control (R33-F2) | Spray herbicide on a weedy field, hoe another one | note which `weedState` values the field shows before and after | the player ticks it himself |
 | 29.10 | Acceptance F (R33-F) | Fertilise a wheat field twice, lime it, roll it, harvest it, mulch the stubble; cut grass three times in one year; correct a litre value; close a year | the entry shows the harvest year, all ticks and the counted litres; the mulching is in the next running season; the three cuts are one entry; the corrected value stays; the closed year takes no change and shows late detections as a notice | – |
 | 29.11 | Acceptance E (R33-E) | Open *Feldbuch → Auswertung* | the last 5 harvest years; "alle Jahre" shows older ones; the bar chart of one field; the comparison per crop with `n`; grain maize and chaff apart | – |
-| 29.12 | Acceptance W (R33-W) | Look at the farm report and the chronicle of a year with counted litres | they show the litres of the field book; fields without them keep the estimate | – |
+| 29.12 | Acceptance W (R33-W) | Look at the farm report and the chronicle of a year with counted litres | they show the litres of the field book marked "gemessen" / "eingetragen", maize as chaff as "Mais (Häckselgut)"; fields without them keep the estimate marked "geschätzt" | – |
