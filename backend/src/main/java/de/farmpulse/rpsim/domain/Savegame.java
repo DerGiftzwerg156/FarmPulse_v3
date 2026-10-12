@@ -217,6 +217,10 @@ public class Savegame {
     @Column(name = "field_hints_enabled", nullable = false)
     private boolean fieldHintsEnabled = true;
 
+    /** Roadmap V3.3 R33-E1: period of the field book evaluation; null = default, 0 = all years, n = last n years. */
+    @Column(name = "field_book_years")
+    private Integer fieldBookYears;
+
     // ---- Roadmap V2 R2-D: the vanilla loan and the field menu become part of the story
 
     /** D1: remaining vanilla loan of the last export and its game time (a smaller game time = reload). */

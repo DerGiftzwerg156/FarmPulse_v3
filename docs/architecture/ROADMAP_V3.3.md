@@ -188,8 +188,8 @@ der Konfigwert mit E (Entscheidung 08.10.2026).
   Produkt, Speichern und Laden der Zähler) kommen mit F3.
 - [x] Backend: `BridgeValidatorTest` und `SimulatorScenariosEndToEndTest`. Die Tests je Erkennungsregel (F2, F3), je
   Saisonregel (F1), Korrektur-Vorrang, Abschluss und Wiederöffnen (F5) sowie Auswertung (E) kommen mit F und E.
-- [ ] Neue Werte unter `rpsim.formulas.field-book.*` samt `docs/dev/configuration-reference.md`
-  (`ConfigurationReferenceDocTest`), z. B. `default-years` (**5**) – **mit E**.
+- [x] Neue Werte unter `rpsim.formulas.field-book.*` samt `docs/dev/configuration-reference.md`
+  (`ConfigurationReferenceDocTest`), z. B. `default-years` (**5**) – **mit E** (umgesetzt mit E).
 - [x] Spieler-Doku `docs/user-guide/funktionen.md`, `CHANGELOG.md`. Q ist für Spieler nicht sichtbar, daher nur der
   `CHANGELOG`-Eintrag.
 - [x] `docs/dev/manual-test-plan.md`: Abschnitt **„29. Roadmap V3.3 im echten FS25“**, eine Zeile je 🟡 und je
@@ -388,29 +388,40 @@ die Maßnahmen gebracht haben.
 - Diagramm: **Balken je Feld**. Ein Feld auswählen, dann Balken l/ha je Erntejahr, gefärbt nach Kultur.
 - Vergleich: **je Kultur über alle Felder**. Ein Durchschnitt erscheint **immer**, mit der Anzahl `n`.
 
+**Stand 12.10.2026: umgesetzt** (`field/FieldBookEvaluationService`, `GET /api/field-book/evaluation`,
+`POST /api/field-book/evaluation/period`, Konfigwert `rpsim.formulas.field-book.default-years`, Migration V44, Tab
+„Auswertung“ der App „Feldbuch“). Entscheidungen vom 09.10.2026 (`QUESTIONS.md`): Der gewählte Zeitraum wird **je
+Spielstand auf dem Server** gemerkt (Offener Punkt E1). Es zählen **alle beendeten Einträge** (geerntet und „ohne
+Ernte“), auch in abgeschlossenen Jahren; nur ein zurückgehaltener Eintrag (Hinweis in einem abgeschlossenen Jahr) zählt
+nicht. Der Vergleich „Walzen“ fehlt bei Kulturen ohne Walzbedarf (`needsRolling = false`). 1. und 2. Düngung werden
+**je Haken einzeln** verglichen. Kulturen über die sechs Farben der Palette hinaus werden grau („Sonstige“).
+
 ### R33-E1 Zeitraum und Tabelle Feld × Jahr
 
-- [ ] Auswahl „letzte x Erntejahre“: Standard `field-book.default-years` (**5**), wählbar 1 bis „alle Jahre“. Gemeint
+- [x] Auswahl „letzte x Erntejahre“: Standard `field-book.default-years` (**5**), wählbar 1 bis „alle Jahre“. Gemeint
   sind die x Erntejahre bis einschließlich dem laufenden FS25-Jahr.
-- [ ] Tabelle: Zeilen = Felder (auch verkaufte und verpachtete, wenn sie im Zeitraum Einträge haben), Spalten =
+- [x] Tabelle: Zeilen = Felder (auch verkaufte und verpachtete, wenn sie im Zeitraum Einträge haben), Spalten =
   Erntejahre. Jede Zelle zeigt Kultur und Produkt, Liter, l/ha und die Maßnahmen als kleine Zeichen. „Ohne Ernte“ ist
   markiert, leere Jahre bleiben leer.
-- [ ] Laufende Einträge kommen in der Auswertung nicht vor (sie haben kein Erntejahr).
+- [x] Laufende Einträge kommen in der Auswertung nicht vor (sie haben kein Erntejahr).
 
 ### R33-E2 Ertrag je Hektar und Diagramm
 
-- [ ] l/ha = Liter ÷ Fläche des Eintrags (F1). Einträge ohne Liter haben kein l/ha und zählen in keinem Durchschnitt
+- [x] l/ha = Liter ÷ Fläche des Eintrags (F1). Einträge ohne Liter haben kein l/ha und zählen in keinem Durchschnitt
   (Entscheidung „leer zählt nicht“).
-- [ ] Diagramm „Balken je Feld“: Ein Feld wählen, dann ein Balken l/ha je Erntejahr im Zeitraum, gefärbt nach Kultur
+- [x] Diagramm „Balken je Feld“: Ein Feld wählen, dann ein Balken l/ha je Erntejahr im Zeitraum, gefärbt nach Kultur
   und Produkt, mit Legende. Inline-SVG wie die vorhandenen Diagramme (`features/bank/finance-card.html`), keine
   Diagramm-Bibliothek.
 
 ### R33-E3 Vergleich mit/ohne Maßnahme
 
-- [ ] Je Kultur und Ernteprodukt (z. B. „Weizen“, „Mais (Häckselgut)“) über alle Felder im Zeitraum. Je Maßnahme:
+- [x] Je Kultur und Ernteprodukt (z. B. „Weizen“, „Mais (Häckselgut)“) über alle Felder im Zeitraum. Je Maßnahme:
   Ø l/ha **mit** und Ø l/ha **ohne**, jeweils mit `n`. Beispiel: „Weizen – gekalkt: Ø 8.900 l/ha (n = 6), nicht
   gekalkt: Ø 7.700 l/ha (n = 2)“.
-- [ ] Maßnahmen, deren Bodenregel im Spielstand aus ist, fehlen auch hier (wie F4).
+- [x] Maßnahmen, deren Bodenregel im Spielstand aus ist, fehlen auch hier (wie F4). Ohne `fieldRules` werden sie
+  gezeigt (wie F2).
+- [x] Walzen fehlt im Vergleich bei Kulturen ohne Walzbedarf; 1. und 2. Düngung stehen je einzeln (Entscheidungen
+  09.10.2026).
 
 **Beleg:** – (Backend und Oberfläche).
 
@@ -426,14 +437,28 @@ nicht mit.
 **Entscheidung 08.10.2026 (`QUESTIONS.md`):** **Ja, ersetzen.** Wo das Feldbuch Liter hat, nutzen Hofbericht, Chronik
 und Bank-Jahresgespräch diesen Wert statt der Schätzung.
 
+**Stand 12.10.2026: umgesetzt** (`finance/FarmReportService`, `diary/ChronicleService`, Hofbericht in der App „Bank“,
+Druckansicht der Chronik). Entscheidungen vom 12.10.2026 (`QUESTIONS.md`): Die Berichte zeigen die **Herkunft** der
+Liter: „gemessen“, „eingetragen“ oder „geschätzt“ (Offener Punkt W1 wie vorgeschlagen). Es gilt der **Stand beim
+Schreiben** des Hofberichts zum Jahreswechsel; spätere Korrekturen im Feldbuch und Berichte, die vor dem Update
+geschrieben wurden, bleiben, wie sie sind (ohne Herkunft). Weicht das Produkt der Feldbuch-Liter vom Standardprodukt der
+Kultur ab, ersetzen sie die Schätzung trotzdem und das Produkt wird genannt („Mais (Häckselgut)“). Die Liter gehen **nur
+in passende Zeilen** der Kultur-Historie (gleiches Feld, Jahr und Kultur, „geerntet“); „nicht geerntet“ bleibt, und es
+kommen keine Zeilen dazu.
+
 ### R33-W1 Gemessene Liter statt Schätzung
 
-- [ ] Heute ist `field_crop_history.yieldLiters` = Fläche × `litersPerSqm` der letzten Sichtung „erntereif“ (R3-K3,
+- [x] Heute ist `field_crop_history.yieldLiters` = Fläche × `litersPerSqm` der letzten Sichtung „erntereif“ (R3-K3,
   Migration V26). Das ist der Grundertrag ohne Düngung, Kalk und die anderen Faktoren.
-- [ ] `FarmReportService`, `ChronicleService` und `AnnualReviewService` nehmen für ein Feld und FS25-Jahr die Liter des
+- [x] `FarmReportService`, `ChronicleService` und `AnnualReviewService` nehmen für ein Feld und FS25-Jahr die Liter des
   Feldbuch-Eintrags `HARVESTED` mit diesem Erntejahr und derselben Kultur, wenn dort Liter stehen. Sonst bleibt die
   Schätzung. Weil das Erntejahr das FS25-Jahr der Ernte ist, passt es zum Jahr der Ernte in `field_crop_history`.
-- [ ] Ob die Berichte zeigen, woher die Zahl kommt, steht in [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung).
+  Umgesetzt im Hofbericht (`FarmReportService.build`); Chronik und Jahresgespräch lesen den Hofbericht und nehmen die
+  Zahl von dort. Ein Eintrag, der in einem abgeschlossenen Jahr als Hinweis wartet, gehört noch nicht zum Feldbuch
+  (F5) und zählt nicht.
+- [x] Die Berichte zeigen, woher die Zahl kommt (Entscheidung 12.10.2026): `FieldLine.yieldSource` = `MEASURED`
+  („gemessen“: Ernte-Zähler oder Lohnunternehmer), `ENTERED` („eingetragen“: Liter im Feldbuch korrigiert) oder
+  `ESTIMATED` („geschätzt“), dazu `FieldLine.product` bei einem anderen Produkt als dem Standardprodukt.
 
 **Beleg:** – (Backend).
 
@@ -456,8 +481,8 @@ in `QUESTIONS.md` mit Status `open`.
 | F3 ✅ 09.10.2026 wie vorgeschlagen | Zuordnung der Liter zu einem Eintrag | Wie in F3: laufender Eintrag mit dieser Kultur, sonst `HARVESTED`-Eintrag gleicher Kultur im laufenden Erntejahr, sonst der laufende Eintrag (übernimmt die Kultur). |
 | F4 ✅ 09.10.2026 wie vorgeschlagen | Kann der Spieler einen „manuell“-Wert wieder an die Erkennung zurückgeben? | Ja, kleiner Knopf „automatisch“ je Wert. Danach gilt wieder der erkannte Wert. |
 | F4 ✅ 09.10.2026: `needsRolling` exportieren, „nicht nötig“ statt Haken | Walzen bei Kulturen, die kein Walzen brauchen (`needsRolling = false`) | Haken bleibt sichtbar, wird aber nicht automatisch gesetzt (`rollerLevel` bleibt dort `0`). |
-| E1 | Wird die Auswahl des Zeitraums gemerkt? | Ja, je Spielstand in den Einstellungen des Feldbuchs, bis der Spieler sie ändert. |
-| W1 | Zeigen Hofbericht, Chronik und Bank, woher die Liter kommen? | Ja: „gemessen“ (Ernte-Zähler oder Lohnunternehmer), „eingetragen“ (manuell) oder „geschätzt“ (wie bisher). |
+| E1 ✅ 09.10.2026: je Spielstand auf dem Server | Wird die Auswahl des Zeitraums gemerkt? | Ja, je Spielstand in den Einstellungen des Feldbuchs, bis der Spieler sie ändert. |
+| W1 ✅ 12.10.2026 wie vorgeschlagen | Zeigen Hofbericht, Chronik und Bank, woher die Liter kommen? | Ja: „gemessen“ (Ernte-Zähler oder Lohnunternehmer), „eingetragen“ (manuell) oder „geschätzt“ (wie bisher). |
 | F4 ✅ 09.10.2026: nach der Flurkarte, neues Symbol „clipboard“ | Platz der App auf dem Startbildschirm und Symbol | Gleich nach „Flurkarte“, Gruppe „farm“, Symbol „book“ bzw. „clipboard“. |
 
 ---

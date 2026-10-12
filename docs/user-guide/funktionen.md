@@ -50,7 +50,7 @@ Homescreen.
 | **Versicherung** | Sturm- und Hagelversicherung (auch mit Baustein „Diebstahl“), Dürre-Index, Schäden melden, Wildschaden | Hofversicherung · Dürre-Index · Schäden |
 | **Personal** | Team, Helferstunden und Stellenausschreibungen | Team · Stellen & Bewerber · Ehemalige |
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen | Karte · Meine Felder · Verhandlungen · Pacht · Vorgänge |
-| **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge | Dokumentation |
+| **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge | Dokumentation · Auswertung |
 | **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl | Ställe · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
@@ -221,7 +221,11 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   Bankberaterin vorab (einmal je Engpass).
 - **Hofbericht und Jahresgespräch:** Zum Jahreswechsel (Februar → März) schreibt die Bank den Hofbericht des Jahres:
   Einnahmen und Ausgaben je Kategorie, Steuer, Kultur und Ertrag je Feld, Regen, Tiere, Personal, Vertrauen und
-  Ansehen im Dorf im Vergleich zum Vorjahr. Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
+  Ansehen im Dorf im Vergleich zum Vorjahr. Beim Ertrag steht, woher die Liter kommen: **gemessen** (vom Spiel oder
+  dem Lohnunternehmer gezählt, aus dem Feldbuch), **eingetragen** (im Feldbuch von dir korrigiert) oder **geschätzt**
+  (Fläche × Ertrag je m², wenn das Feldbuch keine Liter hat). Sind die Feldbuch-Liter ein anderes Produkt als üblich,
+  steht es dabei, z. B. „Mais (Häckselgut)“. Es gilt der Stand zum Jahreswechsel; spätere Korrekturen im Feldbuch
+  ändern einen geschriebenen Hofbericht nicht. Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
   bietet sie eine Zinssenkung auf deine laufenden Kredite an (0,25 Prozentpunkte, die Rate sinkt). Lief es schlecht,
   wird es ein ernstes Gespräch, an deinen Verträgen ändert sich aber nichts. Absagen hat keine Folgen.
   Ist ein Investor neu eingestiegen oder ist eine Rückforderung offen, spricht sie das in der Einladung an.
@@ -583,6 +587,27 @@ und darunter je **Erntejahr** ein Eintrag mit Kultur, Ernteprodukt, Litern, Lite
 Das Feldbuch braucht die aktuelle Mod-Version. Ohne sie fehlen Walzen, Mulchen, die gezählten Liter und die
 Kulturen der Karte (zur Auswahl stehen dann die bekannten Kulturen). Ein Spielstand, den du ohne Speichern neu lädst,
 öffnet eine Ernte nach dem geladenen Zeitpunkt wieder.
+
+Die Liter des Feldbuchs nutzt auch der **Hofbericht** (und damit Chronik und Jahresgespräch) statt der Schätzung –
+für jedes geerntete Feld mit derselben Kultur im Erntejahr (siehe *Bank → Hofbericht*).
+
+### Auswertung
+
+Im Tab **Auswertung** siehst du, was deine Felder in den letzten Jahren gebracht haben.
+
+- **Zeitraum:** die letzten 5 Erntejahre bis zum laufenden FS25-Jahr, frei wählbar von 1 Jahr bis **alle Jahre**. Die
+  Wahl bleibt für den Spielstand gespeichert.
+- Es zählen alle beendeten Einträge, auch „ohne Ernte“ und abgeschlossene Jahre. Die laufende Saison zählt nicht,
+  ebenso wenig ein Eintrag, der als Hinweis auf das Wiederöffnen seines Jahres wartet.
+- **Tabelle Feld × Erntejahr:** je Zelle Kultur und Produkt, Liter, Liter je Hektar und die Maßnahmen als Kürzel
+  (D1/D2 = 1./2. Düngung, K = Kalk, W = Walzen, U = Unkraut, M = Gemulcht). Verkaufte und verpachtete Felder stehen
+  mit ihren Jahren dabei.
+- **Ertrag je Hektar:** Wähle ein Feld; je Erntejahr ein Balken in l/ha, gefärbt nach Kultur und Produkt (gleiche
+  Farbe für dieselbe Kultur auf allen Feldern). Beim Darüberfahren siehst du die Werte.
+- **Vergleich mit und ohne Maßnahme:** je Kultur und Ernteprodukt über alle Felder (z. B. Körnermais und Häckselgut
+  getrennt) der Ø l/ha mit und ohne jede Maßnahme, immer mit der Anzahl `n`. Einträge ohne Liter zählen nicht mit.
+  Walzen fehlt bei Kulturen, die nicht gewalzt werden; Kalk und Unkraut nur, wenn sie im Spielstand eingeschaltet
+  sind.
 
 ## Agrarbörse
 

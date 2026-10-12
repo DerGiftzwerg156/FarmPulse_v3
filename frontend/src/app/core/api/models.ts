@@ -373,7 +373,17 @@ export interface FarmReportView {
   expenses: { category: string; amount: number }[];
   totals: { operatingIncome: number; operatingExpense: number; operatingResult: number; investment: number; divestment: number; financing: number };
   tax: { status: string; profit: number | null; tax: number | null } | null;
-  fields: { farmlandId: number; fruitType: string; hectares: number | null; harvested: boolean; withered: boolean; yieldLiters: number | null }[];
+  /** R33-W1: `product` = harvest product when not the standard one; `yieldSource` null in reports written before. */
+  fields: {
+    farmlandId: number;
+    fruitType: string;
+    hectares: number | null;
+    harvested: boolean;
+    withered: boolean;
+    yieldLiters: number | null;
+    product?: string | null;
+    yieldSource?: YieldSource | null;
+  }[];
   rain: { period: number; rainHours: number; observedHours: number }[];
   stables: { type: string; count: number; health: number | null; productivity: number | null }[];
   welfareInspections: number;
@@ -565,7 +575,15 @@ export interface ChronicleReport {
   tax: number | null;
   income: { label: string; amount: number }[];
   expenses: { label: string; amount: number }[];
-  fields: { farmlandId: number; fruit: string; hectares: number | null; harvested: boolean; withered: boolean; yieldLiters: number | null }[];
+  fields: {
+    farmlandId: number;
+    fruit: string;
+    hectares: number | null;
+    harvested: boolean;
+    withered: boolean;
+    yieldLiters: number | null;
+    yieldSource?: YieldSource | null;
+  }[];
 }
 
 export interface FieldSettingsView {
@@ -1776,3 +1794,41 @@ export interface FieldBookView {
   fields: FieldBookFieldView[];
   notices: { entryId: number; farmlandId: number; harvestYear: number | null; liters: number }[];
 }
+
+/** Roadmap V3.3 R33-E: one entry of the evaluation table (field x harvest year). */
+export interface FieldBookEvaluationCell {
+  entryId: number;
+  harvestYear: number;
+  status: 'HARVESTED' | 'NO_HARVEST';
+  fruitType: string | null;
+  fillType: string | null;
+  liters: number | null;
+  hectares: number | null;
+  litersPerHectare: number | null;
+  measures: Record<'FERT1' | 'FERT2' | 'LIMED' | 'ROLLED' | 'WEEDS' | 'MULCHED', boolean>;
+}
+
+/** Average l/ha with / without a measure; average null when n = 0. */
+export interface FieldBookMeasureComparison {
+  measure: 'FERT1' | 'FERT2' | 'LIMED' | 'ROLLED' | 'WEEDS' | 'MULCHED';
+  withAvg: number | null;
+  withN: number;
+  withoutAvg: number | null;
+  withoutN: number;
+}
+
+/** Roadmap V3.3 R33-E: app "Feldbuch", tab "Auswertung". `years` 0 = all years. */
+export interface FieldBookEvaluationView {
+  years: number;
+  defaultYears: number;
+  fromYear: number | null;
+  toYear: number | null;
+  yearsAvailable: number;
+  showLime: boolean;
+  showWeeds: boolean;
+  fields: { farmlandId: number; name: string; cells: FieldBookEvaluationCell[] }[];
+  comparisons: { fruitType: string; fillType: string | null; measures: FieldBookMeasureComparison[] }[];
+}
+
+/** Roadmap V3.3 R33-W1: where the litres of a field in the farm report come from. */
+export type YieldSource = 'MEASURED' | 'ENTERED' | 'ESTIMATED';

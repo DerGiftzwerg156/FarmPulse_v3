@@ -231,6 +231,7 @@ public class RpsimProperties {
         private CoopBoard coopBoard = new CoopBoard();
         private DieselTheft dieselTheft = new DieselTheft();
         private Fields fields = new Fields();
+        private FieldBook fieldBook = new FieldBook();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
         private Authority authority = new Authority();
@@ -2239,5 +2240,12 @@ public class RpsimProperties {
         /** C6: field work hints of the cooperative (switch per savegame on the settings page as well). */
         private boolean hintsEnabled = true;
         private double hintCooldownDays = 7;
+    }
+
+    /** Roadmap V3.3 R33-E: evaluation of the field book (owner decisions 2026-10-08). */
+    @Getter @Setter
+    public static class FieldBook {
+        /** The last x harvest years shown when the player has not chosen a period (1 to "alle Jahre"). */
+        private int defaultYears = 5;
     }
 }

@@ -70,19 +70,42 @@ public class FieldBookController {
     public record ValueRequest(@NotNull FieldBookService.Value field, String value) {
     }
 
+    /** R33-E1: the last {@code years} harvest years, 0 = all years. */
+    public record PeriodRequest(@NotNull Integer years) {
+    }
+
     private final SavegameContext context;
     private final FieldBookService book;
     private final FactsService facts;
     private final LeaseOutService leaseOut;
     private final ContractRepository contracts;
+    private final de.farmpulse.rpsim.field.FieldBookEvaluationService evaluation;
 
     public FieldBookController(SavegameContext context, FieldBookService book, FactsService facts,
-                               LeaseOutService leaseOut, ContractRepository contracts) {
+                               LeaseOutService leaseOut, ContractRepository contracts,
+                               de.farmpulse.rpsim.field.FieldBookEvaluationService evaluation) {
         this.context = context;
         this.book = book;
         this.facts = facts;
         this.leaseOut = leaseOut;
         this.contracts = contracts;
+        this.evaluation = evaluation;
+    }
+
+    /** Roadmap V3.3 section E: tab "Auswertung" - table field x year, l/ha, chart data and the comparison. */
+    @GetMapping("/api/field-book/evaluation")
+    @Transactional(readOnly = true)
+    public de.farmpulse.rpsim.field.FieldBookEvaluationService.Evaluation evaluation() {
+        return evaluation.evaluate(context.requireActive());
+    }
+
+    /** R33-E1 (owner decision 2026-10-09): the chosen period is kept per savegame. */
+    @PostMapping("/api/field-book/evaluation/period")
+    @Transactional
+    public de.farmpulse.rpsim.field.FieldBookEvaluationService.Evaluation period(@Valid @RequestBody PeriodRequest r) {
+        Savegame sg = context.requireActive();
+        evaluation.choosePeriod(sg, r.years());
+        return evaluation.evaluate(sg);
     }
 
     @GetMapping("/api/field-book")

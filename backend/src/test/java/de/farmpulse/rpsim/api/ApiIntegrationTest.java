@@ -379,6 +379,16 @@ class ApiIntegrationTest {
                 .andExpect(status().isNotFound());
         postJson("/api/field-book/entries/999999/values", java.util.Map.of("value", "true"))
                 .andExpect(status().is4xxClientError());
+        // Roadmap V3.3 R33-E: evaluation and the period kept per savegame
+        mvc.perform(get("/api/field-book/evaluation")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.years").value(5))
+                .andExpect(jsonPath("$.defaultYears").value(5))
+                .andExpect(jsonPath("$.fields").isEmpty())
+                .andExpect(jsonPath("$.comparisons").isEmpty());
+        postJson("/api/field-book/evaluation/period", java.util.Map.of("years", 0)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.years").value(0));
+        mvc.perform(get("/api/field-book/evaluation")).andExpect(jsonPath("$.years").value(0));
+        postJson("/api/field-book/evaluation/period", java.util.Map.of("years", -2)).andExpect(status().is4xxClientError());
     }
 
     /** Roadmap V3.2 R32-I: app "Bank", area "Investoren", and the switch in settings -> events. */

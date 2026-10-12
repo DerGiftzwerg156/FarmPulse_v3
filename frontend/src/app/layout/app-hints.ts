@@ -57,7 +57,8 @@ export const APP_HINTS: Record<string, HintParagraph[]> = {
     { heading: 'workshop.maintenance', text: 'contracts.maintenanceHint' },
     { heading: 'workshop.loans.title', text: 'workshop.loans.intro' },
   ],
-  fieldbook: [{ text: 'appHints.fieldbook' }], // Roadmap V3.3 R33-F
+  // Roadmap V3.3 R33-F / R33-E
+  fieldbook: [{ text: 'appHints.fieldbook' }, { heading: 'tabs.fieldbook.auswertung', text: 'fieldBook.eval.hint' }],
   trade: [
     { text: 'trade.intro' },
     { heading: 'trade.cases', text: 'trade.offerHint' },

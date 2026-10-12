@@ -1,0 +1,257 @@
+<!-- Roadmap V3.3 section E: tab "Auswertung" (owner decisions 2026-10-08 / 2026-10-09) -->
+<section class="space-y-4">
+  @if (error(); as e) {
+    <p class="text-[12px] text-danger" data-testid="fbe-error">{{ e }}</p>
+  }
+  @if (view(); as v) {
+    <!-- E1: period, kept per savegame -->
+    <app-card [title]="'fieldBook.eval.period' | t" data-testid="fbe-period">
+      <div class="flex flex-wrap items-center gap-2 text-[12px]">
+        <select
+          class="rounded-md border border-border bg-bg px-2 py-1 text-text"
+          [disabled]="busy()"
+          (change)="choosePeriod($event)"
+          data-testid="fbe-years"
+        >
+          @for (o of periodOptions(); track o) {
+            <option [value]="o" [selected]="o === v.years">
+              {{
+                o === 0
+                  ? ('fieldBook.eval.allYears' | t)
+                  : o === 1
+                    ? ('fieldBook.eval.lastYear' | t)
+                    : ('fieldBook.eval.lastYears' | t: { years: o })
+              }}
+            </option>
+          }
+        </select>
+        @if (v.fromYear !== null && v.toYear !== null) {
+          <span class="text-muted" data-testid="fbe-range">{{
+            'fieldBook.eval.range' | t: { from: v.fromYear, to: v.toYear }
+          }}</span>
+        }
+      </div>
+    </app-card>
+
+    @if (!v.fields.length) {
+      <p class="text-[12px] text-muted" data-testid="fbe-empty">{{ 'fieldBook.eval.empty' | t }}</p>
+    } @else {
+      <!-- E1: table field x harvest year (also the table view of the chart) -->
+      <app-card [title]="'fieldBook.eval.table' | t" data-testid="fbe-table">
+        <div class="overflow-x-auto">
+          <table class="w-full text-[12px]" [style.min-width.px]="120 + years().length * 130">
+            <thead>
+              <tr class="text-left font-display text-[10px] uppercase tracking-[0.14em] text-muted">
+                <th class="py-1.5 pr-2 font-bold">{{ 'fieldBook.col.field' | t }}</th>
+                @for (y of years(); track y) {
+                  <th class="py-1.5 pr-2 font-bold">{{ y }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of v.fields; track row.farmlandId) {
+                <tr class="border-t border-border align-top" data-testid="fbe-row">
+                  <td class="py-1.5 pr-2 text-text">{{ row.name }}</td>
+                  @for (y of years(); track y) {
+                    <td class="py-1.5 pr-2">
+                      @if (cellOf(row, y); as c) {
+                        <div class="text-text" data-testid="fbe-cell">
+                          @if (c.fruitType) {
+                            {{ label(c.fruitType, c.fillType) }}
+                          }
+                        </div>
+                        @if (c.status === 'NO_HARVEST') {
+                          <div class="text-muted">{{ 'fieldBook.noHarvest' | t }}</div>
+                        }
+                        @if (c.liters !== null) {
+                          <div class="font-mono text-muted">{{ c.liters | num }} l</div>
+                        }
+                        @if (c.litersPerHectare !== null) {
+                          <div class="font-mono text-text" data-testid="fbe-per-ha">
+                            {{ 'fieldBook.perHa' | t: { liters: (c.litersPerHectare | num) } }}
+                          </div>
+                        }
+                        <div class="mt-0.5 flex flex-wrap gap-1" data-testid="fbe-measures">
+                          @for (m of measures(); track m.key) {
+                            @if (c.measures[m.key]) {
+                              <span
+                                class="rounded-sm border border-border px-1 text-[10px] text-muted"
+                                [attr.title]="'fieldBook.col.' + m.key.toLowerCase() | t"
+                                >{{ 'fieldBook.eval.short.' + m.key | t }}</span
+                              >
+                            }
+                          }
+                        </div>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-card>
+
+      <!-- E2: bars l/ha per harvest year of one field, coloured by crop -->
+      <app-card [title]="'fieldBook.eval.chart' | t" data-testid="fbe-chart-card">
+        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <select
+            class="rounded-md border border-border bg-bg px-2 py-1 text-[12px] text-text"
+            (change)="chooseField($event)"
+            data-testid="fbe-field"
+          >
+            @for (f of v.fields; track f.farmlandId) {
+              <option [value]="f.farmlandId" [selected]="f.farmlandId === field()?.farmlandId">
+                {{ f.name }}
+              </option>
+            }
+          </select>
+          <ul class="flex flex-wrap gap-3" data-testid="fbe-legend">
+            @for (l of legend(); track l.key) {
+              <li class="flex items-center gap-1.5 font-body text-[11px] text-text">
+                <span
+                  class="inline-block h-2.5 w-2.5 rounded-sm"
+                  [style.background]="l.color"
+                ></span
+                >{{ l.label }}
+              </li>
+            }
+          </ul>
+        </div>
+        @if (bars().length) {
+          <div class="relative">
+            <svg
+              [attr.viewBox]="'0 0 ' + width + ' ' + height"
+              class="h-auto w-full"
+              role="img"
+              [attr.aria-label]="'fieldBook.eval.chartLabel' | t: { field: field()?.name }"
+              (mouseleave)="hover.set(null)"
+              data-testid="fbe-chart"
+            >
+              @for (t of yTicks(); track $index) {
+                <line
+                  [attr.x1]="pad.left"
+                  [attr.x2]="width - pad.right"
+                  [attr.y1]="sy(t)"
+                  [attr.y2]="sy(t)"
+                  [attr.stroke]="t === 0 ? axis : grid"
+                  stroke-width="1"
+                />
+                <text
+                  [attr.x]="pad.left - 6"
+                  [attr.y]="sy(t) + 3"
+                  text-anchor="end"
+                  class="fill-muted font-mono text-[10px]"
+                >
+                  {{ compact(t) }}
+                </text>
+              }
+              @for (y of years(); track y; let i = $index) {
+                <text
+                  [attr.x]="bandX(i) + bandWidth() / 2"
+                  [attr.y]="height - 8"
+                  text-anchor="middle"
+                  class="fill-muted font-mono text-[10px]"
+                >
+                  {{ y }}
+                </text>
+              }
+              @for (b of bars(); track b.cell.entryId) {
+                <path
+                  [attr.d]="barPath(b.x, b.width, b.cell.litersPerHectare ?? 0)"
+                  [attr.fill]="b.color"
+                  [attr.opacity]="hover() !== null && hover() !== b.index ? 0.55 : 1"
+                  data-testid="fbe-bar"
+                />
+              }
+              @for (y of years(); track y; let i = $index) {
+                <rect
+                  [attr.x]="bandX(i)"
+                  [attr.y]="pad.top"
+                  [attr.width]="bandWidth()"
+                  [attr.height]="height - pad.top - pad.bottom"
+                  fill="transparent"
+                  (mouseenter)="hover.set(i)"
+                  data-testid="fbe-hit"
+                />
+              }
+            </svg>
+            @if (hovered(); as h) {
+              <div
+                class="pointer-events-none absolute right-2 top-2 rounded-sm border border-border bg-bg/95 px-2 py-1.5 text-[11px]"
+                data-testid="fbe-tooltip"
+              >
+                <div class="font-mono text-[10px] text-muted">
+                  {{ 'fieldBook.yearOption' | t: { year: h.cell.harvestYear } }}
+                </div>
+                <div class="flex items-center gap-1.5 text-text">
+                  <span class="inline-block h-2 w-2 rounded-sm" [style.background]="h.color"></span>
+                  {{ label(h.cell.fruitType, h.cell.fillType) }}
+                </div>
+                <div class="text-text">
+                  {{ 'fieldBook.perHa' | t: { liters: (h.cell.litersPerHectare | num) } }} ·
+                  {{ h.cell.liters | num }} l
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="text-[12px] text-muted" data-testid="fbe-no-bars">
+            {{ 'fieldBook.eval.noLiters' | t }}
+          </p>
+        }
+      </app-card>
+
+      <!-- E3: comparison per crop and product, always with n -->
+      <app-card [title]="'fieldBook.eval.compare' | t" data-testid="fbe-compare">
+        <p class="mb-2 text-[12px] text-muted">{{ 'fieldBook.eval.compareIntro' | t }}</p>
+        @for (c of v.comparisons; track c.fruitType + '|' + c.fillType) {
+          <h3
+            class="mt-3 font-display text-[11px] font-bold text-text"
+            data-testid="fbe-compare-crop"
+          >
+            {{ label(c.fruitType, c.fillType) }}
+          </h3>
+          <table class="mt-1 w-full text-[12px]">
+            <thead>
+              <tr class="text-left font-display text-[10px] uppercase tracking-[0.14em] text-muted">
+                <th class="py-1 pr-2 font-bold">{{ 'fieldBook.eval.measure' | t }}</th>
+                <th class="py-1 pr-2 font-bold">{{ 'fieldBook.eval.with' | t }}</th>
+                <th class="py-1 pr-2 font-bold">{{ 'fieldBook.eval.without' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of c.measures; track m.measure) {
+                <tr class="border-t border-border" data-testid="fbe-compare-row">
+                  <td class="py-1 pr-2 text-text">
+                    {{ 'fieldBook.col.' + m.measure.toLowerCase() | t }}
+                  </td>
+                  <td class="py-1 pr-2 font-mono text-text">
+                    {{
+                      m.withAvg !== null
+                        ? ('fieldBook.perHa' | t: { liters: (m.withAvg | num) })
+                        : '–'
+                    }}
+                    <span class="text-muted">(n = {{ m.withN }})</span>
+                  </td>
+                  <td class="py-1 pr-2 font-mono text-text">
+                    {{
+                      m.withoutAvg !== null
+                        ? ('fieldBook.perHa' | t: { liters: (m.withoutAvg | num) })
+                        : '–'
+                    }}
+                    <span class="text-muted">(n = {{ m.withoutN }})</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @empty {
+          <p class="text-[12px] text-muted">{{ 'fieldBook.eval.noLiters' | t }}</p>
+        }
+      </app-card>
+    }
+  } @else if (!error()) {
+    <p class="text-[12px] text-muted">{{ 'common.loading' | t }}</p>
+  }
+</section>
