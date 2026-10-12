@@ -1776,3 +1776,38 @@ export interface FieldBookView {
   fields: FieldBookFieldView[];
   notices: { entryId: number; farmlandId: number; harvestYear: number | null; liters: number }[];
 }
+
+/** Roadmap V3.3 R33-E: one entry of the evaluation table (field x harvest year). */
+export interface FieldBookEvaluationCell {
+  entryId: number;
+  harvestYear: number;
+  status: 'HARVESTED' | 'NO_HARVEST';
+  fruitType: string | null;
+  fillType: string | null;
+  liters: number | null;
+  hectares: number | null;
+  litersPerHectare: number | null;
+  measures: Record<'FERT1' | 'FERT2' | 'LIMED' | 'ROLLED' | 'WEEDS' | 'MULCHED', boolean>;
+}
+
+/** Average l/ha with / without a measure; average null when n = 0. */
+export interface FieldBookMeasureComparison {
+  measure: 'FERT1' | 'FERT2' | 'LIMED' | 'ROLLED' | 'WEEDS' | 'MULCHED';
+  withAvg: number | null;
+  withN: number;
+  withoutAvg: number | null;
+  withoutN: number;
+}
+
+/** Roadmap V3.3 R33-E: app "Feldbuch", tab "Auswertung". `years` 0 = all years. */
+export interface FieldBookEvaluationView {
+  years: number;
+  defaultYears: number;
+  fromYear: number | null;
+  toYear: number | null;
+  yearsAvailable: number;
+  showLime: boolean;
+  showWeeds: boolean;
+  fields: { farmlandId: number; name: string; cells: FieldBookEvaluationCell[] }[];
+  comparisons: { fruitType: string; fillType: string | null; measures: FieldBookMeasureComparison[] }[];
+}

@@ -607,7 +607,7 @@ Every point of [`ROADMAP_V3.3.md`](../architecture/ROADMAP_V3.3.md) marked 🟡 
 criterion has one row here. R33-Q fixes the contract only (owner decision 2026-10-08,
 [bridge protocol](bridge-protocol.md#roadmap-v33-fields-and-block-optional-r33-q1)): the mod reads the levels with
 R33-F2, counts the harvest with R33-F3 and lists the crops of the map with R33-F4 - built since R33-F, so rows
-29.1–29.10 can be checked now, rows 29.11–29.12 with E and W. Without FS25 the bridge simulator scenario `feldbuch` shows the
+29.1–29.11 can be checked now (29.11 since R33-E), row 29.12 with W. Without FS25 the bridge simulator scenario `feldbuch` shows the
 contract (control endpoints `POST /field` for the levels and `POST /harvest` for the counter). Note the result in the
 row's issue and, if the fallback is needed, switch the implementation to it.
 

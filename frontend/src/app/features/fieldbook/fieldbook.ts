@@ -18,6 +18,7 @@ import { Badge, BadgeVariant } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
+import { FieldBookEvaluation } from './fieldbook-evaluation';
 import { Observable } from 'rxjs';
 
 /** The ticks of an entry in table order; lime and weeds only while the soil rule is on (owner decision 2026-10-08). */
@@ -40,7 +41,7 @@ const STATE_BADGE: Record<string, BadgeVariant> = {
 /**
  * Roadmap V3.3 R33-F4 / F5: app "Feldbuch", tab "Dokumentation". Per field the running season and the entries per
  * harvest year; every value can be corrected ("manuell") and given back to the detection (↺); "Ernte eintragen" when
- * the game does not detect a harvest; closing and reopening a harvest year. The tab "Auswertung" follows with E.
+ * the game does not detect a harvest; closing and reopening a harvest year. Tab "Auswertung" (R33-E): FieldBookEvaluation.
  */
 @Component({
   selector: 'app-fieldbook',
@@ -53,6 +54,7 @@ const STATE_BADGE: Record<string, BadgeVariant> = {
     Button,
     Card,
     PageErrorView,
+    FieldBookEvaluation,
   ],
   templateUrl: './fieldbook.html',
 })

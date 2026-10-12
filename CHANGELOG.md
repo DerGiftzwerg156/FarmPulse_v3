@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 four-part form `MAJOR.MINOR.PATCH.0` in `modDesc.xml`. `tools/release/build-release.sh` refuses to build when the
 versions or this changelog do not match.
 
+## [Unreleased]
+
+### Added
+
+- **Field book evaluation [R33-E]** (owner decisions 2026-10-08 / 2026-10-09 in `QUESTIONS.md`): new tab *Auswertung*
+  in the app *Feldbuch*. The last x harvest years up to the current FS25 year (default
+  `rpsim.formulas.field-book.default-years` = 5, selectable from 1 to all years, kept per savegame - migration V44);
+  a table field × harvest year with crop and product, litres, litres per hectare and the measures; a bar chart of
+  litres per hectare per harvest year for one field, coloured by crop and product; and the comparison with / without
+  each measure per crop and product over all fields, always with `n`. All finished entries count except those held
+  back in a closed year; entries without litres count in no average; rolling is not compared for crops that are not
+  rolled; lime and weeds only while their soil rule is on. New endpoints `GET /api/field-book/evaluation` and
+  `POST /api/field-book/evaluation/period`.
+
 ## [2.0.0] - 2026-10-09
 
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training

@@ -840,6 +840,7 @@ placeholders.
 | `rpsim.formulas.fields.fallow-gossip-months` | `4` | Game months without a crop (empty or stubble) before the village gossips about the field; a withered crop is talked about at once. | Roadmap V2 R2-C4 |
 | `rpsim.formulas.fields.harvest-congratulation-trust-delta` | `1` | Trust of the cooperative when every harvestable field of an FS25 year was harvested and nothing withered. | Roadmap V2 R2-C4 |
 | `rpsim.formulas.fields.max-messages-per-month` | `2` | Cap of the field messages (neighbor, gossip, congratulation) per game month. | Roadmap V2 R2-C4 |
+| `rpsim.formulas.field-book.default-years` | `5` | Field book evaluation: the last x harvest years (up to and including the current FS25 year) shown when the player has not chosen a period; the choice is kept per savegame (owner decision 2026-10-09). | Roadmap V3.3 R33-E1 |
 | `rpsim.formulas.fields.hints-enabled` | `true` | Field work hints of the cooperative (harvest ready, lime, plowing); the player can also switch them off per savegame in the settings. | Roadmap V2 R2-C6 |
 | `rpsim.formulas.fields.hint-cooldown-days` | `7` | At most one hint per this many game days. | Roadmap V2 R2-C6 |
 

@@ -2492,7 +2492,8 @@
       "vorgaenge": "Vorgänge"
     },
     "fieldbook": {
-      "dokumentation": "Dokumentation"
+      "dokumentation": "Dokumentation",
+      "auswertung": "Auswertung"
     },
     "stable": {
       "staelle": "Ställe",
@@ -2671,7 +2672,8 @@
       "rolled": "Walzen",
       "weeds": "Unkraut",
       "mulched": "Gemulcht",
-      "sprayTypes": "Düngerart"
+      "sprayTypes": "Düngerart",
+      "field": "Feld"
     },
     "state": {
       "ACTIVE": "bewirtschaftet",
@@ -2683,6 +2685,33 @@
       "FERTILIZER": "Dünger",
       "LIQUID_MANURE": "Gülle",
       "MANURE": "Mist"
+    },
+    "eval": {
+      "period": "Zeitraum",
+      "allYears": "Alle Jahre",
+      "lastYear": "Letztes Erntejahr",
+      "lastYears": "Letzte {years} Erntejahre",
+      "range": "Erntejahre {from} bis {to}",
+      "empty": "Im Zeitraum gibt es keine beendeten Einträge.",
+      "table": "Felder und Erntejahre",
+      "chart": "Ertrag je Hektar",
+      "chartLabel": "Ertrag in Litern je Hektar je Erntejahr für {field}",
+      "noLiters": "Keine Einträge mit Litern im Zeitraum.",
+      "compare": "Vergleich mit und ohne Maßnahme",
+      "compareIntro": "Je Kultur und Ernteprodukt über alle Felder im Zeitraum: Ø Liter je Hektar mit und ohne die Maßnahme, n = Anzahl der Einträge. Einträge ohne Liter zählen nicht mit.",
+      "measure": "Maßnahme",
+      "with": "mit",
+      "without": "ohne",
+      "short": {
+        "FERT1": "D1",
+        "FERT2": "D2",
+        "LIMED": "K",
+        "ROLLED": "W",
+        "WEEDS": "U",
+        "MULCHED": "M"
+      },
+      "hint": "Die Auswertung zeigt die letzten Erntejahre bis zum laufenden FS25-Jahr (Standard 5, frei wählbar bis „alle Jahre“; die Wahl bleibt je Spielstand). Laufende Einträge und zurückgehaltene Einträge eines abgeschlossenen Jahres zählen nicht. Das Diagramm zeigt für ein Feld die Liter je Hektar je Erntejahr, gefärbt nach Kultur. Der Vergleich nennt je Kultur Ø l/ha mit und ohne jede Maßnahme, immer mit n.",
+      "other": "Sonstige"
     }
   }
 }

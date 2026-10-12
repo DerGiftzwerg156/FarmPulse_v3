@@ -1195,6 +1195,8 @@ rpsim:
       max-messages-per-month: 2
       hints-enabled: true
       hint-cooldown-days: 7
+    field-book:                   # Roadmap V3.3 R33-E: field book evaluation (owner decisions 2026-10-08)
+      default-years: 5            # "letzte x Erntejahre" when the player has not chosen a period
     energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
       fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
       probability-per-month: 0.35

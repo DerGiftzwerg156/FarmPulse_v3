@@ -528,6 +528,13 @@ export class ApiService {
   reopenFieldBookYear(year: number): Observable<M.FieldBookView> {
     return this.post(`/field-book/years/${year}/reopen`, {});
   }
+  /** Roadmap V3.3 R33-E: evaluation ("Feldbuch → Auswertung"); `years` 0 = all years, kept per savegame. */
+  fieldBookEvaluation(): Observable<M.FieldBookEvaluationView> {
+    return this.get('/field-book/evaluation');
+  }
+  setFieldBookPeriod(years: number): Observable<M.FieldBookEvaluationView> {
+    return this.post('/field-book/evaluation/period', { years });
+  }
   /** Roadmap V3.2 R32-I: large investors ("Bank → Investoren"). */
   investors(): Observable<M.InvestorsView> {
     return this.get('/investors');

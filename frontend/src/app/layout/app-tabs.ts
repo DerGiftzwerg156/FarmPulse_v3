@@ -61,8 +61,11 @@ export const APP_TABS: Record<string, TabDef[]> = {
     { id: 'pacht', label: 'tabs.fields.pacht' },
     { id: 'vorgaenge', label: 'tabs.fields.vorgaenge' },
   ],
-  // Roadmap V3.3 R33-F4 (owner decision 2026-10-09): "Auswertung" follows with E
-  fieldbook: [{ id: 'dokumentation', label: 'tabs.fieldbook.dokumentation' }],
+  // Roadmap V3.3 R33-F4 / R33-E
+  fieldbook: [
+    { id: 'dokumentation', label: 'tabs.fieldbook.dokumentation' },
+    { id: 'auswertung', label: 'tabs.fieldbook.auswertung' },
+  ],
   stable: [
     { id: 'staelle', label: 'tabs.stable.staelle' },
     { id: 'handel', label: 'tabs.stable.handel' },
