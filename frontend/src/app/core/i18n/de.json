@@ -1093,6 +1093,32 @@
       "MEASURED": "gemessen",
       "ENTERED": "eingetragen",
       "ESTIMATED": "geschätzt"
+    },
+    "marginKind": {
+      "SEED": "Saatgut",
+      "FERTILIZER": "Dünger",
+      "LIME": "Kalk",
+      "PROTECTION": "Pflanzenschutz",
+      "MANURE": "Wirtschaftsdünger",
+      "OTHER_INPUT": "Sonstiges Betriebsmittel",
+      "CONTRACTOR": "Lohnunternehmer",
+      "PREMIUM": "Prämie",
+      "RENT": "Pacht",
+      "OVERHEAD": "Gemeinkosten",
+      "EXTRA_COST": "Eigene Kosten",
+      "EXTRA_REVENUE": "Eigene Leistung"
+    },
+    "marginSource": {
+      "MEASURED": "gemessen",
+      "DISTRIBUTED": "verteilt",
+      "ENTERED": "eingetragen",
+      "ESTIMATED": "geschätzt"
+    },
+    "marginPriceSource": {
+      "REALISED": "erzielt",
+      "HARVEST_DAY": "Preis am Erntetag",
+      "INTERNAL": "Verrechnungswert",
+      "ENTERED": "eingetragen"
     }
   },
   "onboarding": {
@@ -2418,7 +2444,10 @@
       "investorLine": "{name} ({kind}): {amount}, {capital}",
       "investorMoney": "Kapital {capital} · Ausschüttungen {payouts} · Ausgleich {compensations} · Rückzahlung {repayments}",
       "investorDelivered": "geliefert: {items}",
-      "investorBreaches": "Vertragsbrüche: {n}"
+      "investorBreaches": "Vertragsbrüche: {n}",
+      "margins": "Deckungsbeitrag je Kultur",
+      "marginLine": "{ha} ha · {perHa} je ha",
+      "noMargins": "Kein Deckungsbeitrag für dieses Jahr."
     },
     "leaseConsentGiven": "Verpachtung erlaubt",
     "requestLeaseConsent": "Zustimmung zur Verpachtung"
@@ -2718,5 +2747,54 @@
       "hint": "Die Auswertung zeigt die letzten Erntejahre bis zum laufenden FS25-Jahr (Standard 5, frei wählbar bis „alle Jahre“; die Wahl bleibt je Spielstand). Laufende Einträge und zurückgehaltene Einträge eines abgeschlossenen Jahres zählen nicht. Das Diagramm zeigt für ein Feld die Liter je Hektar je Erntejahr, gefärbt nach Kultur. Der Vergleich nennt je Kultur Ø l/ha mit und ohne jede Maßnahme, immer mit n.",
       "other": "Sonstige"
     }
+  },
+  "margin": {
+    "title": "Deckungsbeitrag",
+    "overheads": "Gemeinkosten verteilen",
+    "estimatedHint": "Der Mod zählt Saatgut und Dünger noch nicht: Die Direktkosten sind je Hektar geschätzt. Mit dem aktuellen Mod FS25_RPSim werden sie gemessen.",
+    "empty": "Noch keine Einträge im Feldbuch.",
+    "running": "Laufende Saison",
+    "ranking": "Rangliste der Felder (Ø Deckungsbeitrag je ha)",
+    "best": "bestes",
+    "weakest": "schwächstes",
+    "crops": "Je Kultur (Ø je ha)",
+    "revenueHa": "Leistung",
+    "directHa": "Direktkosten",
+    "marginHa": "DB",
+    "noCrops": "Im Zeitraum gibt es keine Einträge mit Leistung.",
+    "chart": "Deckungsbeitrag je Hektar im Erntejahr",
+    "chartLabel": "Deckungsbeitrag je Hektar je Feld im Erntejahr {year}",
+    "noBars": "In diesem Erntejahr hat kein Feld einen Deckungsbeitrag.",
+    "harvestYear": "Erntejahr {year}",
+    "locked": "Jahr abgeschlossen",
+    "estimated": "geschätzt",
+    "incomplete": "Preis fehlt",
+    "price": "Preis",
+    "provisional": "vorläufig",
+    "pricePlaceholder": "€ je 1000 l",
+    "line": "Zeile",
+    "liters": "Liter",
+    "amount": "Betrag",
+    "corrected": "korrigiert",
+    "held": "zurückgehalten",
+    "helper": "davon {liters} l vom Helfer gekauft",
+    "noPrice": "kein Preis",
+    "edit": "ändern",
+    "noLines": "Noch keine Kosten.",
+    "addKind": "Art",
+    "note": "Text",
+    "add": "Zeile hinzufügen",
+    "total": {
+      "revenue": "Leistung",
+      "directCosts": "Direktkosten",
+      "freeOfDirectCosts": "Direktkostenfreie Leistung",
+      "contractor": "Lohnunternehmer",
+      "margin": "Deckungsbeitrag",
+      "premiums": "Prämien",
+      "rent": "Pacht",
+      "overheads": "Gemeinkosten (verteilt)",
+      "result": "Feldergebnis"
+    },
+    "hint": "Je Feldbuch-Eintrag: Leistung (Liter × erzielter Preis, sonst Preis am Erntetag, sonst Verrechnungswert) minus Direktkosten (Saatgut, Dünger, Kalk, Pflanzenschutz zum Einkaufspreis; eigene Gülle 0 €) und Lohnunternehmer = Deckungsbeitrag. Danach Prämien, Pacht und – mit dem Schalter – die nach Fläche verteilten Gemeinkosten. Der Zeitraum ist derselbe wie in der Feldbuch-Auswertung. Korrekturen gelten, bis du sie mit ↺ zurückgibst."
   }
 }

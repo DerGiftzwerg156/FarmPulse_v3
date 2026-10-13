@@ -221,6 +221,10 @@ public class Savegame {
     @Column(name = "field_book_years")
     private Integer fieldBookYears;
 
+    /** Roadmap V4 R4-D3 (owner decision 2026-10-13): switch "Gemeinkosten verteilen"; null = default (on). */
+    @Column(name = "field_margin_overheads")
+    private Boolean fieldMarginOverheads;
+
     // ---- Roadmap V2 R2-D: the vanilla loan and the field menu become part of the story
 
     /** D1: remaining vanilla loan of the last export and its game time (a smaller game time = reload). */

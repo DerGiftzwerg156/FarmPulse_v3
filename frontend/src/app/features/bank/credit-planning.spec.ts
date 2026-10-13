@@ -192,5 +192,28 @@ describe('FarmReportCard (R3-K3)', () => {
     expect(fields[2].textContent).toContain('30.000 l (geschätzt)');
     expect(el.querySelector('[data-testid="report-compare"]')?.textContent).toContain('Vorjahr');
     expect(el.querySelector('[data-testid="report-rain"]')?.textContent).toContain('12');
+    // a report written before R4-D6 has no margin section
+    expect(el.querySelector('[data-testid="report-margins"]')).toBeNull();
+  });
+
+  it('shows the contribution margin per crop of a report written since R4-D6', () => {
+    TestBed.configureTestingModule({ imports: [FarmReportCard], providers });
+    const fixture = TestBed.createComponent(FarmReportCard);
+    fixture.detectChanges();
+    const snapshot = { staff: 0, monthlyWages: 0, animals: 0, averageHealth: null, reputationTier: 'NEUTRAL', trust: [] };
+    const report: FarmReportView = {
+      year: 3, months: 12, income: [], expenses: [],
+      totals: { operatingIncome: 0, operatingExpense: 0, operatingResult: 0, investment: 0, divestment: 0, financing: 0 },
+      tax: null, fields: [], rain: [], stables: [], welfareInspections: 0, snapshot, previous: null,
+      margins: [{ fruitType: 'WHEAT', fillType: 'WHEAT', hectares: 9, margin: 7200, marginPerHectare: 800, n: 2 },
+        { fruitType: 'MAIZE', fillType: 'CHAFF', hectares: 4, margin: -600, marginPerHectare: -150, n: 1 }],
+    };
+    TestBed.inject(HttpTestingController).expectOne('/api/farm-reports').flush([report]);
+    fixture.detectChanges();
+    const lines = (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="report-margins"] li');
+    expect(lines[0].textContent).toContain('7.200');
+    expect(lines[0].textContent).toContain('800');
+    expect(lines[1].textContent).toContain('Mais (Häckselgut)');
+    expect(lines[1].textContent).toContain('-600');
   });
 });

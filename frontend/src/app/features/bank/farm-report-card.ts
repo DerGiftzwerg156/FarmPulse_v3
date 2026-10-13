@@ -59,6 +59,17 @@ import { Card } from '../../shared/ui/card';
                   }
                 </ul>
                 <p class="mt-2 text-[12px] text-text" data-testid="report-rain">{{ 'credit.report.rain' | t: { hours: (rainHours() | num) } }}</p>
+                @if (r.margins) {
+                  <div class="fp-label mb-1 mt-3">{{ 'credit.report.margins' | t }}</div>
+                  <ul class="space-y-0.5 text-[12px]" data-testid="report-margins">
+                    @for (m of r.margins; track $index) {
+                      <li class="flex justify-between"><span class="text-text">{{ m.fruitType | label: 'fillType' }}@if (m.fillType && m.fillType !== m.fruitType) { ({{ m.fillType | label: 'fillType' }})}</span>
+                        <span class="font-mono" [class.text-danger]="(m.margin ?? 0) < 0">{{ m.margin === null ? '–' : (m.margin | money) }}<span class="text-muted"> · {{ 'credit.report.marginLine' | t: { ha: (m.hectares | num: 2), perHa: m.marginPerHectare === null ? '–' : (m.marginPerHectare | money) } }}</span></span></li>
+                    } @empty {
+                      <li class="text-muted">{{ 'credit.report.noMargins' | t }}</li>
+                    }
+                  </ul>
+                }
               </div>
             </div>
 

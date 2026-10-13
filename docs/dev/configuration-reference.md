@@ -841,6 +841,26 @@ placeholders.
 | `rpsim.formulas.fields.harvest-congratulation-trust-delta` | `1` | Trust of the cooperative when every harvestable field of an FS25 year was harvested and nothing withered. | Roadmap V2 R2-C4 |
 | `rpsim.formulas.fields.max-messages-per-month` | `2` | Cap of the field messages (neighbor, gossip, congratulation) per game month. | Roadmap V2 R2-C4 |
 | `rpsim.formulas.field-book.default-years` | `5` | Field book evaluation: the last x harvest years (up to and including the current FS25 year) shown when the player has not chosen a period; the choice is kept per savegame (owner decision 2026-10-09). | Roadmap V3.3 R33-E1 |
+| `rpsim.formulas.field-margin.categories.SEEDS` | `SEED` | Contribution margin: fill type of the consumption counter -> kind of the direct costs (other fill types count as other inputs). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.FERTILIZER` | `FERTILIZER` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.LIQUIDFERTILIZER` | `FERTILIZER` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.LIME` | `LIME` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.HERBICIDE` | `PROTECTION` | As above (plant protection). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.LIQUIDMANURE` | `MANURE` | As above (farmyard manure, valued with `manure-cost-per-liter`). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.MANURE` | `MANURE` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.DIGESTATE` | `MANURE` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.helper-surcharge` | `1.5` | Litres a helper bought while working are valued with the purchase price x this factor (the game books them so). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.manure-cost-per-liter` | `0` | Euro per litre of own farmyard manure (owner decision 2026-10-13: free, its litres are shown). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.fallback-seed-cost-per-ha` | `120` | Estimate without the consumption counter (older mod): seed per hectare when the seed use or the seed price of the crop is unknown (placeholder). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.fallback-fertilizer-cost-per-ha` | `90` | Estimate: per fertilisation tick of the field book and hectare (placeholder). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.fallback-lime-cost-per-ha` | `70` | Estimate: liming per hectare (placeholder). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.fallback-protection-cost-per-ha` | `60` | Estimate: weed control per hectare (placeholder). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.revenue-categories` | `[SOLD_PRODUCTS, HARVEST_INCOME]` | Money types of the booking statement whose sales (with fill type and litres) give the realised price of a harvest. | Roadmap V4 R4-D2 |
+| `rpsim.formulas.field-margin.internal-price-share` | `0.8` | Product without a sale and without a price on the harvest day (e.g. silage for the own animals): purchase price x this share. | Roadmap V4 R4-D2 |
+| `rpsim.formulas.field-margin.overheads-default` | `true` | Switch "Gemeinkosten verteilen" when the player has not set it (owner decision 2026-10-13: on). | Roadmap V4 R4-D3 |
+| `rpsim.formulas.field-margin.overhead-money-types` | `[PURCHASE_FUEL, VEHICLE_RUNNING_COSTS, VEHICLE_REPAIR, AI, LEASING_COSTS]` | Money types of the booking journal distributed by area over the fields at every month end. | Roadmap V4 R4-D3 |
+| `rpsim.formulas.field-margin.overhead-driver-salaries` | `true` | The monthly salaries of the employees who drive helpers (machine operators, apprentices, seasonal workers) count as overheads too. | Roadmap V4 R4-D3 |
+| `rpsim.formulas.field-margin.advice-enabled` | `true` | The cooperative writes once when a field had a negative contribution margin in two harvest years in a row. | Roadmap V4 R4-D6 |
 | `rpsim.formulas.fields.hints-enabled` | `true` | Field work hints of the cooperative (harvest ready, lime, plowing); the player can also switch them off per savegame in the settings. | Roadmap V2 R2-C6 |
 | `rpsim.formulas.fields.hint-cooldown-days` | `7` | At most one hint per this many game days. | Roadmap V2 R2-C6 |
 

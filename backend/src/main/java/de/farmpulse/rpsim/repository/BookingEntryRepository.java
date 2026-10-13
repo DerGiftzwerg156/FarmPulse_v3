@@ -20,6 +20,9 @@ public interface BookingEntryRepository extends JpaRepository<BookingEntry, Long
 
     List<BookingEntry> findBySavegameAndYearAndPeriodOrderBySeqAsc(Savegame savegame, int year, int period);
 
+    /** Roadmap V4 R4-D2: the sales of a fill type (bookings made while the game sells at a selling station). */
+    List<BookingEntry> findBySavegameAndFillTypeOrderBySeqAsc(Savegame savegame, String fillType);
+
     /** Months with entries: [year, period, count]. */
     @Query("select e.year, e.period, count(e) from BookingEntry e where e.savegame = :sg group by e.year, e.period")
     List<Object[]> countPerMonth(@Param("sg") Savegame savegame);

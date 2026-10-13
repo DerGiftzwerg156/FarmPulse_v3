@@ -93,13 +93,16 @@ public class DirectPaymentService {
     private final RandomSource random;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     public DirectPaymentService(SavegameRepository savegames, DirectPaymentApplicationRepository applications,
                                 DirectPaymentFieldRepository lines, ServiceCaseRepository cases,
                                 ContractRepository contracts, FactsService facts, AuthorityService authority,
                                 BurdeningEvents burden, ServiceRoleService roles, OutboxService outbox,
                                 NarrationRequestService narration, TrustScoreService trust, DiaryService diary,
-                                RandomSource random, RpsimProperties props, GameTime gameTime) {
+                                RandomSource random, RpsimProperties props, GameTime gameTime,
+                                org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
         this.savegames = savegames;
         this.applications = applications;
         this.lines = lines;
@@ -415,6 +418,15 @@ public class DirectPaymentService {
         a.setClosedGameTime(sg.getCurrentGameTime());
         if (paid > 0) {
             outbox.money(sg, paid, MoneyReason.DIRECT_PAYMENT, "Flächenprämie " + a.getCropYear(), new Related(RELATED, a.getId()));
+            // Roadmap V4 R4-D1: the paid premium per field (by the declared hectares) for the contribution margin
+            java.util.Map<Integer, Double> perField = new java.util.LinkedHashMap<>();
+            for (DirectPaymentField line : fields(a)) {
+                if (ha > 0 && line.getHectares() > 0) {
+                    perField.merge(line.getFarmlandId(), paid * line.getHectares() / ha, Double::sum);
+                }
+            }
+            events.publishEvent(new de.farmpulse.rpsim.field.FieldPremiumPaid(sg.getId(), "Flächenprämie",
+                    a.getCropYear(), perField, RELATED + ":" + a.getId()));
         }
         if (a.getCharacter() != null) {
             narration.request(sg, NarrationEventType.DIRECT_PAYMENT_PAID).from(a.getCharacter())

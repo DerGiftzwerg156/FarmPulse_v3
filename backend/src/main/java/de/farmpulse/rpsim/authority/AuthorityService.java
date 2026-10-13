@@ -83,12 +83,15 @@ public class AuthorityService {
     private final DiaryService diary;
     private final RpsimProperties props;
     private final GameTime gameTime;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     public AuthorityService(SavegameRepository savegames, ServiceCaseRepository cases, FieldCropHistoryRepository history,
                             HusbandryRecordRepository husbandries, FieldService fields, FactsService facts,
                             LivestockService livestock, CharacterLookup lookup, OutboxService outbox,
                             NarrationRequestService narration, TrustScoreService trust, PublicActionService publicActions,
-                            DiaryService diary, RpsimProperties props, GameTime gameTime) {
+                            DiaryService diary, RpsimProperties props, GameTime gameTime,
+                            org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
         this.savegames = savegames;
         this.cases = cases;
         this.history = history;
@@ -145,6 +148,7 @@ public class AuthorityService {
         boolean cut = false;
         int checked = 0;
         List<Integer> repeated = new java.util.ArrayList<>();
+        java.util.Map<Integer, Double> premiumFields = new java.util.LinkedHashMap<>(); // Roadmap V4 R4-D1
         for (FieldRecord r : fields.records(sg)) {
             Optional<String> now = crop(sg, r.getFarmlandId(), year);
             Optional<String> before = crop(sg, r.getFarmlandId(), year - 1);
@@ -154,6 +158,7 @@ public class AuthorityService {
             checked++;
             if (!now.get().equals(before.get())) {
                 hectares += r.getHectares() == null ? 0 : r.getHectares();
+                premiumFields.merge(r.getFarmlandId(), r.getHectares() == null ? 0 : r.getHectares(), Double::sum);
                 continue;
             }
             r.setRotationViolations(r.getRotationViolations() + 1);
@@ -171,6 +176,12 @@ public class AuthorityService {
         long premium = Math.round(hectares * cfg().getRotationPremiumPerHa() * (cut ? 1 - cfg().getRotationCutShare() : 1));
         if (premium > 0) {
             outbox.money(sg, premium, MoneyReason.SUBSIDY, "Fruchtfolgeprämie Jahr " + year, null);
+            // Roadmap V4 R4-D1: the premium per field with another crop (by hectares) for the contribution margin
+            double total = hectares;
+            java.util.Map<Integer, Double> perField = new java.util.LinkedHashMap<>();
+            premiumFields.forEach((id, ha) -> perField.put(id, total > 0 ? premium * ha / total : 0));
+            events.publishEvent(new de.farmpulse.rpsim.field.FieldPremiumPaid(sg.getId(), "Fruchtfolgeprämie", year,
+                    perField, "ROTATION:" + year));
             narration.request(sg, NarrationEventType.AUTHORITY_SUBSIDY).from(authority.get())
                     .facts(NarrationFacts.builder().put("harvestYear", year)
                             .put("hectares", Math.round(hectares * 10) / 10.0).put("premium", premium)

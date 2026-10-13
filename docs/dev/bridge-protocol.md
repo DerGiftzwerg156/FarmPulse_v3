@@ -528,6 +528,18 @@ zero counters; the four numbers of a husbandry are left out when they are not a 
 refuses an input counter without `farmlandId`, with a blank `fillType`, missing or negative `liters` / `helperLiters`
 or `helperLiters` > `liters`, negative or incomplete feed amounts and negative food values.
 
+**Built (R4-D1):** `RPSim.sowingEndHook` on `SowingMachine.onEndWorkAreaProcessing` and `RPSim.sprayerEndHook` on
+`Sprayer.onEndWorkAreaProcessing` (`Utils.overwrittenFunction`, installed when the mod is loaded like the harvest
+hooks) call the original first and count afterwards, only on the server: the seed of the sown area with the game's own
+formula (`fruitDesc.seedUsagePerSqm × ha × 10000 × seedUsageScale`, × `1 + damage × DAMAGED_USAGE_INCREASE`; the fill
+type of the seed tank, or `spec.seedFillType` when a helper with *helper buys seeds* sows) and the `usage` of the
+sprayer tick (`workAreaParameters.isActive`, `sprayFillType`; a helper without a spray tank bought it).
+`RPSimGameAdapter:inputEntry` finds the own farmland like `harvestEntry` (shared `ownFarmlandAt`). The counter
+(`RPSimInputCounter`, `state.inputs`) is saved in `FS25_RPSim.xml` (`inputs.counter(i)#farmlandId/fillType/liters/
+helperLiters`) and exported only while a hook is installed. The backend (`FieldMarginService`) books the difference
+of every counter since the last export into the running field book season of the field (a falling counter shrinks the
+line proportionally).
+
 ## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, every 60 s, and on every `farm_facts` cycle when its content changed)
 
 The mod rewrites the file every `marketContextIntervalMs` (mod config, default 60 s real time) even when its content
@@ -646,7 +658,7 @@ mod or not built yet); the bridge simulator exports them only in the scenario `h
 | `fruitTypes[].seedUsagePerSqm` | Seed in litres per m² (≥ 0, 4 decimals) | `FruitTypeDesc.seedUsagePerSqm` (`seeding#litersPerSqm`, LUADOC `Fruits/FruitTypeDesc.md`) |
 | `fruitTypes[].litersPerSqm` | Base yield per m² (≥ 0, 4 decimals), also for crops that stand on no field | `FruitTypeDesc.literPerSqm` (as `fields[].litersPerSqm`) |
 | `fruitTypes[].plantablePeriods[]` / `harvestablePeriods[]` | Periods 1..12 in which the crop can be sown / harvested in the growth mode of the savegame (unique, sorted) | `fruitDesc:getIsPlantableInPeriod(missionInfo.growthMode, period)` / `getIsHarvestableInPeriod` for every period (LUADOC `Fruits/FruitTypeDesc.md`; `SowingMachine.md` calls the first exactly so with `environment.currentPeriod`) |
-| `fillTypeCosts[]` | Purchase price of the game per litre `{ fillType, costPerLiter }` (≥ 0, 4 decimals, unique, sorted) for every fill type in `inputs`, the feed fill types of `animalFood` and the mod setting `costFillTypes` | `g_currentMission.economyManager:getCostPerLiter(fillTypeIndex, false)` (called so in `SowingMachine.md`, `Sprayer.md`, `Motorized.md`, `TreePlanter.md`); 🟡 meaning of the second parameter, 30.5; fallback `FillTypeDesc.pricePerLiter` (LUADOC `FillTypes/FillTypeDesc.md`) |
+| `fillTypeCosts[]` | Purchase price of the game per litre `{ fillType, costPerLiter }` (≥ 0, 4 decimals, unique, sorted) for every fill type in `inputs`, the feed fill types of `animalFood` and the mod setting `costFillTypes`. Read since R4-D1 on every market context write (`RPSimGameAdapter:collectFillTypeCosts`); the feed fill types come with R4-F1 | `g_currentMission.economyManager:getCostPerLiter(fillTypeIndex, false)` (called so in `SowingMachine.md`, `Sprayer.md`, `Motorized.md`, `TreePlanter.md`); 🟡 meaning of the second parameter, 30.5; fallback `FillTypeDesc.pricePerLiter` (LUADOC `FillTypes/FillTypeDesc.md`) |
 | `animalFood[]` | Food groups per animal type `{ animalType, groups, mixtures }`, sorted by `animalType` | `g_currentMission.animalFoodSystem:getAnimalFood(animalTypeIndex).groups` (read so in `PlaceableHusbandryFood:getFoodInfos`, dump) |
 | `animalFood[].groups[]` | `{ title, productionWeight, fillTypes }` in the **order of the game** (it may be the order the animals eat in); `productionWeight` ≥ 0 (3 decimals), at least one fill type | `foodGroup.title`, `foodGroup.productionWeight`, `foodGroup.fillTypes` (same) |
 | `animalFood[].mixtures[]` | Mixed feed fill types of the animal type such as TMR (unique, sorted) | `animalFoodSystem:getMixturesByAnimalTypeIndex(animalTypeIndex)` (`PlaceableHusbandryFood:onPostLoad`, dump) |
@@ -788,6 +800,15 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   (measures, end by harvest or by another crop). The `APPLIED` ack of a contractor `STORAGE_TRANSFER` (harvest) adds its
   litres, of a `FIELD_WORK LIME` ticks the lime. A rewind reopens the entries that ended after the loaded game time and
   drops the seasons begun after it (owner decision 2026-10-09).
+- **Contribution margin** (Roadmap V4 R4-D, `FieldMarginService`, after the field book on every export): books the
+  difference of every `inputs` counter into the running season of the field, valued with `fillTypeCosts` at that moment
+  (helper litres × `field-margin.helper-surcharge`, farmyard manure with `manure-cost-per-liter`), and keeps the best
+  price of the product on the harvest day of every harvested entry. The `APPLIED` ack of a `MONEY_TRANSACTION` of a
+  contractor job (`CONTRACTOR_FEE`) or of a lease contract (`LEASE_PAYMENT`) becomes a line of the running season; the
+  area payment and the rotation premium are split per field when they are booked. At every month end the overhead money
+  types of the journal month that ended (and the salaries of the drivers) are distributed by area. A field book entry
+  that is merged or replaced hands its lines to the entry that takes its place; a rewind deletes the bookings after the
+  loaded game time (the counter lines follow the falling counters).
 - **Savegame reloaded without saving** (`RewindService`): `farm_facts.json` with a game time earlier than the last
   snapshot is a rewind. The next `instructions_ack.json` rebuilt by the mod from the reloaded savegame shows which
   acknowledged instructions are missing; an ack file still written before the reload (it contains acks later than

@@ -391,6 +391,18 @@ export interface FarmReportView {
   previous: FarmReportSnapshot | null;
   /** null in reports written before R32-I. */
   investors?: FarmReportInvestorLine[] | null;
+  /** Roadmap V4 R4-D6: contribution margin per crop and product; null in reports written before. */
+  margins?: FarmReportMarginLine[] | null;
+}
+
+/** Roadmap V4 R4-D6: contribution margin of a crop and product in the farm report (euro, per ha of the area with a margin). */
+export interface FarmReportMarginLine {
+  fruitType: string;
+  fillType: string | null;
+  hectares: number;
+  margin: number | null;
+  marginPerHectare: number | null;
+  n: number;
 }
 
 export interface LoanPaymentView {
@@ -1832,3 +1844,85 @@ export interface FieldBookEvaluationView {
 
 /** Roadmap V3.3 R33-W1: where the litres of a field in the farm report come from. */
 export type YieldSource = 'MEASURED' | 'ENTERED' | 'ESTIMATED';
+
+/** Roadmap V4 R4-D: kind of a line of the contribution margin. */
+export type FieldMarginKind =
+  | 'SEED'
+  | 'FERTILIZER'
+  | 'LIME'
+  | 'PROTECTION'
+  | 'MANURE'
+  | 'OTHER_INPUT'
+  | 'CONTRACTOR'
+  | 'PREMIUM'
+  | 'RENT'
+  | 'OVERHEAD'
+  | 'EXTRA_COST'
+  | 'EXTRA_REVENUE';
+
+/** Roadmap V4 R4-D: one line; `id` null = estimate, `amount` signed (costs negative), null = no price known. */
+export interface FieldMarginLine {
+  id: number | null;
+  kind: FieldMarginKind;
+  source: 'MEASURED' | 'DISTRIBUTED' | 'ENTERED' | 'ESTIMATED';
+  fillType: string | null;
+  liters: number | null;
+  helperLiters: number | null;
+  amount: number | null;
+  corrected: boolean;
+  note: string | null;
+  held: boolean;
+}
+
+/** Roadmap V4 R4-D: the calculation, signed euro; revenue / free / margin / result null without a revenue. */
+export interface FieldMarginTotals {
+  revenue: number | null;
+  directCosts: number;
+  freeOfDirectCosts: number | null;
+  contractor: number;
+  margin: number | null;
+  premiums: number;
+  rent: number;
+  overheads: number;
+  result: number | null;
+}
+
+export interface FieldMarginEntry {
+  entryId: number;
+  farmlandId: number;
+  fieldName: string | null;
+  status: 'RUNNING' | 'HARVESTED' | 'NO_HARVEST';
+  harvestYear: number | null;
+  fruitType: string | null;
+  fillType: string | null;
+  hectares: number | null;
+  liters: number | null;
+  price: { perLiter: number | null; source: 'REALISED' | 'HARVEST_DAY' | 'INTERNAL' | 'ENTERED' | null; provisional: boolean };
+  lines: FieldMarginLine[];
+  totals: FieldMarginTotals;
+  perHectare: FieldMarginTotals | null;
+  locked: boolean;
+  estimated: boolean;
+  incomplete: boolean;
+}
+
+/** Roadmap V4 R4-D5: card "Deckungsbeitrag" in the app "Bank" (period shared with the field book evaluation). */
+export interface FieldMarginView {
+  years: number;
+  defaultYears: number;
+  fromYear: number | null;
+  toYear: number | null;
+  currentYear: number | null;
+  overheads: boolean;
+  measured: boolean;
+  fields: { farmlandId: number; name: string; hectares: number | null; running: FieldMarginEntry | null; entries: FieldMarginEntry[] }[];
+  ranking: { farmlandId: number; name: string; marginPerHectare: number | null; n: number }[];
+  crops: {
+    fruitType: string;
+    fillType: string | null;
+    revenuePerHectare: number | null;
+    directCostsPerHectare: number | null;
+    marginPerHectare: number | null;
+    n: number;
+  }[];
+}

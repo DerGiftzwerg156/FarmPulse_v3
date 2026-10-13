@@ -71,7 +71,7 @@ Punkt-IDs: `R4-<Bereich><Nummer>`, z. B. `R4-D2`. Alle Pfade sind relativ zum Re
 | Phase | Bereich | Inhalt | Mod-Eingriff | Hängt ab von |
 | --- | --- | --- | --- | --- |
 | 0 | [Q – Querschnitt](#q--querschnitt) | Verbrauchs-Zähler je Feld, Einkaufspreise, Saat- und Erntefenster, Futterwerte der Ställe, Futtergruppen, Simulator, Testplan | ja | R33-Q1, R2-A7 |
-| 1 | [D – Deckungsbeitrag je Feld](#d--deckungsbeitrag-je-feld) | Kosten und Erlös je Feldbuch-Eintrag, Korrektur, Karte „Deckungsbeitrag“ in der Bank, Hofbericht | D1: ja (über Q1) | Q, R33-F, R2-B1 |
+| 1 | [D – Deckungsbeitrag je Feld](#d--deckungsbeitrag-je-feld) | Kosten und Erlös je Feldbuch-Eintrag, Korrektur, Karte „Deckungsbeitrag“ in der Bank, Hofbericht (**umgesetzt 13.10.2026**) | D1: ja (über Q1) | Q, R33-F, R2-B1 |
 | 2 | [F – Futterbilanz](#f--futterbilanz) | Bedarf, Vorrat, Reichweite je Futtergruppe, Ballen eintragen, Warnungen, Jahresbedarf | F1: ja (über Q2) | Q, R2-A7 |
 | 3 | [A – Anbauplaner](#a--anbauplaner) | Plan je Feld, Prüfungen, Prognose, Bedarf und Absicherung, Aufgaben, Plan und Ist | A2: ja (über Q1) | Q, D, F, R33-E |
 
@@ -277,6 +277,17 @@ kleine Rechnung, wie sie Landwirte und Berater nutzen:
 Jede Zeile steht in € und in €/ha (Fläche des Eintrags, R33-F1). Die laufende Saison zeigt die bisherigen Kosten ohne
 Leistung.
 
+**Stand 13.10.2026: umgesetzt** (Mod: Hooks auf Sämaschine und Spritze, `RPSimInputCounter`, Einkaufspreise;
+Backend: `field/FieldMarginService`, `api/FieldMarginController`, Migration V45; Frontend: Karte `margin-card` unter
+*Bank → Betriebsergebnis*, Abschnitt im Hofbericht). Abweichungen und Grenzen (Umsetzungshinweise in `QUESTIONS.md`):
+- Die Tabelle nennt die Kultur als Text, nicht als Farbe; das Diagramm färbt nach Vorzeichen (grün / rot).
+- In der Oberfläche werden Betrag und Preis (je 1000 l) korrigiert, eigene Zeilen mit Text und Betrag eingetragen.
+  Liter lassen sich über die API korrigieren (`POST /api/field-margin/items/{id}`), noch nicht in der Karte.
+- Der Link zwischen Rechnung und Feldbuch-Eintrag fehlt noch (die App „Feldbuch“ hat keine Sprungadresse je Eintrag).
+- Die laufende Saison zeigt die bisherigen Kosten je ha; die erwartete Leistung kommt mit dem Anbauplaner (A3).
+- Verbräuche gehen immer in die laufende Saison, die nie gesperrt ist. Zurückgehalten werden nur Prämien und
+  Gemeinkosten, die für ein abgeschlossenes Jahr gebucht werden.
+
 **Entscheidungen 13.10.2026 (`QUESTIONS.md`):**
 - Erntepreis: **erzielter Ø-Preis** der Sorte von der Ernte bis zum Ende des folgenden FS25-Jahres; ohne Verkauf der
   beste Preis am Erntetag, ohne Verkaufsstelle der Verrechnungswert (D2).
@@ -290,27 +301,27 @@ Leistung.
 
 ### R4-D1 Kosten je Feld erfassen
 
-- [ ] Das Backend liest `inputs[]` bei jedem Export. Die Differenz zum zuletzt gesehenen Zählerstand je Feld und Sorte
+- [x] Das Backend liest `inputs[]` bei jedem Export. Die Differenz zum zuletzt gesehenen Zählerstand je Feld und Sorte
   bucht es in den **laufenden Eintrag** dieses Feldes. Das passt zur Saison-Regel aus R33-F1: Mit der Ernte endet der
   Eintrag. Kalk auf der Stoppel und die Saat danach zählen schon zur nächsten Kultur.
-- [ ] Bewertet wird mit `fillTypeCosts[].costPerLiter` **zum Zeitpunkt des Verbrauchs**. `helperLiters` werden mit
+- [x] Bewertet wird mit `fillTypeCosts[].costPerLiter` **zum Zeitpunkt des Verbrauchs**. `helperLiters` werden mit
   `× 1.5` bewertet, weil das Spiel sie so bucht (Beleg Q1). Später geänderte Preise ändern alte Zeilen nicht.
-- [ ] Zuordnung zur Kostenart über die Sorte (`rpsim.formulas.field-margin.categories`): `SEEDS` und
+- [x] Zuordnung zur Kostenart über die Sorte (`rpsim.formulas.field-margin.categories`): `SEEDS` und
   Pflanz-Ware → Saatgut, `FERTILIZER` / `LIQUIDFERTILIZER` → Dünger, `LIME` → Kalk, `HERBICIDE` → Pflanzenschutz,
   `LIQUIDMANURE` / `MANURE` / `DIGESTATE` → Wirtschaftsdünger (0 €, Liter sichtbar, Entscheidung 13.10.2026).
-- [ ] Sinkt ein Zähler (Spielstand neu geladen), zieht das Backend die Differenz wieder ab, höchstens bis `0`, und nie
+- [x] Sinkt ein Zähler (Spielstand neu geladen), zieht das Backend die Differenz wieder ab, höchstens bis `0`, und nie
   aus manuell korrigierten Zeilen (wie R33-F3).
-- [ ] **Schätzung ohne `inputs[]`** (älterer Mod oder 🟡 aus Q1), als „geschätzt“ markiert:
+- [x] **Schätzung ohne `inputs[]`** (älterer Mod oder 🟡 aus Q1), als „geschätzt“ markiert:
   - Saatgut: beim Start einer Kultur im Eintrag `seedUsagePerSqm × 10000 × ha × costPerLiter(SEEDS)`; ohne
     `seedUsagePerSqm` der Konfigwert `field-margin.fallback-seed-cost-per-ha` je Kultur,
   - Dünger und Kalk: je Haken im Feldbuch (1. Düngung, 2. Düngung, gekalkt) der Konfigwert je Hektar,
   - Pflanzenschutz: je Haken „Unkraut bekämpft“ der Konfigwert je Hektar.
-- [ ] Lohnunternehmer: Der Auftrag kennt sein Feld (R31-A1). `CONTRACTOR_FEE` zählt im Eintrag, der beim Erledigen
+- [x] Lohnunternehmer: Der Auftrag kennt sein Feld (R31-A1). `CONTRACTOR_FEE` zählt im Eintrag, der beim Erledigen
   läuft. Der Preis des Lohnunternehmers enthält das Material (R31-A1, „material included“). Ein Auftrag `SOW` oder
   `FERTILIZE` bucht deshalb **kein** Saatgut und keinen Dünger zusätzlich.
-- [ ] Pacht: Die Monatsbeträge `LEASE_PAYMENT` des Feldes (`LeaseService`, `ContractBillingService`) zählen in dem
+- [x] Pacht: Die Monatsbeträge `LEASE_PAYMENT` des Feldes (`LeaseService`, `ContractBillingService`) zählen in dem
   Eintrag, der im Monat der Abbuchung läuft.
-- [ ] Prämien: Die Flächenprämie eines Jahres (`DirectPaymentService`) wird je Feld mit der erklärten Fläche
+- [x] Prämien: Die Flächenprämie eines Jahres (`DirectPaymentService`) wird je Feld mit der erklärten Fläche
   aufgeteilt, die Fruchtfolgeprämie (R2-E2) je Feld mit anderer Kultur als im Vorjahr. Beide gehen in den Eintrag mit
   dem Erntejahr der Zahlung.
 
@@ -319,9 +330,9 @@ Leistung.
 
 ### R4-D2 Leistung bewerten
 
-- [ ] Die Liter kommen aus dem Feldbuch (gemessen oder eingetragen, R33-F3). Ohne Liter fehlt die Leistung, und der
+- [x] Die Liter kommen aus dem Feldbuch (gemessen oder eingetragen, R33-F3). Ohne Liter fehlt die Leistung, und der
   Eintrag zählt in keinem Durchschnitt (wie R33-E2).
-- [ ] Der **Preis je Liter** (Entscheidung 13.10.2026):
+- [x] Der **Preis je Liter** (Entscheidung 13.10.2026):
   1. der **erzielte Ø-Preis** der Sorte aus dem Kontoauszug: alle Verkäufe mit `fillType` und `liters` (`bookings`,
      `SOLD_PRODUCTS`, `HARVEST_INCOME` und die Tool-Verkäufe `GOODS_SALE`) von der Ernte bis zum Ende des folgenden
      FS25-Jahres. Vorkontrakte und Großaufträge sind darin enthalten, weil sie an der Verkaufsstelle verkauft werden,
@@ -329,9 +340,9 @@ Leistung.
      `PriceQueryService`),
   3. ohne Verkaufsstelle (z. B. Silage, Gras, Häckselgut für die eigenen Tiere): der **Verrechnungswert** =
      `costPerLiter` × `field-margin.internal-price-share` (**0.8**).
-- [ ] Der Preis ist eine eigene Zeile mit Herkunft („erzielt“, „Marktpreis“, „Verrechnungswert“, „eingetragen“).
-- [ ] Solange noch Ware der Sorte verkauft werden kann (Zeitraum aus 1. offen), steht am Preis „vorläufig“.
-- [ ] **Stroh** aus der Getreideernte zählt nicht automatisch (es fällt als Schwad und wird nicht gezählt,
+- [x] Der Preis ist eine eigene Zeile mit Herkunft („erzielt“, „Marktpreis“, „Verrechnungswert“, „eingetragen“).
+- [x] Solange noch Ware der Sorte verkauft werden kann (Zeitraum aus 1. offen), steht am Preis „vorläufig“.
+- [x] **Stroh** aus der Getreideernte zählt nicht automatisch (es fällt als Schwad und wird nicht gezählt,
   `Combine.md`). Der Spieler kann es als eigene Leistungszeile eintragen (D4).
 
 **Beleg:** – (Backend: Kontoauszug seit 06.10.2026, Preisverlauf seit V1). 🟡 Kontoauszug `fillType` / `liters`
@@ -339,42 +350,42 @@ Leistung.
 
 ### R4-D3 Gemeinkosten nach Fläche verteilen (Schalter)
 
-- [ ] Schalter **„Gemeinkosten verteilen“** auf der Karte, **Standard an** (Entscheidung 13.10.2026), je Spielstand
+- [x] Schalter **„Gemeinkosten verteilen“** auf der Karte, **Standard an** (Entscheidung 13.10.2026), je Spielstand
   gemerkt. An: Die Beträge der Geldarten aus
   `field-margin.overhead-money-types` (Vorschlag `PURCHASE_FUEL`, `VEHICLE_RUNNING_COSTS`, `VEHICLE_REPAIR`, `AI`,
   `LEASING_COSTS`, `RPSIM_SALARY_PAYMENT` der Maschinenführer) eines Monats werden auf alle Felder mit laufendem
   Eintrag in diesem Monat nach Hektar verteilt.
-- [ ] Geldarten, die schon einem Feld zugeordnet sind (Helper-Saatgut und -Dünger aus D1), fallen nicht noch einmal in
+- [x] Geldarten, die schon einem Feld zugeordnet sind (Helper-Saatgut und -Dünger aus D1), fallen nicht noch einmal in
   die Gemeinkosten. Ohne `inputs[]` gilt das auch für `PURCHASE_SEEDS` / `PURCHASE_FERTILIZER` nicht, sie bleiben dann
   bei der Schätzung aus D1.
-- [ ] Verteilte Zeilen sind als „verteilt“ markiert und lassen sich nicht je Feld korrigieren, nur über den Schalter
+- [x] Verteilte Zeilen sind als „verteilt“ markiert und lassen sich nicht je Feld korrigieren, nur über den Schalter
   ausblenden.
 
 **Beleg:** – (Buchungsjournal `finances.byType` seit R2-B1).
 
 ### R4-D4 Korrigieren und ergänzen
 
-- [ ] Jede Zeile mit Herkunft „gemessen“ oder „geschätzt“ ist änderbar: Liter, Preis oder Betrag. Die Korrektur
+- [x] Jede Zeile mit Herkunft „gemessen“ oder „geschätzt“ ist änderbar: Liter, Preis oder Betrag. Die Korrektur
   gewinnt und ist als „eingetragen“ markiert. Ein Knopf ↺ gibt sie an die Erfassung zurück (wie R33-F4).
-- [ ] **„Kosten hinzufügen“**: eigene Zeile mit Kostenart (Auswahl), Text und Betrag, z. B. zugekaufter Mist,
+- [x] **„Kosten hinzufügen“**: eigene Zeile mit Kostenart (Auswahl), Text und Betrag, z. B. zugekaufter Mist,
   Ballen-Wickelfolie, Hagelschaden-Erstattung als negative Kosten.
-- [ ] **„Leistung hinzufügen“**: eigene Zeile mit Text, Litern und Preis, z. B. gepresstes Stroh.
-- [ ] Ein abgeschlossenes Erntejahr (R33-F5) sperrt auch die Rechnung. Späte Verbräuche erscheinen als Hinweis am
+- [x] **„Leistung hinzufügen“**: eigene Zeile mit Text, Litern und Preis, z. B. gepresstes Stroh.
+- [x] Ein abgeschlossenes Erntejahr (R33-F5) sperrt auch die Rechnung. Späte Verbräuche erscheinen als Hinweis am
   Eintrag (`field_book_notice`), wie späte Liter.
 
 **Beleg:** – (Backend und Oberfläche).
 
 ### R4-D5 Karte „Deckungsbeitrag“ in der Bank
 
-- [ ] Neue Karte in der App „Bank“ (`frontend/src/app/features/bank/`, neben Hofbuchhaltung und Hofbericht),
+- [x] Neue Karte in der App „Bank“ (`frontend/src/app/features/bank/`, neben Hofbuchhaltung und Hofbericht),
   Erst-Hinweis in `app-hints.ts`. Der Zeitraum ist **derselbe gespeicherte Zeitraum** wie in der Feldbuch-Auswertung
   (R33-E1, je Spielstand). Eine Änderung an einer der beiden Stellen gilt für beide (Entscheidung 13.10.2026).
 - [ ] Von der Rechnung eines Eintrags führt ein Link zum Eintrag im Feldbuch und umgekehrt.
-- [ ] **Tabelle Feld × Erntejahr** mit Deckungsbeitrag in €/ha je Zelle, Kultur als Farbe (Palette der Auswertung).
+- [x] **Tabelle Feld × Erntejahr** mit Deckungsbeitrag in €/ha je Zelle, Kultur als Farbe (Palette der Auswertung).
   Klick auf eine Zelle öffnet die Rechnung des Eintrags mit allen Zeilen.
-- [ ] **Rangliste** der Felder im Zeitraum: Ø Deckungsbeitrag je ha mit `n`, bestes und schwächstes Feld markiert.
-- [ ] **Je Kultur und Produkt:** Ø Leistung, Ø Direktkosten und Ø Deckungsbeitrag je ha über alle Felder, mit `n`.
-- [ ] Diagramm: Balken Deckungsbeitrag €/ha je Feld für ein gewähltes Erntejahr, negative Werte nach unten.
+- [x] **Rangliste** der Felder im Zeitraum: Ø Deckungsbeitrag je ha mit `n`, bestes und schwächstes Feld markiert.
+- [x] **Je Kultur und Produkt:** Ø Leistung, Ø Direktkosten und Ø Deckungsbeitrag je ha über alle Felder, mit `n`.
+- [x] Diagramm: Balken Deckungsbeitrag €/ha je Feld für ein gewähltes Erntejahr, negative Werte nach unten.
   Inline-SVG wie die vorhandenen Diagramme, keine Diagramm-Bibliothek.
 - [ ] Die **laufende Saison** steht je Feld oben: bisherige Kosten je ha und, mit dem Plan aus A, die erwartete
   Leistung.
@@ -383,9 +394,9 @@ Leistung.
 
 ### R4-D6 Wirkung auf Hofbericht und Charaktere
 
-- [ ] Der Hofbericht zum Jahreswechsel (`FarmReportService`) bekommt den Abschnitt **„Deckungsbeitrag je Kultur“**
+- [x] Der Hofbericht zum Jahreswechsel (`FarmReportService`) bekommt den Abschnitt **„Deckungsbeitrag je Kultur“**
   (Fläche, Ø €/ha, Summe). Chronik und Bank-Jahresgespräch lesen ihn mit (wie R33-W1).
-- [ ] Hat ein Feld **zwei Erntejahre in Folge** einen negativen Deckungsbeitrag, schreibt die Genossenschaft einmal
+- [x] Hat ein Feld **zwei Erntejahre in Folge** einen negativen Deckungsbeitrag, schreibt die Genossenschaft einmal
   einen Hinweis (Feld, Kultur, Beträge vom Backend). Die KI formuliert nur den Text. Schalter
   `field-margin.advice-enabled`.
 

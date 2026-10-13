@@ -31,9 +31,12 @@ import de.farmpulse.rpsim.repository.FieldBookCounterRepository;
 import de.farmpulse.rpsim.repository.FieldBookEntryRepository;
 import de.farmpulse.rpsim.repository.FieldBookNoticeRepository;
 import de.farmpulse.rpsim.repository.FieldBookYearRepository;
+import de.farmpulse.rpsim.repository.FieldMarginEntryRepository;
+import de.farmpulse.rpsim.repository.FieldMarginItemRepository;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
@@ -74,11 +77,18 @@ public class FieldBookService {
     private final OutboxInstructionRepository outbox;
     private final ServiceCaseRepository cases;
     private final de.farmpulse.rpsim.config.RpsimProperties props;
+    private final FieldMarginItemRepository marginItems;
+    private final FieldMarginEntryRepository marginEntries;
+    private final ApplicationEventPublisher events;
 
     public FieldBookService(SavegameRepository savegames, FieldBookEntryRepository entries, FieldBookYearRepository years,
                             FieldBookNoticeRepository notices, FieldBookCounterRepository counters, FactsService facts,
                             OutboxInstructionRepository outbox, ServiceCaseRepository cases,
-                            de.farmpulse.rpsim.config.RpsimProperties props) {
+                            de.farmpulse.rpsim.config.RpsimProperties props, FieldMarginItemRepository marginItems,
+                            FieldMarginEntryRepository marginEntries, ApplicationEventPublisher events) {
+        this.marginItems = marginItems;
+        this.marginEntries = marginEntries;
+        this.events = events;
         this.savegames = savegames;
         this.entries = entries;
         this.years = years;
@@ -169,7 +179,24 @@ public class FieldBookService {
             }
         }
         // sold, leased out or lease ended: the running season is dropped, the finished years stay (2026-10-09)
-        entries.deleteAll(running.values());
+        running.values().forEach(r -> drop(sg, r, null));
+    }
+
+    /**
+     * Roadmap V4 R4-D: removes an entry; the lines of its contribution margin move to the entry that takes its place
+     * (the costs of a dropped crop stay in the year), or go with it when none does.
+     */
+    private void drop(Savegame sg, FieldBookEntry gone, FieldBookEntry heir) {
+        for (var item : marginItems.findBySavegameAndEntryIdOrderByIdAsc(sg, gone.getId())) {
+            if (heir != null) {
+                item.setEntryId(heir.getId());
+                marginItems.save(item);
+            } else {
+                marginItems.delete(item);
+            }
+        }
+        marginEntries.findBySavegameAndEntryId(sg, gone.getId()).ifPresent(marginEntries::delete);
+        entries.delete(gone);
     }
 
     /** A new running season with the field state as it is now. */
@@ -311,21 +338,21 @@ public class FieldBookService {
         if (others.isEmpty()) {
             return;
         }
+        Optional<FieldBookEntry> harvested = others.stream().filter(o -> o.getStatus() == Status.HARVESTED).findFirst();
         if (e.getStatus() == Status.NO_HARVEST) {
-            entries.delete(e);
+            drop(sg, e, harvested.orElse(others.get(0)));
             return;
         }
-        Optional<FieldBookEntry> harvested = others.stream().filter(o -> o.getStatus() == Status.HARVESTED).findFirst();
         if (harvested.isPresent()) {
             FieldBookEntry target = harvested.get();
             if (Objects.equals(target.getFruitTypeAuto(), e.getFruitTypeAuto())) {
                 merge(target, e);
                 entries.save(target);
             }
-            entries.delete(e);
+            drop(sg, e, target);
             return;
         }
-        entries.deleteAll(others); // only entries without harvest: the harvest wins
+        others.forEach(o -> drop(sg, o, e)); // only entries without harvest: the harvest wins
     }
 
     /** Cuts of the same crop in one harvest year: litres added, measures combined with "or". */
@@ -514,7 +541,7 @@ public class FieldBookService {
             if (reopen == null) {
                 continue; // nothing of this field ended after the loaded time
             }
-            entries.deleteAll(later);
+            later.forEach(x -> drop(sg, x, reopen));
             reopen.setStatus(Status.RUNNING);
             reopen.setHarvestYear(null);
             reopen.setEndedGameTime(null);
@@ -602,6 +629,7 @@ public class FieldBookService {
                 resolve(sg, e);
             }
         }
+        events.publishEvent(new FieldYearReopenedEvent(sg.getId(), year)); // Roadmap V4 R4-D4
     }
 
     @Transactional(readOnly = true)

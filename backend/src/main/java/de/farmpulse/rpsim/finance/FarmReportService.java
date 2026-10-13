@@ -77,6 +77,7 @@ public class FarmReportService {
     private final AnnualReviewService annualReview;
     private final InvestorLedger investors;
     private final FieldBookService fieldBook;
+    private final de.farmpulse.rpsim.field.FieldMarginService fieldMargin;
     private final GameTime gameTime;
     private final RpsimProperties props;
     private final JsonMapper json;
@@ -87,7 +88,8 @@ public class FarmReportService {
                              EmployeeRepository employees, CharacterRepository characters, TrustScoreService trust,
                              VillageReputationService reputation, DiaryService diary, AnnualReviewService annualReview,
                              GameTime gameTime, RpsimProperties props, JsonMapper json, InvestorLedger investors,
-                             FieldBookService fieldBook) {
+                             FieldBookService fieldBook, de.farmpulse.rpsim.field.FieldMarginService fieldMargin) {
+        this.fieldMargin = fieldMargin;
         this.investors = investors;
         this.fieldBook = fieldBook;
         this.savegames = savegames;
@@ -157,11 +159,30 @@ public class FarmReportService {
                            List<TrustLine> trust) {
     }
 
-    /** Roadmap V3.2 R32-I6: {@code investors} = section "Investoren" (null in reports written before). */
+    /**
+     * Roadmap V4 R4-D6: the contribution margin of one crop and product of the year - area of the harvested entries,
+     * the sum of their margins (entries with a revenue only, {@code n} of them) and the margin per hectare of that area.
+     */
+    public record MarginLine(String fruitType, String fillType, double hectares, Long margin, Long marginPerHectare,
+                             int n) {
+    }
+
+    /**
+     * Roadmap V3.2 R32-I6: {@code investors} = section "Investoren" (null in reports written before). Roadmap V4 R4-D6:
+     * {@code margins} = section "Deckungsbeitrag je Kultur" (null in reports written before).
+     */
     public record Report(int year, int months, List<CategoryLine> income, List<CategoryLine> expenses, Totals totals,
                          TaxLine tax, List<FieldLine> fields, List<RainLine> rain, List<StableLine> stables,
                          int welfareInspections, Snapshot snapshot, Snapshot previous,
-                         List<InvestorLedger.ReportLine> investors) {
+                         List<InvestorLedger.ReportLine> investors, List<MarginLine> margins) {
+
+        public Report(int year, int months, List<CategoryLine> income, List<CategoryLine> expenses, Totals totals,
+                      TaxLine tax, List<FieldLine> fields, List<RainLine> rain, List<StableLine> stables,
+                      int welfareInspections, Snapshot snapshot, Snapshot previous,
+                      List<InvestorLedger.ReportLine> investors) {
+            this(year, months, income, expenses, totals, tax, fields, rain, stables, welfareInspections, snapshot,
+                    previous, investors, null);
+        }
 
         public Report(int year, int months, List<CategoryLine> income, List<CategoryLine> expenses, Totals totals,
                       TaxLine tax, List<FieldLine> fields, List<RainLine> rain, List<StableLine> stables,
@@ -273,7 +294,27 @@ public class FarmReportService {
                 .filter(p -> p.getReportYear() < year).findFirst()
                 .map(p -> json.readValue(p.getReportJson(), Report.class).snapshot()).orElse(null);
         return new Report(year, months.size(), lines(income), lines(expenses), totals, tax, fieldLines, rainLines,
-                stableLines, inspections, snapshot, previous, investors.reportLines(sg, year));
+                stableLines, inspections, snapshot, previous, investors.reportLines(sg, year), margins(sg, year));
+    }
+
+    /** R4-D6: the contribution margin per crop and product of the harvested entries of the year. */
+    private List<MarginLine> margins(Savegame sg, int year) {
+        Map<List<String>, List<de.farmpulse.rpsim.field.FieldMarginService.EntryMargin>> groups = new LinkedHashMap<>();
+        fieldMargin.ofYear(sg, year).stream().filter(m -> "HARVESTED".equals(m.status()) && m.fruitType() != null)
+                .sorted(Comparator.comparing(de.farmpulse.rpsim.field.FieldMarginService.EntryMargin::fruitType))
+                .forEach(m -> groups.computeIfAbsent(java.util.Arrays.asList(m.fruitType(), m.fillType()),
+                        k -> new ArrayList<>()).add(m));
+        List<MarginLine> out = new ArrayList<>();
+        groups.forEach((k, list) -> {
+            var withMargin = list.stream().filter(m -> m.totals().margin() != null).toList();
+            double ha = list.stream().mapToDouble(m -> m.hectares() == null ? 0 : m.hectares()).sum();
+            double haWith = withMargin.stream().mapToDouble(m -> m.hectares() == null ? 0 : m.hectares()).sum();
+            Long sum = withMargin.isEmpty() ? null
+                    : Math.round(withMargin.stream().mapToDouble(m -> m.totals().margin()).sum());
+            out.add(new MarginLine(k.get(0), k.get(1), Math.round(ha * 100) / 100.0, sum,
+                    sum == null || haWith <= 0 ? null : Math.round(sum / haWith), withMargin.size()));
+        });
+        return out;
     }
 
     /**

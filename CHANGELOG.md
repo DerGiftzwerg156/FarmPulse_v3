@@ -12,6 +12,19 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Contribution margin per field [R4-D]** (owner decisions 2026-10-13 in `QUESTIONS.md`): a new card
+  *Deckungsbeitrag* in *Bank → Betriebsergebnis*. Per field book entry: revenue (litres x the realised average price
+  of the product from the harvest to the end of the following FS25 year, else the best price on the harvest day, else
+  the purchase price x 0.8), direct costs (seed, fertiliser, lime, plant protection counted by the mod and valued with
+  the purchase price of that moment, helper purchases x 1.5, own farmyard manure 0 euro), contractor fees, premiums,
+  rent and - switch on by default - overheads distributed by area; per entry and per hectare, a table field x year,
+  ranking, averages per crop and a bar chart, in the period of the field book evaluation. Lines can be corrected and
+  own lines added; a closed year is locked. With an older mod the direct costs are estimated per hectare. The farm
+  report gets the section "Deckungsbeitrag je Kultur" and the cooperative writes once after two loss years in a row on
+  a field. Mod: hooks on `SowingMachine` / `Sprayer.onEndWorkAreaProcessing` count the consumption per own field
+  (`farm_facts.inputs`, kept in the mod savegame) and `market_context.fillTypeCosts` carries the purchase prices
+  (mod setting `costFillTypes`). Backend: `FieldMarginService`, `/api/field-margin`, migration V45, values under
+  `rpsim.formulas.field-margin.*`.
 - **Roadmap V4 groundwork - bridge contract for field margin, feed balance and crop planner [R4-Q]** (contract only,
   like R31-Q / R33-Q; the mod reads the values in the game with R4-D1 / R4-F1 / R4-A2):
   - `farm_facts.json`, optional: `inputs` = `{ farmlandId, fillType, liters, helperLiters }`, a cumulative consumption

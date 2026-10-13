@@ -535,6 +535,27 @@ export class ApiService {
   setFieldBookPeriod(years: number): Observable<M.FieldBookEvaluationView> {
     return this.post('/field-book/evaluation/period', { years });
   }
+  /** Roadmap V4 R4-D5: contribution margin per field ("Bank → Betriebsergebnis"). */
+  fieldMargin(): Observable<M.FieldMarginView> {
+    return this.get('/field-margin');
+  }
+  setFieldMarginOverheads(enabled: boolean): Observable<M.FieldMarginView> {
+    return this.post('/field-margin/overheads', { enabled });
+  }
+  /** Litres / amount (entered positive); both null give the line back to the capture. */
+  correctFieldMarginLine(id: number, liters: number | null, amount: number | null): Observable<M.FieldMarginView> {
+    return this.post(`/field-margin/items/${id}`, { liters, amount });
+  }
+  removeFieldMarginLine(id: number): Observable<M.FieldMarginView> {
+    return this.http.delete<M.FieldMarginView>(`${this.base}/field-margin/items/${id}`);
+  }
+  addFieldMarginLine(entryId: number, kind: M.FieldMarginKind, note: string | null, amount: number): Observable<M.FieldMarginView> {
+    return this.post(`/field-margin/entries/${entryId}/items`, { kind, note, liters: null, amount });
+  }
+  /** `perLiter` null gives the price back to the rule (realised, harvest day, internal value). */
+  setFieldMarginPrice(entryId: number, perLiter: number | null): Observable<M.FieldMarginView> {
+    return this.post(`/field-margin/entries/${entryId}/price`, { perLiter });
+  }
   /** Roadmap V3.2 R32-I: large investors ("Bank → Investoren"). */
   investors(): Observable<M.InvestorsView> {
     return this.get('/investors');

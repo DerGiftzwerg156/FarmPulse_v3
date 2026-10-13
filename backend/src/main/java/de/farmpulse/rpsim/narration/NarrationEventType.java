@@ -54,6 +54,8 @@ public enum NarrationEventType {
     // Roadmap V2 R2-E2: authority
     AUTHORITY_ROTATION_NOTICE,
     AUTHORITY_SUBSIDY,
+    /** Roadmap V4 R4-D6: the cooperative about a field with a negative contribution margin in two harvest years in a row. */
+    FIELD_MARGIN_ADVICE,
     AUTHORITY_INSPECTION_NOTICE,
     AUTHORITY_INSPECTION_RESULT,
     // Roadmap V2 R2-E3: family

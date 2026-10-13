@@ -167,6 +167,27 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
 - **Käufe und Verkäufe von Anlagen:** Fahrzeug-, Gebäude- und Feldkäufe zählen als Investition, ihre Verkäufe als
   Anlagenverkauf – beides senkt oder hebt dein Monatsergebnis nicht. Buchungen unter *Sonstiges* zählen je nach
   Vorzeichen als Einnahme oder Ausgabe des laufenden Betriebs.
+- **Deckungsbeitrag** (unter *Betriebsergebnis*): Für jeden Eintrag im **Feldbuch** (Feld × Erntejahr) rechnet
+  FarmPulse, was übrig blieb:
+  - **Leistung** = geerntete Liter × Preis. Der Preis ist der Ø-Preis, den du für diese Ware von der Ernte bis zum Ende
+    des folgenden FS25-Jahres wirklich erzielt hast (bis dahin „vorläufig“). Ohne Verkauf gilt der beste Preis am
+    Erntetag, ohne Verkaufsstelle (z. B. Silage für die eigenen Tiere) 80 % des Einkaufspreises.
+  - **Direktkosten:** Der Mod zählt, wie viel Saatgut, Dünger, Kalk und Pflanzenschutz deine Sämaschinen und Spritzen
+    auf dem Feld verbraucht haben, und bewertet es mit dem Einkaufspreis des Spiels zu diesem Zeitpunkt. Was ein Helfer
+    selbst gekauft hat, zählt wie im Spiel mit Aufschlag × 1,5. Eigene Gülle, Mist und Gärrest kosten nichts, die
+    Liter stehen dabei. Mit einem älteren Mod sind die Direktkosten je Hektar **geschätzt**.
+  - **Deckungsbeitrag** = Leistung − Direktkosten − Lohnunternehmer. Danach kommen **Prämien** (Flächen- und
+    Fruchtfolgeprämie des Feldes), **Pacht** und – solange der Schalter *Gemeinkosten verteilen* an ist (Standard) – die
+    nach Fläche **verteilten** Gemeinkosten (Diesel, Reparatur, Helferlohn, Leasing, Gehälter der Maschinenführer):
+    das **Feldergebnis**.
+  - Die Tabelle zeigt den Deckungsbeitrag je Hektar je Feld und Erntejahr, dazu die **Rangliste** der Felder, den
+    Durchschnitt je Kultur (immer mit *n*) und ein Balkendiagramm eines Erntejahres. Der Zeitraum ist derselbe wie in
+    der Feldbuch-Auswertung. Ein Klick auf eine Zelle zeigt die Rechnung mit allen Zeilen.
+  - Jeden gemessenen oder geschätzten Betrag kannst du **ändern** (↺ gibt ihn zurück), den Preis je 1000 l selbst
+    eintragen und **eigene Zeilen** hinzufügen, z. B. gepresstes Stroh als Leistung oder Wickelfolie als Kosten. Ein im
+    Feldbuch abgeschlossenes Erntejahr ist gesperrt; was später kommt (z. B. eine Prämie), wird erst nach dem Wieder-
+    öffnen gezählt.
+  - Hat ein Feld zwei Erntejahre in Folge einen negativen Deckungsbeitrag, schreibt dir die Genossenschaft einmal.
 - **Kontoauszug:** Unter der Hofbuchhaltung siehst du, was du wann gekauft und verkauft hast und was es gekostet
   oder eingebracht hat – Monat für Monat, filterbar nach Kategorie, mit Eingängen, Ausgängen und Saldo.
   - **Einzeln mit Uhrzeit** stehen Käufe und Verkäufe von Fahrzeugen, Gebäuden und Feldern sowie jede Buchung von
@@ -225,7 +246,8 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   dem Lohnunternehmer gezählt, aus dem Feldbuch), **eingetragen** (im Feldbuch von dir korrigiert) oder **geschätzt**
   (Fläche × Ertrag je m², wenn das Feldbuch keine Liter hat). Sind die Feldbuch-Liter ein anderes Produkt als üblich,
   steht es dabei, z. B. „Mais (Häckselgut)“. Es gilt der Stand zum Jahreswechsel; spätere Korrekturen im Feldbuch
-  ändern einen geschriebenen Hofbericht nicht. Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
+  ändern einen geschriebenen Hofbericht nicht. Seit Roadmap V4 steht im Hofbericht auch der **Deckungsbeitrag je
+  Kultur** (Fläche, Summe und je Hektar). Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
   bietet sie eine Zinssenkung auf deine laufenden Kredite an (0,25 Prozentpunkte, die Rate sinkt). Lief es schlecht,
   wird es ein ernstes Gespräch, an deinen Verträgen ändert sich aber nichts. Absagen hat keine Folgen.
   Ist ein Investor neu eingestiegen oder ist eine Rückforderung offen, spricht sie das in der Einladung an.

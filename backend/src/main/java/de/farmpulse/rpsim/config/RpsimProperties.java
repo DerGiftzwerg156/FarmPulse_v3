@@ -232,6 +232,7 @@ public class RpsimProperties {
         private DieselTheft dieselTheft = new DieselTheft();
         private Fields fields = new Fields();
         private FieldBook fieldBook = new FieldBook();
+        private FieldMargin fieldMargin = new FieldMargin();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
         private Authority authority = new Authority();
@@ -2247,5 +2248,36 @@ public class RpsimProperties {
     public static class FieldBook {
         /** The last x harvest years shown when the player has not chosen a period (1 to "alle Jahre"). */
         private int defaultYears = 5;
+    }
+
+    /** Roadmap V4 R4-D: contribution margin per field book entry (owner decisions 2026-10-13, values placeholders). */
+    @Getter @Setter
+    public static class FieldMargin {
+        /** D1: fill type -> kind of the direct costs (SEED, FERTILIZER, LIME, PROTECTION, MANURE); others OTHER_INPUT. */
+        private Map<String, String> categories = new LinkedHashMap<>(Map.of(
+                "SEEDS", "SEED", "FERTILIZER", "FERTILIZER", "LIQUIDFERTILIZER", "FERTILIZER", "LIME", "LIME",
+                "HERBICIDE", "PROTECTION", "LIQUIDMANURE", "MANURE", "MANURE", "MANURE", "DIGESTATE", "MANURE"));
+        /** D1: litres a helper bought are valued with this factor (the game books them x 1.5). */
+        private double helperSurcharge = 1.5;
+        /** D1 (owner decision 2026-10-13): own farmyard manure costs nothing; its litres are shown. */
+        private double manureCostPerLiter = 0;
+        /** D1 estimate without the counter (older mod): seed, fertilisation per tick, lime, plant protection per ha. */
+        private double fallbackSeedCostPerHa = 120;
+        private double fallbackFertilizerCostPerHa = 90;
+        private double fallbackLimeCostPerHa = 70;
+        private double fallbackProtectionCostPerHa = 60;
+        /** D2: money types of the booking statement that count as sales of a harvest product. */
+        private List<String> revenueCategories = new ArrayList<>(List.of("SOLD_PRODUCTS", "HARVEST_INCOME"));
+        /** D2: internal value of a product without a sell point = purchase price x this share. */
+        private double internalPriceShare = 0.8;
+        /** D3 (owner decision 2026-10-13): overheads are distributed unless the player switches them off. */
+        private boolean overheadsDefault = true;
+        /** D3: money types of the booking journal that are distributed by area at every month end. */
+        private List<String> overheadMoneyTypes = new ArrayList<>(List.of("PURCHASE_FUEL", "VEHICLE_RUNNING_COSTS",
+                "VEHICLE_REPAIR", "AI", "LEASING_COSTS"));
+        /** D3: the monthly salaries of the employees who drive helpers count as overheads too. */
+        private boolean overheadDriverSalaries = true;
+        /** D6: the cooperative writes once when a field had a negative margin in two harvest years in a row. */
+        private boolean adviceEnabled = true;
     }
 }
