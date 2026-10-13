@@ -622,10 +622,8 @@ end
 -- inputFruitType; without it the fruit type of the product (getFruitTypeIndexByFillTypeIndex), the same fallback
 -- Combine:addCutterArea uses for the straw (LUADOC Specializations/Combine.md).
 function RPSimGameAdapter:harvestEntry(combine, inputFruitType, outputFillType)
-    local x, _, z = getWorldTranslation(combine.rootNode)
-    local farmlandId = g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)
-    if type(farmlandId) ~= "number" or farmlandId <= 0
-        or g_farmlandManager:getFarmlandOwner(farmlandId) ~= self:getFarmId() then
+    local farmlandId = self:ownFarmlandAt(combine)
+    if farmlandId == nil then
         return nil
     end
     local fruitIndex = inputFruitType
@@ -638,6 +636,56 @@ function RPSimGameAdapter:harvestEntry(combine, inputFruitType, outputFillType)
         return nil
     end
     return { farmlandId = farmlandId, fruitType = fruitType, fillType = fillType }
+end
+
+--- Farmland of the player farm at the position of a vehicle (getWorldTranslation(rootNode),
+-- g_farmlandManager:getFarmlandIdAtWorldPosition, owner getFarmlandOwner), or nil (roads, other farms' fields).
+function RPSimGameAdapter:ownFarmlandAt(vehicle)
+    local x, _, z = getWorldTranslation(vehicle.rootNode)
+    local farmlandId = g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)
+    if type(farmlandId) ~= "number" or farmlandId <= 0
+        or g_farmlandManager:getFarmlandOwner(farmlandId) ~= self:getFarmId() then
+        return nil
+    end
+    return farmlandId
+end
+
+--- Roadmap V4 R4-D1: field and fill type of litres a sowing machine or sprayer used, or nil when it does not stand on a
+-- farmland of the player farm (leased fields belong to the player farm in the game, FARMLAND_TRANSFER TO_PLAYER).
+function RPSimGameAdapter:inputEntry(vehicle, fillTypeIndex)
+    local farmlandId = self:ownFarmlandAt(vehicle)
+    local fillType = fillTypeIndex ~= nil and g_fillTypeManager:getFillTypeNameByIndex(fillTypeIndex) or nil
+    if farmlandId == nil or type(fillType) ~= "string" or fillType == "" or fillType == "UNKNOWN" then
+        return nil
+    end
+    return { farmlandId = farmlandId, fillType = fillType }
+end
+
+--- Roadmap V4 R4-D1: purchase price per litre of the named fill types - the price the game charges a helper
+-- (g_currentMission.economyManager:getCostPerLiter(fillType, false), called so in SowingMachine.md / Sprayer.md);
+-- fallback FillTypeDesc.pricePerLiter (LUADOC FillTypes/FillTypeDesc.md). Unknown names are left out.
+function RPSimGameAdapter:collectFillTypeCosts(names)
+    local list, seen = {}, {}
+    for _, name in ipairs(names or {}) do
+        if type(name) == "string" and not seen[name] then
+            seen[name] = true
+            safe(function()
+                local index = g_fillTypeManager:getFillTypeIndexByName(name)
+                if index == nil then
+                    return nil
+                end
+                local cost = safe(function() return g_currentMission.economyManager:getCostPerLiter(index, false) end, nil)
+                if type(cost) ~= "number" then
+                    cost = safe(function() return g_fillTypeManager:getFillTypeByIndex(index).pricePerLiter end, nil)
+                end
+                if type(cost) == "number" then
+                    list[#list + 1] = { fillType = name, costPerLiter = cost }
+                end
+                return true
+            end)
+        end
+    end
+    return list
 end
 
 --- Roadmap V3.1 R31-K1: the outline of every field of the map - the nodes of field.polygonPoints (dump field/Field.lua)

@@ -22,6 +22,7 @@ function RPSimProcessor.newState(cfg)
         workforce = RPSimWorkforce.new(), -- Roadmap V2 R2-A0..A5
         prompts = RPSimPrompts.new(), -- Roadmap V2 R2-F1 / R2-F2
         harvests = RPSimHarvestCounter.new(), -- Roadmap V3.3 R33-F3
+        inputs = RPSimInputCounter.new(), -- Roadmap V4 R4-D1
     }
 end
 

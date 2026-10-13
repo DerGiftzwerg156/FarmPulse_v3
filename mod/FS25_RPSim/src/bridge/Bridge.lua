@@ -108,6 +108,10 @@ function RPSimBridge:exportFarmFacts()
     if self.harvestCounterEnabled and self.state.harvests ~= nil then
         raw.harvests = RPSimHarvestCounter.toRaw(self.state.harvests)
     end
+    -- Roadmap V4 R4-D1: only exported while an input hook is installed; otherwise the block stays missing
+    if self.inputCounterEnabled and self.state.inputs ~= nil then
+        raw.inputs = RPSimInputCounter.toRaw(self.state.inputs)
+    end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
 end
 
@@ -326,6 +330,18 @@ function RPSimBridge:exportMarketContext(force)
     end
     raw.savegameId = self.state.savegameId
     raw.storeVehicles = self.storeVehicles -- R3-V1: read once at the mission start
+    -- Roadmap V4 R4-D1: purchase prices of the configured fill types and of every fill type the counter saw
+    local names = {}
+    for _, n in ipairs(self.cfg.costFillTypes or {}) do
+        names[#names + 1] = n
+    end
+    for _, n in ipairs(RPSimInputCounter.fillTypes(self.state.inputs)) do
+        names[#names + 1] = n
+    end
+    local okCosts, costs = pcall(self.adapter.collectFillTypeCosts, self.adapter, names)
+    if okCosts then
+        raw.fillTypeCosts = costs
+    end
     if raw.detectedMods ~= nil and #raw.detectedMods > 0 and not self.conflictsLogged then
         self.conflictsLogged = true
         RPSimLog.warning("Mods with overlapping features detected: %s", table.concat(raw.detectedMods, ", "))
