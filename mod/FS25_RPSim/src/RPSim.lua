@@ -7,10 +7,10 @@
 -- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00 Farm AIJob AIJobFieldWork AIJobConveyor
 -- luacheck: globals AIJobGoTo AIJobDeliver AIJobLoadAndDeliver AISystem
 -- luacheck: globals PlayerInputComponent InputAction g_inputBinding g_i18n Combine Cutter SowingMachine Sprayer
--- luacheck: globals g_fruitTypeManager MathUtil
+-- luacheck: globals g_fruitTypeManager MathUtil PlaceableHusbandryFood
 RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil, financeHook = false,
     helperHooks = false, promptKeyHook = false, harvestHook = false, harvestCounted = false,
-    inputHook = false }
+    inputHook = false, feedHook = false }
 
 local XML_NAME = "FS25_RPSim.xml"
 
@@ -74,6 +74,7 @@ local function loadMapImpl(self)
     self.bridge.promptKeyAvailable = RPSim.promptKeyHook
     self.bridge.harvestCounterEnabled = RPSim.harvestHook
     self.bridge.inputCounterEnabled = RPSim.inputHook
+    self.bridge.feedCounterEnabled = RPSim.feedHook
     self.bridge:bootstrap()
     if Mission00 == nil or Mission00.onStartMission == nil then
         -- No start hook available: start right away (degraded, first export may be incomplete).
@@ -583,6 +584,33 @@ end
 if Sprayer ~= nil and Sprayer.onEndWorkAreaProcessing ~= nil and Utils ~= nil then
     Sprayer.onEndWorkAreaProcessing = Utils.overwrittenFunction(Sprayer.onEndWorkAreaProcessing, RPSim.sprayerEndHook)
     RPSim.inputHook = true
+end
+
+--- Roadmap V4 R4-F1: food the animals of an own husbandry ate. PlaceableHusbandryFood:updateFeeding asks
+-- animalFoodSystem:consumeFood for the eaten litres per fill type and takes each out with removeFood, which returns the
+-- litres really taken (at most the trough level). Counted only on the server: a client calls removeFood too when it
+-- reads the trough level of the server (onReadUpdateStream). A failure never disturbs the feeding.
+function RPSim.removeFoodHook(husbandry, superFunc, absDeltaFillLevel, fillTypeIndex, ...)
+    local removed = superFunc(husbandry, absDeltaFillLevel, fillTypeIndex, ...)
+    pcall(function()
+        local bridge = RPSim.bridge
+        if bridge == nil or not husbandry.isServer or type(removed) ~= "number" or removed <= 0 then
+            return
+        end
+        local entry = bridge.adapter:feedEntry(husbandry, fillTypeIndex)
+        if entry ~= nil then
+            RPSimFeedCounter.add(bridge.state.feed, entry.husbandryUniqueId, entry.fillType, removed)
+        end
+    end)
+    return removed
+end
+
+-- 🟡 manual test plan 31.2: whether a placeable type registered before this hook keeps the original removeFood
+-- (SpecializationUtil.registerFunction stores the function at registration time).
+if PlaceableHusbandryFood ~= nil and PlaceableHusbandryFood.removeFood ~= nil and Utils ~= nil then
+    PlaceableHusbandryFood.removeFood = Utils.overwrittenFunction(PlaceableHusbandryFood.removeFood,
+        RPSim.removeFoodHook)
+    RPSim.feedHook = true
 end
 
 -- booking titles (rpsim_money_*) and AI texts are looked up by engine code in the global g_i18n

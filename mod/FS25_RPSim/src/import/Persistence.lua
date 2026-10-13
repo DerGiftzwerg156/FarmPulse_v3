@@ -208,6 +208,13 @@ function RPSimPersistence.save(writer, state)
         writer:setFloat(k .. "#liters", e.liters)
         writer:setFloat(k .. "#helperLiters", e.helperLiters)
     end
+    -- Roadmap V4 R4-F1: feed counter per husbandry (sorted by RPSimFeedCounter.toRaw)
+    for i, e in ipairs(RPSimFeedCounter.toRaw(state.feed)) do
+        local k = string.format("%s.feed.counter(%d)", ROOT, i - 1)
+        writer:setString(k .. "#husbandry", e.husbandryUniqueId)
+        writer:setString(k .. "#fillType", e.fillType)
+        writer:setFloat(k .. "#liters", e.liters)
+    end
 end
 
 function RPSimPersistence.load(reader, state)
@@ -388,6 +395,16 @@ function RPSimPersistence.load(reader, state)
         if farmlandId == nil then break end
         RPSimInputCounter.restore(state.inputs, farmlandId, reader:getString(k .. "#fillType"),
             reader:getFloat(k .. "#liters"), reader:getFloat(k .. "#helperLiters"))
+        i = i + 1
+    end
+    -- Roadmap V4 R4-F1
+    state.feed = RPSimFeedCounter.new()
+    i = 0
+    while true do
+        local k = string.format("%s.feed.counter(%d)", ROOT, i)
+        local husbandry = reader:getString(k .. "#husbandry")
+        if husbandry == nil then break end
+        RPSimFeedCounter.add(state.feed, husbandry, reader:getString(k .. "#fillType"), reader:getFloat(k .. "#liters"))
         i = i + 1
     end
 end

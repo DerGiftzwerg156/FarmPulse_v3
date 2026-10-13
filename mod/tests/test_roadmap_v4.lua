@@ -1,8 +1,9 @@
 -- Roadmap V4 against the fake engine. Section D (R4-D1) is built: the consumption counter per own field with the hooks
 -- on SowingMachine / Sprayer.onEndWorkAreaProcessing, its savegame persistence and export, and the purchase prices of
--- market_context.fillTypeCosts. Still contract only (Q): the food values of the husbandries, the feed stock and the
--- food groups (R4-F1) and the sowing / harvest windows of the crops (R4-A2) - the adapter does not read them yet, so the
--- blocks are missing ("not collected"), never empty.
+-- market_context.fillTypeCosts. Section F (R4-F1) is built: the food values of the husbandries, the feed counter with
+-- the hook on PlaceableHusbandryFood.removeFood, the feed stock of the own silos and the food groups of the map. Still
+-- contract only (Q): the sowing / harvest windows of the crops (R4-A2) - the adapter does not read them yet, so the
+-- values are missing ("not collected"), never empty.
 local lu = require("luaunit")
 local helpers = require("helpers")
 local T = {}
@@ -17,24 +18,56 @@ function T.TestRoadmapV4:tearDown()
     RPSim.bridge = nil
 end
 
---- One own cow husbandry with a feeding trough (fill type 3 = SILAGE) and straw, and one crop of the map.
+--- One own cow husbandry with a feeding trough (fill type 3 = SILAGE) and straw (4 = STRAW), an own silo, a bunker
+-- silo and a production point, a foreign husbandry, and one crop of the map. The animal food system knows COW with the
+-- groups Futtermischung (TMR 6 or SILAGE) and Heu (HAY 5).
 local function feedGame()
-    local stable = { spec_husbandryAnimals = { animalType = { name = "cow", subTypes = {} } },
-        spec_husbandryFood = { litersPerHour = 41.7, capacity = 20000, fillLevels = { [3] = 6000 } },
-        spec_husbandryStraw = { inputLitersPerHour = 8.3 } }
-    function stable.getUniqueId() return "hus_00001" end
-    function stable.getOwnerFarmId() return 1 end
-    function stable.getSellPrice() return 90000 end
-    function stable.getClusters() return {} end
-    function stable.getNumOfFreeAnimalSlots() return 0 end
-    function stable.getTotalFood() return 6000 end
-    function stable.getFoodCapacity() return 20000 end
-    function stable.getFoodLitersPerHour() return 41.7 end
-    function stable.getHusbandryFillLevel() return 0 end
-    function stable.getHusbandryCapacity() return 0 end
-    local game = helpers.fakeGame({ fillTypes = { [1] = "WHEAT", [2] = "SEEDS", [3] = "SILAGE" },
-        placeables = { stable } })
-    g_currentMission.animalSystem = { getSubTypeByIndex = function() return nil end }
+    local function husbandry(id, owner)
+        local h = { isServer = true, spec_husbandryAnimals = { animalType = { name = "cow", subTypes = {} } },
+            spec_husbandryFood = { litersPerHour = 41.7, capacity = 20000, fillLevels = { [3] = 6000, [5] = 0.4 } },
+            spec_husbandryStraw = { inputLitersPerHour = 8.3, inputFillType = 4 } }
+        function h.getUniqueId() return id end
+        function h.getOwnerFarmId() return owner end
+        function h.getSellPrice() return 90000 end
+        function h.getClusters() return {} end
+        function h.getNumOfFreeAnimalSlots() return 0 end
+        function h.getTotalFood() return 6000 end
+        function h.getFoodCapacity() return 20000 end
+        function h.getFoodLitersPerHour() return 41.7 end
+        function h.getHusbandryFillLevel(_, index) return index == 4 and 1234.6 or 0 end
+        function h.getHusbandryCapacity() return 0 end
+        return h
+    end
+    local function placeable(id, spec)
+        local p = spec
+        function p.getUniqueId() return id end
+        function p.getOwnerFarmId() return 1 end
+        function p.getSellPrice() return 1000 end
+        return p
+    end
+    local silo = placeable("silo_1", { spec_silo = { storages = {
+        { capacity = 200000, fillLevels = { [3] = 50000, [1] = 9000, [4] = 0 } } } } })
+    local bunker = placeable("bunker_1", { spec_bunkerSilo = { bunkerSilo = { inputFillType = 3, fillLevel = 80000 } } })
+    local production = placeable("prod_1", { spec_productionPoint = { productionPoint = { storage = {
+        capacity = 10000, fillLevels = { [3] = 999 } } } } })
+    local game = helpers.fakeGame({ fillTypes = { [1] = "WHEAT", [2] = "SEEDS", [3] = "SILAGE", [4] = "STRAW",
+        [5] = "HAY", [6] = "FORAGE" }, placeables = { husbandry("hus_00001", 1), husbandry("hus_00009", 2), silo, bunker,
+        production } })
+    game.stable = game.placeables
+    g_currentMission.animalSystem = { getSubTypeByIndex = function() return nil end,
+        getTypes = function() return { { name = "COW", typeIndex = 1 }, { name = "HORSE", typeIndex = 3 } } end }
+    game.foodCalls = 0
+    g_currentMission.animalFoodSystem = {
+        getAnimalFood = function(_, typeIndex)
+            game.foodCalls = game.foodCalls + 1
+            if typeIndex == 1 then
+                return { groups = { { title = "Futtermischung", productionWeight = 0.4, fillTypes = { 6, 3 } },
+                    { title = "Heu", productionWeight = 0.3, fillTypes = { 5 } } } }
+            end
+            return { groups = { { title = "Heu", productionWeight = 1, fillTypes = { 5 } } } }
+        end,
+        getMixturesByAnimalTypeIndex = function(_, typeIndex) return typeIndex == 1 and { 6 } or {} end,
+    }
     FruitType = { UNKNOWN = 0 }
     local wheat = { index = 3, name = "WHEAT", regrows = false, seedUsagePerSqm = 0.1, literPerSqm = 0.9,
         fillType = { title = "Weizen" } }
@@ -44,29 +77,193 @@ local function feedGame()
         getFillTypeNameByFruitTypeIndex = function(_, i) return i == 3 and "WHEAT" or nil end,
         getFruitTypes = function() return { wheat } end,
     }
+    game.own = g_currentMission.placeableSystem.placeables[1]
+    game.foreign = g_currentMission.placeableSystem.placeables[2]
     return game
 end
 
-function T.TestRoadmapV4:testFarmFactsCarryNoFeedValuesYet()
+function T.TestRoadmapV4:testFarmFactsCarryTheFoodValuesOfTheHusbandry()
     feedGame()
     local doc = RPSimFarmFacts.build(RPSimGameAdapter.new():collectFarmFacts(), RPSimConfig.new())
-    lu.assertNil(doc.feedStock)
     local h = doc.husbandries[1]
     lu.assertEquals(h.husbandryUniqueId, "hus_00001")
-    for _, key in ipairs({ "foodLitersPerHour", "foodCapacity", "trough", "strawLitersPerHour", "straw",
-        "feedConsumed" }) do
-        lu.assertNil(h[key], key)
-    end
+    lu.assertEquals(h.foodLitersPerHour, 41.7)
+    lu.assertEquals(h.foodCapacity, 20000)
+    lu.assertEquals(h.trough, { { fillType = "SILAGE", amount = 6000 } }) -- HAY 0.4 l is below 1 l
+    lu.assertEquals(h.strawLitersPerHour, 8.3)
+    lu.assertEquals(h.straw, 1235)
+    -- the adapter alone knows no counter and no stock: missing, not empty
+    lu.assertNil(h.feedConsumed)
+    lu.assertNil(doc.feedStock)
 end
 
-function T.TestRoadmapV4:testMarketContextCarriesNoFoodGroupsOrCropWindowsYet()
-    feedGame()
-    local doc = RPSimMarketContext.build(RPSimGameAdapter.new():collectMarketContext({}), RPSimConfig.new())
-    lu.assertNil(doc.animalFood)
+function T.TestRoadmapV4:testFoodValuesFallBackToTheSpecAndStayMissingWithoutIt()
+    local game = feedGame()
+    game.own.getFoodLitersPerHour = nil
+    game.own.spec_husbandryFood.litersPerHour = 12.345
+    game.own.spec_husbandryStraw = nil
+    local h = RPSimGameAdapter.husbandryState(game.own)
+    lu.assertEquals(h.foodLitersPerHour, 12.345)
+    lu.assertNil(h.strawLitersPerHour)
+    lu.assertNil(h.straw)
+    game.own.spec_husbandryFood = nil
+    h = RPSimGameAdapter.husbandryState(game.own)
+    lu.assertNil(h.foodLitersPerHour)
+    lu.assertNil(h.trough)
+end
+
+function T.TestRoadmapV4:testMarketContextCarriesTheFoodGroupsOnce()
+    local game = feedGame()
+    local adapter = RPSimGameAdapter.new()
+    local doc = RPSimMarketContext.build(adapter:collectMarketContext({}), RPSimConfig.new())
+    lu.assertEquals(doc.animalFood, {
+        { animalType = "COW", groups = {
+            { title = "Futtermischung", productionWeight = 0.4, fillTypes = { "FORAGE", "SILAGE" } },
+            { title = "Heu", productionWeight = 0.3, fillTypes = { "HAY" } } }, mixtures = { "FORAGE" } },
+        { animalType = "HORSE", groups = { { title = "Heu", productionWeight = 1, fillTypes = { "HAY" } } },
+            mixtures = {} } })
+    adapter:collectMarketContext({})
+    lu.assertEquals(game.foodCalls, 2) -- read once per mission
+    -- the crop windows are still contract only
     lu.assertEquals(doc.fruitTypes[1].name, "WHEAT")
     for _, key in ipairs({ "seedUsagePerSqm", "litersPerSqm", "plantablePeriods", "harvestablePeriods" }) do
         lu.assertNil(doc.fruitTypes[1][key], key)
     end
+end
+
+function T.TestRoadmapV4:testNoAnimalFoodSystemNoFoodGroups()
+    feedGame()
+    g_currentMission.animalFoodSystem = nil
+    lu.assertNil(RPSimGameAdapter.new():collectAnimalFood())
+    lu.assertNil(RPSimMarketContext.build(RPSimGameAdapter.new():collectMarketContext({}), RPSimConfig.new()).animalFood)
+end
+
+local function feedBridge()
+    local b = RPSimBridge.new(RPSimConfig.new(), RPSimBridgePaths.new("/ms/"), RPSimGameAdapter.new())
+    RPSim.bridge = b
+    return b
+end
+
+--- The game's removeFood: takes at most the trough level out and returns what it took.
+local function removeFood(h, delta, index)
+    local level = h.spec_husbandryFood.fillLevels[index] or 0
+    local taken = math.min(delta, level)
+    h.spec_husbandryFood.fillLevels[index] = level - taken
+    return taken
+end
+
+function T.TestRoadmapV4:testRemoveFoodHookCountsWhatTheAnimalsOfOwnHusbandriesAte()
+    local game = feedGame()
+    local b = feedBridge()
+    lu.assertEquals(RPSim.removeFoodHook(game.own, removeFood, 250.5, 3), 250.5)
+    RPSim.removeFoodHook(game.own, removeFood, 100, 3)
+    RPSim.removeFoodHook(game.own, removeFood, 5, 5) -- only 0.4 l hay in the trough
+    -- a foreign husbandry, a client, nothing taken: not counted
+    RPSim.removeFoodHook(game.foreign, removeFood, 100, 3)
+    game.own.isServer = false
+    RPSim.removeFoodHook(game.own, removeFood, 100, 3)
+    game.own.isServer = true
+    RPSim.removeFoodHook(game.own, removeFood, 100, 2)
+    lu.assertEquals(RPSimFeedCounter.toRaw(b.state.feed), {
+        { husbandryUniqueId = "hus_00001", fillType = "HAY", liters = 0.4 },
+        { husbandryUniqueId = "hus_00001", fillType = "SILAGE", liters = 350.5 } })
+    lu.assertEquals(game.own.spec_husbandryFood.fillLevels[3], 5549.5) -- the client call still fed
+end
+
+function T.TestRoadmapV4:testRemoveFoodHookNeverDisturbsTheFeeding()
+    local game = feedGame()
+    local b = feedBridge()
+    b.adapter.feedEntry = function() error("boom") end
+    lu.assertEquals(RPSim.removeFoodHook(game.own, function() return 7 end, 7, 3), 7)
+    RPSim.bridge = nil
+    lu.assertEquals(RPSim.removeFoodHook(game.own, function() return 3 end, 3, 3), 3)
+end
+
+function T.TestRoadmapV4:testFeedCounterIsSavedLoadedAndExportedWithTheHook()
+    feedGame()
+    local b = feedBridge()
+    RPSimFeedCounter.add(b.state.feed, "hus_00001", "SILAGE", 812.6)
+    RPSimFeedCounter.add(b.state.feed, "hus_00001", "HAY", 40)
+    RPSimFeedCounter.add(b.state.feed, "hus_gone", "HAY", 10)
+    local xml = { data = {} }
+    function xml:setString(k, v) self.data[k] = v end
+    function xml:setInt(k, v) self.data[k] = v end
+    function xml:setFloat(k, v) self.data[k] = v end
+    function xml:getString(k) local v = self.data[k]; return v ~= nil and tostring(v) or nil end
+    function xml:getInt(k) return self.data[k] end
+    function xml:getFloat(k) return self.data[k] end
+    RPSimPersistence.save(xml, b.state)
+    local loaded = RPSimProcessor.newState(RPSimConfig.new())
+    RPSimPersistence.load(xml, loaded)
+    lu.assertEquals(RPSimFeedCounter.toRaw(loaded.feed), RPSimFeedCounter.toRaw(b.state.feed))
+    local fs = helpers.fakeFs()
+    b:bootstrap()
+    b.state.savegameId = "sg"
+    b:exportFarmFacts()
+    local doc = RPSimJson.decode(fs.files[b.paths.farmFacts])
+    lu.assertNil(doc.husbandries[1].feedConsumed) -- no hook installed: missing
+    b.feedCounterEnabled = true
+    b:exportFarmFacts()
+    doc = RPSimJson.decode(fs.files[b.paths.farmFacts])
+    lu.assertEquals(doc.husbandries[1].feedConsumed,
+        { { fillType = "HAY", liters = 40 }, { fillType = "SILAGE", liters = 813 } })
+    -- feed stock: the silo and the bunker silo, not the production point, not the wheat; STRAW 0 is left out
+    lu.assertEquals(doc.feedStock, { { fillType = "SILAGE", amount = 130000 } })
+end
+
+function T.TestRoadmapV4:testAHusbandryWithoutCounterGetsAnEmptyListWhileTheHookRuns()
+    feedGame()
+    local b = feedBridge()
+    local fs = helpers.fakeFs()
+    b:bootstrap()
+    b.state.savegameId = "sg"
+    b.feedCounterEnabled = true
+    b:exportFarmFacts()
+    lu.assertEquals(RPSimJson.decode(fs.files[b.paths.farmFacts]).husbandries[1].feedConsumed, {})
+end
+
+function T.TestRoadmapV4:testNoFeedStockWithoutFoodGroups()
+    feedGame()
+    g_currentMission.animalFoodSystem = nil
+    local b = feedBridge()
+    local fs = helpers.fakeFs()
+    b:bootstrap()
+    b.state.savegameId = "sg"
+    b:exportFarmFacts()
+    lu.assertNil(RPSimJson.decode(fs.files[b.paths.farmFacts]).feedStock)
+end
+
+function T.TestRoadmapV4:testPurchasePricesOfTheFeed()
+    feedGame()
+    local b = feedBridge()
+    local prices = { [3] = 0.1, [4] = 0.05, [5] = 0.12, [6] = 0.2 }
+    g_currentMission.economyManager = { getCostPerLiter = function(_, index, _) return prices[index] end }
+    local fs = helpers.fakeFs()
+    b:bootstrap()
+    b.state.savegameId = "sg"
+    b:exportMarketContext(true)
+    local costs = RPSimJson.decode(fs.files[b.paths.marketContext]).fillTypeCosts
+    local byName = {}
+    for _, c in ipairs(costs) do
+        byName[c.fillType] = c.costPerLiter
+    end
+    lu.assertEquals(byName.SILAGE, 0.1)
+    lu.assertEquals(byName.STRAW, 0.05)
+    lu.assertEquals(byName.HAY, 0.12)
+    lu.assertEquals(byName.FORAGE, 0.2)
+end
+
+function T.TestRoadmapV4:testFeedNamesAndStockArePure()
+    lu.assertEquals(RPSimFeedCounter.feedNames({ { groups = { { fillTypes = { "SILAGE", "HAY" } } },
+        mixtures = { "FORAGE", "HAY" } }, { groups = "broken" } }), { "FORAGE", "HAY", "SILAGE", "STRAW" })
+    lu.assertEquals(RPSimFeedCounter.feedNames(nil), { "STRAW" })
+    lu.assertEquals(RPSimFeedCounter.stockFromSilos({
+        { descriptor = { kind = "SILO" }, storages = { { fillLevels = { HAY = 10, WHEAT = 5 } } } },
+        { descriptor = { kind = "SILO", hasHusbandrySpec = true }, storages = { { fillLevels = { HAY = 99 } } } },
+        { descriptor = { kind = "PRODUCTION" }, storages = { { fillLevels = { HAY = 99 } } } },
+    }, { "HAY" }), { { fillType = "HAY", amount = 10 } })
+    lu.assertFalse(RPSimFeedCounter.add(RPSimFeedCounter.new(), "", "HAY", 1))
+    lu.assertFalse(RPSimFeedCounter.add(RPSimFeedCounter.new(), "h", "HAY", 0 / 0))
 end
 
 -- ------------------------------------------------------------------------------------------ R4-D1

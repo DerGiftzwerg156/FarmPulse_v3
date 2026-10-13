@@ -23,6 +23,7 @@ function RPSimProcessor.newState(cfg)
         prompts = RPSimPrompts.new(), -- Roadmap V2 R2-F1 / R2-F2
         harvests = RPSimHarvestCounter.new(), -- Roadmap V3.3 R33-F3
         inputs = RPSimInputCounter.new(), -- Roadmap V4 R4-D1
+        feed = RPSimFeedCounter.new(), -- Roadmap V4 R4-F1
     }
 end
 

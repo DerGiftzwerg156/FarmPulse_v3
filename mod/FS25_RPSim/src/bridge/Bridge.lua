@@ -112,7 +112,25 @@ function RPSimBridge:exportFarmFacts()
     if self.inputCounterEnabled and self.state.inputs ~= nil then
         raw.inputs = RPSimInputCounter.toRaw(self.state.inputs)
     end
+    -- Roadmap V4 R4-F1: what the animals ate - only while the feed hook is installed, otherwise feedConsumed stays
+    -- missing; the feed stock of the own silos needs the food groups of the map (missing without them)
+    if self.feedCounterEnabled and self.state.feed ~= nil then
+        RPSimFeedCounter.attach(self.state.feed, raw.husbandries)
+    end
+    local feedNames = self:feedNames()
+    if feedNames ~= nil then
+        raw.feedStock = RPSimFeedCounter.stockFromSilos(raw.silos, feedNames)
+    end
     return self:writeJson(self.paths.farmFacts, RPSimFarmFacts.build(raw, self.cfg))
+end
+
+--- Roadmap V4 R4-F1: the fill type names of the food groups of the map plus STRAW, nil without food groups.
+function RPSimBridge:feedNames()
+    local ok, animalFood = pcall(self.adapter.collectAnimalFood, self.adapter)
+    if not ok or type(animalFood) ~= "table" or #animalFood == 0 then
+        return nil
+    end
+    return RPSimFeedCounter.feedNames(animalFood)
 end
 
 --- Roadmap V2 R2-C1: walking all fields is not free, so they are sampled only every fieldExportIntervalMs (real
@@ -336,6 +354,10 @@ function RPSimBridge:exportMarketContext(force)
         names[#names + 1] = n
     end
     for _, n in ipairs(RPSimInputCounter.fillTypes(self.state.inputs)) do
+        names[#names + 1] = n
+    end
+    -- Roadmap V4 R4-F1: purchase prices of the feed (the value of the stock and the monthly feed costs)
+    for _, n in ipairs(self:feedNames() or {}) do
         names[#names + 1] = n
     end
     local okCosts, costs = pcall(self.adapter.collectFillTypeCosts, self.adapter, names)
