@@ -12,6 +12,14 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Roadmap V4 (`docs/architecture/ROADMAP_V4.md`):** plan for the contribution margin per field, the crop planner
+  for the next season and the feed balance of the husbandries, checked against the FS25 code. The mod would count the
+  seed, fertiliser, lime and herbicide used per own field (hooks on `SowingMachine` / `Sprayer`) and the feed eaten per
+  husbandry (`PlaceableHusbandryFood.removeFood`), and export purchase prices, sowing and harvest windows per crop,
+  trough contents, food groups and the feed stock in silos and bunker silos. The backend values each field book entry
+  (revenue, direct costs, contractor, premiums, rent, optional overheads by area), checks a crop plan (rotation,
+  sowing window, silo space, fertiliser rules), forecasts yield and margin, and shows how many days the feed lasts per
+  food group, with warnings by the animal keeper. Open proposals are in `QUESTIONS.md` (2026-10-13).
 - **Field book evaluation [R33-E]** (owner decisions 2026-10-08 / 2026-10-09 in `QUESTIONS.md`): new tab *Auswertung*
   in the app *Feldbuch*. The last x harvest years up to the current FS25 year (default
   `rpsim.formulas.field-book.default-years` = 5, selectable from 1 to all years, kept per savegame - migration V44);
