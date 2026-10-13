@@ -11,12 +11,11 @@ Betriebsleiter bekommt drei Werkzeuge, mit denen er seinen Hof wie ein echter La
    wie viele Tage es noch reicht, bis zur nächsten Ernte und über das ganze Jahr.
 
 Der Projektinhaber hat die drei Punkte am 13.10.2026 ausgewählt. Roadmap V3.3 hat „Kosten und Erlös je Feld in €“
-ausdrücklich für eine spätere Roadmap offengelassen (Abschnitt „Bewusst nicht aufgenommen“). Zu den Punkten gibt es
-**noch keine Entscheidungen des Projektinhabers**. Alles, was nicht durch den FS25-Code oder frühere Entscheidungen
-gedeckt ist, steht als Vorschlag unter [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung) und in
-`QUESTIONS.md` (Status `open`). Wie V2 bis V3.3 enthält die Datei **nur Punkte, die mit der FS25-Schnittstelle machbar
-sind**. Jeder Punkt mit Mod-Eingriff wurde am 13.10.2026 gegen den FS25-Quellcode-Dump und die Community-LUADOC geprüft
-(Quellen am Ende).
+ausdrücklich für eine spätere Roadmap offengelassen (Abschnitt „Bewusst nicht aufgenommen“). Die offenen Punkte hat
+der Projektinhaber ebenfalls am 13.10.2026 entschieden. Die Entscheidungen stehen in `QUESTIONS.md` (13.10.2026), am
+Anfang jedes Bereichs und unter [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung). Wie V2 bis V3.3 enthält
+die Datei **nur Punkte, die mit der FS25-Schnittstelle machbar sind**. Jeder Punkt mit Mod-Eingriff wurde am
+13.10.2026 gegen den FS25-Quellcode-Dump und die Community-LUADOC geprüft (Quellen am Ende).
 
 **Warum das zum Spiel passt:** Das Spiel rechnet die Verbräuche selbst aus und bucht sie nur für Helfer als Geld.
 `SowingMachine:onEndWorkAreaProcessing` rechnet das Saatgut als `fruitDesc.seedUsagePerSqm × ha × 10000 ×
@@ -72,7 +71,7 @@ Punkt-IDs: `R4-<Bereich><Nummer>`, z. B. `R4-D2`. Alle Pfade sind relativ zum Re
 | Phase | Bereich | Inhalt | Mod-Eingriff | Hängt ab von |
 | --- | --- | --- | --- | --- |
 | 0 | [Q – Querschnitt](#q--querschnitt) | Verbrauchs-Zähler je Feld, Einkaufspreise, Saat- und Erntefenster, Futterwerte der Ställe, Futtergruppen, Simulator, Testplan | ja | R33-Q1, R2-A7 |
-| 1 | [D – Deckungsbeitrag je Feld](#d--deckungsbeitrag-je-feld) | Kosten und Erlös je Feldbuch-Eintrag, Korrektur, Tab „Deckungsbeitrag“, Hofbericht | D1: ja (über Q1) | Q, R33-F, R2-B1 |
+| 1 | [D – Deckungsbeitrag je Feld](#d--deckungsbeitrag-je-feld) | Kosten und Erlös je Feldbuch-Eintrag, Korrektur, Karte „Deckungsbeitrag“ in der Bank, Hofbericht | D1: ja (über Q1) | Q, R33-F, R2-B1 |
 | 2 | [F – Futterbilanz](#f--futterbilanz) | Bedarf, Vorrat, Reichweite je Futtergruppe, Ballen eintragen, Warnungen, Jahresbedarf | F1: ja (über Q2) | Q, R2-A7 |
 | 3 | [A – Anbauplaner](#a--anbauplaner) | Plan je Feld, Prüfungen, Prognose, Bedarf und Absicherung, Aufgaben, Plan und Ist | A2: ja (über Q1) | Q, D, F, R33-E |
 
@@ -83,6 +82,10 @@ Verbräuche und Fenster **geschätzt** bzw. fehlen, und der Spieler trägt sie s
 ---
 
 ## Q – Querschnitt
+
+**Entscheidung 13.10.2026 (`QUESTIONS.md`):** Saatgut, Dünger und Futter werden wie der Ernte-Zähler aus V3.3 als
+**fortlaufende Zähler im Mod-Spielstand** geführt; Helfer-Käufe getrennt (`helperLiters`, bewertet `× 1.5` wie im
+Spiel).
 
 Wie R31-Q und R33-Q legt Q **zuerst den Vertrag** an: Schemas, DTOs, Validator, Normalisierung im Mod
 (`RPSimFarmFacts.build`, `RPSimMarketContext.build`), Simulator und Doku. Das Auslesen im Spiel folgt mit D1, F1 und A2.
@@ -204,7 +207,8 @@ Hook ruft das Original auf und zählt dessen Rückgabe, nur auf dem Server und n
   `trough[]` zwischen zwei Exporten. Steigt eine Sorte (nachgefüllt), zählt dieser Abschnitt nicht.
 - Wie `consumeFood` den Bedarf auf die Futtergruppen verteilt (nacheinander oder anteilig), steht nicht im Dump
   (`AnimalFoodSystem` fehlt). **Fallback:** Der gemessene Verbrauch je Sorte (`feedConsumed`) zeigt die echte
-  Verteilung. Solange noch nichts gemessen ist, gilt der Vorschlag aus [Offene Punkte](#offene-punkte-vorschläge-zur-bestätigung).
+  Verteilung. Solange noch nichts gemessen ist, wird nach `productionWeight` der Gruppen verteilt (Entscheidung
+  13.10.2026).
 - `environment.timeAdjustment` ist nirgends definiert. Ob `litersPerHour × 24` schon der Tagesbedarf ist, zeigt erst
   das Spiel. **Fallback:** F1 rechnet mit dem **gemessenen** Verbrauch je Spieltag und nutzt `foodLitersPerHour` nur
   für Änderungen der Herde (siehe F1).
@@ -241,7 +245,7 @@ Hook ruft das Original auf und zählt dessen Rückgabe, nur auf dem Server und n
 
 ## D – Deckungsbeitrag je Feld
 
-**Idee:** Ein neuer Tab **„Deckungsbeitrag“** in der App „Feldbuch“. Für jeden beendeten Feldbuch-Eintrag steht eine
+**Idee:** Eine neue Karte **„Deckungsbeitrag“** in der App „Bank“. Für jeden beendeten Feldbuch-Eintrag steht eine
 kleine Rechnung, wie sie Landwirte und Berater nutzen:
 
 | Zeile | Inhalt | Herkunft |
@@ -259,6 +263,17 @@ kleine Rechnung, wie sie Landwirte und Berater nutzen:
 Jede Zeile steht in € und in €/ha (Fläche des Eintrags, R33-F1). Die laufende Saison zeigt die bisherigen Kosten ohne
 Leistung.
 
+**Entscheidungen 13.10.2026 (`QUESTIONS.md`):**
+- Erntepreis: **erzielter Ø-Preis** der Sorte von der Ernte bis zum Ende des folgenden FS25-Jahres; ohne Verkauf der
+  beste Preis am Erntetag, ohne Verkaufsstelle der Verrechnungswert (D2).
+- Eigener Wirtschaftsdünger (Gülle, Mist, Gärrest): **0 €** in einer eigenen Zeile „Wirtschaftsdünger“, Liter
+  sichtbar (D1).
+- Stroh zählt **nicht** automatisch als Leistung; der Spieler kann es selbst eintragen (D2, D4).
+- Flächen- und Fruchtfolgeprämie: **eigene Zeile nach dem Deckungsbeitrag** (D1).
+- Gemeinkosten: **Schalter, Standard an** (D3).
+- Ort: **Karte „Deckungsbeitrag“ in der App „Bank“**, mit demselben gespeicherten Zeitraum wie die Feldbuch-Auswertung
+  (D5).
+
 ### R4-D1 Kosten je Feld erfassen
 
 - [ ] Das Backend liest `inputs[]` bei jedem Export. Die Differenz zum zuletzt gesehenen Zählerstand je Feld und Sorte
@@ -268,7 +283,7 @@ Leistung.
   `× 1.5` bewertet, weil das Spiel sie so bucht (Beleg Q1). Später geänderte Preise ändern alte Zeilen nicht.
 - [ ] Zuordnung zur Kostenart über die Sorte (`rpsim.formulas.field-margin.categories`): `SEEDS` und
   Pflanz-Ware → Saatgut, `FERTILIZER` / `LIQUIDFERTILIZER` → Dünger, `LIME` → Kalk, `HERBICIDE` → Pflanzenschutz,
-  `LIQUIDMANURE` / `MANURE` / `DIGESTATE` → Wirtschaftsdünger (Wert nach Offenem Punkt D1).
+  `LIQUIDMANURE` / `MANURE` / `DIGESTATE` → Wirtschaftsdünger (0 €, Liter sichtbar, Entscheidung 13.10.2026).
 - [ ] Sinkt ein Zähler (Spielstand neu geladen), zieht das Backend die Differenz wieder ab, höchstens bis `0`, und nie
   aus manuell korrigierten Zeilen (wie R33-F3).
 - [ ] **Schätzung ohne `inputs[]`** (älterer Mod oder 🟡 aus Q1), als „geschätzt“ markiert:
@@ -292,23 +307,26 @@ Leistung.
 
 - [ ] Die Liter kommen aus dem Feldbuch (gemessen oder eingetragen, R33-F3). Ohne Liter fehlt die Leistung, und der
   Eintrag zählt in keinem Durchschnitt (wie R33-E2).
-- [ ] Der **Preis je Liter** (Vorschlag, siehe Offene Punkte D2):
+- [ ] Der **Preis je Liter** (Entscheidung 13.10.2026):
   1. der **erzielte Ø-Preis** der Sorte aus dem Kontoauszug: alle Verkäufe mit `fillType` und `liters` (`bookings`,
      `SOLD_PRODUCTS`, `HARVEST_INCOME` und die Tool-Verkäufe `GOODS_SALE`) von der Ernte bis zum Ende des folgenden
      FS25-Jahres. Vorkontrakte und Großaufträge sind darin enthalten, weil sie an der Verkaufsstelle verkauft werden,
   2. ohne Verkauf: der **beste Preis** der Sorte an einer Verkaufsstelle am Tag der Ernte (Preisverlauf,
      `PriceQueryService`),
   3. ohne Verkaufsstelle (z. B. Silage, Gras, Häckselgut für die eigenen Tiere): der **Verrechnungswert** =
-     `costPerLiter` × `field-margin.internal-price-share` (Vorschlag 0.8).
+     `costPerLiter` × `field-margin.internal-price-share` (**0.8**).
 - [ ] Der Preis ist eine eigene Zeile mit Herkunft („erzielt“, „Marktpreis“, „Verrechnungswert“, „eingetragen“).
 - [ ] Solange noch Ware der Sorte verkauft werden kann (Zeitraum aus 1. offen), steht am Preis „vorläufig“.
+- [ ] **Stroh** aus der Getreideernte zählt nicht automatisch (es fällt als Schwad und wird nicht gezählt,
+  `Combine.md`). Der Spieler kann es als eigene Leistungszeile eintragen (D4).
 
 **Beleg:** – (Backend: Kontoauszug seit 06.10.2026, Preisverlauf seit V1). 🟡 Kontoauszug `fillType` / `liters`
 (Testplan 26.2). **Fallback:** Regel 2.
 
 ### R4-D3 Gemeinkosten nach Fläche verteilen (Schalter)
 
-- [ ] Schalter **„Gemeinkosten verteilen“** im Tab, Standard aus (Offener Punkt D3). An: Die Beträge der Geldarten aus
+- [ ] Schalter **„Gemeinkosten verteilen“** auf der Karte, **Standard an** (Entscheidung 13.10.2026), je Spielstand
+  gemerkt. An: Die Beträge der Geldarten aus
   `field-margin.overhead-money-types` (Vorschlag `PURCHASE_FUEL`, `VEHICLE_RUNNING_COSTS`, `VEHICLE_REPAIR`, `AI`,
   `LEASING_COSTS`, `RPSIM_SALARY_PAYMENT` der Maschinenführer) eines Monats werden auf alle Felder mit laufendem
   Eintrag in diesem Monat nach Hektar verteilt.
@@ -326,15 +344,18 @@ Leistung.
   gewinnt und ist als „eingetragen“ markiert. Ein Knopf ↺ gibt sie an die Erfassung zurück (wie R33-F4).
 - [ ] **„Kosten hinzufügen“**: eigene Zeile mit Kostenart (Auswahl), Text und Betrag, z. B. zugekaufter Mist,
   Ballen-Wickelfolie, Hagelschaden-Erstattung als negative Kosten.
+- [ ] **„Leistung hinzufügen“**: eigene Zeile mit Text, Litern und Preis, z. B. gepresstes Stroh.
 - [ ] Ein abgeschlossenes Erntejahr (R33-F5) sperrt auch die Rechnung. Späte Verbräuche erscheinen als Hinweis am
   Eintrag (`field_book_notice`), wie späte Liter.
 
 **Beleg:** – (Backend und Oberfläche).
 
-### R4-D5 Tab „Deckungsbeitrag“
+### R4-D5 Karte „Deckungsbeitrag“ in der Bank
 
-- [ ] Neuer Tab `deckungsbeitrag` der App `fieldbook` (`app-tabs.ts`), Erst-Hinweis in `app-hints.ts`. Der Zeitraum
-  ist derselbe wie in der Auswertung (R33-E1, je Spielstand gemerkt).
+- [ ] Neue Karte in der App „Bank“ (`frontend/src/app/features/bank/`, neben Hofbuchhaltung und Hofbericht),
+  Erst-Hinweis in `app-hints.ts`. Der Zeitraum ist **derselbe gespeicherte Zeitraum** wie in der Feldbuch-Auswertung
+  (R33-E1, je Spielstand). Eine Änderung an einer der beiden Stellen gilt für beide (Entscheidung 13.10.2026).
+- [ ] Von der Rechnung eines Eintrags führt ein Link zum Eintrag im Feldbuch und umgekehrt.
 - [ ] **Tabelle Feld × Erntejahr** mit Deckungsbeitrag in €/ha je Zelle, Kultur als Farbe (Palette der Auswertung).
   Klick auf eine Zelle öffnet die Rechnung des Eintrags mit allen Zeilen.
 - [ ] **Rangliste** der Felder im Zeitraum: Ø Deckungsbeitrag je ha mit `n`, bestes und schwächstes Feld markiert.
@@ -360,8 +381,9 @@ Leistung.
 und Kalk mit den gezählten Litern und dem Einkaufspreis zum Zeitpunkt der Arbeit, die Leistung mit dem erzielten Preis
 und den Deckungsbeitrag in € und €/ha. Ein Helfer mit „Helfer kauft Dünger“ erscheint mit Aufschlag `× 1.5`. Ein
 Lohnunternehmer-Auftrag erscheint als eigene Zeile. Ohne den neuen Mod sind die Direktkosten als „geschätzt“
-markiert. Ein korrigierter Preis bleibt. Mit „Gemeinkosten verteilen“ erscheint die Zeile „verteilt“, ohne ändert sich
-nur das Feldergebnis.
+markiert. Ein korrigierter Preis bleibt. Die Gemeinkosten erscheinen beim ersten Öffnen als Zeile „verteilt“;
+ausgeschaltet ändert sich nur das Feldergebnis. Die Karte steht in der App „Bank“ und zeigt denselben Zeitraum wie die
+Feldbuch-Auswertung.
 
 ---
 
@@ -371,14 +393,26 @@ nur das Feldergebnis.
 gebraucht wird, wie viel da ist (Trog, Silo, Fahrsilo, eingetragene Ballen) und **wie viele Tage es reicht**. Der
 Tierpfleger warnt rechtzeitig, nicht erst, wenn der Trog leer ist (das gibt es seit R2-A7).
 
+**Entscheidungen 13.10.2026 (`QUESTIONS.md`):**
+- Ort: **Tab „Futter“ in der App „Stall“** und eine **Kachel** auf dem Startbildschirm, solange eine Gruppe gelb oder
+  rot ist.
+- Tagesbedarf: **gemessen, Ø der letzten 3 Spieltage**, bei Änderung der Herde hochgerechnet; ohne Messung der Bedarf
+  des Spiels × 24, „geschätzt“ (F1).
+- Aufteilung auf Futtergruppen vor der ersten Messung: **nach `productionWeight`** (F1).
+- Eingetragene Ballen: Der Vorrat **sinkt mit dem Verbrauch**, nach 10 Spieltagen ohne Änderung kommt die Erinnerung
+  „bitte prüfen“ (F2).
+- Warnschwellen **in Spielmonaten**: grün ab 3 Monaten, gelb darunter, rot unter 1 Monat. Es warnt der Tierpfleger
+  (ohne Tierpfleger die Genossenschaft): Mail beim Wechsel auf Rot, danach **höchstens einmal je Spielmonat** und
+  Gruppe (F3, F4).
+
 ### R4-F1 Bedarf je Stall und Futtergruppe
 
-- [ ] **Tagesbedarf je Stall** (Vorschlag, Offener Punkt F1): der **gemessene** Verbrauch aus `feedConsumed[]` (Fallback:
-  Sinken von `trough[]`), gemittelt über die letzten `feed-balance.measure-days` Spieltage (Vorschlag 3). Ändert sich
+- [ ] **Tagesbedarf je Stall** (Entscheidung 13.10.2026): der **gemessene** Verbrauch aus `feedConsumed[]` (Fallback:
+  Sinken von `trough[]`), gemittelt über die letzten `feed-balance.measure-days` Spieltage (**3**). Ändert sich
   die Herde, wird er mit `foodLitersPerHour jetzt / foodLitersPerHour im Messzeitraum` hochgerechnet. Ohne Messung:
   `foodLitersPerHour × 24` (🟡 Q2), markiert „geschätzt“.
 - [ ] **Bedarf je Futtergruppe:** der gemessene Anteil jeder Sorte am Verbrauch, den Gruppen aus `animalFood[]`
-  zugeordnet. Ohne Messung: Verteilung nach dem Vorschlag in Offener Punkt F1.
+  zugeordnet. Ohne Messung: anteilig nach `productionWeight` der Gruppen (Entscheidung 13.10.2026).
 - [ ] **Einstreu:** `strawLitersPerHour × 24` je Stall mit Einstreu (🟡 wie oben).
 - [ ] Ställe derselben Tierart greifen auf **denselben Vorrat** zu. Die Bilanz rechnet deshalb je Tierart, die
   Reichweite des Trogs aber je Stall.
@@ -395,8 +429,8 @@ Tierpfleger warnt rechtzeitig, nicht erst, wenn der Trog leer ist (das gibt es s
 - [ ] **Sonstiger Vorrat** in Litern (z. B. Lager des Futterroboters, 🟡 Q2).
 - [ ] Ein eingetragener Vorrat **sinkt mit dem Verbrauch**: Der Verbrauch einer Sorte zieht zuerst vom eingetragenen
   Vorrat ab, sobald der automatische Vorrat dieser Sorte nicht sinkt (die Tiere fressen dann aus Ballen, die der Spieler
-  in den Trog gelegt hat). Am Eintrag steht „eingetragen vor x Tagen“, nach `feed-balance.manual-stale-days` als
-  Erinnerung „bitte prüfen“ (Vorschlag in Offener Punkt F2).
+  in den Trog gelegt hat). Am Eintrag steht „eingetragen vor x Tagen“, nach `feed-balance.manual-stale-days` (**10**
+  Spieltage) als Erinnerung „bitte prüfen“ (Entscheidung 13.10.2026).
 
 **Beleg:** ✅ Q2 (`feedStock`, `trough`, `straw`). – für eingetragenen Vorrat (Backend und Oberfläche).
 
@@ -409,16 +443,20 @@ Tierpfleger warnt rechtzeitig, nicht erst, wenn der Trog leer ist (das gibt es s
 - [ ] **Bis zur nächsten Ernte:** Für Gruppen, deren Sorten von eigenen Feldern kommen (Gras, Silage, Heu, Stroh), steht
   die nächste mögliche Ernte aus `harvestablePeriods` der passenden Kulturen (Q1) und, mit A, aus dem Plan. Reicht der
   Vorrat bis dahin nicht, steht die **Fehlmenge** in Litern.
-- [ ] Ampel je Gruppe: grün über `feed-balance.ok-days`, gelb darunter, rot unter `feed-balance.warn-days`.
+- [ ] Ampel je Gruppe in **Spielmonaten** (Entscheidung 13.10.2026): grün ab `feed-balance.ok-months` (**3**), gelb
+  darunter, rot unter `feed-balance.warn-months` (**1**). So passt sie zu jeder Einstellung „Tage je Periode“.
+- [ ] **Kachel** auf dem Startbildschirm „Futter reicht noch x Tage“ mit der knappsten Gruppe, solange eine Gruppe gelb
+  oder rot ist; Klick öffnet den Tab „Futter“.
 - [ ] Kosten des Verbrauchs je Monat und Stall, bewertet mit `fillTypeCosts` (Zukaufpreis), als Zusatzzeile.
 
 **Beleg:** – (Backend). ✅ Q1 (`harvestablePeriods`).
 
 ### R4-F4 Warnungen und Rollenspiel
 
-- [ ] Fällt eine Gruppe unter `feed-balance.warn-days`, schreibt der **Tierpfleger** (ohne Tierpfleger die
-  Genossenschaft) eine Mail mit Gruppe, Reichweite und Fehlmenge, höchstens einmal je `feed-balance.warn-cooldown-days`
-  und Gruppe. Das ergänzt die Trog-Warnung aus R2-A7 und ersetzt sie nicht.
+- [ ] Wechselt eine Gruppe auf **Rot** (unter `feed-balance.warn-months`), schreibt der **Tierpfleger** (ohne
+  Tierpfleger die Genossenschaft) eine Mail mit Gruppe, Reichweite und Fehlmenge. Bleibt sie rot, kommt höchstens
+  **einmal je Spielmonat** und Gruppe eine weitere Mail (Entscheidung 13.10.2026). Das ergänzt die Trog-Warnung aus
+  R2-A7 und ersetzt sie nicht.
 - [ ] In **Aufgaben** erscheint „Futter: Silage reicht noch 6 Tage“ mit Frist = „leer am“. Der **Kalender** zeigt das
   Datum.
 - [ ] Lässt sich die Sorte bei Nachbarn kaufen (Nachbarhandel R3-H3, nur Sorten mit eigenem Silo), führt ein Knopf
@@ -438,9 +476,10 @@ Tierpfleger warnt rechtzeitig, nicht erst, wenn der Trog leer ist (das gibt es s
 
 **Akzeptanz F:** Ein Milchviehstall mit 40 Kühen zeigt nach drei Spieltagen den gemessenen Tagesbedarf je Gruppe. Die
 Silage im Fahrsilo und das Heu im Silo erscheinen automatisch, 20 eingetragene Rundballen Stroh zählen mit. Die
-Reichweite steht in Tagen und Monaten mit Datum. Fällt die Silage unter die Warnschwelle, schreibt der Tierpfleger
-einmal, und in Aufgaben steht die Frist. Kommen zehn Kühe dazu, sinkt die Reichweite sofort. Ohne den neuen Mod zeigt
-der Tab nur den Hinweis „Mod aktualisieren“.
+Reichweite steht in Tagen und Monaten mit Datum. Fällt die Silage unter einen Spielmonat, wird sie rot, der
+Tierpfleger schreibt einmal, in Aufgaben steht die Frist, und auf dem Startbildschirm erscheint die Kachel. Im
+nächsten Spielmonat kommt höchstens eine weitere Mail. Kommen zehn Kühe dazu, sinkt die Reichweite sofort. Ohne den
+neuen Mod zeigt der Tab nur den Hinweis „Mod aktualisieren“.
 
 ---
 
@@ -449,10 +488,17 @@ der Tab nur den Hinweis „Mod aktualisieren“.
 **Idee:** Ein neuer Tab **„Anbauplanung“** in der App „Feldbuch“. Je Feld wählt der Spieler die Kultur für die
 **nächste Saison**. Das Tool prüft den Plan, rechnet Ertrag, Kosten und Deckungsbeitrag hoch und erinnert zur Saatzeit.
 
+**Entscheidungen 13.10.2026 (`QUESTIONS.md`):**
+- Der Plan gilt für die **nächste Saison je Feld**; ist im laufenden Eintrag noch nichts gesät, für diesen. Je Feld
+  genau ein offener Plan (A1).
+- Ertrag ohne Feldbuch-Werte: **Grundertrag × 1,0** (ohne Düngung und Kalk) (A3).
+- Erinnerungsmail der Genossenschaft zur Saatzeit: **Schalter, Standard an**; die Aufgabe kommt immer (A5).
+- **„Plan besprechen“** einmal je Planjahr, Antwort am nächsten Spieltag (A6).
+
 ### R4-A1 Plan anlegen
 
 - [ ] Der Plan gilt je Feld (eigen und gepachtet) für die **nächste Saison**: die Saison nach dem laufenden
-  Feldbuch-Eintrag. Ist im laufenden Eintrag noch keine Kultur gesät, gilt der Plan für ihn (Vorschlag, Offener Punkt A1).
+  Feldbuch-Eintrag. Ist im laufenden Eintrag noch keine Kultur gesät, gilt der Plan für ihn (Entscheidung 13.10.2026).
 - [ ] Je Feld: **Kultur** (Dropdown aller Kulturen der Karte, `fruitTypes[]`, plus „Brache“), **Ernteprodukt**
   (Standardprodukt oder `products[]`, z. B. Mais als Körner oder Häckselgut), optional **Saatmonat** (nur Perioden aus
   `plantablePeriods`) und eine Notiz.
@@ -485,7 +531,7 @@ Prüfungen sind **Hinweise**, keine Sperren.
   1. Ø l/ha dieses Feldes mit dieser Kultur und diesem Produkt aus der Feldbuch-Auswertung (R33-E2, Zeitraum
      `field-book.default-years`),
   2. Ø l/ha der Kultur über alle Felder,
-  3. Grundertrag `litersPerSqm × 10000 × crop-planning.base-yield-factor` (Vorschlag 1.0, der Grundertrag ohne
+  3. Grundertrag `litersPerSqm × 10000 × crop-planning.base-yield-factor` (**1.0**, der Grundertrag ohne
      Düngung und Kalk, wie R33-W1 ihn beschreibt).
 - [ ] **Erwarteter Preis:** Preis eines offenen Vorkontrakts für diese Sorte im Erntejahr (R3-M2), sonst der beste
   aktuelle Preis an einer Verkaufsstelle, sonst der Verrechnungswert aus D2.
@@ -516,8 +562,8 @@ Prüfungen sind **Hinweise**, keine Sperren.
   **Aufgaben** „Feld 12: Weizen säen“ mit Frist = Ende des Fensters. Der **Kalender** zeigt die Fenster.
 - [ ] Am Plan eines Feldes führt **„Lohnunternehmer beauftragen“** zur Karte des Lohnunternehmers (R31-A1) mit Arbeit
   `SOW` und vorbelegter Kultur. Der Auftrag folgt den Regeln von R31-A1 (Feld muss leer sein).
-- [ ] Optional (Schalter, Standard aus): Die Genossenschaft erinnert per Mail an Felder, deren Saatfenster in dieser
-  Periode endet und die noch nicht gesät sind.
+- [ ] Schalter **„Erinnerung zur Saatzeit“**, **Standard an** (Entscheidung 13.10.2026): Die Genossenschaft erinnert
+  per Mail an Felder, deren Saatfenster in dieser Periode endet und die noch nicht gesät sind.
 
 **Beleg:** – (Backend: Aufgaben, Kalender, Lohnunternehmer seit V1–V3.1).
 
@@ -526,9 +572,10 @@ Prüfungen sind **Hinweise**, keine Sperren.
 - [ ] Beginnt auf einem Feld eine neue Saison mit einer **anderen Kultur** als geplant (R33-F1), wird der Plan als
   „abweichend“ markiert. Keine Strafe, kein Vertrauensverlust.
 - [ ] Endet die Saison, steht im Tab die Zeile **Plan / Ist**: Kultur, l/ha und Deckungsbeitrag geplant und erreicht.
-- [ ] **„Plan besprechen“:** einmal je Planjahr schickt der Spieler den Plan an die Genossenschaft. Die Antwort nennt
-  die Ergebnisse der Prüfungen (A2) und die Deckung (A4), alles vom Backend gerechnet. Die KI formuliert nur den Text.
-  Ohne KI gibt es den Text aus `fallback-templates`.
+- [ ] **„Plan besprechen“:** einmal je Planjahr (Entscheidung 13.10.2026) schickt der Spieler den Plan an die
+  Genossenschaft. Die Antwort kommt am nächsten Spieltag und nennt die Ergebnisse der Prüfungen (A2) und die Deckung
+  (A4), alles vom Backend gerechnet. Die KI formuliert nur den Text. Ohne KI gibt es den Text aus
+  `fallback-templates`.
 
 **Beleg:** – (Backend).
 
@@ -542,29 +589,29 @@ einer anderen Kultur gesät, ist der Plan als „abweichend“ markiert, und nac
 
 ## Offene Punkte (Vorschläge zur Bestätigung)
 
-Nicht durch Belege oder Entscheidungen gedeckt. Bis zur Entscheidung gilt der Vorschlag nur als Platzhalter. Eingetragen
-in `QUESTIONS.md` mit Status `open`.
+Alle Punkte hat der Projektinhaber am 13.10.2026 entschieden (`QUESTIONS.md`). Die Tabelle bleibt als Nachweis, was
+vorgeschlagen und was entschieden wurde.
 
 | Punkt | Frage | Vorschlag |
 | --- | --- | --- |
-| Q1 | Wie kommen die Verbräuche ins Backend? | Kumulativer Zähler je Feld und Sorte im Mod-Spielstand, wie `harvests[]` (R33-Q1). Das Backend bucht die Differenz und zieht sie beim Zurückspulen wieder ab. |
-| D1 | Was kostet eigener Wirtschaftsdünger (Gülle, Mist, Gärrest aus dem eigenen Stall)? | `0 €` mit eigener Zeile „Wirtschaftsdünger“ (Liter sichtbar). Alternative: Verrechnungswert aus `costPerLiter`. |
-| D2 | Welcher Preis bewertet die Ernte? | Erzielter Ø-Preis der Sorte von der Ernte bis zum Ende des folgenden FS25-Jahres. Ohne Verkauf der beste Preis am Erntetag, ohne Verkaufsstelle der Verrechnungswert (`costPerLiter × 0.8`). |
-| D2 | Zählt Stroh aus der Ernte als Leistung? | Nein, solange es nicht gezählt wird (Stroh fällt als Schwad, nicht in den Tank, `Combine:addCutterArea`). Der Spieler kann es als eigene Zeile eintragen. |
-| D3 | Gemeinkosten verteilen? | Schalter im Tab, Standard **aus**. An: Diesel, Reparatur, Helfer, Leasing und Gehälter der Maschinenführer je Monat nach Hektar auf alle Felder mit laufender Saison. |
-| D1 | Gehören Prämien in den Deckungsbeitrag? | Ja, als eigene Zeile **nach** dem Deckungsbeitrag (DB ohne und mit Prämie sichtbar). |
-| D5 | Wo steht der Deckungsbeitrag? | Dritter Tab „Deckungsbeitrag“ in der App „Feldbuch“, gleicher Zeitraum wie die Auswertung. |
-| F1 | Woher kommt der Tagesbedarf? | Gemessener Verbrauch der letzten 3 Spieltage, bei Änderung der Herde mit `foodLitersPerHour` hochgerechnet. Ohne Messung `foodLitersPerHour × 24` als „geschätzt“. |
-| F1 | Wie verteilt sich der Bedarf auf die Futtergruppen, solange nichts gemessen ist? | Nach dem gemessenen Anteil je Sorte, sobald er da ist. Vorher anteilig nach `productionWeight` der Gruppen (die Gewichte ergeben zusammen 1). |
-| F2 | Ballen eintragen: sinkt der Wert von selbst? | Ja, der Verbrauch einer Sorte, die im automatischen Vorrat nicht sinkt, zieht vom eingetragenen Vorrat ab. Nach 10 Spieltagen ohne Änderung erinnert der Eintrag an eine Prüfung. |
-| F2 | Ballengrößen | Konfigliste mit Litern je Ballenart (Platzhalter, im Spiel zu messen). Der Spieler kann immer auch Liter eintragen. |
-| F3 | Warnschwellen | `ok-days` 30, `warn-days` 10 Spieltage; Ampel je Gruppe. |
-| F4 | Wer warnt? | Der Tierpfleger, ohne Tierpfleger die Genossenschaft (wie die Gülle-Warnung, R31-B3). Höchstens einmal je 5 Spieltage und Gruppe. |
-| F | Wo steht die Futterbilanz? | Neuer Tab „Futter“ in der App „Stall“, dazu eine Kachel „Futter reicht noch x Tage“ auf dem Startbildschirm, wenn eine Gruppe gelb oder rot ist. |
-| A1 | Für welche Saison gilt der Plan? | Die Saison nach dem laufenden Eintrag; ist im laufenden Eintrag noch nichts gesät, dieser. Je Feld genau ein offener Plan. |
-| A3 | Ertrag ohne Feldbuch-Werte | Grundertrag × 1.0 (ohne Düngung und Kalk). Alternative: × typischer Ertragsfaktor mit voller Düngung (Konfigwert). |
-| A5 | Erinnerung zur Saatzeit per Mail | Schalter, Standard aus. Die Aufgabe in „Aufgaben“ kommt immer. |
-| A6 | „Plan besprechen“ | Einmal je Planjahr, Antwort der Genossenschaft am nächsten Spieltag. |
+| Q1 ✅ 13.10.2026 wie vorgeschlagen | Wie kommen die Verbräuche ins Backend? | Kumulativer Zähler je Feld und Sorte im Mod-Spielstand, wie `harvests[]` (R33-Q1). Das Backend bucht die Differenz und zieht sie beim Zurückspulen wieder ab. |
+| D1 ✅ 13.10.2026 wie vorgeschlagen | Was kostet eigener Wirtschaftsdünger (Gülle, Mist, Gärrest aus dem eigenen Stall)? | `0 €` mit eigener Zeile „Wirtschaftsdünger“ (Liter sichtbar). Alternative: Verrechnungswert aus `costPerLiter`. |
+| D2 ✅ 13.10.2026 wie vorgeschlagen | Welcher Preis bewertet die Ernte? | Erzielter Ø-Preis der Sorte von der Ernte bis zum Ende des folgenden FS25-Jahres. Ohne Verkauf der beste Preis am Erntetag, ohne Verkaufsstelle der Verrechnungswert (`costPerLiter × 0.8`). |
+| D2 ✅ 13.10.2026 wie vorgeschlagen | Zählt Stroh aus der Ernte als Leistung? | Nein, solange es nicht gezählt wird (Stroh fällt als Schwad, nicht in den Tank, `Combine:addCutterArea`). Der Spieler kann es als eigene Zeile eintragen. |
+| D3 ✅ 13.10.2026: Standard **an** | Gemeinkosten verteilen? | Schalter, Standard **aus**. An: Diesel, Reparatur, Helfer, Leasing und Gehälter der Maschinenführer je Monat nach Hektar auf alle Felder mit laufender Saison. |
+| D1 ✅ 13.10.2026 wie vorgeschlagen | Gehören Prämien in den Deckungsbeitrag? | Ja, als eigene Zeile **nach** dem Deckungsbeitrag (DB ohne und mit Prämie sichtbar). |
+| D5 ✅ 13.10.2026: Karte in der App „Bank“, Zeitraum wie die Feldbuch-Auswertung | Wo steht der Deckungsbeitrag? | Dritter Tab „Deckungsbeitrag“ in der App „Feldbuch“, gleicher Zeitraum wie die Auswertung. |
+| F1 ✅ 13.10.2026 wie vorgeschlagen | Woher kommt der Tagesbedarf? | Gemessener Verbrauch der letzten 3 Spieltage, bei Änderung der Herde mit `foodLitersPerHour` hochgerechnet. Ohne Messung `foodLitersPerHour × 24` als „geschätzt“. |
+| F1 ✅ 13.10.2026 wie vorgeschlagen | Wie verteilt sich der Bedarf auf die Futtergruppen, solange nichts gemessen ist? | Nach dem gemessenen Anteil je Sorte, sobald er da ist. Vorher anteilig nach `productionWeight` der Gruppen (die Gewichte ergeben zusammen 1). |
+| F2 ✅ 13.10.2026 wie vorgeschlagen | Ballen eintragen: sinkt der Wert von selbst? | Ja, der Verbrauch einer Sorte, die im automatischen Vorrat nicht sinkt, zieht vom eingetragenen Vorrat ab. Nach 10 Spieltagen ohne Änderung erinnert der Eintrag an eine Prüfung. |
+| F2 ✅ 13.10.2026 wie vorgeschlagen | Ballengrößen | Konfigliste mit Litern je Ballenart (Platzhalter, im Spiel zu messen). Der Spieler kann immer auch Liter eintragen. |
+| F3 ✅ 13.10.2026: in Spielmonaten, grün ab 3, rot unter 1 | Warnschwellen | `ok-days` 30, `warn-days` 10 Spieltage; Ampel je Gruppe. |
+| F4 ✅ 13.10.2026: Tierpfleger; Mail beim Wechsel auf Rot, dann höchstens einmal je Spielmonat und Gruppe | Wer warnt? | Der Tierpfleger, ohne Tierpfleger die Genossenschaft (wie die Gülle-Warnung, R31-B3). Höchstens einmal je 5 Spieltage und Gruppe. |
+| F ✅ 13.10.2026 wie vorgeschlagen | Wo steht die Futterbilanz? | Neuer Tab „Futter“ in der App „Stall“, dazu eine Kachel „Futter reicht noch x Tage“ auf dem Startbildschirm, wenn eine Gruppe gelb oder rot ist. |
+| A1 ✅ 13.10.2026 wie vorgeschlagen | Für welche Saison gilt der Plan? | Die Saison nach dem laufenden Eintrag; ist im laufenden Eintrag noch nichts gesät, dieser. Je Feld genau ein offener Plan. |
+| A3 ✅ 13.10.2026 wie vorgeschlagen | Ertrag ohne Feldbuch-Werte | Grundertrag × 1.0 (ohne Düngung und Kalk). Alternative: × typischer Ertragsfaktor mit voller Düngung (Konfigwert). |
+| A5 ✅ 13.10.2026: Standard **an** | Erinnerung zur Saatzeit per Mail | Schalter, Standard aus. Die Aufgabe in „Aufgaben“ kommt immer. |
+| A6 ✅ 13.10.2026 wie vorgeschlagen | „Plan besprechen“ | Einmal je Planjahr, Antwort der Genossenschaft am nächsten Spieltag. |
 
 ---
 
