@@ -91,9 +91,20 @@ Wie R31-Q und R33-Q legt Q **zuerst den Vertrag** an: Schemas, DTOs, Validator, 
 (`RPSimFarmFacts.build`, `RPSimMarketContext.build`), Simulator und Doku. Das Auslesen im Spiel folgt mit D1, F1 und A2.
 Bis dahin fehlen die Werte.
 
+**Stand 13.10.2026: Vertrag umgesetzt** (Q1, Q2, Q3 ohne die Teile, die laut Roadmap mit D, F und A kommen). Hinweise
+zur Umsetzung (kein neues Verhalten, `QUESTIONS.md` 13.10.2026):
+- `helperLiters` steht immer im Eintrag (`0`, wenn der Mod nichts weiß) und ist nie größer als `liters`.
+- `trough[]` und `feedStock[]` fassen Einträge derselben Sorte zusammen und lassen Mengen unter 1 Liter weg;
+  `feedConsumed[]` behält Zähler mit `0`.
+- `animalFood[].groups[]` behält die Reihenfolge des Spiels (sie kann die Fressreihenfolge sein), Gruppen ohne Sorte
+  fallen weg.
+- Die Mod-Einstellung `costFillTypes` kommt mit D1, weil erst dann Preise gelesen werden.
+- Der Simulator hat neben `POST /input` und `POST /feed` den Endpunkt `POST /eat` (die Tiere fressen aus dem Trog, der
+  Futter-Zähler wächst), damit `feedConsumed[]` ohne Spiel steigt.
+
 ### R4-Q1 Bridge erweitern: Felder und Preise
 
-- [ ] `farm_facts.json`, neuer optionaler Block `inputs[]` = `{ farmlandId, fillType, liters, helperLiters }`. Das ist
+- [x] `farm_facts.json`, neuer optionaler Block `inputs[]` = `{ farmlandId, fillType, liters, helperLiters }`. Das ist
   ein **kumulativer Verbrauchs-Zähler** je eigenem Feld und Betriebsmittel, wie der Ernte-Zähler `harvests[]` aus
   R33-Q1:
   - `liters`: alles, was Sämaschinen und Spritzen auf diesem Feld verbraucht haben (Saatgut, Dünger, Flüssigdünger,
@@ -102,17 +113,18 @@ Bis dahin fehlen die Werte.
     Saatgut / Dünger“). Das Spiel bucht ihn sofort als `PURCHASE_SEEDS` / `PURCHASE_FERTILIZER` mit Aufschlag `× 1.5`.
   - Der Mod speichert die Zähler im eigenen Spielstand (`FS25_RPSim.xml`, `RPSimPersistence`, wie `harvests`). Wird ein
     älterer Spielstand geladen, sind die Zähler auf dem Stand dieses Spielstands.
-- [ ] `market_context.json`, neuer optionaler Block `fillTypeCosts[]` = `{ fillType, costPerLiter }`: der Einkaufspreis
+- [x] `market_context.json`, neuer optionaler Block `fillTypeCosts[]` = `{ fillType, costPerLiter }`: der Einkaufspreis
   des Spiels je Liter. Enthalten sind alle Sorten, die in `inputs[]` vorkommen, die Futtersorten aus `animalFood[]`
   (Q2) und die Liste der Mod-Einstellung `costFillTypes` (Standard: `SEEDS`, `FERTILIZER`, `LIQUIDFERTILIZER`, `LIME`,
-  `HERBICIDE`). Neu gebaut wie der Rest von `market_context` (alle 60 s, nur bei Änderung gelesen).
-- [ ] `market_context.json`, Block `fruitTypes[]` (R33-Q1) bekommt optional:
+  `HERBICIDE`). Neu gebaut wie der Rest von `market_context` (alle 60 s, nur bei Änderung gelesen). Umgesetzt
+  (Vertrag); die Mod-Einstellung `costFillTypes` kommt mit D1.
+- [x] `market_context.json`, Block `fruitTypes[]` (R33-Q1) bekommt optional:
   - `seedUsagePerSqm`: Saatgut in Litern je m² (für A3, Saatgutbedarf),
   - `litersPerSqm`: Grundertrag je m² (heute nur an `fields[]` für Felder mit Kultur; für A3 braucht der Planer ihn
     auch für Kulturen, die gerade nirgends stehen),
   - `plantablePeriods[]` und `harvestablePeriods[]`: die Perioden 1..12, in denen die Kultur gesät bzw. geerntet werden
     kann, im Wachstumsmodus des Spielstands (für A2 und A5).
-- [ ] `docs/dev/bridge-protocol.md` je Feld und Block mit Quelle im FS25-Code.
+- [x] `docs/dev/bridge-protocol.md` je Feld und Block mit Quelle im FS25-Code.
 
 **Beleg (Verbrauchs-Zähler):**
 - ✅ `Specializations/SowingMachine.md`, `onEndWorkAreaProcessing`: `usage = fruitDesc.seedUsagePerSqm * lastHa * 10000 *
@@ -166,19 +178,19 @@ Helper-Einstellung (`helperBuySeeds` bzw. `helperBuyFertilizer`) an ist.
 
 ### R4-Q2 Bridge erweitern: Ställe und Futter
 
-- [ ] `farm_facts.json`, Einträge in `husbandries[]` (R2-A7) bekommen optional:
+- [x] `farm_facts.json`, Einträge in `husbandries[]` (R2-A7) bekommen optional:
   - `foodLitersPerHour`: Futterbedarf des Stalls je Spielstunde,
   - `foodCapacity`: Fassungsvermögen des Futtertrogs,
   - `trough[]` = `{ fillType, amount }`: Inhalt des Trogs je Futtersorte (ganze Liter, nur `amount > 0`),
   - `strawLitersPerHour` und `straw`: Einstreu-Bedarf je Spielstunde und Stroh im Stall (nur Ställe mit Einstreu),
   - `feedConsumed[]` = `{ fillType, liters }`: **kumulativer Zähler** der gefressenen Liter je Sorte, gespeichert im
     Mod-Spielstand wie `harvests`.
-- [ ] `farm_facts.json`, neuer optionaler Block `feedStock[]` = `{ fillType, amount }`: Futtervorrat in **eigenen
+- [x] `farm_facts.json`, neuer optionaler Block `feedStock[]` = `{ fillType, amount }`: Futtervorrat in **eigenen
   Silos, Silo-Erweiterungen und Fahrsilos**. Anders als `assets.storage` ohne Produktionen (deren Lager ist kein Futter)
   und anders als `tradeStorage` mit Fahrsilos (Silage). Nur Sorten, die in `animalFood[]` vorkommen, plus `STRAW`.
-- [ ] `market_context.json`, neuer optionaler Block `animalFood[]`, einmal je Missionsstart gebaut:
+- [x] `market_context.json`, neuer optionaler Block `animalFood[]`, einmal je Missionsstart gebaut:
   `{ animalType, groups: [{ title, productionWeight, fillTypes[] }], mixtures[] }` für jede Tierart der Karte.
-- [ ] Dokumentation, Validator und Normalisierung wie Q1.
+- [x] Dokumentation, Validator und Normalisierung wie Q1.
 
 **Beleg (Dump `animals/husbandry/placeables/`):**
 - ✅ `PlaceableHusbandryFood.lua`, `onHusbandryAnimalsUpdate`: `litersPerHour = Σ subType.input.food:get(age) ×
@@ -226,19 +238,21 @@ Hook ruft das Original auf und zählt dessen Rückgabe, nur auf dem Server und n
   - mit F: `feed_manual_stock` (eingetragene Ballen und sonstiger Vorrat), `feed_consumption_day` (Verbrauch je Stall,
     Sorte und Spieltag), `feed_counter`,
   - mit A: `crop_plan` (Plan je Feld und Saison, Quelle, Abweichung).
-- [ ] Bridge-Simulator: Szenario `hofplanung` mit zwei Ackerfeldern (Säen, Düngen, Kalken, Ernte, steigendes
-  `inputs[]`), einem Milchviehstall mit `trough[]`, `feedStock[]` (Silage im Fahrsilo, Heu im Silo) und steigendem
-  `feedConsumed[]`, dazu `animalFood[]`, `fillTypeCosts[]` und die neuen Werte an `fruitTypes[]`. Steuer-Endpunkte
-  `POST /input` (Verbrauch auf ein Feld buchen) und `POST /feed` (Futter in Trog oder Silo legen).
+- [x] Bridge-Simulator: Szenario `hofplanung` mit zwei Feldern (Weizen gesät und gedüngt, Gras nach dem ersten
+  Schnitt, steigendes `inputs[]`), einem Milchviehstall mit `trough[]`, `feedStock[]` (Silage im Fahrsilo, Heu im Silo)
+  und steigendem `feedConsumed[]`, dazu `animalFood[]`, `fillTypeCosts[]` und die neuen Werte an `fruitTypes[]`.
+  Steuer-Endpunkte `POST /input` (Verbrauch auf ein Feld buchen), `POST /feed` (Futter in Trog oder Silo legen oder
+  herausnehmen) und `POST /eat` (die Tiere fressen aus dem Trog).
 - [ ] Mod-Tests mit gemockten FS25-Globals: Normalisierung aller neuen Felder (`test_farm_facts.lua`,
   `test_market_context.lua`) und neu `test_roadmap_v4.lua` (Hooks zählen nur eigene Flurstücke und Ställe, nur auf dem
-  Server, Speichern und Laden der Zähler, Helper-Liter).
-- [ ] Backend: `BridgeValidatorTest`, `SimulatorScenariosEndToEndTest`, Tests je Regel kommen mit D, F und A.
+  Server, Speichern und Laden der Zähler, Helper-Liter). Umgesetzt: Normalisierung; `test_roadmap_v4.lua` hält fest,
+  dass der Adapter die Werte noch nicht liest. Die Tests der Hooks kommen mit D1 und F1.
+- [x] Backend: `BridgeValidatorTest`, `SimulatorScenariosEndToEndTest`, Tests je Regel kommen mit D, F und A.
 - [ ] Neue Werte unter `rpsim.formulas.field-margin.*`, `rpsim.formulas.feed-balance.*` und
   `rpsim.formulas.crop-planning.*` samt `docs/dev/configuration-reference.md` (`ConfigurationReferenceDocTest`), jeweils
   mit dem Bereich.
 - [ ] Spieler-Doku `docs/user-guide/funktionen.md` mit jedem Bereich, `CHANGELOG.md`.
-- [ ] `docs/dev/manual-test-plan.md`: Abschnitt **„30. Roadmap V4 im echten FS25“**, eine Zeile je 🟡 und je
+- [x] `docs/dev/manual-test-plan.md`: Abschnitt **„30. Roadmap V4 im echten FS25“**, eine Zeile je 🟡 und je
   Akzeptanzkriterium.
 
 ---

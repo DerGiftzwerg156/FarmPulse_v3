@@ -12,6 +12,20 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Roadmap V4 groundwork - bridge contract for field margin, feed balance and crop planner [R4-Q]** (contract only,
+  like R31-Q / R33-Q; the mod reads the values in the game with R4-D1 / R4-F1 / R4-A2):
+  - `farm_facts.json`, optional: `inputs` = `{ farmlandId, fillType, liters, helperLiters }`, a cumulative consumption
+    counter per own field and fill type (seed, fertiliser, lime, herbicide, slurry ...; `helperLiters` = the part a
+    helper bought), `feedStock` = feed in own silos, silo extensions and bunker silos, and per husbandry
+    `foodLitersPerHour`, `foodCapacity`, `trough`, `strawLitersPerHour`, `straw` and the feed counter `feedConsumed`.
+  - `market_context.json`, optional: `fillTypeCosts` (purchase price per litre), `animalFood` (food groups per animal
+    type in the order of the game, mixtures) and per crop `seedUsagePerSqm`, `litersPerSqm`, `plantablePeriods` and
+    `harvestablePeriods`.
+  - Normalised in `RPSimFarmFacts.build` / `RPSimMarketContext.build`; `BridgeDtos` / `BridgeValidator` read and check
+    them. No table and no configuration value yet (they come with D, F and A).
+  - Bridge simulator: scenario `hofplanung`, control endpoints `POST /input`, `POST /feed` and `POST /eat`; counters,
+    trough and stock are part of the simulated savegame.
+  - Docs: bridge protocol with FS25 sources, manual test plan section 30, testing, simulator README, roadmap status.
 - **Roadmap V4 (`docs/architecture/ROADMAP_V4.md`):** plan for the contribution margin per field, the crop planner
   for the next season and the feed balance of the husbandries, checked against the FS25 code. The mod would count the
   seed, fertiliser, lime and herbicide used per own field (hooks on `SowingMachine` / `Sprayer`) and the feed eaten per

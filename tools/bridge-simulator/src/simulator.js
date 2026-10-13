@@ -267,6 +267,14 @@ export class BridgeSimulator {
     // (farm_facts.harvests) only where the scenario has them; all other scenarios stand for a mod without them
     this.fruitTypes = preset.fruitTypes ? structuredClone(preset.fruitTypes) : null;
     this.harvests = preset.harvests ? structuredClone(preset.harvests) : null;
+    // Roadmap V4 (R4-Q3): a mod with the R4-Q1 / R4-Q2 contract (roadmapV4) exports the consumption counter per field
+    // (inputs), the feed stock (feedStock), the purchase prices (fillTypeCosts) and the food groups (animalFood); the
+    // food values of a husbandry come with its scenario entry (trough, feedConsumed ...)
+    this.roadmapV4 = preset.roadmapV4 === true;
+    this.inputs = this.roadmapV4 ? structuredClone(preset.inputs ?? []) : null;
+    this.feedStock = this.roadmapV4 ? structuredClone(preset.feedStock ?? []) : null;
+    this.fillTypeCosts = this.roadmapV4 ? structuredClone(preset.fillTypeCosts ?? []) : null;
+    this.animalFood = this.roadmapV4 ? structuredClone(preset.animalFood ?? []) : null;
     this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
     this.prompts = []; // R2-F2: yes/no questions shown to the "player" (waiting for an answer)
     this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
@@ -290,7 +298,15 @@ export class BridgeSimulator {
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, processed: this.processed, priceEvents: this.priceEvents,
       contractReports: this.contractReports, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State() });
+      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State(), ...this.roadmapV4State() });
+  }
+
+  /**
+   * Roadmap V4 state the mod keeps in its savegame XML or that changes in the game: the consumption counter (R4-Q1) and
+   * the feed stock (R4-Q2); trough and feed counter live in the husbandries.
+   */
+  roadmapV4State() {
+    return { inputs: this.inputs, feedStock: this.feedStock };
   }
 
   /** Roadmap V3.3 state the mod keeps in its savegame XML: the harvest counter (R33-Q1). */
@@ -368,7 +384,7 @@ export class BridgeSimulator {
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
         'storage', 'farmlands', 'calendar', 'finances', 'bookings', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
         'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions', 'missionLimitReached',
-        'vehiclePositions', 'stables', 'harvests']) {
+        'vehiclePositions', 'stables', 'harvests', 'inputs', 'feedStock']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -381,7 +397,7 @@ export class BridgeSimulator {
       contractReports: this.contractReports, gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State() };
+      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State(), ...this.roadmapV4State() };
     this.writeJson(this.paths.savegame, s);
   }
 
@@ -551,7 +567,8 @@ export class BridgeSimulator {
         // R32-Q1: milk sorts in the storage like the mod (whole litres, only amount + capacity > 0, sorted)
         ...(h.storage ? { storage: h.storage.map((s) => ({ fillType: s.fillType, amount: Math.max(0, Math.round(s.amount)),
           capacity: Math.max(0, Math.round(s.capacity)) })).filter((s) => s.amount + s.capacity > 0)
-          .sort((a, b) => a.fillType.localeCompare(b.fillType)) } : {}) }))
+          .sort((a, b) => a.fillType.localeCompare(b.fillType)) } : {}),
+        ...this.feedExport(h) }))
         .sort((a, b) => a.husbandryUniqueId.localeCompare(b.husbandryUniqueId));
     }
     if (this.fields) {
@@ -1038,6 +1055,108 @@ export class BridgeSimulator {
     return this.roadmapV33Blocks().harvests;
   }
 
+  // --------------------------------------------------------------- Roadmap V4 (R4-Q3)
+  /** Litres per fill type like the mod: whole litres, only amounts >= minimum, sorted by fillType. */
+  static litersByFillType(list, key, minimum) {
+    return list.map((e) => ({ fillType: e.fillType, [key]: Math.max(0, Math.round(e[key])) }))
+      .filter((e) => e[key] >= minimum).sort((a, b) => a.fillType.localeCompare(b.fillType));
+  }
+
+  /** R4-Q2: the food values of a husbandry rounded like the mod's buildHusbandries; nothing where the entry has none. */
+  feedExport(h) {
+    const out = {};
+    if (typeof h.foodLitersPerHour === 'number') out.foodLitersPerHour = Math.round(h.foodLitersPerHour * 100) / 100;
+    if (typeof h.foodCapacity === 'number') out.foodCapacity = Math.round(h.foodCapacity);
+    if (h.trough) out.trough = BridgeSimulator.litersByFillType(h.trough, 'amount', 1);
+    if (typeof h.strawLitersPerHour === 'number') out.strawLitersPerHour = Math.round(h.strawLitersPerHour * 100) / 100;
+    if (typeof h.straw === 'number') out.straw = Math.max(0, Math.round(h.straw));
+    if (h.feedConsumed) out.feedConsumed = BridgeSimulator.litersByFillType(h.feedConsumed, 'liters', 0);
+    return out;
+  }
+
+  /** Adds the optional Roadmap V4 farm_facts blocks (consumption counter, feed stock) for a mod with the contract. */
+  roadmapV4Blocks() {
+    if (!this.roadmapV4) return {};
+    return {
+      inputs: this.inputs.map((e) => ({ farmlandId: e.farmlandId, fillType: e.fillType,
+        liters: Math.max(0, Math.round(e.liters)), helperLiters: Math.max(0, Math.min(Math.round(e.helperLiters),
+          Math.round(e.liters))) }))
+        .sort((a, b) => a.farmlandId - b.farmlandId || a.fillType.localeCompare(b.fillType)),
+      feedStock: BridgeSimulator.litersByFillType(this.feedStock, 'amount', 1),
+    };
+  }
+
+  /**
+   * Control API (R4-Q3): a sowing machine or sprayer uses `liters` of `fillType` on an own field, like the planned hooks
+   * on SowingMachine / Sprayer.onEndWorkAreaProcessing (R4-D1); `helper` = a helper bought it while working. The
+   * cumulative counter is part of the savegame (a reload without saving takes it back).
+   */
+  addInput(farmlandId, fillType, liters, helper = false) {
+    if (!this.roadmapV4) throw new Error(`scenario ${this.scenario} exports no inputs`);
+    if (!Number.isInteger(farmlandId)) throw new Error('farmlandId (integer) is required');
+    if (typeof fillType !== 'string' || !fillType) throw new Error('fillType is required');
+    if (typeof liters !== 'number' || !Number.isFinite(liters) || liters <= 0) throw new Error('liters must be > 0');
+    if (!this.farmlands.some((f) => f.farmlandId === farmlandId && f.ownerFarmId === 1)) {
+      throw new Error(`farmland ${farmlandId} is not owned by the player`);
+    }
+    let counter = this.inputs.find((e) => e.farmlandId === farmlandId && e.fillType === fillType);
+    if (!counter) {
+      counter = { farmlandId, fillType, liters: 0, helperLiters: 0 };
+      this.inputs.push(counter);
+    }
+    counter.liters += liters;
+    if (helper === true) counter.helperLiters += liters;
+    this.log(`input field ${farmlandId} +${liters} l ${fillType}${helper === true ? ' (helper bought)' : ''}`);
+    return this.roadmapV4Blocks().inputs;
+  }
+
+  /**
+   * Control API (R4-Q3): feed is put into (amount > 0) or taken out of (amount < 0) the silos / bunker silos
+   * (`husbandryUniqueId` missing) or the trough of a husbandry. Never below 0, the trough never above its capacity.
+   */
+  changeFeed({ husbandryUniqueId, fillType, amount } = {}) {
+    if (!this.roadmapV4) throw new Error(`scenario ${this.scenario} exports no feed values`);
+    if (typeof fillType !== 'string' || !fillType) throw new Error('fillType is required');
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount === 0) throw new Error('amount must be != 0');
+    let list = this.feedStock;
+    let capacity = Infinity;
+    if (husbandryUniqueId !== undefined) {
+      const h = this.husbandries?.find((x) => x.husbandryUniqueId === husbandryUniqueId);
+      if (!h?.trough) throw new Error(`husbandry ${husbandryUniqueId} has no trough`);
+      list = h.trough;
+      capacity = (h.foodCapacity ?? Infinity) - list.reduce((sum, e) => sum + e.amount, 0);
+    }
+    let entry = list.find((e) => e.fillType === fillType);
+    if (!entry) {
+      entry = { fillType, amount: 0 };
+      list.push(entry);
+    }
+    entry.amount = Math.max(0, entry.amount + Math.min(amount, capacity));
+    return { husbandryUniqueId: husbandryUniqueId ?? null, fillType, amount: Math.round(entry.amount) };
+  }
+
+  /**
+   * Control API (R4-Q3): the animals of a husbandry eat `liters` of `fillType` from the trough, like the planned hook on
+   * PlaceableHusbandryFood.removeFood (R4-F1): the trough falls (never below 0) and the feed counter grows by what was
+   * really taken.
+   */
+  eat(husbandryUniqueId, fillType, liters) {
+    if (!this.roadmapV4) throw new Error(`scenario ${this.scenario} exports no feed values`);
+    const h = this.husbandries?.find((x) => x.husbandryUniqueId === husbandryUniqueId);
+    if (!h?.trough || !h.feedConsumed) throw new Error(`husbandry ${husbandryUniqueId} has no trough`);
+    if (typeof liters !== 'number' || !Number.isFinite(liters) || liters <= 0) throw new Error('liters must be > 0');
+    const entry = h.trough.find((e) => e.fillType === fillType);
+    const taken = Math.min(liters, entry?.amount ?? 0);
+    if (entry) entry.amount -= taken;
+    let counter = h.feedConsumed.find((e) => e.fillType === fillType);
+    if (!counter) {
+      counter = { fillType, liters: 0 };
+      h.feedConsumed.push(counter);
+    }
+    counter.liters += taken;
+    return { husbandryUniqueId, fillType, taken, ...this.feedExport(h) };
+  }
+
   // --------------------------------------------------------------- exports
   buildFarmFacts() {
     const storage = Object.entries(this.storage).filter(([, s]) => s.amount > 0)
@@ -1083,6 +1202,7 @@ export class BridgeSimulator {
       ...this.roadmapV3Blocks(),
       ...this.roadmapV31Blocks(),
       ...this.roadmapV33Blocks(),
+      ...this.roadmapV4Blocks(),
     };
   }
 
@@ -1122,6 +1242,11 @@ export class BridgeSimulator {
       // Roadmap V3.3 R33-Q1: the crops of the map, only in scenarios that have them
       ...(this.fruitTypes ? { fruitTypes: structuredClone(this.fruitTypes)
         .sort((a, b) => a.name.localeCompare(b.name)) } : {}),
+      // Roadmap V4 R4-Q1 / R4-Q2: purchase prices and food groups, only from a mod with the contract
+      ...(this.fillTypeCosts ? { fillTypeCosts: structuredClone(this.fillTypeCosts)
+        .sort((a, b) => a.fillType.localeCompare(b.fillType)) } : {}),
+      ...(this.animalFood ? { animalFood: structuredClone(this.animalFood)
+        .sort((a, b) => a.animalType.localeCompare(b.animalType)) } : {}),
     };
   }
 

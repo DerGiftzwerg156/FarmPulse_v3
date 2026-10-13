@@ -625,3 +625,25 @@ row's issue and, if the fallback is needed, switch the implementation to it.
 | 29.10 | Acceptance F (R33-F) | Fertilise a wheat field twice, lime it, roll it, harvest it, mulch the stubble; cut grass three times in one year; correct a litre value; close a year | the entry shows the harvest year, all ticks and the counted litres; the mulching is in the next running season; the three cuts are one entry; the corrected value stays; the closed year takes no change and shows late detections as a notice | – |
 | 29.11 | Acceptance E (R33-E) | Open *Feldbuch → Auswertung* | the last 5 harvest years; "alle Jahre" shows older ones; the bar chart of one field; the comparison per crop with `n`; grain maize and chaff apart | – |
 | 29.12 | Acceptance W (R33-W) | Look at the farm report and the chronicle of a year with counted litres | they show the litres of the field book marked "gemessen" / "eingetragen", maize as chaff as "Mais (Häckselgut)"; fields without them keep the estimate marked "geschätzt" | – |
+
+## 30. Roadmap V4 in the real FS25
+
+Every point of [`ROADMAP_V4.md`](../architecture/ROADMAP_V4.md) marked 🟡 ("Im Spiel prüfen") gets one row here, the
+acceptance criteria follow with their sections. R4-Q fixes the contract only
+([bridge protocol](bridge-protocol.md#roadmap-v4-fields-and-blocks-optional-r4-q1--r4-q2)): the mod reads the values
+with R4-D1 (consumption counter, purchase prices), R4-F1 (food values, feed stock, food groups) and R4-A2 (crop
+windows), so these rows can only be checked once those sections are built. Without FS25 the bridge simulator scenario
+`hofplanung` shows the contract (control endpoints `POST /input` for the counter, `POST /feed` and `POST /eat` for the
+feed). Note the result in the row's issue and, if the fallback is needed, switch the implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 30.1 | 🟡 Hooks on the sowing machine and the sprayer (R4-Q1 / D1) | Sow and fertilise a few metres of an own field by hand, compare the tank levels with `inputs[]` | `liters` grows by what left the tanks, per fill type (`SEEDS`, `FERTILIZER` …); note whether the hooks on `SowingMachine` / `Sprayer.onEndWorkAreaProcessing` reach the event listeners | without `inputs` the field margin estimates the direct costs (R4-D1) |
+| 30.2 | 🟡 Helper buys seed / fertiliser (R4-Q1) | Switch on "helper buys seed / fertiliser", let a helper sow and fertilise with empty tanks | `helperLiters` grows with `liters`; note whether a sprayer without a tank still sets `usage` | for helpers without a tank the month's `PURCHASE_FERTILIZER`, distributed by sprayed area |
+| 30.3 | 🟡 Feed hook (R4-Q2 / F1) | Fill the trough of a cow husbandry, wait one game hour, compare the trough with `feedConsumed[]` | `feedConsumed` grows by what the trough lost; note whether the hook on `PlaceableHusbandryFood.removeFood` counts | the backend measures the falling `trough` between two exports |
+| 30.4 | 🟡 Need per hour (R4-Q2 / F1) | Note `foodLitersPerHour` × 24 and the measured consumption of one game day at 1 and at 3 days per period | note whether `litersPerHour × 24` is the need of a game day (`environment.timeAdjustment`) | the field book of the feed balance uses only the measured consumption |
+| 30.5 | 🟡 Purchase price (R4-Q1 / D1) | Compare `fillTypeCosts` for seed and fertiliser with the shop price of a pallet / big bag (per litre) at two difficulty levels | note what the second parameter of `getCostPerLiter` changes | `FillTypeDesc.pricePerLiter` × price factor of the savegame |
+| 30.6 | 🟡 Fertilising sowing machine and potato planter (R4-Q1) | Sow with a fertilising sowing machine; plant potatoes | note whether the fertiliser is counted once and which `fillType` the potato planter uses | the mod counts once per vehicle, fill type and tick; potatoes: the player enters the litres |
+| 30.7 | 🟡 Food groups, mixtures, feeding robot (R4-Q2) | Look at `animalFood` for cows, pigs, sheep and chicken; fill a TMR into the trough; use a husbandry with feeding robot | groups with title, weight and fill types in the game's order; note whether TMR shows as its own fill type in `trough` and whether the robot's storage is readable | mixed feed counts only as trough content; the robot's storage is entered as "sonstiger Vorrat" |
+| 30.8 | 🟡 Sowing and harvest windows (R4-Q1 / A2) | Compare `plantablePeriods` / `harvestablePeriods` of wheat, maize and grass with the game's crop calendar, with seasonal growth on and off | the periods match the calendar of the game | without the windows the planner offers every month |
+| 30.9 | Counters in the savegame (R4-Q1 / Q2) | Sow and feed, save, sow and feed more, quit without saving and load | `inputs` and `feedConsumed` show the saved values again | – |

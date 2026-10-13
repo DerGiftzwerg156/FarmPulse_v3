@@ -25,11 +25,12 @@ function setup(scenario) {
 const milk = (id, extra = {}) => ({ instructionId: id, type: 'HUSBANDRY_TRANSFER', husbandryUniqueId: 'hus_00001',
   fillType: 'MILK', amount: 5000, ...extra });
 
-test('only investor-milch exports the milk storage of a husbandry (older mod without it)', () => {
+test('only investor-milch and hofplanung export the milk storage of a husbandry (older mod without it)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {
     const facts = read(setup(scenario).sim.paths.farmFacts);
     assert.equal(validate('farmFacts', facts), null, scenario);
-    assert.equal((facts.husbandries ?? []).some((h) => 'storage' in h), scenario === 'investor-milch', scenario);
+    assert.equal((facts.husbandries ?? []).some((h) => 'storage' in h),
+      ['investor-milch', 'hofplanung'].includes(scenario), scenario);
   }
 });
 

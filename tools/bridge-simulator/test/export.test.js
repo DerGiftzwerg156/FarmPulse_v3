@@ -146,7 +146,9 @@ const V2_SCENARIOS = { 'wohlhabender-hof': ['finances', 'husbandries', 'fields',
   // Roadmap V3.2 (R32-Q2): the bulk order farm has the V3.1 weather, the dairy farm the husbandries with milk storage
   grossauftrag: ['weather'], 'investor-milch': ['husbandries', 'weather'],
   // Roadmap V3.3 (R33-Q2): the field book farm has fields with rolling / mulching levels
-  feldbuch: ['fields', 'fieldRules', 'weather'] };
+  feldbuch: ['fields', 'fieldRules', 'weather'],
+  // Roadmap V4 (R4-Q3): the planning farm has fields and the husbandry with its food values
+  hofplanung: ['husbandries', 'fields', 'fieldRules', 'weather'] };
 
 test('Roadmap V2: the new scenarios export their blocks, all others leave them out (older mod)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {

@@ -19,7 +19,8 @@ public final class BridgeDtos {
      * {@code npcFields} (R3-H1) and {@code tradeStorage} (R3-H2) follow the same rule. {@code missionLimitReached}
      * (R3-H5): the game's contract limit of the player farm (MissionManager:hasFarmReachedMissionLimit), null = unknown.
      * Roadmap V3.1 (R31-Q1): {@code vehiclePositions} (R31-D5) follows the same rule as the optional blocks.
-     * Roadmap V3.3 (R33-Q1): {@code harvests} (R33-F3) likewise.
+     * Roadmap V3.3 (R33-Q1): {@code harvests} (R33-F3) likewise. Roadmap V4 (R4-Q1 / R4-Q2): {@code inputs} (R4-D1)
+     * and {@code feedStock} (R4-F2) likewise.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
@@ -27,7 +28,20 @@ public final class BridgeDtos {
                             Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
                             Weather weather, FieldRules fieldRules, List<Field> npcFields,
                             List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached,
-                            List<VehiclePosition> vehiclePositions, Bookings bookings, List<HarvestCounter> harvests) {
+                            List<VehiclePosition> vehiclePositions, Bookings bookings, List<HarvestCounter> harvests,
+                            List<InputCounter> inputs, List<FeedAmount> feedStock) {
+
+        /** Roadmap V3.3 contract without the blocks of Roadmap V4 (older mod). */
+        public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
+                         Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
+                         Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
+                         Weather weather, FieldRules fieldRules, List<Field> npcFields,
+                         List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached,
+                         List<VehiclePosition> vehiclePositions, Bookings bookings, List<HarvestCounter> harvests) {
+            this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, missions, finances,
+                    workforce, husbandries, fields, weather, fieldRules, npcFields, tradeStorage, missionLimitReached,
+                    vehiclePositions, bookings, harvests, null, null);
+        }
 
         /** Contract with the booking statement, without the harvest counter of Roadmap V3.3 (older mod). */
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
@@ -158,12 +172,26 @@ public final class BridgeDtos {
      * subtype ({@code subTypes}), the subtypes the husbandry accepts ({@code supportedSubTypes}) and its free places
      * ({@code freeSlots}); null with an older mod. Roadmap V3.2 R32-Q1, optional: the milk sorts in the storage of the
      * husbandry ({@code storage}, {@code { fillType, amount, capacity }} in whole litres, like {@code tradeStorage});
-     * null without milk or with an older mod.
+     * null without milk or with an older mod. Roadmap V4 R4-Q2 (read by the mod with R4-F1), each optional: the food
+     * need per game hour ({@code foodLitersPerHour}, PlaceableHusbandryFood.litersPerHour), the capacity of the feeding
+     * trough ({@code foodCapacity}), its content per fill type ({@code trough}, only amount >= 1), the straw need per
+     * game hour ({@code strawLitersPerHour}) and the straw in the husbandry ({@code straw}), and the cumulative feed
+     * counter per fill type ({@code feedConsumed}, the return of removeFood, kept in the mod savegame).
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
                             List<HusbandryCondition> conditions, List<SubTypeCount> subTypes,
-                            List<String> supportedSubTypes, Integer freeSlots, List<StorageEntry> storage) {
+                            List<String> supportedSubTypes, Integer freeSlots, List<StorageEntry> storage,
+                            Double foodLitersPerHour, Double foodCapacity, List<FeedAmount> trough,
+                            Double strawLitersPerHour, Double straw, List<FeedCounter> feedConsumed) {
+
+        /** R32-Q1 contract without the food values of Roadmap V4 (older mod). */
+        public Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
+                         List<HusbandryCondition> conditions, List<SubTypeCount> subTypes,
+                         List<String> supportedSubTypes, Integer freeSlots, List<StorageEntry> storage) {
+            this(husbandryUniqueId, health, productivity, food, conditions, subTypes, supportedSubTypes, freeSlots, storage,
+                    null, null, null, null, null, null);
+        }
 
         /** R2-A7 contract without the subtypes of Roadmap V3.1 (older mod). */
         public Husbandry(String husbandryUniqueId, Double health, Double productivity, Double food,
@@ -280,6 +308,28 @@ public final class BridgeDtos {
     }
 
     /**
+     * Roadmap V4 R4-D1 (contract R4-Q1): consumption counter of an own field = litres sowing machines and sprayers used
+     * on it per fill type (seed, fertiliser, lime, herbicide, slurry ...), cumulative and kept in the mod savegame like
+     * the harvest counter. {@code helperLiters} = the part a helper bought while working (the game books it x 1.5).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record InputCounter(Integer farmlandId, String fillType, Double liters, Double helperLiters) {
+    }
+
+    /**
+     * Roadmap V4 R4-Q2: litres of one fill type - the feed stock in own silos, silo extensions and bunker silos
+     * ({@code farm_facts.feedStock}) or the content of a feeding trough ({@code husbandries[].trough}).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FeedAmount(String fillType, Double amount) {
+    }
+
+    /** Roadmap V4 R4-Q2 (F1): cumulative litres of one fill type the animals of a husbandry ate. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FeedCounter(String fillType, Double liters) {
+    }
+
+    /**
      * Roadmap V3.1 (R31-Q1, D5): an own vehicle being driven right now (Enterable:getIsControlled or
      * Vehicle:getIsAIActive). x / z = world position in metres; {@code farmlandId} null = no farmland at the position;
      * {@code onCrop} = a field with a crop stands there (null = not read).
@@ -376,11 +426,21 @@ public final class BridgeDtos {
     /**
      * Roadmap V3 (R3-Q1): {@code storeVehicles} (R3-V1) is optional; null = not present (older mod or switched off).
      * Roadmap V3.1 (R31-Q1): {@code fieldShapes} (R31-K1) likewise. Roadmap V3.3 (R33-Q1): {@code fruitTypes} likewise.
+     * Roadmap V4 (R4-Q1 / R4-Q2): {@code fillTypeCosts} (R4-D1) and {@code animalFood} (R4-F1) likewise.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
                                 List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles,
-                                FieldShapes fieldShapes, List<FruitTypeEntry> fruitTypes) {
+                                FieldShapes fieldShapes, List<FruitTypeEntry> fruitTypes, List<FillTypeCost> fillTypeCosts,
+                                List<AnimalFood> animalFood) {
+
+        /** Roadmap V3.3 contract without the purchase prices and food groups of Roadmap V4 (older mod). */
+        public MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
+                             List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles,
+                             FieldShapes fieldShapes, List<FruitTypeEntry> fruitTypes) {
+            this(savegameId, mapName, sellPoints, fillTypes, farmlands, detectedMods, storeVehicles, fieldShapes,
+                    fruitTypes, null, null);
+        }
 
         /** Roadmap V3.1 contract without the crops of the map of Roadmap V3.3 (older mod). */
         public MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
@@ -424,16 +484,48 @@ public final class BridgeDtos {
      * = standard harvest product, {@code title} = display name of the game, {@code regrows} = grows again after a cut
      * (FruitTypeDesc.regrows), {@code products} = further harvest products from the fruit type converters (e.g. MAIZE
      * -> CHAFF); all but {@code name} optional. R33-F4 (owner decision 2026-10-09): {@code needsRolling} = the crop is
-     * rolled after sowing (FruitTypeDesc.needsRolling); null = not read.
+     * rolled after sowing (FruitTypeDesc.needsRolling); null = not read. Roadmap V4 (R4-Q1, read by the mod with R4-A2),
+     * each optional: {@code seedUsagePerSqm} (FruitTypeDesc.seedUsagePerSqm), {@code litersPerSqm} (base yield) and the
+     * periods 1..12 in which the crop can be sown / harvested in the growth mode of the savegame
+     * ({@code plantablePeriods} / {@code harvestablePeriods}, getIsPlantableInPeriod / getIsHarvestableInPeriod).
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FruitTypeEntry(String name, String fillType, String title, Boolean regrows, List<String> products,
-                                 Boolean needsRolling) {
+                                 Boolean needsRolling, Double seedUsagePerSqm, Double litersPerSqm,
+                                 List<Integer> plantablePeriods, List<Integer> harvestablePeriods) {
+
+        /** R33-F4 contract without the values of Roadmap V4 (older mod). */
+        public FruitTypeEntry(String name, String fillType, String title, Boolean regrows, List<String> products,
+                              Boolean needsRolling) {
+            this(name, fillType, title, regrows, products, needsRolling, null, null, null, null);
+        }
 
         /** R33-Q contract without needsRolling (older mod). */
         public FruitTypeEntry(String name, String fillType, String title, Boolean regrows, List<String> products) {
             this(name, fillType, title, regrows, products, null);
         }
+    }
+
+    /**
+     * Roadmap V4 R4-D1 (contract R4-Q1): purchase price of the game per litre
+     * ({@code economyManager:getCostPerLiter(fillType, false)}).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FillTypeCost(String fillType, Double costPerLiter) {
+    }
+
+    /**
+     * Roadmap V4 R4-F1 (contract R4-Q2): food groups of an animal type in the order of the game
+     * ({@code animalFoodSystem:getAnimalFood(animalTypeIndex).groups}) and its mixtures such as TMR
+     * ({@code getMixturesByAnimalTypeIndex}).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record AnimalFood(String animalType, List<FoodGroup> groups, List<String> mixtures) {
+    }
+
+    /** Roadmap V4 R4-F1: one food group with its weight on production (0..1) and the fill types that belong to it. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FoodGroup(String title, Double productionWeight, List<String> fillTypes) {
     }
 
     /**

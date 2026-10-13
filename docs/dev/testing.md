@@ -145,6 +145,15 @@ that the adapter reads none of the values yet (Q fixes the contract only, owner 
 scenario, the counter with its control endpoint `POST /harvest` and its place in the savegame in
 `test/roadmap-v33.test.js`. Q brings no formula, no table and no configuration value; they come with F and E (owner
 decision 2026-10-08). In the game: manual test plan section 29.
+Roadmap V4 (R4-Q3): `SimulatorScenariosEndToEndTest.roadmapV4FieldsArriveFromThePlanningScenario` checks that the
+consumption counter, the feed stock, the food values of the husbandry, the purchase prices, the food groups and the
+crop windows of `hofplanung` arrive (and stay `null` for `feldbuch`); `BridgeValidatorTest` (`inputs`, `feedStock`,
+the food values, `fillTypeCosts`, `animalFood` and the new crop values) covers the backend side. The mod covers the
+normalisation in `test_farm_facts.lua` and `test_market_context.lua` and, in `test_roadmap_v4.lua`, that the adapter
+reads none of the values yet (Q fixes the contract only); the simulator the scenario, the counters with their control
+endpoints `POST /input`, `POST /feed` and `POST /eat` and their place in the savegame in `test/roadmap-v4.test.js`. Q
+brings no formula, no table and no configuration value; they come with D, F and A. In the game: manual test plan
+section 30.
 Roadmap V3.3 R33-F (field book): `FieldBookTest` covers the first entry (levels found count as done), a season from
 sowing to harvest with every measure, the harvest year and late litres, mulching in the next season, cuts of a grass
 field in one entry, the main crop and "harvest beats no harvest", the product of the counter and a falling counter, a

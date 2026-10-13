@@ -77,7 +77,10 @@ export function startControlServer(sim, port, log = () => {}) {
         // Roadmap V3.2 (R32-Q2): milk in the storage of a husbandry
         '/husbandry-milk': (b) => sim.setHusbandryMilk(b.husbandryUniqueId, b.fillType, b.amount),
         // Roadmap V3.3 (R33-Q2): litres harvested on an own field (harvest counter)
-        '/harvest': (b) => sim.addHarvest(b.farmlandId, b.fruitType, b.fillType, b.liters) };
+        '/harvest': (b) => sim.addHarvest(b.farmlandId, b.fruitType, b.fillType, b.liters),
+        // Roadmap V4 (R4-Q3): consumption on an own field, feed into / out of silo or trough, animals eat
+        '/input': (b) => sim.addInput(b.farmlandId, b.fillType, b.liters, b.helper === true),
+        '/feed': (b) => sim.changeFeed(b), '/eat': (b) => sim.eat(b.husbandryUniqueId, b.fillType, b.liters) };
       if (req.method === 'POST' && patches[url.pathname]) {
         const result = patches[url.pathname](await body(req));
         sim.exportFarmFacts();

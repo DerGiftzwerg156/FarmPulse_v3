@@ -159,9 +159,58 @@ local function buildHusbandryStorage(raw)
     return list
 end
 
+--- A number that is not NaN and >= 0, rounded with fn; nil otherwise.
+local function nonNegative(v, fn)
+    if type(v) == "number" and v == v and v >= 0 then
+        return (fn or round)(v)
+    end
+    return nil
+end
+
+--- Roadmap V4 (R4-Q1 / R4-Q2): litres per fill type (raw = { {fillType, <key>} }). Whole litres, entries of the same
+-- fill type summed, entries without a fill type or with a value that is not a number >= 0 dropped; only sums
+-- >= minimum (0 keeps empty counters, 1 drops empty stocks). Sorted by fillType; nil when not a table.
+local function buildLitersByFillType(raw, key, minimum)
+    if type(raw) ~= "table" then
+        return nil
+    end
+    local byType = {}
+    for _, e in ipairs(raw) do
+        if type(e) == "table" and type(e.fillType) == "string" and e.fillType ~= "" then
+            local v = nonNegative(e[key], function(x) return x end)
+            if v ~= nil then
+                byType[e.fillType] = (byType[e.fillType] or 0) + v
+            end
+        end
+    end
+    local list = RPSimJson.array({})
+    for fillType, v in pairs(byType) do
+        local liters = round(v)
+        if liters >= minimum then
+            list[#list + 1] = { fillType = fillType, [key] = liters }
+        end
+    end
+    table.sort(list, function(a, b) return a.fillType < b.fillType end)
+    return list
+end
+
+--- Roadmap V4 (R4-Q2, contract; read by the mod with R4-F1): food and straw values of a husbandry, each optional:
+-- foodLitersPerHour / strawLitersPerHour (need per game hour, 2 decimals), foodCapacity / straw (whole litres),
+-- trough = { {fillType, amount} } (only amount >= 1), feedConsumed = { {fillType, liters} } (cumulative counter kept in
+-- the mod savegame, 0 kept). Values that are not a number >= 0 are left out.
+local function addFeedValues(e, h)
+    e.foodLitersPerHour = nonNegative(h.foodLitersPerHour, round2)
+    e.foodCapacity = nonNegative(h.foodCapacity)
+    e.trough = buildLitersByFillType(h.trough, "amount", 1)
+    e.strawLitersPerHour = nonNegative(h.strawLitersPerHour, round2)
+    e.straw = nonNegative(h.straw)
+    e.feedConsumed = buildLitersByFillType(h.feedConsumed, "liters", 0)
+end
+
 --- R2-A7: raw = { {husbandryUniqueId, health, productivity?, food, conditions = { {title, ratio} }} }
 -- Roadmap V3.1 R31-A3, each optional: subTypes = { {name, count} }, supportedSubTypes = { name }, freeSlots.
 -- Roadmap V3.2 R32-Q1, optional: storage = { {fillType, amount, capacity} } (milk sorts, missing without milk).
+-- Roadmap V4 R4-Q2, optional: foodLitersPerHour, foodCapacity, trough, strawLitersPerHour, straw, feedConsumed.
 function RPSimFarmFacts.buildHusbandries(raw)
     local list = RPSimJson.array({})
     for _, h in ipairs(raw) do
@@ -180,6 +229,7 @@ function RPSimFarmFacts.buildHusbandries(raw)
                 e.freeSlots = math.max(0, round(h.freeSlots))
             end
             e.storage = buildHusbandryStorage(h.storage)
+            addFeedValues(e, h)
             list[#list + 1] = e
         end
     end
@@ -290,6 +340,37 @@ function RPSimFarmFacts.buildHarvests(raw)
     return list
 end
 
+--- Roadmap V4 (R4-Q1, contract; counted by the mod with R4-D1): consumption counter per own field and fill type =
+-- the litres sowing machines and sprayers used on that field (seed, fertiliser, lime, herbicide, slurry ...),
+-- cumulative and kept in the mod savegame. helperLiters = the part a helper bought while working (the game books it
+-- x 1.5); 0 when missing, at most liters. raw = { {farmlandId, fillType, liters, helperLiters?} }. Whole litres;
+-- incomplete entries (no farmland, empty fill type, liters not a number >= 0) are dropped. Sorted by farmlandId,
+-- fillType.
+function RPSimFarmFacts.buildInputs(raw)
+    local list = RPSimJson.array({})
+    for _, e in ipairs(raw) do
+        if type(e) == "table" and type(e.farmlandId) == "number" and type(e.fillType) == "string" and e.fillType ~= "" then
+            local liters = nonNegative(e.liters)
+            if liters ~= nil then
+                local helper = nonNegative(e.helperLiters) or 0
+                list[#list + 1] = { farmlandId = e.farmlandId, fillType = e.fillType, liters = liters,
+                    helperLiters = math.min(helper, liters) }
+            end
+        end
+    end
+    table.sort(list, function(a, b)
+        if a.farmlandId ~= b.farmlandId then return a.farmlandId < b.farmlandId end
+        return a.fillType < b.fillType
+    end)
+    return list
+end
+
+--- Roadmap V4 (R4-Q2, contract; read by the mod with R4-F1): feed stock in the own silos, silo extensions and bunker
+-- silos (no production points). raw = { {fillType, amount} }; summed per fill type, whole litres, only amount >= 1.
+function RPSimFarmFacts.buildFeedStock(raw)
+    return buildLitersByFillType(raw, "amount", 1)
+end
+
 local FIELD_RULES = { "plowingRequired", "limeRequired", "weedsEnabled", "stonesEnabled" }
 
 --- R2-C: game settings that decide whether plowing, lime, weeds and stones matter at all (the game's soil map shows
@@ -372,7 +453,8 @@ end
 --   (see the build* functions above),
 --   Roadmap V3 (R3-Q1), each optional: npcFields (R3-H1, same entries as fields), tradeStorage (R3-H2),
 --   Roadmap V3.1 (R31-Q1), optional: vehiclePositions (D5, see buildVehiclePositions),
---   Roadmap V3.3 (R33-Q1), optional: harvests (F3, see buildHarvests) }
+--   Roadmap V3.3 (R33-Q1), optional: harvests (F3, see buildHarvests),
+--   Roadmap V4 (R4-Q1 / R4-Q2), optional: inputs (D1, see buildInputs), feedStock (F2, see buildFeedStock) }
 function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
     local vehicles = RPSimJson.array({})
@@ -520,6 +602,14 @@ function RPSimFarmFacts.build(raw, cfg)
     -- Roadmap V3.3 (R33-Q1, F3): harvest counter per own field, crop and harvest product
     if type(raw.harvests) == "table" then
         doc.harvests = RPSimFarmFacts.buildHarvests(raw.harvests)
+    end
+    -- Roadmap V4 (R4-Q1, D1): consumption counter per own field and fill type
+    if type(raw.inputs) == "table" then
+        doc.inputs = RPSimFarmFacts.buildInputs(raw.inputs)
+    end
+    -- Roadmap V4 (R4-Q2, F2): feed stock in own silos, silo extensions and bunker silos
+    if type(raw.feedStock) == "table" then
+        doc.feedStock = RPSimFarmFacts.buildFeedStock(raw.feedStock)
     end
     return doc
 end

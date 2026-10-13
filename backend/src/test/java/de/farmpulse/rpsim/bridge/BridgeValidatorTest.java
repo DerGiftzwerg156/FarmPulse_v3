@@ -353,4 +353,121 @@ class BridgeValidatorTest {
                     .startsWith("invalid fruit type");
         }
     }
+
+    // Roadmap V4 (R4-Q1 / R4-Q2): consumption counter per field, feed stock, food values of a husbandry, purchase prices,
+    // food groups and the new values of the crops are optional (the mod reads them with R4-D1 / R4-F1 / R4-A2)
+
+    @Test
+    void roadmapV4BlocksAreNotPresentForAnOlderModAndEmptyWhenEmpty() {
+        FarmFacts old = facts("\"husbandries\": [{" + HUSBANDRY + " }]");
+        assertThat(BridgeValidator.validate(old)).isEmpty();
+        assertThat(old.inputs()).isNull();
+        assertThat(old.feedStock()).isNull();
+        var h = old.husbandries().get(0);
+        assertThat(h.foodLitersPerHour()).isNull();
+        assertThat(h.trough()).isNull();
+        assertThat(h.feedConsumed()).isNull();
+        FarmFacts empty = facts("\"inputs\": [], \"feedStock\": []");
+        assertThat(BridgeValidator.validate(empty)).isEmpty();
+        assertThat(empty.inputs()).isEmpty();
+        assertThat(empty.feedStock()).isEmpty();
+    }
+
+    @Test
+    void roadmapV4FarmFactsAreParsedAndChecked() {
+        FarmFacts f = facts("""
+                "inputs": [{ "farmlandId": 2, "fillType": "SEEDS", "liters": 3200, "helperLiters": 400 }],
+                "feedStock": [{ "fillType": "SILAGE", "amount": 150000 }],
+                "husbandries": [{ "husbandryUniqueId": "hus_00001", "health": 80, "food": 0.5, "conditions": [],
+                                  "foodLitersPerHour": 41.67, "foodCapacity": 20000, "strawLitersPerHour": 8.33,
+                                  "straw": 1200, "trough": [{ "fillType": "SILAGE", "amount": 4000 }],
+                                  "feedConsumed": [{ "fillType": "SILAGE", "liters": 36000 }] }]""");
+        assertThat(BridgeValidator.validate(f)).isEmpty();
+        var i = f.inputs().get(0);
+        assertThat(i.farmlandId()).isEqualTo(2);
+        assertThat(i.fillType()).isEqualTo("SEEDS");
+        assertThat(i.liters()).isEqualTo(3200.0);
+        assertThat(i.helperLiters()).isEqualTo(400.0);
+        assertThat(f.feedStock().get(0).amount()).isEqualTo(150000.0);
+        var h = f.husbandries().get(0);
+        assertThat(h.foodLitersPerHour()).isEqualTo(41.67);
+        assertThat(h.foodCapacity()).isEqualTo(20000.0);
+        assertThat(h.strawLitersPerHour()).isEqualTo(8.33);
+        assertThat(h.straw()).isEqualTo(1200.0);
+        assertThat(h.trough().get(0).fillType()).isEqualTo("SILAGE");
+        assertThat(h.feedConsumed().get(0).liters()).isEqualTo(36000.0);
+
+        for (String entry : new String[] {
+                "{ \"fillType\": \"SEEDS\", \"liters\": 1, \"helperLiters\": 0 }",
+                "{ \"farmlandId\": 2, \"fillType\": \" \", \"liters\": 1, \"helperLiters\": 0 }",
+                "{ \"farmlandId\": 2, \"fillType\": \"SEEDS\", \"liters\": -1, \"helperLiters\": 0 }",
+                "{ \"farmlandId\": 2, \"fillType\": \"SEEDS\", \"liters\": 1 }",
+                "{ \"farmlandId\": 2, \"fillType\": \"SEEDS\", \"liters\": 1, \"helperLiters\": 2 }"}) {
+            assertThat(BridgeValidator.validate(facts("\"inputs\": [" + entry + "]"))).as(entry)
+                    .singleElement().asString().startsWith("invalid input counter");
+        }
+        for (String entry : new String[] {"{ \"fillType\": \"\", \"amount\": 1 }",
+                "{ \"fillType\": \"SILAGE\", \"amount\": -1 }", "{ \"fillType\": \"SILAGE\" }"}) {
+            assertThat(BridgeValidator.validate(facts("\"feedStock\": [" + entry + "]"))).as(entry)
+                    .singleElement().asString().startsWith("invalid feedStock");
+        }
+        for (String values : new String[] {"\"foodLitersPerHour\": -1", "\"foodCapacity\": -1",
+                "\"strawLitersPerHour\": -0.5", "\"straw\": -1",
+                "\"trough\": [{ \"fillType\": \"SILAGE\", \"amount\": -1 }]",
+                "\"trough\": [{ \"amount\": 1 }]",
+                "\"feedConsumed\": [{ \"fillType\": \"SILAGE\" }]"}) {
+            assertThat(BridgeValidator.validate(facts("\"husbandries\": [{" + HUSBANDRY + ", " + values + " }]")))
+                    .as(values).singleElement().asString().startsWith("invalid husbandry");
+        }
+    }
+
+    @Test
+    void roadmapV4MarketContextIsOptionalAndChecked() {
+        String base = """
+                "savegameId": "sg", "mapName": "Erlengrund", "sellPoints": [], "fillTypes": [], "farmlands": [],
+                "detectedMods": []""";
+        var old = JSON.readValue("{" + base + ", \"fruitTypes\": [{ \"name\": \"WHEAT\" }] }",
+                BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(old)).isEmpty();
+        assertThat(old.fillTypeCosts()).isNull();
+        assertThat(old.animalFood()).isNull();
+        assertThat(old.fruitTypes().get(0).plantablePeriods()).isNull();
+        var ctx = JSON.readValue("{" + base + """
+                , "fillTypeCosts": [{ "fillType": "SEEDS", "costPerLiter": 0.9 }],
+                  "animalFood": [{ "animalType": "COW", "mixtures": ["FORAGE"], "groups": [
+                      { "title": "Futtermischung", "productionWeight": 0.6, "fillTypes": ["FORAGE"] },
+                      { "title": "Silage", "productionWeight": 0.4, "fillTypes": ["SILAGE"] }] }],
+                  "fruitTypes": [{ "name": "WHEAT", "seedUsagePerSqm": 0.1, "litersPerSqm": 0.95,
+                                   "plantablePeriods": [6, 7], "harvestablePeriods": [4, 5] }] }""",
+                BridgeDtos.MarketContext.class);
+        assertThat(BridgeValidator.validate(ctx)).isEmpty();
+        assertThat(ctx.fillTypeCosts().get(0).costPerLiter()).isEqualTo(0.9);
+        var cow = ctx.animalFood().get(0);
+        assertThat(cow.animalType()).isEqualTo("COW");
+        assertThat(cow.mixtures()).containsExactly("FORAGE");
+        assertThat(cow.groups()).extracting(g -> g.title()).containsExactly("Futtermischung", "Silage");
+        assertThat(cow.groups().get(1).productionWeight()).isEqualTo(0.4);
+        var wheat = ctx.fruitTypes().get(0);
+        assertThat(wheat.seedUsagePerSqm()).isEqualTo(0.1);
+        assertThat(wheat.litersPerSqm()).isEqualTo(0.95);
+        assertThat(wheat.plantablePeriods()).containsExactly(6, 7);
+        assertThat(wheat.harvestablePeriods()).containsExactly(4, 5);
+
+        String[][] bad = {
+                {"fillTypeCosts", "{ \"fillType\": \"SEEDS\", \"costPerLiter\": -1 }", "invalid fill type cost"},
+                {"fillTypeCosts", "{ \"costPerLiter\": 1 }", "invalid fill type cost"},
+                {"animalFood", "{ \"groups\": [] }", "invalid animal food"},
+                {"animalFood", "{ \"animalType\": \"COW\" }", "invalid animal food"},
+                {"animalFood", "{ \"animalType\": \"COW\", \"groups\": [{ \"title\": \"Heu\", "
+                        + "\"productionWeight\": 0.2, \"fillTypes\": [] }] }", "invalid animal food"},
+                {"animalFood", "{ \"animalType\": \"COW\", \"groups\": [{ \"title\": \"Heu\", "
+                        + "\"productionWeight\": -0.2, \"fillTypes\": [\"HAY\"] }] }", "invalid animal food"},
+                {"fruitTypes", "{ \"name\": \"WHEAT\", \"seedUsagePerSqm\": -0.1 }", "invalid fruit type"},
+                {"fruitTypes", "{ \"name\": \"WHEAT\", \"plantablePeriods\": [0] }", "invalid fruit type"},
+                {"fruitTypes", "{ \"name\": \"WHEAT\", \"harvestablePeriods\": [13] }", "invalid fruit type"}};
+        for (String[] c : bad) {
+            var m = JSON.readValue("{" + base + ", \"" + c[0] + "\": [" + c[1] + "] }", BridgeDtos.MarketContext.class);
+            assertThat(BridgeValidator.validate(m)).as(c[1]).singleElement().asString().startsWith(c[2]);
+        }
+    }
 }

@@ -80,7 +80,37 @@ public final class BridgeValidator {
         validateRoadmapV3(f, e);
         validateRoadmapV31(f, e);
         validateRoadmapV33(f, e);
+        validateRoadmapV4(f, e);
         return e;
+    }
+
+    /** Roadmap V4 (R4-Q1 / R4-Q2): the optional consumption counter and feed stock are only checked when present. */
+    private static void validateRoadmapV4(FarmFacts f, List<String> e) {
+        if (f.inputs() != null) {
+            f.inputs().forEach(i -> {
+                if (i == null || i.farmlandId() == null || blank(i.fillType()) || negativeOrNull(i.liters())
+                        || negativeOrNull(i.helperLiters()) || i.helperLiters() > i.liters()) {
+                    e.add("invalid input counter " + i);
+                }
+            });
+        }
+        if (f.feedStock() != null && invalidFeedAmounts(f.feedStock())) {
+            e.add("invalid feedStock " + f.feedStock());
+        }
+    }
+
+    /** Roadmap V4 R4-Q2: litres per fill type (feed stock, trough). */
+    private static boolean invalidFeedAmounts(List<BridgeDtos.FeedAmount> list) {
+        return list.stream().anyMatch(a -> a == null || blank(a.fillType()) || negativeOrNull(a.amount()));
+    }
+
+    /** Roadmap V4 R4-Q2: the optional food values of a husbandry. */
+    private static boolean invalidFeedValues(BridgeDtos.Husbandry h) {
+        return Stream.of(h.foodLitersPerHour(), h.foodCapacity(), h.strawLitersPerHour(), h.straw())
+                .anyMatch(v -> v != null && v < 0)
+                || (h.trough() != null && invalidFeedAmounts(h.trough()))
+                || (h.feedConsumed() != null && h.feedConsumed().stream()
+                        .anyMatch(c -> c == null || blank(c.fillType()) || negativeOrNull(c.liters())));
     }
 
     /** Roadmap V3.3 (R33-Q1, F3): the optional harvest counter is only checked when present. */
@@ -188,7 +218,8 @@ public final class BridgeValidator {
                         || (h.productivity() != null && h.productivity() < 0) || h.conditions() == null
                         || h.conditions().stream().anyMatch(c -> c == null || c.title() == null || negativeOrNull(c.ratio()))
                         || invalidSubTypes(h) // subtypes / free places: Roadmap V3.1 R31-A3
-                        || invalidHusbandryStorage(h)) { // milk storage: Roadmap V3.2 R32-Q1
+                        || invalidHusbandryStorage(h) // milk storage: Roadmap V3.2 R32-Q1
+                        || invalidFeedValues(h)) { // food values: Roadmap V4 R4-Q2
                     e.add("invalid husbandry " + h);
                 }
             });
@@ -268,12 +299,36 @@ public final class BridgeValidator {
         if (m.fruitTypes() != null) { // Roadmap V3.3 (R33-Q1)
             m.fruitTypes().forEach(t -> {
                 if (t == null || blank(t.name()) || (t.fillType() != null && t.fillType().isBlank())
-                        || (t.products() != null && t.products().stream().anyMatch(BridgeValidator::blank))) {
+                        || (t.products() != null && t.products().stream().anyMatch(BridgeValidator::blank))
+                        || invalidRoadmapV4FruitType(t)) {
                     e.add("invalid fruit type " + t);
                 }
             });
         }
+        if (m.fillTypeCosts() != null) { // Roadmap V4 (R4-Q1 / R4-D1)
+            m.fillTypeCosts().forEach(c -> {
+                if (c == null || blank(c.fillType()) || negativeOrNull(c.costPerLiter())) e.add("invalid fill type cost " + c);
+            });
+        }
+        if (m.animalFood() != null) { // Roadmap V4 (R4-Q2 / R4-F1)
+            m.animalFood().forEach(a -> {
+                if (a == null || blank(a.animalType()) || a.groups() == null
+                        || (a.mixtures() != null && a.mixtures().stream().anyMatch(BridgeValidator::blank))
+                        || a.groups().stream().anyMatch(g -> g == null || blank(g.title())
+                        || negativeOrNull(g.productionWeight()) || g.fillTypes() == null || g.fillTypes().isEmpty()
+                        || g.fillTypes().stream().anyMatch(BridgeValidator::blank))) {
+                    e.add("invalid animal food " + a);
+                }
+            });
+        }
         return e;
+    }
+
+    /** Roadmap V4 (R4-Q1): seed use and base yield >= 0, sowing / harvest windows only periods 1..12. */
+    private static boolean invalidRoadmapV4FruitType(BridgeDtos.FruitTypeEntry t) {
+        return Stream.of(t.seedUsagePerSqm(), t.litersPerSqm()).anyMatch(v -> v != null && v < 0)
+                || Stream.of(t.plantablePeriods(), t.harvestablePeriods()).anyMatch(list -> list != null
+                && list.stream().anyMatch(p -> p == null || p < 1 || p > 12));
     }
 
     public static List<String> validate(AckDocument a) {

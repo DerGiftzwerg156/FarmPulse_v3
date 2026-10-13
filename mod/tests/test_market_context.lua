@@ -123,4 +123,66 @@ function T.TestMarketContext:testFruitTypesAreOptionalAndNormalized()
     lu.assertStrContains(RPSimJson.encode(doc), '"fruitTypes":[]')
 end
 
+-- Roadmap V4 (R4-Q1 / R4-Q2): purchase prices, food groups and the new values of the crops, optional (read by the mod
+-- with R4-D1 / R4-F1 / R4-A2)
+function T.TestMarketContext:testRoadmapV4BlocksAreOptional()
+    local doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m" })
+    lu.assertNil(doc.fillTypeCosts)
+    lu.assertNil(doc.animalFood)
+    local json = RPSimJson.encode(RPSimMarketContext.build({ savegameId = "sg", mapName = "m", fillTypeCosts = {},
+        animalFood = {} }))
+    lu.assertStrContains(json, '"fillTypeCosts":[]')
+    lu.assertStrContains(json, '"animalFood":[]')
+end
+
+function T.TestMarketContext:testFillTypeCostsAreNormalised()
+    local doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m", fillTypeCosts = {
+        { fillType = "SEEDS", costPerLiter = 0.9 },
+        { fillType = "FERTILIZER", costPerLiter = 1.234567 },
+        { fillType = "LIQUIDMANURE", costPerLiter = 0 },
+        { fillType = "SEEDS", costPerLiter = 2 },
+        { fillType = "LIME", costPerLiter = -0.1 },
+        { fillType = "HERBICIDE", costPerLiter = 0 / 0 },
+        { fillType = "", costPerLiter = 1 },
+        { costPerLiter = 1 } } })
+    lu.assertEquals(doc.fillTypeCosts, {
+        { fillType = "FERTILIZER", costPerLiter = 1.2346 },
+        { fillType = "LIQUIDMANURE", costPerLiter = 0 },
+        { fillType = "SEEDS", costPerLiter = 0.9 } })
+end
+
+function T.TestMarketContext:testAnimalFoodKeepsTheGroupOrderOfTheGame()
+    local doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m", animalFood = {
+        { animalType = "COW", mixtures = { "FORAGE", "", "FORAGE" }, groups = {
+            { title = "Futtermischung", productionWeight = 0.6, fillTypes = { "FORAGE" } },
+            { title = "Silage", productionWeight = 0.25, fillTypes = { "SILAGE", "GRASS_WINDROW", "SILAGE" } },
+            { title = "", productionWeight = 0.1, fillTypes = { "HAY" } },
+            { title = "Leer", productionWeight = 0.1, fillTypes = {} },
+            { title = "Negativ", productionWeight = -1, fillTypes = { "HAY" } },
+            { title = "Heu", productionWeight = 0.1504, fillTypes = { "DRYGRASS_WINDROW" } } } },
+        { animalType = "CHICKEN", groups = { { title = "Getreide", productionWeight = 1,
+            fillTypes = { "WHEAT", "BARLEY" } } } },
+        { animalType = "COW", groups = {} },
+        { animalType = "", groups = {} },
+        { groups = {} } } })
+    lu.assertEquals(doc.animalFood, {
+        { animalType = "CHICKEN", mixtures = {}, groups = {
+            { title = "Getreide", productionWeight = 1, fillTypes = { "BARLEY", "WHEAT" } } } },
+        { animalType = "COW", mixtures = { "FORAGE" }, groups = {
+            { title = "Futtermischung", productionWeight = 0.6, fillTypes = { "FORAGE" } },
+            { title = "Silage", productionWeight = 0.25, fillTypes = { "GRASS_WINDROW", "SILAGE" } },
+            { title = "Heu", productionWeight = 0.15, fillTypes = { "DRYGRASS_WINDROW" } } } } })
+end
+
+function T.TestMarketContext:testFruitTypesCarrySeedUseYieldAndWindows()
+    local doc = RPSimMarketContext.build({ savegameId = "sg", mapName = "m", fruitTypes = {
+        { name = "WHEAT", fillType = "WHEAT", seedUsagePerSqm = 0.123456, litersPerSqm = 0.9,
+            plantablePeriods = { 7, 6, 7, 13, 0, 2.5, "3" }, harvestablePeriods = { 5, 4 } },
+        { name = "GRASS", seedUsagePerSqm = -1, litersPerSqm = 0 / 0, plantablePeriods = {}, harvestablePeriods = 4 } } })
+    lu.assertEquals(doc.fruitTypes, {
+        { name = "GRASS", plantablePeriods = {} },
+        { name = "WHEAT", fillType = "WHEAT", seedUsagePerSqm = 0.1235, litersPerSqm = 0.9,
+            plantablePeriods = { 6, 7 }, harvestablePeriods = { 4, 5 } } })
+end
+
 return T
