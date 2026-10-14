@@ -162,6 +162,13 @@ class FeedBalanceTest {
         assertThat(stable.monthlyCost()).isCloseTo(180 + 216, within(1e-9));
         assertThat(b.worst().title()).isEqualTo("Kraftfutter");
         assertThat(b.worst().reachDays()).isZero();
+        assertThat(silage.plannedHarvest()).as("without the plan").isNull();
+        // F5: with the planned harvest of the crop plan the yearly need is compared with stock + plan
+        GroupBalance planned = group(feed.balance(sg, java.util.Map.of("SILAGE", 20_000.0)), "Silage");
+        assertThat(planned.plannedHarvest()).isEqualTo(20_000);
+        assertThat(planned.coveredWithPlanPercent()).isCloseTo((55_200 + 20_000) / 21_600.0 * 100, within(1e-6));
+        assertThat(planned.yearBalanceWithPlan()).isCloseTo(55_200 + 20_000 - 21_600, within(1e-6));
+        assertThat(planned.coveredPercent()).as("the stock alone stays").isCloseTo(255.6, within(0.1));
     }
 
     @Test

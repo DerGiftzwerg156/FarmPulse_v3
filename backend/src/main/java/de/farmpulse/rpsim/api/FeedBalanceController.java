@@ -27,16 +27,24 @@ public class FeedBalanceController {
 
     private final SavegameContext context;
     private final FeedBalanceService feed;
+    private final de.farmpulse.rpsim.planning.CropPlanService cropPlans;
 
-    public FeedBalanceController(SavegameContext context, FeedBalanceService feed) {
+    public FeedBalanceController(SavegameContext context, FeedBalanceService feed,
+                                 de.farmpulse.rpsim.planning.CropPlanService cropPlans) {
         this.context = context;
         this.feed = feed;
+        this.cropPlans = cropPlans;
+    }
+
+    /** F5: the balance with the planned harvest of the crop plan (A4). */
+    private FeedBalanceService.Balance balance(Savegame sg) {
+        return feed.balance(sg, cropPlans.plannedFeedHarvest(sg));
     }
 
     @GetMapping("/api/feed-balance")
     @Transactional(readOnly = true)
     public FeedBalanceService.Balance view() {
-        return feed.balance(context.requireActive());
+        return balance(context.requireActive());
     }
 
     @PostMapping("/api/feed-balance/manual")
@@ -44,7 +52,7 @@ public class FeedBalanceController {
     public FeedBalanceService.Balance add(@Valid @RequestBody ManualRequest r) {
         Savegame sg = context.requireActive();
         feed.addManual(sg, r.fillType(), r.bales(), r.baleSize(), r.liters(), r.note());
-        return feed.balance(sg);
+        return balance(sg);
     }
 
     @PutMapping("/api/feed-balance/manual/{id}")
@@ -52,7 +60,7 @@ public class FeedBalanceController {
     public FeedBalanceService.Balance update(@PathVariable long id, @Valid @RequestBody ManualRequest r) {
         Savegame sg = context.requireActive();
         feed.updateManual(sg, id, r.fillType(), r.bales(), r.baleSize(), r.liters(), r.note());
-        return feed.balance(sg);
+        return balance(sg);
     }
 
     /** F2: "stimmt noch" - the reminder "bitte prüfen" starts again. */
@@ -61,7 +69,7 @@ public class FeedBalanceController {
     public FeedBalanceService.Balance check(@PathVariable long id) {
         Savegame sg = context.requireActive();
         feed.checkManual(sg, id);
-        return feed.balance(sg);
+        return balance(sg);
     }
 
     @DeleteMapping("/api/feed-balance/manual/{id}")
@@ -69,6 +77,6 @@ public class FeedBalanceController {
     public FeedBalanceService.Balance remove(@PathVariable long id) {
         Savegame sg = context.requireActive();
         feed.removeManual(sg, id);
-        return feed.balance(sg);
+        return balance(sg);
     }
 }

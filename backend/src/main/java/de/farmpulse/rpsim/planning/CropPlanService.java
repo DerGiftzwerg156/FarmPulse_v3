@@ -35,6 +35,7 @@ import de.farmpulse.rpsim.narration.NarrationRequestService;
 import de.farmpulse.rpsim.repository.BulkOrderRepository;
 import de.farmpulse.rpsim.repository.CropPlanRepository;
 import de.farmpulse.rpsim.repository.FieldBookEntryRepository;
+import de.farmpulse.rpsim.repository.FieldRecordRepository;
 import de.farmpulse.rpsim.repository.ForwardContractRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
@@ -122,6 +123,19 @@ public class CropPlanService {
     public record SowDue(int farmlandId, String fieldName, String fruitType, String fillType, long start, long end) {
     }
 
+    /**
+     * Roadmap V4 R4-D5 (owner decision 2026-10-14): expected revenue of a running season - PLAN = the season matches its
+     * plan or is not sown yet (the forecast of the plan, the values kept at sowing), ACTUAL = another crop than planned
+     * stands (the A3 forecast of that crop).
+     */
+    public record ExpectedRevenue(String basis, String fruitType, String fillType, Double hectares, Double litersPerHa,
+                                  String yieldSource, Double pricePerLiter, String priceSource, Double revenue) {
+    }
+
+    /** Planned harvest of one plan: fill type, litres and the start of its harvest window (null = unknown). */
+    private record Harvest(String fillType, double liters, Long harvestStart) {
+    }
+
     /** A planned expense in the liquidity plan (A4). */
     public record PlannedCost(String label, long amount) {
     }
@@ -138,12 +152,14 @@ public class CropPlanService {
     private final NarrationRequestService narration;
     private final GameTime gameTime;
     private final RpsimProperties props;
+    private final FieldRecordRepository fieldRecords;
 
     public CropPlanService(SavegameRepository savegames, CropPlanRepository plans, FieldBookEntryRepository entries,
                            FactsService facts, FieldMarginService margins, FeedBalanceService feed,
                            ForwardContractRepository forwardContracts, BulkOrderRepository bulkOrders,
                            CharacterLookup lookup, NarrationRequestService narration, GameTime gameTime,
-                           RpsimProperties props) {
+                           RpsimProperties props, FieldRecordRepository fieldRecords) {
+        this.fieldRecords = fieldRecords;
         this.savegames = savegames;
         this.plans = plans;
         this.entries = entries;
@@ -255,8 +271,7 @@ public class CropPlanService {
                 continue;
             }
             FieldBookEntry season = running(sg, p.getFarmlandId()).orElse(null);
-            long first = p.getTargetEntryId() != null ? p.getTargetEntryId()
-                    : p.getAfterEntryId() != null ? p.getAfterEntryId() + 1 : 0;
+            long first = firstEntry(p);
             if (season == null || season.fruitType() == null || season.getId() < first) {
                 continue;
             }
@@ -301,6 +316,11 @@ public class CropPlanService {
     }
 
     private Context context(Savegame sg) {
+        return context(sg, true);
+    }
+
+    /** {@code withMargins} false: no direct costs of D (the margin card itself asks, which would go round in circles). */
+    private Context context(Savegame sg, boolean withMargins) {
         FarmFacts f = facts.latest(sg).orElse(null);
         Map<Integer, BridgeDtos.Field> fields = new TreeMap<>();
         if (f != null && f.fields() != null) {
@@ -326,7 +346,8 @@ public class CropPlanService {
         int defaultYears = Math.max(1, props.getFormulas().getFieldBook().getDefaultYears());
         Integer year = f != null && f.calendar() != null ? f.calendar().year() : null;
         return new Context(sg, f, crops(sg), fields, entries.findBySavegameOrderByIdAsc(sg), margins.purchasePrices(sg),
-                best, forward, margins.margins(sg).crops(), year == null ? null : year - defaultYears + 1);
+                best, forward, withMargins ? margins.margins(sg).crops() : List.of(),
+                year == null ? null : year - defaultYears + 1);
     }
 
     /** The crops of the map (market_context.fruitTypes) by name. */
@@ -349,18 +370,15 @@ public class CropPlanService {
         Integer period = ctx.facts() != null && ctx.facts().calendar() != null ? anchor.periodOf(anchor.monthIndex(now)) : null;
         Map<Integer, CropPlan> open = new HashMap<>();
         plans.findBySavegameAndStatus(sg, Status.OPEN).forEach(p -> open.put(p.getFarmlandId(), p));
-        // expected harvest per fill type (storage check, marketing, feed)
         Map<Integer, Forecast> forecasts = new HashMap<>();
+        open.values().forEach(p -> forecasts.put(p.getFarmlandId(), forecast(ctx, p.getFarmlandId(), p.getFruitType(),
+                p.getFillType())));
+        // planned harvest (owner decision 2026-10-14: open plans and MATCHED plans whose season still runs)
+        List<Harvest> harvests = harvests(ctx, forecasts);
         Map<String, Double> expected = new TreeMap<>();
-        open.values().forEach(p -> {
-            Forecast fc = forecast(ctx, p.getFarmlandId(), p.getFruitType(), p.getFillType());
-            forecasts.put(p.getFarmlandId(), fc);
-            if (fc.fillType() != null && fc.liters() != null) {
-                expected.merge(fc.fillType(), fc.liters(), Double::sum);
-            }
-        });
+        harvests.forEach(h -> expected.merge(h.fillType(), h.liters(), Double::sum));
         Map<String, Double> contracted = contracted(sg);
-        Set<String> storageShort = storageShort(ctx, expected, contracted);
+        Set<String> storageShort = storageShort(ctx, harvests, contracts(sg));
 
         List<FieldPlan> fields = new ArrayList<>();
         double planSum = 0;
@@ -502,7 +520,12 @@ public class CropPlanService {
             double ha = fc.hectares() == null ? 0 : fc.hectares();
             out.add(new Check("ROTATION_SAME", values("hectares", round1(ha), "premium",
                     Math.round(ha * authority.getRotationPremiumPerHa()))));
-            if (history.size() >= 2 && p.getFruitType().equals(history.get(history.size() - 2))) {
+            // the rule of the authority (AuthorityService.rotation, FieldOverviewService): the whole premium is cut once
+            // a field repeats its crop for the second time (rotationViolations + 1 >= 2)
+            int violations = fieldRecords.findBySavegameOrderByFarmlandIdAsc(ctx.sg()).stream()
+                    .filter(r -> r.getFarmlandId() == p.getFarmlandId()).mapToInt(r -> r.getRotationViolations())
+                    .findFirst().orElse(0);
+            if (violations + 1 >= 2) {
                 out.add(new Check("ROTATION_CUT", values("share", Math.round(authority.getRotationCutShare() * 100))));
             }
         }
@@ -565,8 +588,13 @@ public class CropPlanService {
         return firstHarvest != null && lastSow != null && firstHarvest > lastSow;
     }
 
-    /** Fill types whose expected harvest exceeds the free capacity of the own silos plus what is already sold ahead. */
-    private static Set<String> storageShort(Context ctx, Map<String, Double> expected, Map<String, Double> contracted) {
+    /**
+     * Fill types whose planned harvest exceeds the free capacity of the own silos plus what is sold before the harvest:
+     * the open forward contracts and bulk orders whose delivery deadline ends before the harvest window of the fill
+     * type begins (owner decision 2026-10-14). Only fill types an own silo takes are checked (tradeStorage); bunker silos
+     * have no capacity in FS25 (BunkerSilo keeps a heap, no capacity), so silage and chaff in them cannot be checked.
+     */
+    private static Set<String> storageShort(Context ctx, List<Harvest> harvests, List<Contracted> contracts) {
         Set<String> out = new java.util.HashSet<>();
         if (ctx.facts() == null || ctx.facts().tradeStorage() == null) {
             return out;
@@ -574,12 +602,77 @@ public class CropPlanService {
         Map<String, Double> free = new HashMap<>();
         ctx.facts().tradeStorage().stream().filter(t -> t != null && t.fillType() != null)
                 .forEach(t -> free.merge(t.fillType(), t.freeCapacity() == null ? 0 : t.freeCapacity(), Double::sum));
-        expected.forEach((ft, liters) -> {
-            if (free.containsKey(ft) && liters > free.get(ft) + contracted.getOrDefault(ft, 0.0)) {
-                out.add(ft); // only fill types an own silo takes; bunker silos and heaps are not known
+        Map<String, Double> liters = new HashMap<>();
+        Map<String, Long> start = new HashMap<>();
+        for (Harvest h : harvests) {
+            liters.merge(h.fillType(), h.liters(), Double::sum);
+            if (h.harvestStart() != null) {
+                start.merge(h.fillType(), h.harvestStart(), Math::min);
+            }
+        }
+        liters.forEach((ft, l) -> {
+            if (!free.containsKey(ft)) {
+                return;
+            }
+            Long harvest = start.get(ft);
+            double soldBefore = harvest == null ? 0 : contracts.stream()
+                    .filter(c -> ft.equals(c.fillType()) && c.deadline() < harvest).mapToDouble(Contracted::remaining).sum();
+            if (l > free.get(ft) + soldBefore) {
+                out.add(ft);
             }
         });
         return out;
+    }
+
+    /**
+     * The planned harvest: every open plan with its forecast and every MATCHED plan whose season still runs with the
+     * values kept at sowing (owner decision 2026-10-14); a DEVIATED plan does not count. Harvest start = the first month
+     * of the harvest window of the crop after its sowing window (open plans) or from now (sown).
+     */
+    private List<Harvest> harvests(Context ctx, Map<Integer, Forecast> openForecasts) {
+        List<Harvest> out = new ArrayList<>();
+        Map<Long, FieldBookEntry> byId = new HashMap<>();
+        ctx.book().forEach(x -> byId.put(x.getId(), x));
+        for (CropPlan p : plans.findBySavegameOrderByIdAsc(ctx.sg())) {
+            if (p.getFruitType() == null) {
+                continue;
+            }
+            CropOption crop = ctx.crops().get(p.getFruitType());
+            if (p.getStatus() == Status.OPEN) {
+                Forecast fc = openForecasts.get(p.getFarmlandId());
+                if (fc == null) {
+                    fc = forecast(ctx, p.getFarmlandId(), p.getFruitType(), p.getFillType());
+                }
+                if (fc.fillType() != null && fc.liters() != null) {
+                    Window w = window(ctx.sg(), p, crop);
+                    out.add(new Harvest(fc.fillType(), fc.liters(),
+                            harvestStart(ctx.sg(), crop, w == null ? ctx.sg().getCurrentGameTime() : w.start(), w != null)));
+                }
+            } else if (p.getStatus() == Status.MATCHED && p.getEntryId() != null) {
+                FieldBookEntry e = byId.get(p.getEntryId());
+                if (e != null && e.getStatus() == FieldBookEntry.Status.RUNNING && p.getFillType() != null
+                        && p.getPlannedLitersPerHa() != null && p.getPlannedHectares() != null) {
+                    out.add(new Harvest(p.getFillType(), p.getPlannedLitersPerHa() * p.getPlannedHectares(),
+                            harvestStart(ctx.sg(), crop, ctx.sg().getCurrentGameTime(), false)));
+                }
+            }
+        }
+        return out;
+    }
+
+    /** First month of the harvest window of a crop from {@code from} (after its month when {@code afterSowing}). */
+    private Long harvestStart(Savegame sg, CropOption crop, long from, boolean afterSowing) {
+        if (crop == null || crop.harvestablePeriods() == null || crop.harvestablePeriods().isEmpty()) {
+            return null;
+        }
+        GameTime.Anchor anchor = gameTime.anchor(sg);
+        long m = anchor.monthIndex(from);
+        for (int k = afterSowing ? 1 : 0; k <= GameTime.PERIODS_PER_YEAR; k++) {
+            if (crop.harvestablePeriods().contains(anchor.periodOf(m + k))) {
+                return k == 0 ? from : anchor.monthStart(m + k);
+            }
+        }
+        return null;
     }
 
     private static Map<String, Object> values(Object... kv) {
@@ -619,6 +712,23 @@ public class CropPlanService {
             Double liters = known.containsKey(crop) ? s[1] : null;
             out.add(new SeedNeed(crop, s[0], liters, liters == null || seedPrice == null ? null : liters * seedPrice));
         });
+        return out;
+    }
+
+    /** An open forward contract or bulk order: litres still to deliver and the delivery deadline. */
+    private record Contracted(String fillType, double remaining, long deadline) {
+    }
+
+    private List<Contracted> contracts(Savegame sg) {
+        List<Contracted> out = new ArrayList<>();
+        for (ForwardContract c : forwardContracts.findBySavegameAndStatus(sg, ForwardContract.OPEN)) {
+            out.add(new Contracted(c.getFillType(), Math.max(0, c.getQuantity()
+                    - (c.getDeliveredQuantity() == null ? 0 : c.getDeliveredQuantity())), c.getDeadlineGameTime()));
+        }
+        for (BulkOrder o : bulkOrders.findBySavegameAndStatus(sg, BulkOrder.OPEN)) {
+            out.add(new Contracted(o.getFillType(), Math.max(0, o.getQuantity()
+                    - (o.getDeliveredQuantity() == null ? 0 : o.getDeliveredQuantity())), o.getDeadlineGameTime()));
+        }
         return out;
     }
 
@@ -712,7 +822,8 @@ public class CropPlanService {
             Forecast fc = forecast(ctx, p.getFarmlandId(), p.getFruitType(), p.getFillType());
             if (fc.directCosts() != null && fc.directCosts() > 0) {
                 BridgeDtos.Field field = ctx.fields().get(p.getFarmlandId());
-                long month = anchor.monthIndex(Math.max(w.start(), sg.getCurrentGameTime()));
+                // owner decision 2026-10-14: a window running now books into the first month of the plan (next month)
+                long month = Math.max(anchor.monthIndex(w.start()), anchor.monthIndex(sg.getCurrentGameTime()) + 1);
                 out.computeIfAbsent(month, k -> new ArrayList<>()).add(new PlannedCost(
                         (field == null ? String.valueOf(p.getFarmlandId()) : field.name()) + " · " + p.getFruitType(),
                         -Math.round(fc.directCosts())));
@@ -922,6 +1033,74 @@ public class CropPlanService {
         narration.request(sg, NarrationEventType.CROP_PLAN_DISCUSSION).from(cooperative).facts(facts)
                 .category(CommunicationCategory.CONTRACT).delay(answer - now).submit();
         sg.setCropPlanDiscussedYear(p.year());
+    }
+
+    // ------------------------------------------------------------------------------------------ D5 / F5
+
+    /**
+     * Roadmap V4 R4-D5 (owner decision 2026-10-14): the expected revenue of every running season that has a plan - the
+     * plan's forecast while nothing is sown or when the crop is the planned one (the values kept at sowing), the A3
+     * forecast of the crop that stands when it deviates. Fields without a plan for the running season are missing.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, ExpectedRevenue> runningRevenue(Savegame sg) {
+        Map<Integer, ExpectedRevenue> out = new HashMap<>();
+        List<CropPlan> all = plans.findBySavegameOrderByIdAsc(sg);
+        if (all.isEmpty()) {
+            return out;
+        }
+        Context ctx = context(sg, false);
+        for (FieldBookEntry running : ctx.book()) {
+            if (running.getStatus() != FieldBookEntry.Status.RUNNING) {
+                continue;
+            }
+            int id = running.getFarmlandId();
+            if (running.fruitType() == null) {
+                all.stream().filter(p -> p.getStatus() == Status.OPEN && p.getFarmlandId() == id
+                        && running.getId() >= firstEntry(p)).findFirst().ifPresent(p -> {
+                    Forecast fc = forecast(ctx, id, p.getFruitType(), p.getFillType());
+                    out.put(id, new ExpectedRevenue("PLAN", fc.fruitType(), fc.fillType(), fc.hectares(), fc.litersPerHa(),
+                            fc.yieldSource(), fc.pricePerLiter(), fc.priceSource(), fc.revenue()));
+                });
+                continue;
+            }
+            all.stream().filter(p -> Objects.equals(p.getEntryId(), running.getId())).findFirst().ifPresent(p -> {
+                if (p.getStatus() == Status.MATCHED) {
+                    Double revenue = p.getPlannedLitersPerHa() != null && p.getPlannedHectares() != null
+                            && p.getPlannedPrice() != null
+                            ? p.getPlannedLitersPerHa() * p.getPlannedHectares() * p.getPlannedPrice() : null;
+                    out.put(id, new ExpectedRevenue("PLAN", p.getFruitType(), p.getFillType(), p.getPlannedHectares(),
+                            p.getPlannedLitersPerHa(), p.getPlannedYieldSource(), p.getPlannedPrice(), null, revenue));
+                } else {
+                    Forecast fc = forecast(ctx, id, running.fruitType(), running.fillType());
+                    out.put(id, new ExpectedRevenue("ACTUAL", fc.fruitType(), fc.fillType(), fc.hectares(), fc.litersPerHa(),
+                            fc.yieldSource(), fc.pricePerLiter(), fc.priceSource(), fc.revenue()));
+                }
+            });
+        }
+        return out;
+    }
+
+    /** First field book entry a plan can be for (the running one it was made for, or a later one). */
+    private static long firstEntry(CropPlan p) {
+        return p.getTargetEntryId() != null ? p.getTargetEntryId() : p.getAfterEntryId() != null ? p.getAfterEntryId() + 1 : 0;
+    }
+
+    /**
+     * Roadmap V4 R4-F5: the planned harvest as feed fill types (chaff counts as silage, crop-planning.feed-equivalents) -
+     * open plans and MATCHED plans whose season still runs (owner decision 2026-10-14).
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Double> plannedFeedHarvest(Savegame sg) {
+        Map<String, Double> out = new HashMap<>();
+        if (plans.findBySavegameOrderByIdAsc(sg).isEmpty()) {
+            return out;
+        }
+        Context ctx = context(sg, false);
+        for (Harvest h : harvests(ctx, Map.of())) {
+            out.merge(cfg().getFeedEquivalents().getOrDefault(h.fillType(), h.fillType()), h.liters(), Double::sum);
+        }
+        return out;
     }
 
     // ------------------------------------------------------------------------------------------ A1 suggestion

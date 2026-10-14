@@ -145,7 +145,17 @@ public class FieldMarginService {
      */
     public record Margins(int years, int defaultYears, Integer fromYear, Integer toYear, Integer currentYear,
                           boolean overheads, boolean measured, List<FieldMargins> fields, List<Ranking> ranking,
-                          List<CropMargin> crops) {
+                          List<CropMargin> crops,
+                          Map<Integer, de.farmpulse.rpsim.planning.CropPlanService.ExpectedRevenue> expected) {
+
+        /**
+         * Roadmap V4 R4-D5 (owner decision 2026-10-14): the expected revenue of the running seasons with a plan of A, by
+         * farmland - added by the controller (the planner reads the margins itself).
+         */
+        public Margins withExpected(Map<Integer, de.farmpulse.rpsim.planning.CropPlanService.ExpectedRevenue> e) {
+            return new Margins(years, defaultYears, fromYear, toYear, currentYear, overheads, measured, fields, ranking,
+                    crops, e);
+        }
     }
 
     /** Kinds the player may add by hand: own costs and revenues and the replacement of an estimated line. */
@@ -739,7 +749,7 @@ public class FieldMarginService {
             fields.add(new FieldMargins(id, name, hectares.get(id), running, done));
         }
         return new Margins(years, defaultYears, from, to, ctx.currentYear(), ctx.overheads(), ctx.measured(), fields,
-                ranking(fields, inPeriod), crops(inPeriod));
+                ranking(fields, inPeriod), crops(inPeriod), Map.of());
     }
 
     private static boolean entryHeld(List<FieldBookEntry> all, long id) {

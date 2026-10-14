@@ -39,16 +39,24 @@ public class FieldMarginController {
 
     private final SavegameContext context;
     private final FieldMarginService margins;
+    private final de.farmpulse.rpsim.planning.CropPlanService cropPlans;
 
-    public FieldMarginController(SavegameContext context, FieldMarginService margins) {
+    public FieldMarginController(SavegameContext context, FieldMarginService margins,
+                                 de.farmpulse.rpsim.planning.CropPlanService cropPlans) {
         this.context = context;
         this.margins = margins;
+        this.cropPlans = cropPlans;
+    }
+
+    /** D5 (owner decision 2026-10-14): the card with the expected revenue of the running seasons with a plan. */
+    private FieldMarginService.Margins card(Savegame sg) {
+        return margins.margins(sg).withExpected(cropPlans.runningRevenue(sg));
     }
 
     @GetMapping("/api/field-margin")
     @Transactional(readOnly = true)
     public FieldMarginService.Margins view() {
-        return margins.margins(context.requireActive());
+        return card(context.requireActive());
     }
 
     @PostMapping("/api/field-margin/overheads")
@@ -56,7 +64,7 @@ public class FieldMarginController {
     public FieldMarginService.Margins overheads(@Valid @RequestBody OverheadsRequest r) {
         Savegame sg = context.requireActive();
         margins.setOverheads(sg, r.enabled());
-        return margins.margins(sg);
+        return card(sg);
     }
 
     @PostMapping("/api/field-margin/items/{id}")
@@ -64,7 +72,7 @@ public class FieldMarginController {
     public FieldMarginService.Margins correct(@PathVariable long id, @RequestBody CorrectRequest r) {
         Savegame sg = context.requireActive();
         margins.correct(sg, id, r.liters(), r.amount());
-        return margins.margins(sg);
+        return card(sg);
     }
 
     @DeleteMapping("/api/field-margin/items/{id}")
@@ -72,7 +80,7 @@ public class FieldMarginController {
     public FieldMarginService.Margins remove(@PathVariable long id) {
         Savegame sg = context.requireActive();
         margins.remove(sg, id);
-        return margins.margins(sg);
+        return card(sg);
     }
 
     @PostMapping("/api/field-margin/entries/{entryId}/items")
@@ -80,7 +88,7 @@ public class FieldMarginController {
     public FieldMarginService.Margins add(@PathVariable long entryId, @Valid @RequestBody AddRequest r) {
         Savegame sg = context.requireActive();
         margins.add(sg, entryId, r.kind(), r.note(), r.liters(), r.amount());
-        return margins.margins(sg);
+        return card(sg);
     }
 
     @PostMapping("/api/field-margin/entries/{entryId}/price")
@@ -88,6 +96,6 @@ public class FieldMarginController {
     public FieldMarginService.Margins price(@PathVariable long entryId, @RequestBody PriceRequest r) {
         Savegame sg = context.requireActive();
         margins.setPrice(sg, entryId, r.perLiter());
-        return margins.margins(sg);
+        return card(sg);
     }
 }

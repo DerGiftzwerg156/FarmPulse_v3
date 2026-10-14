@@ -13,6 +13,8 @@ import de.farmpulse.rpsim.domain.CharacterRole;
 import de.farmpulse.rpsim.domain.CropPlan;
 import de.farmpulse.rpsim.domain.FieldBookEntry;
 import de.farmpulse.rpsim.domain.FieldBookEntry.Status;
+import de.farmpulse.rpsim.domain.FieldPhase;
+import de.farmpulse.rpsim.domain.FieldRecord;
 import de.farmpulse.rpsim.domain.ForwardContract;
 import de.farmpulse.rpsim.domain.NarrationJob;
 import de.farmpulse.rpsim.domain.Savegame;
@@ -21,6 +23,7 @@ import de.farmpulse.rpsim.planning.CropPlanService.FieldPlan;
 import de.farmpulse.rpsim.planning.CropPlanService.Planning;
 import de.farmpulse.rpsim.repository.CropPlanRepository;
 import de.farmpulse.rpsim.repository.FieldBookEntryRepository;
+import de.farmpulse.rpsim.repository.FieldRecordRepository;
 import de.farmpulse.rpsim.repository.ForwardContractRepository;
 import de.farmpulse.rpsim.repository.NarrationJobRepository;
 import de.farmpulse.rpsim.support.Fixtures;
@@ -51,6 +54,7 @@ class CropPlanTest {
     @Autowired CropPlanRepository plans;
     @Autowired FieldBookEntryRepository book;
     @Autowired ForwardContractRepository forwardContracts;
+    @Autowired FieldRecordRepository fieldRecords;
     @Autowired NarrationJobRepository jobs;
     @Autowired TaskService tasks;
     @Autowired CalendarPlanService calendar;
@@ -124,6 +128,29 @@ class CropPlanTest {
         return book.save(e);
     }
 
+    /** The authority's record of a field with its rotation repetitions so far. */
+    private void violations(int farmlandId, int n) {
+        FieldRecord r = new FieldRecord();
+        r.setSavegame(sg);
+        r.setFarmlandId(farmlandId);
+        r.setPhase(FieldPhase.GROWING);
+        r.setRotationViolations(n);
+        fieldRecords.save(r);
+    }
+
+    private ForwardContract contract(String fillType, long quantity, long deadline) {
+        ForwardContract c = new ForwardContract();
+        c.setSavegame(sg);
+        c.setFillType(fillType);
+        c.setSellPoint("Mill");
+        c.setQuantity(quantity);
+        c.setFixedPrice(250);
+        c.setStatus(ForwardContract.OPEN);
+        c.setDeliveryStartGameTime(deadline - GameTime.days(1));
+        c.setDeadlineGameTime(deadline);
+        return forwardContracts.save(c);
+    }
+
     private static FieldPlan field(Planning p, int id) {
         return p.fields().stream().filter(f -> f.farmlandId() == id).findFirst().orElseThrow();
     }
@@ -165,12 +192,16 @@ class CropPlanTest {
     @Test
     void theChecksAreHintsWithTheirFigures() {
         facts(true, "[{ \"fillType\": \"WHEAT\", \"amount\": 0, \"freeCapacity\": 1000 }]");
+        violations(12, 1); // the authority counted one repetition already: the next one cuts the whole premium
         planner.plan(sg, 12, "WHEAT", null, 9, null);
         FieldPlan f = field(planner.planning(sg), 12);
         assertThat(codes(f)).containsExactly("ROTATION_SAME", "ROTATION_CUT", "SOW_OUTSIDE_WINDOW", "TOO_LATE", "STORAGE",
                 "FERTILIZER_CLOSED");
         assertThat(f.plan().checks().getFirst().values()).containsEntry("hectares", 4.5).containsEntry("premium", 180L);
         assertThat(f.plan().checks().get(1).values()).containsEntry("share", 50L);
+        // without a repetition counted by the authority there is no cut (its rule: violations + 1 >= 2)
+        fieldRecords.deleteAll(fieldRecords.findBySavegameOrderByFarmlandIdAsc(sg));
+        assertThat(codes(field(planner.planning(sg), 12))).contains("ROTATION_SAME").doesNotContain("ROTATION_CUT");
         // the field without lime in the running season gets the soil hint, a fallow plan none
         planner.plan(sg, 14, "BARLEY", null, null, null);
         assertThat(codes(field(planner.planning(sg), 14))).contains("LIME").doesNotContain("ROTATION_SAME", "TOO_LATE");
@@ -238,7 +269,9 @@ class CropPlanTest {
         assertThat(task.deadlineGameTime()).isEqualTo(GameTime.days(12));
         assertThat(task.sowDue().fieldName()).isEqualTo("14");
         assertThat(calendar.overview(sg).agenda()).anyMatch(a -> "SOW_WINDOW_END".equals(a.kind()) && "14".equals(a.title()));
-        assertThat(planner.plannedByMonth(sg).get(10L)).singleElement()
+        // the window runs now: its costs go into the first month of the liquidity plan (owner decision 2026-10-14)
+        assertThat(planner.plannedByMonth(sg)).containsOnlyKeys(11L);
+        assertThat(planner.plannedByMonth(sg).get(11L)).singleElement()
                 .satisfies(c -> assertThat(c.amount()).isEqualTo(-1800)); // 2 ha x 900
         // a maize plan waits for its window in February
         planner.plan(sg, 12, "MAIZE", null, null, null);
@@ -322,5 +355,52 @@ class CropPlanTest {
         assertThat(job.getFactsJson()).contains("\"plans\":1").contains("\"rotationFields\":1");
         assertThat(planner.planning(sg).discussed()).isTrue();
         assertThatThrownBy(() -> planner.discuss(sg)).isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    void storageCountsOnlyContractsDueBeforeTheHarvestAndTheSownPlanStaysPlanned() {
+        // field 14: wheat 2 ha (16 000 l), sown in August/September, harvested from June (period 4) = month 20
+        facts(true, "[{ \"fillType\": \"WHEAT\", \"amount\": 0, \"freeCapacity\": 10000 }]");
+        planner.plan(sg, 14, "WHEAT", null, null, null);
+        assertThat(codes(field(planner.planning(sg), 14))).contains("STORAGE");
+        // delivered after the harvest begins: does not free room
+        contract("WHEAT", 8000, GameTime.days(25));
+        assertThat(codes(field(planner.planning(sg), 14))).contains("STORAGE");
+        // due before the harvest window: the silo is empty again in time (owner decision 2026-10-14)
+        contract("WHEAT", 8000, GameTime.days(15));
+        assertThat(codes(field(planner.planning(sg), 14))).doesNotContain("STORAGE");
+        // sown as planned: the harvest still counts with the values kept at sowing (owner decision 2026-10-14)
+        FieldBookEntry running14 = book.findBySavegameAndFarmlandIdOrderByIdAsc(sg, 14).getLast();
+        running14.setFruitTypeAuto("WHEAT");
+        running14.setFillTypeAuto("WHEAT");
+        book.save(running14);
+        t += GameTime.hours(1);
+        facts(true, "[]");
+        assertThat(planner.planning(sg).marketing()).singleElement()
+                .satisfies(m -> assertThat(m.expected()).isCloseTo(16_000, within(1e-6)));
+        assertThat(planner.plannedFeedHarvest(sg)).containsEntry("WHEAT", 16_000.0);
+    }
+
+    @Test
+    void theRunningSeasonExpectsTheRevenueOfItsPlan() {
+        // nothing sown yet: the forecast of the plan (barley base yield 7000 l/ha x 2 ha x 0.18)
+        planner.plan(sg, 14, "BARLEY", null, null, null);
+        var expected = planner.runningRevenue(sg);
+        assertThat(expected).containsOnlyKeys(14);
+        assertThat(expected.get(14).basis()).isEqualTo("PLAN");
+        assertThat(expected.get(14).revenue()).isCloseTo(7000 * 2 * 0.18, within(1e-6));
+        // another crop than planned stands: the A3 forecast of that crop (wheat: crop average 8000 l/ha x 0.23)
+        FieldBookEntry running14 = book.findBySavegameAndFarmlandIdOrderByIdAsc(sg, 14).getLast();
+        running14.setFruitTypeAuto("WHEAT");
+        running14.setFillTypeAuto("WHEAT");
+        book.save(running14);
+        t += GameTime.hours(1);
+        facts(true, "[]");
+        expected = planner.runningRevenue(sg);
+        assertThat(expected.get(14).basis()).isEqualTo("ACTUAL");
+        assertThat(expected.get(14).fruitType()).isEqualTo("WHEAT");
+        assertThat(expected.get(14).revenue()).isCloseTo(8000 * 2 * 0.23, within(1e-6));
+        // field 12 has no plan for its running season: nothing expected
+        assertThat(expected).doesNotContainKey(12);
     }
 }

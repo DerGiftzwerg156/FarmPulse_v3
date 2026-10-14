@@ -94,7 +94,8 @@ public class FeedBalanceService {
                                double needPerDay, boolean estimated, double stock, double manual, double trough,
                                Double reachDays, Double reachMonths, Long emptyAt, String status, Long nextHarvestAt,
                                Double shortfall, double yearNeed, Double coveredPercent, double yearBalance,
-                               Double monthlyCost, boolean neighborTrade) {
+                               Double monthlyCost, boolean neighborTrade, Double plannedHarvest,
+                               Double coveredWithPlanPercent, Double yearBalanceWithPlan) {
     }
 
     public record AnimalBalance(String animalType, int animals, List<GroupBalance> groups) {
@@ -549,6 +550,15 @@ public class FeedBalanceService {
 
     @Transactional(readOnly = true)
     public Balance balance(Savegame sg) {
+        return balance(sg, null);
+    }
+
+    /**
+     * F5: with {@code planned} (litres per feed fill type of the crop plan, A4) the yearly need is also compared with
+     * stock + planned harvest; null = without the plan (warnings, tasks, the planner itself).
+     */
+    @Transactional(readOnly = true)
+    public Balance balance(Savegame sg, Map<String, Double> planned) {
         long now = sg.getCurrentGameTime();
         int dpp = gameTime.anchor(sg).daysPerPeriod();
         FarmFacts f = facts.latest(sg).orElse(null);
@@ -701,13 +711,15 @@ public class FeedBalanceService {
             for (Acc acc : entry.getValue()) {
                 double stock = 0;
                 double man = 0;
+                double plan = 0;
                 for (String ft : acc.group.fillTypes()) {
                     double all = needOf.getOrDefault(ft, 0.0);
                     double share = all > 0 ? acc.need / all : 1.0 / eatersOf.getOrDefault(ft, 1);
                     stock += (auto.getOrDefault(ft, 0.0) + entered.getOrDefault(ft, 0.0)) * share;
                     man += entered.getOrDefault(ft, 0.0) * share;
+                    plan += (planned == null ? 0 : planned.getOrDefault(ft, 0.0)) * share;
                 }
-                groups.add(group(sg, acc, stock, man, now, dpp, market, tradeable));
+                groups.add(group(sg, acc, stock, man, now, dpp, market, tradeable, planned == null ? null : plan));
             }
             int count = stables.stream().filter(s -> s.type().equals(entry.getKey())).mapToInt(Stable::count).sum();
             animals.add(new AnimalBalance(entry.getKey(), count, groups));
@@ -772,7 +784,7 @@ public class FeedBalanceService {
     }
 
     private GroupBalance group(Savegame sg, Acc acc, double stock, double man, long now, int dpp,
-                               BridgeDtos.MarketContext market, Set<String> tradeable) {
+                               BridgeDtos.MarketContext market, Set<String> tradeable, Double plannedHarvest) {
         double total = stock + acc.trough;
         Double reach = acc.need > 0 && !acc.group.fillTypes().isEmpty() ? total / acc.need : null;
         Double months = reach == null ? null : reach / dpp;
@@ -785,7 +797,9 @@ public class FeedBalanceService {
         return new GroupBalance(acc.group.title(), acc.group.kind(), acc.group.weight(), acc.group.fillTypes(), acc.need,
                 acc.estimated, stock, man, acc.trough, reach, months, emptyAt, status, harvest, shortfall, yearNeed,
                 yearNeed > 0 ? total / yearNeed * 100 : null, total - yearNeed, acc.costKnown ? acc.cost : null,
-                acc.group.fillTypes().stream().anyMatch(tradeable::contains));
+                acc.group.fillTypes().stream().anyMatch(tradeable::contains), plannedHarvest,
+                plannedHarvest == null || yearNeed <= 0 ? null : (total + plannedHarvest) / yearNeed * 100,
+                plannedHarvest == null ? null : total + plannedHarvest - yearNeed);
     }
 
     /**
