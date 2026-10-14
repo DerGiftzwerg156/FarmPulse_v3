@@ -181,11 +181,18 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
     Fruchtfolgeprämie des Feldes), **Pacht** und – solange der Schalter *Gemeinkosten verteilen* an ist (Standard) – die
     nach Fläche **verteilten** Gemeinkosten (Diesel, Reparatur, Helferlohn, Leasing, Gehälter der Maschinenführer):
     das **Feldergebnis**.
-  - Die Tabelle zeigt den Deckungsbeitrag je Hektar je Feld und Erntejahr, dazu die **Rangliste** der Felder, den
-    Durchschnitt je Kultur (immer mit *n*) und ein Balkendiagramm eines Erntejahres. Der Zeitraum ist derselbe wie in
-    der Feldbuch-Auswertung. Ein Klick auf eine Zelle zeigt die Rechnung mit allen Zeilen.
-  - Jeden gemessenen oder geschätzten Betrag kannst du **ändern** (↺ gibt ihn zurück), den Preis je 1000 l selbst
-    eintragen und **eigene Zeilen** hinzufügen, z. B. gepresstes Stroh als Leistung oder Wickelfolie als Kosten. Ein im
+  - Die Tabelle zeigt den Deckungsbeitrag je Hektar je Feld und Erntejahr, die Kultur mit derselben Farbe wie in der
+    Feldbuch-Auswertung, dazu die **Rangliste** der Felder, den Durchschnitt je Kultur (immer mit *n*) und ein
+    Balkendiagramm eines Erntejahres. Der Zeitraum ist derselbe wie in der Feldbuch-Auswertung. Ein Klick auf eine Zelle
+    zeigt die Rechnung mit allen Zeilen; *Im Feldbuch* springt zum Eintrag, und im Feldbuch führt *Deckungsbeitrag* an
+    jedem Eintrag hierher zurück.
+  - **Laufende Saison:** bisherige Kosten je Hektar und – wenn es für die Saison einen Anbauplan gibt – die
+    **erwartete Leistung**: die Prognose des Plans, oder, wenn eine andere Kultur gesät wurde, die Prognose für die
+    Kultur, die steht.
+  - Jede gemessene oder geschätzte Zeile kannst du **ändern** – Liter, Preis je 1000 l oder den Betrag (↺ gibt sie
+    zurück; ändern sich nur die Liter, rechnet FarmPulse den Betrag mit) –, den Erntepreis je 1000 l selbst eintragen
+    und **eigene Zeilen** hinzufügen, z. B. gepresstes Stroh als Leistung mit Litern und Preis oder Wickelfolie als
+    Kosten. Ein im
     Feldbuch abgeschlossenes Erntejahr ist gesperrt; was später kommt (z. B. eine Prämie), wird erst nach dem Wieder-
     öffnen gezählt.
   - Hat ein Feld zwei Erntejahre in Folge einen negativen Deckungsbeitrag, schreibt dir die Genossenschaft einmal.
@@ -641,21 +648,26 @@ in der laufenden Saison noch nichts gesät, gilt der Plan für sie.
   optional der **Saatmonat** und eine Notiz. *Wie Vorjahr* nimmt die Kultur, die jetzt steht oder zuletzt stand;
   *Fruchtfolge vorschlagen* wählt eine Kultur, die in den letzten zwei Saisons nicht auf dem Feld stand – am liebsten
   die mit dem besten Ø Deckungsbeitrag je Hektar, sonst die mit dem höchsten Grundertrag × Preis.
-- **Hinweise** (sie sperren nichts): gleiche Kultur wie zuvor („Fruchtfolgeprämie entfällt für x ha (≈ y €)“, bei der
-  zweiten Wiederholung die Kürzung der ganzen Prämie), ein Saatmonat außerhalb des Saatfensters, eine laufende Kultur,
-  die erst nach dem letzten Saatmonat geerntet wird („zu spät für dieses Jahr“), fehlender Lagerplatz in den eigenen
-  Silos, die Sperrfrist für Gülle und Mist bei einer Herbstsaat und „vor der Saat kalken“, wenn Kalk im Spielstand an
-  ist und in dieser Saison noch nicht gekalkt wurde.
+- **Hinweise** (sie sperren nichts): gleiche Kultur wie zuvor („Fruchtfolgeprämie entfällt für x ha (≈ y €)“; hat das
+  Amt auf dem Feld schon eine Wiederholung gezählt, der Hinweis auf die Kürzung der ganzen Prämie), ein Saatmonat
+  außerhalb des Saatfensters, eine laufende Kultur, die erst nach dem letzten Saatmonat geerntet wird („zu spät für
+  dieses Jahr“), fehlender Lagerplatz in den eigenen Silos (Vorkontrakte und Großaufträge, die vor der Ernte geliefert
+  sein müssen, machen Platz; Fahrsilos haben im Spiel kein Fassungsvermögen und werden nicht geprüft), die Sperrfrist
+  für Gülle und Mist bei einer Herbstsaat und „vor der Saat kalken“, wenn Kalk im Spielstand an ist und in dieser
+  Saison noch nicht gekalkt wurde.
 - **Prognose je Feld:** erwartete l/ha – der Ø dieses Feldes mit dieser Kultur, sonst der Ø der Kultur über alle
   Felder, sonst der Grundertrag der Kultur (ohne Düngung und Kalk) –, der Preis (offener Vorkontrakt, bester aktueller
   Preis oder Verrechnungswert), die Direktkosten (Ø aus dem Deckungsbeitrag, sonst nur Saatgut) und der erwartete
   Deckungsbeitrag. Oben steht die Summe des Plans neben „wie Vorjahr“.
 - **Bedarf und Absicherung:** Saatgut je Kultur in Litern und €, wie viel der erwarteten Ernte schon über Vorkontrakte
   und Großaufträge verkauft ist, und ob die Futterernte den Jahresbedarf deiner Ställe deckt (mit der Fläche, die die
-  Lücke schließen würde). Die erwarteten Direktkosten stehen als „geplant“ in der **Liquiditätsplanung** der Bank.
+  Lücke schließen würde). Zur erwarteten Ernte zählen offene Pläne und wie geplant gesäte Felder, die noch nicht
+  geerntet sind. Die erwarteten Direktkosten stehen als „geplant“ in der **Liquiditätsplanung** der Bank (läuft das
+  Saatfenster schon, im nächsten Monat). *Vorkontrakt abschließen* öffnet die Agrarbörse mit der Sorte.
 - **Saatzeit:** Im Saatfenster steht in **Aufgaben** „Feld 12: Weizen säen“ mit dem Ende des Fensters als Frist, der
-  **Kalender** zeigt Beginn und Ende. Mit dem Schalter *Erinnerung zur Saatzeit* (Standard an) erinnert dich die
-  Genossenschaft per Mail an Felder, deren Saatfenster in diesem Monat endet.
+  **Kalender** zeigt Beginn und Ende. *Lohnunternehmer beauftragen* öffnet die Flurkarte mit dem Feld, der Arbeit
+  „Säen“ und der Kultur. Mit dem Schalter *Erinnerung zur Saatzeit* (Standard an) erinnert dich die Genossenschaft per
+  Mail an Felder, deren Saatfenster in diesem Monat endet.
 - **Plan und Wirklichkeit:** Beginnt die Saison mit einer anderen Kultur als geplant, ist der Plan „abweichend“ – ohne
   Folgen. Unter **Plan / Ist** stehen Kultur, l/ha und Deckungsbeitrag geplant und erreicht.
 - **Plan besprechen:** Einmal im Jahr schickst du den Plan an die Genossenschaft; die Antwort kommt am nächsten
@@ -740,9 +752,10 @@ Mod-Version.
   - **Vorrat:** was in deinen Silos, Erweiterungen und Fahrsilos liegt, was im Trog ist und was du selbst einträgst.
     Fressen mehrere Tierarten dieselbe Sorte, teilt FarmPulse den Vorrat nach ihrem Bedarf.
   - **Reichweite** in Tagen und Spielmonaten mit Ampel – grün ab 3 Monaten, gelb darunter, rot unter einem Monat – und
-    dem Tag, an dem die Gruppe leer ist. Kennt FarmPulse die Erntezeit der passenden Kultur (z. B. Gras für Silage und
-    Heu), steht die **nächste Ernte** dabei und wie viele Liter bis dahin **fehlen**; dazu der **Jahresbedarf** („gedeckt
-    zu x %“) und die **Futterkosten** je Monat zum Einkaufspreis.
+    dem Tag, an dem die Gruppe leer ist. Steht eine passende Kultur im **Anbauplan**, gilt deren Erntezeit („laut
+    Anbauplan“), sonst die Erntezeit der passenden Kulturen (z. B. Gras für Silage und Heu): Dann steht die **nächste
+    Ernte** dabei und wie viele Liter bis dahin **fehlen**. Dazu der **Jahresbedarf** („gedeckt zu x %“, mit Anbauplan
+    auch mit der geplanten Ernte samt Fehlmenge oder Überschuss) und die **Futterkosten** je Monat zum Einkaufspreis.
   - Je Stall: Bedarf, Trog („leer in x Stunden“), Stroh im Stall und die Futterkosten.
   - **Ballen und sonstiger Vorrat:** Ballen und Paletten zählt das Spiel nicht als Füllstand. Trag sie ein – Anzahl und
     Größe (z. B. Rundballen 1,25 m) oder direkt Liter. Der Vorrat sinkt von selbst, sobald Futter in den Trog oder

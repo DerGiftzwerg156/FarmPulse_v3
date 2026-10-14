@@ -1092,15 +1092,28 @@ public class CropPlanService {
      */
     @Transactional(readOnly = true)
     public Map<String, Double> plannedFeedHarvest(Savegame sg) {
-        Map<String, Double> out = new HashMap<>();
-        if (plans.findBySavegameOrderByIdAsc(sg).isEmpty()) {
-            return out;
+        return feedPlan(sg).harvest();
+    }
+
+    /**
+     * Roadmap V4 R4-F3 / R4-F5: the planned harvest as feed (litres per feed fill type) and the earliest start of its
+     * harvest windows - the feed balance takes the next harvest of a group from the plan.
+     */
+    @Transactional(readOnly = true)
+    public FeedBalanceService.Plan feedPlan(Savegame sg) {
+        Map<String, Double> liters = new HashMap<>();
+        Map<String, Long> start = new HashMap<>();
+        if (!plans.findBySavegameOrderByIdAsc(sg).isEmpty()) {
+            Context ctx = context(sg, false);
+            for (Harvest h : harvests(ctx, Map.of())) {
+                String ft = cfg().getFeedEquivalents().getOrDefault(h.fillType(), h.fillType());
+                liters.merge(ft, h.liters(), Double::sum);
+                if (h.harvestStart() != null) {
+                    start.merge(ft, h.harvestStart(), Math::min);
+                }
+            }
         }
-        Context ctx = context(sg, false);
-        for (Harvest h : harvests(ctx, Map.of())) {
-            out.merge(cfg().getFeedEquivalents().getOrDefault(h.fillType(), h.fillType()), h.liters(), Double::sum);
-        }
-        return out;
+        return new FeedBalanceService.Plan(liters, start);
     }
 
     // ------------------------------------------------------------------------------------------ A1 suggestion

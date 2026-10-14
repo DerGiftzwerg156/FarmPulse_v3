@@ -162,6 +162,14 @@ the advice of the cooperative after two loss years. Mod: `test_roadmap_v4.lua` (
 sprayer, only own farmland and the server, helper litres, never disturbing the work, savegame and export, the purchase
 prices). Frontend: `margin-card.spec.ts` (table, ranking, crops, chart, calculation, corrections, own lines, price,
 switch, shared period, locked entry) and the farm report section in `credit-planning.spec.ts`.
+Roadmap V4, closed gaps (owner decisions 2026-10-14): `CropPlanTest` also covers the storage check with contracts due
+before the harvest window, the sown plan that stays planned harvest, the rotation cut by the authority's count, the
+running window in the next month of the liquidity plan and the expected revenue of a running season (plan / actual
+crop); `FeedBalanceTest` the yearly need with the planned harvest and the next harvest from the plan. Frontend:
+`margin-card.spec.ts` (crop colours, link to the field book and `?entry=`, expected revenue, litres / price
+corrections, revenue with litres and price), `fieldbook.spec.ts` (`?entry=` and the links to the bank),
+`feed-balance.spec.ts` (with plan), `contractor-work-card.spec.ts` and `marketing.spec.ts` (presets) and the links of
+`crop-planning.spec.ts`.
 Roadmap V4 R4-A (crop planner): `CropPlanTest` covers the plan for the next or the running season with its
 validation, the hints with their figures (rotation and its cut, sowing window, too late, storage, fertiliser ordinance,
 lime; none for fallow), the forecast with its sources (field, crop, base yield; best price and forward contract; seed

@@ -285,6 +285,13 @@ class FeedBalanceTest {
         // period 9 starts in month 8 = day 24, 14 days from now: 360 x 14 - 2100
         assertThat(hay.nextHarvestAt()).isEqualTo(GameTime.days(24));
         assertThat(hay.shortfall()).isCloseTo(2940, within(1e-6));
+        assertThat(hay.nextHarvestSource()).isEqualTo("CROPS");
+        // F3: with the crop plan of A the next harvest is the harvest window of the planned crop
+        GroupBalance planned = group(feed.balance(sg, new FeedBalanceService.Plan(java.util.Map.of("DRYGRASS_WINDROW", 9_000.0),
+                java.util.Map.of("DRYGRASS_WINDROW", t + GameTime.days(8)))), "Heu");
+        assertThat(planned.nextHarvestAt()).isEqualTo(t + GameTime.days(8));
+        assertThat(planned.nextHarvestSource()).isEqualTo("PLAN");
+        assertThat(planned.shortfall()).isCloseTo(360 * 8 - 2100, within(1e-6));
         assertThat(group(feed.balance(sg), "Kraftfutter").nextHarvestAt()).isNull();
     }
 

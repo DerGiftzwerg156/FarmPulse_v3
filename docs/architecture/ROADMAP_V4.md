@@ -232,7 +232,10 @@ Hook ruft das Original auf und zählt dessen Rückgabe, nur auf dem Server und n
 
 ### R4-Q3 Domäne, Simulator, Tests, Konfiguration, Doku, Testplan
 
-- [ ] Neue Tabellen kommen **mit den Bereichen**, nicht mit Q (wie R33-Q2):
+- [x] Neue Tabellen kommen **mit den Bereichen**, nicht mit Q (wie R33-Q2). Umgesetzt: D mit V45 (`field_margin_item`,
+  `field_margin_entry`, `field_input_counter`), F mit V46 (`feed_counter`, `feed_snapshot` statt `feed_consumption_day` –
+  die Tagesmessung liest Zählerstände je Spieltag –, `feed_level`, `feed_manual_stock`, `feed_alert`), A mit V47
+  (`crop_plan`). Geplant war:
   - mit D: `field_margin_item` (Kosten- und Erlöszeilen je Feldbuch-Eintrag: Art, Sorte, Liter, Preis, Betrag, Herkunft,
     Quelle `AUTO` / `MANUAL`), `field_input_counter` (zuletzt gesehener Zählerstand je Feld und Sorte),
   - mit F: `feed_manual_stock` (eingetragene Ballen und sonstiger Vorrat), `feed_consumption_day` (Verbrauch je Stall,
@@ -243,15 +246,14 @@ Hook ruft das Original auf und zählt dessen Rückgabe, nur auf dem Server und n
   und steigendem `feedConsumed[]`, dazu `animalFood[]`, `fillTypeCosts[]` und die neuen Werte an `fruitTypes[]`.
   Steuer-Endpunkte `POST /input` (Verbrauch auf ein Feld buchen), `POST /feed` (Futter in Trog oder Silo legen oder
   herausnehmen) und `POST /eat` (die Tiere fressen aus dem Trog).
-- [ ] Mod-Tests mit gemockten FS25-Globals: Normalisierung aller neuen Felder (`test_farm_facts.lua`,
+- [x] Mod-Tests mit gemockten FS25-Globals: Normalisierung aller neuen Felder (`test_farm_facts.lua`,
   `test_market_context.lua`) und neu `test_roadmap_v4.lua` (Hooks zählen nur eigene Flurstücke und Ställe, nur auf dem
-  Server, Speichern und Laden der Zähler, Helper-Liter). Umgesetzt: Normalisierung; `test_roadmap_v4.lua` hält fest,
-  dass der Adapter die Werte noch nicht liest. Die Tests der Hooks kommen mit D1 und F1.
+  Server, Speichern und Laden der Zähler, Helper-Liter; mit D1, F1 und A2 umgesetzt).
 - [x] Backend: `BridgeValidatorTest`, `SimulatorScenariosEndToEndTest`, Tests je Regel kommen mit D, F und A.
-- [ ] Neue Werte unter `rpsim.formulas.field-margin.*`, `rpsim.formulas.feed-balance.*` und
+- [x] Neue Werte unter `rpsim.formulas.field-margin.*`, `rpsim.formulas.feed-balance.*` und
   `rpsim.formulas.crop-planning.*` samt `docs/dev/configuration-reference.md` (`ConfigurationReferenceDocTest`), jeweils
   mit dem Bereich.
-- [ ] Spieler-Doku `docs/user-guide/funktionen.md` mit jedem Bereich, `CHANGELOG.md`.
+- [x] Spieler-Doku `docs/user-guide/funktionen.md` mit jedem Bereich, `CHANGELOG.md`.
 - [x] `docs/dev/manual-test-plan.md`: Abschnitt **„30. Roadmap V4 im echten FS25“**, eine Zeile je 🟡 und je
   Akzeptanzkriterium.
 
@@ -280,11 +282,12 @@ Leistung.
 **Stand 13.10.2026: umgesetzt** (Mod: Hooks auf Sämaschine und Spritze, `RPSimInputCounter`, Einkaufspreise;
 Backend: `field/FieldMarginService`, `api/FieldMarginController`, Migration V45; Frontend: Karte `margin-card` unter
 *Bank → Betriebsergebnis*, Abschnitt im Hofbericht). Abweichungen und Grenzen (Umsetzungshinweise in `QUESTIONS.md`):
-- Die Tabelle nennt die Kultur als Text, nicht als Farbe; das Diagramm färbt nach Vorzeichen (grün / rot).
-- In der Oberfläche werden Betrag und Preis (je 1000 l) korrigiert, eigene Zeilen mit Text und Betrag eingetragen.
-  Liter lassen sich über die API korrigieren (`POST /api/field-margin/items/{id}`), noch nicht in der Karte.
-- Der Link zwischen Rechnung und Feldbuch-Eintrag fehlt noch (die App „Feldbuch“ hat keine Sprungadresse je Eintrag).
-- Die laufende Saison zeigt die bisherigen Kosten je ha; die erwartete Leistung kommt mit dem Anbauplaner (A3).
+- Die Tabelle zeigt die Kultur als Farbpunkt (Regel der Feldbuch-Auswertung) und als Text; das Diagramm färbt nach
+  Vorzeichen (grün / rot).
+- Nachgezogen am 14.10.2026: Liter, Preis je 1000 l oder Betrag je Zeile in der Karte, eigene Leistung mit Litern und
+  Preis, der Link zwischen Rechnung und Feldbuch-Eintrag in beide Richtungen (`?entry=`) und die erwartete Leistung der
+  laufenden Saison (Entscheidung 14.10.2026: Prognose des Plans, bei abweichender Kultur die A3-Prognose der stehenden
+  Kultur, ohne Plan keine).
 - Verbräuche gehen immer in die laufende Saison, die nie gesperrt ist. Zurückgehalten werden nur Prämien und
   Gemeinkosten, die für ein abgeschlossenes Jahr gebucht werden.
 
@@ -380,14 +383,14 @@ Backend: `field/FieldMarginService`, `api/FieldMarginController`, Migration V45;
 - [x] Neue Karte in der App „Bank“ (`frontend/src/app/features/bank/`, neben Hofbuchhaltung und Hofbericht),
   Erst-Hinweis in `app-hints.ts`. Der Zeitraum ist **derselbe gespeicherte Zeitraum** wie in der Feldbuch-Auswertung
   (R33-E1, je Spielstand). Eine Änderung an einer der beiden Stellen gilt für beide (Entscheidung 13.10.2026).
-- [ ] Von der Rechnung eines Eintrags führt ein Link zum Eintrag im Feldbuch und umgekehrt.
+- [x] Von der Rechnung eines Eintrags führt ein Link zum Eintrag im Feldbuch und umgekehrt.
 - [x] **Tabelle Feld × Erntejahr** mit Deckungsbeitrag in €/ha je Zelle, Kultur als Farbe (Palette der Auswertung).
   Klick auf eine Zelle öffnet die Rechnung des Eintrags mit allen Zeilen.
 - [x] **Rangliste** der Felder im Zeitraum: Ø Deckungsbeitrag je ha mit `n`, bestes und schwächstes Feld markiert.
 - [x] **Je Kultur und Produkt:** Ø Leistung, Ø Direktkosten und Ø Deckungsbeitrag je ha über alle Felder, mit `n`.
 - [x] Diagramm: Balken Deckungsbeitrag €/ha je Feld für ein gewähltes Erntejahr, negative Werte nach unten.
   Inline-SVG wie die vorhandenen Diagramme, keine Diagramm-Bibliothek.
-- [ ] Die **laufende Saison** steht je Feld oben: bisherige Kosten je ha und, mit dem Plan aus A, die erwartete
+- [x] Die **laufende Saison** steht je Feld oben: bisherige Kosten je ha und, mit dem Plan aus A, die erwartete
   Leistung.
 
 **Beleg:** – (Oberfläche).
@@ -422,15 +425,16 @@ Tierpfleger warnt rechtzeitig, nicht erst, wenn der Trog leer ist (das gibt es s
 `RPSimFeedCounter`, `feedStock`, `animalFood`, Futterpreise; Backend: `feed/FeedBalanceService`,
 `api/FeedBalanceController`, Migration V46, Aufgaben `FEED` und Kalender `FEED_EMPTY`; Frontend: Tab `futter` in der
 App „Stall“, Kachel auf dem Startbildschirm). Abweichungen und Grenzen (Umsetzungshinweise in `QUESTIONS.md`):
-- „Bis zur nächsten Ernte“ nutzt die Erntefenster der Kulturen aus `harvestablePeriods` (Zuordnung Sorte → Kulturen in
-  `feed-balance.harvest-crops`); ohne die Fenster (älterer Mod) fehlen nächste Ernte und Fehlmenge.
-  Ob die Kultur auf eigenen Feldern steht, prüft die Bilanz nicht; den Plan nutzt sie mit A.
+- „Bis zur nächsten Ernte“: mit einem Anbauplan das Erntefenster der geplanten Kultur (Quelle „laut Anbauplan“), sonst
+  die Erntefenster der Kulturen aus `harvestablePeriods` (Zuordnung Sorte → Kulturen in `feed-balance.harvest-crops`);
+  ohne die Fenster (älterer Mod) fehlen nächste Ernte und Fehlmenge.
 - Eine Sorte, die mehrere Gruppen (auch verschiedener Tierarten) fressen, wird nach deren Bedarf geteilt. Eine
   Mischung im Silo zählt für die Gruppe, die sie nennt; die Zutaten einer Mischung kennt der Vertrag nicht.
 - Eingetragener Vorrat sinkt, wenn ein Trog oder das Stroh im Stall steigt, ohne dass ein Silo derselben Sorte sinkt.
   Gekauftes Futter, das direkt in den Trog geht, zählt deshalb auch als Ballen; ohne Eintrag passiert nichts.
 - Die Ballengrößen in `feed-balance.bale-sizes` sind Platzhalter (🟡 Testplan 30.12); Liter direkt gehen immer.
-- Der Jahresbedarf vergleicht nur mit dem Vorrat; die geplante Ernte kommt mit A4.
+- Der Jahresbedarf vergleicht mit dem Vorrat und, mit einem Anbauplan, mit Vorrat plus geplanter Ernte (offene Pläne und
+  wie geplant gesäte, noch nicht geerntete Saisons – Entscheidung 14.10.2026).
 
 **Entscheidungen 13.10.2026 (`QUESTIONS.md`):**
 - Ort: **Tab „Futter“ in der App „Stall“** und eine **Kachel** auf dem Startbildschirm, solange eine Gruppe gelb oder
@@ -531,14 +535,19 @@ neuen Mod zeigt der Tab nur den Hinweis „Mod aktualisieren“.
 `planning/CropPlanService`, `api/CropPlanController`, Migration V47, Aufgaben `SOW`, Kalender `SOW_WINDOW_START` /
 `SOW_WINDOW_END`, Zeilen „CROP_PLAN“ in der Liquiditätsplanung; Frontend: Tab `anbauplanung` im Feldbuch).
 Abweichungen und Grenzen (Umsetzungshinweise in `QUESTIONS.md`):
-- „Lohnunternehmer beauftragen“ und „Vorkontrakt abschließen“ öffnen die Flurkarte bzw. den Tab der Agrarbörse ohne
-  vorbelegtes Feld, Kultur oder Sorte – diese Seiten nehmen solche Parameter noch nicht an.
-- Die Lagerplatz-Prüfung kennt nur Sorten, die ein eigenes Silo aufnimmt (Fahrsilos meldet der Mod dort nicht), und
-  rechnet offene Vorkontrakte und Großaufträge als verkauft, ohne den Liefermonat zu prüfen.
-- Die Fruchtfolge-Prüfung vergleicht mit den Kulturen im Feldbuch; ob das Amt eine Wiederholung schon gezählt hat,
-  liest sie nicht.
+- „Lohnunternehmer beauftragen“ öffnet die Flurkarte mit dem Feld, der Arbeit „Säen“ und der Kultur
+  (`?farmland=&work=SOW&fruitType=`; eine Kultur, die der Lohnunternehmer nicht sät, wird nicht vorbelegt),
+  „Vorkontrakt abschließen“ die Agrarbörse mit der Sorte (`?forwardFillType=`).
+- Lagerplatz (Entscheidung 14.10.2026): Vorkontrakte und Großaufträge zählen als „vor der Ernte verkauft“, wenn ihre
+  Lieferfrist vor dem Erntefenster der geplanten Kultur endet. Geprüft werden Sorten, die ein eigenes Silo aufnimmt;
+  Fahrsilos haben in FS25 keine Kapazität (der Haufen liegt auf dem Boden, `BunkerSilo` kennt kein Fassungsvermögen,
+  LUADOC `Objects/BunkerSilo.md`), Silage und Häckselgut im Fahrsilo lassen sich daher nicht prüfen.
+- Fruchtfolge: Vergleich mit der Hauptkultur des laufenden bzw. letzten Feldbuch-Eintrags (wie in der Tabelle oben);
+  die Kürzung der ganzen Prämie folgt der Regel des Amts (`FieldRecord.rotationViolations + 1 >= 2`, wie
+  `AuthorityService.rotation` und die Feldübersicht).
 - Häckselgut zählt für die Futterdeckung als Silage (`crop-planning.feed-equivalents`).
-- Kosten eines Saatfensters, das jetzt läuft, stehen im laufenden Monat, den die Liquiditätsplanung nicht zeigt.
+- Geplante Ernte = offene Pläne und wie geplant gesäte, noch nicht geerntete Saisons; Kosten eines Saatfensters, das
+  jetzt läuft, stehen im ersten Monat der Liquiditätsplanung (Entscheidungen 14.10.2026).
 
 **Entscheidungen 13.10.2026 (`QUESTIONS.md`):**
 - Der Plan gilt für die **nächste Saison je Feld**; ist im laufenden Eintrag noch nichts gesät, für diesen. Je Feld

@@ -2885,7 +2885,8 @@
     "add": "Eintragen",
     "withPlan": "mit geplanter Ernte ({liters} l) gedeckt zu {percent} %",
     "planShort": "Fehlmenge {liters} l",
-    "planSurplus": "Überschuss {liters} l"
+    "planSurplus": "Überschuss {liters} l",
+    "fromPlan": "(laut Anbauplan)"
   },
   "cropPlan": {
     "title": "Anbauplanung nächste Saison",

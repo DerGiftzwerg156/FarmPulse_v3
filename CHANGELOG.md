@@ -12,6 +12,14 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Roadmap V4 - gaps closed** (owner decisions 2026-10-14 in `QUESTIONS.md`): the contribution margin card colours the
+  crops like the field book evaluation, links each calculation to its field book entry and back (`?entry=`), shows the
+  expected revenue of a running season with a plan, and corrects lines by litres, price per 1000 l or amount (own
+  revenue with litres and price). The feed tab compares the yearly need with stock plus the planned harvest and takes
+  the next harvest from the crop plan. The crop planner presets the contractor (field, sowing, crop) and the forward
+  contract (fill type), counts contracts due before the harvest window in the storage check, follows the authority's
+  rule for the rotation cut, keeps sown plans in the planned harvest and books the costs of a running sowing window
+  into the next month of the liquidity plan.
 - **Crop planner [R4-A]** (owner decisions 2026-10-13 in `QUESTIONS.md`): a new tab *Anbauplanung* in the app
   *Feldbuch*. Per own or leased field the plan for the next season (the running one while nothing is sown): crop or
   fallow, harvest product, sowing month and note, "Wie Vorjahr" and "Fruchtfolge vorschlagen". Hints that never block:

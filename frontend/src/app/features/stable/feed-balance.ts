@@ -88,7 +88,7 @@ export function feedFillTypes(v: FeedBalanceView): string[] {
                         <td class="py-2 pr-3">
                           @if (g.emptyAt !== null) { <span class="font-mono">{{ g.emptyAt | gameTime }}</span> } @else { – }
                           @if (g.nextHarvestAt !== null) {
-                            <div class="text-[11px] text-muted" data-testid="feed-harvest">{{ 'feed.nextHarvest' | t: { time: (g.nextHarvestAt | gameTime) } }}</div>
+                            <div class="text-[11px] text-muted" data-testid="feed-harvest">{{ 'feed.nextHarvest' | t: { time: (g.nextHarvestAt | gameTime) } }}@if (g.nextHarvestSource === 'PLAN') { {{ 'feed.fromPlan' | t }} }</div>
                             @if (g.shortfall) { <div class="text-[11px] text-danger" data-testid="feed-shortfall">{{ 'feed.shortfall' | t: { liters: (g.shortfall | num) } }}</div> }
                           }
                         </td>

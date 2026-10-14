@@ -2003,6 +2003,8 @@ export interface FeedGroup {
   plannedHarvest: number | null;
   coveredWithPlanPercent: number | null;
   yearBalanceWithPlan: number | null;
+  /** R4-F3: PLAN = harvest window of a crop of the crop plan, CROPS = windows of the crops of the fill types. */
+  nextHarvestSource: 'PLAN' | 'CROPS' | null;
 }
 
 export interface FeedAnimal {

@@ -38,7 +38,7 @@ public class FeedBalanceController {
 
     /** F5: the balance with the planned harvest of the crop plan (A4). */
     private FeedBalanceService.Balance balance(Savegame sg) {
-        return feed.balance(sg, cropPlans.plannedFeedHarvest(sg));
+        return feed.balance(sg, cropPlans.feedPlan(sg));
     }
 
     @GetMapping("/api/feed-balance")
