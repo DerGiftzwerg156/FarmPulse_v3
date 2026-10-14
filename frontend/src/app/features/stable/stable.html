@@ -1,7 +1,9 @@
 @let labels = { health: ('stable.health' | t), food: ('stable.food' | t), water: ('stable.water' | t), productivity: ('stable.productivity' | t) };
-<!-- Tabs (owner decision 2026-10-06): Ställe | Handel & Tierarzt -->
+<!-- Tabs (owner decision 2026-10-06): Ställe | Futter (Roadmap V4 R4-F, owner decision 2026-10-13) | Handel & Tierarzt -->
 <section class="flex flex-col gap-5">
-  @if (tab() === 'handel') {
+  @if (tab() === 'futter') {
+    <app-feed-balance />
+  } @else if (tab() === 'handel') {
     <app-service-cases [caseKinds]="['LIVESTOCK_OFFER', 'VET_VISIT', 'BREEDING_ADVICE']" openTitle="stable.trade"
       [highlightCase]="highlightedCase()" testId="stable-cases" />
   } @else {

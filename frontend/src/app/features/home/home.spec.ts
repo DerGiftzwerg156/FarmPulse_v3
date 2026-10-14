@@ -35,7 +35,7 @@ describe('Home (start screen)', () => {
     http.match('/api/notices').forEach((r) => r.flush([]));
   }
 
-  function flushAll(http: HttpTestingController, phase: string | null = 'HARVESTABLE') {
+  function flushAll(http: HttpTestingController, phase: string | null = 'HARVESTABLE', worst: object | null = null) {
     http.expectOne('/api/calendar').flush({ gameTime: 5 * DAY, currentPeriod: 2, year: 1, daysPerPeriod: 1, nextMonthStart: 6 * DAY,
       nextPeriod: 3, agenda: [], monthStartDebits: [], monthStartTotal: 8315, yearEvents: [] });
     http.expectOne('/api/village-reputation').flush({ tier: 'GOOD', label: 'gut angesehen' });
@@ -54,6 +54,8 @@ describe('Home (start screen)', () => {
       foodWarnBelow: 0.2, waterWarnBelow: 0.2, vetDue: [], barns: [
         { husbandryUniqueId: 'h1', type: 'COW', count: 42, value: 1, health: 38, productivity: 61, food: 0.12, water: 0.86, conditions: [], inspectionDeadline: null },
         { husbandryUniqueId: 'h2', type: 'CHICKEN', count: 120, value: 1, health: 94, productivity: 92, food: 0.7, water: 1, conditions: [], inspectionDeadline: null }] });
+    http.expectOne('/api/feed-balance').flush({ tracked: true, counted: true, measureDays: 3, okMonths: 3, warnMonths: 1, daysPerPeriod: 3,
+      animals: [], stables: [], manual: [], baleSizes: {}, worst, monthlyCost: null });
   }
 
   it('invites to the onboarding without a savegame', () => {
@@ -98,6 +100,24 @@ describe('Home (start screen)', () => {
     flushTasks(http);
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="harvestable"]')?.textContent?.trim()).toBe('0');
+  });
+
+  // Roadmap V4 R4-F3: the tile while a food group is yellow or red
+  it('shows the feed tile with the tightest food group only while one is yellow or red', () => {
+    const { el, http, fixture, store } = setup();
+    flushAll(http);
+    flushTasks(http);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="feed-widget"]')).toBeNull();
+    store.stateVersion.update((v) => v + 1);
+    fixture.detectChanges();
+    flushAll(http, 'HARVESTABLE', { animalType: 'COW', title: 'Silage', kind: 'FOOD', status: 'RED', reachDays: 6.4 });
+    flushTasks(http);
+    fixture.detectChanges();
+    const tile = el.querySelector('[data-testid="feed-widget"]')!;
+    expect(tile.getAttribute('href')).toBe('/stall/futter');
+    expect(tile.querySelector('[data-testid="feed-days"]')?.textContent).toContain('Futter reicht noch 6 Tage');
+    expect(tile.textContent).toContain('Silage · Rinder');
   });
 
   // Roadmap V3 R3-T1: only reached milestones, hidden without one

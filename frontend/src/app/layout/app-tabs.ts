@@ -68,6 +68,7 @@ export const APP_TABS: Record<string, TabDef[]> = {
   ],
   stable: [
     { id: 'staelle', label: 'tabs.stable.staelle' },
+    { id: 'futter', label: 'tabs.stable.futter' }, // Roadmap V4 R4-F (owner decision 2026-10-13)
     { id: 'handel', label: 'tabs.stable.handel' },
   ],
   workshop: [

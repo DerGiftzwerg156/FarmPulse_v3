@@ -1076,7 +1076,7 @@ export interface ApiError {
 
 /** Hof-Tablet "Aufgaben": one open decision of any area (type names the payload that is set). */
 export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING'
-  | 'INVESTOR_DUE';
+  | 'INVESTOR_DUE' | 'FEED';
 
 export interface TaskView {
   key: string;
@@ -1094,6 +1094,16 @@ export interface TaskView {
   pendingApplicants: number | null;
   /** Roadmap V3.2 R32-I4: a delivery still due to an investor (type INVESTOR_DUE). */
   investorDue?: InvestorDueView | null;
+  /** Roadmap V4 R4-F4: a food group that lasts less than ok-months (type FEED, kind YELLOW / RED). */
+  feedDue?: FeedDueView | null;
+}
+
+export interface FeedDueView {
+  animalType: string;
+  title: string;
+  kind: FeedGroupKind;
+  reachDays: number | null;
+  fillTypes: string[];
 }
 
 export interface InvestorDueView {
@@ -1925,4 +1935,110 @@ export interface FieldMarginView {
     marginPerHectare: number | null;
     n: number;
   }[];
+}
+
+// ------------------------------------------------------------------------------------------ Roadmap V4 R4-F
+
+/** FOOD = a food group of the game, BEDDING = the straw of the stables. */
+export type FeedGroupKind = 'FOOD' | 'BEDDING';
+/** Traffic light in game months; UNUSED = not eaten (measured 0) or fill types unknown. */
+export type FeedStatus = 'GREEN' | 'YELLOW' | 'RED' | 'UNUSED';
+
+export interface FeedFillTypeNeed {
+  fillType: string;
+  perDay: number;
+}
+
+export interface FeedStable {
+  husbandryUniqueId: string;
+  animalType: string;
+  count: number;
+  /** false = need of the game x 24 ("geschätzt"). */
+  measured: boolean;
+  needPerDay: number;
+  troughLiters: number | null;
+  troughCapacity: number | null;
+  troughHours: number | null;
+  strawPerDay: number | null;
+  straw: number | null;
+  monthlyCost: number | null;
+  needs: FeedFillTypeNeed[];
+}
+
+export interface FeedGroup {
+  title: string;
+  kind: FeedGroupKind;
+  productionWeight: number | null;
+  fillTypes: string[];
+  needPerDay: number;
+  estimated: boolean;
+  /** Share of the silo and entered stock. */
+  stock: number;
+  manual: number;
+  /** Troughs (straw in the stables for the bedding). */
+  trough: number;
+  reachDays: number | null;
+  reachMonths: number | null;
+  emptyAt: number | null;
+  status: FeedStatus;
+  nextHarvestAt: number | null;
+  shortfall: number | null;
+  yearNeed: number;
+  coveredPercent: number | null;
+  yearBalance: number;
+  monthlyCost: number | null;
+  neighborTrade: boolean;
+}
+
+export interface FeedAnimal {
+  animalType: string;
+  animals: number;
+  groups: FeedGroup[];
+}
+
+export interface FeedManualStock {
+  id: number;
+  fillType: string;
+  liters: number;
+  bales: number | null;
+  baleSize: string | null;
+  balesLeft: number | null;
+  note: string | null;
+  enteredGameTime: number;
+  checkedGameTime: number;
+  ageDays: number;
+  stale: boolean;
+}
+
+export interface FeedWorst {
+  animalType: string;
+  title: string;
+  kind: FeedGroupKind;
+  status: FeedStatus;
+  reachDays: number | null;
+}
+
+export interface FeedBalanceView {
+  /** false = older mod without the food values ("Mod aktualisieren"). */
+  tracked: boolean;
+  /** false = the mod does not count the eaten feed; the sinking troughs are measured. */
+  counted: boolean;
+  measureDays: number;
+  okMonths: number;
+  warnMonths: number;
+  daysPerPeriod: number;
+  animals: FeedAnimal[];
+  stables: FeedStable[];
+  manual: FeedManualStock[];
+  baleSizes: Record<string, number>;
+  worst: FeedWorst | null;
+  monthlyCost: number | null;
+}
+
+export interface FeedStockRequest {
+  fillType: string;
+  bales: number | null;
+  baleSize: string | null;
+  liters: number | null;
+  note: string | null;
 }

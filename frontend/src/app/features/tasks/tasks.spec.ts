@@ -7,7 +7,7 @@ import { GameStateStore } from '../../core/state/game-state.store';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { DAY, message, savegame } from '../../../testing/fixtures';
 import { Tasks } from './tasks';
-import { dueLabel, taskCategory, taskGroup } from './task-groups';
+import { dueLabel, taskCategory, taskGroup, taskTitle } from './task-groups';
 import { taskAppId, taskLink } from '../../layout/task-apps';
 
 const NOW = 47 * DAY + 11.5 * 3_600_000;
@@ -51,6 +51,17 @@ describe('task helpers', () => {
     expect(taskLink(task({ type: 'NEGOTIATION', negotiation: { id: 4 } as never }))).toEqual({ path: '/farmland/verhandlungen', query: { negotiation: 4 } });
     expect(taskLink(task({ type: 'CASE', kind: 'TAX_BILL', serviceCase: { id: 7 } as never }))).toEqual({ path: '/aemter/finanzamt', query: { case: 7 } });
     expect(taskLink(task({ type: 'CALL', call: { id: 2 } as never }))).toEqual({ path: '/calls', query: { id: 2 } });
+  });
+
+  // Roadmap V4 R4-F4: a food group that runs out opens the tab "Futter"
+  it('names a feed task by group and days and links it to the feed tab', () => {
+    const i18n = TestBed.inject(TranslationService);
+    const feed = task({ type: 'FEED', kind: 'RED', feedDue: { animalType: 'COW', title: 'Silage', kind: 'FOOD', reachDays: 6.7, fillTypes: ['SILAGE'] } });
+    expect(taskTitle(feed, i18n)).toBe('Futter: Silage reicht noch 6 Tage');
+    expect(taskTitle(task({ type: 'FEED', feedDue: { animalType: 'COW', title: 'STRAW', kind: 'BEDDING', reachDays: 2, fillTypes: ['STRAW'] } }), i18n))
+      .toBe('Futter: Einstreu (Stroh) reicht noch 2 Tage');
+    expect(taskAppId(feed)).toBe('stable');
+    expect(taskLink(feed)).toEqual({ path: '/stall/futter', query: {} });
   });
 });
 

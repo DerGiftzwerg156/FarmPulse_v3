@@ -13,7 +13,7 @@ import { Icon } from '../../shared/ui/icon';
 import { CaseCard } from '../contracts/case-card';
 import { toneClass } from '../../layout/apps';
 import { taskApp, taskLink } from '../../layout/task-apps';
-import { dueLabel, isUrgent } from './task-groups';
+import { dueLabel, feedTaskTitle, isUrgent } from './task-groups';
 
 /**
  * One open decision in "Aufgaben": app of origin, deadline and the same actions as in the app itself (they call the
@@ -113,6 +113,12 @@ import { dueLabel, isUrgent } from './task-groups';
           <div class="text-[15px] font-semibold text-text">{{ 'tasks.investorDue' | t: { name: d.investor ?? '–' } }}</div>
           <div class="text-[12px] text-[#8FA39A]" data-testid="investor-due">{{ 'investors.due' | t: { remaining: (d.remaining | num), unit: (d.type === 'A1' ? ('investors.animals' | t) : 'l'), what: ((d.subType ?? d.fillType ?? '') | label: 'fillType') } }}</div>
         }
+        @case ('FEED') {
+          <!-- Roadmap V4 R4-F4: a food group that lasts less than ok-months -->
+          @let f = t.feedDue!;
+          <div class="text-[15px] font-semibold text-text">{{ feedTitle() }}</div>
+          <div class="text-[12px] text-[#8FA39A]" data-testid="feed-due">{{ f.animalType | label: 'animalType' }} · {{ ('enums.feedStatus.' + t.kind) | t }}</div>
+        }
         @case ('POSTING') {
           <div class="text-[15px] font-semibold text-text">{{ 'tasks.applicants' | t: { role: (t.kind | label: 'jobRole'), n: t.pendingApplicants } }}</div>
           <div class="text-[12px] text-[#8FA39A]">{{ 'tasks.applicantsHint' | t }}</div>
@@ -144,6 +150,7 @@ export class TaskCard {
   readonly link = computed(() => taskLink(this.task()));
   readonly urgent = computed(() => isUrgent(this.task(), this.now()));
   readonly due = computed(() => dueLabel(this.task(), this.now(), this.i18n));
+  readonly feedTitle = computed(() => feedTaskTitle(this.task(), this.i18n));
 
   run(o: Observable<unknown>, after?: () => void): void {
     this.busy.set(true);

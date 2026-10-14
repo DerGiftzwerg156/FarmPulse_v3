@@ -556,6 +556,24 @@ export class ApiService {
   setFieldMarginPrice(entryId: number, perLiter: number | null): Observable<M.FieldMarginView> {
     return this.post(`/field-margin/entries/${entryId}/price`, { perLiter });
   }
+  /** Roadmap V4 R4-F: feed balance ("Stall → Futter") and the home tile. */
+  feedBalance(): Observable<M.FeedBalanceView> {
+    return this.get('/feed-balance');
+  }
+  /** F2: bales of a size (bales + baleSize) or litres directly. */
+  addFeedStock(r: M.FeedStockRequest): Observable<M.FeedBalanceView> {
+    return this.post('/feed-balance/manual', r);
+  }
+  updateFeedStock(id: number, r: M.FeedStockRequest): Observable<M.FeedBalanceView> {
+    return this.http.put<M.FeedBalanceView>(`${this.base}/feed-balance/manual/${id}`, r);
+  }
+  /** "stimmt noch": the reminder "bitte prüfen" starts again. */
+  checkFeedStock(id: number): Observable<M.FeedBalanceView> {
+    return this.post(`/feed-balance/manual/${id}/check`, {});
+  }
+  removeFeedStock(id: number): Observable<M.FeedBalanceView> {
+    return this.http.delete<M.FeedBalanceView>(`${this.base}/feed-balance/manual/${id}`);
+  }
   /** Roadmap V3.2 R32-I: large investors ("Bank → Investoren"). */
   investors(): Observable<M.InvestorsView> {
     return this.get('/investors');

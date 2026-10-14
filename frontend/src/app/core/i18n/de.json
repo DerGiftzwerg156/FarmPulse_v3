@@ -1119,6 +1119,19 @@
       "HARVEST_DAY": "Preis am Erntetag",
       "INTERNAL": "Verrechnungswert",
       "ENTERED": "eingetragen"
+    },
+    "feedStatus": {
+      "GREEN": "reicht",
+      "YELLOW": "knapp",
+      "RED": "kritisch",
+      "UNUSED": "nicht gefüttert"
+    },
+    "baleSize": {
+      "ROUND_125": "Rundballen 1,25 m",
+      "ROUND_150": "Rundballen 1,50 m",
+      "SQUARE_120": "Quaderballen 1,20 m",
+      "SQUARE_180": "Quaderballen 1,80 m",
+      "SQUARE_240": "Quaderballen 2,40 m"
     }
   },
   "onboarding": {
@@ -1763,7 +1776,9 @@
     "stableFood": "Futter {food} %",
     "animals": "Tiere",
     "milestones": "Meilensteine",
-    "milestoneReached": "Erreicht: {time}"
+    "milestoneReached": "Erreicht: {time}",
+    "feed": "Futter reicht noch {days} Tage",
+    "feedGroup": "{group} · {animal}"
   },
   "settings": {
     "ai": "KI-Anbieter",
@@ -1976,7 +1991,8 @@
     "toDiary": "Zum Tagebuch",
     "counterOfferShort": "Gegenangebot der Bank",
     "leaseOutEndsHint": "Der Pächter möchte verlängern – ohne Antwort bekommst du das Feld zum Ende zurück.",
-    "investorDue": "Lieferung an {name}"
+    "investorDue": "Lieferung an {name}",
+    "feedDue": "Futter: {group} reicht noch {days} Tage"
   },
   "calendar": {
     "nextDays": "Nächste Tage",
@@ -2011,7 +2027,8 @@
       "bulkOrderStart": "Liefermonat beginnt: {fillType} an {sellPoint} ({amount})",
       "bulkOrderEnd": "Liefermonat endet: {quantity} l {fillType} an {sellPoint}",
       "investorDelivery": "{name} wartet noch auf {remaining} {unit} {what}",
-      "investorRepayment": "Rückzahlung an {name}: {amount}"
+      "investorRepayment": "Rückzahlung an {name}: {amount}",
+      "feedEmpty": "Futter leer: {group} ({animal})"
     },
     "debits": {
       "salaries": "Gehälter ({n})",
@@ -2531,6 +2548,7 @@
     },
     "stable": {
       "staelle": "Ställe",
+      "futter": "Futter",
       "handel": "Handel & Tierarzt"
     },
     "workshop": {
@@ -2796,5 +2814,46 @@
       "result": "Feldergebnis"
     },
     "hint": "Je Feldbuch-Eintrag: Leistung (Liter × erzielter Preis, sonst Preis am Erntetag, sonst Verrechnungswert) minus Direktkosten (Saatgut, Dünger, Kalk, Pflanzenschutz zum Einkaufspreis; eigene Gülle 0 €) und Lohnunternehmer = Deckungsbeitrag. Danach Prämien, Pacht und – mit dem Schalter – die nach Fläche verteilten Gemeinkosten. Der Zeitraum ist derselbe wie in der Feldbuch-Auswertung. Korrekturen gelten, bis du sie mit ↺ zurückgibst."
+  },
+  "feed": {
+    "untracked": "Die Futterbilanz braucht den neuen Mod: Bitte FS25_RPSim aktualisieren, dann erscheinen Bedarf, Vorrat und Reichweite je Futtergruppe.",
+    "notCounted": "Der Mod zählt das gefressene Futter noch nicht – gemessen wird, wie weit die Tröge sinken.",
+    "group": "Futtergruppe",
+    "needPerDay": "Bedarf / Tag",
+    "stock": "Vorrat",
+    "reach": "Reichweite",
+    "emptyAt": "Leer am",
+    "year": "Jahr",
+    "monthlyCost": "Kosten / Monat",
+    "bedding": "Einstreu (Stroh)",
+    "askNeighbor": "Beim Nachbarn anfragen",
+    "estimated": "geschätzt",
+    "measured": "gemessen",
+    "ofManual": "davon {liters} l eingetragen",
+    "reachValue": "{days} Tage · {months} Monate",
+    "nextHarvest": "nächste Ernte ab {time}",
+    "shortfall": "bis dahin fehlen {liters} l",
+    "covered": "gedeckt zu {percent} %",
+    "yearNeed": "Jahresbedarf {liters} l",
+    "stables": "Ställe und Tröge",
+    "stableNeed": "Bedarf {liters} l am Tag",
+    "trough": "Trog {liters} von {capacity} l",
+    "troughHours": "leer in {hours} Stunden",
+    "straw": "Stroh im Stall {liters} l, Einstreu {perDay} l am Tag",
+    "stableCost": "Futterkosten {amount} im Monat",
+    "totalCost": "Futterkosten aller Ställe: {amount} im Monat",
+    "manual": "Ballen und sonstiger Vorrat",
+    "manualHint": "Ballen und Paletten zählt das Spiel nicht mit. Trag sie hier ein – der Vorrat sinkt, sobald Futter ohne Silo in den Trog oder Stroh in den Stall kommt.",
+    "balesLeft": "noch {bales} × {size}",
+    "age": "eingetragen vor {days} Tagen",
+    "stale": "bitte prüfen",
+    "check": "Stimmt noch",
+    "remove": "Löschen",
+    "fillType": "Sorte",
+    "bales": "Ballen",
+    "baleSize": "Größe",
+    "orLiters": "oder Liter",
+    "note": "Notiz",
+    "add": "Eintragen"
   }
 }
