@@ -51,6 +51,8 @@ export class Market {
   readonly event = input<string>();
   /** Tab of the route `/market/:tab`. */
   readonly tab = input<string>('lager');
+  /** Roadmap V4 R4-A4: `?forwardFillType=` presets the fill type of a new forward contract (link of the crop planner). */
+  readonly forwardFillType = input<string>();
 
   readonly ranges = RANGES;
   readonly storage = signal<StorageOverview | null>(null);

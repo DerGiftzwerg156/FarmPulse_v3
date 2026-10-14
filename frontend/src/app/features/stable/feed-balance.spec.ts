@@ -11,7 +11,7 @@ const group = (over: Partial<FeedGroup> = {}): FeedGroup => ({
   title: 'Silage', kind: 'FOOD', productionWeight: 0.5, fillTypes: ['SILAGE'], needPerDay: 800, estimated: false,
   stock: 54000, manual: 0, trough: 1200, reachDays: 69, reachMonths: 23, emptyAt: 79 * DAY, status: 'GREEN',
   nextHarvestAt: null, shortfall: null, yearNeed: 28800, coveredPercent: 191.7, yearBalance: 26400, monthlyCost: 240,
-  neighborTrade: false, ...over,
+  neighborTrade: false, plannedHarvest: null, coveredWithPlanPercent: null, yearBalanceWithPlan: null, ...over,
 });
 
 const view = (over: Partial<FeedBalanceView> = {}): FeedBalanceView => ({
@@ -20,7 +20,7 @@ const view = (over: Partial<FeedBalanceView> = {}): FeedBalanceView => ({
     group(),
     group({ title: 'Heu', fillTypes: ['DRYGRASS_WINDROW'], needPerDay: 400, stock: 1500, trough: 600, reachDays: 5.3, reachMonths: 1.8,
       status: 'YELLOW', neighborTrade: true, nextHarvestAt: 24 * DAY, shortfall: 2940, monthlyCost: null, coveredPercent: 14.6,
-      yearBalance: -12300 }),
+      yearBalance: -12300, plannedHarvest: 6000, coveredWithPlanPercent: 56.3, yearBalanceWithPlan: -6300 }),
     group({ title: 'STRAW', kind: 'BEDDING', fillTypes: ['STRAW'], needPerDay: 240, estimated: true, stock: 80000, manual: 80000,
       trough: 480, reachDays: 335, reachMonths: 112, status: 'GREEN' }),
   ] }],
@@ -72,6 +72,10 @@ describe('FeedBalance (Stall → Futter, R4-F)', () => {
     expect(rows[1].querySelector('[data-testid="feed-shortfall"]')?.textContent).toContain('2.940 l');
     expect(rows[1].querySelector('[data-testid="feed-neighbor"]')?.getAttribute('href')).toBe('/handel');
     expect(rows[0].querySelector('[data-testid="feed-neighbor"]')).toBeNull();
+    // R4-F5: with the planned harvest of the crop plan
+    expect(rows[1].querySelector('[data-testid="feed-with-plan"]')?.textContent).toContain('mit geplanter Ernte (6.000 l) gedeckt zu 56 %');
+    expect(rows[1].querySelector('[data-testid="feed-with-plan"]')?.textContent).toContain('Fehlmenge 6.300 l');
+    expect(rows[0].querySelector('[data-testid="feed-with-plan"]')).toBeNull();
     expect(rows[2].textContent).toContain('Einstreu (Stroh)');
     expect(rows[2].querySelector('[data-testid="feed-estimated"]')).not.toBeNull();
     expect(rows[2].textContent).toContain('davon 80.000 l eingetragen');

@@ -119,6 +119,9 @@
               @for (e of f.running ? [f.running].concat(f.entries) : f.entries; track e.id) {
                 <tr
                   class="border-t border-border align-top"
+                  [class.bg-accent/10]="highlightedEntry() === e.id"
+                  [attr.data-entry]="e.id"
+                  [attr.data-highlight]="highlightedEntry() === e.id ? 'true' : null"
                   [attr.data-testid]="e.status === 'RUNNING' ? 'fb-running' : 'fb-entry'"
                 >
                   <td class="py-1.5 pr-2">
@@ -148,6 +151,9 @@
                     @if (e.firstEntry) {
                       <div class="text-muted">{{ 'fieldBook.firstEntry' | t }}</div>
                     }
+                    <!-- Roadmap V4 R4-D5: the calculation of this entry in the bank -->
+                    <a routerLink="/bank/ergebnis" [queryParams]="{ entry: e.id }" class="block text-[11px] text-accent hover:underline"
+                      data-testid="fb-margin-link">{{ 'fieldBook.marginLink' | t }} →</a>
                   </td>
                   <!-- crop -->
                   <td class="py-1.5 pr-2">

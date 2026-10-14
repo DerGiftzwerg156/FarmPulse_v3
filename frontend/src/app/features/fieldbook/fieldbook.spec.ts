@@ -1,12 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { FieldBookEntryView, FieldBookValueKey, FieldBookView } from '../../core/api/models';
 import { GameStateStore } from '../../core/state/game-state.store';
 import { savegame } from '../../../testing/fixtures';
 import { FieldBook } from './fieldbook';
 
-const providers = [provideHttpClient(), provideHttpClientTesting()];
+const providers = [provideRouter([]), provideHttpClient(), provideHttpClientTesting()];
 
 function entry(
   over: Partial<FieldBookEntryView> = {},
@@ -82,10 +83,11 @@ const view = (over: Partial<FieldBookView> = {}): FieldBookView => ({
   ...over,
 });
 
-function page(v: FieldBookView) {
+function page(v: FieldBookView, entryParam?: string) {
   TestBed.configureTestingModule({ imports: [FieldBook], providers });
   TestBed.inject(GameStateStore).savegame.set(savegame({}));
   const fixture = TestBed.createComponent(FieldBook);
+  if (entryParam) fixture.componentRef.setInput('entry', entryParam);
   fixture.detectChanges();
   const http = TestBed.inject(HttpTestingController);
   http.expectOne('/api/field-book').flush(v);
@@ -94,6 +96,15 @@ function page(v: FieldBookView) {
 }
 
 describe('FieldBook (R33-F)', () => {
+  // Roadmap V4 R4-D5: links between an entry and its contribution margin in the bank
+  it('highlights the entry of ?entry= and links every entry to its contribution margin', () => {
+    const { el } = page(view(), '1');
+    const highlighted = el.querySelector('[data-highlight="true"]');
+    expect(highlighted?.getAttribute('data-entry')).toBe('1');
+    const links = [...el.querySelectorAll('[data-testid="fb-margin-link"]')].map((a) => a.getAttribute('href'));
+    expect(links).toEqual(['/bank/ergebnis?entry=2', '/bank/ergebnis?entry=1']);
+  });
+
   it('shows the running season and the harvest years with ticks, litres per hectare and fertiliser', () => {
     const { el } = page(view());
     expect(el.querySelector('[data-testid="fb-running"]')?.textContent).toContain(

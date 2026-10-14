@@ -68,6 +68,9 @@ describe('CropPlanning (Feldbuch → Anbauplanung, R4-A)', () => {
     expect(checks[1]).toContain('November liegt nicht im Saatfenster (August, September)');
     expect(r12.querySelector('[data-testid="cp-forecast"]')?.textContent).toContain('8.000 l/ha (Ø dieses Feldes)');
     expect(r12.querySelector('[data-testid="cp-window"]')?.textContent).toContain('Saatfenster jetzt');
+    // R4-A4 / A5: the links preset field, work, crop and fill type
+    expect(r12.querySelector('[data-testid="cp-contractor"]')?.getAttribute('href')).toBe('/farmland/karte?farmland=12&work=SOW&fruitType=WHEAT');
+    expect(el.querySelector('[data-testid="cp-forward"]')?.getAttribute('href')).toBe('/market/vorkontrakte?forwardFillType=WHEAT');
     expect(r12.querySelector('[data-testid="cp-plan"]')?.textContent).toContain('nächste Saison');
     expect(el.querySelector('[data-testid="cp-sum"]')?.textContent).toContain('Deckungsbeitrag des Plans');
     expect(el.querySelector('[data-testid="cp-marketing"]')?.textContent).toContain('50 % vorab verkauft');

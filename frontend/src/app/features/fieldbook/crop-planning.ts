@@ -119,7 +119,7 @@ export function cropProducts(crop: CropPlanCrop | undefined): string[] {
                     @if (p.forecast.costSource === 'SEED') { <span class="ml-1 text-muted">· {{ 'cropPlan.seedOnly' | t }}</span> }
                     @if (p.window; as w) {
                       <div class="mt-1" data-testid="cp-window">{{ (w.active ? 'cropPlan.windowNow' : 'cropPlan.windowNext') | t: { start: (w.start | gameTime), end: (w.end | gameTime) } }}
-                        <a routerLink="/farmland/karte" class="ml-2 text-accent hover:underline" data-testid="cp-contractor">{{ 'cropPlan.contractor' | t }} →</a>
+                        <a routerLink="/farmland/karte" [queryParams]="{ farmland: f.farmlandId, work: 'SOW', fruitType: p.fruitType }" class="ml-2 text-accent hover:underline" data-testid="cp-contractor">{{ 'cropPlan.contractor' | t }} →</a>
                       </div>
                     }
                     @for (c of p.checks; track c.code) {
@@ -147,9 +147,10 @@ export function cropProducts(crop: CropPlanCrop | undefined): string[] {
               <div data-testid="cp-marketing">
                 <div class="mb-1 font-semibold text-text">{{ 'cropPlan.marketing' | t }}</div>
                 @for (m of v.marketing; track m.fillType) {
-                  <div>{{ m.fillType | label: 'fillType' }}: {{ 'cropPlan.sold' | t: { percent: (m.soldPercent ?? 0 | num), liters: (m.expected | num) } }}</div>
+                  <div>{{ m.fillType | label: 'fillType' }}: {{ 'cropPlan.sold' | t: { percent: (m.soldPercent ?? 0 | num), liters: (m.expected | num) } }}
+                    <a routerLink="/market/vorkontrakte" [queryParams]="{ forwardFillType: m.fillType }" class="ml-1 text-[12px] text-accent hover:underline" data-testid="cp-forward">{{ 'cropPlan.forward' | t }} →</a>
+                  </div>
                 }
-                <a routerLink="/market/vorkontrakte" class="text-[12px] text-accent hover:underline" data-testid="cp-forward">{{ 'cropPlan.forward' | t }} →</a>
               </div>
               <div data-testid="cp-feed">
                 <div class="mb-1 font-semibold text-text">{{ 'cropPlan.feed' | t }}</div>

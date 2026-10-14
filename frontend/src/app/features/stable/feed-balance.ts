@@ -96,6 +96,13 @@ export function feedFillTypes(v: FeedBalanceView): string[] {
                           @if (g.coveredPercent !== null) {
                             <span [class.text-danger]="g.yearBalance < 0">{{ 'feed.covered' | t: { percent: (g.coveredPercent | num) } }}</span>
                             <div class="text-[11px] text-muted">{{ 'feed.yearNeed' | t: { liters: (g.yearNeed | num) } }}</div>
+                            @if (g.plannedHarvest !== null && g.coveredWithPlanPercent !== null) {
+                              <!-- R4-F5: with the planned harvest of the crop plan (A4) -->
+                              <div class="text-[11px]" [class.text-danger]="(g.yearBalanceWithPlan ?? 0) < 0" data-testid="feed-with-plan">
+                                {{ 'feed.withPlan' | t: { percent: (g.coveredWithPlanPercent | num), liters: (g.plannedHarvest | num) } }}
+                                · {{ ((g.yearBalanceWithPlan ?? 0) < 0 ? 'feed.planShort' : 'feed.planSurplus') | t: { liters: (abs(g.yearBalanceWithPlan) | num) } }}
+                              </div>
+                            }
                           } @else { – }
                         </td>
                         <td class="py-2 text-right font-mono">{{ g.monthlyCost === null ? '–' : (g.monthlyCost | money) }}</td>
@@ -210,6 +217,10 @@ export class FeedBalance {
       },
       error: () => this.failed.set(true),
     });
+  }
+
+  abs(v: number | null): number {
+    return Math.abs(v ?? 0);
   }
 
   variant(status: FeedStatus): BadgeVariant {

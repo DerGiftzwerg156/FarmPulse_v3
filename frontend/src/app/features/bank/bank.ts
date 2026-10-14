@@ -69,6 +69,9 @@ export class Bank {
   /** `?case=` highlights a claim, an invitation to the annual review or a rate-cut offer (R3-K). */
   readonly case = input<string>();
   readonly highlightedCase = computed(() => Number(this.case()) || null);
+  /** Roadmap V4 R4-D5: `?entry=` opens the contribution margin of a field book entry (link from the field book). */
+  readonly entry = input<string>();
+  readonly openedEntry = computed(() => Number(this.entry()) || null);
   private readonly picker = viewChild(CollateralPicker);
   /** Roadmap V3 R3-K1: own fields offered as collateral in the form. */
   readonly collateralIds = signal<number[]>([]);

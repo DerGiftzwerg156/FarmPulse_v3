@@ -1,4 +1,5 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import { FieldMarginEntry, FieldMarginKind, FieldMarginLine, FieldMarginView } from '../../core/api/models';
@@ -10,6 +11,8 @@ import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
+import { SERIES_COLORS } from '../../shared/ui/chart-wrapper';
+import { OTHER_COLOR, cropKey } from '../fieldbook/fieldbook-evaluation';
 
 const SURFACE = '#141A17';
 const GRID = '#222E28';
@@ -29,6 +32,40 @@ export const TOTAL_ROWS: { key: keyof FieldMarginEntry['totals']; total?: boolea
   { key: 'overheads' },
   { key: 'result', total: true },
 ];
+
+/**
+ * Roadmap V4 R4-D5: colour per crop and product with the rule of the field book evaluation (cropColors): the crops of
+ * the most entries with l/ha take the palette in alphabetical order, the others are "Sonstige".
+ */
+export function marginCropColors(view: FieldMarginView): Map<string, string> {
+  const counts = new Map<string, number>();
+  for (const f of view.fields) {
+    for (const e of f.entries) {
+      if (e.fruitType && e.liters !== null && e.hectares !== null && e.hectares > 0) {
+        const k = cropKey(e.fruitType, e.fillType);
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+      }
+    }
+  }
+  const top = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, SERIES_COLORS.length)
+    .map(([k]) => k)
+    .sort();
+  const colors = new Map<string, string>();
+  top.forEach((k, i) => colors.set(k, SERIES_COLORS[i]));
+  return colors;
+}
+
+/**
+ * D4: the amount of a corrected line - the amount when given, else litres x price per 1000 l (the litres of the line
+ * when none are given); null = only the litres change (the backend scales the measured amount).
+ */
+export function lineAmount(liters: number | null, per1000: number | null, amount: number | null, lineLiters: number | null): number | null {
+  if (amount !== null) return amount;
+  const l = liters ?? lineLiters;
+  return per1000 !== null && l !== null ? (l * per1000) / 1000 : null;
+}
 
 /** Bars of the chart: one per field with an entry of the year, positive up, negative down (euro per hectare). */
 export function marginBars(
@@ -62,7 +99,7 @@ export function marginBars(
  */
 @Component({
   selector: 'app-margin-card',
-  imports: [TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, Card, Badge, Button],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, Card, Badge, Button],
   host: { class: 'block' },
   template: `
     <app-card [title]="'margin.title' | t" data-testid="margin-card">
@@ -109,8 +146,11 @@ export function marginBars(
                     <td class="py-1.5 pr-2">
                       @if (f.running; as r) {
                         <button type="button" class="text-left" (click)="select(r.entryId)" data-testid="margin-running">
-                          <span class="text-text">{{ r.fruitType | label: 'fillType' }}</span>
+                          <span class="text-text"><span class="mr-1 inline-block h-2 w-2 rounded-full" [style.background]="colorOf(r)" data-testid="margin-color"></span>{{ r.fruitType | label: 'fillType' }}</span>
                           <span class="block font-mono text-muted">{{ r.perHectare ? (r.perHectare.directCosts | money) : '–' }} / ha</span>
+                          @if (expectedPerHa(f.farmlandId); as x) {
+                            <span class="block font-mono text-accent" data-testid="margin-expected">{{ 'margin.expected' | t: { amount: (x | money) } }}</span>
+                          }
                         </button>
                       }
                     </td>
@@ -118,7 +158,7 @@ export function marginBars(
                       <td class="py-1.5 pr-2">
                         @if (entryOf(f.entries, y); as e) {
                           <button type="button" class="text-left" (click)="select(e.entryId)" [class.underline]="selectedId() === e.entryId" data-testid="margin-cell">
-                            <span class="text-text">{{ e.fruitType | label: 'fillType' }}</span>
+                            <span class="text-text"><span class="mr-1 inline-block h-2 w-2 rounded-full" [style.background]="colorOf(e)" data-testid="margin-color"></span>{{ e.fruitType | label: 'fillType' }}</span>
                             <span class="block font-mono" [class.text-danger]="(e.perHectare?.margin ?? 0) < 0" [class.text-accent]="(e.perHectare?.margin ?? 0) > 0">{{ e.perHectare?.margin === null || e.perHectare?.margin === undefined ? '–' : (e.perHectare!.margin | money) }} / ha</span>
                           </button>
                         }
@@ -198,12 +238,21 @@ export function marginBars(
                 {{ e.harvestYear === null ? ('margin.running' | t) : ('margin.harvestYear' | t: { year: e.harvestYear }) }}
                 @if (e.hectares !== null) { · {{ e.hectares | num: 2 }} ha }
               </div>
-              <div class="flex gap-1.5">
+              <div class="flex items-center gap-1.5">
+                <a routerLink="/feldbuch/dokumentation" [queryParams]="{ entry: e.entryId }" class="text-[11px] text-accent hover:underline" data-testid="margin-fieldbook-link">{{ 'margin.fieldBookLink' | t }} →</a>
                 @if (e.locked) { <app-badge variant="neutral" data-testid="margin-locked">{{ 'margin.locked' | t }}</app-badge> }
                 @if (e.estimated) { <app-badge variant="warning">{{ 'margin.estimated' | t }}</app-badge> }
                 @if (e.incomplete) { <app-badge variant="warning">{{ 'margin.incomplete' | t }}</app-badge> }
               </div>
             </div>
+            @if (e.status === 'RUNNING' && expectedOf(e.farmlandId); as x) {
+              <!-- R4-D5 (owner decision 2026-10-14): the expected revenue of the plan, else of the crop that stands -->
+              <div class="mb-2 text-[12px] text-text" data-testid="margin-expected-revenue">
+                {{ 'margin.expectedRevenue' | t: { amount: x.revenue === null ? '–' : (x.revenue | money), lph: (x.litersPerHa | num),
+                  price: x.pricePerLiter === null ? '–' : ((x.pricePerLiter * 1000) | money) } }}
+                <span class="text-muted">({{ ('margin.expectedBasis.' + x.basis) | t }})</span>
+              </div>
+            }
             @if (e.status !== 'RUNNING') {
               <div class="mb-2 flex flex-wrap items-center gap-2 text-[12px]" data-testid="margin-price">
                 <span class="text-muted">{{ 'margin.price' | t }}:</span>
@@ -232,8 +281,10 @@ export function marginBars(
                     <td class="pl-2 text-right">
                       @if (!e.locked && l.source !== 'DISTRIBUTED') {
                         @if (editing() === key(e, l, $index)) {
-                          <input class="fp-input w-24 font-mono" type="number" min="0" step="any" #amount data-testid="margin-amount-input" />
-                          <app-button variant="secondary" [disabled]="busy()" (pressed)="saveLine(e, l, amount.value)" data-testid="margin-amount-save">{{ 'common.save' | t }}</app-button>
+                          <input class="fp-input w-20 font-mono" type="number" min="0" step="any" [placeholder]="'margin.litersLine' | t" #liters data-testid="margin-liters-input" />
+                          <input class="fp-input w-20 font-mono" type="number" min="0" step="any" [placeholder]="'margin.priceLine' | t" #per1000 data-testid="margin-line-price-input" />
+                          <input class="fp-input w-24 font-mono" type="number" min="0" step="any" [placeholder]="'margin.amountLine' | t" #amount data-testid="margin-amount-input" />
+                          <app-button variant="secondary" [disabled]="busy()" (pressed)="saveLine(e, l, amount.value, liters.value, per1000.value)" data-testid="margin-amount-save">{{ 'common.save' | t }}</app-button>
                         } @else {
                           <button type="button" class="text-[11px] text-accent" (click)="editing.set(key(e, l, $index))" data-testid="margin-edit">{{ 'margin.edit' | t }}</button>
                         }
@@ -268,13 +319,15 @@ export function marginBars(
             </table>
 
             @if (!e.locked) {
-              <form class="mt-3 flex flex-wrap items-end gap-2 text-[12px]" (submit)="$event.preventDefault(); addLine(e, kind.value, note.value, add.value)" data-testid="margin-add">
+              <form class="mt-3 flex flex-wrap items-end gap-2 text-[12px]" (submit)="$event.preventDefault(); addLine(e, kind.value, note.value, add.value, addLiters.value, addPrice.value)" data-testid="margin-add">
                 <label class="space-y-1"><span class="fp-label block">{{ 'margin.addKind' | t }}</span>
                   <select class="rounded-md border border-border bg-bg px-2 py-1 text-text" #kind data-testid="margin-add-kind">
                     @for (k of addKinds(e); track k) { <option [value]="k">{{ k | label: 'marginKind' }}</option> }
                   </select>
                 </label>
                 <label class="space-y-1"><span class="fp-label block">{{ 'margin.note' | t }}</span><input class="fp-input" type="text" maxlength="200" #note data-testid="margin-add-note" /></label>
+                <label class="space-y-1"><span class="fp-label block">{{ 'margin.litersLine' | t }}</span><input class="fp-input w-24 font-mono" type="number" min="0" step="any" #addLiters data-testid="margin-add-liters" /></label>
+                <label class="space-y-1"><span class="fp-label block">{{ 'margin.priceLine' | t }}</span><input class="fp-input w-24 font-mono" type="number" min="0" step="any" #addPrice data-testid="margin-add-price" /></label>
                 <label class="space-y-1"><span class="fp-label block">{{ 'margin.amount' | t }}</span><input class="fp-input w-28 font-mono" type="number" min="0" step="any" #add data-testid="margin-add-amount" /></label>
                 <app-button type="submit" [disabled]="busy()" data-testid="margin-add-submit">{{ 'margin.add' | t }}</app-button>
               </form>
@@ -291,7 +344,13 @@ export class MarginCard {
   private readonly store = inject(GameStateStore);
   private readonly i18n = inject(TranslationService);
 
+  /** Roadmap V4 R4-D5: entry whose calculation opens (link `?entry=` from the field book). */
+  readonly openEntry = input<number | null>(null);
   readonly view = signal<FieldMarginView | null>(null);
+  readonly colors = computed(() => {
+    const v = this.view();
+    return v ? marginCropColors(v) : new Map<string, string>();
+  });
   readonly error = signal<string | null>(null);
   readonly busy = signal(false);
   readonly selectedId = signal<number | null>(null);
@@ -354,6 +413,25 @@ export class MarginCard {
       this.store.stateVersion();
       if (this.store.savegame()) untracked(() => this.load());
     });
+    // the calculation of the entry the field book links to opens once the card has its data
+    effect(() => {
+      const id = this.openEntry();
+      if (id !== null && this.view()) untracked(() => this.selectedId.set(id));
+    });
+  }
+
+  colorOf(e: FieldMarginEntry): string {
+    return this.colors().get(cropKey(e.fruitType, e.fillType)) ?? OTHER_COLOR;
+  }
+
+  expectedOf(farmlandId: number) {
+    return this.view()?.expected?.[farmlandId] ?? null;
+  }
+
+  /** Expected revenue per hectare of a running season (null without a plan or without a price). */
+  expectedPerHa(farmlandId: number): number | null {
+    const x = this.expectedOf(farmlandId);
+    return x && x.revenue !== null && x.hectares ? x.revenue / x.hectares : null;
   }
 
   load(): void {
@@ -404,14 +482,27 @@ export class MarginCard {
     this.run(this.api.setFieldMarginOverheads((event.target as HTMLInputElement).checked));
   }
 
-  /** An estimated line has no id: its correction is an own line of the same kind that replaces it. */
-  saveLine(e: FieldMarginEntry, l: FieldMarginLine, value: string): void {
-    const amount = Number(value);
-    if (value === '' || !Number.isFinite(amount) || amount < 0) return;
+  /**
+   * D4: litres, price per 1000 l or amount of a line (the amount wins, else litres x price; litres alone scale the
+   * measured amount). An estimated line has no id: its correction is an own line of the same kind that replaces it.
+   */
+  saveLine(e: FieldMarginEntry, l: FieldMarginLine, value: string, litersValue = '', priceValue = ''): void {
+    const num = (v: string): number | null | undefined => {
+      if (v.trim() === '') return null;
+      const n = Number(v);
+      return Number.isFinite(n) && n >= 0 ? n : undefined;
+    };
+    const amountIn = num(value);
+    const liters = num(litersValue);
+    const per1000 = num(priceValue);
+    if (amountIn === undefined || liters === undefined || per1000 === undefined) return;
+    const amount = lineAmount(liters, per1000, amountIn, l.liters);
+    if (amount === null && liters === null) return;
     if (l.id === null) {
-      this.run(this.api.addFieldMarginLine(e.entryId, l.kind, null, amount));
+      if (amount === null) return;
+      this.run(this.api.addFieldMarginLine(e.entryId, l.kind, null, amount, liters));
     } else {
-      this.run(this.api.correctFieldMarginLine(l.id, null, amount));
+      this.run(this.api.correctFieldMarginLine(l.id, liters, amount));
     }
   }
 
@@ -427,10 +518,15 @@ export class MarginCard {
     return e.estimated ? ['EXTRA_COST', 'EXTRA_REVENUE', 'SEED', 'FERTILIZER', 'LIME', 'PROTECTION'] : ['EXTRA_COST', 'EXTRA_REVENUE'];
   }
 
-  addLine(e: FieldMarginEntry, kind: string, note: string, value: string): void {
-    const amount = Number(value);
-    if (value === '' || !Number.isFinite(amount) || amount < 0) return;
-    this.run(this.api.addFieldMarginLine(e.entryId, kind as FieldMarginKind, note.trim() || null, amount));
+  /** D4: an own line with an amount, or with litres and price per 1000 l ("Leistung hinzufügen", e.g. pressed straw). */
+  addLine(e: FieldMarginEntry, kind: string, note: string, value: string, litersValue = '', priceValue = ''): void {
+    const liters = litersValue.trim() === '' ? null : Number(litersValue);
+    const per1000 = priceValue.trim() === '' ? null : Number(priceValue);
+    const given = value.trim() === '' ? null : Number(value);
+    if ([liters, per1000, given].some((x) => x !== null && (!Number.isFinite(x) || x < 0))) return;
+    const amount = lineAmount(liters, per1000, given, null);
+    if (amount === null) return;
+    this.run(this.api.addFieldMarginLine(e.entryId, kind as FieldMarginKind, note.trim() || null, amount, liters));
   }
 
   /** The field takes euro per 1000 l like the prices of the Agrarbörse. */

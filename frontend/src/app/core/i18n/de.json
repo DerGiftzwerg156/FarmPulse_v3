@@ -2781,7 +2781,8 @@
       },
       "hint": "Die Auswertung zeigt die letzten Erntejahre bis zum laufenden FS25-Jahr (Standard 5, frei wählbar bis „alle Jahre“; die Wahl bleibt je Spielstand). Laufende Einträge und zurückgehaltene Einträge eines abgeschlossenen Jahres zählen nicht. Das Diagramm zeigt für ein Feld die Liter je Hektar je Erntejahr, gefärbt nach Kultur. Der Vergleich nennt je Kultur Ø l/ha mit und ohne jede Maßnahme, immer mit n.",
       "other": "Sonstige"
-    }
+    },
+    "marginLink": "Deckungsbeitrag"
   },
   "margin": {
     "title": "Deckungsbeitrag",
@@ -2830,7 +2831,17 @@
       "overheads": "Gemeinkosten (verteilt)",
       "result": "Feldergebnis"
     },
-    "hint": "Je Feldbuch-Eintrag: Leistung (Liter × erzielter Preis, sonst Preis am Erntetag, sonst Verrechnungswert) minus Direktkosten (Saatgut, Dünger, Kalk, Pflanzenschutz zum Einkaufspreis; eigene Gülle 0 €) und Lohnunternehmer = Deckungsbeitrag. Danach Prämien, Pacht und – mit dem Schalter – die nach Fläche verteilten Gemeinkosten. Der Zeitraum ist derselbe wie in der Feldbuch-Auswertung. Korrekturen gelten, bis du sie mit ↺ zurückgibst."
+    "hint": "Je Feldbuch-Eintrag: Leistung (Liter × erzielter Preis, sonst Preis am Erntetag, sonst Verrechnungswert) minus Direktkosten (Saatgut, Dünger, Kalk, Pflanzenschutz zum Einkaufspreis; eigene Gülle 0 €) und Lohnunternehmer = Deckungsbeitrag. Danach Prämien, Pacht und – mit dem Schalter – die nach Fläche verteilten Gemeinkosten. Der Zeitraum ist derselbe wie in der Feldbuch-Auswertung. Korrekturen gelten, bis du sie mit ↺ zurückgibst.",
+    "fieldBookLink": "Im Feldbuch",
+    "expected": "erwartet {amount} / ha",
+    "expectedRevenue": "Erwartete Leistung: {amount} ({lph} l/ha × {price} je 1000 l)",
+    "expectedBasis": {
+      "PLAN": "laut Anbauplan",
+      "ACTUAL": "Prognose der stehenden Kultur, weicht vom Plan ab"
+    },
+    "priceLine": "€ / 1000 l",
+    "litersLine": "Liter",
+    "amountLine": "Betrag"
   },
   "feed": {
     "untracked": "Die Futterbilanz braucht den neuen Mod: Bitte FS25_RPSim aktualisieren, dann erscheinen Bedarf, Vorrat und Reichweite je Futtergruppe.",
@@ -2871,7 +2882,10 @@
     "baleSize": "Größe",
     "orLiters": "oder Liter",
     "note": "Notiz",
-    "add": "Eintragen"
+    "add": "Eintragen",
+    "withPlan": "mit geplanter Ernte ({liters} l) gedeckt zu {percent} %",
+    "planShort": "Fehlmenge {liters} l",
+    "planSurplus": "Überschuss {liters} l"
   },
   "cropPlan": {
     "title": "Anbauplanung nächste Saison",

@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { FieldMarginEntry, FieldMarginTotals, FieldMarginView } from '../../core/api/models';
 import { GameStateStore } from '../../core/state/game-state.store';
 import { savegame } from '../../../testing/fixtures';
-import { MarginCard, marginBars } from './margin-card';
+import { MarginCard, lineAmount, marginBars, marginCropColors } from './margin-card';
 
 const totals = (margin: number | null, over: Partial<FieldMarginTotals> = {}): FieldMarginTotals => ({
   revenue: margin === null ? null : margin + 4620,
@@ -66,10 +67,11 @@ const view = (over: Partial<FieldMarginView> = {}): FieldMarginView => ({
   ...over,
 });
 
-function page(v: FieldMarginView) {
-  TestBed.configureTestingModule({ imports: [MarginCard], providers: [provideHttpClient(), provideHttpClientTesting()] });
+function page(v: FieldMarginView, openEntry: number | null = null) {
+  TestBed.configureTestingModule({ imports: [MarginCard], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
   TestBed.inject(GameStateStore).savegame.set(savegame({}));
   const fixture = TestBed.createComponent(MarginCard);
+  fixture.componentRef.setInput('openEntry', openEntry);
   fixture.detectChanges();
   const http = TestBed.inject(HttpTestingController);
   http.expectOne('/api/field-margin').flush(v);
@@ -86,6 +88,21 @@ describe('marginBars', () => {
     expect(bars[1].y).toBeCloseTo(zero);
     expect(bars[0].h).toBeGreaterThan(bars[1].h);
     expect(marginBars(view(), 1, 640, 220, { left: 12, right: 12, top: 12, bottom: 24 })).toEqual([]);
+  });
+});
+
+describe('margin helpers (R4-D4 / D5)', () => {
+  it('colours the crops with the rule of the field book evaluation', () => {
+    const colors = marginCropColors(view());
+    expect(colors.size).toBe(1);
+    expect(colors.get('WHEAT|WHEAT')).toBeTruthy();
+  });
+
+  it('computes the amount of a line from amount, litres x price or the litres of the line', () => {
+    expect(lineAmount(null, null, 120, 3000)).toBe(120);
+    expect(lineAmount(2000, 250, null, 3000)).toBe(500);
+    expect(lineAmount(null, 250, null, 3000)).toBe(750);
+    expect(lineAmount(2000, null, null, 3000)).toBeNull();
   });
 });
 
@@ -185,5 +202,43 @@ describe('MarginCard (R4-D5)', () => {
     expect(el.querySelector('[data-testid="margin-locked"]')).not.toBeNull();
     expect(el.querySelector('[data-testid="margin-edit"]')).toBeNull();
     expect(el.querySelector('[data-testid="margin-add"]')).toBeNull();
+  });
+
+  it('links to the field book, opens an entry from it and shows the expected revenue of the running season', () => {
+    const v = view({ expected: { '12': { basis: 'ACTUAL', fruitType: 'WHEAT', fillType: 'WHEAT', hectares: 4.5, litersPerHa: 8000,
+      yieldSource: 'CROP', pricePerLiter: 0.23, priceSource: 'BEST', revenue: 8280 } } });
+    const { el, fixture } = page(v, 1);
+    expect(el.querySelector('[data-testid="margin-detail"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="margin-fieldbook-link"]')?.getAttribute('href')).toBe('/feldbuch/dokumentation?entry=1');
+    expect(el.querySelector('[data-testid="margin-expected"]')?.textContent).toContain('1.840');
+    expect(el.querySelectorAll('[data-testid="margin-color"]').length).toBeGreaterThan(0);
+    (el.querySelector('[data-testid="margin-running"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const x = el.querySelector('[data-testid="margin-expected-revenue"]')?.textContent ?? '';
+    expect(x).toContain('8.280');
+    expect(x).toContain('weicht vom Plan ab');
+  });
+
+  it('corrects a line by litres and price and adds a revenue with litres and price', () => {
+    const { el, fixture, http } = page(view());
+    (el.querySelector('[data-testid="margin-cell"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="margin-edit"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="margin-liters-input"]') as HTMLInputElement).value = '2000';
+    (el.querySelector('[data-testid="margin-line-price-input"]') as HTMLInputElement).value = '900';
+    (el.querySelector('[data-testid="margin-amount-save"] button') as HTMLButtonElement).click();
+    const correct = http.expectOne('/api/field-margin/items/7');
+    expect(correct.request.body).toEqual({ liters: 2000, amount: 1800 });
+    correct.flush(view());
+    fixture.detectChanges();
+    (el.querySelector('[data-testid="margin-add-kind"]') as HTMLSelectElement).value = 'EXTRA_REVENUE';
+    (el.querySelector('[data-testid="margin-add-note"]') as HTMLInputElement).value = 'Stroh';
+    (el.querySelector('[data-testid="margin-add-liters"]') as HTMLInputElement).value = '40000';
+    (el.querySelector('[data-testid="margin-add-price"]') as HTMLInputElement).value = '50';
+    (el.querySelector('[data-testid="margin-add"]') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    const add = http.expectOne('/api/field-margin/entries/1/items');
+    expect(add.request.body).toEqual({ kind: 'EXTRA_REVENUE', note: 'Stroh', liters: 40000, amount: 2000 });
+    add.flush(view());
   });
 });

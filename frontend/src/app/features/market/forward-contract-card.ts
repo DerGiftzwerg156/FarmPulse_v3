@@ -87,9 +87,12 @@ export class ForwardContractCard {
   private readonly i18n = inject(TranslationService);
 
   readonly prices = input<PriceView[]>([]);
+  /** Roadmap V4 R4-A4: fill type to start with (link of the crop planner); ignored when no sell point buys it. */
+  readonly presetFillType = input<string | null>(null);
 
   readonly data = signal<ForwardContractsView | null>(null);
   readonly fillType = signal('');
+  private presetApplied = false;
   readonly sellPoint = signal('');
   readonly quantity = signal(10000);
   readonly lead = signal(1);
@@ -113,7 +116,13 @@ export class ForwardContractCard {
     });
     effect(() => {
       const types = this.fillTypes();
-      if (!this.fillType() && types.length) untracked(() => this.fillType.set(types[0]));
+      const preset = this.presetFillType();
+      if (preset && types.includes(preset) && !this.presetApplied) {
+        this.presetApplied = true;
+        untracked(() => this.fillType.set(preset));
+      } else if (!this.fillType() && types.length) {
+        untracked(() => this.fillType.set(types[0]));
+      }
     });
     effect(() => {
       const points = this.sellPoints();

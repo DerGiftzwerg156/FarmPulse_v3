@@ -1944,6 +1944,8 @@ export interface FieldMarginView {
     marginPerHectare: number | null;
     n: number;
   }[];
+  /** Roadmap V4 R4-D5 (owner decision 2026-10-14): expected revenue of the running seasons with a plan, by farmland. */
+  expected?: Record<string, FieldMarginExpected>;
 }
 
 // ------------------------------------------------------------------------------------------ Roadmap V4 R4-F
@@ -1997,6 +1999,10 @@ export interface FeedGroup {
   yearBalance: number;
   monthlyCost: number | null;
   neighborTrade: boolean;
+  /** R4-F5: planned harvest of the crop plan for this group (null = no plan), coverage and balance with it. */
+  plannedHarvest: number | null;
+  coveredWithPlanPercent: number | null;
+  yearBalanceWithPlan: number | null;
 }
 
 export interface FeedAnimal {
@@ -2195,4 +2201,17 @@ export interface CropSuggestion {
   fillType: string | null;
   reason: 'MARGIN' | 'YIELD';
   value: number | null;
+}
+
+/** R4-D5: PLAN = the forecast of the crop plan, ACTUAL = the forecast of the crop that stands (it deviates). */
+export interface FieldMarginExpected {
+  basis: 'PLAN' | 'ACTUAL';
+  fruitType: string | null;
+  fillType: string | null;
+  hectares: number | null;
+  litersPerHa: number | null;
+  yieldSource: string | null;
+  pricePerLiter: number | null;
+  priceSource: string | null;
+  revenue: number | null;
 }

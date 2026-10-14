@@ -549,8 +549,9 @@ export class ApiService {
   removeFieldMarginLine(id: number): Observable<M.FieldMarginView> {
     return this.http.delete<M.FieldMarginView>(`${this.base}/field-margin/items/${id}`);
   }
-  addFieldMarginLine(entryId: number, kind: M.FieldMarginKind, note: string | null, amount: number): Observable<M.FieldMarginView> {
-    return this.post(`/field-margin/entries/${entryId}/items`, { kind, note, liters: null, amount });
+  addFieldMarginLine(entryId: number, kind: M.FieldMarginKind, note: string | null, amount: number,
+                     liters: number | null = null): Observable<M.FieldMarginView> {
+    return this.post(`/field-margin/entries/${entryId}/items`, { kind, note, liters, amount });
   }
   /** `perLiter` null gives the price back to the rule (realised, harvest day, internal value). */
   setFieldMarginPrice(entryId: number, perLiter: number | null): Observable<M.FieldMarginView> {

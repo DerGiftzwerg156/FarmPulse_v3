@@ -63,6 +63,14 @@ export class Farmland {
   readonly case = input<string>();
   readonly highlightedContract = computed(() => Number(this.contract()) || null);
   readonly highlightedCase = computed(() => Number(this.case()) || null);
+  /**
+   * Roadmap V4 R4-A5: `?farmland=` selects a field on the map, `?work=` / `?fruitType=` preset the contractor form of
+   * it (link "Lohnunternehmer beauftragen" of the crop planner).
+   */
+  readonly farmland = input<string>();
+  readonly work = input<string>();
+  readonly fruitType = input<string>();
+  readonly presetField = computed(() => Number(this.farmland()) || null);
 
   readonly fields = signal<FarmlandView[] | null>(null);
   readonly negotiations = signal<NegotiationView[] | null>(null);
@@ -113,6 +121,10 @@ export class Farmland {
     effect(() => {
       const id = Number(this.negotiation());
       if (id) untracked(() => this.selectNegotiation(id));
+    });
+    effect(() => {
+      const id = this.presetField();
+      if (id !== null && this.fields()?.some((f) => f.farmlandId === id)) untracked(() => this.selectedField.set(id));
     });
   }
 

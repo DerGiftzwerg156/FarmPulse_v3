@@ -44,6 +44,22 @@ describe('PriceAlarmCard (R3-M1)', () => {
 });
 
 describe('ForwardContractCard (R3-M2)', () => {
+  // Roadmap V4 R4-A4: the link of the crop planner presets the fill type
+  it('starts with the preset fill type when a sell point buys it', () => {
+    TestBed.configureTestingModule({ imports: [ForwardContractCard], providers });
+    const fixture = TestBed.createComponent(ForwardContractCard);
+    // without a preset the card starts with the first fill type in alphabetical order (BARLEY)
+    fixture.componentRef.setInput('prices', [{ sellPoint: 'MillNorth', sellPointName: 'Mühle Nord', fillType: 'BARLEY', currentPrice: 180 },
+      ...prices]);
+    fixture.componentRef.setInput('presetFillType', 'WHEAT');
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne('/api/forward-contracts').flush({ minLeadMonths: 1, maxLeadMonths: 12,
+      minQuantity: 1000, maxQuantity: 200000, quantityStep: 1000, maxOpen: 5, factorPerMonthPercent: -2, penaltySharePercent: 25,
+      contracts: [] });
+    fixture.detectChanges();
+    expect(fixture.componentInstance.fillType()).toBe('WHEAT'); // without the preset the first one, BARLEY
+  });
+
   it('asks for the fixed price and concludes the contract', () => {
     TestBed.configureTestingModule({ imports: [ForwardContractCard], providers });
     const fixture = TestBed.createComponent(ForwardContractCard);
