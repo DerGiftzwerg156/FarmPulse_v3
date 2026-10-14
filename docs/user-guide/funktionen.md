@@ -20,7 +20,8 @@ Homescreen.
   die **nächste Abbuchung** zum Monatsbeginn (führt zum Kalender) und dein **Ansehen im Dorf** (führt zu den
   Kontakten). Daneben die Widgets **Zu erledigen** (die dringendsten Aufgaben), **Meilensteine** (nur wenn du schon
   einen erreicht hast, führt zum Tagebuch), **Felder** (wie viele erntereif sind) und **Stall** (Gesundheit und Futter
-  des Stalls, der am schlechtesten dasteht).
+  des Stalls, der am schlechtesten dasteht). Reicht eine Futtergruppe weniger als drei Spielmonate, erscheint dazu die
+  Kachel **Futter** („Futter reicht noch x Tage“), die direkt in *Stall → Futter* führt.
 - **Apps:** Eine Zahl am App-Symbol zählt, was dort auf dich wartet – ungelesene Mails, klingelnde Anrufe, offene
   Entscheidungen.
 - **Dock:** Post, Telefon, Aufgaben und Kalender liegen immer griffbereit – auf dem Start unten schwebend, in jeder
@@ -51,7 +52,7 @@ Homescreen.
 | **Personal** | Team, Helferstunden und Stellenausschreibungen | Team · Stellen & Bewerber · Ehemalige |
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen | Karte · Meine Felder · Verhandlungen · Pacht · Vorgänge |
 | **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge | Dokumentation · Auswertung |
-| **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl | Ställe · Handel & Tierarzt |
+| **Stall** | Tiere, Tierpfleger, Futterbilanz, Tierarzt, Viehhandel und Tierwohl | Ställe · Futter · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
 | **Tagebuch** | Die Chronik deines Hofs | – |
@@ -700,6 +701,27 @@ Der Stall zeigt deine Ställe so, wie das Spiel sie meldet: Tierart, Anzahl, **G
 Mod-Version.
 
 - **Tierpfleger:innen:** wer sich kümmert und wie viele Tiere auf eine Person kommen (ab etwa 80 wird es eng).
+- **Futter** (Tab *Futter*): je Tierart und Futtergruppe des Spiels (z. B. Silage, Heu, Kraftfutter) und für die
+  Einstreu (Stroh):
+  - **Bedarf je Tag:** gemessen aus dem, was die Tiere in den letzten drei Spieltagen gefressen haben; kommen Tiere
+    dazu oder gehen welche, rechnet FarmPulse sofort hoch bzw. herunter. Bis zur ersten Messung gilt der Bedarf des
+    Spiels, auf die Gruppen verteilt nach ihrem Gewicht – markiert „geschätzt“.
+  - **Vorrat:** was in deinen Silos, Erweiterungen und Fahrsilos liegt, was im Trog ist und was du selbst einträgst.
+    Fressen mehrere Tierarten dieselbe Sorte, teilt FarmPulse den Vorrat nach ihrem Bedarf.
+  - **Reichweite** in Tagen und Spielmonaten mit Ampel – grün ab 3 Monaten, gelb darunter, rot unter einem Monat – und
+    dem Tag, an dem die Gruppe leer ist. Kennt FarmPulse die Erntezeit der passenden Kultur (z. B. Gras für Silage und
+    Heu), steht die **nächste Ernte** dabei und wie viele Liter bis dahin **fehlen**; dazu der **Jahresbedarf** („gedeckt
+    zu x %“) und die **Futterkosten** je Monat zum Einkaufspreis.
+  - Je Stall: Bedarf, Trog („leer in x Stunden“), Stroh im Stall und die Futterkosten.
+  - **Ballen und sonstiger Vorrat:** Ballen und Paletten zählt das Spiel nicht als Füllstand. Trag sie ein – Anzahl und
+    Größe (z. B. Rundballen 1,25 m) oder direkt Liter. Der Vorrat sinkt von selbst, sobald Futter in den Trog oder
+    Stroh in den Stall kommt, ohne dass ein Silo weniger wird. Nach 10 Spieltagen ohne Änderung steht „bitte prüfen“;
+    *Stimmt noch* bestätigt den Eintrag.
+  - Wird eine Gruppe **rot**, schreibt dir dein Tierpfleger (ohne ihn die Genossenschaft) – danach höchstens einmal je
+    Spielmonat und Gruppe. Gelbe und rote Gruppen stehen in **Aufgaben** („Futter: Silage reicht noch 6 Tage“, Frist =
+    leer am) und im **Kalender**. Lässt sich die Sorte bei Nachbarn kaufen, führt *Beim Nachbarn anfragen* in die App
+    **Handel**. Die Futterbilanz braucht die aktuelle Mod-Version; mit einem älteren Mod steht nur der Hinweis, den Mod
+    zu aktualisieren.
 - **Tierarzt, Viehhändler:in und Zuchtberatung – nur wenn du Tiere hältst.** Der Tierarzt kommt alle paar Monate zur
   Routineuntersuchung je Tierart und schickt eine Rechnung (Grundgebühr plus Betrag je Tier); wann er das nächste Mal
   kommt, steht im Stall. Sinkt die Gesundheit in einem Stall stark (unter 40 %), rückt er zu einem **Notfall** aus –

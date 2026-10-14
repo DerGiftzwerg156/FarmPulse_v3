@@ -540,6 +540,21 @@ helperLiters`) and exported only while a hook is installed. The backend (`FieldM
 of every counter since the last export into the running field book season of the field (a falling counter shrinks the
 line proportionally).
 
+**Built (R4-F1):** `RPSimGameAdapter.husbandryFeed` reads the food values of every own husbandry
+(`getFoodLitersPerHour()`, falling back to `spec_husbandryFood.litersPerHour`; `getFoodCapacity()`;
+`spec_husbandryFood.fillLevels` as `trough`; `spec_husbandryStraw.inputLitersPerHour` and
+`getHusbandryFillLevel(spec_husbandryStraw.inputFillType, farmId)` as `strawLitersPerHour` / `straw`). `RPSim.removeFoodHook`
+on `PlaceableHusbandryFood.removeFood` (`Utils.overwrittenFunction`, installed when the mod is loaded) calls the original
+and adds what it returned to the counter of the husbandry and fill type, only on the server (a client calls
+`removeFood` too when it reads the trough of the server) and only for husbandries of the player farm
+(`RPSimGameAdapter:feedEntry`). The counter (`RPSimFeedCounter`, `state.feed`) is saved in `FS25_RPSim.xml`
+(`feed.counter(i)#husbandry/fillType/liters`) and exported as `feedConsumed` only while the hook is installed (a
+husbandry without counter then gets `[]`). `feedStock` comes from the storage places the stock inventory counts
+(`RPSimStorage.counts`) without production points, filtered to the fill types of the food groups plus `STRAW`
+(`RPSimFeedCounter.stockFromSilos`); without food groups (no `animalFoodSystem`) it stays missing. The backend
+(`FeedBalanceService`) books the difference of every counter since the last export (a falling counter is taken back);
+without `feedConsumed` it counts the fall of `trough` between two exports.
+
 ## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, every 60 s, and on every `farm_facts` cycle when its content changed)
 
 The mod rewrites the file every `marketContextIntervalMs` (mod config, default 60 s real time) even when its content
@@ -662,6 +677,12 @@ mod or not built yet); the bridge simulator exports them only in the scenario `h
 | `animalFood[]` | Food groups per animal type `{ animalType, groups, mixtures }`, sorted by `animalType` | `g_currentMission.animalFoodSystem:getAnimalFood(animalTypeIndex).groups` (read so in `PlaceableHusbandryFood:getFoodInfos`, dump) |
 | `animalFood[].groups[]` | `{ title, productionWeight, fillTypes }` in the **order of the game** (it may be the order the animals eat in); `productionWeight` ≥ 0 (3 decimals), at least one fill type | `foodGroup.title`, `foodGroup.productionWeight`, `foodGroup.fillTypes` (same) |
 | `animalFood[].mixtures[]` | Mixed feed fill types of the animal type such as TMR (unique, sorted) | `animalFoodSystem:getMixturesByAnimalTypeIndex(animalTypeIndex)` (`PlaceableHusbandryFood:onPostLoad`, dump) |
+
+**Built (R4-F1):** `RPSimGameAdapter:collectAnimalFood` walks `g_currentMission.animalSystem:getTypes()` (`type.name`,
+`type.typeIndex`) and reads `animalFoodSystem:getAnimalFood(typeIndex).groups` and
+`getMixturesByAnimalTypeIndex(typeIndex)` once per mission (fill type indices as names); without an animal food
+system `animalFood` stays missing. The fill types of the groups, the mixtures and `STRAW` are added to the purchase
+prices of `fillTypeCosts`.
 
 `RPSimMarketContext.buildFruitTypes` adds the four values when valid and leaves them out otherwise
 (`buildPeriods` keeps whole periods 1..12); `buildFillTypeCosts` drops entries without a fill type, with a price that
@@ -809,6 +830,14 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   types of the journal month that ended (and the salaries of the drivers) are distributed by area. A field book entry
   that is merged or replaced hands its lines to the entry that takes its place; a rewind deletes the bookings after the
   loaded game time (the counter lines follow the falling counters).
+- **Feed balance** (Roadmap V4 R4-F, `FeedBalanceService`, on every export and every game day): books the eaten litres
+  per husbandry and fill type (difference of `feedConsumed`, else the fall of `trough`), keeps one snapshot per
+  husbandry and game day, and measures the daily need over the last `feed-balance.measure-days` game days (scaled by
+  `foodLitersPerHour` now / in the period; without a measurement `foodLitersPerHour × 24`, "geschätzt"). A rise of a
+  trough or of the straw in a stable that the silos (`feedStock`) did not give lowers the stock the player entered
+  (bales). Every game day a food group below `feed-balance.warn-months` game months of reach brings a mail of the
+  animal keeper (without one the cooperative), at most one per game month and group; yellow and red groups are tasks
+  (`FEED`) and calendar entries (`FEED_EMPTY`). A rewind drops the later snapshots and starts the levels again.
 - **Savegame reloaded without saving** (`RewindService`): `farm_facts.json` with a game time earlier than the last
   snapshot is a rewind. The next `instructions_ack.json` rebuilt by the mod from the reloaded savegame shows which
   acknowledged instructions are missing; an ack file still written before the reload (it contains acks later than

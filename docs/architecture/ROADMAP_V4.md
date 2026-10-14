@@ -72,7 +72,7 @@ Punkt-IDs: `R4-<Bereich><Nummer>`, z. B. `R4-D2`. Alle Pfade sind relativ zum Re
 | --- | --- | --- | --- | --- |
 | 0 | [Q – Querschnitt](#q--querschnitt) | Verbrauchs-Zähler je Feld, Einkaufspreise, Saat- und Erntefenster, Futterwerte der Ställe, Futtergruppen, Simulator, Testplan | ja | R33-Q1, R2-A7 |
 | 1 | [D – Deckungsbeitrag je Feld](#d--deckungsbeitrag-je-feld) | Kosten und Erlös je Feldbuch-Eintrag, Korrektur, Karte „Deckungsbeitrag“ in der Bank, Hofbericht (**umgesetzt 13.10.2026**) | D1: ja (über Q1) | Q, R33-F, R2-B1 |
-| 2 | [F – Futterbilanz](#f--futterbilanz) | Bedarf, Vorrat, Reichweite je Futtergruppe, Ballen eintragen, Warnungen, Jahresbedarf | F1: ja (über Q2) | Q, R2-A7 |
+| 2 | [F – Futterbilanz](#f--futterbilanz) | Bedarf, Vorrat, Reichweite je Futtergruppe, Ballen eintragen, Warnungen, Jahresbedarf (**umgesetzt 13.10.2026**) | F1: ja (über Q2) | Q, R2-A7 |
 | 3 | [A – Anbauplaner](#a--anbauplaner) | Plan je Feld, Prüfungen, Prognose, Bedarf und Absicherung, Aufgaben, Plan und Ist | A2: ja (über Q1) | Q, D, F, R33-E |
 
 D zuerst: Der Planer nimmt die Kosten je Hektar aus D. F kann parallel zu D laufen. A kommt zuletzt, weil er D (Kosten)
@@ -418,6 +418,20 @@ Feldbuch-Auswertung.
 gebraucht wird, wie viel da ist (Trog, Silo, Fahrsilo, eingetragene Ballen) und **wie viele Tage es reicht**. Der
 Tierpfleger warnt rechtzeitig, nicht erst, wenn der Trog leer ist (das gibt es seit R2-A7).
 
+**Stand 13.10.2026: umgesetzt** (Mod: Futterwerte je Stall, Hook auf `PlaceableHusbandryFood.removeFood`,
+`RPSimFeedCounter`, `feedStock`, `animalFood`, Futterpreise; Backend: `feed/FeedBalanceService`,
+`api/FeedBalanceController`, Migration V46, Aufgaben `FEED` und Kalender `FEED_EMPTY`; Frontend: Tab `futter` in der
+App „Stall“, Kachel auf dem Startbildschirm). Abweichungen und Grenzen (Umsetzungshinweise in `QUESTIONS.md`):
+- „Bis zur nächsten Ernte“ nutzt die Erntefenster der Kulturen aus `harvestablePeriods` (Zuordnung Sorte → Kulturen in
+  `feed-balance.harvest-crops`); der Mod liest die Fenster erst mit A2, bis dahin fehlen nächste Ernte und Fehlmenge.
+  Ob die Kultur auf eigenen Feldern steht, prüft die Bilanz nicht; den Plan nutzt sie mit A.
+- Eine Sorte, die mehrere Gruppen (auch verschiedener Tierarten) fressen, wird nach deren Bedarf geteilt. Eine
+  Mischung im Silo zählt für die Gruppe, die sie nennt; die Zutaten einer Mischung kennt der Vertrag nicht.
+- Eingetragener Vorrat sinkt, wenn ein Trog oder das Stroh im Stall steigt, ohne dass ein Silo derselben Sorte sinkt.
+  Gekauftes Futter, das direkt in den Trog geht, zählt deshalb auch als Ballen; ohne Eintrag passiert nichts.
+- Die Ballengrößen in `feed-balance.bale-sizes` sind Platzhalter (🟡 Testplan 30.12); Liter direkt gehen immer.
+- Der Jahresbedarf vergleicht nur mit dem Vorrat; die geplante Ernte kommt mit A4.
+
 **Entscheidungen 13.10.2026 (`QUESTIONS.md`):**
 - Ort: **Tab „Futter“ in der App „Stall“** und eine **Kachel** auf dem Startbildschirm, solange eine Gruppe gelb oder
   rot ist.
@@ -432,27 +446,27 @@ Tierpfleger warnt rechtzeitig, nicht erst, wenn der Trog leer ist (das gibt es s
 
 ### R4-F1 Bedarf je Stall und Futtergruppe
 
-- [ ] **Tagesbedarf je Stall** (Entscheidung 13.10.2026): der **gemessene** Verbrauch aus `feedConsumed[]` (Fallback:
+- [x] **Tagesbedarf je Stall** (Entscheidung 13.10.2026): der **gemessene** Verbrauch aus `feedConsumed[]` (Fallback:
   Sinken von `trough[]`), gemittelt über die letzten `feed-balance.measure-days` Spieltage (**3**). Ändert sich
   die Herde, wird er mit `foodLitersPerHour jetzt / foodLitersPerHour im Messzeitraum` hochgerechnet. Ohne Messung:
   `foodLitersPerHour × 24` (🟡 Q2), markiert „geschätzt“.
-- [ ] **Bedarf je Futtergruppe:** der gemessene Anteil jeder Sorte am Verbrauch, den Gruppen aus `animalFood[]`
+- [x] **Bedarf je Futtergruppe:** der gemessene Anteil jeder Sorte am Verbrauch, den Gruppen aus `animalFood[]`
   zugeordnet. Ohne Messung: anteilig nach `productionWeight` der Gruppen (Entscheidung 13.10.2026).
-- [ ] **Einstreu:** `strawLitersPerHour × 24` je Stall mit Einstreu (🟡 wie oben).
-- [ ] Ställe derselben Tierart greifen auf **denselben Vorrat** zu. Die Bilanz rechnet deshalb je Tierart, die
+- [x] **Einstreu:** `strawLitersPerHour × 24` je Stall mit Einstreu (🟡 wie oben).
+- [x] Ställe derselben Tierart greifen auf **denselben Vorrat** zu. Die Bilanz rechnet deshalb je Tierart, die
   Reichweite des Trogs aber je Stall.
 
 **Beleg:** ✅ Q2. 🟡 Q2 (`timeAdjustment`, Verteilung auf Gruppen).
 
 ### R4-F2 Vorrat
 
-- [ ] **Automatisch:** `feedStock[]` (Silos, Erweiterungen, Fahrsilos) und `trough[]` (je Stall), dazu `straw` im
+- [x] **Automatisch:** `feedStock[]` (Silos, Erweiterungen, Fahrsilos) und `trough[]` (je Stall), dazu `straw` im
   Stall.
-- [ ] **Ballen und Paletten selbst eintragen:** Ballen sind im Spiel Objekte und kein Füllstand (seit V3
+- [x] **Ballen und Paletten selbst eintragen:** Ballen sind im Spiel Objekte und kein Füllstand (seit V3
   ausgeklammert). Der Spieler trägt je Sorte die **Anzahl Ballen** und die Ballengröße ein (Auswahl aus
   `feed-balance.bale-sizes`, z. B. Rundballen 1,25 m, Quaderballen 2,4 m, je mit Litern) oder direkt Liter.
-- [ ] **Sonstiger Vorrat** in Litern (z. B. Lager des Futterroboters, 🟡 Q2).
-- [ ] Ein eingetragener Vorrat **sinkt mit dem Verbrauch**: Der Verbrauch einer Sorte zieht zuerst vom eingetragenen
+- [x] **Sonstiger Vorrat** in Litern (z. B. Lager des Futterroboters, 🟡 Q2).
+- [x] Ein eingetragener Vorrat **sinkt mit dem Verbrauch**: Der Verbrauch einer Sorte zieht zuerst vom eingetragenen
   Vorrat ab, sobald der automatische Vorrat dieser Sorte nicht sinkt (die Tiere fressen dann aus Ballen, die der Spieler
   in den Trog gelegt hat). Am Eintrag steht „eingetragen vor x Tagen“, nach `feed-balance.manual-stale-days` (**10**
   Spieltage) als Erinnerung „bitte prüfen“ (Entscheidung 13.10.2026).
@@ -461,39 +475,39 @@ Tierpfleger warnt rechtzeitig, nicht erst, wenn der Trog leer ist (das gibt es s
 
 ### R4-F3 Reichweite
 
-- [ ] Je Tierart und Futtergruppe: **Reichweite in Tagen** = (Vorrat der Sorten der Gruppe + Trog) ÷ Tagesbedarf der
+- [x] Je Tierart und Futtergruppe: **Reichweite in Tagen** = (Vorrat der Sorten der Gruppe + Trog) ÷ Tagesbedarf der
   Gruppe. Dazu in Monaten (`÷ calendar.daysPerPeriod`) und als Datum „leer am“ im Spielkalender.
-- [ ] Je Stall: Reichweite des **Trogs** allein („Trog leer in x Stunden“), damit der Spieler weiß, wann er nachfüllen
+- [x] Je Stall: Reichweite des **Trogs** allein („Trog leer in x Stunden“), damit der Spieler weiß, wann er nachfüllen
   muss.
-- [ ] **Bis zur nächsten Ernte:** Für Gruppen, deren Sorten von eigenen Feldern kommen (Gras, Silage, Heu, Stroh), steht
+- [x] **Bis zur nächsten Ernte:** Für Gruppen, deren Sorten von eigenen Feldern kommen (Gras, Silage, Heu, Stroh), steht
   die nächste mögliche Ernte aus `harvestablePeriods` der passenden Kulturen (Q1) und, mit A, aus dem Plan. Reicht der
   Vorrat bis dahin nicht, steht die **Fehlmenge** in Litern.
-- [ ] Ampel je Gruppe in **Spielmonaten** (Entscheidung 13.10.2026): grün ab `feed-balance.ok-months` (**3**), gelb
+- [x] Ampel je Gruppe in **Spielmonaten** (Entscheidung 13.10.2026): grün ab `feed-balance.ok-months` (**3**), gelb
   darunter, rot unter `feed-balance.warn-months` (**1**). So passt sie zu jeder Einstellung „Tage je Periode“.
-- [ ] **Kachel** auf dem Startbildschirm „Futter reicht noch x Tage“ mit der knappsten Gruppe, solange eine Gruppe gelb
+- [x] **Kachel** auf dem Startbildschirm „Futter reicht noch x Tage“ mit der knappsten Gruppe, solange eine Gruppe gelb
   oder rot ist; Klick öffnet den Tab „Futter“.
-- [ ] Kosten des Verbrauchs je Monat und Stall, bewertet mit `fillTypeCosts` (Zukaufpreis), als Zusatzzeile.
+- [x] Kosten des Verbrauchs je Monat und Stall, bewertet mit `fillTypeCosts` (Zukaufpreis), als Zusatzzeile.
 
 **Beleg:** – (Backend). ✅ Q1 (`harvestablePeriods`).
 
 ### R4-F4 Warnungen und Rollenspiel
 
-- [ ] Wechselt eine Gruppe auf **Rot** (unter `feed-balance.warn-months`), schreibt der **Tierpfleger** (ohne
+- [x] Wechselt eine Gruppe auf **Rot** (unter `feed-balance.warn-months`), schreibt der **Tierpfleger** (ohne
   Tierpfleger die Genossenschaft) eine Mail mit Gruppe, Reichweite und Fehlmenge. Bleibt sie rot, kommt höchstens
   **einmal je Spielmonat** und Gruppe eine weitere Mail (Entscheidung 13.10.2026). Das ergänzt die Trog-Warnung aus
   R2-A7 und ersetzt sie nicht.
-- [ ] In **Aufgaben** erscheint „Futter: Silage reicht noch 6 Tage“ mit Frist = „leer am“. Der **Kalender** zeigt das
+- [x] In **Aufgaben** erscheint „Futter: Silage reicht noch 6 Tage“ mit Frist = „leer am“. Der **Kalender** zeigt das
   Datum.
-- [ ] Lässt sich die Sorte bei Nachbarn kaufen (Nachbarhandel R3-H3, nur Sorten mit eigenem Silo), führt ein Knopf
+- [x] Lässt sich die Sorte bei Nachbarn kaufen (Nachbarhandel R3-H3, nur Sorten mit eigenem Silo), führt ein Knopf
   **„Beim Nachbarn anfragen“** direkt in die App „Handel“.
-- [ ] Bleibt eine Gruppe rot, bis der Trog leer ist, greift wie bisher die Tierschutz-Regel des Amts (R2-E2). V4 ändert
+- [x] Bleibt eine Gruppe rot, bis der Trog leer ist, greift wie bisher die Tierschutz-Regel des Amts (R2-E2). V4 ändert
   daran nichts.
 
 **Beleg:** – (Backend: Mails, Aufgaben, Kalender seit V1–V3).
 
 ### R4-F5 Jahresbedarf
 
-- [ ] Je Tierart und Gruppe: **Jahresbedarf** = Tagesbedarf × 12 × `daysPerPeriod`, verglichen mit dem Vorrat und, mit
+- [x] Je Tierart und Gruppe: **Jahresbedarf** = Tagesbedarf × 12 × `daysPerPeriod`, verglichen mit dem Vorrat und, mit
   A, der geplanten Ernte (A4). Ergebnis „gedeckt zu x %“ und Fehlmenge oder Überschuss in Litern.
 - [ ] Diese Zahl nutzt der Anbauplaner, um Futterflächen vorzuschlagen (A4).
 

@@ -12,6 +12,18 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Feed balance [R4-F]** (owner decisions 2026-10-13 in `QUESTIONS.md`): a new tab *Futter* in the app *Stall*. Per
+  animal type and food group of the game (plus the bedding): the need per day - measured over the last 3 game days
+  and scaled at once when the herd changes, before that the need of the game split by `productionWeight`
+  ("geschätzt") -, the stock of own silos, silo extensions, bunker silos and troughs plus bales the player enters
+  (they sink when a trough or the straw rises without a silo falling; "bitte prüfen" after 10 game days), the reach in
+  days and game months with a traffic light (green from 3, red below 1), the day it runs empty, the next harvest of
+  the crop with the shortfall, the yearly need and the monthly feed costs. A red group brings a mail of the animal
+  keeper (without one the cooperative), at most once per game month and group; yellow and red groups are tasks and
+  calendar entries, and the home screen shows the tile "Futter reicht noch x Tage". Mod: food values per husbandry, a
+  hook on `PlaceableHusbandryFood.removeFood` counting the eaten feed (`feedConsumed`, kept in the mod savegame),
+  `feedStock` and `market_context.animalFood`; feed prices in `fillTypeCosts`. Backend: `FeedBalanceService`,
+  `/api/feed-balance`, migration V46, values under `rpsim.formulas.feed-balance.*`.
 - **Contribution margin per field [R4-D]** (owner decisions 2026-10-13 in `QUESTIONS.md`): a new card
   *Deckungsbeitrag* in *Bank → Betriebsergebnis*. Per field book entry: revenue (litres x the realised average price
   of the product from the harvest to the end of the following FS25 year, else the best price on the harvest day, else

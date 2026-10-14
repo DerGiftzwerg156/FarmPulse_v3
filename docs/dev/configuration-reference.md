@@ -865,7 +865,7 @@ placeholders.
 | `rpsim.formulas.feed-balance.ok-months` | `3` | Traffic light of a food group in game months of reach: green from this value (owner decision 2026-10-13). | Roadmap V4 R4-F3 |
 | `rpsim.formulas.feed-balance.warn-months` | `1` | Red below this many game months of reach (yellow in between); a group turning red brings the warning mail. | Roadmap V4 R4-F3 |
 | `rpsim.formulas.feed-balance.manual-stale-days` | `10` | An entered stock (bales, pallets) unchanged for this many game days shows "bitte prüfen" (owner decision 2026-10-13). | Roadmap V4 R4-F2 |
-| `rpsim.formulas.feed-balance.bale-sizes.ROUND_125` | `4000` | Litres per bale of the size the player chooses when entering bales (placeholder, manual test plan 31.4). | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.ROUND_125` | `4000` | Litres per bale of the size the player chooses when entering bales (placeholder, manual test plan 30.12). | Roadmap V4 R4-F2 |
 | `rpsim.formulas.feed-balance.bale-sizes.ROUND_150` | `5500` | As above. | Roadmap V4 R4-F2 |
 | `rpsim.formulas.feed-balance.bale-sizes.SQUARE_120` | `2500` | As above. | Roadmap V4 R4-F2 |
 | `rpsim.formulas.feed-balance.bale-sizes.SQUARE_180` | `4500` | As above. | Roadmap V4 R4-F2 |

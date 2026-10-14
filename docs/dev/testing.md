@@ -150,7 +150,7 @@ consumption counter, the feed stock, the food values of the husbandry, the purch
 crop windows of `hofplanung` arrive (and stay `null` for `feldbuch`); `BridgeValidatorTest` (`inputs`, `feedStock`,
 the food values, `fillTypeCosts`, `animalFood` and the new crop values) covers the backend side. The mod covers the
 normalisation in `test_farm_facts.lua` and `test_market_context.lua` and, in `test_roadmap_v4.lua`, that the adapter
-reads none of the values yet (Q fixes the contract only); the simulator the scenario, the counters with their control
+does not read the crop windows yet (they come with A2); the simulator the scenario, the counters with their control
 endpoints `POST /input`, `POST /feed` and `POST /eat` and their place in the savegame in `test/roadmap-v4.test.js`. Q
 brings no formula, no table and no configuration value; they come with D, F and A. In the game: manual test plan
 section 30.
@@ -163,6 +163,16 @@ the advice of the cooperative after two loss years. Mod: `test_roadmap_v4.lua` (
 sprayer, only own farmland and the server, helper litres, never disturbing the work, savegame and export, the purchase
 prices). Frontend: `margin-card.spec.ts` (table, ranking, crops, chart, calculation, corrections, own lines, price,
 switch, shared period, locked entry) and the farm report section in `credit-planning.spec.ts`.
+Roadmap V4 R4-F (feed balance): `FeedBalanceTest` covers the need of the game split by productionWeight before the
+first measurement (reach, traffic light in game months, empty date, yearly need, monthly costs, neighbour link, the
+bedding), the measured need from the counter over the last game days and its scaling with the herd, the measurement
+by the sinking trough of an older mod, entered bales that sink when the straw rises without the silo falling and the
+reminder "bitte prüfen", the warning of the cooperative or the animal keeper at most once per game month, tasks and
+calendar, the shortfall until the next harvest, an older mod and a rewind. Mod: `test_roadmap_v4.lua` (the food values
+and their fallback, the food groups read once, the hook on `removeFood` - own husbandries, only the server, never
+disturbing the feeding -, savegame and export, the feed stock without production points, the feed prices). Frontend:
+`feed-balance.spec.ts` (older mod, groups with reach, shortfall and neighbour link, entering bales or litres, "stimmt
+noch", deleting), the tile in `home.spec.ts` and the task in `tasks.spec.ts`.
 Roadmap V3.3 R33-F (field book): `FieldBookTest` covers the first entry (levels found count as done), a season from
 sowing to harvest with every measure, the harvest year and late litres, mulching in the next season, cuts of a grass
 field in one entry, the main crop and "harvest beats no harvest", the product of the counter and a falling counter, a

@@ -1224,7 +1224,7 @@ rpsim:
       ok-months: 3                # traffic light in game months: green from 3 months of reach
       warn-months: 1              # red below 1 month (yellow in between); the animal keeper warns once per month and group
       manual-stale-days: 10       # an entered stock unchanged for 10 game days asks "bitte prüfen"
-      bale-sizes:                 # litres per bale of the sizes the player chooses (placeholders, manual test plan 31.4)
+      bale-sizes:                 # litres per bale of the sizes the player chooses (placeholders, manual test plan 30.12)
         ROUND_125: 4000
         ROUND_150: 5500
         SQUARE_120: 2500

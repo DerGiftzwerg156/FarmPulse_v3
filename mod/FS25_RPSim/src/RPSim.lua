@@ -605,7 +605,7 @@ function RPSim.removeFoodHook(husbandry, superFunc, absDeltaFillLevel, fillTypeI
     return removed
 end
 
--- 🟡 manual test plan 31.2: whether a placeable type registered before this hook keeps the original removeFood
+-- 🟡 manual test plan 30.3: whether a placeable type registered before this hook keeps the original removeFood
 -- (SpecializationUtil.registerFunction stores the function at registration time).
 if PlaceableHusbandryFood ~= nil and PlaceableHusbandryFood.removeFood ~= nil and Utils ~= nil then
     PlaceableHusbandryFood.removeFood = Utils.overwrittenFunction(PlaceableHusbandryFood.removeFood,

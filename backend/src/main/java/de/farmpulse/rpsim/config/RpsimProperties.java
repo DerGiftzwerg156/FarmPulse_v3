@@ -2261,7 +2261,7 @@ public class RpsimProperties {
         private double warnMonths = 1;
         /** F2: an entered stock unchanged for x game days asks "bitte prüfen" (owner decision 2026-10-13). */
         private int manualStaleDays = 10;
-        /** F2: litres per bale of the sizes the player can choose (🟡 manual test plan 31.4). */
+        /** F2: litres per bale of the sizes the player can choose (🟡 manual test plan 30.12). */
         private Map<String, Double> baleSizes = new LinkedHashMap<>(Map.of(
                 "ROUND_125", 4000.0, "ROUND_150", 5500.0, "SQUARE_120", 2500.0, "SQUARE_180", 4500.0,
                 "SQUARE_240", 8000.0));
