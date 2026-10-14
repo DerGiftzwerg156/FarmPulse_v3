@@ -1132,6 +1132,18 @@
       "SQUARE_120": "Quaderballen 1,20 m",
       "SQUARE_180": "Quaderballen 1,80 m",
       "SQUARE_240": "Quaderballen 2,40 m"
+    },
+    "cropYieldSource": {
+      "FIELD": "Ø dieses Feldes",
+      "CROP": "Ø der Kultur",
+      "BASE": "Grundertrag",
+      "null": "unbekannt"
+    },
+    "cropPriceSource": {
+      "FORWARD": "Vorkontrakt",
+      "BEST": "bester Preis",
+      "INTERNAL": "Verrechnungswert",
+      "null": "unbekannt"
     }
   },
   "onboarding": {
@@ -1992,7 +2004,9 @@
     "counterOfferShort": "Gegenangebot der Bank",
     "leaseOutEndsHint": "Der Pächter möchte verlängern – ohne Antwort bekommst du das Feld zum Ende zurück.",
     "investorDue": "Lieferung an {name}",
-    "feedDue": "Futter: {group} reicht noch {days} Tage"
+    "feedDue": "Futter: {group} reicht noch {days} Tage",
+    "sowDue": "Feld {field}: {crop} säen",
+    "sowHint": "Saatfenster laut Anbauplanung"
   },
   "calendar": {
     "nextDays": "Nächste Tage",
@@ -2028,7 +2042,9 @@
       "bulkOrderEnd": "Liefermonat endet: {quantity} l {fillType} an {sellPoint}",
       "investorDelivery": "{name} wartet noch auf {remaining} {unit} {what}",
       "investorRepayment": "Rückzahlung an {name}: {amount}",
-      "feedEmpty": "Futter leer: {group} ({animal})"
+      "feedEmpty": "Futter leer: {group} ({animal})",
+      "sowWindowStart": "Saatfenster beginnt: Feld {field} ({crop})",
+      "sowWindowEnd": "Saatfenster endet: Feld {field} ({crop})"
     },
     "debits": {
       "salaries": "Gehälter ({n})",
@@ -2544,7 +2560,8 @@
     },
     "fieldbook": {
       "dokumentation": "Dokumentation",
-      "auswertung": "Auswertung"
+      "auswertung": "Auswertung",
+      "anbauplanung": "Anbauplanung"
     },
     "stable": {
       "staelle": "Ställe",
@@ -2855,5 +2872,65 @@
     "orLiters": "oder Liter",
     "note": "Notiz",
     "add": "Eintragen"
+  },
+  "cropPlan": {
+    "title": "Anbauplanung nächste Saison",
+    "reminders": "Erinnerung zur Saatzeit",
+    "discuss": "Plan besprechen",
+    "discussed": "Plan besprochen",
+    "noWindows": "Der Mod meldet keine Saatfenster (ältere Version) – alle Monate stehen zur Wahl, die Fensterprüfung entfällt.",
+    "sum": "Erwarteter Deckungsbeitrag des Plans: {plan} (wie Vorjahr: {previous})",
+    "now": "jetzt: {crop}",
+    "last": "zuletzt: {crop}",
+    "crop": "Kultur",
+    "fallow": "Brache",
+    "product": "Ernteprodukt",
+    "sowMonth": "Saatmonat",
+    "window": "im Saatfenster",
+    "note": "Notiz",
+    "same": "Wie Vorjahr",
+    "suggest": "Fruchtfolge vorschlagen",
+    "remove": "Plan löschen",
+    "target": {
+      "RUNNING": "laufende Saison",
+      "NEXT": "nächste Saison"
+    },
+    "forecast": "erwartet {lph} l/ha ({source}), {price} je 1000 l ({priceSource}), Deckungsbeitrag {margin}",
+    "noForecast": "Prognose unbekannt",
+    "seedOnly": "Direktkosten nur Saatgut, der Rest ist unbekannt",
+    "windowNow": "Saatfenster jetzt bis {end}",
+    "windowNext": "Saatfenster {start} bis {end}",
+    "contractor": "Lohnunternehmer beauftragen",
+    "check": {
+      "ROTATION_SAME": "Gleiche Kultur wie zuvor: Fruchtfolgeprämie entfällt für {hectares} ha (≈ {premium} €)",
+      "ROTATION_CUT": "Zweite Wiederholung: Das Amt kürzt die ganze Fruchtfolgeprämie um {share} %",
+      "SOW_OUTSIDE_WINDOW": "{period} liegt nicht im Saatfenster ({periods})",
+      "TOO_LATE": "{crop} wird erst nach dem letzten Saatmonat geerntet – zu spät für dieses Jahr",
+      "STORAGE": "Lagerplatz fehlt für {fillType}: die erwartete Ernte passt nicht in die eigenen Silos",
+      "FERTILIZER_CLOSED": "Herbstsaat: Sperrfrist für Gülle und Mist in {periods} beachten",
+      "LIME": "Vor der Saat kalken – in dieser Saison noch nicht gekalkt",
+      "WEEDS": "Unkraut in dieser Saison noch nicht bekämpft"
+    },
+    "suggestion": {
+      "MARGIN": "Vorschlag: {crop} (bester Ø Deckungsbeitrag je ha)",
+      "YIELD": "Vorschlag: {crop} (höchster Grundertrag × Preis)",
+      "NONE": "Keine passende Kultur gefunden"
+    },
+    "needs": "Bedarf und Absicherung",
+    "seed": "Saatgut",
+    "seedHint": "Saatgut liegt im Spiel in Paletten und Big Bags; einen Bestand zeigt das Tool nicht.",
+    "marketing": "Vermarktung",
+    "sold": "{percent} % vorab verkauft (von {liters} l)",
+    "forward": "Vorkontrakt abschließen",
+    "feed": "Futter",
+    "covered": "gedeckt zu {percent} %",
+    "feedSuggest": "fehlt: etwa {hectares} ha {crop}",
+    "history": "Plan / Ist",
+    "field": "Feld",
+    "planned": "Plan",
+    "actual": "Ist",
+    "margin": "Deckungsbeitrag",
+    "deviated": "abweichend",
+    "noFields": "Keine eigenen oder gepachteten Felder."
   }
 }

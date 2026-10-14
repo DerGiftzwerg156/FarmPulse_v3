@@ -119,6 +119,11 @@ import { dueLabel, feedTaskTitle, isUrgent } from './task-groups';
           <div class="text-[15px] font-semibold text-text">{{ feedTitle() }}</div>
           <div class="text-[12px] text-[#8FA39A]" data-testid="feed-due">{{ f.animalType | label: 'animalType' }} · {{ ('enums.feedStatus.' + t.kind) | t }}</div>
         }
+        @case ('SOW') {
+          <!-- Roadmap V4 R4-A5: a planned field in its sowing window -->
+          <div class="text-[15px] font-semibold text-text">{{ 'tasks.sowDue' | t: { field: t.sowDue?.fieldName ?? '', crop: (t.sowDue?.fruitType | label: 'fruitType') } }}</div>
+          <div class="text-[12px] text-[#8FA39A]" data-testid="sow-due">{{ 'tasks.sowHint' | t }}</div>
+        }
         @case ('POSTING') {
           <div class="text-[15px] font-semibold text-text">{{ 'tasks.applicants' | t: { role: (t.kind | label: 'jobRole'), n: t.pendingApplicants } }}</div>
           <div class="text-[12px] text-[#8FA39A]">{{ 'tasks.applicantsHint' | t }}</div>

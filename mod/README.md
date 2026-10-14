@@ -72,6 +72,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   `PlaceableHusbandryFood.removeFood` zählt, was die Tiere aus dem Trog fressen (nur eigene Ställe, nur auf dem Server;
   der Zähler steht im Mod-Spielstand). Dazu den Futtervorrat in eigenen Silos, Erweiterungen und Fahrsilos
   (`feedStock[]`), die Futtergruppen je Tierart (`market_context.animalFood[]`) und die Einkaufspreise des Futters.
+- Exportiert für den **Anbauplaner** (Roadmap V4, R4-A2) je Kultur der Karte Saatbedarf und Grundertrag je m² und die
+  Saat- und Erntefenster im Wachstumsmodus des Spielstands (`market_context.fruitTypes[].plantablePeriods` /
+  `harvestablePeriods`).
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben

@@ -149,8 +149,7 @@ Roadmap V4 (R4-Q3): `SimulatorScenariosEndToEndTest.roadmapV4FieldsArriveFromThe
 consumption counter, the feed stock, the food values of the husbandry, the purchase prices, the food groups and the
 crop windows of `hofplanung` arrive (and stay `null` for `feldbuch`); `BridgeValidatorTest` (`inputs`, `feedStock`,
 the food values, `fillTypeCosts`, `animalFood` and the new crop values) covers the backend side. The mod covers the
-normalisation in `test_farm_facts.lua` and `test_market_context.lua` and, in `test_roadmap_v4.lua`, that the adapter
-does not read the crop windows yet (they come with A2); the simulator the scenario, the counters with their control
+normalisation in `test_farm_facts.lua` and `test_market_context.lua`; the simulator the scenario, the counters with their control
 endpoints `POST /input`, `POST /feed` and `POST /eat` and their place in the savegame in `test/roadmap-v4.test.js`. Q
 brings no formula, no table and no configuration value; they come with D, F and A. In the game: manual test plan
 section 30.
@@ -163,6 +162,15 @@ the advice of the cooperative after two loss years. Mod: `test_roadmap_v4.lua` (
 sprayer, only own farmland and the server, helper litres, never disturbing the work, savegame and export, the purchase
 prices). Frontend: `margin-card.spec.ts` (table, ranking, crops, chart, calculation, corrections, own lines, price,
 switch, shared period, locked entry) and the farm report section in `credit-planning.spec.ts`.
+Roadmap V4 R4-A (crop planner): `CropPlanTest` covers the plan for the next or the running season with its
+validation, the hints with their figures (rotation and its cut, sowing window, too late, storage, fertiliser ordinance,
+lime; none for fallow), the forecast with its sources (field, crop, base yield; best price and forward contract; seed
+only), seed and the share sold ahead, the task, the calendar, the liquidity plan and the single reminder, MATCHED /
+DEVIATED with plan and reality and the rewind, a field that is no longer own, the rotation suggestion and "Plan
+besprechen" once per year. Mod: `test_roadmap_v4.lua` (seed use, base yield and the windows in the growth mode, none
+without it or without the methods). Frontend: `crop-planning.spec.ts` (hints, forecast, window, needs, plan / actual,
+planning a field, "Wie Vorjahr", suggestion, fallow, removing, reminder, "Plan besprechen", older mod) and the task in
+`tasks.spec.ts`.
 Roadmap V4 R4-F (feed balance): `FeedBalanceTest` covers the need of the game split by productionWeight before the
 first measurement (reach, traffic light in game months, empty date, yearly need, monthly costs, neighbour link, the
 bedding), the measured need from the counter over the last game days and its scaling with the herd, the measurement

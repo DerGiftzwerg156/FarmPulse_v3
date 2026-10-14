@@ -43,6 +43,7 @@ export function yearTone(kind: string): EventTone {
   if (kind === 'INVESTOR_DELIVERY') return 'farm'; // Roadmap V3.2 R32-I4
   if (kind === 'INVESTOR_REPAYMENT') return 'money'; // Roadmap V3.2 R32-I5
   if (kind === 'FEED_EMPTY') return 'farm'; // Roadmap V4 R4-F4
+  if (kind.startsWith('SOW_WINDOW_')) return 'farm'; // Roadmap V4 R4-A5
   return 'sys';
 }
 
@@ -136,6 +137,9 @@ export class CalendarApp {
       // Roadmap V4 R4-F4: a yellow or red food group runs empty (subKind = animal type, title = group)
       FEED_EMPTY: () => this.i18n.t('calendar.agenda.feedEmpty', { group: e.title === 'STRAW' ? this.i18n.t('feed.bedding') : (e.title ?? ''),
         animal: this.i18n.t('enums.animalType.' + e.subKind) }),
+      // Roadmap V4 R4-A5: sowing window of a planned field (title = field, reference = crop)
+      SOW_WINDOW_START: () => this.i18n.t('calendar.agenda.sowWindowStart', { field: e.title ?? '', crop: e.reference ?? '' }),
+      SOW_WINDOW_END: () => this.i18n.t('calendar.agenda.sowWindowEnd', { field: e.title ?? '', crop: e.reference ?? '' }),
     };
     const contractApp = e.subKind ? APPS.find((a) => a.id === contractAppId(e.subKind!)) : undefined;
     const apps: Record<string, [string, string | null]> = {
@@ -146,6 +150,7 @@ export class CalendarApp {
       BULK_ORDER_START: ['nav.trade', '/handel/grossauftraege'], BULK_ORDER_END: ['nav.trade', '/handel/grossauftraege'],
       INVESTOR_DELIVERY: ['nav.bank', '/bank/investoren'], INVESTOR_REPAYMENT: ['nav.bank', '/bank/investoren'],
       FEED_EMPTY: ['nav.stable', '/stall/futter'],
+      SOW_WINDOW_START: ['nav.fieldBook', '/feldbuch/anbauplanung'], SOW_WINDOW_END: ['nav.fieldBook', '/feldbuch/anbauplanung'],
     };
     const [app, link] = apps[e.kind] ?? ['nav.calendar', null];
     return { gameTime: e.gameTime, text: (texts[e.kind] ?? (() => e.kind))(), app: this.i18n.t(app), tone: yearTone(e.kind), link, query: null };

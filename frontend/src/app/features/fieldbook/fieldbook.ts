@@ -18,6 +18,7 @@ import { Badge, BadgeVariant } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
+import { CropPlanning } from './crop-planning';
 import { FieldBookEvaluation } from './fieldbook-evaluation';
 import { Observable } from 'rxjs';
 
@@ -55,6 +56,7 @@ const STATE_BADGE: Record<string, BadgeVariant> = {
     Card,
     PageErrorView,
     FieldBookEvaluation,
+    CropPlanning,
   ],
   templateUrl: './fieldbook.html',
 })

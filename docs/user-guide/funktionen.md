@@ -51,7 +51,7 @@ Homescreen.
 | **Versicherung** | Sturm- und Hagelversicherung (auch mit Baustein „Diebstahl“), Dürre-Index, Schäden melden, Wildschaden | Hofversicherung · Dürre-Index · Schäden |
 | **Personal** | Team, Helferstunden und Stellenausschreibungen | Team · Stellen & Bewerber · Ehemalige |
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen | Karte · Meine Felder · Verhandlungen · Pacht · Vorgänge |
-| **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge | Dokumentation · Auswertung |
+| **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge; Anbauplanung der nächsten Saison | Dokumentation · Auswertung · Anbauplanung |
 | **Stall** | Tiere, Tierpfleger, Futterbilanz, Tierarzt, Viehhandel und Tierwohl | Ställe · Futter · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
@@ -631,6 +631,37 @@ Im Tab **Auswertung** siehst du, was deine Felder in den letzten Jahren gebracht
   getrennt) der Ø l/ha mit und ohne jede Maßnahme, immer mit der Anzahl `n`. Einträge ohne Liter zählen nicht mit.
   Walzen fehlt bei Kulturen, die nicht gewalzt werden; Kalk und Unkraut nur, wenn sie im Spielstand eingeschaltet
   sind.
+
+### Anbauplanung
+
+Im Tab **Anbauplanung** legst du je Feld (eigen und gepachtet) fest, was in der **nächsten Saison** wachsen soll. Ist
+in der laufenden Saison noch nichts gesät, gilt der Plan für sie.
+
+- **Plan:** Kultur (alle Kulturen der Karte oder **Brache**), Ernteprodukt (z. B. Mais als Körner oder Häckselgut),
+  optional der **Saatmonat** und eine Notiz. *Wie Vorjahr* nimmt die Kultur, die jetzt steht oder zuletzt stand;
+  *Fruchtfolge vorschlagen* wählt eine Kultur, die in den letzten zwei Saisons nicht auf dem Feld stand – am liebsten
+  die mit dem besten Ø Deckungsbeitrag je Hektar, sonst die mit dem höchsten Grundertrag × Preis.
+- **Hinweise** (sie sperren nichts): gleiche Kultur wie zuvor („Fruchtfolgeprämie entfällt für x ha (≈ y €)“, bei der
+  zweiten Wiederholung die Kürzung der ganzen Prämie), ein Saatmonat außerhalb des Saatfensters, eine laufende Kultur,
+  die erst nach dem letzten Saatmonat geerntet wird („zu spät für dieses Jahr“), fehlender Lagerplatz in den eigenen
+  Silos, die Sperrfrist für Gülle und Mist bei einer Herbstsaat und „vor der Saat kalken“, wenn Kalk im Spielstand an
+  ist und in dieser Saison noch nicht gekalkt wurde.
+- **Prognose je Feld:** erwartete l/ha – der Ø dieses Feldes mit dieser Kultur, sonst der Ø der Kultur über alle
+  Felder, sonst der Grundertrag der Kultur (ohne Düngung und Kalk) –, der Preis (offener Vorkontrakt, bester aktueller
+  Preis oder Verrechnungswert), die Direktkosten (Ø aus dem Deckungsbeitrag, sonst nur Saatgut) und der erwartete
+  Deckungsbeitrag. Oben steht die Summe des Plans neben „wie Vorjahr“.
+- **Bedarf und Absicherung:** Saatgut je Kultur in Litern und €, wie viel der erwarteten Ernte schon über Vorkontrakte
+  und Großaufträge verkauft ist, und ob die Futterernte den Jahresbedarf deiner Ställe deckt (mit der Fläche, die die
+  Lücke schließen würde). Die erwarteten Direktkosten stehen als „geplant“ in der **Liquiditätsplanung** der Bank.
+- **Saatzeit:** Im Saatfenster steht in **Aufgaben** „Feld 12: Weizen säen“ mit dem Ende des Fensters als Frist, der
+  **Kalender** zeigt Beginn und Ende. Mit dem Schalter *Erinnerung zur Saatzeit* (Standard an) erinnert dich die
+  Genossenschaft per Mail an Felder, deren Saatfenster in diesem Monat endet.
+- **Plan und Wirklichkeit:** Beginnt die Saison mit einer anderen Kultur als geplant, ist der Plan „abweichend“ – ohne
+  Folgen. Unter **Plan / Ist** stehen Kultur, l/ha und Deckungsbeitrag geplant und erreicht.
+- **Plan besprechen:** Einmal im Jahr schickst du den Plan an die Genossenschaft; die Antwort kommt am nächsten
+  Spieltag und nennt die Hinweise und die Deckung.
+- Die Saatfenster braucht die aktuelle Mod-Version; ohne sie stehen alle Monate zur Wahl und die Fensterprüfung
+  entfällt.
 
 ## Agrarbörse
 

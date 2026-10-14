@@ -1,0 +1,7 @@
+Saatzeit: {{fields}}
+Hallo,
+
+auf {{count}} Feld/Feldern endet in diesem Monat das Saatfenster, und laut deiner Anbauplanung soll dort noch gesät werden: {{fields}}. Der Plan steht im Feldbuch unter „Anbauplanung“.
+
+Viele Grüße
+{{characterName}}

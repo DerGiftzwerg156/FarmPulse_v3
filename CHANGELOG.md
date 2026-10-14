@@ -12,6 +12,17 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Crop planner [R4-A]** (owner decisions 2026-10-13 in `QUESTIONS.md`): a new tab *Anbauplanung* in the app
+  *Feldbuch*. Per own or leased field the plan for the next season (the running one while nothing is sown): crop or
+  fallow, harvest product, sowing month and note, "Wie Vorjahr" and "Fruchtfolge vorschlagen". Hints that never block:
+  rotation with the lost premium and the cut, sowing window and "too late", storage, the fertiliser ordinance for an
+  autumn sowing, lime before sowing. Forecast per field with its sources (average of the field, of the crop or the base
+  yield x 1.0; forward contract, best price or internal value; direct costs of D or seed only) and the margin of the
+  plan against "wie Vorjahr". Seed need, the share sold ahead and the feed coverage against the yearly need of F, the
+  costs as planned expenses in the liquidity plan. A sowing task and calendar dates for the window, a reminder of the
+  cooperative (switch, default on), MATCHED / DEVIATED and plan / actual, "Plan besprechen" once per year (answer the
+  next game day). Mod: seed use, base yield and the sowing / harvest windows of every crop. Backend:
+  `CropPlanService`, `/api/crop-plans`, migration V47, values under `rpsim.formulas.crop-planning.*`.
 - **Feed balance [R4-F]** (owner decisions 2026-10-13 in `QUESTIONS.md`): a new tab *Futter* in the app *Stall*. Per
   animal type and food group of the game (plus the bedding): the need per day - measured over the last 3 game days
   and scaled at once when the herd changes, before that the need of the game split by `productionWeight`

@@ -53,13 +53,16 @@ public class CalendarPlanService {
     private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
     private final de.farmpulse.rpsim.investor.InvestorService investors;
     private final de.farmpulse.rpsim.feed.FeedBalanceService feed;
+    private final de.farmpulse.rpsim.planning.CropPlanService cropPlans;
 
     public CalendarPlanService(EmployeeRepository employees, LoanRepository loans, ContractRepository contracts,
                                FamilyService family, TaxService tax, FactsService facts, GameTime gameTime,
                                RpsimProperties props, de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
                                de.farmpulse.rpsim.investor.InvestorService investors,
-                               de.farmpulse.rpsim.feed.FeedBalanceService feed) {
+                               de.farmpulse.rpsim.feed.FeedBalanceService feed,
+                               de.farmpulse.rpsim.planning.CropPlanService cropPlans) {
         this.feed = feed;
+        this.cropPlans = cropPlans;
         this.bulkOrders = bulkOrders;
         this.investors = investors;
         this.employees = employees;
@@ -202,6 +205,15 @@ public class CalendarPlanService {
             if (d.emptyAt() != null && d.emptyAt() > now && d.emptyAt() <= until) {
                 out.add(new AgendaEntryView(d.emptyAt(), "FEED_EMPTY", d.animalType(), d.title(), null,
                         String.join(",", d.fillTypes())));
+            }
+        }
+        // Roadmap V4 R4-A5: start and end of the sowing window of a planned field (title = field, reference = crop)
+        for (var d : cropPlans.due(sg)) {
+            if (d.start() > now && d.start() <= until) {
+                out.add(new AgendaEntryView(d.start(), "SOW_WINDOW_START", null, d.fieldName(), null, d.fruitType()));
+            }
+            if (d.end() > now && d.end() <= until) {
+                out.add(new AgendaEntryView(d.end(), "SOW_WINDOW_END", null, d.fieldName(), null, d.fruitType()));
             }
         }
         // Roadmap V3.2 R32-I4 / I5: open deliveries to an investor (end of the period) and the buy-back / repayment

@@ -556,6 +556,26 @@ export class ApiService {
   setFieldMarginPrice(entryId: number, perLiter: number | null): Observable<M.FieldMarginView> {
     return this.post(`/field-margin/entries/${entryId}/price`, { perLiter });
   }
+  /** Roadmap V4 R4-A: crop planner ("Feldbuch → Anbauplanung"). */
+  cropPlanning(): Observable<M.CropPlanningView> {
+    return this.get('/crop-plans');
+  }
+  saveCropPlan(farmlandId: number, r: M.CropPlanRequest): Observable<M.CropPlanningView> {
+    return this.http.put<M.CropPlanningView>(`${this.base}/crop-plans/fields/${farmlandId}`, r);
+  }
+  removeCropPlan(farmlandId: number): Observable<M.CropPlanningView> {
+    return this.http.delete<M.CropPlanningView>(`${this.base}/crop-plans/fields/${farmlandId}`);
+  }
+  /** "Fruchtfolge vorschlagen": null (204) when no crop fits. */
+  cropSuggestion(farmlandId: number): Observable<M.CropSuggestion | null> {
+    return this.get(`/crop-plans/fields/${farmlandId}/suggestion`);
+  }
+  setCropPlanReminders(enabled: boolean): Observable<M.CropPlanningView> {
+    return this.post('/crop-plans/reminders', { enabled });
+  }
+  discussCropPlan(): Observable<M.CropPlanningView> {
+    return this.post('/crop-plans/discuss', {});
+  }
   /** Roadmap V4 R4-F: feed balance ("Stall → Futter") and the home tile. */
   feedBalance(): Observable<M.FeedBalanceView> {
     return this.get('/feed-balance');

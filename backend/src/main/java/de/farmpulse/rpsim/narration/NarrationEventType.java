@@ -58,6 +58,10 @@ public enum NarrationEventType {
     FIELD_MARGIN_ADVICE,
     /** Roadmap V4 R4-F4: the animal keeper (without one the cooperative) about a food group that lasts less than a month. */
     FEED_SHORTAGE_WARNING,
+    /** Roadmap V4 R4-A5: the cooperative reminds of planned fields whose sowing window ends this month. */
+    CROP_PLAN_REMINDER,
+    /** Roadmap V4 R4-A6: the cooperative answers "Plan besprechen" with the checks and the coverage of the plan. */
+    CROP_PLAN_DISCUSSION,
     AUTHORITY_INSPECTION_NOTICE,
     AUTHORITY_INSPECTION_RESULT,
     // Roadmap V2 R2-E3: family

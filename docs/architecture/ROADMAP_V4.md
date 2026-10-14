@@ -73,7 +73,7 @@ Punkt-IDs: `R4-<Bereich><Nummer>`, z. B. `R4-D2`. Alle Pfade sind relativ zum Re
 | 0 | [Q – Querschnitt](#q--querschnitt) | Verbrauchs-Zähler je Feld, Einkaufspreise, Saat- und Erntefenster, Futterwerte der Ställe, Futtergruppen, Simulator, Testplan | ja | R33-Q1, R2-A7 |
 | 1 | [D – Deckungsbeitrag je Feld](#d--deckungsbeitrag-je-feld) | Kosten und Erlös je Feldbuch-Eintrag, Korrektur, Karte „Deckungsbeitrag“ in der Bank, Hofbericht (**umgesetzt 13.10.2026**) | D1: ja (über Q1) | Q, R33-F, R2-B1 |
 | 2 | [F – Futterbilanz](#f--futterbilanz) | Bedarf, Vorrat, Reichweite je Futtergruppe, Ballen eintragen, Warnungen, Jahresbedarf (**umgesetzt 13.10.2026**) | F1: ja (über Q2) | Q, R2-A7 |
-| 3 | [A – Anbauplaner](#a--anbauplaner) | Plan je Feld, Prüfungen, Prognose, Bedarf und Absicherung, Aufgaben, Plan und Ist | A2: ja (über Q1) | Q, D, F, R33-E |
+| 3 | [A – Anbauplaner](#a--anbauplaner) | Plan je Feld, Prüfungen, Prognose, Bedarf und Absicherung, Aufgaben, Plan und Ist (**umgesetzt 14.10.2026**) | A2: ja (über Q1) | Q, D, F, R33-E |
 
 D zuerst: Der Planer nimmt die Kosten je Hektar aus D. F kann parallel zu D laufen. A kommt zuletzt, weil er D (Kosten)
 und F (Futterbedarf fürs Jahr) zusammenführt. Alle Bereiche funktionieren mit einem älteren Mod (ohne Q). Dann sind
@@ -423,7 +423,7 @@ Tierpfleger warnt rechtzeitig, nicht erst, wenn der Trog leer ist (das gibt es s
 `api/FeedBalanceController`, Migration V46, Aufgaben `FEED` und Kalender `FEED_EMPTY`; Frontend: Tab `futter` in der
 App „Stall“, Kachel auf dem Startbildschirm). Abweichungen und Grenzen (Umsetzungshinweise in `QUESTIONS.md`):
 - „Bis zur nächsten Ernte“ nutzt die Erntefenster der Kulturen aus `harvestablePeriods` (Zuordnung Sorte → Kulturen in
-  `feed-balance.harvest-crops`); der Mod liest die Fenster erst mit A2, bis dahin fehlen nächste Ernte und Fehlmenge.
+  `feed-balance.harvest-crops`); ohne die Fenster (älterer Mod) fehlen nächste Ernte und Fehlmenge.
   Ob die Kultur auf eigenen Feldern steht, prüft die Bilanz nicht; den Plan nutzt sie mit A.
 - Eine Sorte, die mehrere Gruppen (auch verschiedener Tierarten) fressen, wird nach deren Bedarf geteilt. Eine
   Mischung im Silo zählt für die Gruppe, die sie nennt; die Zutaten einer Mischung kennt der Vertrag nicht.
@@ -509,7 +509,7 @@ App „Stall“, Kachel auf dem Startbildschirm). Abweichungen und Grenzen (Umse
 
 - [x] Je Tierart und Gruppe: **Jahresbedarf** = Tagesbedarf × 12 × `daysPerPeriod`, verglichen mit dem Vorrat und, mit
   A, der geplanten Ernte (A4). Ergebnis „gedeckt zu x %“ und Fehlmenge oder Überschuss in Litern.
-- [ ] Diese Zahl nutzt der Anbauplaner, um Futterflächen vorzuschlagen (A4).
+- [x] Diese Zahl nutzt der Anbauplaner, um Futterflächen vorzuschlagen (A4).
 
 **Beleg:** – (Backend).
 
@@ -527,6 +527,19 @@ neuen Mod zeigt der Tab nur den Hinweis „Mod aktualisieren“.
 **Idee:** Ein neuer Tab **„Anbauplanung“** in der App „Feldbuch“. Je Feld wählt der Spieler die Kultur für die
 **nächste Saison**. Das Tool prüft den Plan, rechnet Ertrag, Kosten und Deckungsbeitrag hoch und erinnert zur Saatzeit.
 
+**Stand 14.10.2026: umgesetzt** (Mod: Saatbedarf, Grundertrag und Saat- / Erntefenster je Kultur; Backend:
+`planning/CropPlanService`, `api/CropPlanController`, Migration V47, Aufgaben `SOW`, Kalender `SOW_WINDOW_START` /
+`SOW_WINDOW_END`, Zeilen „CROP_PLAN“ in der Liquiditätsplanung; Frontend: Tab `anbauplanung` im Feldbuch).
+Abweichungen und Grenzen (Umsetzungshinweise in `QUESTIONS.md`):
+- „Lohnunternehmer beauftragen“ und „Vorkontrakt abschließen“ öffnen die Flurkarte bzw. den Tab der Agrarbörse ohne
+  vorbelegtes Feld, Kultur oder Sorte – diese Seiten nehmen solche Parameter noch nicht an.
+- Die Lagerplatz-Prüfung kennt nur Sorten, die ein eigenes Silo aufnimmt (Fahrsilos meldet der Mod dort nicht), und
+  rechnet offene Vorkontrakte und Großaufträge als verkauft, ohne den Liefermonat zu prüfen.
+- Die Fruchtfolge-Prüfung vergleicht mit den Kulturen im Feldbuch; ob das Amt eine Wiederholung schon gezählt hat,
+  liest sie nicht.
+- Häckselgut zählt für die Futterdeckung als Silage (`crop-planning.feed-equivalents`).
+- Kosten eines Saatfensters, das jetzt läuft, stehen im laufenden Monat, den die Liquiditätsplanung nicht zeigt.
+
 **Entscheidungen 13.10.2026 (`QUESTIONS.md`):**
 - Der Plan gilt für die **nächste Saison je Feld**; ist im laufenden Eintrag noch nichts gesät, für diesen. Je Feld
   genau ein offener Plan (A1).
@@ -536,15 +549,15 @@ neuen Mod zeigt der Tab nur den Hinweis „Mod aktualisieren“.
 
 ### R4-A1 Plan anlegen
 
-- [ ] Der Plan gilt je Feld (eigen und gepachtet) für die **nächste Saison**: die Saison nach dem laufenden
+- [x] Der Plan gilt je Feld (eigen und gepachtet) für die **nächste Saison**: die Saison nach dem laufenden
   Feldbuch-Eintrag. Ist im laufenden Eintrag noch keine Kultur gesät, gilt der Plan für ihn (Entscheidung 13.10.2026).
-- [ ] Je Feld: **Kultur** (Dropdown aller Kulturen der Karte, `fruitTypes[]`, plus „Brache“), **Ernteprodukt**
+- [x] Je Feld: **Kultur** (Dropdown aller Kulturen der Karte, `fruitTypes[]`, plus „Brache“), **Ernteprodukt**
   (Standardprodukt oder `products[]`, z. B. Mais als Körner oder Häckselgut), optional **Saatmonat** (nur Perioden aus
   `plantablePeriods`) und eine Notiz.
-- [ ] Knöpfe **„Wie Vorjahr“** (Kultur des letzten Eintrags) und **„Fruchtfolge vorschlagen“**: eine andere Kultur als
+- [x] Knöpfe **„Wie Vorjahr“** (Kultur des letzten Eintrags) und **„Fruchtfolge vorschlagen“**: eine andere Kultur als
   in den letzten `crop-planning.rotation-years` Jahren, bevorzugt die Kultur mit dem besten Ø Deckungsbeitrag je ha
   aus D (ohne D: höchster Grundertrag × Preis).
-- [ ] Verkaufte, verpachtete und zurückgegebene Felder fallen aus dem Plan. Ein neues Feld kommt ohne Plan dazu.
+- [x] Verkaufte, verpachtete und zurückgegebene Felder fallen aus dem Plan. Ein neues Feld kommt ohne Plan dazu.
 
 **Beleg:** – (Backend und Oberfläche). ✅ Q1 (`plantablePeriods`).
 
@@ -560,58 +573,58 @@ Prüfungen sind **Hinweise**, keine Sperren.
 | Düngeverordnung | Kulturen mit Saat im Herbst: Hinweis auf die Sperrfrist für Gülle und Mist (`closed-periods`) | R31-B3 |
 | Bodenregeln | Kalk oder Unkraut im Spielstand an (`fieldRules`) und im letzten Eintrag nicht erledigt → Hinweis „vor der Saat kalken“ | R2-C1, R33-F2 |
 
-- [ ] Ohne `plantablePeriods` (älterer Mod) entfällt die Saatfenster-Prüfung, die Auswahl zeigt alle Monate.
+- [x] Ohne `plantablePeriods` (älterer Mod) entfällt die Saatfenster-Prüfung, die Auswahl zeigt alle Monate.
 
 **Beleg:** ✅ Q1 (`getIsPlantableInPeriod`, `getIsHarvestableInPeriod`). – für die übrigen Prüfungen.
 
 ### R4-A3 Prognose je Feld
 
-- [ ] **Erwarteter Ertrag** l/ha, in dieser Reihenfolge (Herkunft wird angezeigt):
+- [x] **Erwarteter Ertrag** l/ha, in dieser Reihenfolge (Herkunft wird angezeigt):
   1. Ø l/ha dieses Feldes mit dieser Kultur und diesem Produkt aus der Feldbuch-Auswertung (R33-E2, Zeitraum
      `field-book.default-years`),
   2. Ø l/ha der Kultur über alle Felder,
   3. Grundertrag `litersPerSqm × 10000 × crop-planning.base-yield-factor` (**1.0**, der Grundertrag ohne
      Düngung und Kalk, wie R33-W1 ihn beschreibt).
-- [ ] **Erwarteter Preis:** Preis eines offenen Vorkontrakts für diese Sorte im Erntejahr (R3-M2), sonst der beste
+- [x] **Erwarteter Preis:** Preis eines offenen Vorkontrakts für diese Sorte im Erntejahr (R3-M2), sonst der beste
   aktuelle Preis an einer Verkaufsstelle, sonst der Verrechnungswert aus D2.
-- [ ] **Erwartete Direktkosten:** Ø Direktkosten je ha der Kultur aus D. Ohne D-Werte: Saatgut aus `seedUsagePerSqm ×
+- [x] **Erwartete Direktkosten:** Ø Direktkosten je ha der Kultur aus D. Ohne D-Werte: Saatgut aus `seedUsagePerSqm ×
   10000 × costPerLiter(SEEDS)`, der Rest „unbekannt“.
-- [ ] **Erwarteter Deckungsbeitrag** je Feld und als Summe des Plans. Ein Vergleich „Plan jetzt“ gegen „wie Vorjahr“
+- [x] **Erwarteter Deckungsbeitrag** je Feld und als Summe des Plans. Ein Vergleich „Plan jetzt“ gegen „wie Vorjahr“
   zeigt, was der Wechsel bringt.
 
 **Beleg:** – (Backend). ✅ Q1 (`litersPerSqm`, `seedUsagePerSqm`, `fillTypeCosts`).
 
 ### R4-A4 Bedarf und Absicherung
 
-- [ ] **Saatgut:** Bedarf je Sorte in Litern und € (`seedUsagePerSqm × 10000 × ha`). Saatgut liegt im Spiel in
+- [x] **Saatgut:** Bedarf je Sorte in Litern und € (`seedUsagePerSqm × 10000 × ha`). Saatgut liegt im Spiel in
   Paletten und Big Bags (Objekte); einen Bestand zeigt das Tool deshalb nicht.
-- [ ] **Vermarktung:** erwartete Erntemenge je Sorte gegen offene Vorkontrakte und Großaufträge mit Liefermonat im
+- [x] **Vermarktung:** erwartete Erntemenge je Sorte gegen offene Vorkontrakte und Großaufträge mit Liefermonat im
   Erntejahr → „x % vorab verkauft“. Ein Knopf führt zum Vorkontrakt in der Agrarbörse (R3-M2) mit vorbelegter Sorte.
-- [ ] **Futter:** erwartete Ernte der Futtersorten (Gras, Silage bzw. Häckselgut, Heu, Stroh) gegen den Jahresbedarf aus
+- [x] **Futter:** erwartete Ernte der Futtersorten (Gras, Silage bzw. Häckselgut, Heu, Stroh) gegen den Jahresbedarf aus
   F5 → „Futter fürs Jahr gedeckt zu x %“. Fehlt Futter, schlägt der Planer die Fläche vor, die mit dem erwarteten
   Ertrag die Lücke schließt.
-- [ ] **Liquidität:** Die Saatgut- und erwarteten Direktkosten erscheinen als geplante Ausgaben in der
+- [x] **Liquidität:** Die Saatgut- und erwarteten Direktkosten erscheinen als geplante Ausgaben in der
   Liquiditätsplanung (R3-K2) im Saatmonat, als „geplant“ markiert.
 
 **Beleg:** – (Backend). ✅ Q1.
 
 ### R4-A5 Aufgaben und Kalender
 
-- [ ] Zu Beginn des Saatfensters (erste Periode aus `plantablePeriods`, bzw. der gewählte Saatmonat) erscheint in
+- [x] Zu Beginn des Saatfensters (erste Periode aus `plantablePeriods`, bzw. der gewählte Saatmonat) erscheint in
   **Aufgaben** „Feld 12: Weizen säen“ mit Frist = Ende des Fensters. Der **Kalender** zeigt die Fenster.
-- [ ] Am Plan eines Feldes führt **„Lohnunternehmer beauftragen“** zur Karte des Lohnunternehmers (R31-A1) mit Arbeit
+- [x] Am Plan eines Feldes führt **„Lohnunternehmer beauftragen“** zur Karte des Lohnunternehmers (R31-A1) mit Arbeit
   `SOW` und vorbelegter Kultur. Der Auftrag folgt den Regeln von R31-A1 (Feld muss leer sein).
-- [ ] Schalter **„Erinnerung zur Saatzeit“**, **Standard an** (Entscheidung 13.10.2026): Die Genossenschaft erinnert
+- [x] Schalter **„Erinnerung zur Saatzeit“**, **Standard an** (Entscheidung 13.10.2026): Die Genossenschaft erinnert
   per Mail an Felder, deren Saatfenster in dieser Periode endet und die noch nicht gesät sind.
 
 **Beleg:** – (Backend: Aufgaben, Kalender, Lohnunternehmer seit V1–V3.1).
 
 ### R4-A6 Plan und Wirklichkeit
 
-- [ ] Beginnt auf einem Feld eine neue Saison mit einer **anderen Kultur** als geplant (R33-F1), wird der Plan als
+- [x] Beginnt auf einem Feld eine neue Saison mit einer **anderen Kultur** als geplant (R33-F1), wird der Plan als
   „abweichend“ markiert. Keine Strafe, kein Vertrauensverlust.
-- [ ] Endet die Saison, steht im Tab die Zeile **Plan / Ist**: Kultur, l/ha und Deckungsbeitrag geplant und erreicht.
-- [ ] **„Plan besprechen“:** einmal je Planjahr (Entscheidung 13.10.2026) schickt der Spieler den Plan an die
+- [x] Endet die Saison, steht im Tab die Zeile **Plan / Ist**: Kultur, l/ha und Deckungsbeitrag geplant und erreicht.
+- [x] **„Plan besprechen“:** einmal je Planjahr (Entscheidung 13.10.2026) schickt der Spieler den Plan an die
   Genossenschaft. Die Antwort kommt am nächsten Spieltag und nennt die Ergebnisse der Prüfungen (A2) und die Deckung
   (A4), alles vom Backend gerechnet. Die KI formuliert nur den Text. Ohne KI gibt es den Text aus
   `fallback-templates`.

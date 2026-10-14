@@ -74,6 +74,7 @@ public class LiquidityPlanService {
     private final de.farmpulse.rpsim.market.ForwardContractService forwardContracts;
     private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
     private final de.farmpulse.rpsim.investor.InvestorService investors;
+    private final de.farmpulse.rpsim.planning.CropPlanService cropPlans;
 
     public LiquidityPlanService(SavegameRepository savegames, FactsService facts, FinanceJournalService journal,
                                 EmployeeRepository employees, LoanRepository loans, ContractRepository contracts,
@@ -81,7 +82,9 @@ public class LiquidityPlanService {
                                 NarrationRequestService narration, RpsimProperties props,
                                 de.farmpulse.rpsim.market.ForwardContractService forwardContracts,
                                 de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
-                                de.farmpulse.rpsim.investor.InvestorService investors) {
+                                de.farmpulse.rpsim.investor.InvestorService investors,
+                                de.farmpulse.rpsim.planning.CropPlanService cropPlans) {
+        this.cropPlans = cropPlans;
         this.forwardContracts = forwardContracts;
         this.bulkOrders = bulkOrders;
         this.investors = investors;
@@ -152,6 +155,7 @@ public class LiquidityPlanService {
         MonthPlan firstZero = null;
         MonthPlan firstReserve = null;
         Integer y = year;
+        var cropCosts = cropPlans.plannedByMonth(sg); // Roadmap V4 R4-A4
         for (int k = 1; k <= cfg().getHorizonMonths(); k++) {
             long idx = current + k;
             long start = anchor.monthStart(idx);
@@ -211,6 +215,10 @@ public class LiquidityPlanService {
             // and running compensations as estimate
             for (var ip : investors.planned(sg, idx)) {
                 postings.add(new Posting(ip.kind(), ip.label(), ip.amount(), ip.estimate()));
+            }
+            // Roadmap V4 R4-A4: seed and expected direct costs of the crop plan in the month its sowing window starts
+            for (var cp : cropCosts.getOrDefault(idx, List.of())) {
+                postings.add(new Posting("CROP_PLAN", cp.label(), cp.amount(), true));
             }
             if (hasCalendar && PREPAYMENT_PERIODS.contains(period)) {
                 boolean afterYearChange = y > year;

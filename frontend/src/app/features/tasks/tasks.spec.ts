@@ -63,6 +63,15 @@ describe('task helpers', () => {
     expect(taskAppId(feed)).toBe('stable');
     expect(taskLink(feed)).toEqual({ path: '/stall/futter', query: {} });
   });
+
+  // Roadmap V4 R4-A5: a planned field in its sowing window opens the tab "Anbauplanung"
+  it('names a sowing task by field and crop and links it to the crop planner', () => {
+    const i18n = TestBed.inject(TranslationService);
+    const sow = task({ type: 'SOW', kind: 'WHEAT', sowDue: { farmlandId: 12, fieldName: '12', fruitType: 'WHEAT', fillType: 'WHEAT' } });
+    expect(taskTitle(sow, i18n)).toBe('Feld 12: WHEAT säen');
+    expect(taskAppId(sow)).toBe('fieldbook');
+    expect(taskLink(sow)).toEqual({ path: '/feldbuch/anbauplanung', query: {} });
+  });
 });
 
 describe('Tasks', () => {

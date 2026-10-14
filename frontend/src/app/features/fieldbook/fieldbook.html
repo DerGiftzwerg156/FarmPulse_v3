@@ -1,6 +1,9 @@
-<!-- Roadmap V3.3 R33-F: tab "Dokumentation"; R33-E: tab "Auswertung" (owner decision 2026-10-09) -->
+<!-- Roadmap V3.3 R33-F: tab "Dokumentation"; R33-E: tab "Auswertung" (owner decision 2026-10-09); Roadmap V4 R4-A: tab
+     "Anbauplanung" (owner decision 2026-10-13) -->
 <section class="space-y-4">
-  @if (tab() === 'auswertung') {
+  @if (tab() === 'anbauplanung') {
+    <app-crop-planning />
+  } @else if (tab() === 'auswertung') {
     <app-fieldbook-evaluation [crops]="view()?.crops ?? []" />
   } @else if (error(); as err) {
     <app-page-error [error]="err" />

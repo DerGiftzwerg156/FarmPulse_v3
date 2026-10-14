@@ -234,6 +234,7 @@ public class RpsimProperties {
         private FieldBook fieldBook = new FieldBook();
         private FieldMargin fieldMargin = new FieldMargin();
         private FeedBalance feedBalance = new FeedBalance();
+        private CropPlanning cropPlanning = new CropPlanning();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
         private Authority authority = new Authority();
@@ -2249,6 +2250,23 @@ public class RpsimProperties {
     public static class FieldBook {
         /** The last x harvest years shown when the player has not chosen a period (1 to "alle Jahre"). */
         private int defaultYears = 5;
+    }
+
+    /** Roadmap V4 R4-A: crop planner (owner decisions 2026-10-13, values placeholders). */
+    @Getter @Setter
+    public static class CropPlanning {
+        /** A1: "Fruchtfolge vorschlagen" picks a crop that did not stand on the field in the last x seasons. */
+        private int rotationYears = 2;
+        /** A3 (owner decision 2026-10-13): base yield = litersPerSqm x 10000 x this factor (without fertiliser, lime). */
+        private double baseYieldFactor = 1.0;
+        /** A2: FS25 periods of an autumn sowing (August-November): hint on the closed period for slurry and manure. */
+        private List<Integer> autumnPeriods = new ArrayList<>(List.of(6, 7, 8, 9));
+        /** A4: harvest products that become another feed fill type (chaff is ensiled to silage, 1 : 1). */
+        private Map<String, String> feedEquivalents = new LinkedHashMap<>(Map.of("CHAFF", "SILAGE"));
+        /** A5 (owner decision 2026-10-13): the cooperative reminds at sowing time unless the player switches it off. */
+        private boolean remindersDefault = true;
+        /** A6: game hour of the next day at which the cooperative answers "Plan besprechen". */
+        private int discussAnswerHour = 9;
     }
 
     /** Roadmap V4 R4-F: feed balance per animal type and food group (owner decisions 2026-10-13, values placeholders). */

@@ -300,7 +300,7 @@ public class FieldMarginService {
     }
 
     /** Purchase prices per litre of the game (market_context.fillTypeCosts), empty with an older mod. */
-    Map<String, Double> purchasePrices(Savegame sg) {
+    public Map<String, Double> purchasePrices(Savegame sg) {
         Map<String, Double> m = new HashMap<>();
         facts.marketContext(sg).map(BridgeDtos.MarketContext::fillTypeCosts).ifPresent(list -> list.stream()
                 .filter(c -> c != null && c.fillType() != null && c.costPerLiter() != null)

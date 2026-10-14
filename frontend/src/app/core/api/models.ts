@@ -1076,7 +1076,7 @@ export interface ApiError {
 
 /** Hof-Tablet "Aufgaben": one open decision of any area (type names the payload that is set). */
 export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING'
-  | 'INVESTOR_DUE' | 'FEED';
+  | 'INVESTOR_DUE' | 'FEED' | 'SOW';
 
 export interface TaskView {
   key: string;
@@ -1096,6 +1096,15 @@ export interface TaskView {
   investorDue?: InvestorDueView | null;
   /** Roadmap V4 R4-F4: a food group that lasts less than ok-months (type FEED, kind YELLOW / RED). */
   feedDue?: FeedDueView | null;
+  /** Roadmap V4 R4-A5: a planned field in its sowing window (type SOW, kind = crop). */
+  sowDue?: SowDueView | null;
+}
+
+export interface SowDueView {
+  farmlandId: number;
+  fieldName: string;
+  fruitType: string;
+  fillType: string | null;
 }
 
 export interface FeedDueView {
@@ -2041,4 +2050,149 @@ export interface FeedStockRequest {
   baleSize: string | null;
   liters: number | null;
   note: string | null;
+}
+
+// ------------------------------------------------------------------------------------------ Roadmap V4 R4-A
+
+export interface CropPlanCrop {
+  name: string;
+  title: string | null;
+  fillType: string | null;
+  products: string[];
+  /** null = not read (older mod): every month is offered. */
+  plantablePeriods: number[] | null;
+  harvestablePeriods: number[] | null;
+  litersPerSqm: number | null;
+}
+
+/** A hint of the checks: ROTATION_SAME, ROTATION_CUT, SOW_OUTSIDE_WINDOW, TOO_LATE, STORAGE, FERTILIZER_CLOSED, LIME, WEEDS. */
+export interface CropPlanCheck {
+  code: string;
+  values: Record<string, unknown>;
+}
+
+export type CropYieldSource = 'FIELD' | 'CROP' | 'BASE';
+export type CropPriceSource = 'FORWARD' | 'BEST' | 'INTERNAL';
+export type CropCostSource = 'MARGIN' | 'SEED';
+
+export interface CropForecast {
+  fruitType: string;
+  fillType: string | null;
+  hectares: number | null;
+  litersPerHa: number | null;
+  yieldSource: CropYieldSource | null;
+  liters: number | null;
+  pricePerLiter: number | null;
+  priceSource: CropPriceSource | null;
+  revenue: number | null;
+  directCostsPerHa: number | null;
+  costSource: CropCostSource | null;
+  directCosts: number | null;
+  margin: number | null;
+}
+
+export interface CropPlanWindow {
+  start: number;
+  end: number;
+  active: boolean;
+}
+
+export interface CropPlanView {
+  id: number;
+  status: string;
+  /** RUNNING = the running season (nothing sown yet), NEXT = the season after it. */
+  target: 'RUNNING' | 'NEXT';
+  /** BRACHE = fallow. */
+  fruitType: string;
+  fillType: string | null;
+  sowPeriod: number | null;
+  note: string | null;
+  checks: CropPlanCheck[];
+  forecast: CropForecast;
+  window: CropPlanWindow | null;
+}
+
+export interface CropPlanField {
+  farmlandId: number;
+  name: string;
+  hectares: number | null;
+  runningCrop: string | null;
+  lastCrop: string | null;
+  sown: boolean;
+  plan: CropPlanView | null;
+  /** "Wie Vorjahr": the forecast of the crop standing now (else the last one). */
+  previous: CropForecast | null;
+}
+
+export interface CropSeedNeed {
+  fruitType: string;
+  hectares: number;
+  liters: number | null;
+  cost: number | null;
+}
+
+export interface CropMarketNeed {
+  fillType: string;
+  expected: number;
+  contracted: number;
+  soldPercent: number | null;
+}
+
+export interface CropFeedNeed {
+  animalType: string;
+  title: string;
+  kind: FeedGroupKind;
+  fillTypes: string[];
+  yearNeed: number;
+  expected: number;
+  coveredPercent: number | null;
+  suggestCrop: string | null;
+  suggestHectares: number | null;
+}
+
+export interface CropPlanActual {
+  id: number;
+  farmlandId: number;
+  name: string;
+  status: 'MATCHED' | 'DEVIATED';
+  plannedCrop: string;
+  actualCrop: string | null;
+  harvestYear: number | null;
+  ended: boolean;
+  plannedLitersPerHa: number | null;
+  actualLitersPerHa: number | null;
+  plannedMargin: number | null;
+  actualMargin: number | null;
+}
+
+export interface CropPlanningView {
+  year: number | null;
+  period: number | null;
+  /** false = older mod without sowing windows. */
+  windows: boolean;
+  reminders: boolean;
+  /** "Plan besprechen" already used this year. */
+  discussed: boolean;
+  crops: CropPlanCrop[];
+  fields: CropPlanField[];
+  planMargin: number | null;
+  previousMargin: number | null;
+  seeds: CropSeedNeed[];
+  marketing: CropMarketNeed[];
+  feed: CropFeedNeed[];
+  history: CropPlanActual[];
+}
+
+export interface CropPlanRequest {
+  fruitType: string;
+  fillType: string | null;
+  sowPeriod: number | null;
+  note: string | null;
+}
+
+export interface CropSuggestion {
+  fruitType: string;
+  fillType: string | null;
+  reason: 'MARGIN' | 'YIELD';
+  value: number | null;
 }

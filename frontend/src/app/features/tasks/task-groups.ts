@@ -62,6 +62,8 @@ export function taskTitle(t: TaskView, i18n: TranslationService): string {
       return i18n.t('tasks.investorDue', { name: t.investorDue?.investor ?? '' });
     case 'FEED':
       return feedTaskTitle(t, i18n);
+    case 'SOW':
+      return i18n.t('tasks.sowDue', { field: t.sowDue?.fieldName ?? '', crop: t.sowDue?.fruitType ?? '' });
   }
 }
 

@@ -494,8 +494,8 @@ More **optional** values for [`ROADMAP_V4.md`](../architecture/ROADMAP_V4.md) (f
 planner), same rules as above (`schemaVersion` stays `1`, missing = older mod, an empty block is a real answer of the
 game). R4-Q fixes the **contract only** (`BridgeDtos`, `BridgeValidator`, the simulator schemas,
 `RPSimFarmFacts.build` / `RPSimMarketContext.build`); the mod reads the values in the game with R4-D1 (consumption
-counter, purchase prices), R4-F1 (food values, feed stock, food groups) and R4-A2 (crop windows). Until then they are
-missing. The bridge simulator exports them only in the scenario `hofplanung`.
+counter, purchase prices), R4-F1 (food values, feed stock, food groups) and R4-A2 (crop windows) - all three are built
+since 14.10.2026; an older mod leaves them out. The bridge simulator exports them only in the scenario `hofplanung`.
 
 ```json
 { "inputs": [{ "farmlandId": 2, "fillType": "FERTILIZER", "liters": 1800, "helperLiters": 1800 },
@@ -684,6 +684,11 @@ mod or not built yet); the bridge simulator exports them only in the scenario `h
 system `animalFood` stays missing. The fill types of the groups, the mixtures and `STRAW` are added to the purchase
 prices of `fillTypeCosts`.
 
+**Built (R4-A2):** `RPSimGameAdapter:collectFruitTypes` adds `FruitTypeDesc.seedUsagePerSqm`, `FruitTypeDesc.literPerSqm`
+and, with `missionInfo.growthMode`, the periods of `getIsPlantableInPeriod` / `getIsHarvestableInPeriod`
+(`RPSimGameAdapter.periodsWhere`, every period 1..12); a crop without these methods or a failing call has no windows,
+without a growth mode none are read. Read once per mission like the rest of `fruitTypes`.
+
 `RPSimMarketContext.buildFruitTypes` adds the four values when valid and leaves them out otherwise
 (`buildPeriods` keeps whole periods 1..12); `buildFillTypeCosts` drops entries without a fill type, with a price that
 is not a number ≥ 0 and repeated fill types; `buildAnimalFood` drops groups without a title, with a negative weight or
@@ -830,6 +835,10 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   types of the journal month that ended (and the salaries of the drivers) are distributed by area. A field book entry
   that is merged or replaced hands its lines to the entry that takes its place; a rewind deletes the bookings after the
   loaded game time (the counter lines follow the falling counters).
+- **Crop planner** (Roadmap V4 R4-A, `CropPlanService`, after the field book and the contribution margin on every
+  export): drops the open plan of a field that is no longer own, and when the season a plan is for begins with a crop
+  marks it MATCHED or DEVIATED and keeps the forecast of that moment. At every month start the cooperative reminds of
+  planned fields whose sowing window (`fruitTypes[].plantablePeriods`) ends with that month (switch, default on).
 - **Feed balance** (Roadmap V4 R4-F, `FeedBalanceService`, on every export and every game day): books the eaten litres
   per husbandry and fill type (difference of `feedConsumed`, else the fall of `trough`), keeps one snapshot per
   husbandry and game day, and measures the daily need over the last `feed-balance.measure-days` game days (scaled by

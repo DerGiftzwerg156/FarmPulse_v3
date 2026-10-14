@@ -350,7 +350,12 @@ public final class Views {
     public record TaskView(String key, String type, String kind, Long deadlineGameTime, long gameTime, CaseView serviceCase,
                            ContractView contract, CreditApplicationView application, MessageView call,
                            NegotiationView negotiation, MarketEventView marketEvent, JobPostingView posting,
-                           Integer pendingApplicants, InvestorDueView investorDue, FeedDueView feedDue) {
+                           Integer pendingApplicants, InvestorDueView investorDue, FeedDueView feedDue,
+                           SowDueView sowDue) {
+    }
+
+    /** Roadmap V4 R4-A5: a planned field whose sowing window is now (task "SOW", kind = crop, deadline = end of window). */
+    public record SowDueView(int farmlandId, String fieldName, String fruitType, String fillType) {
     }
 
     /**

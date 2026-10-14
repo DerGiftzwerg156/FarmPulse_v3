@@ -1219,6 +1219,14 @@ rpsim:
       overhead-money-types: [PURCHASE_FUEL, VEHICLE_RUNNING_COSTS, VEHICLE_REPAIR, AI, LEASING_COSTS]
       overhead-driver-salaries: true          # monthly salaries of the employees who drive helpers count too
       advice-enabled: true        # cooperative mail after two loss years in a row on a field
+    crop-planning:                # Roadmap V4 R4-A: crop planner (owner decisions 2026-10-13)
+      rotation-years: 2           # "Fruchtfolge vorschlagen": a crop not grown on the field in the last 2 seasons
+      base-yield-factor: 1.0      # base yield = litersPerSqm x 10000 x 1.0 (without fertiliser and lime)
+      autumn-periods: [6, 7, 8, 9]  # sowing in August-November: hint on the closed period for slurry and manure
+      feed-equivalents:           # harvest product -> feed fill type it becomes (chaff is ensiled to silage)
+        CHAFF: SILAGE
+      reminders-default: true     # the cooperative reminds at sowing time unless switched off
+      discuss-answer-hour: 9      # "Plan besprechen": the cooperative answers the next game day at 9:00
     feed-balance:                 # Roadmap V4 R4-F: feed balance per animal type and food group (owner decisions 2026-10-13)
       measure-days: 3             # measured daily need = mean of the last 3 game days
       ok-months: 3                # traffic light in game months: green from 3 months of reach
