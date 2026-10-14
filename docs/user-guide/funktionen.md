@@ -409,7 +409,10 @@ eingestellt, kommt kein Angebot.
 - **Gehalt:** wird zu Beginn jedes Spielmonats (FS25-Kalender) überwiesen.
 - **Gehaltserhöhung, freier Tag, Kündigen.** Bleibt jemand lange unzufrieden, kommt erst eine Warnung, dann ein
   **Streik** (Abzeichen *Streikt*, das Gehalt läuft weiter, die Person arbeitet nicht) und zuletzt die Kündigung.
-  Steigt die Zufriedenheit wieder, endet der Streik von selbst.
+  Steigt die Zufriedenheit wieder, endet der Streik von selbst. *Freien Tag geben* nimmt 1–30 Tage; sie gelten wie
+  Krankheit für einen Monat mit 30 Tagen und passen sich deinen *Tagen pro Monat* an (mindestens ein Spieltag). Das
+  Formular zeigt dir, wie viele Spieltage das sind; die Entlastung richtet sich danach, wie lange die Person wirklich
+  fehlt.
 - **Maschinenführer fahren deine Helfer.** Startest du im Spiel einen Helfer, übernimmt ihn der erste freie
   Maschinenführer – die Liste ist nach Können sortiert. Die Meldungen im Spiel nennen seinen Namen, und du zahlst im
   Spiel keinen Helferlohn (das Gehalt läuft ja schon). Gibt es keinen freien Maschinenführer, fährt ein normaler
@@ -434,7 +437,7 @@ eingestellt, kommt kein Angebot.
   die Traktor-Stufe. Auf der Personal-Karte buchst du mit *Schulung* eine Weiterbildung: Sie kostet Geld (von 4.500 €
   für große Traktoren bis 12.000 € für den LKW-Führerschein) und steigert die Wertschätzung. Am Buchungstag arbeitet
   die Person noch normal, am **ganzen nächsten Spieltag** (0 bis 24 Uhr) ist sie auf der Schulung und fährt keinen
-  Helfer. Die Schulung hat Vorrang: Für diesen Tag gibt es keinen freien Tag, und krank wird in der Zeit niemand. Danach
+  Helfer (eine länger eingestellte Schulungsdauer passt sich wie die freien Tage der Monatslänge an). Die Schulung hat Vorrang: Für diesen Tag gibt es keinen freien Tag, und krank wird in der Zeit niemand. Danach
   steht die Schulung auf der Karte. Bewerber für die Stelle
   Maschinenführer bringen manchmal schon eine Schulung mit (sichtbar in der Bewerbung) und möchten dafür etwas mehr
   Gehalt. Wer schon vor diesem Update angestellt war, hat noch keine Schulung. Findet sich kein geschulter

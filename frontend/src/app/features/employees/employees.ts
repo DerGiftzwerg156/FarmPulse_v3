@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { ApplicationView, EmployeeView, JobPostingView, NeedsView, TrainingOfferView } from '../../core/api/models';
+import { AbsenceScaleView, ApplicationView, EmployeeView, JobPostingView, NeedsView, TrainingOfferView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -75,6 +75,15 @@ export class Employees {
   readonly interviewChannel = signal<'MAIL' | 'CALL'>('MAIL');
   /** "Schulungen": catalog (price per training), loaded when the training panel opens the first time. */
   readonly trainingCatalog = signal<TrainingOfferView[] | null>(null);
+  /** Owner request 2026-10-14: days off and trainings follow the month length; loaded with the first panel. */
+  readonly absenceScale = signal<AbsenceScaleView | null>(null);
+  /** Game days off for the days entered in the panel (null while unknown or unscaled). */
+  readonly timeOffGameDays = computed(() => {
+    const s = this.absenceScale();
+    const days = Number(this.panelValue());
+    if (!s?.enabled || !Number.isFinite(days) || days <= 0) return null;
+    return Math.max(1, Math.round((days * s.daysPerPeriod) / Math.max(1, s.referenceDaysPerPeriod)));
+  });
   readonly panelTraining = signal<string | null>(null);
 
   /** The team: working employees and hired ones who start next month. */
@@ -203,6 +212,9 @@ export class Employees {
     const same = this.panel()?.employeeId === e.id && this.panel()?.kind === kind;
     this.panel.set(same ? null : { employeeId: e.id, kind });
     this.panelValue.set(kind === 'raise' ? Math.round(e.monthlySalary * 1.05) : 1);
+    if (kind !== 'raise' && !same && this.absenceScale() === null) {
+      this.api.absenceScale().subscribe({ next: (s) => this.absenceScale.set(s), error: () => this.absenceScale.set(null) });
+    }
     if (kind === 'training' && !same) {
       this.panelTraining.set(this.openTrainings(e)[0]?.training ?? null);
       if (this.trainingCatalog() === null) {

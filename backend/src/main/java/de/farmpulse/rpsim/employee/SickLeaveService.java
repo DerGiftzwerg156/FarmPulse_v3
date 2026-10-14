@@ -43,8 +43,8 @@ import org.springframework.transaction.annotation.Transactional;
  *   a time.</li>
  *   <li>The employee is away for sickness-days / accident-days (ON_LEAVE in EMPLOYEE_ROSTER, no helper); the salary
  *   continues. The office clerk - or the employee - reports it; the Berufsgenossenschaft reports an accident.</li>
- *   <li>Owner request 2026-10-14: the day ranges are meant for a month of reference-days-per-period days and are scaled
- *   to the FS25 days per period (at least one game day); the chances are adjusted so that the expected share of absent
+ *   <li>Owner request 2026-10-14: the day ranges are scaled to the FS25 days per period ({@link AbsenceScale}, at
+ *   least one game day); the chances are adjusted so that the expected share of absent
  *   days stays the same. The player can cap one absence and set the frequency of sickness / accidents in percent per
  *   savegame (expert settings); a running absence is rescaled when the days per period change.</li>
  *   <li>Get-well wishes once per absence: appreciation and trust, a thank-you mail; diary at absence and return.</li>
@@ -68,12 +68,12 @@ public class SickLeaveService {
     private final RandomSource random;
     private final ApplicationEventPublisher publisher;
     private final RpsimProperties props;
-    private final GameTime gameTime;
+    private final AbsenceScale scale;
 
     public SickLeaveService(SavegameRepository savegames, EmployeeRepository employees, SatisfactionService satisfaction,
                             BurdeningEvents burden, ServiceRoleService roles, NarrationRequestService narration,
                             TrustScoreService trust, DiaryService diary, RandomSource random,
-                            ApplicationEventPublisher publisher, RpsimProperties props, GameTime gameTime) {
+                            ApplicationEventPublisher publisher, RpsimProperties props, AbsenceScale scale) {
         this.savegames = savegames;
         this.employees = employees;
         this.satisfaction = satisfaction;
@@ -85,7 +85,7 @@ public class SickLeaveService {
         this.random = random;
         this.publisher = publisher;
         this.props = props;
-        this.gameTime = gameTime;
+        this.scale = scale;
     }
 
     private RpsimProperties.SickLeave cfg() {
@@ -110,17 +110,14 @@ public class SickLeaveService {
         }
     }
 
-    /**
-     * The configured range (days of a month with reference-days-per-period days) scaled to the month length: rounded,
-     * at least one game day. Unchanged without scale-with-month-length.
-     */
-    public static Days scaled(int min, int max, int daysPerPeriod, RpsimProperties.SickLeave cfg) {
-        if (!cfg.isScaleWithMonthLength()) {
-            return new Days(min, max);
-        }
-        double f = daysPerPeriod / (double) Math.max(1, cfg.getReferenceDaysPerPeriod());
-        int lo = Math.max(1, (int) Math.round(min * f));
-        return new Days(lo, Math.max(lo, (int) Math.round(max * f)));
+    /** The configured range scaled to the month length ({@link AbsenceScale}): rounded, at least one game day. */
+    public static Days scaled(int min, int max, int daysPerPeriod, RpsimProperties.AbsenceScaling cfg) {
+        int lo = AbsenceScale.gameDays(min, daysPerPeriod, cfg);
+        return new Days(lo, Math.max(lo, AbsenceScale.gameDays(max, daysPerPeriod, cfg)));
+    }
+
+    private RpsimProperties.AbsenceScaling scaling() {
+        return props.getFormulas().getAbsenceScaling();
     }
 
     /** Chance factor that keeps the expected share of absent days of the configured range (1 without scaling). */
@@ -130,13 +127,13 @@ public class SickLeaveService {
 
     /** Sickness range of the savegame: scaled to its month length, capped by the player. */
     public Days sicknessDays(Savegame sg) {
-        return scaled(cfg().getSicknessDaysMin(), cfg().getSicknessDaysMax(), daysPerPeriod(sg), cfg())
+        return scaled(cfg().getSicknessDaysMin(), cfg().getSicknessDaysMax(), daysPerPeriod(sg), scaling())
                 .cappedAt(sg.getSickLeaveMaxDays());
     }
 
     /** Accident range of the savegame: scaled to its month length, capped by the player. */
     public Days accidentDays(Savegame sg) {
-        return scaled(cfg().getAccidentDaysMin(), cfg().getAccidentDaysMax(), daysPerPeriod(sg), cfg())
+        return scaled(cfg().getAccidentDaysMin(), cfg().getAccidentDaysMax(), daysPerPeriod(sg), scaling())
                 .cappedAt(sg.getSickLeaveMaxDays());
     }
 
@@ -148,7 +145,7 @@ public class SickLeaveService {
         int min = cfg().getSicknessDaysMin();
         int max = cfg().getSicknessDaysMax();
         return cfg().getSicknessProbabilityPerDay() * burden.factor(sg)
-                * chanceFactor(min, max, scaled(min, max, daysPerPeriod(sg), cfg()))
+                * chanceFactor(min, max, scaled(min, max, daysPerPeriod(sg), scaling()))
                 * sg.getSicknessFrequencyPercent() / 100.0;
     }
 
@@ -157,7 +154,7 @@ public class SickLeaveService {
         int min = cfg().getAccidentDaysMin();
         int max = cfg().getAccidentDaysMax();
         return cfg().getAccidentProbabilityPerDay() * burden.factor(sg)
-                * chanceFactor(min, max, scaled(min, max, daysPerPeriod(sg), cfg()))
+                * chanceFactor(min, max, scaled(min, max, daysPerPeriod(sg), scaling()))
                 * sg.getAccidentFrequencyPercent() / 100.0;
     }
 
@@ -167,7 +164,7 @@ public class SickLeaveService {
     }
 
     private int daysPerPeriod(Savegame sg) {
-        return gameTime.anchor(sg).daysPerPeriod();
+        return scale.daysPerPeriod(sg);
     }
 
     /** Accident risk factor from the needs workload and working conditions (0..100). */
@@ -270,7 +267,7 @@ public class SickLeaveService {
     @EventListener
     @Transactional
     public void onCalendarChanged(CalendarChangedEvent ev) {
-        if (!cfg().isScaleWithMonthLength() || ev.previous().daysPerPeriod() == ev.current().daysPerPeriod()) {
+        if (!scale.enabled() || ev.previous().daysPerPeriod() == ev.current().daysPerPeriod()) {
             return;
         }
         savegames.findById(ev.savegameId()).ifPresent(sg -> {
@@ -280,10 +277,9 @@ public class SickLeaveService {
                 if (!absent(e, now)) {
                     continue;
                 }
-                long rest = e.getAbsenceUntilGameTime() - now;
-                long scaled = Math.round(rest * (double) ev.current().daysPerPeriod() / ev.previous().daysPerPeriod());
                 int maxDays = (ACCIDENT.equals(e.getAbsenceKind()) ? accidentDays(sg) : sicknessDays(sg)).max();
-                long until = now + Math.max(GameTime.days(1), Math.min(scaled, GameTime.days(maxDays)));
+                long until = scale.rescaleUntil(e.getAbsenceUntilGameTime(), now, ev.previous().daysPerPeriod(),
+                        ev.current().daysPerPeriod(), maxDays);
                 if (until != e.getAbsenceUntilGameTime()) {
                     e.setAbsenceUntilGameTime(until);
                     changed = true;

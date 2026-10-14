@@ -22,8 +22,11 @@ import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
 import de.farmpulse.rpsim.repository.EmployeeRepository;
+import de.farmpulse.rpsim.repository.SavegameRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameTime;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  * Owner decision 2026-10-06: the employee works normally on the booking day and is away for whole game days from the
  * start of the next game day (0:00) on. The booked training has precedence: no days off overlapping it and no sickness
- * while it is booked.
+ * while it is booked. Owner request 2026-10-14: duration-days are scaled to the FS25 days per period
+ * ({@link AbsenceScale}, at least one game day).
  */
 @Service
 public class TrainingService {
@@ -48,10 +52,12 @@ public class TrainingService {
     private final DiaryService diary;
     private final RpsimProperties props;
     private final ApplicationEventPublisher publisher;
+    private final SavegameRepository savegames;
+    private final AbsenceScale scale;
 
     public TrainingService(EmployeeRepository employees, OutboxService outbox, SatisfactionService satisfaction,
                            NarrationRequestService narration, DiaryService diary, RpsimProperties props,
-                           ApplicationEventPublisher publisher) {
+                           ApplicationEventPublisher publisher, SavegameRepository savegames, AbsenceScale scale) {
         this.employees = employees;
         this.outbox = outbox;
         this.satisfaction = satisfaction;
@@ -59,10 +65,17 @@ public class TrainingService {
         this.diary = diary;
         this.props = props;
         this.publisher = publisher;
+        this.savegames = savegames;
+        this.scale = scale;
     }
 
     private RpsimProperties.Trainings cfg() {
         return props.getFormulas().getTraining();
+    }
+
+    /** Game days of a training in the savegame: duration-days scaled to the month length, at least one. */
+    public int durationGameDays(Savegame sg) {
+        return scale.gameDays(sg, cfg().getDurationDays());
     }
 
     public long cost(Training t) {
@@ -153,7 +166,8 @@ public class TrainingService {
         long from = trainingStart(now);
         e.setTrainingInProgress(t);
         e.setTrainingFromGameTime(from);
-        e.setTrainingUntilGameTime(from + GameTime.days(cfg().getDurationDays()));
+        int days = durationGameDays(sg);
+        e.setTrainingUntilGameTime(from + GameTime.days(days));
         if (cfg().getAppreciationPoints() != 0) {
             satisfaction.record(e, SatisfactionCategory.APPRECIATION, cfg().getAppreciationPoints(), "Schulung " + t.title());
         }
@@ -162,10 +176,34 @@ public class TrainingService {
                         .put("salary", e.getMonthlySalary()).build())
                 .category(CommunicationCategory.EMPLOYEE).related(SatisfactionService.RELATED, e.getId()).submit();
         diary.addAuto(sg, "EMPLOYEE", e.getCharacter().getName() + " zur Schulung angemeldet",
-                "Schulung „" + t.title() + "“ gebucht (" + cost + " €), morgen den ganzen Tag.", SatisfactionService.RELATED,
+                "Schulung „" + t.title() + "“ gebucht (" + cost + " €), " + (days == 1 ? "morgen den ganzen Tag."
+                        : "ab morgen " + days + " Tage."), SatisfactionService.RELATED,
                 e.getId());
         publisher.publishEvent(new RosterChangedEvent(sg.getId())); // ON_LEAVE for the mod only from the next day on
         return e;
+    }
+
+    /** "Days per period" changed: a booked training lasts the scaled duration from its start. */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        if (ev.previous().daysPerPeriod() == ev.current().daysPerPeriod()) {
+            return;
+        }
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            long now = sg.getCurrentGameTime();
+            boolean changed = false;
+            for (Employee e : employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE)) {
+                if (trainingBooked(e, now) && e.getTrainingFromGameTime() != null) {
+                    long until = e.getTrainingFromGameTime() + GameTime.days(durationGameDays(sg));
+                    changed |= until != e.getTrainingUntilGameTime();
+                    e.setTrainingUntilGameTime(until);
+                }
+            }
+            if (changed) {
+                publisher.publishEvent(new RosterChangedEvent(sg.getId()));
+            }
+        });
     }
 
     /** Finishes every training whose time is over; returns true when a qualification was added. */

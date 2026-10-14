@@ -1470,7 +1470,10 @@
       "getWellSent": "Genesungswünsche an {name} geschickt."
     },
     "formerTitle": "Ehemalige Mitarbeiter",
-    "noFormer": "Noch keine ehemaligen Mitarbeiter."
+    "noFormer": "Noch keine ehemaligen Mitarbeiter.",
+    "timeOffGameDay": "Bei {dpp} Tagen pro Monat ist das 1 Spieltag frei – die Tage gelten für einen Monat mit {ref} Tagen und passen sich deiner Monatslänge an.",
+    "timeOffGameDays": "Bei {dpp} Tagen pro Monat sind das {days} Spieltage frei – die Tage gelten für einen Monat mit {ref} Tagen und passen sich deiner Monatslänge an.",
+    "trainingHintDays": "Die Schulung kostet {cost} und dauert ab morgen {days} Spieltage – heute arbeitet {name} noch normal, danach fährt {name} in der Zeit keinen Helfer und kann nicht frei nehmen. Danach darf {name} diese Maschinen fahren."
   },
   "farmland": {
     "map": "Feldübersicht",

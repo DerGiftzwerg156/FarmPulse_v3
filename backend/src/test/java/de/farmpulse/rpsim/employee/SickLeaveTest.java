@@ -73,6 +73,7 @@ class SickLeaveTest {
     @AfterEach
     void restore() {
         props.getFormulas().setSickLeave(new RpsimProperties.SickLeave());
+        props.getFormulas().setAbsenceScaling(new RpsimProperties.AbsenceScaling());
     }
 
     private Employee employee(JobRole role, String name) {
@@ -150,7 +151,7 @@ class SickLeaveTest {
 
     @Test
     void theAbsenceIsScaledToTheMonthLength() {
-        RpsimProperties.SickLeave cfg = props.getFormulas().getSickLeave();
+        RpsimProperties.AbsenceScaling cfg = props.getFormulas().getAbsenceScaling();
         assertThat(SickLeaveService.scaled(2, 5, 30, cfg)).isEqualTo(new SickLeaveService.Days(2, 5));
         assertThat(SickLeaveService.scaled(3, 10, 28, cfg)).isEqualTo(new SickLeaveService.Days(3, 9));
         assertThat(SickLeaveService.scaled(2, 5, 10, cfg)).isEqualTo(new SickLeaveService.Days(1, 2));
@@ -159,7 +160,7 @@ class SickLeaveTest {
         // the expected share of absent days stays: shorter absences, more frequent
         assertThat(SickLeaveService.chanceFactor(2, 5, new SickLeaveService.Days(2, 5))).isEqualTo(1.0);
         assertThat(SickLeaveService.chanceFactor(2, 5, new SickLeaveService.Days(1, 1))).isEqualTo(3.5);
-        cfg.setScaleWithMonthLength(false);
+        cfg.setEnabled(false);
         assertThat(SickLeaveService.scaled(2, 5, 2, cfg)).isEqualTo(new SickLeaveService.Days(2, 5));
     }
 

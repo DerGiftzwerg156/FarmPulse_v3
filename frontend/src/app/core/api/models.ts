@@ -1352,6 +1352,18 @@ export interface BurdenSettingsView {
   sickLeaveDuration?: SickLeaveDurationView;
 }
 
+/**
+ * Owner request 2026-10-14: absences (days off, training, sickness) are days of a month with referenceDaysPerPeriod
+ * days, scaled to daysPerPeriod: game days = max(1, round(days x daysPerPeriod / referenceDaysPerPeriod)); unscaled
+ * when enabled is false. trainingDays = game days of a training.
+ */
+export interface AbsenceScaleView {
+  enabled: boolean;
+  daysPerPeriod: number;
+  referenceDaysPerPeriod: number;
+  trainingDays: number;
+}
+
 /** R31-B5: absence in game days, scaled to the days per period and capped by maxDays (null = automatic only). */
 export interface SickLeaveDurationView {
   maxDays: number | null;

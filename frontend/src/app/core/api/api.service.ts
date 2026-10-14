@@ -206,6 +206,10 @@ export class ApiService {
   raise(id: number, newSalary: number): Observable<M.EmployeeView> {
     return this.post(`/employees/${id}/raise`, { newSalary });
   }
+  /** Owner request 2026-10-14: how absences are scaled to the month length. */
+  absenceScale(): Observable<M.AbsenceScaleView> {
+    return this.get('/employees/absence-scale');
+  }
   timeOff(id: number, days: number): Observable<M.EmployeeView> {
     return this.post(`/employees/${id}/time-off`, { days });
   }

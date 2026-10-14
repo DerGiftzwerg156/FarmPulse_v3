@@ -96,12 +96,13 @@ versions or this changelog do not match.
 
 ### Changed
 
-- **Sick leave follows the month length** (owner request 2026-10-14): sickness (2–5 days) and work accidents (3–10
-  days) are meant for a 30-day month and are scaled to the FS25 *days per period*, at least one game day - with 2 days
-  per period an employee is away for one day instead of up to 10. The chances are adjusted so that the share of absent
-  days stays the same (shorter months: shorter, slightly more frequent absences); a running absence is rescaled when
-  the days per period change. *Einstellungen → Ereignisse* shows the current duration. Configurable via
-  `sick-leave.scale-with-month-length` and `reference-days-per-period`.
+- **Absences follow the month length** (owner request 2026-10-14): sickness (2–5 days), work accidents (3–10 days),
+  days off (1–30) and trainings are meant for a 30-day month and are scaled to the FS25 *days per period*, at least one
+  game day - with 2 days per period an employee is away for one day instead of up to 10. The sickness / accident
+  chances are adjusted so that the share of absent days stays the same (shorter months: shorter, slightly more frequent
+  absences); the relief of days off follows the share of the month the employee is away. Running absences are rescaled
+  when the days per period change. *Einstellungen → Ereignisse* shows the current sick leave duration, the days off
+  form the game days. Configurable via `rpsim.formulas.absence-scaling`.
 - **Expert settings** (owner decision 2026-10-14): a new settings tab *Experte* for fine-tuning. Per savegame the
   frequency of sickness and of work accidents in percent (0-500, with the expected cases per employee and year) and the
   cap of one absence (`GET/PUT /api/settings/sick-leave`). The cards *Kredit und Felder im Spielmenü* (from

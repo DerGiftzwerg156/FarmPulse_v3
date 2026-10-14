@@ -207,7 +207,7 @@ public class SettingsController {
         SickLeaveService.Days sick = sickLeave.sicknessDays(sg);
         SickLeaveService.Days accident = sickLeave.accidentDays(sg);
         return new Views.SickLeaveDurationView(sg.getSickLeaveMaxDays(), gameTime.anchor(sg).daysPerPeriod(),
-                props.getFormulas().getSickLeave().isScaleWithMonthLength(), sick.min(), sick.max(), accident.min(),
+                props.getFormulas().getAbsenceScaling().isEnabled(), sick.min(), sick.max(), accident.min(),
                 accident.max());
     }
 

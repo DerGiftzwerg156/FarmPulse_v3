@@ -128,6 +128,14 @@ public final class Views {
     public record TrainingOfferView(String training, long cost, List<String> vehicleCategories) {
     }
 
+    /**
+     * Owner request 2026-10-14: absences (days off, training, sickness) are days of a month with
+     * {@code referenceDaysPerPeriod} days scaled to {@code daysPerPeriod}: game days = max(1, round(days x daysPerPeriod /
+     * referenceDaysPerPeriod)); unscaled when {@code enabled} is false. {@code trainingDays} = game days of a training.
+     */
+    public record AbsenceScaleView(boolean enabled, int daysPerPeriod, int referenceDaysPerPeriod, int trainingDays) {
+    }
+
     public record NeedsView(double payFairness, double workload, double appreciation, double workingConditions,
                             double satisfaction, double effectiveSkill) {
     }

@@ -876,6 +876,9 @@ rpsim:
       fee-per-ha: 12
       fee-per-employee: 180
       bill-period: 2              # April
+    absence-scaling:              # owner request 2026-10-14: sickness, accident, days off and training are days of a
+      enabled: true               # month with reference-days-per-period days, scaled to the FS25 days per period
+      reference-days-per-period: 30   # (at least 1 game day); sickness / accident chances adjusted
     sick-leave:                   # Roadmap V3.1 R31-B5: sickness and work accident (owner decisions, placeholders)
       enabled: true
       sickness-probability-per-day: 0.005
@@ -885,12 +888,10 @@ rpsim:
       risk-bad-factor: 1.5
       risk-good-threshold: 70     # both from 70: x 0.5
       risk-good-factor: 0.5
-      sickness-days-min: 2        # days away in a month of reference-days-per-period days ...
+      sickness-days-min: 2        # days away, scaled to the month length (absence-scaling)
       sickness-days-max: 5
       accident-days-min: 3
       accident-days-max: 10
-      scale-with-month-length: true   # ... scaled to the FS25 days per period (at least 1 day), chances adjusted
-      reference-days-per-period: 30
       get-well-appreciation: 8    # get-well wishes: appreciation +8, trust +2
       get-well-trust-delta: 2
     village-newspaper:            # Roadmap V3.1 R31-D1: village newspaper "Dorfblatt" (owner decisions)
