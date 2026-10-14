@@ -103,6 +103,20 @@ versions or this changelog do not match.
   where the litres come from ("gemessen", "eingetragen" or "geschätzt") and names a product that is not the standard
   one ("Mais (Häckselgut)"). The report keeps the state of the year change; reports written before stay unchanged.
 
+### Changed
+
+- **Absences follow the month length** (owner request 2026-10-14): sickness (2–5 days), work accidents (3–10 days),
+  days off (1–30) and trainings are meant for a 30-day month and are scaled to the FS25 *days per period*, at least one
+  game day - with 2 days per period an employee is away for one day instead of up to 10. The sickness / accident
+  chances are adjusted so that the share of absent days stays the same (shorter months: shorter, slightly more frequent
+  absences); the relief of days off follows the share of the month the employee is away. Running absences are rescaled
+  when the days per period change. *Einstellungen → Ereignisse* shows the current sick leave duration, the days off
+  form the game days. Configurable via `rpsim.formulas.absence-scaling`.
+- **Expert settings** (owner decision 2026-10-14): a new settings tab *Experte* for fine-tuning. Per savegame the
+  frequency of sickness and of work accidents in percent (0-500, with the expected cases per employee and year) and the
+  cap of one absence (`GET/PUT /api/settings/sick-leave`). The cards *Kredit und Felder im Spielmenü* (from
+  *Ereignisse*) and *Erkannte Mods mit Überschneidungen* (from *Im Spiel*) moved there.
+
 ## [2.0.0] - 2026-10-09
 
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training

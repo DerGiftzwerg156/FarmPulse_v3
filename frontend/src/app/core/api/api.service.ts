@@ -206,6 +206,10 @@ export class ApiService {
   raise(id: number, newSalary: number): Observable<M.EmployeeView> {
     return this.post(`/employees/${id}/raise`, { newSalary });
   }
+  /** Owner request 2026-10-14: how absences are scaled to the month length. */
+  absenceScale(): Observable<M.AbsenceScaleView> {
+    return this.get('/employees/absence-scale');
+  }
   timeOff(id: number, days: number): Observable<M.EmployeeView> {
     return this.post(`/employees/${id}/time-off`, { days });
   }
@@ -468,6 +472,17 @@ export class ApiService {
     investors?: boolean;
   }): Observable<M.BurdenSettingsView> {
     return this.http.put<M.BurdenSettingsView>(`${this.base}/settings/burdening-events`, r);
+  }
+  /** R31-B5 expert settings: duration cap (0 = automatic) and frequency of sickness / accidents in percent. */
+  sickLeaveSettings(): Observable<M.SickLeaveSettingsView> {
+    return this.get('/settings/sick-leave');
+  }
+  saveSickLeaveSettings(r: {
+    maxDays: number;
+    sicknessFrequencyPercent: number;
+    accidentFrequencyPercent: number;
+  }): Observable<M.SickLeaveSettingsView> {
+    return this.http.put<M.SickLeaveSettingsView>(`${this.base}/settings/sick-leave`, r);
   }
   /** Roadmap V3.1 R31-B1: area payment application. */
   directPayment(): Observable<M.DirectPaymentStatusView> {

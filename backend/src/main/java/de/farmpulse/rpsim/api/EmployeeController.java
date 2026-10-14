@@ -41,12 +41,15 @@ public class EmployeeController {
     private final EmployeeRepository employees;
     private final ApiMapper mapper;
     private final de.farmpulse.rpsim.employee.SickLeaveService sickLeave;
+    private final de.farmpulse.rpsim.employee.AbsenceScale scale;
     private final PayrollScheduler payroll;
 
     public EmployeeController(SavegameContext context, HiringService hiring, SatisfactionService satisfaction,
                               TrainingService training, EmployeeRepository employees, ApiMapper mapper,
-                              de.farmpulse.rpsim.employee.SickLeaveService sickLeave, PayrollScheduler payroll) {
+                              de.farmpulse.rpsim.employee.SickLeaveService sickLeave,
+                              de.farmpulse.rpsim.employee.AbsenceScale scale, PayrollScheduler payroll) {
         this.sickLeave = sickLeave;
+        this.scale = scale;
         this.payroll = payroll;
         this.training = training;
         this.context = context;
@@ -109,6 +112,18 @@ public class EmployeeController {
         Employee e = active(context.requireActive(), id);
         satisfaction.raise(e, r.newSalary());
         return mapper.employee(e);
+    }
+
+    /**
+     * Owner request 2026-10-14: how absences are scaled to the month length - the days off form shows the game days of
+     * the chosen days, the training panel its duration.
+     */
+    @GetMapping("/api/employees/absence-scale")
+    @Transactional(readOnly = true)
+    public Views.AbsenceScaleView absenceScale() {
+        Savegame sg = context.requireActive();
+        return new Views.AbsenceScaleView(scale.enabled(), scale.daysPerPeriod(sg), scale.referenceDaysPerPeriod(),
+                training.durationGameDays(sg));
     }
 
     @PostMapping("/api/employees/{id}/time-off")

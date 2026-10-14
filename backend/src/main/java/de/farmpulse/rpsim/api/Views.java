@@ -128,6 +128,14 @@ public final class Views {
     public record TrainingOfferView(String training, long cost, List<String> vehicleCategories) {
     }
 
+    /**
+     * Owner request 2026-10-14: absences (days off, training, sickness) are days of a month with
+     * {@code referenceDaysPerPeriod} days scaled to {@code daysPerPeriod}: game days = max(1, round(days x daysPerPeriod /
+     * referenceDaysPerPeriod)); unscaled when {@code enabled} is false. {@code trainingDays} = game days of a training.
+     */
+    public record AbsenceScaleView(boolean enabled, int daysPerPeriod, int referenceDaysPerPeriod, int trainingDays) {
+    }
+
     public record NeedsView(double payFairness, double workload, double appreciation, double workingConditions,
                             double satisfaction, double effectiveSkill) {
     }
@@ -207,7 +215,25 @@ public final class Views {
      */
     public record BurdenSettingsView(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave,
                                      boolean nightWork, boolean cropDamage, boolean dieselTheft,
-                                     String tonePreset, double idyllicFactor, boolean investors) {
+                                     String tonePreset, double idyllicFactor, boolean investors,
+                                     SickLeaveDurationView sickLeaveDuration) {
+    }
+
+    /**
+     * R31-B5: the absence of a sickness / accident in game days for the current days per period (scaled, capped by
+     * {@code maxDays}; null = automatic only).
+     */
+    public record SickLeaveDurationView(Integer maxDays, int daysPerPeriod, boolean scaled, int sicknessDaysMin,
+                                        int sicknessDaysMax, int accidentDaysMin, int accidentDaysMax) {
+    }
+
+    /**
+     * R31-B5 expert settings: duration, frequency in percent and the expected cases per employee and FS25 year
+     * (accidents: per employee of the accident roles under normal conditions). {@code enabled} = the switch under
+     * "Ereignisse".
+     */
+    public record SickLeaveSettingsView(boolean enabled, SickLeaveDurationView duration, int sicknessFrequencyPercent,
+                                        int accidentFrequencyPercent, double sicknessPerYear, double accidentPerYear) {
     }
 
     /** Roadmap V3 R3-T2: optional farm name; {@code mapName} is the fallback shown when it is empty. */

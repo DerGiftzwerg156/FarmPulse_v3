@@ -1356,6 +1356,44 @@ export interface BurdenSettingsView {
   idyllicFactor: number;
   /** Roadmap V3.2 R32-I1: large investors (not a burden, same card). */
   investors: boolean;
+  /** R31-B5: absence of a sickness / accident for the current days per period (older backends: missing). */
+  sickLeaveDuration?: SickLeaveDurationView;
+}
+
+/**
+ * Owner request 2026-10-14: absences (days off, training, sickness) are days of a month with referenceDaysPerPeriod
+ * days, scaled to daysPerPeriod: game days = max(1, round(days x daysPerPeriod / referenceDaysPerPeriod)); unscaled
+ * when enabled is false. trainingDays = game days of a training.
+ */
+export interface AbsenceScaleView {
+  enabled: boolean;
+  daysPerPeriod: number;
+  referenceDaysPerPeriod: number;
+  trainingDays: number;
+}
+
+/** R31-B5: absence in game days, scaled to the days per period and capped by maxDays (null = automatic only). */
+export interface SickLeaveDurationView {
+  maxDays: number | null;
+  daysPerPeriod: number;
+  scaled: boolean;
+  sicknessDaysMin: number;
+  sicknessDaysMax: number;
+  accidentDaysMin: number;
+  accidentDaysMax: number;
+}
+
+/**
+ * R31-B5 expert settings: duration, frequency in percent and the expected cases per employee and FS25 year
+ * (accidents: per employee of the accident roles under normal conditions); enabled = the switch under "Ereignisse".
+ */
+export interface SickLeaveSettingsView {
+  enabled: boolean;
+  duration: SickLeaveDurationView;
+  sicknessFrequencyPercent: number;
+  accidentFrequencyPercent: number;
+  sicknessPerYear: number;
+  accidentPerYear: number;
 }
 
 /** R31-B1: one field of an area payment application. */

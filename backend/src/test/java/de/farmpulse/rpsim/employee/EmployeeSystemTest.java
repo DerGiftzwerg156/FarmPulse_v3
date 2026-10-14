@@ -280,7 +280,7 @@ class EmployeeSystemTest {
         e.setAppreciation(0);
         satisfaction.checkEscalation(e);
         satisfaction.raise(e, e.getMonthlySalary() * 2); // +30 pay fairness
-        satisfaction.timeOff(e, 5);                       // +75 workload
+        satisfaction.timeOff(e, 5);                       // one game day of a 1-day month: +450 workload (capped)
         satisfaction.checkEscalation(e);
         assertThat(e.getLowSatisfactionSinceGameTime()).isNull();
     }

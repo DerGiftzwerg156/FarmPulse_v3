@@ -219,6 +219,7 @@ public class RpsimProperties {
         private AnimalDisease animalDisease = new AnimalDisease();
         private SocialInsurance socialInsurance = new SocialInsurance();
         private SickLeave sickLeave = new SickLeave();
+        private AbsenceScaling absenceScaling = new AbsenceScaling();
         private VillageNewspaper villageNewspaper = new VillageNewspaper();
         private VillageChat villageChat = new VillageChat();
         private Stammtisch stammtisch = new Stammtisch();
@@ -1697,6 +1698,7 @@ public class RpsimProperties {
         /** ... and x risk-good-factor when both are from risk-good-threshold. */
         private double riskGoodThreshold = 70;
         private double riskGoodFactor = 0.5;
+        /** Days away, scaled to the month length by absence-scaling (at least one game day). */
         private int sicknessDaysMin = 2;
         private int sicknessDaysMax = 5;
         private int accidentDaysMin = 3;
@@ -1704,6 +1706,17 @@ public class RpsimProperties {
         /** Get-well wishes (once per absence). */
         private double getWellAppreciation = 8;
         private double getWellTrustDelta = 2;
+    }
+
+    /**
+     * Owner request 2026-10-14: absences of employees (sickness, work accident, days off, training) are days of a month
+     * with reference-days-per-period days and are scaled to the FS25 "days per period" (at least one game day). The
+     * sickness / accident chances are adjusted so that the expected share of absent days stays the same.
+     */
+    @Getter @Setter
+    public static class AbsenceScaling {
+        private boolean enabled = true;
+        private int referenceDaysPerPeriod = 30;
     }
 
     /** Roadmap V3.1 R31-D1: village newspaper "Dorfblatt" (owner decisions 2026-10-05). */

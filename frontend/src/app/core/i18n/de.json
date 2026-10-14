@@ -1475,7 +1475,10 @@
       "getWellSent": "Genesungswünsche an {name} geschickt."
     },
     "formerTitle": "Ehemalige Mitarbeiter",
-    "noFormer": "Noch keine ehemaligen Mitarbeiter."
+    "noFormer": "Noch keine ehemaligen Mitarbeiter.",
+    "timeOffGameDay": "Bei {dpp} Tagen pro Monat ist das 1 Spieltag frei – die Tage gelten für einen Monat mit {ref} Tagen und passen sich deiner Monatslänge an.",
+    "timeOffGameDays": "Bei {dpp} Tagen pro Monat sind das {days} Spieltage frei – die Tage gelten für einen Monat mit {ref} Tagen und passen sich deiner Monatslänge an.",
+    "trainingHintDays": "Die Schulung kostet {cost} und dauert ab morgen {days} Spieltage – heute arbeitet {name} noch normal, danach fährt {name} in der Zeit keinen Helfer und kann nicht frei nehmen. Danach darf {name} diese Maschinen fahren."
   },
   "farmland": {
     "map": "Feldübersicht",
@@ -1861,12 +1864,30 @@
       "fertilizer": "Kontrollen der Düngeverordnung",
       "disease": "Tierseuchen",
       "sickLeave": "Krankheit und Arbeitsunfälle",
+      "sickLeaveRangeScaled": "Ausfall in Spieltagen bei {dpp} Tagen pro Monat: Krankheit {sickness}, Arbeitsunfall {accident}. Die Dauer passt sich der Monatslänge an – kürzere Monate bedeuten kürzere, dafür etwas häufigere Ausfälle. Häufigkeit und Höchstdauer stellst du unter Experte ein.",
+      "sickLeaveRange": "Ausfall in Spieltagen: Krankheit {sickness}, Arbeitsunfall {accident}. Häufigkeit und Höchstdauer stellst du unter Experte ein.",
       "hint": "Abgeschaltete Ereignisse kommen in diesem Spielstand nicht vor. Anträge, Prämien, Förderung und der Beitrag der Berufsgenossenschaft bleiben. Flurschaden ist anfangs aus.",
       "idyllic": "Weltmodus idyllisch: keine Tierseuchen und kein Dieselklau; Kontrollen, Kürzungen, Bußgelder der Düngeverordnung, Ausfälle, Vertrauensverluste durch Nachtarbeit und Flurschaden sowie Entschädigungen nur zu {percent} %.",
       "nightWork": "Beschwerden über Nachtarbeit",
       "cropDamage": "Flurschaden auf Nachbarfeldern",
       "dieselTheft": "Dieselklau",
       "investors": "Großinvestoren (Angebote von Investoren)"
+    },
+    "expert": {
+      "hint": "Experteneinstellungen: Die Standardwerte sind aufeinander abgestimmt. Ändere hier nur etwas, wenn du das Spiel bewusst feiner einstellen willst.",
+      "reset": "Auf Standard zurücksetzen",
+      "sickLeave": {
+        "title": "Krankheit und Arbeitsunfälle",
+        "off": "Krankheit und Arbeitsunfälle sind unter Ereignisse abgeschaltet – die Werte wirken erst, wenn du sie dort einschaltest.",
+        "sicknessFrequency": "Häufigkeit von Krankheiten",
+        "accidentFrequency": "Häufigkeit von Arbeitsunfällen",
+        "perYear": "Erwartet je Mitarbeiter und Spieljahr: etwa {sickness} Krankheitsfälle, {accident} Arbeitsunfälle (Maschinenführer, Saisonkräfte, Azubis bei normalen Bedingungen).",
+        "maxDays": "Höchstdauer eines Ausfalls",
+        "auto": "automatisch",
+        "day": "1 Tag",
+        "days": "{days} Tage",
+        "hint": "100 % = Standard, 0 % = nie. Die Höchstdauer kürzt nur die Dauer, an der Häufigkeit ändert sie nichts."
+      }
     }
   },
   "notices": {
@@ -2601,7 +2622,8 @@
       "hof": "Hof",
       "ereignisse": "Ereignisse",
       "spiel": "Im Spiel",
-      "netzwerk": "Tablet & Netzwerk"
+      "netzwerk": "Tablet & Netzwerk",
+      "experte": "Experte"
     }
   },
   "appHints": {

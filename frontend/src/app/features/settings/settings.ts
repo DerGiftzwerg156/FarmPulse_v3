@@ -4,10 +4,11 @@ import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
 import {
   AiSettingsView, BurdenSettingsView, BypassSettingsView, FarmSettingsView, FieldSettingsView, GameSettingsView,
-  PromptSettingsView,
+  PromptSettingsView, SickLeaveSettingsView,
 } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
+import { NumberPipe } from '../../shared/format/format.pipes';
 import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
@@ -24,11 +25,12 @@ export const URL_PROVIDERS = ['OLLAMA'];
  * Settings (AP-8.11): local AI provider, model and API key. The key is only held in this form until it is sent to
  * the backend, which writes it to its git-ignored local config; it is never read back or stored in the browser.
  * The tone preset is shown read-only (fixed since the onboarding). Tabs (owner decision 2026-10-06): KI, Hof,
- * Ereignisse, Im Spiel (with the helper switches from "Personal"), Tablet & Netzwerk.
+ * Ereignisse, Im Spiel (with the helper switches from "Personal"), Tablet & Netzwerk; Experte (owner decision
+ * 2026-10-14: frequency and cap of the sick leave, reactions to the game menus, detected mods).
  */
 @Component({
   selector: 'app-settings',
-  imports: [TranslatePipe, LabelPipe, Card, Badge, Button, LanSettingsCard, HelperSettingsCard,
+  imports: [TranslatePipe, LabelPipe, NumberPipe, Card, Badge, Button, LanSettingsCard, HelperSettingsCard,
     OverdraftSettingsCard],
   templateUrl: './settings.html',
 })
@@ -49,6 +51,10 @@ export class Settings {
   /** Roadmap V3.1 R31-B: switches of the burdening events. */
   readonly burden = signal<BurdenSettingsView | null>(null);
   readonly burdenKeys = ['areaCheck', 'fertilizer', 'disease', 'sickLeave', 'nightWork', 'cropDamage', 'dieselTheft', 'investors'] as const;
+  /** R31-B5 expert settings: duration and frequency of sickness and work accidents. */
+  readonly sickLeave = signal<SickLeaveSettingsView | null>(null);
+  /** R31-B5: choices of the cap of one sickness / accident absence in game days (0 = automatic only). */
+  readonly sickLeaveMaxDayOptions = [0, 1, 2, 3, 5, 7, 10, 14] as const;
   readonly prompts = signal<PromptSettingsView | null>(null);
   readonly provider = signal('');
   readonly model = signal('');
@@ -75,6 +81,7 @@ export class Settings {
     this.api.farmSettings().subscribe({ next: (f) => this.applyFarm(f), error: () => this.farm.set(null) });
     this.api.bypassSettings().subscribe({ next: (b) => this.bypass.set(b), error: () => this.bypass.set(null) });
     this.api.burdenSettings().subscribe({ next: (b) => this.burden.set(b), error: () => this.burden.set(null) });
+    this.api.sickLeaveSettings().subscribe({ next: (s) => this.sickLeave.set(s), error: () => this.sickLeave.set(null) });
     this.api.promptSettings().subscribe({ next: (p) => this.prompts.set(p), error: () => this.prompts.set(null) });
   }
 
@@ -109,6 +116,44 @@ export class Settings {
       next: (n) => this.burden.set(n),
       error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
     });
+  }
+
+  /**
+   * R31-B5 expert settings: a frequency field in percent - clamped to 0..500, an empty or invalid entry keeps the
+   * current value; the field shows what is saved.
+   */
+  saveFrequency(key: 'sicknessFrequencyPercent' | 'accidentFrequencyPercent', input: HTMLInputElement): void {
+    const s = this.sickLeave();
+    if (!s) return;
+    const v = input.valueAsNumber;
+    const percent = Number.isFinite(v) ? Math.min(500, Math.max(0, Math.round(v))) : s[key];
+    input.value = `${percent}`;
+    if (percent !== s[key]) this.saveSickLeave({ [key]: percent });
+  }
+
+  /** R31-B5 expert settings: cap of one absence (0 = automatic, scaled to the days per period) and the frequencies. */
+  saveSickLeave(change: { maxDays?: number; sicknessFrequencyPercent?: number; accidentFrequencyPercent?: number }): void {
+    const s = this.sickLeave();
+    if (!s) return;
+    const r = {
+      maxDays: change.maxDays ?? s.duration.maxDays ?? 0,
+      sicknessFrequencyPercent: change.sicknessFrequencyPercent ?? s.sicknessFrequencyPercent,
+      accidentFrequencyPercent: change.accidentFrequencyPercent ?? s.accidentFrequencyPercent,
+    };
+    this.api.saveSickLeaveSettings(r).subscribe({
+      next: (n) => {
+        this.sickLeave.set(n);
+        // the summary under "Ereignisse" shows the same duration
+        const b = this.burden();
+        if (b) this.burden.set({ ...b, sickLeaveDuration: n.duration });
+      },
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
+  }
+
+  /** "2–5" or "1" for a range of game days. */
+  dayRange(min: number, max: number): string {
+    return min === max ? `${min}` : `${min}–${max}`;
   }
 
   /** Roadmap V2 R2-C6: switches the field work hints of the cooperative. */

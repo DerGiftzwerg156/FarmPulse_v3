@@ -135,6 +135,15 @@ public final class Requests {
                                         Boolean nightWork, Boolean cropDamage, Boolean dieselTheft, Boolean investors) {
     }
 
+    /**
+     * R31-B5 expert settings: cap of one absence in game days (0 = automatic) and the frequency of sickness / work
+     * accidents in percent of the configured chance.
+     */
+    public record SickLeaveSettingsRequest(@NotNull @Min(0) @Max(30) Integer maxDays,
+                                           @NotNull @Min(0) @Max(500) Integer sicknessFrequencyPercent,
+                                           @NotNull @Min(0) @Max(500) Integer accidentFrequencyPercent) {
+    }
+
     public record FieldSettingsRequest(boolean fieldHintsEnabled) {
     }
 
