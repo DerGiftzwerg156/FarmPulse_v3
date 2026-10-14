@@ -92,6 +92,7 @@ export const APP_TABS: Record<string, TabDef[]> = {
     { id: 'ereignisse', label: 'tabs.settings.ereignisse' },
     { id: 'spiel', label: 'tabs.settings.spiel' },
     { id: 'netzwerk', label: 'tabs.settings.netzwerk' },
+    { id: 'experte', label: 'tabs.settings.experte' }, // expert settings (owner decision 2026-10-14)
   ],
 };
 

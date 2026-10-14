@@ -127,8 +127,16 @@ public final class Requests {
     /** Roadmap V2 R2-C6: switch of the field work hints. */
     /** Roadmap V3.1 R31-B: switches of the burdening events. */
     public record BurdenSettingsRequest(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave,
-                                        Boolean nightWork, Boolean cropDamage, Boolean dieselTheft, Boolean investors,
-                                        @Min(0) @Max(30) Integer sickLeaveMaxDays) {
+                                        Boolean nightWork, Boolean cropDamage, Boolean dieselTheft, Boolean investors) {
+    }
+
+    /**
+     * R31-B5 expert settings: cap of one absence in game days (0 = automatic) and the frequency of sickness / work
+     * accidents in percent of the configured chance.
+     */
+    public record SickLeaveSettingsRequest(@NotNull @Min(0) @Max(30) Integer maxDays,
+                                           @NotNull @Min(0) @Max(500) Integer sicknessFrequencyPercent,
+                                           @NotNull @Min(0) @Max(500) Integer accidentFrequencyPercent) {
     }
 
     public record FieldSettingsRequest(boolean fieldHintsEnabled) {

@@ -164,9 +164,6 @@ public class SettingsController {
         if (r.investors() != null) { // Roadmap V3.2 R32-I1: large investors (not a burden, same settings card)
             sg.setInvestorsEnabled(r.investors());
         }
-        if (r.sickLeaveMaxDays() != null) { // R31-B5: 0 = automatic only (null = unchanged, older clients)
-            sg.setSickLeaveMaxDays(r.sickLeaveMaxDays() == 0 ? null : r.sickLeaveMaxDays());
-        }
         return burdenView(sg);
     }
 
@@ -176,6 +173,34 @@ public class SettingsController {
                 sg.getTonePreset().name(),
                 props.getFormulas().getBurdeningEvents().getIdyllicFactor(), sg.isInvestorsEnabled(),
                 sickLeaveDuration(sg));
+    }
+
+    /** R31-B5 expert settings: duration and frequency of sickness and work accidents. */
+    @GetMapping("/api/settings/sick-leave")
+    @Transactional(readOnly = true)
+    public Views.SickLeaveSettingsView sickLeaveSettings() {
+        return sickLeaveView(context.requireActive());
+    }
+
+    @PutMapping("/api/settings/sick-leave")
+    @Transactional
+    public Views.SickLeaveSettingsView saveSickLeaveSettings(@Valid @RequestBody Requests.SickLeaveSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setSickLeaveMaxDays(r.maxDays() == 0 ? null : r.maxDays());
+        sg.setSicknessFrequencyPercent(r.sicknessFrequencyPercent());
+        sg.setAccidentFrequencyPercent(r.accidentFrequencyPercent());
+        return sickLeaveView(sg);
+    }
+
+    private Views.SickLeaveSettingsView sickLeaveView(Savegame sg) {
+        return new Views.SickLeaveSettingsView(sg.isBurdenSickLeave(), sickLeaveDuration(sg),
+                sg.getSicknessFrequencyPercent(), sg.getAccidentFrequencyPercent(),
+                round2(sickLeave.perYear(sg, sickLeave.sicknessChance(sg))),
+                round2(sickLeave.perYear(sg, sickLeave.accidentChance(sg))));
+    }
+
+    private static double round2(double v) {
+        return Math.round(v * 100) / 100.0;
     }
 
     private Views.SickLeaveDurationView sickLeaveDuration(Savegame sg) {

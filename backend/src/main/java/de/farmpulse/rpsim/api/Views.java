@@ -212,6 +212,15 @@ public final class Views {
                                         int sicknessDaysMax, int accidentDaysMin, int accidentDaysMax) {
     }
 
+    /**
+     * R31-B5 expert settings: duration, frequency in percent and the expected cases per employee and FS25 year
+     * (accidents: per employee of the accident roles under normal conditions). {@code enabled} = the switch under
+     * "Ereignisse".
+     */
+    public record SickLeaveSettingsView(boolean enabled, SickLeaveDurationView duration, int sicknessFrequencyPercent,
+                                        int accidentFrequencyPercent, double sicknessPerYear, double accidentPerYear) {
+    }
+
     /** Roadmap V3 R3-T2: optional farm name; {@code mapName} is the fallback shown when it is empty. */
     public record FarmSettingsView(String farmName, String mapName) {
     }

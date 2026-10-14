@@ -45,8 +45,8 @@ import org.springframework.transaction.annotation.Transactional;
  *   continues. The office clerk - or the employee - reports it; the Berufsgenossenschaft reports an accident.</li>
  *   <li>Owner request 2026-10-14: the day ranges are meant for a month of reference-days-per-period days and are scaled
  *   to the FS25 days per period (at least one game day); the chances are adjusted so that the expected share of absent
- *   days stays the same. The player can cap one absence per savegame (settings); a running absence is rescaled when
- *   the days per period change.</li>
+ *   days stays the same. The player can cap one absence and set the frequency of sickness / accidents in percent per
+ *   savegame (expert settings); a running absence is rescaled when the days per period change.</li>
  *   <li>Get-well wishes once per absence: appreciation and trust, a thank-you mail; diary at absence and return.</li>
  * </ul>
  */
@@ -140,6 +140,32 @@ public class SickLeaveService {
                 .cappedAt(sg.getSickLeaveMaxDays());
     }
 
+    /**
+     * Chance of a sickness per employee and game day: configured chance x scaling to the month length x world mode x
+     * the player's frequency.
+     */
+    public double sicknessChance(Savegame sg) {
+        int min = cfg().getSicknessDaysMin();
+        int max = cfg().getSicknessDaysMax();
+        return cfg().getSicknessProbabilityPerDay() * burden.factor(sg)
+                * chanceFactor(min, max, scaled(min, max, daysPerPeriod(sg), cfg()))
+                * sg.getSicknessFrequencyPercent() / 100.0;
+    }
+
+    /** Chance of a work accident per employee of the accident roles and game day, before the risk factor. */
+    public double accidentChance(Savegame sg) {
+        int min = cfg().getAccidentDaysMin();
+        int max = cfg().getAccidentDaysMax();
+        return cfg().getAccidentProbabilityPerDay() * burden.factor(sg)
+                * chanceFactor(min, max, scaled(min, max, daysPerPeriod(sg), cfg()))
+                * sg.getAccidentFrequencyPercent() / 100.0;
+    }
+
+    /** Expected cases per employee and FS25 year at the given chance per game day (shown in the expert settings). */
+    public double perYear(Savegame sg, double chancePerDay) {
+        return GameTime.PERIODS_PER_YEAR * daysPerPeriod(sg) * Math.min(1, chancePerDay);
+    }
+
     private int daysPerPeriod(Savegame sg) {
         return gameTime.anchor(sg).daysPerPeriod();
     }
@@ -186,23 +212,17 @@ public class SickLeaveService {
                 || (e.getTimeOffUntilGameTime() != null && e.getTimeOffUntilGameTime() > now)) {
             return false;
         }
-        double factor = burden.factor(sg);
-        int dpp = daysPerPeriod(sg);
         // the chance follows the scaled range, the player's cap only shortens the absence
-        Days sick = scaled(cfg().getSicknessDaysMin(), cfg().getSicknessDaysMax(), dpp, cfg());
-        if (random.chance(cfg().getSicknessProbabilityPerDay() * factor
-                * chanceFactor(cfg().getSicknessDaysMin(), cfg().getSicknessDaysMax(), sick))) {
-            Days d = sick.cappedAt(sg.getSickLeaveMaxDays());
+        if (random.chance(sicknessChance(sg))) {
+            Days d = sicknessDays(sg);
             start(sg, e, SICKNESS, random.intBetween(d.min(), d.max()));
             return true;
         }
         if (cfg().getAccidentRoles().contains(e.getJobRole().name())) {
             SatisfactionService.Needs n = satisfaction.needs(e);
             double risk = riskFactor(n.workload(), n.workingConditions(), cfg());
-            Days acc = scaled(cfg().getAccidentDaysMin(), cfg().getAccidentDaysMax(), dpp, cfg());
-            if (random.chance(cfg().getAccidentProbabilityPerDay() * risk * factor
-                    * chanceFactor(cfg().getAccidentDaysMin(), cfg().getAccidentDaysMax(), acc))) {
-                Days d = acc.cappedAt(sg.getSickLeaveMaxDays());
+            if (random.chance(accidentChance(sg) * risk)) {
+                Days d = accidentDays(sg);
                 start(sg, e, ACCIDENT, random.intBetween(d.min(), d.max()));
                 return true;
             }

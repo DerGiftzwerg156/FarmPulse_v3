@@ -413,6 +413,29 @@ class ApiIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    /** R31-B5 expert settings: duration cap and frequency of sickness / accidents. */
+    @Test
+    void sickLeaveExpertSettings() throws Exception {
+        mvc.perform(get("/api/settings/sick-leave")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.sicknessFrequencyPercent").value(100))
+                .andExpect(jsonPath("$.accidentFrequencyPercent").value(100))
+                .andExpect(jsonPath("$.duration.maxDays").doesNotExist());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/settings/sick-leave")
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of(
+                                "maxDays", 3, "sicknessFrequencyPercent", 0, "accidentFrequencyPercent", 200))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.duration.maxDays").value(3))
+                .andExpect(jsonPath("$.sicknessFrequencyPercent").value(0))
+                .andExpect(jsonPath("$.sicknessPerYear").value(0.0))
+                .andExpect(jsonPath("$.accidentFrequencyPercent").value(200));
+        mvc.perform(get("/api/settings/burdening-events")).andExpect(jsonPath("$.sickLeaveDuration.maxDays").value(3));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/settings/sick-leave")
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of(
+                                "maxDays", 0, "sicknessFrequencyPercent", 501, "accidentFrequencyPercent", 100))))
+                .andExpect(status().isBadRequest());
+    }
+
     @Test
     void storageAndPrices() throws Exception {
         mvc.perform(get("/api/storage")).andExpect(status().isOk())

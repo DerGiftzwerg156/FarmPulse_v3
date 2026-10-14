@@ -56,7 +56,7 @@ Homescreen.
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
 | **Tagebuch** | Die Chronik deines Hofs | – |
-| **Einstellungen** | Alle Einstellungen: KI, Hof, Ereignisse, Fragen und Helfer im Spiel, Tablet & Netzwerk | KI · Hof · Ereignisse · Im Spiel · Tablet & Netzwerk |
+| **Einstellungen** | Alle Einstellungen: KI, Hof, Ereignisse, Fragen und Helfer im Spiel, Tablet & Netzwerk, Experteneinstellungen | KI · Hof · Ereignisse · Im Spiel · Tablet & Netzwerk · Experte |
 
 Alte Lesezeichen (z. B. `/mailbox`, `/bank`, `/contracts`) funktionieren weiter und führen in die passende App.
 
@@ -420,8 +420,8 @@ eingestellt, kommt kein Angebot.
 - **Krankheit und Arbeitsunfall.** Ab und zu wird jemand krank (2–5 Tage) oder hat einen Arbeitsunfall (3–10 Tage;
   nur wer Maschinen fährt). Diese Dauer gilt für einen Monat mit 30 Tagen und passt sich deiner Einstellung *Tage pro
   Monat* an, mindestens ein Spieltag: Bei 2 Tagen pro Monat fällt jemand einen Tag aus, dafür etwas häufiger – über das
-  Jahr fehlen deine Leute insgesamt gleich lange. Unter **Einstellungen → Ereignisse** kannst du die Höchstdauer eines
-  Ausfalls zusätzlich begrenzen. Unfälle passieren öfter, wenn die Arbeitsbelastung hoch und die Maschinen verschlissen
+  Jahr fehlen deine Leute insgesamt gleich lange. Unter **Einstellungen → Experte** stellst du die Häufigkeit von
+  Krankheiten und Unfällen ein und kannst die Höchstdauer eines Ausfalls begrenzen. Unfälle passieren öfter, wenn die Arbeitsbelastung hoch und die Maschinen verschlissen
   sind, und seltener, wenn beides gut ist. Die Bürokraft (ohne sie die Person selbst) meldet den Ausfall, nach einem
   Unfall schreibt auch die Berufsgenossenschaft. Auf der Karte steht *krank bis …* bzw. *nach Arbeitsunfall bis …*; in
   der Zeit fährt die Person keinen Helfer, das Gehalt läuft weiter. Mit *Genesungswünsche* (einmal je Ausfall)
@@ -981,15 +981,23 @@ nicht nur für einen Spielstand, und lässt sich nur am Spiele-PC ändern.
 **Belastende Ereignisse:** Vor-Ort-Kontrolle des Sammelantrags, Kontrollen der Düngeverordnung, Tierseuchen,
 Krankheit und Arbeitsunfälle, Beschwerden über Nachtarbeit, Flurschaden auf Nachbarfeldern und Dieselklau einzeln
 ein- oder ausschalten (Standard an, Flurschaden aus; siehe **Ämter**, **Personal**, **Flurkarte** und **Werkstatt**).
-Unter Krankheit und Arbeitsunfälle siehst du, wie lange ein Ausfall bei deinen Tagen pro Monat dauert, und kannst eine
-**Höchstdauer eines Ausfalls** wählen (Standard *automatisch*).
+Unter Krankheit und Arbeitsunfälle siehst du, wie lange ein Ausfall bei deinen Tagen pro Monat dauert.
 In derselben Karte schaltest du die Angebote von **Großinvestoren** ein oder aus (Standard an; laufende Verträge gelten
 weiter, siehe **Bank**).
 Im idyllischen Weltmodus gibt es keine Tierseuchen und keinen Dieselklau, die übrigen Ereignisse kommen nur halb so
 oft bzw. kosten nur halb so viel.
 
-**Kredit und Felder im Spielmenü:** Die Reaktionen der Charaktere auf den Kredit oder Feldkauf im Spielmenü ein- oder
-ausschalten (Standard an). Ausgeschaltet bleibt nur der Tagebucheintrag.
+
+**Experte:** Feineinstellungen für Spieler, die bewusst nachjustieren wollen – die Standardwerte sind aufeinander
+abgestimmt.
+
+- *Krankheit und Arbeitsunfälle:* Häufigkeit von Krankheiten und von Arbeitsunfällen in Prozent (100 % = Standard,
+  0 % = nie, höchstens 500 %) mit der erwarteten Zahl der Fälle je Mitarbeiter und Spieljahr, dazu die **Höchstdauer
+  eines Ausfalls** (Standard *automatisch*; sie kürzt nur die Dauer, die Häufigkeit bleibt). *Auf Standard
+  zurücksetzen* stellt alles wieder her. Gilt je Spielstand.
+- *Kredit und Felder im Spielmenü:* Die Reaktionen der Charaktere auf den Kredit oder Feldkauf im Spielmenü ein- oder
+  ausschalten (Standard an). Ausgeschaltet bleibt nur der Tagebucheintrag.
+- *Erkannte Mods mit Überschneidungen:* Welche aktiven Mods sich mit FarmPulse überschneiden (nur Anzeige).
 
 **Fragen im Spiel:** Einfache Ja/Nein-Entscheidungen erscheinen als Fenster direkt im Spiel, immer zu den
 Bedingungen, die auch im Browser stehen. Einzeln einschaltbar (Standard: nur Anrufe):

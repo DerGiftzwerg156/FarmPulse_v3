@@ -1,4 +1,4 @@
-<!-- Tabs (owner decision 2026-10-06): KI | Hof | Ereignisse | Im Spiel | Tablet & Netzwerk -->
+<!-- Tabs (owner decision 2026-10-06): KI | Hof | Ereignisse | Im Spiel | Tablet & Netzwerk | Experte (2026-10-14) -->
 <section class="space-y-4">
   @switch (tab()) {
     @case ('hof') {
@@ -42,19 +42,9 @@
                   <input type="checkbox" [checked]="b[k]" (change)="saveBurden(k, $any($event.target).checked)" [attr.data-testid]="'burden-' + k" />
                   <span>{{ ('settings.burden.' + k) | t }}</span>
                 </label>
-                <!-- R31-B5: how long a sickness / accident lasts, scaled to the days per period -->
+                <!-- R31-B5: how long a sickness / accident lasts, scaled to the days per period (set under "Experte") -->
                 @if (k === 'sickLeave' && b.sickLeave && b.sickLeaveDuration; as d) {
-                  <div class="ml-6 mt-1 space-y-1" data-testid="sick-leave-duration">
-                    <label class="flex items-center gap-2 text-[11px] text-muted">
-                      <span>{{ 'settings.burden.sickLeaveMaxDays' | t }}</span>
-                      <select class="fp-input !w-auto !py-0.5 text-[11px]" [value]="'' + (d.maxDays ?? 0)" (change)="saveSickLeaveMaxDays(+$any($event.target).value)" data-testid="sick-leave-max-days">
-                        @for (o of sickLeaveMaxDayOptions; track o) {
-                          <option [value]="'' + o">{{ o === 0 ? ('settings.burden.sickLeaveAuto' | t) : o === 1 ? ('settings.burden.sickLeaveDay' | t) : ('settings.burden.sickLeaveDays' | t: { days: o }) }}</option>
-                        }
-                      </select>
-                    </label>
-                    <p class="text-[11px] text-muted" data-testid="sick-leave-range">{{ (d.scaled ? 'settings.burden.sickLeaveRangeScaled' : 'settings.burden.sickLeaveRange') | t: { dpp: d.daysPerPeriod, sickness: dayRange(d.sicknessDaysMin, d.sicknessDaysMax), accident: dayRange(d.accidentDaysMin, d.accidentDaysMax) } }}</p>
-                  </div>
+                  <p class="ml-6 mt-1 text-[11px] text-muted" data-testid="sick-leave-range">{{ (d.scaled ? 'settings.burden.sickLeaveRangeScaled' : 'settings.burden.sickLeaveRange') | t: { dpp: d.daysPerPeriod, sickness: dayRange(d.sicknessDaysMin, d.sicknessDaysMax), accident: dayRange(d.accidentDaysMin, d.accidentDaysMax) } }}</p>
                 }
               </li>
             }
@@ -62,16 +52,6 @@
           @if (b.tonePreset === 'IDYLLIC') {
             <p class="mt-1 text-[11px] text-warn" data-testid="burden-idyllic">{{ 'settings.burden.idyllic' | t: { percent: b.idyllicFactor * 100 } }}</p>
           }
-        } @else {
-          <p class="text-[12px] text-muted">–</p>
-        }
-      </app-card>
-      <app-card [title]="'settings.bypass.title' | t" data-testid="bypass-settings">
-        @if (bypass(); as b) {
-          <label class="flex items-start gap-2 text-[12px] text-text">
-            <input type="checkbox" [checked]="b.reactionsEnabled" (change)="saveBypass($any($event.target).checked)" data-testid="bypass-reactions" />
-            <span>{{ 'settings.bypass.reactions' | t }}</span>
-          </label>
         } @else {
           <p class="text-[12px] text-muted">–</p>
         }
@@ -113,6 +93,58 @@
       </app-card>
       <!-- Roadmap V2 R2-A1 / R2-A3, moved from "Personal" (owner decision 2026-10-06) -->
       <app-helper-settings-card />
+    }
+    @case ('experte') {
+      <!-- Expert settings (owner decision 2026-10-14): only for players who want to fine-tune; defaults are balanced -->
+      <p class="text-[12px] text-warn" data-testid="expert-hint">{{ 'settings.expert.hint' | t }}</p>
+      <!-- R31-B5: duration and frequency of sickness and work accidents -->
+      <app-card [title]="'settings.expert.sickLeave.title' | t" data-testid="sick-leave-settings">
+        @if (sickLeave(); as s) {
+          @if (!s.enabled) {
+            <p class="mb-2 text-[11px] text-warn" data-testid="sick-leave-off">{{ 'settings.expert.sickLeave.off' | t }}</p>
+          }
+          <div class="space-y-2">
+            <label class="flex flex-wrap items-center gap-2 text-[12px] text-text">
+              <span class="min-w-48">{{ 'settings.expert.sickLeave.sicknessFrequency' | t }}</span>
+              <input class="fp-input !w-24" type="number" min="0" max="500" step="10" [value]="s.sicknessFrequencyPercent"
+                (change)="saveFrequency('sicknessFrequencyPercent', $any($event.target))" data-testid="sickness-frequency" />
+              <span>%</span>
+            </label>
+            <label class="flex flex-wrap items-center gap-2 text-[12px] text-text">
+              <span class="min-w-48">{{ 'settings.expert.sickLeave.accidentFrequency' | t }}</span>
+              <input class="fp-input !w-24" type="number" min="0" max="500" step="10" [value]="s.accidentFrequencyPercent"
+                (change)="saveFrequency('accidentFrequencyPercent', $any($event.target))" data-testid="accident-frequency" />
+              <span>%</span>
+            </label>
+            <p class="text-[11px] text-muted" data-testid="sick-leave-per-year">{{ 'settings.expert.sickLeave.perYear' | t: { sickness: (s.sicknessPerYear | num: 1), accident: (s.accidentPerYear | num: 1) } }}</p>
+            <label class="flex flex-wrap items-center gap-2 text-[12px] text-text">
+              <span class="min-w-48">{{ 'settings.expert.sickLeave.maxDays' | t }}</span>
+              <select class="fp-input !w-auto" [value]="'' + (s.duration.maxDays ?? 0)" (change)="saveSickLeave({ maxDays: +$any($event.target).value })" data-testid="sick-leave-max-days">
+                @for (o of sickLeaveMaxDayOptions; track o) {
+                  <option [value]="'' + o">{{ o === 0 ? ('settings.expert.sickLeave.auto' | t) : o === 1 ? ('settings.expert.sickLeave.day' | t) : ('settings.expert.sickLeave.days' | t: { days: o }) }}</option>
+                }
+              </select>
+            </label>
+            <p class="text-[11px] text-muted" data-testid="sick-leave-expert-range">{{ (s.duration.scaled ? 'settings.burden.sickLeaveRangeScaled' : 'settings.burden.sickLeaveRange') | t: { dpp: s.duration.daysPerPeriod, sickness: dayRange(s.duration.sicknessDaysMin, s.duration.sicknessDaysMax), accident: dayRange(s.duration.accidentDaysMin, s.duration.accidentDaysMax) } }}</p>
+            <p class="text-[11px] text-muted">{{ 'settings.expert.sickLeave.hint' | t }}</p>
+            <app-button variant="secondary" (pressed)="saveSickLeave({ maxDays: 0, sicknessFrequencyPercent: 100, accidentFrequencyPercent: 100 })" data-testid="sick-leave-reset">{{ 'settings.expert.reset' | t }}</app-button>
+          </div>
+        } @else {
+          <p class="text-[12px] text-muted">–</p>
+        }
+      </app-card>
+      <!-- Roadmap V2 R2-D, moved from "Ereignisse" (owner decision 2026-10-14) -->
+      <app-card [title]="'settings.bypass.title' | t" data-testid="bypass-settings">
+        @if (bypass(); as b) {
+          <label class="flex items-start gap-2 text-[12px] text-text">
+            <input type="checkbox" [checked]="b.reactionsEnabled" (change)="saveBypass($any($event.target).checked)" data-testid="bypass-reactions" />
+            <span>{{ 'settings.bypass.reactions' | t }}</span>
+          </label>
+        } @else {
+          <p class="text-[12px] text-muted">–</p>
+        }
+      </app-card>
+      <!-- moved from "Im Spiel" (owner decision 2026-10-14) -->
       <app-card [title]="'settings.detectedMods' | t" data-testid="mods-settings">
         <ul class="text-[12px]" data-testid="detected-mods">
           @for (m of store.savegame()?.detectedMods ?? []; track m) {

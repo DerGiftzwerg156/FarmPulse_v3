@@ -128,33 +128,74 @@ describe('Settings', () => {
     expect(el.querySelector('[data-testid="fields-untracked"]')?.textContent).toContain('aktuellen Mod-Version');
   });
 
-  // R31-B5: the absence follows the days per period, the player can cap it
-  it('shows the scaled sick leave and caps it', () => {
-    const { toTab, el, http, fixture } = setup();
-    const burden = { areaCheck: true, fertilizer: true, disease: true, sickLeave: true, nightWork: true, cropDamage: false,
-      dieselTheft: true, tonePreset: 'REALISTIC', idyllicFactor: 0.5, investors: true,
-      sickLeaveDuration: { maxDays: null, daysPerPeriod: 2, scaled: true, sicknessDaysMin: 1, sicknessDaysMax: 1,
-        accidentDaysMin: 1, accidentDaysMax: 1 } };
-    http.expectOne('/api/settings/burdening-events').flush(burden);
+  // R31-B5: the absence follows the days per period; the summary stays under "Ereignisse"
+  it('shows the scaled sick leave under Ereignisse', () => {
+    const { toTab, el, http } = setup();
+    http.expectOne('/api/settings/burdening-events').flush({ areaCheck: true, fertilizer: true, disease: true,
+      sickLeave: true, nightWork: true, cropDamage: false, dieselTheft: true, tonePreset: 'REALISTIC', idyllicFactor: 0.5,
+      investors: true, sickLeaveDuration: { maxDays: null, daysPerPeriod: 2, scaled: true, sicknessDaysMin: 1,
+        sicknessDaysMax: 1, accidentDaysMin: 1, accidentDaysMax: 1 } });
     toTab('ereignisse');
     expect(el.querySelector('[data-testid="sick-leave-range"]')?.textContent).toContain('bei 2 Tagen pro Monat: Krankheit 1, Arbeitsunfall 1');
+    expect(el.querySelector('[data-testid="sick-leave-max-days"]')).toBeNull(); // expert setting
+    expect(el.querySelector('[data-testid="bypass-settings"]')).toBeNull(); // moved to "Experte"
+  });
+
+  // Expert settings (owner decision 2026-10-14): frequency and cap of sickness / accidents, the moved cards
+  it('sets frequency and cap of the sick leave in the expert tab', () => {
+    const { toTab, el, http, fixture } = setup();
+    const sick = { enabled: true, sicknessFrequencyPercent: 100, accidentFrequencyPercent: 100, sicknessPerYear: 1.8,
+      accidentPerYear: 1.08, duration: { maxDays: null, daysPerPeriod: 30, scaled: true, sicknessDaysMin: 2,
+        sicknessDaysMax: 5, accidentDaysMin: 3, accidentDaysMax: 10 } };
+    http.expectOne('/api/settings/sick-leave').flush(sick);
+    toTab('experte');
+    expect(el.querySelector('[data-testid="expert-hint"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="bypass-settings"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="mods-settings"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="sick-leave-per-year"]')?.textContent).toContain('etwa 1,8 Krankheitsfälle');
+    expect(el.querySelector('[data-testid="sick-leave-off"]')).toBeNull();
+
+    const freq = el.querySelector('[data-testid="sickness-frequency"]') as HTMLInputElement;
+    freq.value = '50';
+    freq.dispatchEvent(new Event('change'));
+    let req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/sick-leave');
+    expect(req.request.body).toEqual({ maxDays: 0, sicknessFrequencyPercent: 50, accidentFrequencyPercent: 100 });
+    req.flush({ ...sick, sicknessFrequencyPercent: 50, sicknessPerYear: 0.9 });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="sick-leave-per-year"]')?.textContent).toContain('etwa 0,9 Krankheitsfälle');
+    freq.value = ''; // an emptied field keeps the value, nothing is saved
+    freq.dispatchEvent(new Event('change'));
+    http.expectNone((r) => r.method === 'PUT' && r.url === '/api/settings/sick-leave');
+    expect(freq.value).toBe('50');
+
+    const acc = el.querySelector('[data-testid="accident-frequency"]') as HTMLInputElement;
+    acc.value = '9999'; // clamped
+    acc.dispatchEvent(new Event('change'));
+    req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/sick-leave');
+    expect(req.request.body.accidentFrequencyPercent).toBe(500);
+    expect(acc.value).toBe('500');
+    req.flush({ ...sick, sicknessFrequencyPercent: 50, accidentFrequencyPercent: 500 });
+    fixture.detectChanges();
+
     const select = el.querySelector('[data-testid="sick-leave-max-days"]') as HTMLSelectElement;
     expect(select.value).toBe('0');
     select.value = '3';
     select.dispatchEvent(new Event('change'));
-    const req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/burdening-events');
-    expect(req.request.body.sickLeaveMaxDays).toBe(3);
-    expect(req.request.body.sickLeave).toBe(true);
-    req.flush({ ...burden, sickLeaveDuration: { ...burden.sickLeaveDuration, maxDays: 3, daysPerPeriod: 30,
-      sicknessDaysMin: 2, sicknessDaysMax: 3, accidentDaysMin: 3, accidentDaysMax: 3 } });
+    req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/sick-leave');
+    expect(req.request.body).toEqual({ maxDays: 3, sicknessFrequencyPercent: 50, accidentFrequencyPercent: 500 });
+    req.flush({ ...sick, duration: { ...sick.duration, maxDays: 3, sicknessDaysMax: 3, accidentDaysMax: 3 } });
     fixture.detectChanges();
-    expect(el.querySelector('[data-testid="sick-leave-range"]')?.textContent).toContain('Krankheit 2–3, Arbeitsunfall 3');
+    expect(el.querySelector('[data-testid="sick-leave-expert-range"]')?.textContent).toContain('Krankheit 2–3, Arbeitsunfall 3');
+
+    (el.querySelector('[data-testid="sick-leave-reset"] button') as HTMLButtonElement).click();
+    req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/sick-leave');
+    expect(req.request.body).toEqual({ maxDays: 0, sicknessFrequencyPercent: 100, accidentFrequencyPercent: 100 });
   });
 
   // Roadmap V2 R2-D
   it('switches the reactions to the game menus off', () => {
     const { toTab, el, http, fixture } = setup(undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });
-    toTab('ereignisse');
+    toTab('experte'); // expert setting since 2026-10-14
     const box = el.querySelector('[data-testid="bypass-reactions"]') as HTMLInputElement;
     box.checked = false;
     box.dispatchEvent(new Event('change'));

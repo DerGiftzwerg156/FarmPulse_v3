@@ -182,6 +182,28 @@ class SickLeaveTest {
     }
 
     @Test
+    void theFrequencyIsSetPerSavegame() {
+        sg.setCalDaysPerPeriod(30); // no scaling: 0.005 per day
+        assertThat(sickLeave.sicknessChance(sg)).isCloseTo(0.005, org.assertj.core.data.Offset.offset(1e-12));
+        assertThat(sickLeave.perYear(sg, sickLeave.sicknessChance(sg))).isCloseTo(1.8, org.assertj.core.data.Offset.offset(1e-9));
+        sg.setSicknessFrequencyPercent(200);
+        sg.setAccidentFrequencyPercent(50);
+        assertThat(sickLeave.sicknessChance(sg)).isCloseTo(0.01, org.assertj.core.data.Offset.offset(1e-12));
+        assertThat(sickLeave.accidentChance(sg)).isCloseTo(0.0015, org.assertj.core.data.Offset.offset(1e-12));
+        sg.setTonePreset(TonePreset.IDYLLIC); // x 0.5
+        assertThat(sickLeave.sicknessChance(sg)).isCloseTo(0.005, org.assertj.core.data.Offset.offset(1e-12));
+
+        // 0 % = never, even at a configured certainty
+        props.getFormulas().getSickLeave().setSicknessProbabilityPerDay(2.0);
+        props.getFormulas().getSickLeave().setAccidentProbabilityPerDay(2.0);
+        sg.setSicknessFrequencyPercent(0);
+        sg.setAccidentFrequencyPercent(0);
+        Employee e = employee(JobRole.MACHINE_OPERATOR, "Jonas Meyer");
+        day();
+        assertThat(e.getAbsenceKind()).isNull();
+    }
+
+    @Test
     void aRunningAbsenceIsRescaledWhenTheDaysPerPeriodChange() {
         sg.setCalDaysPerPeriod(28);
         GameTime.Anchor before = new GameTime.Anchor(0, sg.getCalMonthStartGameTime(), 28, 2);

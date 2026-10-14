@@ -356,9 +356,16 @@ public class Savegame {
     @Column(name = "burden_sick_leave", nullable = false)
     private boolean burdenSickLeave = true;
 
-    /** R31-B5: the player's cap of one sickness / accident absence in game days (settings); null = automatic only. */
+    /** R31-B5: the player's cap of one sickness / accident absence in game days (expert settings); null = automatic. */
     @Column(name = "sick_leave_max_days")
     private Integer sickLeaveMaxDays;
+
+    /** R31-B5: frequency of sickness / work accidents in percent of the configured chance (expert settings). */
+    @Column(name = "sickness_frequency_percent", nullable = false)
+    private int sicknessFrequencyPercent = 100;
+
+    @Column(name = "accident_frequency_percent", nullable = false)
+    private int accidentFrequencyPercent = 100;
 
     /** Roadmap V3.1 R31-B3: confirmed findings of the fertiliser rules (the first one is a warning, later ones a fine). */
     @Column(name = "fertilizer_violations", nullable = false)

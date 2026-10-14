@@ -455,10 +455,19 @@ export class ApiService {
     cropDamage: boolean;
     dieselTheft: boolean;
     investors?: boolean;
-    /** R31-B5: cap of one absence in game days, 0 = automatic only. */
-    sickLeaveMaxDays?: number;
   }): Observable<M.BurdenSettingsView> {
     return this.http.put<M.BurdenSettingsView>(`${this.base}/settings/burdening-events`, r);
+  }
+  /** R31-B5 expert settings: duration cap (0 = automatic) and frequency of sickness / accidents in percent. */
+  sickLeaveSettings(): Observable<M.SickLeaveSettingsView> {
+    return this.get('/settings/sick-leave');
+  }
+  saveSickLeaveSettings(r: {
+    maxDays: number;
+    sicknessFrequencyPercent: number;
+    accidentFrequencyPercent: number;
+  }): Observable<M.SickLeaveSettingsView> {
+    return this.http.put<M.SickLeaveSettingsView>(`${this.base}/settings/sick-leave`, r);
   }
   /** Roadmap V3.1 R31-B1: area payment application. */
   directPayment(): Observable<M.DirectPaymentStatusView> {

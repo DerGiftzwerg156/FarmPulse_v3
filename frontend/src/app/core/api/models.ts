@@ -1363,6 +1363,19 @@ export interface SickLeaveDurationView {
   accidentDaysMax: number;
 }
 
+/**
+ * R31-B5 expert settings: duration, frequency in percent and the expected cases per employee and FS25 year
+ * (accidents: per employee of the accident roles under normal conditions); enabled = the switch under "Ereignisse".
+ */
+export interface SickLeaveSettingsView {
+  enabled: boolean;
+  duration: SickLeaveDurationView;
+  sicknessFrequencyPercent: number;
+  accidentFrequencyPercent: number;
+  sicknessPerYear: number;
+  accidentPerYear: number;
+}
+
 /** R31-B1: one field of an area payment application. */
 export interface DirectPaymentFieldView {
   farmlandId: number;
