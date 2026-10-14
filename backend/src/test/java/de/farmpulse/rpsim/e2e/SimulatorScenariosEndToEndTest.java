@@ -296,6 +296,48 @@ class SimulatorScenariosEndToEndTest {
         });
     }
 
+    /**
+     * Roadmap V4 (R4-Q3): the consumption counter, the feed stock, the food values of the husbandry, the purchase prices,
+     * the food groups and the crop windows of hofplanung reach the backend; an older scenario leaves them out.
+     */
+    @Test
+    void roadmapV4FieldsArriveFromThePlanningScenario() {
+        Savegame plan = link("hofplanung", "sim_hofplanung_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(plan.getId()).orElseThrow();
+            var f = facts.latest(sg).orElseThrow();
+            assertThat(f.inputs()).extracting(i -> i.fillType()).containsExactly("FERTILIZER", "SEEDS", "LIQUIDMANURE");
+            assertThat(f.inputs().get(0).helperLiters()).isEqualTo(1800.0);
+            assertThat(f.feedStock()).extracting(a -> a.fillType()).containsExactly("DRYGRASS_WINDROW", "SILAGE", "STRAW");
+            var h = f.husbandries().get(0);
+            assertThat(h.foodLitersPerHour()).isEqualTo(41.67);
+            assertThat(h.trough()).extracting(a -> a.fillType()).containsExactly("DRYGRASS_WINDROW", "SILAGE");
+            assertThat(h.feedConsumed()).extracting(c -> c.liters()).containsExactly(12000.0, 36000.0);
+            var ctx = facts.marketContext(sg).orElseThrow();
+            assertThat(ctx.fillTypeCosts()).anySatisfy(c -> {
+                assertThat(c.fillType()).isEqualTo("SEEDS");
+                assertThat(c.costPerLiter()).isEqualTo(0.9);
+            });
+            assertThat(ctx.animalFood()).singleElement().satisfies(a -> assertThat(a.groups()).extracting(g -> g.title())
+                    .containsExactly("Futtermischung", "Silage", "Heu"));
+            assertThat(ctx.fruitTypes()).filteredOn(t -> t.name().equals("WHEAT")).singleElement().satisfies(t -> {
+                assertThat(t.plantablePeriods()).containsExactly(6, 7);
+                assertThat(t.seedUsagePerSqm()).isEqualTo(0.1);
+            });
+        });
+        Savegame old = link("feldbuch", "sim_alt4_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame sg = savegames.findById(old.getId()).orElseThrow();
+            var f = facts.latest(sg).orElseThrow();
+            assertThat(f.inputs()).isNull();
+            assertThat(f.feedStock()).isNull();
+            var ctx = facts.marketContext(sg).orElseThrow();
+            assertThat(ctx.fillTypeCosts()).isNull();
+            assertThat(ctx.animalFood()).isNull();
+            assertThat(ctx.fruitTypes()).allSatisfy(t -> assertThat(t.plantablePeriods()).isNull());
+        });
+    }
+
     /** Roadmap V3.2 (R32-Q2): a HUSBANDRY_TRANSFER goes out, the simulator takes the milk out of the stable. */
     @Test
     void husbandryTransferTakesTheMilkOutOfTheStable() {

@@ -571,10 +571,13 @@ function RPSimGameAdapter:collectMarketContext(conflictMods)
     raw.fieldShapes = self:collectFieldShapes()
     -- Roadmap V3.3 R33-F4: the crops of the map for the field book (read once per mission start)
     raw.fruitTypes = self:collectFruitTypes()
+    -- Roadmap V4 R4-F1: the food groups per animal type for the feed balance (read once per mission start)
+    raw.animalFood = self:collectAnimalFood()
     return raw
 end
 
---- Roadmap V3.3 R33-F4 (contract R33-Q1): every crop of the map for the crop dropdown of the field book.
+--- Roadmap V3.3 R33-F4 (contract R33-Q1): every crop of the map for the crop dropdown of the field book. Roadmap V4
+-- R4-A2: plus seedUsagePerSqm, litersPerSqm and the sowing / harvest windows (periodsWhere).
 -- g_fruitTypeManager:getFruitTypes() (LUADOC Fruits/FruitTypeManager.md); per fruit type: name and index
 -- (FruitTypeDesc), the standard product getFillTypeNameByFruitTypeIndex, the title of its fill type
 -- (FruitTypeDesc.fillType = the FillTypeDesc, FillTypeDesc.title), regrows and needsRolling (FruitTypeDesc.md). Further
@@ -591,12 +594,21 @@ function RPSimGameAdapter:collectFruitTypes()
         return nil
     end
     local converters = safe(function() return g_fruitTypeManager.fruitTypeConverters end, nil)
+    local growthMode = safe(function() return g_currentMission.missionInfo.growthMode end, nil)
     local list = {}
     for _, desc in pairs(fruitTypes) do
         safe(function()
             local e = { name = desc.name, regrows = desc.regrows == true, needsRolling = desc.needsRolling ~= false }
             e.fillType = safe(function() return g_fruitTypeManager:getFillTypeNameByFruitTypeIndex(desc.index) end, nil)
             e.title = safe(function() return desc.fillType.title end, nil)
+            -- Roadmap V4 R4-A2: seed use and base yield per m² (FruitTypeDesc: seeding#litersPerSqm,
+            -- harvest#litersPerSqm) and the sowing / harvest windows in the growth mode of the savegame
+            e.seedUsagePerSqm = desc.seedUsagePerSqm
+            e.litersPerSqm = desc.literPerSqm
+            if growthMode ~= nil then
+                e.plantablePeriods = RPSimGameAdapter.periodsWhere(desc, "getIsPlantableInPeriod", growthMode)
+                e.harvestablePeriods = RPSimGameAdapter.periodsWhere(desc, "getIsHarvestableInPeriod", growthMode)
+            end
             local products = {}
             for _, converter in pairs(type(converters) == "table" and converters or {}) do
                 local entry = type(converter) == "table" and converter[desc.index] or nil
@@ -615,6 +627,25 @@ function RPSimGameAdapter:collectFruitTypes()
     return list
 end
 
+--- Roadmap V4 R4-A2: the periods 1..12 in which `method` (getIsPlantableInPeriod / getIsHarvestableInPeriod of
+-- FruitTypeDesc, LUADOC Fruits/FruitTypeDesc.md; SowingMachine calls the first with missionInfo.growthMode and
+-- environment.currentPeriod) is true; nil when the crop has no such method or a call fails.
+function RPSimGameAdapter.periodsWhere(desc, method, growthMode)
+    if type(desc[method]) ~= "function" then
+        return nil
+    end
+    local ok, list = pcall(function()
+        local out = {}
+        for period = 1, 12 do
+            if desc[method](desc, growthMode, period) then
+                out[#out + 1] = period
+            end
+        end
+        return out
+    end)
+    return ok and list or nil
+end
+
 --- Roadmap V3.3 R33-F3: field, crop and product of litres a harvesting machine got into its tank, or nil when it does
 -- not stand on a farmland of the player farm (missions on other farms' fields, roads). Farmland at the position of the
 -- machine (getWorldTranslation(rootNode) as in Combine:addCutterArea, g_farmlandManager:getFarmlandIdAtWorldPosition,
@@ -622,10 +653,8 @@ end
 -- inputFruitType; without it the fruit type of the product (getFruitTypeIndexByFillTypeIndex), the same fallback
 -- Combine:addCutterArea uses for the straw (LUADOC Specializations/Combine.md).
 function RPSimGameAdapter:harvestEntry(combine, inputFruitType, outputFillType)
-    local x, _, z = getWorldTranslation(combine.rootNode)
-    local farmlandId = g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)
-    if type(farmlandId) ~= "number" or farmlandId <= 0
-        or g_farmlandManager:getFarmlandOwner(farmlandId) ~= self:getFarmId() then
+    local farmlandId = self:ownFarmlandAt(combine)
+    if farmlandId == nil then
         return nil
     end
     local fruitIndex = inputFruitType
@@ -638,6 +667,56 @@ function RPSimGameAdapter:harvestEntry(combine, inputFruitType, outputFillType)
         return nil
     end
     return { farmlandId = farmlandId, fruitType = fruitType, fillType = fillType }
+end
+
+--- Farmland of the player farm at the position of a vehicle (getWorldTranslation(rootNode),
+-- g_farmlandManager:getFarmlandIdAtWorldPosition, owner getFarmlandOwner), or nil (roads, other farms' fields).
+function RPSimGameAdapter:ownFarmlandAt(vehicle)
+    local x, _, z = getWorldTranslation(vehicle.rootNode)
+    local farmlandId = g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)
+    if type(farmlandId) ~= "number" or farmlandId <= 0
+        or g_farmlandManager:getFarmlandOwner(farmlandId) ~= self:getFarmId() then
+        return nil
+    end
+    return farmlandId
+end
+
+--- Roadmap V4 R4-D1: field and fill type of litres a sowing machine or sprayer used, or nil when it does not stand on a
+-- farmland of the player farm (leased fields belong to the player farm in the game, FARMLAND_TRANSFER TO_PLAYER).
+function RPSimGameAdapter:inputEntry(vehicle, fillTypeIndex)
+    local farmlandId = self:ownFarmlandAt(vehicle)
+    local fillType = fillTypeIndex ~= nil and g_fillTypeManager:getFillTypeNameByIndex(fillTypeIndex) or nil
+    if farmlandId == nil or type(fillType) ~= "string" or fillType == "" or fillType == "UNKNOWN" then
+        return nil
+    end
+    return { farmlandId = farmlandId, fillType = fillType }
+end
+
+--- Roadmap V4 R4-D1: purchase price per litre of the named fill types - the price the game charges a helper
+-- (g_currentMission.economyManager:getCostPerLiter(fillType, false), called so in SowingMachine.md / Sprayer.md);
+-- fallback FillTypeDesc.pricePerLiter (LUADOC FillTypes/FillTypeDesc.md). Unknown names are left out.
+function RPSimGameAdapter:collectFillTypeCosts(names)
+    local list, seen = {}, {}
+    for _, name in ipairs(names or {}) do
+        if type(name) == "string" and not seen[name] then
+            seen[name] = true
+            safe(function()
+                local index = g_fillTypeManager:getFillTypeIndexByName(name)
+                if index == nil then
+                    return nil
+                end
+                local cost = safe(function() return g_currentMission.economyManager:getCostPerLiter(index, false) end, nil)
+                if type(cost) ~= "number" then
+                    cost = safe(function() return g_fillTypeManager:getFillTypeByIndex(index).pricePerLiter end, nil)
+                end
+                if type(cost) == "number" then
+                    list[#list + 1] = { fillType = name, costPerLiter = cost }
+                end
+                return true
+            end)
+        end
+    end
+    return list
 end
 
 --- Roadmap V3.1 R31-K1: the outline of every field of the map - the nodes of field.polygonPoints (dump field/Field.lua)
@@ -1249,8 +1328,104 @@ function RPSimGameAdapter.husbandryState(p)
         end, nil)
         state.freeSlots = safe(function() return p:getNumOfFreeAnimalSlots() end, nil)
         state.storage = RPSimGameAdapter.husbandryMilkStorage(p)
+        RPSimGameAdapter.husbandryFeed(p, state)
         return state
     end, nil)
+end
+
+--- Roadmap V4 R4-F1: food and straw values of a husbandry (dump animals/husbandry/placeables/PlaceableHusbandryFood.lua
+-- and PlaceableHusbandryStraw.lua, LUADOC Specializations/PlaceableHusbandryFood.md), each left out when missing:
+--   foodLitersPerHour  getFoodLitersPerHour(), else spec_husbandryFood.litersPerHour (the sum over the clusters of
+--                      subType.input.food:get(age) x animals / 24, onHusbandryAnimalsUpdate)
+--   foodCapacity       getFoodCapacity() (the trough capacity, placeable.husbandry.food#capacity)
+--   trough             spec_husbandryFood.fillLevels [fillTypeIndex] = litres - a mixture lands as its ingredients
+--                      (addFood splits it), so the trough holds plain fill types only
+--   strawLitersPerHour spec_husbandryStraw.inputLitersPerHour (subType.input.straw, per game hour)
+--   straw              getHusbandryFillLevel(spec_husbandryStraw.inputFillType, farmId) (the straw in the stable)
+function RPSimGameAdapter.husbandryFeed(p, state)
+    local food = p.spec_husbandryFood
+    if food ~= nil then
+        state.foodLitersPerHour = safe(function()
+            if p.getFoodLitersPerHour ~= nil then
+                return p:getFoodLitersPerHour()
+            end
+            return food.litersPerHour
+        end, nil)
+        state.foodCapacity = safe(function() return p:getFoodCapacity() end, nil)
+        state.trough = safe(function()
+            local list = {}
+            for index, level in pairs(food.fillLevels or {}) do
+                local name = g_fillTypeManager:getFillTypeNameByIndex(index)
+                if name ~= nil then
+                    list[#list + 1] = { fillType = name, amount = level }
+                end
+            end
+            return list
+        end, nil)
+    end
+    local straw = p.spec_husbandryStraw
+    if straw ~= nil then
+        state.strawLitersPerHour = straw.inputLitersPerHour
+        state.straw = safe(function() return p:getHusbandryFillLevel(straw.inputFillType, p:getOwnerFarmId()) end, nil)
+    end
+end
+
+--- Roadmap V4 R4-F1: husbandry and fill type of food the animals of an own husbandry ate (removeFood hook in RPSim.lua),
+-- or nil for a husbandry of another farm or an unknown fill type.
+function RPSimGameAdapter:feedEntry(p, fillTypeIndex)
+    if p == nil or p:getOwnerFarmId() ~= self:getFarmId() then
+        return nil
+    end
+    local fillType = fillTypeIndex ~= nil and g_fillTypeManager:getFillTypeNameByIndex(fillTypeIndex) or nil
+    local uniqueId = p:getUniqueId()
+    if type(fillType) ~= "string" or fillType == "" or uniqueId == nil then
+        return nil
+    end
+    return { husbandryUniqueId = tostring(uniqueId), fillType = fillType }
+end
+
+--- Roadmap V4 R4-F1: the food groups of every animal type (market_context.animalFood). The animal types come from
+-- g_currentMission.animalSystem:getTypes() (type.name, type.typeIndex); per type
+-- animalFoodSystem:getAnimalFood(typeIndex).groups = { {title, productionWeight, fillTypes = {fillTypeIndex}} } and
+-- animalFoodSystem:getMixturesByAnimalTypeIndex(typeIndex) = { mixture fillTypeIndex } - read the same way by
+-- PlaceableHusbandryFood:onPostLoad / getFoodInfos. The food of the map does not change during a game: read once and
+-- kept. nil without an animal or animal food system.
+function RPSimGameAdapter:collectAnimalFood()
+    if self.animalFoodCache ~= nil then
+        return self.animalFoodCache
+    end
+    local foodSystem = safe(function() return g_currentMission.animalFoodSystem end, nil)
+    local types = safe(function()
+        local system = g_currentMission.animalSystem
+        return system.getTypes ~= nil and system:getTypes() or system.types
+    end, nil)
+    if foodSystem == nil or type(types) ~= "table" then
+        return nil
+    end
+    local function names(indices)
+        local list = {}
+        for _, index in pairs(type(indices) == "table" and indices or {}) do
+            list[#list + 1] = safe(function() return g_fillTypeManager:getFillTypeNameByIndex(index) end, nil)
+        end
+        return list
+    end
+    local list = {}
+    for key, animalType in pairs(types) do
+        safe(function()
+            local typeIndex = animalType.typeIndex or key
+            local entry = { animalType = string.upper(animalType.name), groups = {} }
+            local animalFood = foodSystem:getAnimalFood(typeIndex)
+            for _, group in ipairs(animalFood ~= nil and animalFood.groups or {}) do
+                entry.groups[#entry.groups + 1] = { title = group.title, productionWeight = group.productionWeight,
+                    fillTypes = names(group.fillTypes) }
+            end
+            entry.mixtures = names(safe(function() return foodSystem:getMixturesByAnimalTypeIndex(typeIndex) end, nil))
+            list[#list + 1] = entry
+            return true
+        end)
+    end
+    self.animalFoodCache = list
+    return list
 end
 
 --- Roadmap V3.2 R32-Q1: the milk sorts in the storage of a husbandry (dump animals/husbandry/placeables, LUADOC

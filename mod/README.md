@@ -61,6 +61,20 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   Fruchtumwandlungen) und den Ernte-Zähler (`harvests[]` = `{ farmlandId, fruitType, fillType, liters }`): Hooks auf
   `Combine.addCutterArea` und – als zweiter Weg – um `Cutter.onEndWorkAreaProcessing` zählen die Liter, die im Tank
   landen, nur auf eigenen Flurstücken und nie doppelt; der Zähler steht im Mod-Spielstand.
+- Exportiert für den **Deckungsbeitrag** (Roadmap V4, R4-D1) je eigenem Feld und Sorte den Verbrauchs-Zähler
+  (`inputs[]` = `{ farmlandId, fillType, liters, helperLiters }`): Hooks auf `SowingMachine.onEndWorkAreaProcessing`
+  (Saatgut der gesäten Fläche, Formel des Spiels) und `Sprayer.onEndWorkAreaProcessing` (Dünger, Kalk, Herbizid,
+  Gülle …) zählen nur auf eigenen Flurstücken und nur auf dem Server; was ein Helfer selbst gekauft hat, steht in
+  `helperLiters`. Der Zähler steht im Mod-Spielstand. Dazu die Einkaufspreise je Liter
+  (`market_context.fillTypeCosts[]`, Mod-Einstellung `costFillTypes`).
+- Exportiert für die **Futterbilanz** (Roadmap V4, R4-F1) je Stall den Bedarf des Spiels (`foodLitersPerHour`,
+  `strawLitersPerHour`), Trog und Stroh im Stall und den Futter-Zähler (`feedConsumed[]`): ein Hook auf
+  `PlaceableHusbandryFood.removeFood` zählt, was die Tiere aus dem Trog fressen (nur eigene Ställe, nur auf dem Server;
+  der Zähler steht im Mod-Spielstand). Dazu den Futtervorrat in eigenen Silos, Erweiterungen und Fahrsilos
+  (`feedStock[]`), die Futtergruppen je Tierart (`market_context.animalFood[]`) und die Einkaufspreise des Futters.
+- Exportiert für den **Anbauplaner** (Roadmap V4, R4-A2) je Kultur der Karte Saatbedarf und Grundertrag je m² und die
+  Saat- und Erntefenster im Wachstumsmodus des Spielstands (`market_context.fruitTypes[].plantablePeriods` /
+  `harvestablePeriods`).
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben

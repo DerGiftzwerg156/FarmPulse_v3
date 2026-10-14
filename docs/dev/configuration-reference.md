@@ -841,6 +841,46 @@ placeholders.
 | `rpsim.formulas.fields.harvest-congratulation-trust-delta` | `1` | Trust of the cooperative when every harvestable field of an FS25 year was harvested and nothing withered. | Roadmap V2 R2-C4 |
 | `rpsim.formulas.fields.max-messages-per-month` | `2` | Cap of the field messages (neighbor, gossip, congratulation) per game month. | Roadmap V2 R2-C4 |
 | `rpsim.formulas.field-book.default-years` | `5` | Field book evaluation: the last x harvest years (up to and including the current FS25 year) shown when the player has not chosen a period; the choice is kept per savegame (owner decision 2026-10-09). | Roadmap V3.3 R33-E1 |
+| `rpsim.formulas.field-margin.categories.SEEDS` | `SEED` | Contribution margin: fill type of the consumption counter -> kind of the direct costs (other fill types count as other inputs). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.FERTILIZER` | `FERTILIZER` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.LIQUIDFERTILIZER` | `FERTILIZER` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.LIME` | `LIME` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.HERBICIDE` | `PROTECTION` | As above (plant protection). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.LIQUIDMANURE` | `MANURE` | As above (farmyard manure, valued with `manure-cost-per-liter`). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.MANURE` | `MANURE` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.categories.DIGESTATE` | `MANURE` | As above. | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.helper-surcharge` | `1.5` | Litres a helper bought while working are valued with the purchase price x this factor (the game books them so). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.manure-cost-per-liter` | `0` | Euro per litre of own farmyard manure (owner decision 2026-10-13: free, its litres are shown). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.fallback-seed-cost-per-ha` | `120` | Estimate without the consumption counter (older mod): seed per hectare when the seed use or the seed price of the crop is unknown (placeholder). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.fallback-fertilizer-cost-per-ha` | `90` | Estimate: per fertilisation tick of the field book and hectare (placeholder). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.fallback-lime-cost-per-ha` | `70` | Estimate: liming per hectare (placeholder). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.fallback-protection-cost-per-ha` | `60` | Estimate: weed control per hectare (placeholder). | Roadmap V4 R4-D1 |
+| `rpsim.formulas.field-margin.revenue-categories` | `[SOLD_PRODUCTS, HARVEST_INCOME]` | Money types of the booking statement whose sales (with fill type and litres) give the realised price of a harvest. | Roadmap V4 R4-D2 |
+| `rpsim.formulas.field-margin.internal-price-share` | `0.8` | Product without a sale and without a price on the harvest day (e.g. silage for the own animals): purchase price x this share. | Roadmap V4 R4-D2 |
+| `rpsim.formulas.field-margin.overheads-default` | `true` | Switch "Gemeinkosten verteilen" when the player has not set it (owner decision 2026-10-13: on). | Roadmap V4 R4-D3 |
+| `rpsim.formulas.field-margin.overhead-money-types` | `[PURCHASE_FUEL, VEHICLE_RUNNING_COSTS, VEHICLE_REPAIR, AI, LEASING_COSTS]` | Money types of the booking journal distributed by area over the fields at every month end. | Roadmap V4 R4-D3 |
+| `rpsim.formulas.field-margin.overhead-driver-salaries` | `true` | The monthly salaries of the employees who drive helpers (machine operators, apprentices, seasonal workers) count as overheads too. | Roadmap V4 R4-D3 |
+| `rpsim.formulas.field-margin.advice-enabled` | `true` | The cooperative writes once when a field had a negative contribution margin in two harvest years in a row. | Roadmap V4 R4-D6 |
+| `rpsim.formulas.crop-planning.rotation-years` | `2` | Crop planner, "Fruchtfolge vorschlagen": a crop that did not stand on the field in the last x seasons. | Roadmap V4 R4-A1 |
+| `rpsim.formulas.crop-planning.base-yield-factor` | `1.0` | Expected yield without field book values: `litersPerSqm × 10000 ×` this factor (owner decision 2026-10-13: the base yield without fertiliser and lime). | Roadmap V4 R4-A3 |
+| `rpsim.formulas.crop-planning.autumn-periods` | `[6, 7, 8, 9]` | FS25 periods of an autumn sowing (August-November): the plan shows the closed period for slurry and manure of the fertiliser ordinance. | Roadmap V4 R4-A2 |
+| `rpsim.formulas.crop-planning.feed-equivalents.CHAFF` | `SILAGE` | Harvest product that becomes another feed fill type when the plan is compared with the yearly feed need (chaff is ensiled to silage, 1 : 1). | Roadmap V4 R4-A4 |
+| `rpsim.formulas.crop-planning.reminders-default` | `true` | Switch "Erinnerung zur Saatzeit" when the player has not set it (owner decision 2026-10-13: on): the cooperative reminds of planned fields whose sowing window ends this month. | Roadmap V4 R4-A5 |
+| `rpsim.formulas.crop-planning.discuss-answer-hour` | `9` | "Plan besprechen": the cooperative answers the next game day at this hour. | Roadmap V4 R4-A6 |
+| `rpsim.formulas.feed-balance.measure-days` | `3` | Feed balance: the measured daily need of a stable is the mean of the eaten litres of the last x game days, scaled by the need of the game now / in the measuring period (owner decision 2026-10-13). | Roadmap V4 R4-F1 |
+| `rpsim.formulas.feed-balance.ok-months` | `3` | Traffic light of a food group in game months of reach: green from this value (owner decision 2026-10-13). | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.warn-months` | `1` | Red below this many game months of reach (yellow in between); a group turning red brings the warning mail. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.manual-stale-days` | `10` | An entered stock (bales, pallets) unchanged for this many game days shows "bitte prüfen" (owner decision 2026-10-13). | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.ROUND_125` | `4000` | Litres per bale of the size the player chooses when entering bales (placeholder, manual test plan 30.12). | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.ROUND_150` | `5500` | As above. | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.SQUARE_120` | `2500` | As above. | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.SQUARE_180` | `4500` | As above. | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.SQUARE_240` | `8000` | As above. | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.harvest-crops.SILAGE` | `[GRASS, MAIZE]` | Crops a feed fill type comes from: the next game month one of them can be harvested (fruitTypes[].harvestablePeriods) gives the date and the shortfall until then. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.harvest-crops.GRASS_WINDROW` | `[GRASS]` | As above. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.harvest-crops.DRYGRASS_WINDROW` | `[GRASS]` | As above. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.harvest-crops.STRAW` | `[WHEAT, BARLEY, OAT]` | As above. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.warnings-enabled` | `true` | The animal keeper (without one the cooperative) writes when a food group turns red, at most once per game month and group (owner decision 2026-10-13). | Roadmap V4 R4-F4 |
 | `rpsim.formulas.fields.hints-enabled` | `true` | Field work hints of the cooperative (harvest ready, lime, plowing); the player can also switch them off per savegame in the settings. | Roadmap V2 R2-C6 |
 | `rpsim.formulas.fields.hint-cooldown-days` | `7` | At most one hint per this many game days. | Roadmap V2 R2-C6 |
 

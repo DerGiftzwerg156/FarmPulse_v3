@@ -119,6 +119,20 @@
             </a>
           }
 
+          @if (feed()?.worst; as w) {
+            <!-- Roadmap V4 R4-F3: tile while a food group is yellow or red; opens the tab "Futter" -->
+            <a routerLink="/stall/futter" class="block rounded-[20px] border bg-surface p-5 hover:border-accent/50" [class.border-danger/60]="w.status === 'RED'"
+              [class.border-warn/60]="w.status === 'YELLOW'" data-testid="feed-widget">
+              <div class="mb-3 flex items-center gap-2">
+                <app-icon name="barn" size="h-4 w-4" [class]="w.status === 'RED' ? 'text-danger' : 'text-warn'" />
+                <span class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-text">{{ 'tabs.stable.futter' | t }}</span>
+              </div>
+              <div class="font-display text-[20px] font-bold leading-tight" [class.text-danger]="w.status === 'RED'" [class.text-warn]="w.status === 'YELLOW'"
+                data-testid="feed-days">{{ 'home.feed' | t: { days: (w.reachDays ?? 0 | num) } }}</div>
+              <div class="text-[13px] text-[#B9C8C2]">{{ 'home.feedGroup' | t: { group: (w.kind === 'BEDDING' ? ('feed.bedding' | t) : w.title), animal: (w.animalType | label: 'animalType') } }}</div>
+            </a>
+          }
+
           @if (weakestBarn(); as b) {
             <a routerLink="/stall" class="block rounded-[20px] border bg-surface p-5 hover:border-accent/50" [class.border-warn/60]="stableAlarm()" [class.border-border]="!stableAlarm()"
               data-testid="stable-widget">

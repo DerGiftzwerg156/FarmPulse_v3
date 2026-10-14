@@ -12,6 +12,73 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Roadmap V4 - gaps closed** (owner decisions 2026-10-14 in `QUESTIONS.md`): the contribution margin card colours the
+  crops like the field book evaluation, links each calculation to its field book entry and back (`?entry=`), shows the
+  expected revenue of a running season with a plan, and corrects lines by litres, price per 1000 l or amount (own
+  revenue with litres and price). The feed tab compares the yearly need with stock plus the planned harvest and takes
+  the next harvest from the crop plan. The crop planner presets the contractor (field, sowing, crop) and the forward
+  contract (fill type), counts contracts due before the harvest window in the storage check, follows the authority's
+  rule for the rotation cut, keeps sown plans in the planned harvest and books the costs of a running sowing window
+  into the next month of the liquidity plan.
+- **Crop planner [R4-A]** (owner decisions 2026-10-13 in `QUESTIONS.md`): a new tab *Anbauplanung* in the app
+  *Feldbuch*. Per own or leased field the plan for the next season (the running one while nothing is sown): crop or
+  fallow, harvest product, sowing month and note, "Wie Vorjahr" and "Fruchtfolge vorschlagen". Hints that never block:
+  rotation with the lost premium and the cut, sowing window and "too late", storage, the fertiliser ordinance for an
+  autumn sowing, lime before sowing. Forecast per field with its sources (average of the field, of the crop or the base
+  yield x 1.0; forward contract, best price or internal value; direct costs of D or seed only) and the margin of the
+  plan against "wie Vorjahr". Seed need, the share sold ahead and the feed coverage against the yearly need of F, the
+  costs as planned expenses in the liquidity plan. A sowing task and calendar dates for the window, a reminder of the
+  cooperative (switch, default on), MATCHED / DEVIATED and plan / actual, "Plan besprechen" once per year (answer the
+  next game day). Mod: seed use, base yield and the sowing / harvest windows of every crop. Backend:
+  `CropPlanService`, `/api/crop-plans`, migration V47, values under `rpsim.formulas.crop-planning.*`.
+- **Feed balance [R4-F]** (owner decisions 2026-10-13 in `QUESTIONS.md`): a new tab *Futter* in the app *Stall*. Per
+  animal type and food group of the game (plus the bedding): the need per day - measured over the last 3 game days
+  and scaled at once when the herd changes, before that the need of the game split by `productionWeight`
+  ("geschätzt") -, the stock of own silos, silo extensions, bunker silos and troughs plus bales the player enters
+  (they sink when a trough or the straw rises without a silo falling; "bitte prüfen" after 10 game days), the reach in
+  days and game months with a traffic light (green from 3, red below 1), the day it runs empty, the next harvest of
+  the crop with the shortfall, the yearly need and the monthly feed costs. A red group brings a mail of the animal
+  keeper (without one the cooperative), at most once per game month and group; yellow and red groups are tasks and
+  calendar entries, and the home screen shows the tile "Futter reicht noch x Tage". Mod: food values per husbandry, a
+  hook on `PlaceableHusbandryFood.removeFood` counting the eaten feed (`feedConsumed`, kept in the mod savegame),
+  `feedStock` and `market_context.animalFood`; feed prices in `fillTypeCosts`. Backend: `FeedBalanceService`,
+  `/api/feed-balance`, migration V46, values under `rpsim.formulas.feed-balance.*`.
+- **Contribution margin per field [R4-D]** (owner decisions 2026-10-13 in `QUESTIONS.md`): a new card
+  *Deckungsbeitrag* in *Bank → Betriebsergebnis*. Per field book entry: revenue (litres x the realised average price
+  of the product from the harvest to the end of the following FS25 year, else the best price on the harvest day, else
+  the purchase price x 0.8), direct costs (seed, fertiliser, lime, plant protection counted by the mod and valued with
+  the purchase price of that moment, helper purchases x 1.5, own farmyard manure 0 euro), contractor fees, premiums,
+  rent and - switch on by default - overheads distributed by area; per entry and per hectare, a table field x year,
+  ranking, averages per crop and a bar chart, in the period of the field book evaluation. Lines can be corrected and
+  own lines added; a closed year is locked. With an older mod the direct costs are estimated per hectare. The farm
+  report gets the section "Deckungsbeitrag je Kultur" and the cooperative writes once after two loss years in a row on
+  a field. Mod: hooks on `SowingMachine` / `Sprayer.onEndWorkAreaProcessing` count the consumption per own field
+  (`farm_facts.inputs`, kept in the mod savegame) and `market_context.fillTypeCosts` carries the purchase prices
+  (mod setting `costFillTypes`). Backend: `FieldMarginService`, `/api/field-margin`, migration V45, values under
+  `rpsim.formulas.field-margin.*`.
+- **Roadmap V4 groundwork - bridge contract for field margin, feed balance and crop planner [R4-Q]** (contract only,
+  like R31-Q / R33-Q; the mod reads the values in the game with R4-D1 / R4-F1 / R4-A2):
+  - `farm_facts.json`, optional: `inputs` = `{ farmlandId, fillType, liters, helperLiters }`, a cumulative consumption
+    counter per own field and fill type (seed, fertiliser, lime, herbicide, slurry ...; `helperLiters` = the part a
+    helper bought), `feedStock` = feed in own silos, silo extensions and bunker silos, and per husbandry
+    `foodLitersPerHour`, `foodCapacity`, `trough`, `strawLitersPerHour`, `straw` and the feed counter `feedConsumed`.
+  - `market_context.json`, optional: `fillTypeCosts` (purchase price per litre), `animalFood` (food groups per animal
+    type in the order of the game, mixtures) and per crop `seedUsagePerSqm`, `litersPerSqm`, `plantablePeriods` and
+    `harvestablePeriods`.
+  - Normalised in `RPSimFarmFacts.build` / `RPSimMarketContext.build`; `BridgeDtos` / `BridgeValidator` read and check
+    them. No table and no configuration value yet (they come with D, F and A).
+  - Bridge simulator: scenario `hofplanung`, control endpoints `POST /input`, `POST /feed` and `POST /eat`; counters,
+    trough and stock are part of the simulated savegame.
+  - Docs: bridge protocol with FS25 sources, manual test plan section 30, testing, simulator README, roadmap status.
+- **Roadmap V4 (`docs/architecture/ROADMAP_V4.md`):** plan for the contribution margin per field, the crop planner
+  for the next season and the feed balance of the husbandries, checked against the FS25 code. The mod would count the
+  seed, fertiliser, lime and herbicide used per own field (hooks on `SowingMachine` / `Sprayer`) and the feed eaten per
+  husbandry (`PlaceableHusbandryFood.removeFood`), and export purchase prices, sowing and harvest windows per crop,
+  trough contents, food groups and the feed stock in silos and bunker silos. The backend values each field book entry
+  (revenue, direct costs, contractor, premiums, rent, overheads by area behind a switch that is on by default) on a
+  card in the app *Bank*, checks a crop plan (rotation, sowing window, silo space, fertiliser rules), forecasts yield
+  and margin, and shows how many days the feed lasts per food group in a new tab of the app *Stall*, with warnings by
+  the animal keeper in game months. Owner decisions are in `QUESTIONS.md` (2026-10-13).
 - **Field book evaluation [R33-E]** (owner decisions 2026-10-08 / 2026-10-09 in `QUESTIONS.md`): new tab *Auswertung*
   in the app *Feldbuch*. The last x harvest years up to the current FS25 year (default
   `rpsim.formulas.field-book.default-years` = 5, selectable from 1 to all years, kept per savegame - migration V44);

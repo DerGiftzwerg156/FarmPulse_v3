@@ -221,6 +221,18 @@ public class Savegame {
     @Column(name = "field_book_years")
     private Integer fieldBookYears;
 
+    /** Roadmap V4 R4-D3 (owner decision 2026-10-13): switch "Gemeinkosten verteilen"; null = default (on). */
+    @Column(name = "field_margin_overheads")
+    private Boolean fieldMarginOverheads;
+
+    /** Roadmap V4 R4-A5 (owner decision 2026-10-13): reminder mail at sowing time; null = default (on). */
+    @Column(name = "crop_plan_reminders")
+    private Boolean cropPlanReminders;
+
+    /** Roadmap V4 R4-A6: FS25 year the plan was last sent to the cooperative ("Plan besprechen", once per plan year). */
+    @Column(name = "crop_plan_discussed_year")
+    private Integer cropPlanDiscussedYear;
+
     // ---- Roadmap V2 R2-D: the vanilla loan and the field menu become part of the story
 
     /** D1: remaining vanilla loan of the last export and its game time (a smaller game time = reload). */

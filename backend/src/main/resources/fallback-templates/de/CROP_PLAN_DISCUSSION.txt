@@ -1,0 +1,7 @@
+Zu deinem Anbauplan
+Hallo,
+
+wir haben uns deinen Plan für {{plans}} Feld/Felder angesehen. Erwartet ist ein Deckungsbeitrag von {{margin}} €. Hinweise: {{rotationFields}} Feld/Felder ohne Fruchtfolgewechsel, {{windowFields}} außerhalb des Saatfensters, {{limeFields}} sollten vor der Saat gekalkt werden. Die Einzelheiten stehen im Feldbuch unter „Anbauplanung“.
+
+Viele Grüße
+{{characterName}}

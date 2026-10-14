@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { RouterLink } from '@angular/router';
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 import { ApiService } from '../../core/api/api.service';
-import { CalendarOverviewView, FarmlandView, FinanceOverview, MilestoneView, ReputationView, StablesView } from '../../core/api/models';
+import { CalendarOverviewView, FarmlandView, FinanceOverview, MilestoneView, ReputationView, StablesView, FeedBalanceView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -38,6 +38,8 @@ export class Home {
   readonly finances = signal<FinanceOverview | null>(null);
   readonly fields = signal<FarmlandView[]>([]);
   readonly stables = signal<StablesView | null>(null);
+  /** Roadmap V4 R4-F3: the tightest yellow or red food group (tile only while there is one). */
+  readonly feed = signal<FeedBalanceView | null>(null);
   readonly loaded = signal(false);
   /** Roadmap V3 R3-T1: reached milestones only (owner decision); the widget stays hidden without one. */
   readonly milestones = signal<MilestoneView[]>([]);
@@ -91,7 +93,9 @@ export class Home {
       finances: safe(this.api.finances(), null as FinanceOverview | null),
       fields: safe(this.api.farmlands(), [] as FarmlandView[]),
       stables: safe(this.api.stables(), null as StablesView | null),
+      feed: safe(this.api.feedBalance(), null as FeedBalanceView | null),
     }).subscribe((r) => {
+      this.feed.set(r.feed);
       this.calendar.set(r.calendar);
       this.reputation.set(r.reputation);
       this.finances.set(r.finances);

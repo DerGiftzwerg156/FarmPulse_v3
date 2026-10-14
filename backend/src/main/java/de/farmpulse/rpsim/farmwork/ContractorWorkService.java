@@ -71,7 +71,7 @@ public class ContractorWorkService {
     public static final String RELATED = "CONTRACTOR_WORK";
     /** The works in the order the contractor does them on one day (harvest first, fertilising after sowing). */
     public static final List<String> WORKS = List.of("HARVEST", "PLOW", "CULTIVATE", "LIME", "SOW", "FERTILIZE");
-    static final Map<String, String> WORK_TITLES = Map.of("PLOW", "Pflügen", "CULTIVATE", "Grubbern", "LIME", "Kalken",
+    public static final Map<String, String> WORK_TITLES = Map.of("PLOW", "Pflügen", "CULTIVATE", "Grubbern", "LIME", "Kalken",
             "SOW", "Säen", "FERTILIZE", "Düngen", "HARVEST", "Ernten");
 
     /** One work for the form; {@code reason} names why it is not possible (null = possible). */

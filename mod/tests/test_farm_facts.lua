@@ -374,4 +374,75 @@ function T.TestFarmFacts:testHarvestCounterIsNormalisedAndSorted()
         { farmlandId = 7, fruitType = "MAIZE", fillType = "MAIZE", liters = 1000 } })
 end
 
+-- Roadmap V4 (R4-Q1 / R4-Q2): consumption counter per field, feed stock and the food values of a husbandry, contract
+-- only (the mod reads them in the game with R4-D1 / R4-F1)
+function T.TestFarmFacts:testRoadmapV4BlocksAreAbsentWhenNotCollected()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0,
+        husbandries = { { husbandryUniqueId = "hus_1", health = 90, food = 0.5, conditions = {} } } }, RPSimConfig.new())
+    lu.assertNil(doc.inputs)
+    lu.assertNil(doc.feedStock)
+    lu.assertEquals(doc.husbandries[1], { husbandryUniqueId = "hus_1", health = 90, food = 0.5, conditions = {} })
+    -- an empty list is a real answer
+    local json = RPSimJson.encode(RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, inputs = {},
+        feedStock = {} }, RPSimConfig.new()))
+    lu.assertStrContains(json, '"inputs":[]')
+    lu.assertStrContains(json, '"feedStock":[]')
+end
+
+function T.TestFarmFacts:testInputCounterIsNormalisedAndSorted()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, inputs = {
+        { farmlandId = 7, fillType = "SEEDS", liters = 812.6, helperLiters = 400.2 },
+        { farmlandId = 7, fillType = "FERTILIZER", liters = 1500 },
+        { farmlandId = 3, fillType = "LIME", liters = 0, helperLiters = 0 },
+        { farmlandId = 4, fillType = "HERBICIDE", liters = 100, helperLiters = 250 },
+        { farmlandId = 4, fillType = "SEEDS", liters = 10, helperLiters = -3 },
+        { farmlandId = 4, fillType = "", liters = 10 },
+        { farmlandId = 4, fillType = "LIME", liters = -1 },
+        { farmlandId = 4, fillType = "LIME", liters = 0 / 0 },
+        { fillType = "LIME", liters = 10 },
+        { farmlandId = 4, liters = 10 } } }, RPSimConfig.new())
+    lu.assertEquals(doc.inputs, {
+        { farmlandId = 3, fillType = "LIME", liters = 0, helperLiters = 0 },
+        { farmlandId = 4, fillType = "HERBICIDE", liters = 100, helperLiters = 100 },
+        { farmlandId = 4, fillType = "SEEDS", liters = 10, helperLiters = 0 },
+        { farmlandId = 7, fillType = "FERTILIZER", liters = 1500, helperLiters = 0 },
+        { farmlandId = 7, fillType = "SEEDS", liters = 813, helperLiters = 400 } })
+end
+
+function T.TestFarmFacts:testFeedStockIsSummedPerFillType()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, feedStock = {
+        { fillType = "SILAGE", amount = 120000.4 },
+        { fillType = "SILAGE", amount = 30000.4 },
+        { fillType = "DRYGRASS_WINDROW", amount = 0.2 },
+        { fillType = "STRAW", amount = 8000 },
+        { fillType = "HAY", amount = -5 },
+        { fillType = "", amount = 10 },
+        { amount = 10 } } }, RPSimConfig.new())
+    lu.assertEquals(doc.feedStock, {
+        { fillType = "SILAGE", amount = 150001 },
+        { fillType = "STRAW", amount = 8000 } })
+end
+
+function T.TestFarmFacts:testHusbandryFeedValuesAreNormalised()
+    local doc = RPSimFarmFacts.build({ savegameId = "s", gameTime = 0, balance = 0, husbandries = {
+        { husbandryUniqueId = "hus_1", health = 90, food = 0.3, conditions = {},
+            foodLitersPerHour = 41.666, foodCapacity = 20000.4, strawLitersPerHour = 8.333, straw = 1200.6,
+            trough = { { fillType = "SILAGE", amount = 4000.2 }, { fillType = "HAY", amount = 0.3 },
+                { fillType = "SILAGE", amount = 1000 }, { fillType = "GRASS_WINDROW", amount = -1 } },
+            feedConsumed = { { fillType = "SILAGE", liters = 98000.5 }, { fillType = "HAY", liters = 0 },
+                { fillType = "", liters = 5 } } },
+        { husbandryUniqueId = "hus_2", health = 80, food = 0, conditions = {},
+            foodLitersPerHour = -1, foodCapacity = 0 / 0, strawLitersPerHour = "8", straw = -2, trough = "SILAGE",
+            feedConsumed = {} } } }, RPSimConfig.new())
+    local h1, h2 = doc.husbandries[1], doc.husbandries[2]
+    lu.assertEquals({ h1.foodLitersPerHour, h1.foodCapacity, h1.strawLitersPerHour, h1.straw },
+        { 41.67, 20000, 8.33, 1201 })
+    lu.assertEquals(h1.trough, { { fillType = "SILAGE", amount = 5000 } })
+    lu.assertEquals(h1.feedConsumed, { { fillType = "HAY", liters = 0 }, { fillType = "SILAGE", liters = 98001 } })
+    for _, key in ipairs({ "foodLitersPerHour", "foodCapacity", "strawLitersPerHour", "straw", "trough" }) do
+        lu.assertNil(h2[key], key)
+    end
+    lu.assertEquals(h2.feedConsumed, {})
+end
+
 return T

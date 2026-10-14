@@ -102,6 +102,8 @@ Dorfzeitung, Dorfchat, Stammtisch und Hofkarte. Geplant:
 Großinvestoren mit Gegenleistung.
 [Roadmap V3.3](docs/architecture/ROADMAP_V3.3.md) – Feldbuch: je Feld und Erntejahr Kultur, Düngung, Kalk, Walzen,
 Unkraut, Mulchen und Erntemenge, mit Auswertung über die letzten Jahre.
+[Roadmap V4](docs/architecture/ROADMAP_V4.md) – Deckungsbeitrag je Feld, Futterbilanz der Ställe und Anbauplaner für
+die nächste Saison.
 
 Weitere Werkzeuge: [Bridge-Simulator](tools/bridge-simulator/README.md) ·
 [Screenshot-Generator](tools/screenshot-generator/README.md) · [Beitragen](CONTRIBUTING.md) ·

@@ -1093,6 +1093,57 @@
       "MEASURED": "gemessen",
       "ENTERED": "eingetragen",
       "ESTIMATED": "geschätzt"
+    },
+    "marginKind": {
+      "SEED": "Saatgut",
+      "FERTILIZER": "Dünger",
+      "LIME": "Kalk",
+      "PROTECTION": "Pflanzenschutz",
+      "MANURE": "Wirtschaftsdünger",
+      "OTHER_INPUT": "Sonstiges Betriebsmittel",
+      "CONTRACTOR": "Lohnunternehmer",
+      "PREMIUM": "Prämie",
+      "RENT": "Pacht",
+      "OVERHEAD": "Gemeinkosten",
+      "EXTRA_COST": "Eigene Kosten",
+      "EXTRA_REVENUE": "Eigene Leistung"
+    },
+    "marginSource": {
+      "MEASURED": "gemessen",
+      "DISTRIBUTED": "verteilt",
+      "ENTERED": "eingetragen",
+      "ESTIMATED": "geschätzt"
+    },
+    "marginPriceSource": {
+      "REALISED": "erzielt",
+      "HARVEST_DAY": "Preis am Erntetag",
+      "INTERNAL": "Verrechnungswert",
+      "ENTERED": "eingetragen"
+    },
+    "feedStatus": {
+      "GREEN": "reicht",
+      "YELLOW": "knapp",
+      "RED": "kritisch",
+      "UNUSED": "nicht gefüttert"
+    },
+    "baleSize": {
+      "ROUND_125": "Rundballen 1,25 m",
+      "ROUND_150": "Rundballen 1,50 m",
+      "SQUARE_120": "Quaderballen 1,20 m",
+      "SQUARE_180": "Quaderballen 1,80 m",
+      "SQUARE_240": "Quaderballen 2,40 m"
+    },
+    "cropYieldSource": {
+      "FIELD": "Ø dieses Feldes",
+      "CROP": "Ø der Kultur",
+      "BASE": "Grundertrag",
+      "null": "unbekannt"
+    },
+    "cropPriceSource": {
+      "FORWARD": "Vorkontrakt",
+      "BEST": "bester Preis",
+      "INTERNAL": "Verrechnungswert",
+      "null": "unbekannt"
     }
   },
   "onboarding": {
@@ -1737,7 +1788,9 @@
     "stableFood": "Futter {food} %",
     "animals": "Tiere",
     "milestones": "Meilensteine",
-    "milestoneReached": "Erreicht: {time}"
+    "milestoneReached": "Erreicht: {time}",
+    "feed": "Futter reicht noch {days} Tage",
+    "feedGroup": "{group} · {animal}"
   },
   "settings": {
     "ai": "KI-Anbieter",
@@ -1950,7 +2003,10 @@
     "toDiary": "Zum Tagebuch",
     "counterOfferShort": "Gegenangebot der Bank",
     "leaseOutEndsHint": "Der Pächter möchte verlängern – ohne Antwort bekommst du das Feld zum Ende zurück.",
-    "investorDue": "Lieferung an {name}"
+    "investorDue": "Lieferung an {name}",
+    "feedDue": "Futter: {group} reicht noch {days} Tage",
+    "sowDue": "Feld {field}: {crop} säen",
+    "sowHint": "Saatfenster laut Anbauplanung"
   },
   "calendar": {
     "nextDays": "Nächste Tage",
@@ -1985,7 +2041,10 @@
       "bulkOrderStart": "Liefermonat beginnt: {fillType} an {sellPoint} ({amount})",
       "bulkOrderEnd": "Liefermonat endet: {quantity} l {fillType} an {sellPoint}",
       "investorDelivery": "{name} wartet noch auf {remaining} {unit} {what}",
-      "investorRepayment": "Rückzahlung an {name}: {amount}"
+      "investorRepayment": "Rückzahlung an {name}: {amount}",
+      "feedEmpty": "Futter leer: {group} ({animal})",
+      "sowWindowStart": "Saatfenster beginnt: Feld {field} ({crop})",
+      "sowWindowEnd": "Saatfenster endet: Feld {field} ({crop})"
     },
     "debits": {
       "salaries": "Gehälter ({n})",
@@ -2418,7 +2477,10 @@
       "investorLine": "{name} ({kind}): {amount}, {capital}",
       "investorMoney": "Kapital {capital} · Ausschüttungen {payouts} · Ausgleich {compensations} · Rückzahlung {repayments}",
       "investorDelivered": "geliefert: {items}",
-      "investorBreaches": "Vertragsbrüche: {n}"
+      "investorBreaches": "Vertragsbrüche: {n}",
+      "margins": "Deckungsbeitrag je Kultur",
+      "marginLine": "{ha} ha · {perHa} je ha",
+      "noMargins": "Kein Deckungsbeitrag für dieses Jahr."
     },
     "leaseConsentGiven": "Verpachtung erlaubt",
     "requestLeaseConsent": "Zustimmung zur Verpachtung"
@@ -2498,10 +2560,12 @@
     },
     "fieldbook": {
       "dokumentation": "Dokumentation",
-      "auswertung": "Auswertung"
+      "auswertung": "Auswertung",
+      "anbauplanung": "Anbauplanung"
     },
     "stable": {
       "staelle": "Ställe",
+      "futter": "Futter",
       "handel": "Handel & Tierarzt"
     },
     "workshop": {
@@ -2717,6 +2781,171 @@
       },
       "hint": "Die Auswertung zeigt die letzten Erntejahre bis zum laufenden FS25-Jahr (Standard 5, frei wählbar bis „alle Jahre“; die Wahl bleibt je Spielstand). Laufende Einträge und zurückgehaltene Einträge eines abgeschlossenen Jahres zählen nicht. Das Diagramm zeigt für ein Feld die Liter je Hektar je Erntejahr, gefärbt nach Kultur. Der Vergleich nennt je Kultur Ø l/ha mit und ohne jede Maßnahme, immer mit n.",
       "other": "Sonstige"
-    }
+    },
+    "marginLink": "Deckungsbeitrag"
+  },
+  "margin": {
+    "title": "Deckungsbeitrag",
+    "overheads": "Gemeinkosten verteilen",
+    "estimatedHint": "Der Mod zählt Saatgut und Dünger noch nicht: Die Direktkosten sind je Hektar geschätzt. Mit dem aktuellen Mod FS25_RPSim werden sie gemessen.",
+    "empty": "Noch keine Einträge im Feldbuch.",
+    "running": "Laufende Saison",
+    "ranking": "Rangliste der Felder (Ø Deckungsbeitrag je ha)",
+    "best": "bestes",
+    "weakest": "schwächstes",
+    "crops": "Je Kultur (Ø je ha)",
+    "revenueHa": "Leistung",
+    "directHa": "Direktkosten",
+    "marginHa": "DB",
+    "noCrops": "Im Zeitraum gibt es keine Einträge mit Leistung.",
+    "chart": "Deckungsbeitrag je Hektar im Erntejahr",
+    "chartLabel": "Deckungsbeitrag je Hektar je Feld im Erntejahr {year}",
+    "noBars": "In diesem Erntejahr hat kein Feld einen Deckungsbeitrag.",
+    "harvestYear": "Erntejahr {year}",
+    "locked": "Jahr abgeschlossen",
+    "estimated": "geschätzt",
+    "incomplete": "Preis fehlt",
+    "price": "Preis",
+    "provisional": "vorläufig",
+    "pricePlaceholder": "€ je 1000 l",
+    "line": "Zeile",
+    "liters": "Liter",
+    "amount": "Betrag",
+    "corrected": "korrigiert",
+    "held": "zurückgehalten",
+    "helper": "davon {liters} l vom Helfer gekauft",
+    "noPrice": "kein Preis",
+    "edit": "ändern",
+    "noLines": "Noch keine Kosten.",
+    "addKind": "Art",
+    "note": "Text",
+    "add": "Zeile hinzufügen",
+    "total": {
+      "revenue": "Leistung",
+      "directCosts": "Direktkosten",
+      "freeOfDirectCosts": "Direktkostenfreie Leistung",
+      "contractor": "Lohnunternehmer",
+      "margin": "Deckungsbeitrag",
+      "premiums": "Prämien",
+      "rent": "Pacht",
+      "overheads": "Gemeinkosten (verteilt)",
+      "result": "Feldergebnis"
+    },
+    "hint": "Je Feldbuch-Eintrag: Leistung (Liter × erzielter Preis, sonst Preis am Erntetag, sonst Verrechnungswert) minus Direktkosten (Saatgut, Dünger, Kalk, Pflanzenschutz zum Einkaufspreis; eigene Gülle 0 €) und Lohnunternehmer = Deckungsbeitrag. Danach Prämien, Pacht und – mit dem Schalter – die nach Fläche verteilten Gemeinkosten. Der Zeitraum ist derselbe wie in der Feldbuch-Auswertung. Korrekturen gelten, bis du sie mit ↺ zurückgibst.",
+    "fieldBookLink": "Im Feldbuch",
+    "expected": "erwartet {amount} / ha",
+    "expectedRevenue": "Erwartete Leistung: {amount} ({lph} l/ha × {price} je 1000 l)",
+    "expectedBasis": {
+      "PLAN": "laut Anbauplan",
+      "ACTUAL": "Prognose der stehenden Kultur, weicht vom Plan ab"
+    },
+    "priceLine": "€ / 1000 l",
+    "litersLine": "Liter",
+    "amountLine": "Betrag"
+  },
+  "feed": {
+    "untracked": "Die Futterbilanz braucht den neuen Mod: Bitte FS25_RPSim aktualisieren, dann erscheinen Bedarf, Vorrat und Reichweite je Futtergruppe.",
+    "notCounted": "Der Mod zählt das gefressene Futter noch nicht – gemessen wird, wie weit die Tröge sinken.",
+    "group": "Futtergruppe",
+    "needPerDay": "Bedarf / Tag",
+    "stock": "Vorrat",
+    "reach": "Reichweite",
+    "emptyAt": "Leer am",
+    "year": "Jahr",
+    "monthlyCost": "Kosten / Monat",
+    "bedding": "Einstreu (Stroh)",
+    "askNeighbor": "Beim Nachbarn anfragen",
+    "estimated": "geschätzt",
+    "measured": "gemessen",
+    "ofManual": "davon {liters} l eingetragen",
+    "reachValue": "{days} Tage · {months} Monate",
+    "nextHarvest": "nächste Ernte ab {time}",
+    "shortfall": "bis dahin fehlen {liters} l",
+    "covered": "gedeckt zu {percent} %",
+    "yearNeed": "Jahresbedarf {liters} l",
+    "stables": "Ställe und Tröge",
+    "stableNeed": "Bedarf {liters} l am Tag",
+    "trough": "Trog {liters} von {capacity} l",
+    "troughHours": "leer in {hours} Stunden",
+    "straw": "Stroh im Stall {liters} l, Einstreu {perDay} l am Tag",
+    "stableCost": "Futterkosten {amount} im Monat",
+    "totalCost": "Futterkosten aller Ställe: {amount} im Monat",
+    "manual": "Ballen und sonstiger Vorrat",
+    "manualHint": "Ballen und Paletten zählt das Spiel nicht mit. Trag sie hier ein – der Vorrat sinkt, sobald Futter ohne Silo in den Trog oder Stroh in den Stall kommt.",
+    "balesLeft": "noch {bales} × {size}",
+    "age": "eingetragen vor {days} Tagen",
+    "stale": "bitte prüfen",
+    "check": "Stimmt noch",
+    "remove": "Löschen",
+    "fillType": "Sorte",
+    "bales": "Ballen",
+    "baleSize": "Größe",
+    "orLiters": "oder Liter",
+    "note": "Notiz",
+    "add": "Eintragen",
+    "withPlan": "mit geplanter Ernte ({liters} l) gedeckt zu {percent} %",
+    "planShort": "Fehlmenge {liters} l",
+    "planSurplus": "Überschuss {liters} l",
+    "fromPlan": "(laut Anbauplan)"
+  },
+  "cropPlan": {
+    "title": "Anbauplanung nächste Saison",
+    "reminders": "Erinnerung zur Saatzeit",
+    "discuss": "Plan besprechen",
+    "discussed": "Plan besprochen",
+    "noWindows": "Der Mod meldet keine Saatfenster (ältere Version) – alle Monate stehen zur Wahl, die Fensterprüfung entfällt.",
+    "sum": "Erwarteter Deckungsbeitrag des Plans: {plan} (wie Vorjahr: {previous})",
+    "now": "jetzt: {crop}",
+    "last": "zuletzt: {crop}",
+    "crop": "Kultur",
+    "fallow": "Brache",
+    "product": "Ernteprodukt",
+    "sowMonth": "Saatmonat",
+    "window": "im Saatfenster",
+    "note": "Notiz",
+    "same": "Wie Vorjahr",
+    "suggest": "Fruchtfolge vorschlagen",
+    "remove": "Plan löschen",
+    "target": {
+      "RUNNING": "laufende Saison",
+      "NEXT": "nächste Saison"
+    },
+    "forecast": "erwartet {lph} l/ha ({source}), {price} je 1000 l ({priceSource}), Deckungsbeitrag {margin}",
+    "noForecast": "Prognose unbekannt",
+    "seedOnly": "Direktkosten nur Saatgut, der Rest ist unbekannt",
+    "windowNow": "Saatfenster jetzt bis {end}",
+    "windowNext": "Saatfenster {start} bis {end}",
+    "contractor": "Lohnunternehmer beauftragen",
+    "check": {
+      "ROTATION_SAME": "Gleiche Kultur wie zuvor: Fruchtfolgeprämie entfällt für {hectares} ha (≈ {premium} €)",
+      "ROTATION_CUT": "Zweite Wiederholung: Das Amt kürzt die ganze Fruchtfolgeprämie um {share} %",
+      "SOW_OUTSIDE_WINDOW": "{period} liegt nicht im Saatfenster ({periods})",
+      "TOO_LATE": "{crop} wird erst nach dem letzten Saatmonat geerntet – zu spät für dieses Jahr",
+      "STORAGE": "Lagerplatz fehlt für {fillType}: die erwartete Ernte passt nicht in die eigenen Silos",
+      "FERTILIZER_CLOSED": "Herbstsaat: Sperrfrist für Gülle und Mist in {periods} beachten",
+      "LIME": "Vor der Saat kalken – in dieser Saison noch nicht gekalkt",
+      "WEEDS": "Unkraut in dieser Saison noch nicht bekämpft"
+    },
+    "suggestion": {
+      "MARGIN": "Vorschlag: {crop} (bester Ø Deckungsbeitrag je ha)",
+      "YIELD": "Vorschlag: {crop} (höchster Grundertrag × Preis)",
+      "NONE": "Keine passende Kultur gefunden"
+    },
+    "needs": "Bedarf und Absicherung",
+    "seed": "Saatgut",
+    "seedHint": "Saatgut liegt im Spiel in Paletten und Big Bags; einen Bestand zeigt das Tool nicht.",
+    "marketing": "Vermarktung",
+    "sold": "{percent} % vorab verkauft (von {liters} l)",
+    "forward": "Vorkontrakt abschließen",
+    "feed": "Futter",
+    "covered": "gedeckt zu {percent} %",
+    "feedSuggest": "fehlt: etwa {hectares} ha {crop}",
+    "history": "Plan / Ist",
+    "field": "Feld",
+    "planned": "Plan",
+    "actual": "Ist",
+    "margin": "Deckungsbeitrag",
+    "deviated": "abweichend",
+    "noFields": "Keine eigenen oder gepachteten Felder."
   }
 }

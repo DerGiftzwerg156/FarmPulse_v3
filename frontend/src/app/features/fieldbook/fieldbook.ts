@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { PageError, apiErrorMessage, toPageError } from '../../core/api/api-error';
 import {
@@ -18,6 +19,7 @@ import { Badge, BadgeVariant } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { PageErrorView } from '../../shared/ui/page-error';
+import { CropPlanning } from './crop-planning';
 import { FieldBookEvaluation } from './fieldbook-evaluation';
 import { Observable } from 'rxjs';
 
@@ -47,6 +49,7 @@ const STATE_BADGE: Record<string, BadgeVariant> = {
   selector: 'app-fieldbook',
   imports: [
     NgTemplateOutlet,
+    RouterLink,
     TranslatePipe,
     LabelPipe,
     NumberPipe,
@@ -55,6 +58,7 @@ const STATE_BADGE: Record<string, BadgeVariant> = {
     Card,
     PageErrorView,
     FieldBookEvaluation,
+    CropPlanning,
   ],
   templateUrl: './fieldbook.html',
 })
@@ -64,6 +68,9 @@ export class FieldBook {
   private readonly i18n = inject(TranslationService);
   /** Tab of the route `/feldbuch/:tab`. */
   readonly tab = input<string>('dokumentation');
+  /** Roadmap V4 R4-D5: `?entry=` highlights a field book entry (link from the contribution margin in the bank). */
+  readonly entry = input<string>();
+  readonly highlightedEntry = computed(() => Number(this.entry()) || null);
 
   readonly view = signal<FieldBookView | null>(null);
   readonly error = signal<PageError | null>(null);

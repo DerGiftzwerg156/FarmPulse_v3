@@ -25,7 +25,7 @@ node src/cli.js --help
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--dir` | `./runtime/modSettings/FS25_RPSim` | Bridge folder (the backend `dev` profile points here) |
-| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods`, `helfer-hof`, `tierhof-krank`, `ernte-herbst`, `nachbarhandel`, `duerre-sommer`, `winter-schnee`, `lohnunternehmer`, `viehhandel`, `grossauftrag`, `investor-milch`, `feldbuch` |
+| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods`, `helfer-hof`, `tierhof-krank`, `ernte-herbst`, `nachbarhandel`, `duerre-sommer`, `winter-schnee`, `lohnunternehmer`, `viehhandel`, `grossauftrag`, `investor-milch`, `feldbuch`, `hofplanung` |
 | `--interval` | `5000` | Real-time ms between cycles |
 | `--game-minutes-per-tick` | `60` | Game time advanced per cycle |
 | `--savegame-id` | `map_erlengrund_sim_<scenario>` | Simulated savegame id |
@@ -63,6 +63,7 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | `viehhandel` | Roadmap V3.1 (R31-A3): a cow stable with free places (Holstein and Angus) and a full sheep stable; `husbandries[]` export the breeds, the possible breeds and the free places (`subTypes`, `supportedSubTypes`, `freeSlots`) from the simulator's model that `ANIMAL_TRANSFER` changes |
 | `grossauftrag` | Roadmap V3.2 (R32-G): a full canola silo (`tradeStorage` 600 000 l, no free capacity) and the oil mill "Ölmühle Nord" (`OilMillNorth`, canola, sunflower, soybean) as an extra sell point of the map in `market_context.json` and `prices` |
 | `investor-milch` | Roadmap V3.2 (R32-I3, type W3): a cow stable with 12 000 l milk in its storage (capacity 30 000 l); `husbandries[].storage[]` exports it, `HUSBANDRY_TRANSFER` takes it out |
+| `hofplanung` | Roadmap V4 (R4-Q): September; wheat sown and fertilised once on field 2, grass after the first cut on field 4, a cow husbandry with 40 cows, a trough with silage and hay, 150 000 l silage and 30 000 l hay in stock, the consumption counter `inputs` (seed, fertiliser bought by a helper, slurry), purchase prices, the food groups of the cows and the crops with seed use, base yield and sowing / harvest windows |
 | `feldbuch` | Roadmap V3.3 (R33-Q): August; own fields with rolling / mulching levels (harvestable wheat, grass after the first cut, harvestable maize still to be rolled), the crops of the map in `market_context.fruitTypes` (grass grows again, maize also gives `CHAFF`) and the harvest counter `harvests` (18 000 l grass windrow on field 4) |
 | `ernte-herbst` | Roadmap V2 (R2-C): starts in September; `fields` with ready maize, growing potatoes, withered wheat and a weedy empty field (with the crop details `withered`, `cut`, `fillType`, `litersPerSqm`), `fieldRules` with every soil mechanic on, rain in `weather`, `finances` |
 
@@ -118,9 +119,10 @@ created by `MISSION_CREATE` are part of the simulated savegame and go back on `/
   without a booking (game value = list price; in the V3.1 scenarios with its shop `category`).
 
 **Roadmap V3.1 fields and blocks** (R31-Q2): only `winter-schnee`, `lohnunternehmer` and `viehhandel` (and the V3.2
-scenarios `grossauftrag` and `investor-milch`, R32-Q2, and the V3.3 scenario `feldbuch`, R33-Q2) stand for a mod with the R31-Q1 contract. They export `calendar.dayTimeMs` (time of day of the game time), `vehiclePositions` (empty
+scenarios `grossauftrag` and `investor-milch`, R32-Q2, the V3.3 scenario `feldbuch`, R33-Q2, and the V4 scenario
+`hofplanung`, R4-Q3) stand for a mod with the R31-Q1 contract. They export `calendar.dayTimeMs` (time of day of the game time), `vehiclePositions` (empty
 until `POST /vehicle-positions`), the shop `category` and the diesel `fuel` of the own vehicles and
-`weather.snowHeight`; `lohnunternehmer` and `feldbuch` also the `sprayType` of their fields and `fieldShapes` (15 outlines on a 4 × 4
+`weather.snowHeight`; `lohnunternehmer`, `feldbuch` and `hofplanung` also the `sprayType` of their fields and `fieldShapes` (15 outlines on a 4 × 4
 grid of a 2048 m map). All other scenarios leave them out. Vehicle positions and the stables are part of the simulated
 savegame and go back on `/reload-without-saving`. The values, fruit types and animal subtypes are simulated examples.
 
@@ -152,6 +154,18 @@ liters }`, cumulative whole litres, sorted); all other scenarios stand for a mod
 litres a harvesting machine got into its tank on an own field, like the planned hook of R33-F3; a contractor harvest
 (`FIELD_WORK HARVEST`) is not counted (in the game it is a state jump, not a combine). The counter is part of the
 simulated savegame and goes back on `/reload-without-saving`. The values, crops and titles are simulated examples.
+`hofplanung` (R4-Q3) has the V3.3 values too.
+
+**Roadmap V4** (R4-Q3): only `hofplanung` exports the consumption counter per own field (`inputs` = `{ farmlandId,
+fillType, liters, helperLiters }`, cumulative whole litres, sorted), the feed stock in silos and bunker silos
+(`feedStock`), the food values of its husbandry (`foodLitersPerHour`, `foodCapacity`, `trough`, `strawLitersPerHour`,
+`straw`, `feedConsumed`) and in `market_context` the purchase prices (`fillTypeCosts`), the food groups per animal type
+(`animalFood`, in the order of the game) and the crops with `seedUsagePerSqm`, `litersPerSqm`, `plantablePeriods` and
+`harvestablePeriods`; all other scenarios stand for a mod without them. `POST /input` adds litres a sowing machine or
+sprayer used on an own field (like the planned hooks of R4-D1), `POST /feed` puts feed into or takes it out of the
+stock or a trough, `POST /eat` lets the animals eat from the trough (like the planned hook of R4-F1: the trough falls,
+the feed counter grows by what was really taken). Counters, trough and stock are part of the simulated savegame and go
+back on `/reload-without-saving`. The values, prices and titles are simulated examples.
 
 ## Control API (manual testing / E2E)
 
@@ -178,6 +192,9 @@ simulated savegame and goes back on `/reload-without-saving`. The values, crops 
 | `POST /fuel {"uniqueId":"veh_00002","liters":150}` | Roadmap V3.1 R31-D8: the diesel level of an own vehicle with a diesel tank changes (kept within 0..capacity) |
 | `POST /husbandry-milk {"husbandryUniqueId":"hus_00001","fillType":"MILK","amount":20000}` | Roadmap V3.2 R32-Q2: the milk in the storage of a husbandry changes (litres, capped at the capacity; only milk sorts of the husbandry) |
 | `POST /harvest {"farmlandId":5,"fruitType":"MAIZE","fillType":"CHAFF","liters":30000}` | Roadmap V3.3 R33-Q2: a harvesting machine gets litres into its tank on an own field (`feldbuch`); the counter of field, crop and product grows (only farmlands the player owns, litres > 0) |
+| `POST /input {"farmlandId":2,"fillType":"LIME","liters":4000,"helper":false}` | Roadmap V4 R4-Q3: a sowing machine or sprayer uses litres on an own field (`hofplanung`); `helper: true` = a helper bought them (also counted in `helperLiters`); only farmlands the player owns, litres > 0 |
+| `POST /feed {"husbandryUniqueId":"hus_00001","fillType":"SILAGE","amount":5000}` | Roadmap V4 R4-Q3: feed into (amount > 0) or out of (amount < 0) a trough, or without `husbandryUniqueId` the silo / bunker silo stock (`hofplanung`); never below 0, the trough never above its capacity |
+| `POST /eat {"husbandryUniqueId":"hus_00001","fillType":"SILAGE","liters":1000}` | Roadmap V4 R4-Q3: the animals eat from the trough; the trough falls and `feedConsumed` grows by what was really taken |
 | `POST /vanilla-loan {"change": 30000}` | Roadmap V2 R2-D1: the player takes (positive) or repays (negative) the vanilla loan in the finance menu; the balance moves by the same amount |
 | `POST /vanilla-farmland {"farmlandId": 13, "toPlayer": true}` | Roadmap V2 R2-D2: the player buys (`true`) or sells a farmland in the game's field menu at its price (booked as `FIELD_BUY` / `FIELD_SELL`), market context re-exported |
 | `POST /answer {"promptId":"prm_…","answer":"YES"}` | Roadmap V2 R2-F: the player answers a yes/no question in the game (`YES` / `NO`); 400 for an unknown question |

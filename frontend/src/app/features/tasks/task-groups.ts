@@ -60,5 +60,16 @@ export function taskTitle(t: TaskView, i18n: TranslationService): string {
       return i18n.t('tasks.applicants', { role: i18n.t('enums.jobRole.' + t.kind), n: t.pendingApplicants });
     case 'INVESTOR_DUE':
       return i18n.t('tasks.investorDue', { name: t.investorDue?.investor ?? '' });
+    case 'FEED':
+      return feedTaskTitle(t, i18n);
+    case 'SOW':
+      return i18n.t('tasks.sowDue', { field: t.sowDue?.fieldName ?? '', crop: t.sowDue?.fruitType ?? '' });
   }
+}
+
+/** Roadmap V4 R4-F4: "Futter: Silage reicht noch 6 Tage". */
+export function feedTaskTitle(t: TaskView, i18n: TranslationService): string {
+  const d = t.feedDue;
+  const group = d?.kind === 'BEDDING' ? i18n.t('feed.bedding') : (d?.title ?? '');
+  return i18n.t('tasks.feedDue', { group, days: Math.max(0, Math.floor(d?.reachDays ?? 0)) });
 }

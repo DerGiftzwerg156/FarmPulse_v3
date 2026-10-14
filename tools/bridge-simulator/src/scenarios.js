@@ -467,6 +467,83 @@ Object.assign(SCENARIOS, {
   },
 });
 
+// Roadmap V4 (R4-Q3): hofplanung stands for a mod with the R4-Q1 / R4-Q2 contract - farm_facts carries the
+// consumption counter per own field (inputs, raised with POST /input), the feed stock in silos and bunker silos
+// (feedStock) and the food values of the cow husbandry (trough, need per hour, straw, feed counter; POST /feed and
+// POST /eat); market_context the purchase prices (fillTypeCosts), the food groups per animal type (animalFood) and the
+// crops with seed use, base yield and sowing / harvest windows. All other scenarios leave them out and stand for a mod
+// without them. All numbers, names and titles are simulated examples, not values read from FS25.
+Object.assign(SCENARIOS, {
+  hofplanung: {
+    description: 'Hofplanung: Weizen gesät und gedüngt, Gras nach dem ersten Schnitt, Milchviehstall mit Trog, '
+      + 'Silage im Fahrsilo und Heu im Silo, Einkaufspreise, Futtergruppen, Saat- und Erntefenster (R4-Q).',
+    balance: 140000, vanillaLoan: 0, ownedFarmlands: [2, 4], startPeriod: 7, roadmapV31: true, roadmapV4: true,
+    vehicles: [
+      { ...vehicle(1, 150000, 0.2), name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml',
+        category: 'TRACTORSM', fuel: { liters: 120, capacity: 150 } },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 180000 }],
+    animals: [{ husbandryUniqueId: 'hus_00001', type: 'COW', count: 40, estimatedValue: 160000 }],
+    stables: { hus_00001: { capacity: 60, valuePerAnimal: 4000, subTypes: { COW_HOLSTEIN: 40 } } },
+    storage: { WHEAT: { amount: 20000, capacity: 150000 }, DRYGRASS_WINDROW: { amount: 30000, capacity: 60000 } },
+    drift: { income: 2600, expense: 2200 },
+    husbandries: [
+      { husbandryUniqueId: 'hus_00001', health: 92, productivity: 0.9, food: 0.3,
+        conditions: [{ title: 'Wasser', ratio: 0.9 }, { title: 'Stroh', ratio: 0.6 }, { title: 'Gülle', ratio: 0.4 },
+          { title: 'Milch', ratio: 0.3 }],
+        storage: [{ fillType: 'MILK', amount: 9000, capacity: 30000 }],
+        foodLitersPerHour: 41.67, foodCapacity: 20000, strawLitersPerHour: 8.33, straw: 1200,
+        trough: [{ fillType: 'SILAGE', amount: 4000 }, { fillType: 'DRYGRASS_WINDROW', amount: 2000 }],
+        feedConsumed: [{ fillType: 'DRYGRASS_WINDROW', liters: 12000 }, { fillType: 'SILAGE', liters: 36000 }] },
+    ],
+    fields: [
+      // wheat sown in autumn and fertilised once (the counter holds seed and fertiliser)
+      { farmlandId: 2, fruitType: 'WHEAT', growthState: 2, minHarvestingGrowthState: 8, maxHarvestingGrowthState: 8,
+        withered: false, cut: false, fillType: 'WHEAT', litersPerSqm: 0.95,
+        weedState: 0, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN',
+        sprayType: 'FERTILIZER', rollerLevel: 0, stubbleShredLevel: 0 },
+      // grass growing again after the first cut, fertilised with slurry
+      { farmlandId: 4, fruitType: 'GRASS', growthState: 2, minHarvestingGrowthState: 3, maxHarvestingGrowthState: 4,
+        withered: false, cut: false, fillType: 'GRASS_WINDROW', litersPerSqm: 0.9,
+        weedState: 0, stoneLevel: 0, sprayLevel: 1, limeLevel: 1, plowLevel: 1, groundType: 'SOWN',
+        sprayType: 'LIQUID_MANURE', rollerLevel: 0, stubbleShredLevel: 0 },
+    ],
+    fieldRules: { plowingRequired: true, limeRequired: true, weedsEnabled: true, stonesEnabled: true },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.3, temperature: 12, snowHeight: 0 },
+    fruitTypes: [
+      { name: 'WHEAT', fillType: 'WHEAT', title: 'Weizen', regrows: false, needsRolling: true, products: [],
+        seedUsagePerSqm: 0.1, litersPerSqm: 0.95, plantablePeriods: [6, 7], harvestablePeriods: [4, 5] },
+      { name: 'MAIZE', fillType: 'MAIZE', title: 'Mais', regrows: false, needsRolling: true, products: ['CHAFF'],
+        seedUsagePerSqm: 0.05, litersPerSqm: 1.1, plantablePeriods: [2, 3], harvestablePeriods: [6, 7] },
+      { name: 'GRASS', fillType: 'GRASS_WINDROW', title: 'Gras', regrows: true, needsRolling: true, products: [],
+        seedUsagePerSqm: 0.04, litersPerSqm: 0.9, plantablePeriods: [1, 2, 3, 4, 5, 6, 7],
+        harvestablePeriods: [2, 3, 4, 5, 6, 7, 8] },
+    ],
+    harvests: [{ farmlandId: 4, fruitType: 'GRASS', fillType: 'GRASS_WINDROW', liters: 18000 }],
+    inputs: [
+      { farmlandId: 2, fillType: 'SEEDS', liters: 3200, helperLiters: 0 },
+      { farmlandId: 2, fillType: 'FERTILIZER', liters: 1800, helperLiters: 1800 },
+      { farmlandId: 4, fillType: 'LIQUIDMANURE', liters: 60000, helperLiters: 0 },
+    ],
+    feedStock: [{ fillType: 'SILAGE', amount: 150000 }, { fillType: 'DRYGRASS_WINDROW', amount: 30000 },
+      { fillType: 'STRAW', amount: 8000 }],
+    fillTypeCosts: [
+      { fillType: 'SEEDS', costPerLiter: 0.9 }, { fillType: 'FERTILIZER', costPerLiter: 1.6 },
+      { fillType: 'LIQUIDFERTILIZER', costPerLiter: 1.5 }, { fillType: 'LIME', costPerLiter: 0.225 },
+      { fillType: 'HERBICIDE', costPerLiter: 1.2 }, { fillType: 'LIQUIDMANURE', costPerLiter: 0.02 },
+      { fillType: 'SILAGE', costPerLiter: 0.18 }, { fillType: 'DRYGRASS_WINDROW', costPerLiter: 0.2 },
+      { fillType: 'STRAW', costPerLiter: 0.1 },
+    ],
+    animalFood: [
+      { animalType: 'COW', mixtures: ['FORAGE'], groups: [
+        { title: 'Futtermischung', productionWeight: 0.6, fillTypes: ['FORAGE'] },
+        { title: 'Silage', productionWeight: 0.25, fillTypes: ['SILAGE'] },
+        { title: 'Heu', productionWeight: 0.15, fillTypes: ['DRYGRASS_WINDROW'] },
+      ] },
+    ],
+  },
+});
+
 // Simulated vanilla contracts (TODO T-22); the mod reads them from g_missionManager:getMissions().
 export const MISSIONS = [
   { uniqueId: 'mission_001', title: 'Ernte', typeName: 'harvestMission', field: '7', npcIndex: 3, npcTitle: 'Otto Wendler',

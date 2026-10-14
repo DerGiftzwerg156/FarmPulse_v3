@@ -17,14 +17,14 @@ function setup(scenario) {
   return sim;
 }
 
-test('only feldbuch exports the Roadmap V3.3 values (older mod without them)', () => {
+test('only feldbuch and hofplanung export the Roadmap V3.3 values (older mod without them)', () => {
   for (const scenario of Object.keys(SCENARIOS)) {
     const sim = setup(scenario);
     const facts = read(sim.paths.farmFacts);
     const ctx = read(sim.paths.marketContext);
     assert.equal(validate('farmFacts', facts), null, scenario);
     assert.equal(validate('marketContext', ctx), null, scenario);
-    const expected = scenario === 'feldbuch';
+    const expected = ['feldbuch', 'hofplanung'].includes(scenario);
     assert.equal('harvests' in facts, expected, scenario);
     assert.equal('fruitTypes' in ctx, expected, scenario);
     assert.equal((facts.fields ?? []).some((f) => 'rollerLevel' in f || 'stubbleShredLevel' in f), expected, scenario);

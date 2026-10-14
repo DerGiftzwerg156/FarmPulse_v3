@@ -94,7 +94,7 @@
         <app-price-alarm-card [prices]="prices() ?? []" />
       }
       @case ('vorkontrakte') {
-        <app-forward-contract-card [prices]="prices() ?? []" />
+        <app-forward-contract-card [prices]="prices() ?? []" [presetFillType]="forwardFillType() ?? null" />
       }
       @default {
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">

@@ -8,6 +8,7 @@ import { GameTimePipe, MoneyPipe, NumberPipe } from '../../shared/format/format.
 import { LabelPipe } from '../../shared/format/label.pipe';
 import { Icon } from '../../shared/ui/icon';
 import { ServiceCases } from '../contracts/service-cases';
+import { FeedBalance } from './feed-balance';
 
 export interface Bar {
   label: string;
@@ -33,14 +34,14 @@ export function barnBars(b: BarnView, s: StablesView, labels: { health: string; 
  */
 @Component({
   selector: 'app-stable',
-  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Icon, ServiceCases],
+  imports: [RouterLink, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Icon, ServiceCases, FeedBalance],
   templateUrl: './stable.html',
 })
 export class Stable {
   private readonly api = inject(ApiService);
   private readonly store = inject(GameStateStore);
 
-  /** Tab of the route `/stall/:tab` (owner decision 2026-10-06): Ställe, Handel & Tierarzt. */
+  /** Tab of the route `/stall/:tab` (owner decision 2026-10-06): Ställe, Futter (Roadmap V4 R4-F), Handel & Tierarzt. */
   readonly tab = input<string>('staelle');
   readonly case = input<string>();
   readonly highlightedCase = computed(() => Number(this.case()) || null);

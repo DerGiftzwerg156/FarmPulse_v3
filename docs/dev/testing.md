@@ -145,6 +145,50 @@ that the adapter reads none of the values yet (Q fixes the contract only, owner 
 scenario, the counter with its control endpoint `POST /harvest` and its place in the savegame in
 `test/roadmap-v33.test.js`. Q brings no formula, no table and no configuration value; they come with F and E (owner
 decision 2026-10-08). In the game: manual test plan section 29.
+Roadmap V4 (R4-Q3): `SimulatorScenariosEndToEndTest.roadmapV4FieldsArriveFromThePlanningScenario` checks that the
+consumption counter, the feed stock, the food values of the husbandry, the purchase prices, the food groups and the
+crop windows of `hofplanung` arrive (and stay `null` for `feldbuch`); `BridgeValidatorTest` (`inputs`, `feedStock`,
+the food values, `fillTypeCosts`, `animalFood` and the new crop values) covers the backend side. The mod covers the
+normalisation in `test_farm_facts.lua` and `test_market_context.lua`; the simulator the scenario, the counters with their control
+endpoints `POST /input`, `POST /feed` and `POST /eat` and their place in the savegame in `test/roadmap-v4.test.js`. Q
+brings no formula, no table and no configuration value; they come with D, F and A. In the game: manual test plan
+section 30.
+Roadmap V4 R4-D (contribution margin): `FieldMarginTest` covers the direct costs from the counter at the price of the
+moment with the helper surcharge and free farmyard manure, a falling counter, the estimate of an older mod and its
+replacement by an entered line, contractor fees, rent and premiums (each booked once), the realised price of the sales
+from the harvest to the end of the following year and the entered price, overheads by area and the switch, corrections
+and own lines, a closed year with a held premium, the lines of a replaced entry moving to the harvest of the year and
+the advice of the cooperative after two loss years. Mod: `test_roadmap_v4.lua` (the hooks on the sowing machine and the
+sprayer, only own farmland and the server, helper litres, never disturbing the work, savegame and export, the purchase
+prices). Frontend: `margin-card.spec.ts` (table, ranking, crops, chart, calculation, corrections, own lines, price,
+switch, shared period, locked entry) and the farm report section in `credit-planning.spec.ts`.
+Roadmap V4, closed gaps (owner decisions 2026-10-14): `CropPlanTest` also covers the storage check with contracts due
+before the harvest window, the sown plan that stays planned harvest, the rotation cut by the authority's count, the
+running window in the next month of the liquidity plan and the expected revenue of a running season (plan / actual
+crop); `FeedBalanceTest` the yearly need with the planned harvest and the next harvest from the plan. Frontend:
+`margin-card.spec.ts` (crop colours, link to the field book and `?entry=`, expected revenue, litres / price
+corrections, revenue with litres and price), `fieldbook.spec.ts` (`?entry=` and the links to the bank),
+`feed-balance.spec.ts` (with plan), `contractor-work-card.spec.ts` and `marketing.spec.ts` (presets) and the links of
+`crop-planning.spec.ts`.
+Roadmap V4 R4-A (crop planner): `CropPlanTest` covers the plan for the next or the running season with its
+validation, the hints with their figures (rotation and its cut, sowing window, too late, storage, fertiliser ordinance,
+lime; none for fallow), the forecast with its sources (field, crop, base yield; best price and forward contract; seed
+only), seed and the share sold ahead, the task, the calendar, the liquidity plan and the single reminder, MATCHED /
+DEVIATED with plan and reality and the rewind, a field that is no longer own, the rotation suggestion and "Plan
+besprechen" once per year. Mod: `test_roadmap_v4.lua` (seed use, base yield and the windows in the growth mode, none
+without it or without the methods). Frontend: `crop-planning.spec.ts` (hints, forecast, window, needs, plan / actual,
+planning a field, "Wie Vorjahr", suggestion, fallow, removing, reminder, "Plan besprechen", older mod) and the task in
+`tasks.spec.ts`.
+Roadmap V4 R4-F (feed balance): `FeedBalanceTest` covers the need of the game split by productionWeight before the
+first measurement (reach, traffic light in game months, empty date, yearly need, monthly costs, neighbour link, the
+bedding), the measured need from the counter over the last game days and its scaling with the herd, the measurement
+by the sinking trough of an older mod, entered bales that sink when the straw rises without the silo falling and the
+reminder "bitte prüfen", the warning of the cooperative or the animal keeper at most once per game month, tasks and
+calendar, the shortfall until the next harvest, an older mod and a rewind. Mod: `test_roadmap_v4.lua` (the food values
+and their fallback, the food groups read once, the hook on `removeFood` - own husbandries, only the server, never
+disturbing the feeding -, savegame and export, the feed stock without production points, the feed prices). Frontend:
+`feed-balance.spec.ts` (older mod, groups with reach, shortfall and neighbour link, entering bales or litres, "stimmt
+noch", deleting), the tile in `home.spec.ts` and the task in `tasks.spec.ts`.
 Roadmap V3.3 R33-F (field book): `FieldBookTest` covers the first entry (levels found count as done), a season from
 sowing to harvest with every measure, the harvest year and late litres, mulching in the next season, cuts of a grass
 field in one entry, the main crop and "harvest beats no harvest", the product of the counter and a falling counter, a

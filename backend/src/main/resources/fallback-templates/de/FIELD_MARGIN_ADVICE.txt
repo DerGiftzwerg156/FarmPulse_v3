@@ -1,0 +1,7 @@
+Feld {{fieldName}}: zwei Jahre mit Verlust
+Hallo,
+
+beim Durchsehen der Zahlen ist uns Feld {{fieldName}} aufgefallen: Im Erntejahr {{year}} lag der Deckungsbeitrag bei {{margin}} € ({{fruitType}}), im Jahr davor bei {{previousMargin}} € ({{previousFruitType}}). Vielleicht lohnt sich ein Blick auf Kultur, Düngung oder Pacht – die Rechnung steht in der App „Bank“.
+
+Viele Grüße
+{{characterName}}

@@ -6,9 +6,11 @@
 -- luacheck: globals g_currentMission g_modSettingsDirectory addModEventListener Utils getUserProfileAppPath
 -- luacheck: globals FSCareerMissionInfo SellingStation XMLFile getDate Mission00 Farm AIJob AIJobFieldWork AIJobConveyor
 -- luacheck: globals AIJobGoTo AIJobDeliver AIJobLoadAndDeliver AISystem
--- luacheck: globals PlayerInputComponent InputAction g_inputBinding g_i18n Combine Cutter
+-- luacheck: globals PlayerInputComponent InputAction g_inputBinding g_i18n Combine Cutter SowingMachine Sprayer
+-- luacheck: globals g_fruitTypeManager MathUtil PlaceableHusbandryFood
 RPSim = { modName = g_currentModName, modDirectory = g_currentModDirectory, bridge = nil, financeHook = false,
-    helperHooks = false, promptKeyHook = false, harvestHook = false, harvestCounted = false }
+    helperHooks = false, promptKeyHook = false, harvestHook = false, harvestCounted = false,
+    inputHook = false, feedHook = false }
 
 local XML_NAME = "FS25_RPSim.xml"
 
@@ -71,6 +73,8 @@ local function loadMapImpl(self)
     self.bridge.workforceEnabled = RPSim.helperHooks
     self.bridge.promptKeyAvailable = RPSim.promptKeyHook
     self.bridge.harvestCounterEnabled = RPSim.harvestHook
+    self.bridge.inputCounterEnabled = RPSim.inputHook
+    self.bridge.feedCounterEnabled = RPSim.feedHook
     self.bridge:bootstrap()
     if Mission00 == nil or Mission00.onStartMission == nil then
         -- No start hook available: start right away (degraded, first export may be incomplete).
@@ -511,6 +515,102 @@ end
 if Cutter ~= nil and Cutter.onEndWorkAreaProcessing ~= nil and Utils ~= nil then
     Cutter.onEndWorkAreaProcessing = Utils.overwrittenFunction(Cutter.onEndWorkAreaProcessing, RPSim.cutterEndHook)
     RPSim.harvestHook = true
+end
+
+--- Roadmap V4 R4-D1: litres a sowing machine or sprayer used on an own field are added to the consumption counter
+-- (with the part a helper bought). A failure never disturbs the work.
+function RPSim.countInput(vehicle, fillTypeIndex, liters, helper)
+    local bridge = RPSim.bridge
+    if bridge == nil or type(liters) ~= "number" or liters <= 0 then
+        return
+    end
+    local ok, entry = pcall(bridge.adapter.inputEntry, bridge.adapter, vehicle, fillTypeIndex)
+    if ok and entry ~= nil then
+        RPSimInputCounter.add(bridge.state.inputs, entry.farmlandId, entry.fillType, liters, helper)
+    end
+end
+
+--- Roadmap V4 R4-D1: after SowingMachine:onEndWorkAreaProcessing (LUADOC Specializations/SowingMachine.md) the seed of
+-- the sown area - the same formula the game uses: fruitDesc.seedUsagePerSqm x ha x 10000 x seedUsageScale, more with
+-- damage (DAMAGED_USAGE_INCREASE). Only on the server; a helper with "helper buys seeds" bought it (helperLiters).
+function RPSim.sowingEndHook(machine, superFunc, dt, hasProcessed, ...)
+    local result = superFunc(machine, dt, hasProcessed, ...)
+    pcall(function()
+        local spec = machine.spec_sowingMachine
+        local p = spec ~= nil and spec.workAreaParameters or nil
+        if not machine.isServer or p == nil or type(p.lastChangedArea) ~= "number" or p.lastChangedArea <= 0 then
+            return
+        end
+        local fruitDesc = g_fruitTypeManager:getFruitTypeByIndex(p.seedsFruitType)
+        local ha = MathUtil.areaToHa(p.lastChangedArea, g_currentMission:getFruitPixelsToSqm())
+        local usage = fruitDesc.seedUsagePerSqm * ha * 10000 * (spec.seedUsageScale or 1)
+        local damage = machine.getVehicleDamage ~= nil and machine:getVehicleDamage() or 0
+        if damage > 0 and SowingMachine.DAMAGED_USAGE_INCREASE ~= nil then
+            usage = usage * (1 + damage * SowingMachine.DAMAGED_USAGE_INCREASE)
+        end
+        local helper = machine:getIsAIActive() and g_currentMission.missionInfo.helperBuySeeds == true
+        local fillType = spec.seedFillType
+        if not helper and p.seedsVehicle ~= nil and p.seedsVehicleFillUnitIndex ~= nil then
+            fillType = p.seedsVehicle:getFillUnitFillType(p.seedsVehicleFillUnitIndex)
+        end
+        RPSim.countInput(machine, fillType, usage, helper)
+    end)
+    return result
+end
+
+--- Roadmap V4 R4-D1: after Sprayer:onEndWorkAreaProcessing (LUADOC Specializations/Sprayer.md) the litres of this tick
+-- (spec.workAreaParameters.usage of spec.workAreaParameters.sprayFillType) - fertiliser, liquid fertiliser, lime,
+-- herbicide, slurry, manure, digestate. A helper without a spray tank bought them (onStartWorkAreaProcessing books
+-- them as PURCHASE_FERTILIZER x 1.5). Only on the server.
+function RPSim.sprayerEndHook(sprayer, superFunc, dt, hasProcessed, ...)
+    local result = superFunc(sprayer, dt, hasProcessed, ...)
+    pcall(function()
+        local spec = sprayer.spec_sprayer
+        local p = spec ~= nil and spec.workAreaParameters or nil
+        if not sprayer.isServer or p == nil or not p.isActive or type(p.usage) ~= "number" or p.usage <= 0 then
+            return
+        end
+        local helper = sprayer:getIsAIActive() and p.sprayVehicle == nil
+        RPSim.countInput(sprayer, p.sprayFillType, p.usage, helper)
+    end)
+    return result
+end
+
+if SowingMachine ~= nil and SowingMachine.onEndWorkAreaProcessing ~= nil and Utils ~= nil then
+    SowingMachine.onEndWorkAreaProcessing = Utils.overwrittenFunction(SowingMachine.onEndWorkAreaProcessing,
+        RPSim.sowingEndHook)
+    RPSim.inputHook = true
+end
+if Sprayer ~= nil and Sprayer.onEndWorkAreaProcessing ~= nil and Utils ~= nil then
+    Sprayer.onEndWorkAreaProcessing = Utils.overwrittenFunction(Sprayer.onEndWorkAreaProcessing, RPSim.sprayerEndHook)
+    RPSim.inputHook = true
+end
+
+--- Roadmap V4 R4-F1: food the animals of an own husbandry ate. PlaceableHusbandryFood:updateFeeding asks
+-- animalFoodSystem:consumeFood for the eaten litres per fill type and takes each out with removeFood, which returns the
+-- litres really taken (at most the trough level). Counted only on the server: a client calls removeFood too when it
+-- reads the trough level of the server (onReadUpdateStream). A failure never disturbs the feeding.
+function RPSim.removeFoodHook(husbandry, superFunc, absDeltaFillLevel, fillTypeIndex, ...)
+    local removed = superFunc(husbandry, absDeltaFillLevel, fillTypeIndex, ...)
+    pcall(function()
+        local bridge = RPSim.bridge
+        if bridge == nil or not husbandry.isServer or type(removed) ~= "number" or removed <= 0 then
+            return
+        end
+        local entry = bridge.adapter:feedEntry(husbandry, fillTypeIndex)
+        if entry ~= nil then
+            RPSimFeedCounter.add(bridge.state.feed, entry.husbandryUniqueId, entry.fillType, removed)
+        end
+    end)
+    return removed
+end
+
+-- 🟡 manual test plan 30.3: whether a placeable type registered before this hook keeps the original removeFood
+-- (SpecializationUtil.registerFunction stores the function at registration time).
+if PlaceableHusbandryFood ~= nil and PlaceableHusbandryFood.removeFood ~= nil and Utils ~= nil then
+    PlaceableHusbandryFood.removeFood = Utils.overwrittenFunction(PlaceableHusbandryFood.removeFood,
+        RPSim.removeFoodHook)
+    RPSim.feedHook = true
 end
 
 -- booking titles (rpsim_money_*) and AI texts are looked up by engine code in the global g_i18n

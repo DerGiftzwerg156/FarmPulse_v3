@@ -1197,6 +1197,53 @@ rpsim:
       hint-cooldown-days: 7
     field-book:                   # Roadmap V3.3 R33-E: field book evaluation (owner decisions 2026-10-08)
       default-years: 5            # "letzte x Erntejahre" when the player has not chosen a period
+    field-margin:                 # Roadmap V4 R4-D: contribution margin per field (owner decisions 2026-10-13, placeholders)
+      categories:                 # fill type -> kind of the direct costs; other fill types: OTHER_INPUT
+        SEEDS: SEED
+        FERTILIZER: FERTILIZER
+        LIQUIDFERTILIZER: FERTILIZER
+        LIME: LIME
+        HERBICIDE: PROTECTION
+        LIQUIDMANURE: MANURE
+        MANURE: MANURE
+        DIGESTATE: MANURE
+      helper-surcharge: 1.5       # litres a helper bought are valued x 1.5 like the game books them
+      manure-cost-per-liter: 0    # own farmyard manure costs nothing (owner decision 2026-10-13)
+      fallback-seed-cost-per-ha: 120          # estimate without the counter (older mod), euro per ha
+      fallback-fertilizer-cost-per-ha: 90     # per fertilisation tick
+      fallback-lime-cost-per-ha: 70
+      fallback-protection-cost-per-ha: 60
+      revenue-categories: [SOLD_PRODUCTS, HARVEST_INCOME]   # sales of the booking statement that value a harvest
+      internal-price-share: 0.8   # product without a sell point: purchase price x 0.8
+      overheads-default: true     # "Gemeinkosten verteilen" is on unless the player switches it off
+      overhead-money-types: [PURCHASE_FUEL, VEHICLE_RUNNING_COSTS, VEHICLE_REPAIR, AI, LEASING_COSTS]
+      overhead-driver-salaries: true          # monthly salaries of the employees who drive helpers count too
+      advice-enabled: true        # cooperative mail after two loss years in a row on a field
+    crop-planning:                # Roadmap V4 R4-A: crop planner (owner decisions 2026-10-13)
+      rotation-years: 2           # "Fruchtfolge vorschlagen": a crop not grown on the field in the last 2 seasons
+      base-yield-factor: 1.0      # base yield = litersPerSqm x 10000 x 1.0 (without fertiliser and lime)
+      autumn-periods: [6, 7, 8, 9]  # sowing in August-November: hint on the closed period for slurry and manure
+      feed-equivalents:           # harvest product -> feed fill type it becomes (chaff is ensiled to silage)
+        CHAFF: SILAGE
+      reminders-default: true     # the cooperative reminds at sowing time unless switched off
+      discuss-answer-hour: 9      # "Plan besprechen": the cooperative answers the next game day at 9:00
+    feed-balance:                 # Roadmap V4 R4-F: feed balance per animal type and food group (owner decisions 2026-10-13)
+      measure-days: 3             # measured daily need = mean of the last 3 game days
+      ok-months: 3                # traffic light in game months: green from 3 months of reach
+      warn-months: 1              # red below 1 month (yellow in between); the animal keeper warns once per month and group
+      manual-stale-days: 10       # an entered stock unchanged for 10 game days asks "bitte prüfen"
+      bale-sizes:                 # litres per bale of the sizes the player chooses (placeholders, manual test plan 30.12)
+        ROUND_125: 4000
+        ROUND_150: 5500
+        SQUARE_120: 2500
+        SQUARE_180: 4500
+        SQUARE_240: 8000
+      harvest-crops:              # fill type of the feed -> crops it comes from (next harvest and shortfall)
+        SILAGE: [GRASS, MAIZE]
+        GRASS_WINDROW: [GRASS]
+        DRYGRASS_WINDROW: [GRASS]
+        STRAW: [WHEAT, BARLEY, OAT]
+      warnings-enabled: true      # warning mail of the animal keeper (without one the cooperative) when a group turns red
     energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
       fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
       probability-per-month: 0.35

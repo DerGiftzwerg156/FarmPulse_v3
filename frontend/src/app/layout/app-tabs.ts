@@ -65,9 +65,11 @@ export const APP_TABS: Record<string, TabDef[]> = {
   fieldbook: [
     { id: 'dokumentation', label: 'tabs.fieldbook.dokumentation' },
     { id: 'auswertung', label: 'tabs.fieldbook.auswertung' },
+    { id: 'anbauplanung', label: 'tabs.fieldbook.anbauplanung' }, // Roadmap V4 R4-A (owner decision 2026-10-13)
   ],
   stable: [
     { id: 'staelle', label: 'tabs.stable.staelle' },
+    { id: 'futter', label: 'tabs.stable.futter' }, // Roadmap V4 R4-F (owner decision 2026-10-13)
     { id: 'handel', label: 'tabs.stable.handel' },
   ],
   workshop: [

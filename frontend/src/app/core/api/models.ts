@@ -391,6 +391,18 @@ export interface FarmReportView {
   previous: FarmReportSnapshot | null;
   /** null in reports written before R32-I. */
   investors?: FarmReportInvestorLine[] | null;
+  /** Roadmap V4 R4-D6: contribution margin per crop and product; null in reports written before. */
+  margins?: FarmReportMarginLine[] | null;
+}
+
+/** Roadmap V4 R4-D6: contribution margin of a crop and product in the farm report (euro, per ha of the area with a margin). */
+export interface FarmReportMarginLine {
+  fruitType: string;
+  fillType: string | null;
+  hectares: number;
+  margin: number | null;
+  marginPerHectare: number | null;
+  n: number;
 }
 
 export interface LoanPaymentView {
@@ -1064,7 +1076,7 @@ export interface ApiError {
 
 /** Hof-Tablet "Aufgaben": one open decision of any area (type names the payload that is set). */
 export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING'
-  | 'INVESTOR_DUE';
+  | 'INVESTOR_DUE' | 'FEED' | 'SOW';
 
 export interface TaskView {
   key: string;
@@ -1082,6 +1094,25 @@ export interface TaskView {
   pendingApplicants: number | null;
   /** Roadmap V3.2 R32-I4: a delivery still due to an investor (type INVESTOR_DUE). */
   investorDue?: InvestorDueView | null;
+  /** Roadmap V4 R4-F4: a food group that lasts less than ok-months (type FEED, kind YELLOW / RED). */
+  feedDue?: FeedDueView | null;
+  /** Roadmap V4 R4-A5: a planned field in its sowing window (type SOW, kind = crop). */
+  sowDue?: SowDueView | null;
+}
+
+export interface SowDueView {
+  farmlandId: number;
+  fieldName: string;
+  fruitType: string;
+  fillType: string | null;
+}
+
+export interface FeedDueView {
+  animalType: string;
+  title: string;
+  kind: FeedGroupKind;
+  reachDays: number | null;
+  fillTypes: string[];
 }
 
 export interface InvestorDueView {
@@ -1832,3 +1863,357 @@ export interface FieldBookEvaluationView {
 
 /** Roadmap V3.3 R33-W1: where the litres of a field in the farm report come from. */
 export type YieldSource = 'MEASURED' | 'ENTERED' | 'ESTIMATED';
+
+/** Roadmap V4 R4-D: kind of a line of the contribution margin. */
+export type FieldMarginKind =
+  | 'SEED'
+  | 'FERTILIZER'
+  | 'LIME'
+  | 'PROTECTION'
+  | 'MANURE'
+  | 'OTHER_INPUT'
+  | 'CONTRACTOR'
+  | 'PREMIUM'
+  | 'RENT'
+  | 'OVERHEAD'
+  | 'EXTRA_COST'
+  | 'EXTRA_REVENUE';
+
+/** Roadmap V4 R4-D: one line; `id` null = estimate, `amount` signed (costs negative), null = no price known. */
+export interface FieldMarginLine {
+  id: number | null;
+  kind: FieldMarginKind;
+  source: 'MEASURED' | 'DISTRIBUTED' | 'ENTERED' | 'ESTIMATED';
+  fillType: string | null;
+  liters: number | null;
+  helperLiters: number | null;
+  amount: number | null;
+  corrected: boolean;
+  note: string | null;
+  held: boolean;
+}
+
+/** Roadmap V4 R4-D: the calculation, signed euro; revenue / free / margin / result null without a revenue. */
+export interface FieldMarginTotals {
+  revenue: number | null;
+  directCosts: number;
+  freeOfDirectCosts: number | null;
+  contractor: number;
+  margin: number | null;
+  premiums: number;
+  rent: number;
+  overheads: number;
+  result: number | null;
+}
+
+export interface FieldMarginEntry {
+  entryId: number;
+  farmlandId: number;
+  fieldName: string | null;
+  status: 'RUNNING' | 'HARVESTED' | 'NO_HARVEST';
+  harvestYear: number | null;
+  fruitType: string | null;
+  fillType: string | null;
+  hectares: number | null;
+  liters: number | null;
+  price: { perLiter: number | null; source: 'REALISED' | 'HARVEST_DAY' | 'INTERNAL' | 'ENTERED' | null; provisional: boolean };
+  lines: FieldMarginLine[];
+  totals: FieldMarginTotals;
+  perHectare: FieldMarginTotals | null;
+  locked: boolean;
+  estimated: boolean;
+  incomplete: boolean;
+}
+
+/** Roadmap V4 R4-D5: card "Deckungsbeitrag" in the app "Bank" (period shared with the field book evaluation). */
+export interface FieldMarginView {
+  years: number;
+  defaultYears: number;
+  fromYear: number | null;
+  toYear: number | null;
+  currentYear: number | null;
+  overheads: boolean;
+  measured: boolean;
+  fields: { farmlandId: number; name: string; hectares: number | null; running: FieldMarginEntry | null; entries: FieldMarginEntry[] }[];
+  ranking: { farmlandId: number; name: string; marginPerHectare: number | null; n: number }[];
+  crops: {
+    fruitType: string;
+    fillType: string | null;
+    revenuePerHectare: number | null;
+    directCostsPerHectare: number | null;
+    marginPerHectare: number | null;
+    n: number;
+  }[];
+  /** Roadmap V4 R4-D5 (owner decision 2026-10-14): expected revenue of the running seasons with a plan, by farmland. */
+  expected?: Record<string, FieldMarginExpected>;
+}
+
+// ------------------------------------------------------------------------------------------ Roadmap V4 R4-F
+
+/** FOOD = a food group of the game, BEDDING = the straw of the stables. */
+export type FeedGroupKind = 'FOOD' | 'BEDDING';
+/** Traffic light in game months; UNUSED = not eaten (measured 0) or fill types unknown. */
+export type FeedStatus = 'GREEN' | 'YELLOW' | 'RED' | 'UNUSED';
+
+export interface FeedFillTypeNeed {
+  fillType: string;
+  perDay: number;
+}
+
+export interface FeedStable {
+  husbandryUniqueId: string;
+  animalType: string;
+  count: number;
+  /** false = need of the game x 24 ("geschätzt"). */
+  measured: boolean;
+  needPerDay: number;
+  troughLiters: number | null;
+  troughCapacity: number | null;
+  troughHours: number | null;
+  strawPerDay: number | null;
+  straw: number | null;
+  monthlyCost: number | null;
+  needs: FeedFillTypeNeed[];
+}
+
+export interface FeedGroup {
+  title: string;
+  kind: FeedGroupKind;
+  productionWeight: number | null;
+  fillTypes: string[];
+  needPerDay: number;
+  estimated: boolean;
+  /** Share of the silo and entered stock. */
+  stock: number;
+  manual: number;
+  /** Troughs (straw in the stables for the bedding). */
+  trough: number;
+  reachDays: number | null;
+  reachMonths: number | null;
+  emptyAt: number | null;
+  status: FeedStatus;
+  nextHarvestAt: number | null;
+  shortfall: number | null;
+  yearNeed: number;
+  coveredPercent: number | null;
+  yearBalance: number;
+  monthlyCost: number | null;
+  neighborTrade: boolean;
+  /** R4-F5: planned harvest of the crop plan for this group (null = no plan), coverage and balance with it. */
+  plannedHarvest: number | null;
+  coveredWithPlanPercent: number | null;
+  yearBalanceWithPlan: number | null;
+  /** R4-F3: PLAN = harvest window of a crop of the crop plan, CROPS = windows of the crops of the fill types. */
+  nextHarvestSource: 'PLAN' | 'CROPS' | null;
+}
+
+export interface FeedAnimal {
+  animalType: string;
+  animals: number;
+  groups: FeedGroup[];
+}
+
+export interface FeedManualStock {
+  id: number;
+  fillType: string;
+  liters: number;
+  bales: number | null;
+  baleSize: string | null;
+  balesLeft: number | null;
+  note: string | null;
+  enteredGameTime: number;
+  checkedGameTime: number;
+  ageDays: number;
+  stale: boolean;
+}
+
+export interface FeedWorst {
+  animalType: string;
+  title: string;
+  kind: FeedGroupKind;
+  status: FeedStatus;
+  reachDays: number | null;
+}
+
+export interface FeedBalanceView {
+  /** false = older mod without the food values ("Mod aktualisieren"). */
+  tracked: boolean;
+  /** false = the mod does not count the eaten feed; the sinking troughs are measured. */
+  counted: boolean;
+  measureDays: number;
+  okMonths: number;
+  warnMonths: number;
+  daysPerPeriod: number;
+  animals: FeedAnimal[];
+  stables: FeedStable[];
+  manual: FeedManualStock[];
+  baleSizes: Record<string, number>;
+  worst: FeedWorst | null;
+  monthlyCost: number | null;
+}
+
+export interface FeedStockRequest {
+  fillType: string;
+  bales: number | null;
+  baleSize: string | null;
+  liters: number | null;
+  note: string | null;
+}
+
+// ------------------------------------------------------------------------------------------ Roadmap V4 R4-A
+
+export interface CropPlanCrop {
+  name: string;
+  title: string | null;
+  fillType: string | null;
+  products: string[];
+  /** null = not read (older mod): every month is offered. */
+  plantablePeriods: number[] | null;
+  harvestablePeriods: number[] | null;
+  litersPerSqm: number | null;
+}
+
+/** A hint of the checks: ROTATION_SAME, ROTATION_CUT, SOW_OUTSIDE_WINDOW, TOO_LATE, STORAGE, FERTILIZER_CLOSED, LIME, WEEDS. */
+export interface CropPlanCheck {
+  code: string;
+  values: Record<string, unknown>;
+}
+
+export type CropYieldSource = 'FIELD' | 'CROP' | 'BASE';
+export type CropPriceSource = 'FORWARD' | 'BEST' | 'INTERNAL';
+export type CropCostSource = 'MARGIN' | 'SEED';
+
+export interface CropForecast {
+  fruitType: string;
+  fillType: string | null;
+  hectares: number | null;
+  litersPerHa: number | null;
+  yieldSource: CropYieldSource | null;
+  liters: number | null;
+  pricePerLiter: number | null;
+  priceSource: CropPriceSource | null;
+  revenue: number | null;
+  directCostsPerHa: number | null;
+  costSource: CropCostSource | null;
+  directCosts: number | null;
+  margin: number | null;
+}
+
+export interface CropPlanWindow {
+  start: number;
+  end: number;
+  active: boolean;
+}
+
+export interface CropPlanView {
+  id: number;
+  status: string;
+  /** RUNNING = the running season (nothing sown yet), NEXT = the season after it. */
+  target: 'RUNNING' | 'NEXT';
+  /** BRACHE = fallow. */
+  fruitType: string;
+  fillType: string | null;
+  sowPeriod: number | null;
+  note: string | null;
+  checks: CropPlanCheck[];
+  forecast: CropForecast;
+  window: CropPlanWindow | null;
+}
+
+export interface CropPlanField {
+  farmlandId: number;
+  name: string;
+  hectares: number | null;
+  runningCrop: string | null;
+  lastCrop: string | null;
+  sown: boolean;
+  plan: CropPlanView | null;
+  /** "Wie Vorjahr": the forecast of the crop standing now (else the last one). */
+  previous: CropForecast | null;
+}
+
+export interface CropSeedNeed {
+  fruitType: string;
+  hectares: number;
+  liters: number | null;
+  cost: number | null;
+}
+
+export interface CropMarketNeed {
+  fillType: string;
+  expected: number;
+  contracted: number;
+  soldPercent: number | null;
+}
+
+export interface CropFeedNeed {
+  animalType: string;
+  title: string;
+  kind: FeedGroupKind;
+  fillTypes: string[];
+  yearNeed: number;
+  expected: number;
+  coveredPercent: number | null;
+  suggestCrop: string | null;
+  suggestHectares: number | null;
+}
+
+export interface CropPlanActual {
+  id: number;
+  farmlandId: number;
+  name: string;
+  status: 'MATCHED' | 'DEVIATED';
+  plannedCrop: string;
+  actualCrop: string | null;
+  harvestYear: number | null;
+  ended: boolean;
+  plannedLitersPerHa: number | null;
+  actualLitersPerHa: number | null;
+  plannedMargin: number | null;
+  actualMargin: number | null;
+}
+
+export interface CropPlanningView {
+  year: number | null;
+  period: number | null;
+  /** false = older mod without sowing windows. */
+  windows: boolean;
+  reminders: boolean;
+  /** "Plan besprechen" already used this year. */
+  discussed: boolean;
+  crops: CropPlanCrop[];
+  fields: CropPlanField[];
+  planMargin: number | null;
+  previousMargin: number | null;
+  seeds: CropSeedNeed[];
+  marketing: CropMarketNeed[];
+  feed: CropFeedNeed[];
+  history: CropPlanActual[];
+}
+
+export interface CropPlanRequest {
+  fruitType: string;
+  fillType: string | null;
+  sowPeriod: number | null;
+  note: string | null;
+}
+
+export interface CropSuggestion {
+  fruitType: string;
+  fillType: string | null;
+  reason: 'MARGIN' | 'YIELD';
+  value: number | null;
+}
+
+/** R4-D5: PLAN = the forecast of the crop plan, ACTUAL = the forecast of the crop that stands (it deviates). */
+export interface FieldMarginExpected {
+  basis: 'PLAN' | 'ACTUAL';
+  fruitType: string | null;
+  fillType: string | null;
+  hectares: number | null;
+  litersPerHa: number | null;
+  yieldSource: string | null;
+  pricePerLiter: number | null;
+  priceSource: string | null;
+  revenue: number | null;
+}

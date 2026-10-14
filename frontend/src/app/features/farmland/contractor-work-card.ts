@@ -84,6 +84,12 @@ export class ContractorWorkCard {
   readonly farmlandId = input.required<number>();
   /** Emitted after an order so the page can reload its case list. */
   readonly ordered = output<void>();
+  /**
+   * Roadmap V4 R4-A5: work and crop the form starts with (link of the crop planner). A crop the contractor does not
+   * sow (not in the list of the quote) is not preset.
+   */
+  readonly presetWork = input<string | null>(null);
+  readonly presetFruitType = input<string | null>(null);
 
   readonly quote = signal<ContractorQuoteView | null>(null);
   readonly loadError = signal<string | null>(null);
@@ -104,11 +110,12 @@ export class ContractorWorkCard {
   constructor() {
     effect(() => {
       const id = this.farmlandId();
+      const work = this.presetWork();
       untracked(() => {
         this.info.set(null);
         this.error.set(null);
         this.fruitType.set(null);
-        this.selected.set([]);
+        this.selected.set(work ? [work] : []);
         this.quote.set(null);
         this.load(id);
       });
@@ -119,7 +126,11 @@ export class ContractorWorkCard {
   load(id = this.farmlandId()): void {
     this.loadError.set(null);
     this.api.contractorQuote(id, this.selected()).subscribe({
-      next: (q) => this.quote.set(q),
+      next: (q) => {
+        this.quote.set(q);
+        const preset = this.presetFruitType();
+        if (preset && this.fruitType() === null && q.fruitTypes.includes(preset)) this.fruitType.set(preset);
+      },
       error: (e) => this.loadError.set(apiErrorMessage(e, this.i18n.t('common.error'))),
     });
   }

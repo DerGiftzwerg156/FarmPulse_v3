@@ -104,6 +104,10 @@ end
 -- (FruitTypeDesc.needsRolling, R33-F4 owner decision 2026-10-09), products = further harvest products from the fruit type
 -- converters (e.g. MAIZE -> CHAFF; sorted, unique, without the standard product). Optional values that are empty or of
 -- the wrong type are left out; entries without a name and repeated names are dropped. Sorted by name.
+-- Roadmap V4 (R4-Q1, contract; read by the mod with R4-A2), each optional: seedUsagePerSqm (FruitTypeDesc
+-- seeding#litersPerSqm) and litersPerSqm (base yield), both >= 0 with 4 decimals; plantablePeriods / harvestablePeriods
+-- = the periods 1..12 in which the crop can be sown / harvested in the growth mode of the savegame
+-- (getIsPlantableInPeriod / getIsHarvestableInPeriod), whole, unique, sorted.
 function RPSimMarketContext.buildFruitTypes(raw)
     local list = RPSimJson.array({})
     local seen = {}
@@ -135,10 +139,94 @@ function RPSimMarketContext.buildFruitTypes(raw)
                 table.sort(products)
                 e.products = products
             end
+            for _, key in ipairs({ "seedUsagePerSqm", "litersPerSqm" }) do
+                local v = f[key]
+                if type(v) == "number" and v == v and v >= 0 then
+                    e[key] = math.floor(v * 10000 + 0.5) / 10000
+                end
+            end
+            e.plantablePeriods = RPSimMarketContext.buildPeriods(f.plantablePeriods)
+            e.harvestablePeriods = RPSimMarketContext.buildPeriods(f.harvestablePeriods)
             list[#list + 1] = e
         end
     end
     table.sort(list, function(a, b) return a.name < b.name end)
+    return list
+end
+
+--- Roadmap V4 (R4-Q1): FS25 periods 1..12 (whole numbers, unique, sorted); nil when not a table.
+function RPSimMarketContext.buildPeriods(raw)
+    if type(raw) ~= "table" then
+        return nil
+    end
+    local seen, list = {}, RPSimJson.array({})
+    for _, p in ipairs(raw) do
+        if type(p) == "number" and p == math.floor(p) and p >= 1 and p <= 12 and not seen[p] then
+            seen[p] = true
+            list[#list + 1] = p
+        end
+    end
+    table.sort(list)
+    return list
+end
+
+--- Roadmap V4 (R4-Q1, contract; read by the mod with R4-D1): purchase price of the game per litre
+-- (economyManager:getCostPerLiter). raw = { {fillType, costPerLiter} }; costPerLiter >= 0 with 4 decimals, entries
+-- without a fill type, with a price that is not a number >= 0 or with a repeated fill type dropped. Sorted by fillType.
+function RPSimMarketContext.buildFillTypeCosts(raw)
+    local list = RPSimJson.array({})
+    local seen = {}
+    for _, c in ipairs(raw) do
+        if type(c) == "table" and type(c.fillType) == "string" and c.fillType ~= "" and not seen[c.fillType]
+            and type(c.costPerLiter) == "number" and c.costPerLiter == c.costPerLiter and c.costPerLiter >= 0 then
+            seen[c.fillType] = true
+            list[#list + 1] = { fillType = c.fillType, costPerLiter = math.floor(c.costPerLiter * 10000 + 0.5) / 10000 }
+        end
+    end
+    table.sort(list, function(a, b) return a.fillType < b.fillType end)
+    return list
+end
+
+--- Fill type names: unique, without empty values, sorted.
+local function uniqueSortedNames(raw)
+    local seen, list = {}, RPSimJson.array({})
+    for _, name in ipairs(type(raw) == "table" and raw or {}) do
+        if type(name) == "string" and name ~= "" and not seen[name] then
+            seen[name] = true
+            list[#list + 1] = name
+        end
+    end
+    table.sort(list)
+    return list
+end
+
+--- Roadmap V4 (R4-Q2, contract; read by the mod with R4-F1): food groups per animal type
+-- (animalFoodSystem:getAnimalFood(animalTypeIndex).groups, getMixturesByAnimalTypeIndex). raw = { {animalType,
+-- groups = { {title, productionWeight, fillTypes = {..}} }, mixtures = {..}} }. A group needs a title, a
+-- productionWeight >= 0 (3 decimals) and at least one fill type; groups keep the order of the game (it may be the order
+-- the animals eat in). Entries without an animal type or with a repeated one are dropped. Sorted by animalType.
+function RPSimMarketContext.buildAnimalFood(raw)
+    local list = RPSimJson.array({})
+    local seen = {}
+    for _, a in ipairs(raw) do
+        if type(a) == "table" and type(a.animalType) == "string" and a.animalType ~= "" and not seen[a.animalType] then
+            seen[a.animalType] = true
+            local groups = RPSimJson.array({})
+            for _, g in ipairs(type(a.groups) == "table" and a.groups or {}) do
+                if type(g) == "table" and type(g.title) == "string" and g.title ~= ""
+                    and type(g.productionWeight) == "number" and g.productionWeight == g.productionWeight
+                    and g.productionWeight >= 0 then
+                    local fillTypes = uniqueSortedNames(g.fillTypes)
+                    if #fillTypes > 0 then
+                        groups[#groups + 1] = { title = g.title,
+                            productionWeight = math.floor(g.productionWeight * 1000 + 0.5) / 1000, fillTypes = fillTypes }
+                    end
+                end
+            end
+            list[#list + 1] = { animalType = a.animalType, groups = groups, mixtures = uniqueSortedNames(a.mixtures) }
+        end
+    end
+    table.sort(list, function(a, b) return a.animalType < b.animalType end)
     return list
 end
 
@@ -148,7 +236,8 @@ end
 --         detectedMods = { "FS25_..." },
 --         storeVehicles = <see buildStoreVehicles> | nil (Roadmap V3, nil = not collected),
 --         fieldShapes = <see buildFieldShapes> | nil (Roadmap V3.1, nil = not collected),
---         fruitTypes = <see buildFruitTypes> | nil (Roadmap V3.3, nil = not collected) }
+--         fruitTypes = <see buildFruitTypes> | nil (Roadmap V3.3, nil = not collected),
+--         fillTypeCosts = <see buildFillTypeCosts> | nil, animalFood = <see buildAnimalFood> | nil (Roadmap V4) }
 -- cfg: RPSimConfig (fieldShapeMaxPoints), defaults when missing.
 function RPSimMarketContext.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
@@ -204,6 +293,13 @@ function RPSimMarketContext.build(raw, cfg)
     end
     if type(raw.fruitTypes) == "table" then
         doc.fruitTypes = RPSimMarketContext.buildFruitTypes(raw.fruitTypes)
+    end
+    -- Roadmap V4 (R4-Q1, D1): purchase prices; (R4-Q2, F1): food groups per animal type
+    if type(raw.fillTypeCosts) == "table" then
+        doc.fillTypeCosts = RPSimMarketContext.buildFillTypeCosts(raw.fillTypeCosts)
+    end
+    if type(raw.animalFood) == "table" then
+        doc.animalFood = RPSimMarketContext.buildAnimalFood(raw.animalFood)
     end
     return doc
 end

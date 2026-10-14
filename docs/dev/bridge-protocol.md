@@ -488,6 +488,73 @@ as not assignable. Nothing within `rpsim.formulas.finance.statement-vehicle-matc
 order of booking and vehicle spawn (manual test plan 26.3). The backend validator refuses entries without `seq`,
 `year`, `period` (1..12), `category` or `amount`, a `seq` ≥ `nextSeq` and a missing `nextSeq` / `entries`.
 
+### Roadmap V4 fields and blocks (optional, R4-Q1 / R4-Q2)
+
+More **optional** values for [`ROADMAP_V4.md`](../architecture/ROADMAP_V4.md) (field margin, feed balance, crop
+planner), same rules as above (`schemaVersion` stays `1`, missing = older mod, an empty block is a real answer of the
+game). R4-Q fixes the **contract only** (`BridgeDtos`, `BridgeValidator`, the simulator schemas,
+`RPSimFarmFacts.build` / `RPSimMarketContext.build`); the mod reads the values in the game with R4-D1 (consumption
+counter, purchase prices), R4-F1 (food values, feed stock, food groups) and R4-A2 (crop windows) - all three are built
+since 14.10.2026; an older mod leaves them out. The bridge simulator exports them only in the scenario `hofplanung`.
+
+```json
+{ "inputs": [{ "farmlandId": 2, "fillType": "FERTILIZER", "liters": 1800, "helperLiters": 1800 },
+             { "farmlandId": 2, "fillType": "SEEDS", "liters": 3200, "helperLiters": 0 }],
+  "feedStock": [{ "fillType": "SILAGE", "amount": 150000 }, { "fillType": "STRAW", "amount": 8000 }],
+  "husbandries": [{ "husbandryUniqueId": "hus_00001", "health": 92, "food": 0.3, "conditions": [],
+                    "foodLitersPerHour": 41.67, "foodCapacity": 20000, "strawLitersPerHour": 8.33, "straw": 1200,
+                    "trough": [{ "fillType": "SILAGE", "amount": 4000 }],
+                    "feedConsumed": [{ "fillType": "SILAGE", "liters": 36000 }] }] }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `inputs` | Consumption counter, one entry per own field and fill type, sorted by `farmlandId`, `fillType`; empty = nothing counted yet | see below |
+| `inputs[].farmlandId` | Farmland the sowing machine or sprayer stood on, only farmlands of the player farm (leased ones included) | `g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)` at `getWorldTranslation(self.rootNode)` (LUADOC `Economy/FarmlandManager.md`), as the harvest counter |
+| `inputs[].fillType` | Fill type used (seed, fertiliser, liquid fertiliser, lime, herbicide, slurry, manure, digestate) | sowing: `spec.seedFillType` or the fill type of the seed tank; spraying: `spec.workAreaParameters.sprayFillType` (LUADOC `Specializations/SowingMachine.md`, `Sprayer.md`) |
+| `inputs[].liters` | **Cumulative** litres used on this field (whole litres, ≥ 0), kept in the mod savegame like `harvests` | `usage` of `SowingMachine:onEndWorkAreaProcessing` (`fruitDesc.seedUsagePerSqm × ha × 10000 × seedUsageScale`, more with damage) and `spec.workAreaParameters.usage` of `Sprayer:onEndWorkAreaProcessing`; the fertilising sowing machine uses the sprayer's parameters (`FertilizingSowingMachine.md`). 🟡 whether the hooks reach the event listeners (manual test plan 30.1) |
+| `inputs[].helperLiters` | Part of `liters` a helper bought while working (≤ `liters`); the game books it at once as `PURCHASE_SEEDS` / `PURCHASE_FERTILIZER` with `getCostPerLiter(fillType, false) × 1.5` | `self:getIsAIActive()` with `missionInfo.helperBuySeeds` / `helperBuyFertilizer` (same LUADOC pages). 🟡 sprayer of a helper without a tank, 30.2 |
+| `feedStock` | Feed stock per fill type in **own silos, silo extensions and bunker silos** (whole litres, only ≥ 1, summed per fill type, sorted); unlike `assets.storage` without production points, unlike `tradeStorage` with bunker silos | the same storage sources as `assets.storage` (`RPSimGameAdapter:storageSources`, open technical points No. 8) without `spec_productionPoint`; only fill types of `market_context.animalFood` plus `STRAW` |
+| `husbandries[].foodLitersPerHour` | Food need of the husbandry per game hour (2 decimals) | `getFoodLitersPerHour()` = `Σ subType.input.food:get(age) × cluster:getNumAnimals() / 24` (dump `animals/husbandry/placeables/PlaceableHusbandryFood.lua`, `onHusbandryAnimalsUpdate`). 🟡 `environment.timeAdjustment` is not defined in the dump, 30.4 |
+| `husbandries[].foodCapacity` | Capacity of the feeding trough (whole litres) | `getFoodCapacity()` (same file) |
+| `husbandries[].trough[]` | Content of the trough per fill type `{ fillType, amount }` (whole litres, only ≥ 1, sorted) | `spec_husbandryFood.fillLevels[fillTypeIndex]` (same file) |
+| `husbandries[].strawLitersPerHour` / `.straw` | Straw need per game hour (2 decimals) and straw in the husbandry (whole litres); only husbandries with straw | `spec_husbandryStraw.inputLitersPerHour` (dump `PlaceableHusbandryStraw.lua`, `onHusbandryAnimalsUpdate`); `getHusbandryFillLevel(FillType.STRAW, farmId)` (as the milk, R32-Q1) |
+| `husbandries[].feedConsumed[]` | **Cumulative** litres the animals ate per fill type `{ fillType, liters }` (whole litres, ≥ 0, sorted), kept in the mod savegame | return value of `PlaceableHusbandryFood:removeFood(delta, fillTypeIndex)`, called hourly by `updateFeeding` (`PlaceableHusbandry:onHourChanged`). 🟡 whether the hook reaches the registered function, 30.3; fallback: the falling `trough` between two exports |
+
+**Built (R4-Q1 / R4-Q2, contract):** `RPSimFarmFacts.buildInputs` keeps entries with a `farmlandId`, a non-empty
+`fillType` and `liters` ≥ 0 (whole litres), sets a missing or invalid `helperLiters` to `0` and caps it at `liters`;
+`RPSimFarmFacts.buildFeedStock` and the `trough` sum per fill type and drop amounts below 1 litre; `feedConsumed` keeps
+zero counters; the four numbers of a husbandry are left out when they are not a number ≥ 0. The backend validator
+refuses an input counter without `farmlandId`, with a blank `fillType`, missing or negative `liters` / `helperLiters`
+or `helperLiters` > `liters`, negative or incomplete feed amounts and negative food values.
+
+**Built (R4-D1):** `RPSim.sowingEndHook` on `SowingMachine.onEndWorkAreaProcessing` and `RPSim.sprayerEndHook` on
+`Sprayer.onEndWorkAreaProcessing` (`Utils.overwrittenFunction`, installed when the mod is loaded like the harvest
+hooks) call the original first and count afterwards, only on the server: the seed of the sown area with the game's own
+formula (`fruitDesc.seedUsagePerSqm × ha × 10000 × seedUsageScale`, × `1 + damage × DAMAGED_USAGE_INCREASE`; the fill
+type of the seed tank, or `spec.seedFillType` when a helper with *helper buys seeds* sows) and the `usage` of the
+sprayer tick (`workAreaParameters.isActive`, `sprayFillType`; a helper without a spray tank bought it).
+`RPSimGameAdapter:inputEntry` finds the own farmland like `harvestEntry` (shared `ownFarmlandAt`). The counter
+(`RPSimInputCounter`, `state.inputs`) is saved in `FS25_RPSim.xml` (`inputs.counter(i)#farmlandId/fillType/liters/
+helperLiters`) and exported only while a hook is installed. The backend (`FieldMarginService`) books the difference
+of every counter since the last export into the running field book season of the field (a falling counter shrinks the
+line proportionally).
+
+**Built (R4-F1):** `RPSimGameAdapter.husbandryFeed` reads the food values of every own husbandry
+(`getFoodLitersPerHour()`, falling back to `spec_husbandryFood.litersPerHour`; `getFoodCapacity()`;
+`spec_husbandryFood.fillLevels` as `trough`; `spec_husbandryStraw.inputLitersPerHour` and
+`getHusbandryFillLevel(spec_husbandryStraw.inputFillType, farmId)` as `strawLitersPerHour` / `straw`). `RPSim.removeFoodHook`
+on `PlaceableHusbandryFood.removeFood` (`Utils.overwrittenFunction`, installed when the mod is loaded) calls the original
+and adds what it returned to the counter of the husbandry and fill type, only on the server (a client calls
+`removeFood` too when it reads the trough of the server) and only for husbandries of the player farm
+(`RPSimGameAdapter:feedEntry`). The counter (`RPSimFeedCounter`, `state.feed`) is saved in `FS25_RPSim.xml`
+(`feed.counter(i)#husbandry/fillType/liters`) and exported as `feedConsumed` only while the hook is installed (a
+husbandry without counter then gets `[]`). `feedStock` comes from the storage places the stock inventory counts
+(`RPSimStorage.counts`) without production points, filtered to the fill types of the food groups plus `STRAW`
+(`RPSimFeedCounter.stockFromSilos`); without food groups (no `animalFoodSystem`) it stays missing. The backend
+(`FeedBalanceService`) books the difference of every counter since the last export (a falling counter is taken back);
+without `feedConsumed` it counts the fall of `trough` between two exports.
+
 ## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, every 60 s, and on every `farm_facts` cycle when its content changed)
 
 The mod rewrites the file every `marketContextIntervalMs` (mod config, default 60 s real time) even when its content
@@ -587,6 +654,47 @@ not present (older mod or not built yet); the bridge simulator exports it only i
 optional values and removes empty, repeated and standard products. The backend validator refuses a blank `name`, a blank
 `fillType` and a blank product.
 
+
+**Roadmap V4 values** (optional, contract R4-Q1 / R4-Q2; read by the mod with R4-D1 / R4-F1 / R4-A2, built once per
+mission start like `fruitTypes` except `fillTypeCosts`, which follows the regular rewrite). Missing = not present (older
+mod or not built yet); the bridge simulator exports them only in the scenario `hofplanung`.
+
+```json
+{ "fruitTypes": [{ "name": "WHEAT", "fillType": "WHEAT", "seedUsagePerSqm": 0.1, "litersPerSqm": 0.95,
+                   "plantablePeriods": [6, 7], "harvestablePeriods": [4, 5] }],
+  "fillTypeCosts": [{ "fillType": "SEEDS", "costPerLiter": 0.9 }, { "fillType": "FERTILIZER", "costPerLiter": 1.6 }],
+  "animalFood": [{ "animalType": "COW", "mixtures": ["FORAGE"], "groups": [
+      { "title": "Futtermischung", "productionWeight": 0.6, "fillTypes": ["FORAGE"] },
+      { "title": "Silage", "productionWeight": 0.25, "fillTypes": ["SILAGE"] }] }] }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `fruitTypes[].seedUsagePerSqm` | Seed in litres per m² (≥ 0, 4 decimals) | `FruitTypeDesc.seedUsagePerSqm` (`seeding#litersPerSqm`, LUADOC `Fruits/FruitTypeDesc.md`) |
+| `fruitTypes[].litersPerSqm` | Base yield per m² (≥ 0, 4 decimals), also for crops that stand on no field | `FruitTypeDesc.literPerSqm` (as `fields[].litersPerSqm`) |
+| `fruitTypes[].plantablePeriods[]` / `harvestablePeriods[]` | Periods 1..12 in which the crop can be sown / harvested in the growth mode of the savegame (unique, sorted) | `fruitDesc:getIsPlantableInPeriod(missionInfo.growthMode, period)` / `getIsHarvestableInPeriod` for every period (LUADOC `Fruits/FruitTypeDesc.md`; `SowingMachine.md` calls the first exactly so with `environment.currentPeriod`) |
+| `fillTypeCosts[]` | Purchase price of the game per litre `{ fillType, costPerLiter }` (≥ 0, 4 decimals, unique, sorted) for every fill type in `inputs`, the feed fill types of `animalFood` and the mod setting `costFillTypes`. Read since R4-D1 on every market context write (`RPSimGameAdapter:collectFillTypeCosts`); the feed fill types come with R4-F1 | `g_currentMission.economyManager:getCostPerLiter(fillTypeIndex, false)` (called so in `SowingMachine.md`, `Sprayer.md`, `Motorized.md`, `TreePlanter.md`); 🟡 meaning of the second parameter, 30.5; fallback `FillTypeDesc.pricePerLiter` (LUADOC `FillTypes/FillTypeDesc.md`) |
+| `animalFood[]` | Food groups per animal type `{ animalType, groups, mixtures }`, sorted by `animalType` | `g_currentMission.animalFoodSystem:getAnimalFood(animalTypeIndex).groups` (read so in `PlaceableHusbandryFood:getFoodInfos`, dump) |
+| `animalFood[].groups[]` | `{ title, productionWeight, fillTypes }` in the **order of the game** (it may be the order the animals eat in); `productionWeight` ≥ 0 (3 decimals), at least one fill type | `foodGroup.title`, `foodGroup.productionWeight`, `foodGroup.fillTypes` (same) |
+| `animalFood[].mixtures[]` | Mixed feed fill types of the animal type such as TMR (unique, sorted) | `animalFoodSystem:getMixturesByAnimalTypeIndex(animalTypeIndex)` (`PlaceableHusbandryFood:onPostLoad`, dump) |
+
+**Built (R4-F1):** `RPSimGameAdapter:collectAnimalFood` walks `g_currentMission.animalSystem:getTypes()` (`type.name`,
+`type.typeIndex`) and reads `animalFoodSystem:getAnimalFood(typeIndex).groups` and
+`getMixturesByAnimalTypeIndex(typeIndex)` once per mission (fill type indices as names); without an animal food
+system `animalFood` stays missing. The fill types of the groups, the mixtures and `STRAW` are added to the purchase
+prices of `fillTypeCosts`.
+
+**Built (R4-A2):** `RPSimGameAdapter:collectFruitTypes` adds `FruitTypeDesc.seedUsagePerSqm`, `FruitTypeDesc.literPerSqm`
+and, with `missionInfo.growthMode`, the periods of `getIsPlantableInPeriod` / `getIsHarvestableInPeriod`
+(`RPSimGameAdapter.periodsWhere`, every period 1..12); a crop without these methods or a failing call has no windows,
+without a growth mode none are read. Read once per mission like the rest of `fruitTypes`.
+
+`RPSimMarketContext.buildFruitTypes` adds the four values when valid and leaves them out otherwise
+(`buildPeriods` keeps whole periods 1..12); `buildFillTypeCosts` drops entries without a fill type, with a price that
+is not a number ≥ 0 and repeated fill types; `buildAnimalFood` drops groups without a title, with a negative weight or
+without fill types and repeated animal types. The backend validator refuses negative seed use or yield, periods outside
+1..12, a blank or negatively priced cost entry and an animal food entry without `animalType` or `groups` or with an
+invalid group.
 
 ## `import/instructions.json` + `import/instructions.xml` (backend → mod)
 
@@ -718,6 +826,27 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   (measures, end by harvest or by another crop). The `APPLIED` ack of a contractor `STORAGE_TRANSFER` (harvest) adds its
   litres, of a `FIELD_WORK LIME` ticks the lime. A rewind reopens the entries that ended after the loaded game time and
   drops the seasons begun after it (owner decision 2026-10-09).
+- **Contribution margin** (Roadmap V4 R4-D, `FieldMarginService`, after the field book on every export): books the
+  difference of every `inputs` counter into the running season of the field, valued with `fillTypeCosts` at that moment
+  (helper litres × `field-margin.helper-surcharge`, farmyard manure with `manure-cost-per-liter`), and keeps the best
+  price of the product on the harvest day of every harvested entry. The `APPLIED` ack of a `MONEY_TRANSACTION` of a
+  contractor job (`CONTRACTOR_FEE`) or of a lease contract (`LEASE_PAYMENT`) becomes a line of the running season; the
+  area payment and the rotation premium are split per field when they are booked. At every month end the overhead money
+  types of the journal month that ended (and the salaries of the drivers) are distributed by area. A field book entry
+  that is merged or replaced hands its lines to the entry that takes its place; a rewind deletes the bookings after the
+  loaded game time (the counter lines follow the falling counters).
+- **Crop planner** (Roadmap V4 R4-A, `CropPlanService`, after the field book and the contribution margin on every
+  export): drops the open plan of a field that is no longer own, and when the season a plan is for begins with a crop
+  marks it MATCHED or DEVIATED and keeps the forecast of that moment. At every month start the cooperative reminds of
+  planned fields whose sowing window (`fruitTypes[].plantablePeriods`) ends with that month (switch, default on).
+- **Feed balance** (Roadmap V4 R4-F, `FeedBalanceService`, on every export and every game day): books the eaten litres
+  per husbandry and fill type (difference of `feedConsumed`, else the fall of `trough`), keeps one snapshot per
+  husbandry and game day, and measures the daily need over the last `feed-balance.measure-days` game days (scaled by
+  `foodLitersPerHour` now / in the period; without a measurement `foodLitersPerHour × 24`, "geschätzt"). A rise of a
+  trough or of the straw in a stable that the silos (`feedStock`) did not give lowers the stock the player entered
+  (bales). Every game day a food group below `feed-balance.warn-months` game months of reach brings a mail of the
+  animal keeper (without one the cooperative), at most one per game month and group; yellow and red groups are tasks
+  (`FEED`) and calendar entries (`FEED_EMPTY`). A rewind drops the later snapshots and starts the levels again.
 - **Savegame reloaded without saving** (`RewindService`): `farm_facts.json` with a game time earlier than the last
   snapshot is a rewind. The next `instructions_ack.json` rebuilt by the mod from the reloaded savegame shows which
   acknowledged instructions are missing; an ack file still written before the reload (it contains acks later than

@@ -20,7 +20,8 @@ Homescreen.
   die **nächste Abbuchung** zum Monatsbeginn (führt zum Kalender) und dein **Ansehen im Dorf** (führt zu den
   Kontakten). Daneben die Widgets **Zu erledigen** (die dringendsten Aufgaben), **Meilensteine** (nur wenn du schon
   einen erreicht hast, führt zum Tagebuch), **Felder** (wie viele erntereif sind) und **Stall** (Gesundheit und Futter
-  des Stalls, der am schlechtesten dasteht).
+  des Stalls, der am schlechtesten dasteht). Reicht eine Futtergruppe weniger als drei Spielmonate, erscheint dazu die
+  Kachel **Futter** („Futter reicht noch x Tage“), die direkt in *Stall → Futter* führt.
 - **Apps:** Eine Zahl am App-Symbol zählt, was dort auf dich wartet – ungelesene Mails, klingelnde Anrufe, offene
   Entscheidungen.
 - **Dock:** Post, Telefon, Aufgaben und Kalender liegen immer griffbereit – auf dem Start unten schwebend, in jeder
@@ -50,8 +51,8 @@ Homescreen.
 | **Versicherung** | Sturm- und Hagelversicherung (auch mit Baustein „Diebstahl“), Dürre-Index, Schäden melden, Wildschaden | Hofversicherung · Dürre-Index · Schäden |
 | **Personal** | Team, Helferstunden und Stellenausschreibungen | Team · Stellen & Bewerber · Ehemalige |
 | **Flurkarte** | Felder, Kulturen, Fruchtfolge, Verhandlungen, Pacht und Forderungen | Karte · Meine Felder · Verhandlungen · Pacht · Vorgänge |
-| **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge | Dokumentation · Auswertung |
-| **Stall** | Tiere, Tierpfleger, Tierarzt, Viehhandel und Tierwohl | Ställe · Handel & Tierarzt |
+| **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge; Anbauplanung der nächsten Saison | Dokumentation · Auswertung · Anbauplanung |
+| **Stall** | Tiere, Tierpfleger, Futterbilanz, Tierarzt, Viehhandel und Tierwohl | Ställe · Futter · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
 | **Tagebuch** | Die Chronik deines Hofs | – |
@@ -167,6 +168,34 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
 - **Käufe und Verkäufe von Anlagen:** Fahrzeug-, Gebäude- und Feldkäufe zählen als Investition, ihre Verkäufe als
   Anlagenverkauf – beides senkt oder hebt dein Monatsergebnis nicht. Buchungen unter *Sonstiges* zählen je nach
   Vorzeichen als Einnahme oder Ausgabe des laufenden Betriebs.
+- **Deckungsbeitrag** (unter *Betriebsergebnis*): Für jeden Eintrag im **Feldbuch** (Feld × Erntejahr) rechnet
+  FarmPulse, was übrig blieb:
+  - **Leistung** = geerntete Liter × Preis. Der Preis ist der Ø-Preis, den du für diese Ware von der Ernte bis zum Ende
+    des folgenden FS25-Jahres wirklich erzielt hast (bis dahin „vorläufig“). Ohne Verkauf gilt der beste Preis am
+    Erntetag, ohne Verkaufsstelle (z. B. Silage für die eigenen Tiere) 80 % des Einkaufspreises.
+  - **Direktkosten:** Der Mod zählt, wie viel Saatgut, Dünger, Kalk und Pflanzenschutz deine Sämaschinen und Spritzen
+    auf dem Feld verbraucht haben, und bewertet es mit dem Einkaufspreis des Spiels zu diesem Zeitpunkt. Was ein Helfer
+    selbst gekauft hat, zählt wie im Spiel mit Aufschlag × 1,5. Eigene Gülle, Mist und Gärrest kosten nichts, die
+    Liter stehen dabei. Mit einem älteren Mod sind die Direktkosten je Hektar **geschätzt**.
+  - **Deckungsbeitrag** = Leistung − Direktkosten − Lohnunternehmer. Danach kommen **Prämien** (Flächen- und
+    Fruchtfolgeprämie des Feldes), **Pacht** und – solange der Schalter *Gemeinkosten verteilen* an ist (Standard) – die
+    nach Fläche **verteilten** Gemeinkosten (Diesel, Reparatur, Helferlohn, Leasing, Gehälter der Maschinenführer):
+    das **Feldergebnis**.
+  - Die Tabelle zeigt den Deckungsbeitrag je Hektar je Feld und Erntejahr, die Kultur mit derselben Farbe wie in der
+    Feldbuch-Auswertung, dazu die **Rangliste** der Felder, den Durchschnitt je Kultur (immer mit *n*) und ein
+    Balkendiagramm eines Erntejahres. Der Zeitraum ist derselbe wie in der Feldbuch-Auswertung. Ein Klick auf eine Zelle
+    zeigt die Rechnung mit allen Zeilen; *Im Feldbuch* springt zum Eintrag, und im Feldbuch führt *Deckungsbeitrag* an
+    jedem Eintrag hierher zurück.
+  - **Laufende Saison:** bisherige Kosten je Hektar und – wenn es für die Saison einen Anbauplan gibt – die
+    **erwartete Leistung**: die Prognose des Plans, oder, wenn eine andere Kultur gesät wurde, die Prognose für die
+    Kultur, die steht.
+  - Jede gemessene oder geschätzte Zeile kannst du **ändern** – Liter, Preis je 1000 l oder den Betrag (↺ gibt sie
+    zurück; ändern sich nur die Liter, rechnet FarmPulse den Betrag mit) –, den Erntepreis je 1000 l selbst eintragen
+    und **eigene Zeilen** hinzufügen, z. B. gepresstes Stroh als Leistung mit Litern und Preis oder Wickelfolie als
+    Kosten. Ein im
+    Feldbuch abgeschlossenes Erntejahr ist gesperrt; was später kommt (z. B. eine Prämie), wird erst nach dem Wieder-
+    öffnen gezählt.
+  - Hat ein Feld zwei Erntejahre in Folge einen negativen Deckungsbeitrag, schreibt dir die Genossenschaft einmal.
 - **Kontoauszug:** Unter der Hofbuchhaltung siehst du, was du wann gekauft und verkauft hast und was es gekostet
   oder eingebracht hat – Monat für Monat, filterbar nach Kategorie, mit Eingängen, Ausgängen und Saldo.
   - **Einzeln mit Uhrzeit** stehen Käufe und Verkäufe von Fahrzeugen, Gebäuden und Feldern sowie jede Buchung von
@@ -225,7 +254,8 @@ lehnt ab wie der Knopf im Browser. Welche weiteren Entscheidungen im Spiel gefra
   dem Lohnunternehmer gezählt, aus dem Feldbuch), **eingetragen** (im Feldbuch von dir korrigiert) oder **geschätzt**
   (Fläche × Ertrag je m², wenn das Feldbuch keine Liter hat). Sind die Feldbuch-Liter ein anderes Produkt als üblich,
   steht es dabei, z. B. „Mais (Häckselgut)“. Es gilt der Stand zum Jahreswechsel; spätere Korrekturen im Feldbuch
-  ändern einen geschriebenen Hofbericht nicht. Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
+  ändern einen geschriebenen Hofbericht nicht. Seit Roadmap V4 steht im Hofbericht auch der **Deckungsbeitrag je
+  Kultur** (Fläche, Summe und je Hektar). Die Bankberaterin lädt zum **Jahresgespräch** ein. Lief das Jahr gut,
   bietet sie eine Zinssenkung auf deine laufenden Kredite an (0,25 Prozentpunkte, die Rate sinkt). Lief es schlecht,
   wird es ein ernstes Gespräch, an deinen Verträgen ändert sich aber nichts. Absagen hat keine Folgen.
   Ist ein Investor neu eingestiegen oder ist eine Rückforderung offen, spricht sie das in der Einladung an.
@@ -609,6 +639,42 @@ Im Tab **Auswertung** siehst du, was deine Felder in den letzten Jahren gebracht
   Walzen fehlt bei Kulturen, die nicht gewalzt werden; Kalk und Unkraut nur, wenn sie im Spielstand eingeschaltet
   sind.
 
+### Anbauplanung
+
+Im Tab **Anbauplanung** legst du je Feld (eigen und gepachtet) fest, was in der **nächsten Saison** wachsen soll. Ist
+in der laufenden Saison noch nichts gesät, gilt der Plan für sie.
+
+- **Plan:** Kultur (alle Kulturen der Karte oder **Brache**), Ernteprodukt (z. B. Mais als Körner oder Häckselgut),
+  optional der **Saatmonat** und eine Notiz. *Wie Vorjahr* nimmt die Kultur, die jetzt steht oder zuletzt stand;
+  *Fruchtfolge vorschlagen* wählt eine Kultur, die in den letzten zwei Saisons nicht auf dem Feld stand – am liebsten
+  die mit dem besten Ø Deckungsbeitrag je Hektar, sonst die mit dem höchsten Grundertrag × Preis.
+- **Hinweise** (sie sperren nichts): gleiche Kultur wie zuvor („Fruchtfolgeprämie entfällt für x ha (≈ y €)“; hat das
+  Amt auf dem Feld schon eine Wiederholung gezählt, der Hinweis auf die Kürzung der ganzen Prämie), ein Saatmonat
+  außerhalb des Saatfensters, eine laufende Kultur, die erst nach dem letzten Saatmonat geerntet wird („zu spät für
+  dieses Jahr“), fehlender Lagerplatz in den eigenen Silos (Vorkontrakte und Großaufträge, die vor der Ernte geliefert
+  sein müssen, machen Platz; Fahrsilos haben im Spiel kein Fassungsvermögen und werden nicht geprüft), die Sperrfrist
+  für Gülle und Mist bei einer Herbstsaat und „vor der Saat kalken“, wenn Kalk im Spielstand an ist und in dieser
+  Saison noch nicht gekalkt wurde.
+- **Prognose je Feld:** erwartete l/ha – der Ø dieses Feldes mit dieser Kultur, sonst der Ø der Kultur über alle
+  Felder, sonst der Grundertrag der Kultur (ohne Düngung und Kalk) –, der Preis (offener Vorkontrakt, bester aktueller
+  Preis oder Verrechnungswert), die Direktkosten (Ø aus dem Deckungsbeitrag, sonst nur Saatgut) und der erwartete
+  Deckungsbeitrag. Oben steht die Summe des Plans neben „wie Vorjahr“.
+- **Bedarf und Absicherung:** Saatgut je Kultur in Litern und €, wie viel der erwarteten Ernte schon über Vorkontrakte
+  und Großaufträge verkauft ist, und ob die Futterernte den Jahresbedarf deiner Ställe deckt (mit der Fläche, die die
+  Lücke schließen würde). Zur erwarteten Ernte zählen offene Pläne und wie geplant gesäte Felder, die noch nicht
+  geerntet sind. Die erwarteten Direktkosten stehen als „geplant“ in der **Liquiditätsplanung** der Bank (läuft das
+  Saatfenster schon, im nächsten Monat). *Vorkontrakt abschließen* öffnet die Agrarbörse mit der Sorte.
+- **Saatzeit:** Im Saatfenster steht in **Aufgaben** „Feld 12: Weizen säen“ mit dem Ende des Fensters als Frist, der
+  **Kalender** zeigt Beginn und Ende. *Lohnunternehmer beauftragen* öffnet die Flurkarte mit dem Feld, der Arbeit
+  „Säen“ und der Kultur. Mit dem Schalter *Erinnerung zur Saatzeit* (Standard an) erinnert dich die Genossenschaft per
+  Mail an Felder, deren Saatfenster in diesem Monat endet.
+- **Plan und Wirklichkeit:** Beginnt die Saison mit einer anderen Kultur als geplant, ist der Plan „abweichend“ – ohne
+  Folgen. Unter **Plan / Ist** stehen Kultur, l/ha und Deckungsbeitrag geplant und erreicht.
+- **Plan besprechen:** Einmal im Jahr schickst du den Plan an die Genossenschaft; die Antwort kommt am nächsten
+  Spieltag und nennt die Hinweise und die Deckung.
+- Die Saatfenster braucht die aktuelle Mod-Version; ohne sie stehen alle Monate zur Wahl und die Fensterprüfung
+  entfällt.
+
 ## Agrarbörse
 
 ![Agrarbörse](../screenshots/15-agrarboerse.png)
@@ -678,6 +744,28 @@ Der Stall zeigt deine Ställe so, wie das Spiel sie meldet: Tierart, Anzahl, **G
 Mod-Version.
 
 - **Tierpfleger:innen:** wer sich kümmert und wie viele Tiere auf eine Person kommen (ab etwa 80 wird es eng).
+- **Futter** (Tab *Futter*): je Tierart und Futtergruppe des Spiels (z. B. Silage, Heu, Kraftfutter) und für die
+  Einstreu (Stroh):
+  - **Bedarf je Tag:** gemessen aus dem, was die Tiere in den letzten drei Spieltagen gefressen haben; kommen Tiere
+    dazu oder gehen welche, rechnet FarmPulse sofort hoch bzw. herunter. Bis zur ersten Messung gilt der Bedarf des
+    Spiels, auf die Gruppen verteilt nach ihrem Gewicht – markiert „geschätzt“.
+  - **Vorrat:** was in deinen Silos, Erweiterungen und Fahrsilos liegt, was im Trog ist und was du selbst einträgst.
+    Fressen mehrere Tierarten dieselbe Sorte, teilt FarmPulse den Vorrat nach ihrem Bedarf.
+  - **Reichweite** in Tagen und Spielmonaten mit Ampel – grün ab 3 Monaten, gelb darunter, rot unter einem Monat – und
+    dem Tag, an dem die Gruppe leer ist. Steht eine passende Kultur im **Anbauplan**, gilt deren Erntezeit („laut
+    Anbauplan“), sonst die Erntezeit der passenden Kulturen (z. B. Gras für Silage und Heu): Dann steht die **nächste
+    Ernte** dabei und wie viele Liter bis dahin **fehlen**. Dazu der **Jahresbedarf** („gedeckt zu x %“, mit Anbauplan
+    auch mit der geplanten Ernte samt Fehlmenge oder Überschuss) und die **Futterkosten** je Monat zum Einkaufspreis.
+  - Je Stall: Bedarf, Trog („leer in x Stunden“), Stroh im Stall und die Futterkosten.
+  - **Ballen und sonstiger Vorrat:** Ballen und Paletten zählt das Spiel nicht als Füllstand. Trag sie ein – Anzahl und
+    Größe (z. B. Rundballen 1,25 m) oder direkt Liter. Der Vorrat sinkt von selbst, sobald Futter in den Trog oder
+    Stroh in den Stall kommt, ohne dass ein Silo weniger wird. Nach 10 Spieltagen ohne Änderung steht „bitte prüfen“;
+    *Stimmt noch* bestätigt den Eintrag.
+  - Wird eine Gruppe **rot**, schreibt dir dein Tierpfleger (ohne ihn die Genossenschaft) – danach höchstens einmal je
+    Spielmonat und Gruppe. Gelbe und rote Gruppen stehen in **Aufgaben** („Futter: Silage reicht noch 6 Tage“, Frist =
+    leer am) und im **Kalender**. Lässt sich die Sorte bei Nachbarn kaufen, führt *Beim Nachbarn anfragen* in die App
+    **Handel**. Die Futterbilanz braucht die aktuelle Mod-Version; mit einem älteren Mod steht nur der Hinweis, den Mod
+    zu aktualisieren.
 - **Tierarzt, Viehhändler:in und Zuchtberatung – nur wenn du Tiere hältst.** Der Tierarzt kommt alle paar Monate zur
   Routineuntersuchung je Tierart und schickt eine Rechnung (Grundgebühr plus Betrag je Tier); wann er das nächste Mal
   kommt, steht im Stall. Sinkt die Gesundheit in einem Stall stark (unter 40 %), rückt er zu einem **Notfall** aus –

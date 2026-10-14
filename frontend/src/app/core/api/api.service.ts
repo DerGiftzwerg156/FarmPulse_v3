@@ -535,6 +535,66 @@ export class ApiService {
   setFieldBookPeriod(years: number): Observable<M.FieldBookEvaluationView> {
     return this.post('/field-book/evaluation/period', { years });
   }
+  /** Roadmap V4 R4-D5: contribution margin per field ("Bank → Betriebsergebnis"). */
+  fieldMargin(): Observable<M.FieldMarginView> {
+    return this.get('/field-margin');
+  }
+  setFieldMarginOverheads(enabled: boolean): Observable<M.FieldMarginView> {
+    return this.post('/field-margin/overheads', { enabled });
+  }
+  /** Litres / amount (entered positive); both null give the line back to the capture. */
+  correctFieldMarginLine(id: number, liters: number | null, amount: number | null): Observable<M.FieldMarginView> {
+    return this.post(`/field-margin/items/${id}`, { liters, amount });
+  }
+  removeFieldMarginLine(id: number): Observable<M.FieldMarginView> {
+    return this.http.delete<M.FieldMarginView>(`${this.base}/field-margin/items/${id}`);
+  }
+  addFieldMarginLine(entryId: number, kind: M.FieldMarginKind, note: string | null, amount: number,
+                     liters: number | null = null): Observable<M.FieldMarginView> {
+    return this.post(`/field-margin/entries/${entryId}/items`, { kind, note, liters, amount });
+  }
+  /** `perLiter` null gives the price back to the rule (realised, harvest day, internal value). */
+  setFieldMarginPrice(entryId: number, perLiter: number | null): Observable<M.FieldMarginView> {
+    return this.post(`/field-margin/entries/${entryId}/price`, { perLiter });
+  }
+  /** Roadmap V4 R4-A: crop planner ("Feldbuch → Anbauplanung"). */
+  cropPlanning(): Observable<M.CropPlanningView> {
+    return this.get('/crop-plans');
+  }
+  saveCropPlan(farmlandId: number, r: M.CropPlanRequest): Observable<M.CropPlanningView> {
+    return this.http.put<M.CropPlanningView>(`${this.base}/crop-plans/fields/${farmlandId}`, r);
+  }
+  removeCropPlan(farmlandId: number): Observable<M.CropPlanningView> {
+    return this.http.delete<M.CropPlanningView>(`${this.base}/crop-plans/fields/${farmlandId}`);
+  }
+  /** "Fruchtfolge vorschlagen": null (204) when no crop fits. */
+  cropSuggestion(farmlandId: number): Observable<M.CropSuggestion | null> {
+    return this.get(`/crop-plans/fields/${farmlandId}/suggestion`);
+  }
+  setCropPlanReminders(enabled: boolean): Observable<M.CropPlanningView> {
+    return this.post('/crop-plans/reminders', { enabled });
+  }
+  discussCropPlan(): Observable<M.CropPlanningView> {
+    return this.post('/crop-plans/discuss', {});
+  }
+  /** Roadmap V4 R4-F: feed balance ("Stall → Futter") and the home tile. */
+  feedBalance(): Observable<M.FeedBalanceView> {
+    return this.get('/feed-balance');
+  }
+  /** F2: bales of a size (bales + baleSize) or litres directly. */
+  addFeedStock(r: M.FeedStockRequest): Observable<M.FeedBalanceView> {
+    return this.post('/feed-balance/manual', r);
+  }
+  updateFeedStock(id: number, r: M.FeedStockRequest): Observable<M.FeedBalanceView> {
+    return this.http.put<M.FeedBalanceView>(`${this.base}/feed-balance/manual/${id}`, r);
+  }
+  /** "stimmt noch": the reminder "bitte prüfen" starts again. */
+  checkFeedStock(id: number): Observable<M.FeedBalanceView> {
+    return this.post(`/feed-balance/manual/${id}/check`, {});
+  }
+  removeFeedStock(id: number): Observable<M.FeedBalanceView> {
+    return this.http.delete<M.FeedBalanceView>(`${this.base}/feed-balance/manual/${id}`);
+  }
   /** Roadmap V3.2 R32-I: large investors ("Bank → Investoren"). */
   investors(): Observable<M.InvestorsView> {
     return this.get('/investors');

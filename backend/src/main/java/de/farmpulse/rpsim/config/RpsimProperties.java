@@ -232,6 +232,9 @@ public class RpsimProperties {
         private DieselTheft dieselTheft = new DieselTheft();
         private Fields fields = new Fields();
         private FieldBook fieldBook = new FieldBook();
+        private FieldMargin fieldMargin = new FieldMargin();
+        private FeedBalance feedBalance = new FeedBalance();
+        private CropPlanning cropPlanning = new CropPlanning();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
         private Authority authority = new Authority();
@@ -2247,5 +2250,75 @@ public class RpsimProperties {
     public static class FieldBook {
         /** The last x harvest years shown when the player has not chosen a period (1 to "alle Jahre"). */
         private int defaultYears = 5;
+    }
+
+    /** Roadmap V4 R4-A: crop planner (owner decisions 2026-10-13, values placeholders). */
+    @Getter @Setter
+    public static class CropPlanning {
+        /** A1: "Fruchtfolge vorschlagen" picks a crop that did not stand on the field in the last x seasons. */
+        private int rotationYears = 2;
+        /** A3 (owner decision 2026-10-13): base yield = litersPerSqm x 10000 x this factor (without fertiliser, lime). */
+        private double baseYieldFactor = 1.0;
+        /** A2: FS25 periods of an autumn sowing (August-November): hint on the closed period for slurry and manure. */
+        private List<Integer> autumnPeriods = new ArrayList<>(List.of(6, 7, 8, 9));
+        /** A4: harvest products that become another feed fill type (chaff is ensiled to silage, 1 : 1). */
+        private Map<String, String> feedEquivalents = new LinkedHashMap<>(Map.of("CHAFF", "SILAGE"));
+        /** A5 (owner decision 2026-10-13): the cooperative reminds at sowing time unless the player switches it off. */
+        private boolean remindersDefault = true;
+        /** A6: game hour of the next day at which the cooperative answers "Plan besprechen". */
+        private int discussAnswerHour = 9;
+    }
+
+    /** Roadmap V4 R4-F: feed balance per animal type and food group (owner decisions 2026-10-13, values placeholders). */
+    @Getter @Setter
+    public static class FeedBalance {
+        /** F1: the measured daily need is the mean of the last x game days (owner decision 2026-10-13). */
+        private int measureDays = 3;
+        /** F3 (owner decision 2026-10-13): green from x game months of reach, yellow below, red below warn-months. */
+        private double okMonths = 3;
+        private double warnMonths = 1;
+        /** F2: an entered stock unchanged for x game days asks "bitte prüfen" (owner decision 2026-10-13). */
+        private int manualStaleDays = 10;
+        /** F2: litres per bale of the sizes the player can choose (🟡 manual test plan 30.12). */
+        private Map<String, Double> baleSizes = new LinkedHashMap<>(Map.of(
+                "ROUND_125", 4000.0, "ROUND_150", 5500.0, "SQUARE_120", 2500.0, "SQUARE_180", 4500.0,
+                "SQUARE_240", 8000.0));
+        /** F3: fill type of the feed -> crops of the own fields it comes from (next harvest, shortfall). */
+        private Map<String, List<String>> harvestCrops = new LinkedHashMap<>(Map.of(
+                "SILAGE", List.of("GRASS", "MAIZE"), "GRASS_WINDROW", List.of("GRASS"),
+                "DRYGRASS_WINDROW", List.of("GRASS"), "STRAW", List.of("WHEAT", "BARLEY", "OAT")));
+        /** F4: the animal keeper (without one the cooperative) warns when a group turns red. */
+        private boolean warningsEnabled = true;
+    }
+
+    /** Roadmap V4 R4-D: contribution margin per field book entry (owner decisions 2026-10-13, values placeholders). */
+    @Getter @Setter
+    public static class FieldMargin {
+        /** D1: fill type -> kind of the direct costs (SEED, FERTILIZER, LIME, PROTECTION, MANURE); others OTHER_INPUT. */
+        private Map<String, String> categories = new LinkedHashMap<>(Map.of(
+                "SEEDS", "SEED", "FERTILIZER", "FERTILIZER", "LIQUIDFERTILIZER", "FERTILIZER", "LIME", "LIME",
+                "HERBICIDE", "PROTECTION", "LIQUIDMANURE", "MANURE", "MANURE", "MANURE", "DIGESTATE", "MANURE"));
+        /** D1: litres a helper bought are valued with this factor (the game books them x 1.5). */
+        private double helperSurcharge = 1.5;
+        /** D1 (owner decision 2026-10-13): own farmyard manure costs nothing; its litres are shown. */
+        private double manureCostPerLiter = 0;
+        /** D1 estimate without the counter (older mod): seed, fertilisation per tick, lime, plant protection per ha. */
+        private double fallbackSeedCostPerHa = 120;
+        private double fallbackFertilizerCostPerHa = 90;
+        private double fallbackLimeCostPerHa = 70;
+        private double fallbackProtectionCostPerHa = 60;
+        /** D2: money types of the booking statement that count as sales of a harvest product. */
+        private List<String> revenueCategories = new ArrayList<>(List.of("SOLD_PRODUCTS", "HARVEST_INCOME"));
+        /** D2: internal value of a product without a sell point = purchase price x this share. */
+        private double internalPriceShare = 0.8;
+        /** D3 (owner decision 2026-10-13): overheads are distributed unless the player switches them off. */
+        private boolean overheadsDefault = true;
+        /** D3: money types of the booking journal that are distributed by area at every month end. */
+        private List<String> overheadMoneyTypes = new ArrayList<>(List.of("PURCHASE_FUEL", "VEHICLE_RUNNING_COSTS",
+                "VEHICLE_REPAIR", "AI", "LEASING_COSTS"));
+        /** D3: the monthly salaries of the employees who drive helpers count as overheads too. */
+        private boolean overheadDriverSalaries = true;
+        /** D6: the cooperative writes once when a field had a negative margin in two harvest years in a row. */
+        private boolean adviceEnabled = true;
     }
 }

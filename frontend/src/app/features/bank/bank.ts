@@ -19,6 +19,7 @@ import { ServiceCases } from '../contracts/service-cases';
 import { CollateralPicker } from './collateral-picker';
 import { FarmReportCard } from './farm-report-card';
 import { FinanceCard } from './finance-card';
+import { MarginCard } from './margin-card';
 import { StatementCard } from './statement-card';
 import { LiquidityPlanCard } from './liquidity-plan-card';
 import { InvestorsPanel } from './investors-panel';
@@ -53,7 +54,7 @@ export const STATE_BADGE: Record<ApplicationState, BadgeVariant> = {
 @Component({
   selector: 'app-bank',
   imports: [ReactiveFormsModule, TranslatePipe, LabelPipe, MoneyPipe, NumberPipe, GameTimePipe, Card, Badge, Button, Stat, PageErrorView, FinanceCard, StatementCard,
-    CollateralPicker, LiquidityPlanCard, FarmReportCard, ServiceCases, InvestorsPanel],
+    CollateralPicker, LiquidityPlanCard, FarmReportCard, ServiceCases, InvestorsPanel, MarginCard],
   templateUrl: './bank.html',
 })
 export class Bank {
@@ -68,6 +69,9 @@ export class Bank {
   /** `?case=` highlights a claim, an invitation to the annual review or a rate-cut offer (R3-K). */
   readonly case = input<string>();
   readonly highlightedCase = computed(() => Number(this.case()) || null);
+  /** Roadmap V4 R4-D5: `?entry=` opens the contribution margin of a field book entry (link from the field book). */
+  readonly entry = input<string>();
+  readonly openedEntry = computed(() => Number(this.entry()) || null);
   private readonly picker = viewChild(CollateralPicker);
   /** Roadmap V3 R3-K1: own fields offered as collateral in the form. */
   readonly collateralIds = signal<number[]>([]);

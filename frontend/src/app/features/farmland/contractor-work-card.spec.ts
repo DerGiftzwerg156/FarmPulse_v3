@@ -124,4 +124,31 @@ describe('ContractorWorkCard', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="contractor-unavailable"]')?.textContent)
       .toContain('Felddaten');
   });
+
+  // Roadmap V4 R4-A5: the link of the crop planner presets the sowing with its crop
+  it('starts with the preset work and crop, and ignores a crop the contractor does not sow', () => {
+    TestBed.configureTestingModule({ imports: [ContractorWorkCard], providers: [provideHttpClient(), provideHttpClientTesting()] });
+    const fixture = TestBed.createComponent(ContractorWorkCard);
+    fixture.componentRef.setInput('farmlandId', 12);
+    fixture.componentRef.setInput('presetWork', 'SOW');
+    fixture.componentRef.setInput('presetFruitType', 'BARLEY');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/contractor-work/fields/12?works=SOW').flush(quote({ phase: 'EMPTY', selected: ['SOW'], options: [
+      { work: 'SOW', price: 450, harvestLiters: null, fillType: null, reason: null }] }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selected()).toEqual(['SOW']);
+    expect(fixture.componentInstance.fruitType()).toBe('BARLEY');
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [ContractorWorkCard], providers: [provideHttpClient(), provideHttpClientTesting()] });
+    const other = TestBed.createComponent(ContractorWorkCard);
+    other.componentRef.setInput('farmlandId', 12);
+    other.componentRef.setInput('presetWork', 'SOW');
+    other.componentRef.setInput('presetFruitType', 'POTATO');
+    other.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne('/api/contractor-work/fields/12?works=SOW').flush(quote({ selected: ['SOW'] }));
+    other.detectChanges();
+    expect(other.componentInstance.fruitType()).toBeNull();
+  });
 });

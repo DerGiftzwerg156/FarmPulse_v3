@@ -33,6 +33,21 @@
       "properties": { "name": { "type": "string", "minLength": 1 }, "fillType": { "type": "string", "minLength": 1 },
         "title": { "type": "string", "minLength": 1 }, "regrows": { "type": "boolean" },
         "needsRolling": { "type": "boolean" },
-        "products": { "type": "array", "items": { "type": "string", "minLength": 1 } } } } }
+        "products": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "seedUsagePerSqm": { "type": "number", "minimum": 0 }, "litersPerSqm": { "type": "number", "minimum": 0 },
+        "plantablePeriods": { "type": "array", "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1, "maximum": 12 } },
+        "harvestablePeriods": { "type": "array", "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1, "maximum": 12 } } } } },
+    "fillTypeCosts": { "type": "array", "items": { "type": "object", "required": ["fillType", "costPerLiter"],
+      "properties": { "fillType": { "type": "string", "minLength": 1 },
+        "costPerLiter": { "type": "number", "minimum": 0 } } } },
+    "animalFood": { "type": "array", "items": { "type": "object", "required": ["animalType", "groups", "mixtures"],
+      "properties": { "animalType": { "type": "string", "minLength": 1 },
+        "groups": { "type": "array", "items": { "type": "object", "required": ["title", "productionWeight", "fillTypes"],
+          "properties": { "title": { "type": "string", "minLength": 1 },
+            "productionWeight": { "type": "number", "minimum": 0 },
+            "fillTypes": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } } } },
+        "mixtures": { "type": "array", "items": { "type": "string", "minLength": 1 } } } } }
   }
 }

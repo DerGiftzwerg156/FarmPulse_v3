@@ -61,6 +61,9 @@ RPSimConfig.DEFAULTS = {
     -- Roadmap V3.1 R31-K1 (contract R31-Q1): at most this many points per field outline in market_context.fieldShapes;
     -- longer outlines are thinned out evenly
     fieldShapeMaxPoints = 64,
+    -- Roadmap V4 R4-D1: fill types whose purchase price is exported in market_context.fillTypeCosts (plus every fill
+    -- type the consumption counter saw); the field margin values the counted litres with them
+    costFillTypes = { "SEEDS", "FERTILIZER", "LIQUIDFERTILIZER", "LIME", "HERBICIDE" },
 }
 
 function RPSimConfig.new(overrides)
