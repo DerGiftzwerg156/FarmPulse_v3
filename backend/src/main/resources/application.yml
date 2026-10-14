@@ -1219,6 +1219,23 @@ rpsim:
       overhead-money-types: [PURCHASE_FUEL, VEHICLE_RUNNING_COSTS, VEHICLE_REPAIR, AI, LEASING_COSTS]
       overhead-driver-salaries: true          # monthly salaries of the employees who drive helpers count too
       advice-enabled: true        # cooperative mail after two loss years in a row on a field
+    feed-balance:                 # Roadmap V4 R4-F: feed balance per animal type and food group (owner decisions 2026-10-13)
+      measure-days: 3             # measured daily need = mean of the last 3 game days
+      ok-months: 3                # traffic light in game months: green from 3 months of reach
+      warn-months: 1              # red below 1 month (yellow in between); the animal keeper warns once per month and group
+      manual-stale-days: 10       # an entered stock unchanged for 10 game days asks "bitte prüfen"
+      bale-sizes:                 # litres per bale of the sizes the player chooses (placeholders, manual test plan 31.4)
+        ROUND_125: 4000
+        ROUND_150: 5500
+        SQUARE_120: 2500
+        SQUARE_180: 4500
+        SQUARE_240: 8000
+      harvest-crops:              # fill type of the feed -> crops it comes from (next harvest and shortfall)
+        SILAGE: [GRASS, MAIZE]
+        GRASS_WINDROW: [GRASS]
+        DRYGRASS_WINDROW: [GRASS]
+        STRAW: [WHEAT, BARLEY, OAT]
+      warnings-enabled: true      # warning mail of the animal keeper (without one the cooperative) when a group turns red
     energy:                       # TODO T-20: energy supplier - only with biogas sell points on the map (placeholders)
       fill-types: [METHANE, SILAGE, CHAFF, MANURE, LIQUIDMANURE, DIGESTATE]
       probability-per-month: 0.35

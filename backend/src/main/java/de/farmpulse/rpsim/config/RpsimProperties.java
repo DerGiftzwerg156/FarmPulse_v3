@@ -233,6 +233,7 @@ public class RpsimProperties {
         private Fields fields = new Fields();
         private FieldBook fieldBook = new FieldBook();
         private FieldMargin fieldMargin = new FieldMargin();
+        private FeedBalance feedBalance = new FeedBalance();
         private VanillaBypass vanillaBypass = new VanillaBypass();
         private Tax tax = new Tax();
         private Authority authority = new Authority();
@@ -2248,6 +2249,28 @@ public class RpsimProperties {
     public static class FieldBook {
         /** The last x harvest years shown when the player has not chosen a period (1 to "alle Jahre"). */
         private int defaultYears = 5;
+    }
+
+    /** Roadmap V4 R4-F: feed balance per animal type and food group (owner decisions 2026-10-13, values placeholders). */
+    @Getter @Setter
+    public static class FeedBalance {
+        /** F1: the measured daily need is the mean of the last x game days (owner decision 2026-10-13). */
+        private int measureDays = 3;
+        /** F3 (owner decision 2026-10-13): green from x game months of reach, yellow below, red below warn-months. */
+        private double okMonths = 3;
+        private double warnMonths = 1;
+        /** F2: an entered stock unchanged for x game days asks "bitte prüfen" (owner decision 2026-10-13). */
+        private int manualStaleDays = 10;
+        /** F2: litres per bale of the sizes the player can choose (🟡 manual test plan 31.4). */
+        private Map<String, Double> baleSizes = new LinkedHashMap<>(Map.of(
+                "ROUND_125", 4000.0, "ROUND_150", 5500.0, "SQUARE_120", 2500.0, "SQUARE_180", 4500.0,
+                "SQUARE_240", 8000.0));
+        /** F3: fill type of the feed -> crops of the own fields it comes from (next harvest, shortfall). */
+        private Map<String, List<String>> harvestCrops = new LinkedHashMap<>(Map.of(
+                "SILAGE", List.of("GRASS", "MAIZE"), "GRASS_WINDROW", List.of("GRASS"),
+                "DRYGRASS_WINDROW", List.of("GRASS"), "STRAW", List.of("WHEAT", "BARLEY", "OAT")));
+        /** F4: the animal keeper (without one the cooperative) warns when a group turns red. */
+        private boolean warningsEnabled = true;
     }
 
     /** Roadmap V4 R4-D: contribution margin per field book entry (owner decisions 2026-10-13, values placeholders). */

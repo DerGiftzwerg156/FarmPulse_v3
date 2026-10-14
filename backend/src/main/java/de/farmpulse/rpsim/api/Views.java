@@ -350,7 +350,14 @@ public final class Views {
     public record TaskView(String key, String type, String kind, Long deadlineGameTime, long gameTime, CaseView serviceCase,
                            ContractView contract, CreditApplicationView application, MessageView call,
                            NegotiationView negotiation, MarketEventView marketEvent, JobPostingView posting,
-                           Integer pendingApplicants, InvestorDueView investorDue) {
+                           Integer pendingApplicants, InvestorDueView investorDue, FeedDueView feedDue) {
+    }
+
+    /**
+     * Roadmap V4 R4-F4: a food group of an animal type that lasts less than ok-months (task "FEED", kind = status
+     * YELLOW / RED, deadline = the date it runs empty). {@code kind} FOOD or BEDDING (straw).
+     */
+    public record FeedDueView(String animalType, String title, String kind, Double reachDays, List<String> fillTypes) {
     }
 
     /** Roadmap V3.2 R32-I4: a delivery still due to an investor in the current period (task "INVESTOR_DUE"). */

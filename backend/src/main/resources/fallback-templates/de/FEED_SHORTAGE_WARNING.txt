@@ -1,0 +1,6 @@
+Futter wird knapp: {{groupTitle}}
+Hallo,
+
+das Futter der Gruppe {{groupTitle}} ({{animalType}}) reicht nur noch {{reachDays}} Tage, also etwa {{reachMonths}} Monate. Am Tag fressen die Tiere davon rund {{needPerDay}} Liter. Bitte sorg rechtzeitig für Nachschub – die Bilanz steht in der App „Stall“ unter „Futter“.
+
+{{characterName}}

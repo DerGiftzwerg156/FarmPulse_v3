@@ -56,6 +56,8 @@ public enum NarrationEventType {
     AUTHORITY_SUBSIDY,
     /** Roadmap V4 R4-D6: the cooperative about a field with a negative contribution margin in two harvest years in a row. */
     FIELD_MARGIN_ADVICE,
+    /** Roadmap V4 R4-F4: the animal keeper (without one the cooperative) about a food group that lasts less than a month. */
+    FEED_SHORTAGE_WARNING,
     AUTHORITY_INSPECTION_NOTICE,
     AUTHORITY_INSPECTION_RESULT,
     // Roadmap V2 R2-E3: family

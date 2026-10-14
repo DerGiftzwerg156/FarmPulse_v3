@@ -861,6 +861,20 @@ placeholders.
 | `rpsim.formulas.field-margin.overhead-money-types` | `[PURCHASE_FUEL, VEHICLE_RUNNING_COSTS, VEHICLE_REPAIR, AI, LEASING_COSTS]` | Money types of the booking journal distributed by area over the fields at every month end. | Roadmap V4 R4-D3 |
 | `rpsim.formulas.field-margin.overhead-driver-salaries` | `true` | The monthly salaries of the employees who drive helpers (machine operators, apprentices, seasonal workers) count as overheads too. | Roadmap V4 R4-D3 |
 | `rpsim.formulas.field-margin.advice-enabled` | `true` | The cooperative writes once when a field had a negative contribution margin in two harvest years in a row. | Roadmap V4 R4-D6 |
+| `rpsim.formulas.feed-balance.measure-days` | `3` | Feed balance: the measured daily need of a stable is the mean of the eaten litres of the last x game days, scaled by the need of the game now / in the measuring period (owner decision 2026-10-13). | Roadmap V4 R4-F1 |
+| `rpsim.formulas.feed-balance.ok-months` | `3` | Traffic light of a food group in game months of reach: green from this value (owner decision 2026-10-13). | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.warn-months` | `1` | Red below this many game months of reach (yellow in between); a group turning red brings the warning mail. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.manual-stale-days` | `10` | An entered stock (bales, pallets) unchanged for this many game days shows "bitte prüfen" (owner decision 2026-10-13). | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.ROUND_125` | `4000` | Litres per bale of the size the player chooses when entering bales (placeholder, manual test plan 31.4). | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.ROUND_150` | `5500` | As above. | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.SQUARE_120` | `2500` | As above. | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.SQUARE_180` | `4500` | As above. | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.bale-sizes.SQUARE_240` | `8000` | As above. | Roadmap V4 R4-F2 |
+| `rpsim.formulas.feed-balance.harvest-crops.SILAGE` | `[GRASS, MAIZE]` | Crops a feed fill type comes from: the next game month one of them can be harvested (fruitTypes[].harvestablePeriods) gives the date and the shortfall until then. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.harvest-crops.GRASS_WINDROW` | `[GRASS]` | As above. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.harvest-crops.DRYGRASS_WINDROW` | `[GRASS]` | As above. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.harvest-crops.STRAW` | `[WHEAT, BARLEY, OAT]` | As above. | Roadmap V4 R4-F3 |
+| `rpsim.formulas.feed-balance.warnings-enabled` | `true` | The animal keeper (without one the cooperative) writes when a food group turns red, at most once per game month and group (owner decision 2026-10-13). | Roadmap V4 R4-F4 |
 | `rpsim.formulas.fields.hints-enabled` | `true` | Field work hints of the cooperative (harvest ready, lime, plowing); the player can also switch them off per savegame in the settings. | Roadmap V2 R2-C6 |
 | `rpsim.formulas.fields.hint-cooldown-days` | `7` | At most one hint per this many game days. | Roadmap V2 R2-C6 |
 

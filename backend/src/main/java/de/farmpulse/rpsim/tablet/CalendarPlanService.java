@@ -52,11 +52,14 @@ public class CalendarPlanService {
     private final RpsimProperties props;
     private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
     private final de.farmpulse.rpsim.investor.InvestorService investors;
+    private final de.farmpulse.rpsim.feed.FeedBalanceService feed;
 
     public CalendarPlanService(EmployeeRepository employees, LoanRepository loans, ContractRepository contracts,
                                FamilyService family, TaxService tax, FactsService facts, GameTime gameTime,
                                RpsimProperties props, de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
-                               de.farmpulse.rpsim.investor.InvestorService investors) {
+                               de.farmpulse.rpsim.investor.InvestorService investors,
+                               de.farmpulse.rpsim.feed.FeedBalanceService feed) {
+        this.feed = feed;
         this.bulkOrders = bulkOrders;
         this.investors = investors;
         this.employees = employees;
@@ -192,6 +195,13 @@ public class CalendarPlanService {
             if (o.getDeadlineGameTime() > now && o.getDeadlineGameTime() <= until) {
                 out.add(new AgendaEntryView(o.getDeadlineGameTime(), "BULK_ORDER_END", null, where, o.getQuantity(),
                         o.getFillType()));
+            }
+        }
+        // Roadmap V4 R4-F4: the day a yellow or red food group runs empty (title = group, reference = fill types)
+        for (var d : feed.due(sg)) {
+            if (d.emptyAt() != null && d.emptyAt() > now && d.emptyAt() <= until) {
+                out.add(new AgendaEntryView(d.emptyAt(), "FEED_EMPTY", d.animalType(), d.title(), null,
+                        String.join(",", d.fillTypes())));
             }
         }
         // Roadmap V3.2 R32-I4 / I5: open deliveries to an investor (end of the period) and the buy-back / repayment

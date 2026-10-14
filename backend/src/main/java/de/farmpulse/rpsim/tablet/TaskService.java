@@ -58,13 +58,16 @@ public class TaskService {
     private final GamePromptRepository prompts;
     private final ApiMapper mapper;
     private final de.farmpulse.rpsim.investor.InvestorService investors;
+    private final de.farmpulse.rpsim.feed.FeedBalanceService feed;
 
     public TaskService(ServiceCaseRepository cases, ContractRepository contracts, CreditApplicationRepository applications,
                        CommunicationRepository communications, NegotiationRepository negotiations,
                        MarketEventRepository marketEvents, JobPostingRepository postings,
                        JobApplicationRepository jobApplications, GamePromptRepository prompts, ApiMapper mapper,
-                       de.farmpulse.rpsim.investor.InvestorService investors) {
+                       de.farmpulse.rpsim.investor.InvestorService investors,
+                       de.farmpulse.rpsim.feed.FeedBalanceService feed) {
         this.investors = investors;
+        this.feed = feed;
         this.cases = cases;
         this.contracts = contracts;
         this.applications = applications;
@@ -129,6 +132,12 @@ public class TaskService {
                     sg.getCurrentGameTime()).investorDue(new de.farmpulse.rpsim.api.Views.InvestorDueView(d.contractId(),
                     d.obligationId(), d.investor(), d.type(), d.fillType(), d.subType(), d.remaining())).build());
         }
+        // Roadmap V4 R4-F4: food groups that last less than ok-months, deadline = the date they run empty
+        for (var d : feed.due(sg)) {
+            items.add(task("feed-" + d.animalType() + "-" + d.title(), "FEED", d.status(), d.emptyAt(),
+                    sg.getCurrentGameTime()).feedDue(new de.farmpulse.rpsim.api.Views.FeedDueView(d.animalType(),
+                    d.title(), d.kind(), d.reachDays(), d.fillTypes())).build());
+        }
         items.sort(Comparator.comparing((TaskView t) -> t.deadlineGameTime() == null ? Long.MAX_VALUE : t.deadlineGameTime())
                 .thenComparing(TaskView::gameTime, Comparator.reverseOrder()));
         int waiting = prompts.findBySavegameAndStatusInAndExpiresGameTimeGreaterThanEqualOrderByIdAsc(sg,
@@ -156,6 +165,7 @@ public class TaskService {
         private de.farmpulse.rpsim.api.Views.JobPostingView posting;
         private Integer pendingApplicants;
         private de.farmpulse.rpsim.api.Views.InvestorDueView investorDue;
+        private de.farmpulse.rpsim.api.Views.FeedDueView feedDue;
 
         private Builder(String key, String type, String kind, Long deadline, long gameTime) {
             this.key = key;
@@ -205,6 +215,11 @@ public class TaskService {
             return this;
         }
 
+        Builder feedDue(de.farmpulse.rpsim.api.Views.FeedDueView v) {
+            this.feedDue = v;
+            return this;
+        }
+
         Builder pendingApplicants(int n) {
             this.pendingApplicants = n;
             return this;
@@ -212,7 +227,7 @@ public class TaskService {
 
         TaskView build() {
             return new TaskView(key, type, kind, deadline, gameTime, serviceCase, contract, application, call, negotiation,
-                    marketEvent, posting, pendingApplicants, investorDue);
+                    marketEvent, posting, pendingApplicants, investorDue, feedDue);
         }
     }
 }
