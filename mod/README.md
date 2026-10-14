@@ -78,7 +78,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
-    nicht deckt, werden abgelehnt (`FAILED`, Meldung `INSUFFICIENT_FUNDS`)
+    nicht deckt, werden abgelehnt (`FAILED`, Meldung `INSUFFICIENT_FUNDS`). Mit Dispo (Einstellung im Tablet) trägt
+    jede Abbuchung `minBalance`: Sie darf das Konto bis dahin ins Minus ziehen. `OVERDRAFT_INTEREST` (Dispozinsen)
+    kommt mit `ignoreFunds` und wird immer gebucht
   - `PRICE_EVENT` – Preis an **einer** Verkaufsstelle ändern (`MULTIPLIER` mit Ramp-Up/Hold/Decay oder
     `FIXED`-Sonderkontrakt mit Mengen-Tracking)
   - `FARMLAND_TRANSFER` – Feldbesitz übertragen (Kauf/Verkauf, Beginn und Ende einer Pacht)

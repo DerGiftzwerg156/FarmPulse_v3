@@ -120,6 +120,11 @@ public final class Requests {
                                         String helperWageMode, boolean strictHelperLimit) {
     }
 
+    /** Overdraft (owner decisions 2026-10-14): limit in euro, interest in percent per year. */
+    public record OverdraftSettingsRequest(boolean enabled, @PositiveOrZero long limit,
+                                           @PositiveOrZero double interestPercent) {
+    }
+
     /** Roadmap V2 R2-D: switch of the reactions to the vanilla loan and the game's field menu. */
     public record BypassSettingsRequest(boolean reactionsEnabled) {
     }

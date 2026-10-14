@@ -234,6 +234,10 @@
             <en>Investor compensation</en>
             <de>Ausgleichszahlung an Investor</de>
         </text>
+        <text name="rpsim_money_OVERDRAFT_INTEREST">
+            <en>Overdraft interest</en>
+            <de>Dispozinsen</de>
+        </text>
         <!-- Schulungen: start of a helper refused in the strict mode (no free machine operator with the training) -->
         <text name="rpsim_ai_noTraining">
             <en>No trained machine operator available</en>

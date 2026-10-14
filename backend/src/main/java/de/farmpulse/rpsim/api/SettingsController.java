@@ -10,6 +10,7 @@ import de.farmpulse.rpsim.ai.AiSettingsService;
 import de.farmpulse.rpsim.api.Requests.AiSettingsRequest;
 import de.farmpulse.rpsim.api.Views.AiSettingsView;
 import de.farmpulse.rpsim.api.Views.GameSettingsView;
+import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.domain.HelperWageMode;
 import de.farmpulse.rpsim.domain.PromptKind;
@@ -40,11 +41,13 @@ public class SettingsController {
     private final VanillaBypassService bypass;
     private final PromptService prompts;
     private final de.farmpulse.rpsim.config.RpsimProperties props;
+    private final LiquidityService liquidity;
 
     public SettingsController(AiSettingsService settings, AiProviderRegistry registry, SavegameContext context,
                               WorkforceService workforce, VanillaBypassService bypass, PromptService prompts,
-                              de.farmpulse.rpsim.config.RpsimProperties props) {
+                              de.farmpulse.rpsim.config.RpsimProperties props, LiquidityService liquidity) {
         this.props = props;
+        this.liquidity = liquidity;
         this.settings = settings;
         this.registry = registry;
         this.context = context;
@@ -92,6 +95,31 @@ public class SettingsController {
         sg.setStrictHelperLimit(r.strictHelperLimit());
         workforce.sync(sg);
         return new Views.HelperSettingsView(sg.getHelperWageMode().name(), sg.isStrictHelperLimit(), sg.isWorkforceTracked());
+    }
+
+    /**
+     * Owner decisions 2026-10-14: overdraft - every debit of the tool may go down to -limit (off: not below zero), with
+     * interest per year on a negative balance at every month start.
+     */
+    @GetMapping("/api/settings/overdraft")
+    @Transactional(readOnly = true)
+    public Views.OverdraftSettingsView overdraft() {
+        return overdraftView(context.requireActive());
+    }
+
+    @PutMapping("/api/settings/overdraft")
+    @Transactional
+    public Views.OverdraftSettingsView saveOverdraft(@Valid @RequestBody Requests.OverdraftSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setOverdraftEnabled(r.enabled());
+        sg.setOverdraftLimit(r.limit());
+        sg.setOverdraftInterestPercent(r.interestPercent());
+        return overdraftView(sg);
+    }
+
+    private Views.OverdraftSettingsView overdraftView(Savegame sg) {
+        return new Views.OverdraftSettingsView(sg.isOverdraftEnabled(), sg.getOverdraftLimit(),
+                sg.getOverdraftInterestPercent(), liquidity.latestBalance(sg));
     }
 
     /** Roadmap V2 R2-D: reactions to the vanilla loan and the game's field menu. */

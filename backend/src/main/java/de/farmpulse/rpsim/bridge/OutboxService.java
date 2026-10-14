@@ -76,7 +76,23 @@ public class OutboxService {
         if (note != null) {
             p.put("note", note);
         }
+        if (reason == MoneyReason.OVERDRAFT_INTEREST) {
+            p.put("ignoreFunds", true); // owner decisions 2026-10-14: the interest is booked even beyond the limit
+        } else if (amount < 0) {
+            putMinBalance(sg, p);
+        }
         return enqueue(sg, InstructionType.MONEY_TRANSACTION, p, batchId, gameTimeEarliest, related);
+    }
+
+    /**
+     * Overdraft (owner decisions 2026-10-14): a debit carries the lowest balance it may leave while the overdraft is
+     * on; without the field the mod refuses every debit below zero (T-03).
+     */
+    private static void putMinBalance(Savegame sg, Map<String, Object> p) {
+        long min = LiquidityService.minBalance(sg);
+        if (min < 0) {
+            p.put("minBalance", min);
+        }
     }
 
     @Transactional
@@ -197,6 +213,9 @@ public class OutboxService {
         p.put("wear", wear);
         p.put("price", price);
         p.put("moneyReason", MoneyReason.VEHICLE_PURCHASE.name());
+        if (price > 0) {
+            putMinBalance(sg, p);
+        }
         return enqueue(sg, InstructionType.VEHICLE_SPAWN, p, null, null, related);
     }
 

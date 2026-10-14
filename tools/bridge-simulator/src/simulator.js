@@ -28,7 +28,9 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   // owner decision 2026-10-06: severance before the first working day
   'SEVERANCE',
   // Roadmap V3.2 (R32-Q1)
-  'INVESTOR_CAPITAL', 'INVESTOR_REPAYMENT', 'INVESTOR_PAYOUT', 'INVESTOR_COMPENSATION']);
+  'INVESTOR_CAPITAL', 'INVESTOR_REPAYMENT', 'INVESTOR_PAYOUT', 'INVESTOR_COMPENSATION',
+  // owner decisions 2026-10-14: interest on a negative balance (overdraft)
+  'OVERDRAFT_INTEREST']);
 // Roadmap V3.1 R31-A1: works of the contractor
 const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'FERTILIZE', 'HARVEST'];
 // crop details a field loses when the contractor plows, cultivates or sows (R2-C1 fields of a standing crop)
@@ -71,6 +73,9 @@ export function validateInstruction(ins) {
     case 'MONEY_TRANSACTION':
       if (!num(ins.amount)) return 'amount must be a number';
       if (!MONEY_REASONS.has(ins.reason)) return `unknown reason ${ins.reason}`;
+      // overdraft (owner decisions 2026-10-14): optional floor of a debit and the interest booked regardless
+      if (ins.minBalance !== undefined && (!num(ins.minBalance) || ins.minBalance > 0)) return 'minBalance must be a number <= 0';
+      if (ins.ignoreFunds !== undefined && typeof ins.ignoreFunds !== 'boolean') return 'ignoreFunds must be a boolean';
       return null;
     case 'PRICE_EVENT':
       if (!ins.fillType || !ins.sellPoint) return 'fillType and sellPoint are required';
@@ -151,6 +156,7 @@ export function validateInstruction(ins) {
       // R31-A2: price 0 = borrowed or demo machine (no booking)
       if (!num(ins.price) || ins.price < 0) return 'price must be >= 0';
       if (!MONEY_REASONS.has(ins.moneyReason)) return `unknown moneyReason ${ins.moneyReason}`;
+      if (ins.minBalance !== undefined && (!num(ins.minBalance) || ins.minBalance > 0)) return 'minBalance must be a number <= 0';
       return null;
     case 'VEHICLE_REMOVE':
       if (typeof ins.vehicleId !== 'string' || !ins.vehicleId) return 'vehicleId is required';
@@ -187,9 +193,13 @@ export function validateInstruction(ins) {
 
 /** Mod parity (RPSimInstructions.checkFunds): the net money change of a batch must not push the balance below 0. */
 export function fundsCover(balance, items) {
-  const net = items.filter((i) => i?.type === 'MONEY_TRANSACTION' && typeof i.amount === 'number')
-    .reduce((s, i) => s + i.amount, 0);
-  return !(net < 0 && balance + net < 0);
+  // like RPSimInstructions.checkFunds: the floor is 0 or the highest minBalance of the debits (overdraft, owner
+  // decisions 2026-10-14); bookings with ignoreFunds (overdraft interest) stay out of the check
+  const money = items.filter((i) => i?.type === 'MONEY_TRANSACTION' && typeof i.amount === 'number' && i.ignoreFunds !== true);
+  const net = money.reduce((s, i) => s + i.amount, 0);
+  const floors = money.filter((i) => i.amount < 0).map((i) => (typeof i.minBalance === 'number' ? Math.min(i.minBalance, 0) : 0));
+  const floor = floors.length > 0 ? Math.max(...floors) : 0;
+  return !(net < 0 && balance + net < floor);
 }
 
 export class BridgeSimulator {
@@ -664,7 +674,7 @@ export class BridgeSimulator {
   vehicleSpawn(ins) {
     const item = this.storeVehicles?.find((v) => v.xmlFilename === ins.storeXmlFilename);
     if (!item) return 'UNKNOWN_STORE_ITEM';
-    if (this.balance < ins.price) return 'INSUFFICIENT_FUNDS';
+    if (this.balance - ins.price < (typeof ins.minBalance === 'number' ? Math.min(ins.minBalance, 0) : 0)) return 'INSUFFICIENT_FUNDS';
     const next = Math.max(0, ...this.vehicles.map((v) => Number(v.uniqueId.replace(/\D/g, '')) || 0)) + 1;
     const uniqueId = `veh_${String(next).padStart(5, '0')}`;
     // the game value of a borrowed machine (price 0) is its list price; a mod with the R31-Q1 contract exports the

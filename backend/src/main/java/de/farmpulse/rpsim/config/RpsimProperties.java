@@ -2055,6 +2055,7 @@ public class RpsimProperties {
             m.put("RPSIM_CREDIT_CALLBACK", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_SPECIAL_REPAYMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_PREPAYMENT_FEE", FinanceClass.FINANCING);
+            m.put("RPSIM_OVERDRAFT_INTEREST", FinanceClass.FINANCING); // owner decisions 2026-10-14
             m.put("RPSIM_STARTING_CAPITAL_ADJUSTMENT", FinanceClass.FINANCING);
             m.put("RPSIM_COOP_SHARES", FinanceClass.FINANCING); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_INVESTOR_CAPITAL", FinanceClass.FINANCING); // Roadmap V3.2 (R32-Q1)

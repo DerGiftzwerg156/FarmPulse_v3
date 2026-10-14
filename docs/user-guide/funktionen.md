@@ -406,7 +406,11 @@ eingestellt, kommt kein Angebot.
 - **Team:** Zufriedenheit gesamt und je Bereich (Bezahlung, Arbeitsbelastung, Wertschätzung,
   Arbeitsbedingungen = Zustand deiner Maschinen). Zufriedene Leute arbeiten besser, das zeigt sich monatlich im
   Geld.
-- **Gehalt:** wird zu Beginn jedes Spielmonats (FS25-Kalender) überwiesen.
+- **Gehalt:** wird zu Beginn jedes Spielmonats (FS25-Kalender) überwiesen. Reicht das Geld nicht, bleibt das Gehalt
+  offen (Abzeichen *Gehalt überfällig*, die Person ist einmal unzufrieden mit der Bezahlung) und wird gezahlt, sobald
+  wieder genug Geld da ist. Mit **Gehalt nachzahlen** auf der Karte der Person zahlst du es sofort – der Knopf erscheint
+  nur, solange ein Gehalt offen ist. Mit **Dispo** (unter **Einstellungen → Hof**) wird das Gehalt pünktlich gezahlt,
+  auch wenn das Konto dafür bis zum Limit ins Minus geht – dann ohne Unzufriedenheit.
 - **Gehaltserhöhung, freier Tag, Kündigen.** Bleibt jemand lange unzufrieden, kommt erst eine Warnung, dann ein
   **Streik** (Abzeichen *Streikt*, das Gehalt läuft weiter, die Person arbeitet nicht) und zuletzt die Kündigung.
   Steigt die Zufriedenheit wieder, endet der Streik von selbst.
@@ -972,6 +976,13 @@ Adresse und QR-Code (siehe [Auf dem Handy oder Tablet](#auf-dem-handy-oder-table
 nicht nur für einen Spielstand, und lässt sich nur am Spiele-PC ändern.
 
 **Hof:** Der Hofname steht über der Chronik und im Dateinamen (optional, ohne ihn der Kartenname).
+
+**Dispo** (unter **Hof**, Standard aus): Eingeschaltet dürfen alle Abbuchungen von FarmPulse – Gehälter, Kreditraten,
+Rechnungen, Verträge und deine eigenen Käufe im Tablet – das Konto bis zum eingestellten **Limit** ins Minus ziehen.
+Zu Beginn jedes Spielmonats kostet ein negativer Kontostand **Dispozinsen** (Standard 10 % pro Jahr, also ein Zwölftel
+davon je Monat); die Zinsen werden auch dann gebucht, wenn sie das Konto unter das Limit drücken. Ausgeschaltet geht keine
+Abbuchung von FarmPulse unter 0 €; ein offenes Gehalt zahlst du dann mit *Gehalt nachzahlen* im **Personal**.
+Achtung: Wie Farming Simulator selbst auf einen negativen Kontostand reagiert, ist noch nicht im echten Spiel getestet.
 
 **Felder:** Hinweise der Genossenschaft zur Feldarbeit ein- oder ausschalten (Standard an).
 
