@@ -128,6 +128,29 @@ describe('Settings', () => {
     expect(el.querySelector('[data-testid="fields-untracked"]')?.textContent).toContain('aktuellen Mod-Version');
   });
 
+  // R31-B5: the absence follows the days per period, the player can cap it
+  it('shows the scaled sick leave and caps it', () => {
+    const { toTab, el, http, fixture } = setup();
+    const burden = { areaCheck: true, fertilizer: true, disease: true, sickLeave: true, nightWork: true, cropDamage: false,
+      dieselTheft: true, tonePreset: 'REALISTIC', idyllicFactor: 0.5, investors: true,
+      sickLeaveDuration: { maxDays: null, daysPerPeriod: 2, scaled: true, sicknessDaysMin: 1, sicknessDaysMax: 1,
+        accidentDaysMin: 1, accidentDaysMax: 1 } };
+    http.expectOne('/api/settings/burdening-events').flush(burden);
+    toTab('ereignisse');
+    expect(el.querySelector('[data-testid="sick-leave-range"]')?.textContent).toContain('bei 2 Tagen pro Monat: Krankheit 1, Arbeitsunfall 1');
+    const select = el.querySelector('[data-testid="sick-leave-max-days"]') as HTMLSelectElement;
+    expect(select.value).toBe('0');
+    select.value = '3';
+    select.dispatchEvent(new Event('change'));
+    const req = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/settings/burdening-events');
+    expect(req.request.body.sickLeaveMaxDays).toBe(3);
+    expect(req.request.body.sickLeave).toBe(true);
+    req.flush({ ...burden, sickLeaveDuration: { ...burden.sickLeaveDuration, maxDays: 3, daysPerPeriod: 30,
+      sicknessDaysMin: 2, sicknessDaysMax: 3, accidentDaysMin: 3, accidentDaysMax: 3 } });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="sick-leave-range"]')?.textContent).toContain('Krankheit 2–3, Arbeitsunfall 3');
+  });
+
   // Roadmap V2 R2-D
   it('switches the reactions to the game menus off', () => {
     const { toTab, el, http, fixture } = setup(undefined, undefined, { reactionsEnabled: true, interestSurchargePercent: 1 });

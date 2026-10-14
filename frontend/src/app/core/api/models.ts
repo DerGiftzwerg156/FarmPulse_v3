@@ -1348,6 +1348,19 @@ export interface BurdenSettingsView {
   idyllicFactor: number;
   /** Roadmap V3.2 R32-I1: large investors (not a burden, same card). */
   investors: boolean;
+  /** R31-B5: absence of a sickness / accident for the current days per period (older backends: missing). */
+  sickLeaveDuration?: SickLeaveDurationView;
+}
+
+/** R31-B5: absence in game days, scaled to the days per period and capped by maxDays (null = automatic only). */
+export interface SickLeaveDurationView {
+  maxDays: number | null;
+  daysPerPeriod: number;
+  scaled: boolean;
+  sicknessDaysMin: number;
+  sicknessDaysMax: number;
+  accidentDaysMin: number;
+  accidentDaysMax: number;
 }
 
 /** R31-B1: one field of an area payment application. */

@@ -1278,10 +1278,12 @@ Owner decisions of 2026-10-05 in `QUESTIONS.md`. Bills of a grant repayment and 
 | `rpsim.formulas.sick-leave.risk-bad-factor` | `1.5` | … (multiplied). | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.risk-good-threshold` | `70` | Both needs from this value … | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.risk-good-factor` | `0.5` | … lower the accident risk by this factor. | Roadmap V3.1 R31-B5 |
-| `rpsim.formulas.sick-leave.sickness-days-min` | `2` | Game days away when sick, at least … | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.sickness-days-min` | `2` | Days away when sick, at least … (days of a month with `reference-days-per-period` days, see `scale-with-month-length`) | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.sickness-days-max` | `5` | … and at most (ON_LEAVE, salary continues). | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.accident-days-min` | `3` | Game days away after an accident, at least … | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.accident-days-max` | `10` | … and at most. | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.scale-with-month-length` | `true` | The day ranges above are scaled to the FS25 "days per period" of the savegame: × days per period / `reference-days-per-period`, rounded, at least 1 game day (2 days per period: sickness and accident 1 day). The chances per game day are × (mean of the configured range / mean of the scaled range), so the expected share of absent days stays the same – shorter months mean more frequent but shorter absences. A running absence is rescaled when the days per period change. The player can additionally cap the absence per savegame (settings, „Höchstdauer eines Ausfalls“); the cap only shortens, it does not change the chances. `false` = the ranges are game days as before. | Owner request 2026-10-14 |
+| `rpsim.formulas.sick-leave.reference-days-per-period` | `30` | Month length the day ranges are meant for. | Owner request 2026-10-14 |
 | `rpsim.formulas.sick-leave.get-well-appreciation` | `8` | Get-well wishes (once per absence): appreciation points … | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.get-well-trust-delta` | `2` | … and trust of the employee. | Roadmap V3.1 R31-B5 |
 

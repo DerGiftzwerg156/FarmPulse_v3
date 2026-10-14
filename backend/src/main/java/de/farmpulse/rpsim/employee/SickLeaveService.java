@@ -23,6 +23,7 @@ import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
 import de.farmpulse.rpsim.repository.EmployeeRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
 import de.farmpulse.rpsim.trust.TrustScoreService;
@@ -42,6 +43,10 @@ import org.springframework.transaction.annotation.Transactional;
  *   a time.</li>
  *   <li>The employee is away for sickness-days / accident-days (ON_LEAVE in EMPLOYEE_ROSTER, no helper); the salary
  *   continues. The office clerk - or the employee - reports it; the Berufsgenossenschaft reports an accident.</li>
+ *   <li>Owner request 2026-10-14: the day ranges are meant for a month of reference-days-per-period days and are scaled
+ *   to the FS25 days per period (at least one game day); the chances are adjusted so that the expected share of absent
+ *   days stays the same. The player can cap one absence per savegame (settings); a running absence is rescaled when
+ *   the days per period change.</li>
  *   <li>Get-well wishes once per absence: appreciation and trust, a thank-you mail; diary at absence and return.</li>
  * </ul>
  */
@@ -63,11 +68,12 @@ public class SickLeaveService {
     private final RandomSource random;
     private final ApplicationEventPublisher publisher;
     private final RpsimProperties props;
+    private final GameTime gameTime;
 
     public SickLeaveService(SavegameRepository savegames, EmployeeRepository employees, SatisfactionService satisfaction,
                             BurdeningEvents burden, ServiceRoleService roles, NarrationRequestService narration,
                             TrustScoreService trust, DiaryService diary, RandomSource random,
-                            ApplicationEventPublisher publisher, RpsimProperties props) {
+                            ApplicationEventPublisher publisher, RpsimProperties props, GameTime gameTime) {
         this.savegames = savegames;
         this.employees = employees;
         this.satisfaction = satisfaction;
@@ -79,6 +85,7 @@ public class SickLeaveService {
         this.random = random;
         this.publisher = publisher;
         this.props = props;
+        this.gameTime = gameTime;
     }
 
     private RpsimProperties.SickLeave cfg() {
@@ -88,6 +95,53 @@ public class SickLeaveService {
     /** True while a sickness or accident keeps the employee away. */
     public static boolean absent(Employee e, long now) {
         return e.getAbsenceKind() != null && e.getAbsenceUntilGameTime() != null && e.getAbsenceUntilGameTime() > now;
+    }
+
+    /** Range of an absence in game days. */
+    public record Days(int min, int max) {
+
+        double mean() {
+            return (min + max) / 2.0;
+        }
+
+        /** The player's cap (null = none) only shortens the range. */
+        Days cappedAt(Integer cap) {
+            return cap == null ? this : new Days(Math.min(min, cap), Math.min(max, cap));
+        }
+    }
+
+    /**
+     * The configured range (days of a month with reference-days-per-period days) scaled to the month length: rounded,
+     * at least one game day. Unchanged without scale-with-month-length.
+     */
+    public static Days scaled(int min, int max, int daysPerPeriod, RpsimProperties.SickLeave cfg) {
+        if (!cfg.isScaleWithMonthLength()) {
+            return new Days(min, max);
+        }
+        double f = daysPerPeriod / (double) Math.max(1, cfg.getReferenceDaysPerPeriod());
+        int lo = Math.max(1, (int) Math.round(min * f));
+        return new Days(lo, Math.max(lo, (int) Math.round(max * f)));
+    }
+
+    /** Chance factor that keeps the expected share of absent days of the configured range (1 without scaling). */
+    static double chanceFactor(int min, int max, Days scaled) {
+        return (min + max) / 2.0 / scaled.mean();
+    }
+
+    /** Sickness range of the savegame: scaled to its month length, capped by the player. */
+    public Days sicknessDays(Savegame sg) {
+        return scaled(cfg().getSicknessDaysMin(), cfg().getSicknessDaysMax(), daysPerPeriod(sg), cfg())
+                .cappedAt(sg.getSickLeaveMaxDays());
+    }
+
+    /** Accident range of the savegame: scaled to its month length, capped by the player. */
+    public Days accidentDays(Savegame sg) {
+        return scaled(cfg().getAccidentDaysMin(), cfg().getAccidentDaysMax(), daysPerPeriod(sg), cfg())
+                .cappedAt(sg.getSickLeaveMaxDays());
+    }
+
+    private int daysPerPeriod(Savegame sg) {
+        return gameTime.anchor(sg).daysPerPeriod();
     }
 
     /** Accident risk factor from the needs workload and working conditions (0..100). */
@@ -133,15 +187,23 @@ public class SickLeaveService {
             return false;
         }
         double factor = burden.factor(sg);
-        if (random.chance(cfg().getSicknessProbabilityPerDay() * factor)) {
-            start(sg, e, SICKNESS, random.intBetween(cfg().getSicknessDaysMin(), cfg().getSicknessDaysMax()));
+        int dpp = daysPerPeriod(sg);
+        // the chance follows the scaled range, the player's cap only shortens the absence
+        Days sick = scaled(cfg().getSicknessDaysMin(), cfg().getSicknessDaysMax(), dpp, cfg());
+        if (random.chance(cfg().getSicknessProbabilityPerDay() * factor
+                * chanceFactor(cfg().getSicknessDaysMin(), cfg().getSicknessDaysMax(), sick))) {
+            Days d = sick.cappedAt(sg.getSickLeaveMaxDays());
+            start(sg, e, SICKNESS, random.intBetween(d.min(), d.max()));
             return true;
         }
         if (cfg().getAccidentRoles().contains(e.getJobRole().name())) {
             SatisfactionService.Needs n = satisfaction.needs(e);
             double risk = riskFactor(n.workload(), n.workingConditions(), cfg());
-            if (random.chance(cfg().getAccidentProbabilityPerDay() * risk * factor)) {
-                start(sg, e, ACCIDENT, random.intBetween(cfg().getAccidentDaysMin(), cfg().getAccidentDaysMax()));
+            Days acc = scaled(cfg().getAccidentDaysMin(), cfg().getAccidentDaysMax(), dpp, cfg());
+            if (random.chance(cfg().getAccidentProbabilityPerDay() * risk * factor
+                    * chanceFactor(cfg().getAccidentDaysMin(), cfg().getAccidentDaysMax(), acc))) {
+                Days d = acc.cappedAt(sg.getSickLeaveMaxDays());
+                start(sg, e, ACCIDENT, random.intBetween(d.min(), d.max()));
                 return true;
             }
         }
@@ -179,6 +241,38 @@ public class SickLeaveService {
         e.setGetWellSent(false);
         diary.addAuto(sg, "EMPLOYEE", e.getCharacter().getName() + " ist wieder da", ACCIDENT.equals(kind)
                 ? "Nach dem Arbeitsunfall wieder einsatzbereit." : "Wieder gesund und an der Arbeit.", RELATED, e.getId());
+    }
+
+    /**
+     * "Days per period" changed: a running absence keeps its share of the month (at least one game day) but never
+     * exceeds the longest absence of the new month length.
+     */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        if (!cfg().isScaleWithMonthLength() || ev.previous().daysPerPeriod() == ev.current().daysPerPeriod()) {
+            return;
+        }
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            long now = sg.getCurrentGameTime();
+            boolean changed = false;
+            for (Employee e : employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE)) {
+                if (!absent(e, now)) {
+                    continue;
+                }
+                long rest = e.getAbsenceUntilGameTime() - now;
+                long scaled = Math.round(rest * (double) ev.current().daysPerPeriod() / ev.previous().daysPerPeriod());
+                int maxDays = (ACCIDENT.equals(e.getAbsenceKind()) ? accidentDays(sg) : sicknessDays(sg)).max();
+                long until = now + Math.max(GameTime.days(1), Math.min(scaled, GameTime.days(maxDays)));
+                if (until != e.getAbsenceUntilGameTime()) {
+                    e.setAbsenceUntilGameTime(until);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                publisher.publishEvent(new RosterChangedEvent(sg.getId()));
+            }
+        });
     }
 
     /** "Genesungswünsche": once per absence - appreciation, trust, a thank-you mail. */

@@ -418,7 +418,10 @@ eingestellt, kommt kein Angebot.
   fährt, bringt auch weniger zusätzlichen Nutzen. Ein Streikender stellt seinen Helfer sofort ab. Fahren ständig
   Helfer ohne eigenen Mitarbeiter, fragt die Genossenschaft einmal nach, ob du nicht jemanden fest einstellen willst.
 - **Krankheit und Arbeitsunfall.** Ab und zu wird jemand krank (2–5 Tage) oder hat einen Arbeitsunfall (3–10 Tage;
-  nur wer Maschinen fährt). Unfälle passieren öfter, wenn die Arbeitsbelastung hoch und die Maschinen verschlissen
+  nur wer Maschinen fährt). Diese Dauer gilt für einen Monat mit 30 Tagen und passt sich deiner Einstellung *Tage pro
+  Monat* an, mindestens ein Spieltag: Bei 2 Tagen pro Monat fällt jemand einen Tag aus, dafür etwas häufiger – über das
+  Jahr fehlen deine Leute insgesamt gleich lange. Unter **Einstellungen → Ereignisse** kannst du die Höchstdauer eines
+  Ausfalls zusätzlich begrenzen. Unfälle passieren öfter, wenn die Arbeitsbelastung hoch und die Maschinen verschlissen
   sind, und seltener, wenn beides gut ist. Die Bürokraft (ohne sie die Person selbst) meldet den Ausfall, nach einem
   Unfall schreibt auch die Berufsgenossenschaft. Auf der Karte steht *krank bis …* bzw. *nach Arbeitsunfall bis …*; in
   der Zeit fährt die Person keinen Helfer, das Gehalt läuft weiter. Mit *Genesungswünsche* (einmal je Ausfall)
@@ -978,6 +981,8 @@ nicht nur für einen Spielstand, und lässt sich nur am Spiele-PC ändern.
 **Belastende Ereignisse:** Vor-Ort-Kontrolle des Sammelantrags, Kontrollen der Düngeverordnung, Tierseuchen,
 Krankheit und Arbeitsunfälle, Beschwerden über Nachtarbeit, Flurschaden auf Nachbarfeldern und Dieselklau einzeln
 ein- oder ausschalten (Standard an, Flurschaden aus; siehe **Ämter**, **Personal**, **Flurkarte** und **Werkstatt**).
+Unter Krankheit und Arbeitsunfälle siehst du, wie lange ein Ausfall bei deinen Tagen pro Monat dauert, und kannst eine
+**Höchstdauer eines Ausfalls** wählen (Standard *automatisch*).
 In derselben Karte schaltest du die Angebote von **Großinvestoren** ein oder aus (Standard an; laufende Verträge gelten
 weiter, siehe **Bank**).
 Im idyllischen Weltmodus gibt es keine Tierseuchen und keinen Dieselklau, die übrigen Ereignisse kommen nur halb so

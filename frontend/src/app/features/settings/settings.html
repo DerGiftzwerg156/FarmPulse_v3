@@ -42,6 +42,20 @@
                   <input type="checkbox" [checked]="b[k]" (change)="saveBurden(k, $any($event.target).checked)" [attr.data-testid]="'burden-' + k" />
                   <span>{{ ('settings.burden.' + k) | t }}</span>
                 </label>
+                <!-- R31-B5: how long a sickness / accident lasts, scaled to the days per period -->
+                @if (k === 'sickLeave' && b.sickLeave && b.sickLeaveDuration; as d) {
+                  <div class="ml-6 mt-1 space-y-1" data-testid="sick-leave-duration">
+                    <label class="flex items-center gap-2 text-[11px] text-muted">
+                      <span>{{ 'settings.burden.sickLeaveMaxDays' | t }}</span>
+                      <select class="fp-input !w-auto !py-0.5 text-[11px]" [value]="'' + (d.maxDays ?? 0)" (change)="saveSickLeaveMaxDays(+$any($event.target).value)" data-testid="sick-leave-max-days">
+                        @for (o of sickLeaveMaxDayOptions; track o) {
+                          <option [value]="'' + o">{{ o === 0 ? ('settings.burden.sickLeaveAuto' | t) : o === 1 ? ('settings.burden.sickLeaveDay' | t) : ('settings.burden.sickLeaveDays' | t: { days: o }) }}</option>
+                        }
+                      </select>
+                    </label>
+                    <p class="text-[11px] text-muted" data-testid="sick-leave-range">{{ (d.scaled ? 'settings.burden.sickLeaveRangeScaled' : 'settings.burden.sickLeaveRange') | t: { dpp: d.daysPerPeriod, sickness: dayRange(d.sicknessDaysMin, d.sicknessDaysMax), accident: dayRange(d.accidentDaysMin, d.accidentDaysMax) } }}</p>
+                  </div>
+                }
               </li>
             }
           </ul>

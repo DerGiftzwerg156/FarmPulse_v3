@@ -455,6 +455,8 @@ export class ApiService {
     cropDamage: boolean;
     dieselTheft: boolean;
     investors?: boolean;
+    /** R31-B5: cap of one absence in game days, 0 = automatic only. */
+    sickLeaveMaxDays?: number;
   }): Observable<M.BurdenSettingsView> {
     return this.http.put<M.BurdenSettingsView>(`${this.base}/settings/burdening-events`, r);
   }

@@ -200,7 +200,16 @@ public final class Views {
      */
     public record BurdenSettingsView(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave,
                                      boolean nightWork, boolean cropDamage, boolean dieselTheft,
-                                     String tonePreset, double idyllicFactor, boolean investors) {
+                                     String tonePreset, double idyllicFactor, boolean investors,
+                                     SickLeaveDurationView sickLeaveDuration) {
+    }
+
+    /**
+     * R31-B5: the absence of a sickness / accident in game days for the current days per period (scaled, capped by
+     * {@code maxDays}; null = automatic only).
+     */
+    public record SickLeaveDurationView(Integer maxDays, int daysPerPeriod, boolean scaled, int sicknessDaysMin,
+                                        int sicknessDaysMax, int accidentDaysMin, int accidentDaysMax) {
     }
 
     /** Roadmap V3 R3-T2: optional farm name; {@code mapName} is the fallback shown when it is empty. */

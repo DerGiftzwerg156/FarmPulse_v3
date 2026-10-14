@@ -94,6 +94,15 @@ versions or this changelog do not match.
   where the litres come from ("gemessen", "eingetragen" or "geschätzt") and names a product that is not the standard
   one ("Mais (Häckselgut)"). The report keeps the state of the year change; reports written before stay unchanged.
 
+### Changed
+
+- **Sick leave follows the month length** (owner request 2026-10-14): sickness (2–5 days) and work accidents (3–10
+  days) are meant for a 30-day month and are scaled to the FS25 *days per period*, at least one game day - with 2 days
+  per period an employee is away for one day instead of up to 10. The chances are adjusted so that the share of absent
+  days stays the same (shorter months: shorter, slightly more frequent absences); a running absence is rescaled when
+  the days per period change. *Einstellungen → Ereignisse* shows the current duration and lets the player cap one
+  absence per savegame. Configurable via `sick-leave.scale-with-month-length` and `reference-days-per-period`.
+
 ## [2.0.0] - 2026-10-09
 
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training

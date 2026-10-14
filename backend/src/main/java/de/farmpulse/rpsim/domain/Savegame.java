@@ -356,6 +356,10 @@ public class Savegame {
     @Column(name = "burden_sick_leave", nullable = false)
     private boolean burdenSickLeave = true;
 
+    /** R31-B5: the player's cap of one sickness / accident absence in game days (settings); null = automatic only. */
+    @Column(name = "sick_leave_max_days")
+    private Integer sickLeaveMaxDays;
+
     /** Roadmap V3.1 R31-B3: confirmed findings of the fertiliser rules (the first one is a warning, later ones a fine). */
     @Column(name = "fertilizer_violations", nullable = false)
     private int fertilizerViolations;

@@ -47,6 +47,8 @@ export class Settings {
   /** Roadmap V3.1 R31-B: switches of the burdening events. */
   readonly burden = signal<BurdenSettingsView | null>(null);
   readonly burdenKeys = ['areaCheck', 'fertilizer', 'disease', 'sickLeave', 'nightWork', 'cropDamage', 'dieselTheft', 'investors'] as const;
+  /** R31-B5: choices of the cap of one sickness / accident absence in game days (0 = automatic only). */
+  readonly sickLeaveMaxDayOptions = [0, 1, 2, 3, 5, 7, 10, 14] as const;
   readonly prompts = signal<PromptSettingsView | null>(null);
   readonly provider = signal('');
   readonly model = signal('');
@@ -107,6 +109,24 @@ export class Settings {
       next: (n) => this.burden.set(n),
       error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
     });
+  }
+
+  /** R31-B5: caps one sickness / accident absence (0 = automatic, scaled to the days per period). */
+  saveSickLeaveMaxDays(days: number): void {
+    const b = this.burden();
+    if (!b) return;
+    const r = { areaCheck: b.areaCheck, fertilizer: b.fertilizer, disease: b.disease, sickLeave: b.sickLeave,
+      nightWork: b.nightWork, cropDamage: b.cropDamage, dieselTheft: b.dieselTheft, investors: b.investors,
+      sickLeaveMaxDays: days };
+    this.api.saveBurdenSettings(r).subscribe({
+      next: (n) => this.burden.set(n),
+      error: (e) => this.error.set(apiErrorMessage(e, this.i18n.t('common.error'))),
+    });
+  }
+
+  /** "2–5" or "1" for a range of game days. */
+  dayRange(min: number, max: number): string {
+    return min === max ? `${min}` : `${min}–${max}`;
   }
 
   /** Roadmap V2 R2-C6: switches the field work hints of the cooperative. */

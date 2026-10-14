@@ -14,10 +14,12 @@ import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.domain.HelperWageMode;
 import de.farmpulse.rpsim.domain.PromptKind;
 import de.farmpulse.rpsim.domain.Savegame;
+import de.farmpulse.rpsim.employee.SickLeaveService;
 import de.farmpulse.rpsim.employee.WorkforceService;
 import de.farmpulse.rpsim.lan.NetworkAddresses;
 import de.farmpulse.rpsim.prompt.PromptService;
 import de.farmpulse.rpsim.savegame.SavegameContext;
+import de.farmpulse.rpsim.time.GameTime;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,11 +42,16 @@ public class SettingsController {
     private final VanillaBypassService bypass;
     private final PromptService prompts;
     private final de.farmpulse.rpsim.config.RpsimProperties props;
+    private final SickLeaveService sickLeave;
+    private final GameTime gameTime;
 
     public SettingsController(AiSettingsService settings, AiProviderRegistry registry, SavegameContext context,
                               WorkforceService workforce, VanillaBypassService bypass, PromptService prompts,
-                              de.farmpulse.rpsim.config.RpsimProperties props) {
+                              de.farmpulse.rpsim.config.RpsimProperties props, SickLeaveService sickLeave,
+                              GameTime gameTime) {
         this.props = props;
+        this.sickLeave = sickLeave;
+        this.gameTime = gameTime;
         this.settings = settings;
         this.registry = registry;
         this.context = context;
@@ -157,6 +164,9 @@ public class SettingsController {
         if (r.investors() != null) { // Roadmap V3.2 R32-I1: large investors (not a burden, same settings card)
             sg.setInvestorsEnabled(r.investors());
         }
+        if (r.sickLeaveMaxDays() != null) { // R31-B5: 0 = automatic only (null = unchanged, older clients)
+            sg.setSickLeaveMaxDays(r.sickLeaveMaxDays() == 0 ? null : r.sickLeaveMaxDays());
+        }
         return burdenView(sg);
     }
 
@@ -164,7 +174,16 @@ public class SettingsController {
         return new Views.BurdenSettingsView(sg.isBurdenAreaCheck(), sg.isBurdenFertilizer(), sg.isBurdenDisease(),
                 sg.isBurdenSickLeave(), sg.isBurdenNightWork(), sg.isBurdenCropDamage(), sg.isBurdenDieselTheft(),
                 sg.getTonePreset().name(),
-                props.getFormulas().getBurdeningEvents().getIdyllicFactor(), sg.isInvestorsEnabled());
+                props.getFormulas().getBurdeningEvents().getIdyllicFactor(), sg.isInvestorsEnabled(),
+                sickLeaveDuration(sg));
+    }
+
+    private Views.SickLeaveDurationView sickLeaveDuration(Savegame sg) {
+        SickLeaveService.Days sick = sickLeave.sicknessDays(sg);
+        SickLeaveService.Days accident = sickLeave.accidentDays(sg);
+        return new Views.SickLeaveDurationView(sg.getSickLeaveMaxDays(), gameTime.anchor(sg).daysPerPeriod(),
+                props.getFormulas().getSickLeave().isScaleWithMonthLength(), sick.min(), sick.max(), accident.min(),
+                accident.max());
     }
 
     /** Roadmap V3 R3-T2: optional farm name, heads the chronicle (without it the map name). */
