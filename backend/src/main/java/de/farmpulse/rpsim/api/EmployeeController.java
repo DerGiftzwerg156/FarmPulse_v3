@@ -19,6 +19,7 @@ import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.HiringService;
 import de.farmpulse.rpsim.employee.SatisfactionService;
 import de.farmpulse.rpsim.employee.TrainingService;
+import de.farmpulse.rpsim.payroll.PayrollScheduler;
 import de.farmpulse.rpsim.repository.EmployeeRepository;
 import de.farmpulse.rpsim.savegame.SavegameContext;
 import jakarta.validation.Valid;
@@ -40,11 +41,16 @@ public class EmployeeController {
     private final EmployeeRepository employees;
     private final ApiMapper mapper;
     private final de.farmpulse.rpsim.employee.SickLeaveService sickLeave;
+    private final de.farmpulse.rpsim.employee.AbsenceScale scale;
+    private final PayrollScheduler payroll;
 
     public EmployeeController(SavegameContext context, HiringService hiring, SatisfactionService satisfaction,
                               TrainingService training, EmployeeRepository employees, ApiMapper mapper,
-                              de.farmpulse.rpsim.employee.SickLeaveService sickLeave) {
+                              de.farmpulse.rpsim.employee.SickLeaveService sickLeave,
+                              de.farmpulse.rpsim.employee.AbsenceScale scale, PayrollScheduler payroll) {
         this.sickLeave = sickLeave;
+        this.scale = scale;
+        this.payroll = payroll;
         this.training = training;
         this.context = context;
         this.hiring = hiring;
@@ -108,11 +114,35 @@ public class EmployeeController {
         return mapper.employee(e);
     }
 
+    /**
+     * Owner request 2026-10-14: how absences are scaled to the month length - the days off form shows the game days of
+     * the chosen days, the training panel its duration.
+     */
+    @GetMapping("/api/employees/absence-scale")
+    @Transactional(readOnly = true)
+    public Views.AbsenceScaleView absenceScale() {
+        Savegame sg = context.requireActive();
+        return new Views.AbsenceScaleView(scale.enabled(), scale.daysPerPeriod(sg), scale.referenceDaysPerPeriod(),
+                training.durationGameDays(sg));
+    }
+
     @PostMapping("/api/employees/{id}/time-off")
     @Transactional
     public EmployeeView timeOff(@PathVariable Long id, @Valid @RequestBody TimeOffRequest r) {
         Employee e = active(context.requireActive(), id);
         satisfaction.timeOff(e, r.days());
+        return mapper.employee(e);
+    }
+
+    /**
+     * Owner decisions 2026-10-14: pays an overdue salary right away (only offered while one is overdue) - with the
+     * overdraft while it is on.
+     */
+    @PostMapping("/api/employees/{id}/pay-salary")
+    @Transactional
+    public EmployeeView paySalary(@PathVariable Long id) {
+        Employee e = active(context.requireActive(), id);
+        payroll.payOverdue(e);
         return mapper.employee(e);
     }
 

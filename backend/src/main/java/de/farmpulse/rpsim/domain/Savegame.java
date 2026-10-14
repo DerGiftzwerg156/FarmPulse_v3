@@ -315,6 +315,21 @@ public class Savegame {
     @Column(name = "investors_enabled", nullable = false)
     private boolean investorsEnabled = true;
 
+    /**
+     * Overdraft (owner decisions 2026-10-14): every debit of the tool may push the balance down to -overdraftLimit
+     * (salaries, installments, bills and own purchases alike). Off = no debit below zero (T-03).
+     */
+    @Column(name = "overdraft_enabled", nullable = false)
+    private boolean overdraftEnabled;
+
+    /** Overdraft: the lowest balance a debit may leave is -overdraftLimit (euro, >= 0). */
+    @Column(name = "overdraft_limit", nullable = false)
+    private long overdraftLimit;
+
+    /** Overdraft: interest in percent per year, charged at every month start on a negative balance (default 10). */
+    @Column(name = "overdraft_interest_percent", nullable = false)
+    private double overdraftInterestPercent = 10;
+
     /** Roadmap V3.2 R32-I1: FS25 year of the last investor offer (at most one per year; extensions do not count). */
     @Column(name = "investor_offer_year")
     private Integer investorOfferYear;
@@ -355,6 +370,17 @@ public class Savegame {
 
     @Column(name = "burden_sick_leave", nullable = false)
     private boolean burdenSickLeave = true;
+
+    /** R31-B5: the player's cap of one sickness / accident absence in game days (expert settings); null = automatic. */
+    @Column(name = "sick_leave_max_days")
+    private Integer sickLeaveMaxDays;
+
+    /** R31-B5: frequency of sickness / work accidents in percent of the configured chance (expert settings). */
+    @Column(name = "sickness_frequency_percent", nullable = false)
+    private int sicknessFrequencyPercent = 100;
+
+    @Column(name = "accident_frequency_percent", nullable = false)
+    private int accidentFrequencyPercent = 100;
 
     /** Roadmap V3.1 R31-B3: confirmed findings of the fertiliser rules (the first one is a warning, later ones a fine). */
     @Column(name = "fertilizer_violations", nullable = false)

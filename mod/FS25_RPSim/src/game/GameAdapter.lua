@@ -759,7 +759,8 @@ function RPSimGameAdapter:getBalance()
 end
 
 --- Batch pre-check (T-03): debits are refused when the balance does not cover them, so the farm never goes
--- into the red through a tool booking. Unknown balance => refuse debits (never book blindly).
+-- into the red through a tool booking - unless a debit carries minBalance (overdraft, owner decisions 2026-10-14),
+-- then down to that floor. Unknown balance => refuse debits (never book blindly).
 function RPSimGameAdapter:checkBatchFunds(items)
     return RPSimInstructions.checkFunds(self:getBalance() or 0, items)
 end
@@ -879,7 +880,9 @@ end
 -- the callback, or directly when the loading cannot start. Returns true (loading started) or false, err.
 function RPSimGameAdapter:spawnVehicle(ins, done)
     local balance = self:getBalance()
-    if balance == nil or balance < ins.price then
+    -- overdraft (owner decisions 2026-10-14): minBalance (<= 0) is the lowest balance the purchase may leave
+    local floor = type(ins.minBalance) == "number" and math.min(ins.minBalance, 0) or 0
+    if balance == nil or balance - ins.price < floor then
         return false, "INSUFFICIENT_FUNDS"
     end
     local storeItem = safe(function() return g_storeManager:getItemByXMLFilename(ins.storeXmlFilename) end, nil)

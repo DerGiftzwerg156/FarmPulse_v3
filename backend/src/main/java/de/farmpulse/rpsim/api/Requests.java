@@ -120,6 +120,11 @@ public final class Requests {
                                         String helperWageMode, boolean strictHelperLimit) {
     }
 
+    /** Overdraft (owner decisions 2026-10-14): limit in euro, interest in percent per year. */
+    public record OverdraftSettingsRequest(boolean enabled, @PositiveOrZero long limit,
+                                           @PositiveOrZero double interestPercent) {
+    }
+
     /** Roadmap V2 R2-D: switch of the reactions to the vanilla loan and the game's field menu. */
     public record BypassSettingsRequest(boolean reactionsEnabled) {
     }
@@ -128,6 +133,15 @@ public final class Requests {
     /** Roadmap V3.1 R31-B: switches of the burdening events. */
     public record BurdenSettingsRequest(boolean areaCheck, boolean fertilizer, boolean disease, boolean sickLeave,
                                         Boolean nightWork, Boolean cropDamage, Boolean dieselTheft, Boolean investors) {
+    }
+
+    /**
+     * R31-B5 expert settings: cap of one absence in game days (0 = automatic) and the frequency of sickness / work
+     * accidents in percent of the configured chance.
+     */
+    public record SickLeaveSettingsRequest(@NotNull @Min(0) @Max(30) Integer maxDays,
+                                           @NotNull @Min(0) @Max(500) Integer sicknessFrequencyPercent,
+                                           @NotNull @Min(0) @Max(500) Integer accidentFrequencyPercent) {
     }
 
     public record FieldSettingsRequest(boolean fieldHintsEnabled) {

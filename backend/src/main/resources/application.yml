@@ -876,6 +876,9 @@ rpsim:
       fee-per-ha: 12
       fee-per-employee: 180
       bill-period: 2              # April
+    absence-scaling:              # owner request 2026-10-14: sickness, accident, days off and training are days of a
+      enabled: true               # month with reference-days-per-period days, scaled to the FS25 days per period
+      reference-days-per-period: 30   # (at least 1 game day); sickness / accident chances adjusted
     sick-leave:                   # Roadmap V3.1 R31-B5: sickness and work accident (owner decisions, placeholders)
       enabled: true
       sickness-probability-per-day: 0.005
@@ -885,7 +888,7 @@ rpsim:
       risk-bad-factor: 1.5
       risk-good-threshold: 70     # both from 70: x 0.5
       risk-good-factor: 0.5
-      sickness-days-min: 2
+      sickness-days-min: 2        # days away, scaled to the month length (absence-scaling)
       sickness-days-max: 5
       accident-days-min: 3
       accident-days-max: 10
@@ -1091,6 +1094,7 @@ rpsim:
         RPSIM_CREDIT_CALLBACK: FINANCING
         RPSIM_CREDIT_SPECIAL_REPAYMENT: FINANCING
         RPSIM_CREDIT_PREPAYMENT_FEE: FINANCING
+        RPSIM_OVERDRAFT_INTEREST: FINANCING           # owner decisions 2026-10-14: interest on a negative balance (overdraft)
         RPSIM_STARTING_CAPITAL_ADJUSTMENT: FINANCING
         RPSIM_COOP_SHARES: FINANCING                  # Roadmap V3.1 (R31-Q1): cooperative shares and their repayment (R31-D7)
         RPSIM_INVESTOR_CAPITAL: FINANCING             # Roadmap V3.2 (R32-Q1): capital of a large investor (R32-I2)

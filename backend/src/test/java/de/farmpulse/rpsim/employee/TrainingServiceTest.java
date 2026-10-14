@@ -149,6 +149,11 @@ class TrainingServiceTest {
 
     @Test
     void theBookedTrainingHasPrecedenceOverDaysOffAndSickness() {
+        // 30 days per period: days off are game days (owner request 2026-10-14: scaled to the month length)
+        sg.setCalMonthIndex(0L);
+        sg.setCalMonthStartGameTime(0L);
+        sg.setCalDaysPerPeriod(30);
+        sg.setCalPeriod(1);
         Employee e = employee(JobRole.MACHINE_OPERATOR);
         training.book(e, Training.TRUCK);
         // booked at 0:00: one day off ends right before the training day, two days off overlap it

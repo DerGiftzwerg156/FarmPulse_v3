@@ -270,6 +270,8 @@ class ApiIntegrationTest {
         postJson("/api/employees/" + eid + "/raise", java.util.Map.of("newSalary", 99999)).andExpect(status().isOk());
         postJson("/api/employees/" + eid + "/time-off", java.util.Map.of("days", 2)).andExpect(status().isOk());
         postJson("/api/employees/" + eid + "/time-off", java.util.Map.of("days", 0)).andExpect(status().isBadRequest());
+        // owner decisions 2026-10-14: the button only works while a salary is overdue
+        mvc.perform(post("/api/employees/" + eid + "/pay-salary")).andExpect(jsonPath("$.code").value("SALARY_NOT_OVERDUE"));
         mvc.perform(delete("/api/employees/" + eid)).andExpect(jsonPath("$.status").value("TERMINATED"));
         postJson("/api/job-postings", java.util.Map.of("jobRole", "ASTRONAUT")).andExpect(status().isBadRequest());
     }
@@ -410,6 +412,29 @@ class ApiIntegrationTest {
         mvc.perform(get("/api/investors")).andExpect(jsonPath("$.savegameEnabled").value(false));
         mvc.perform(post("/api/investors/offers/999999/packages/1/accept")).andExpect(status().isNotFound());
         postJson("/api/investors/obligations/999999/deliver", java.util.Map.of("quantity", 0))
+                .andExpect(status().isBadRequest());
+    }
+
+    /** R31-B5 expert settings: duration cap and frequency of sickness / accidents. */
+    @Test
+    void sickLeaveExpertSettings() throws Exception {
+        mvc.perform(get("/api/settings/sick-leave")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.sicknessFrequencyPercent").value(100))
+                .andExpect(jsonPath("$.accidentFrequencyPercent").value(100))
+                .andExpect(jsonPath("$.duration.maxDays").doesNotExist());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/settings/sick-leave")
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of(
+                                "maxDays", 3, "sicknessFrequencyPercent", 0, "accidentFrequencyPercent", 200))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.duration.maxDays").value(3))
+                .andExpect(jsonPath("$.sicknessFrequencyPercent").value(0))
+                .andExpect(jsonPath("$.sicknessPerYear").value(0.0))
+                .andExpect(jsonPath("$.accidentFrequencyPercent").value(200));
+        mvc.perform(get("/api/settings/burdening-events")).andExpect(jsonPath("$.sickLeaveDuration.maxDays").value(3));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/settings/sick-leave")
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(java.util.Map.of(
+                                "maxDays", 0, "sicknessFrequencyPercent", 501, "accidentFrequencyPercent", 100))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -647,6 +672,16 @@ class ApiIntegrationTest {
                 .andExpect(jsonPath("$.strictHelperLimit").value(true));
         mvc.perform(put("/api/settings/helpers").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"helperWageMode\":\"FREE\",\"strictHelperLimit\":true}"))
+                .andExpect(status().isBadRequest());
+        // owner decisions 2026-10-14: overdraft
+        mvc.perform(get("/api/settings/overdraft")).andExpect(jsonPath("$.enabled").value(false))
+                .andExpect(jsonPath("$.limit").value(0)).andExpect(jsonPath("$.interestPercent").value(10.0));
+        mvc.perform(put("/api/settings/overdraft").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":true,\"limit\":25000,\"interestPercent\":8.5}"))
+                .andExpect(jsonPath("$.enabled").value(true)).andExpect(jsonPath("$.limit").value(25000))
+                .andExpect(jsonPath("$.interestPercent").value(8.5));
+        mvc.perform(put("/api/settings/overdraft").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":true,\"limit\":-1,\"interestPercent\":8.5}"))
                 .andExpect(status().isBadRequest());
         // Roadmap V2 R2-C6
         mvc.perform(get("/api/settings/fields")).andExpect(jsonPath("$.fieldHintsEnabled").value(true))

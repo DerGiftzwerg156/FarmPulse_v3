@@ -51,11 +51,12 @@ public class SatisfactionService {
     private final RpsimProperties props;
     private final ApplicationEventPublisher publisher;
     private final GameTime gameTime;
+    private final AbsenceScale scale;
 
     public SatisfactionService(EmployeeRepository employees, SatisfactionEventRepository events,
                                SavegameRepository savegames, FactsService facts, OutboxService outbox,
                                NarrationRequestService narration, DiaryService diary, RpsimProperties props,
-                               ApplicationEventPublisher publisher, GameTime gameTime) {
+                               ApplicationEventPublisher publisher, GameTime gameTime, AbsenceScale scale) {
         this.employees = employees;
         this.events = events;
         this.savegames = savegames;
@@ -66,6 +67,7 @@ public class SatisfactionService {
         this.props = props;
         this.publisher = publisher;
         this.gameTime = gameTime;
+        this.scale = scale;
     }
 
     private RpsimProperties.Satisfaction cfg() {
@@ -169,22 +171,54 @@ public class SatisfactionService {
         thanks(e, "RAISE");
     }
 
-    /** Granted days off: workload relief. */
+    /**
+     * Granted days off: workload relief. Owner request 2026-10-14: {@code days} are days of a month with
+     * reference-days-per-period days, scaled to the FS25 days per period ({@link AbsenceScale}, at least one game day);
+     * the relief follows the share of the month the employee is actually away.
+     */
     @Transactional
     public void timeOff(Employee e, int days) {
         if (days <= 0) {
             throw new de.farmpulse.rpsim.common.BusinessRuleException("INVALID_DAYS", "Mindestens ein freier Tag.");
         }
-        long now = e.getSavegame().getCurrentGameTime();
-        if (TrainingService.trainingOverlaps(e, now, now + GameTime.days(days))) {
+        Savegame sg = e.getSavegame();
+        long now = sg.getCurrentGameTime();
+        int gameDays = scale.gameDays(sg, days);
+        if (TrainingService.trainingOverlaps(e, now, now + GameTime.days(gameDays))) {
             // owner decision 2026-10-06: the booked training has precedence
             throw new de.farmpulse.rpsim.common.BusinessRuleException("TIME_OFF_TRAINING",
                     "In dieser Zeit ist der Mitarbeiter auf einer Schulung.");
         }
-        record(e, SatisfactionCategory.WORKLOAD, days * cfg().getTimeOffPointsPerDay(), days + " freie Tage");
-        e.setTimeOffUntilGameTime(now + GameTime.days(days));
+        record(e, SatisfactionCategory.WORKLOAD, scale.referenceDays(sg, gameDays) * cfg().getTimeOffPointsPerDay(),
+                gameDays + (gameDays == 1 ? " freier Tag" : " freie Tage"));
+        e.setTimeOffUntilGameTime(now + GameTime.days(gameDays));
         thanks(e, "TIME_OFF");
         publisher.publishEvent(new RosterChangedEvent(e.getSavegame().getId())); // R2-A0: ON_LEAVE
+    }
+
+    /** "Days per period" changed: running days off keep their share of the month (1 game day .. one month). */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(de.farmpulse.rpsim.time.CalendarChangedEvent ev) {
+        if (!scale.enabled() || ev.previous().daysPerPeriod() == ev.current().daysPerPeriod()) {
+            return;
+        }
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            long now = sg.getCurrentGameTime();
+            boolean changed = false;
+            for (Employee e : employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE)) {
+                Long until = e.getTimeOffUntilGameTime();
+                if (until != null && until > now) {
+                    long rescaled = scale.rescaleUntil(until, now, ev.previous().daysPerPeriod(),
+                            ev.current().daysPerPeriod(), ev.current().daysPerPeriod());
+                    changed |= rescaled != until;
+                    e.setTimeOffUntilGameTime(rescaled);
+                }
+            }
+            if (changed) {
+                publisher.publishEvent(new RosterChangedEvent(sg.getId()));
+            }
+        });
     }
 
     /** Active mail/conversation with the employee: appreciation (with cooldown against farming). */

@@ -12,6 +12,14 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Dispo and paying overdue salaries** (owner decisions 2026-10-14 in `QUESTIONS.md`): a new card *Dispo* in
+  *Einstellungen → Hof* (off by default). Switched on, every debit of FarmPulse (salaries, installments, bills,
+  contracts and own purchases) may push the balance down to the set limit; a salary is then paid on time without the
+  pay fairness malus. At every month start a negative balance costs the overdraft interest (default 10 % per year,
+  booked as *Dispozinsen* / `OVERDRAFT_INTEREST`, even beyond the limit). Switched off nothing changes; an overdue
+  salary can now be paid right away with the button *Gehalt nachzahlen* in *Personal* (shown only while a salary is
+  overdue), the automatic payment as soon as money is there stays. Bridge: `MONEY_TRANSACTION` and `VEHICLE_SPAWN`
+  carry the optional `minBalance`, the interest `ignoreFunds`; the mod checks the funds against that floor.
 - **Roadmap vehicle dealer (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`):** plan for buying new machines from a
   new dealer character in the tablet, checked against the FS25 code (dump and LUADOC). The machine is configured like
   in the in-game shop (all options with their prices, default configuration, dependent options, packages), several
@@ -102,6 +110,20 @@ versions or this changelog do not match.
   estimate (area × litres per m²) - and with it the chronicle and the annual review of the bank. Each field line says
   where the litres come from ("gemessen", "eingetragen" or "geschätzt") and names a product that is not the standard
   one ("Mais (Häckselgut)"). The report keeps the state of the year change; reports written before stay unchanged.
+
+### Changed
+
+- **Absences follow the month length** (owner request 2026-10-14): sickness (2–5 days), work accidents (3–10 days),
+  days off (1–30) and trainings are meant for a 30-day month and are scaled to the FS25 *days per period*, at least one
+  game day - with 2 days per period an employee is away for one day instead of up to 10. The sickness / accident
+  chances are adjusted so that the share of absent days stays the same (shorter months: shorter, slightly more frequent
+  absences); the relief of days off follows the share of the month the employee is away. Running absences are rescaled
+  when the days per period change. *Einstellungen → Ereignisse* shows the current sick leave duration, the days off
+  form the game days. Configurable via `rpsim.formulas.absence-scaling`.
+- **Expert settings** (owner decision 2026-10-14): a new settings tab *Experte* for fine-tuning. Per savegame the
+  frequency of sickness and of work accidents in percent (0-500, with the expected cases per employee and year) and the
+  cap of one absence (`GET/PUT /api/settings/sick-leave`). The cards *Kredit und Felder im Spielmenü* (from
+  *Ereignisse*) and *Erkannte Mods mit Überschneidungen* (from *Im Spiel*) moved there.
 
 ## [2.0.0] - 2026-10-09
 

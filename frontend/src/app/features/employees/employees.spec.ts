@@ -82,6 +82,32 @@ describe('Employees', () => {
     expect(el.querySelector('[data-testid="employee"]')?.textContent?.replace(/\s/g, ' ')).toContain('3.100 €');
   });
 
+  // owner decisions 2026-10-14: the button is offered only while a salary is overdue
+  it('pays an overdue salary with the button', () => {
+    const { el, btn, fixture, http } = setup([emp({ salaryOverdue: true }), emp({ id: 2 })]);
+    const cards = el.querySelectorAll('[data-testid="employee"]');
+    expect(cards[1].querySelector('[data-testid="pay-salary"]')).toBeNull();
+    btn('pay-salary').click();
+    const req = http.expectOne('/api/employees/1/pay-salary');
+    expect(req.request.method).toBe('POST');
+    req.flush(emp());
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="employees-message"]')?.textContent).toContain('Das offene Gehalt von Jonas Peters ist bezahlt.');
+    expect(el.querySelector('[data-testid="pay-salary"]')).toBeNull();
+  });
+
+  it('shows why an overdue salary could not be paid', () => {
+    const { el, btn, fixture, http } = setup([emp({ salaryOverdue: true })]);
+    btn('pay-salary').click();
+    http.expectOne('/api/employees/1/pay-salary').flush(
+      { code: 'INSUFFICIENT_FUNDS', message: 'Der Kontostand reicht für das Gehalt nicht.' },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Der Kontostand reicht für das Gehalt nicht.');
+    expect(el.querySelector('[data-testid="pay-salary"]')).not.toBeNull();
+  });
+
   it('shows the trainings of machine operators and books a paid training', () => {
     const op = emp({ jobRole: 'MACHINE_OPERATOR', trainings: ['COMBINE'] });
     const { el, btn, fixture, http } = setup([op, emp({ id: 2 })]);
@@ -91,6 +117,7 @@ describe('Employees', () => {
     expect(cards[1].querySelector('[data-testid="training-open"]')).toBeNull();
     btn('training-open').click();
     fixture.detectChanges();
+    http.expectOne('/api/employees/absence-scale').flush({ enabled: true, daysPerPeriod: 2, referenceDaysPerPeriod: 30, trainingDays: 1 });
     http.expectOne('/api/trainings').flush([
       { training: 'LARGE_TRACTOR', cost: 1500, vehicleCategories: ['TRACTORSL'] },
       { training: 'COMBINE', cost: 3000, vehicleCategories: ['HARVESTERS'] },
@@ -195,9 +222,18 @@ describe('Employees', () => {
     const { el, btn, fixture, http } = setup([emp()]);
     btn('timeoff-open').click();
     fixture.detectChanges();
+    // owner request 2026-10-14: the days follow the month length
+    http.expectOne('/api/employees/absence-scale').flush({ enabled: true, daysPerPeriod: 2, referenceDaysPerPeriod: 30, trainingDays: 1 });
+    fixture.detectChanges();
     const input = el.querySelector('[data-testid="panel-value"]') as HTMLInputElement;
+    input.value = '30';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="timeoff-game-days"]')?.textContent).toContain('Bei 2 Tagen pro Monat sind das 2 Spieltage frei');
     input.value = '2';
     input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="timeoff-game-days"]')?.textContent).toContain('ist das 1 Spieltag frei');
     btn('panel-submit').click();
     const req = http.expectOne('/api/employees/1/time-off');
     expect(req.request.body).toEqual({ days: 2 });

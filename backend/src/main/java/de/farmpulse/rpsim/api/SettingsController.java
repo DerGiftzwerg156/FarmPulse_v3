@@ -10,14 +10,17 @@ import de.farmpulse.rpsim.ai.AiSettingsService;
 import de.farmpulse.rpsim.api.Requests.AiSettingsRequest;
 import de.farmpulse.rpsim.api.Views.AiSettingsView;
 import de.farmpulse.rpsim.api.Views.GameSettingsView;
+import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.bypass.VanillaBypassService;
 import de.farmpulse.rpsim.domain.HelperWageMode;
 import de.farmpulse.rpsim.domain.PromptKind;
 import de.farmpulse.rpsim.domain.Savegame;
+import de.farmpulse.rpsim.employee.SickLeaveService;
 import de.farmpulse.rpsim.employee.WorkforceService;
 import de.farmpulse.rpsim.lan.NetworkAddresses;
 import de.farmpulse.rpsim.prompt.PromptService;
 import de.farmpulse.rpsim.savegame.SavegameContext;
+import de.farmpulse.rpsim.time.GameTime;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,11 +43,18 @@ public class SettingsController {
     private final VanillaBypassService bypass;
     private final PromptService prompts;
     private final de.farmpulse.rpsim.config.RpsimProperties props;
+    private final SickLeaveService sickLeave;
+    private final GameTime gameTime;
+    private final LiquidityService liquidity;
 
     public SettingsController(AiSettingsService settings, AiProviderRegistry registry, SavegameContext context,
                               WorkforceService workforce, VanillaBypassService bypass, PromptService prompts,
-                              de.farmpulse.rpsim.config.RpsimProperties props) {
+                              de.farmpulse.rpsim.config.RpsimProperties props, SickLeaveService sickLeave,
+                              GameTime gameTime, LiquidityService liquidity) {
         this.props = props;
+        this.sickLeave = sickLeave;
+        this.gameTime = gameTime;
+        this.liquidity = liquidity;
         this.settings = settings;
         this.registry = registry;
         this.context = context;
@@ -92,6 +102,31 @@ public class SettingsController {
         sg.setStrictHelperLimit(r.strictHelperLimit());
         workforce.sync(sg);
         return new Views.HelperSettingsView(sg.getHelperWageMode().name(), sg.isStrictHelperLimit(), sg.isWorkforceTracked());
+    }
+
+    /**
+     * Owner decisions 2026-10-14: overdraft - every debit of the tool may go down to -limit (off: not below zero), with
+     * interest per year on a negative balance at every month start.
+     */
+    @GetMapping("/api/settings/overdraft")
+    @Transactional(readOnly = true)
+    public Views.OverdraftSettingsView overdraft() {
+        return overdraftView(context.requireActive());
+    }
+
+    @PutMapping("/api/settings/overdraft")
+    @Transactional
+    public Views.OverdraftSettingsView saveOverdraft(@Valid @RequestBody Requests.OverdraftSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setOverdraftEnabled(r.enabled());
+        sg.setOverdraftLimit(r.limit());
+        sg.setOverdraftInterestPercent(r.interestPercent());
+        return overdraftView(sg);
+    }
+
+    private Views.OverdraftSettingsView overdraftView(Savegame sg) {
+        return new Views.OverdraftSettingsView(sg.isOverdraftEnabled(), sg.getOverdraftLimit(),
+                sg.getOverdraftInterestPercent(), liquidity.latestBalance(sg));
     }
 
     /** Roadmap V2 R2-D: reactions to the vanilla loan and the game's field menu. */
@@ -164,7 +199,44 @@ public class SettingsController {
         return new Views.BurdenSettingsView(sg.isBurdenAreaCheck(), sg.isBurdenFertilizer(), sg.isBurdenDisease(),
                 sg.isBurdenSickLeave(), sg.isBurdenNightWork(), sg.isBurdenCropDamage(), sg.isBurdenDieselTheft(),
                 sg.getTonePreset().name(),
-                props.getFormulas().getBurdeningEvents().getIdyllicFactor(), sg.isInvestorsEnabled());
+                props.getFormulas().getBurdeningEvents().getIdyllicFactor(), sg.isInvestorsEnabled(),
+                sickLeaveDuration(sg));
+    }
+
+    /** R31-B5 expert settings: duration and frequency of sickness and work accidents. */
+    @GetMapping("/api/settings/sick-leave")
+    @Transactional(readOnly = true)
+    public Views.SickLeaveSettingsView sickLeaveSettings() {
+        return sickLeaveView(context.requireActive());
+    }
+
+    @PutMapping("/api/settings/sick-leave")
+    @Transactional
+    public Views.SickLeaveSettingsView saveSickLeaveSettings(@Valid @RequestBody Requests.SickLeaveSettingsRequest r) {
+        Savegame sg = context.requireActive();
+        sg.setSickLeaveMaxDays(r.maxDays() == 0 ? null : r.maxDays());
+        sg.setSicknessFrequencyPercent(r.sicknessFrequencyPercent());
+        sg.setAccidentFrequencyPercent(r.accidentFrequencyPercent());
+        return sickLeaveView(sg);
+    }
+
+    private Views.SickLeaveSettingsView sickLeaveView(Savegame sg) {
+        return new Views.SickLeaveSettingsView(sg.isBurdenSickLeave(), sickLeaveDuration(sg),
+                sg.getSicknessFrequencyPercent(), sg.getAccidentFrequencyPercent(),
+                round2(sickLeave.perYear(sg, sickLeave.sicknessChance(sg))),
+                round2(sickLeave.perYear(sg, sickLeave.accidentChance(sg))));
+    }
+
+    private static double round2(double v) {
+        return Math.round(v * 100) / 100.0;
+    }
+
+    private Views.SickLeaveDurationView sickLeaveDuration(Savegame sg) {
+        SickLeaveService.Days sick = sickLeave.sicknessDays(sg);
+        SickLeaveService.Days accident = sickLeave.accidentDays(sg);
+        return new Views.SickLeaveDurationView(sg.getSickLeaveMaxDays(), gameTime.anchor(sg).daysPerPeriod(),
+                props.getFormulas().getAbsenceScaling().isEnabled(), sick.min(), sick.max(), accident.min(),
+                accident.max());
     }
 
     /** Roadmap V3 R3-T2: optional farm name, heads the chronicle (without it the map name). */

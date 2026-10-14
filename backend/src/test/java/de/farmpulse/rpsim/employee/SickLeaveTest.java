@@ -25,6 +25,7 @@ import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
 import de.farmpulse.rpsim.support.Fixtures;
 import de.farmpulse.rpsim.support.SeededRandomConfig;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
@@ -72,6 +73,7 @@ class SickLeaveTest {
     @AfterEach
     void restore() {
         props.getFormulas().setSickLeave(new RpsimProperties.SickLeave());
+        props.getFormulas().setAbsenceScaling(new RpsimProperties.AbsenceScaling());
     }
 
     private Employee employee(JobRole role, String name) {
@@ -136,13 +138,92 @@ class SickLeaveTest {
     @Test
     void accidentsHitDrivingRolesAndAreReportedToTheSocialInsurance() {
         props.getFormulas().getSickLeave().setAccidentProbabilityPerDay(2.0); // certain even x 0.5 under good conditions
+        props.getFormulas().getSickLeave().setSicknessProbabilityPerDay(0); // the sickness is rolled first
         Employee keeper = employee(JobRole.ANIMAL_KEEPER, "Greta Lüders");
         Employee driver = employee(JobRole.MACHINE_OPERATOR, "Jonas Meyer");
         day();
         assertThat(keeper.getAbsenceKind()).isNull(); // not an accident role
         assertThat(driver.getAbsenceKind()).isEqualTo(SickLeaveService.ACCIDENT);
-        assertThat(driver.getAbsenceUntilGameTime() - sg.getCurrentGameTime()).isBetween(3 * DAY, 10 * DAY);
+        // one day per period: 3..10 days of a 30-day month shrink to one game day
+        assertThat(driver.getAbsenceUntilGameTime() - sg.getCurrentGameTime()).isEqualTo(DAY);
         assertThat(narrations()).contains("EMPLOYEE_SICK", "WORK_ACCIDENT_REPORT");
+    }
+
+    @Test
+    void theAbsenceIsScaledToTheMonthLength() {
+        RpsimProperties.AbsenceScaling cfg = props.getFormulas().getAbsenceScaling();
+        assertThat(SickLeaveService.scaled(2, 5, 30, cfg)).isEqualTo(new SickLeaveService.Days(2, 5));
+        assertThat(SickLeaveService.scaled(3, 10, 28, cfg)).isEqualTo(new SickLeaveService.Days(3, 9));
+        assertThat(SickLeaveService.scaled(2, 5, 10, cfg)).isEqualTo(new SickLeaveService.Days(1, 2));
+        assertThat(SickLeaveService.scaled(2, 5, 2, cfg)).isEqualTo(new SickLeaveService.Days(1, 1));
+        assertThat(SickLeaveService.scaled(3, 10, 1, cfg)).isEqualTo(new SickLeaveService.Days(1, 1));
+        // the expected share of absent days stays: shorter absences, more frequent
+        assertThat(SickLeaveService.chanceFactor(2, 5, new SickLeaveService.Days(2, 5))).isEqualTo(1.0);
+        assertThat(SickLeaveService.chanceFactor(2, 5, new SickLeaveService.Days(1, 1))).isEqualTo(3.5);
+        cfg.setEnabled(false);
+        assertThat(SickLeaveService.scaled(2, 5, 2, cfg)).isEqualTo(new SickLeaveService.Days(2, 5));
+    }
+
+    @Test
+    void aTwoDayMonthLosesTheEmployeeForOneDayAndThePlayerCanCapLongerMonths() {
+        props.getFormulas().getSickLeave().setSicknessProbabilityPerDay(1.0);
+        sg.setCalDaysPerPeriod(2);
+        Employee e = employee(JobRole.ANIMAL_KEEPER, "Greta Lüders");
+        day();
+        assertThat(e.getAbsenceKind()).isEqualTo(SickLeaveService.SICKNESS);
+        assertThat(e.getAbsenceUntilGameTime() - sg.getCurrentGameTime()).isEqualTo(DAY);
+        assertThat(sickLeave.sicknessDays(sg)).isEqualTo(new SickLeaveService.Days(1, 1));
+
+        sg.setCalDaysPerPeriod(30);
+        assertThat(sickLeave.sicknessDays(sg)).isEqualTo(new SickLeaveService.Days(2, 5));
+        assertThat(sickLeave.accidentDays(sg)).isEqualTo(new SickLeaveService.Days(3, 10));
+        sg.setSickLeaveMaxDays(3);
+        assertThat(sickLeave.sicknessDays(sg)).isEqualTo(new SickLeaveService.Days(2, 3));
+        assertThat(sickLeave.accidentDays(sg)).isEqualTo(new SickLeaveService.Days(3, 3));
+    }
+
+    @Test
+    void theFrequencyIsSetPerSavegame() {
+        sg.setCalDaysPerPeriod(30); // no scaling: 0.005 per day
+        assertThat(sickLeave.sicknessChance(sg)).isCloseTo(0.005, org.assertj.core.data.Offset.offset(1e-12));
+        assertThat(sickLeave.perYear(sg, sickLeave.sicknessChance(sg))).isCloseTo(1.8, org.assertj.core.data.Offset.offset(1e-9));
+        sg.setSicknessFrequencyPercent(200);
+        sg.setAccidentFrequencyPercent(50);
+        assertThat(sickLeave.sicknessChance(sg)).isCloseTo(0.01, org.assertj.core.data.Offset.offset(1e-12));
+        assertThat(sickLeave.accidentChance(sg)).isCloseTo(0.0015, org.assertj.core.data.Offset.offset(1e-12));
+        sg.setTonePreset(TonePreset.IDYLLIC); // x 0.5
+        assertThat(sickLeave.sicknessChance(sg)).isCloseTo(0.005, org.assertj.core.data.Offset.offset(1e-12));
+
+        // 0 % = never, even at a configured certainty
+        props.getFormulas().getSickLeave().setSicknessProbabilityPerDay(2.0);
+        props.getFormulas().getSickLeave().setAccidentProbabilityPerDay(2.0);
+        sg.setSicknessFrequencyPercent(0);
+        sg.setAccidentFrequencyPercent(0);
+        Employee e = employee(JobRole.MACHINE_OPERATOR, "Jonas Meyer");
+        day();
+        assertThat(e.getAbsenceKind()).isNull();
+    }
+
+    @Test
+    void aRunningAbsenceIsRescaledWhenTheDaysPerPeriodChange() {
+        sg.setCalDaysPerPeriod(28);
+        GameTime.Anchor before = new GameTime.Anchor(0, sg.getCalMonthStartGameTime(), 28, 2);
+        Employee e = employee(JobRole.MACHINE_OPERATOR, "Jonas Meyer");
+        Employee f = employee(JobRole.ANIMAL_KEEPER, "Greta Lüders");
+        sickLeave.start(sg, e, SickLeaveService.SICKNESS, 5);
+        sickLeave.start(sg, f, SickLeaveService.ACCIDENT, 9);
+
+        sg.setCalDaysPerPeriod(2);
+        GameTime.Anchor after = new GameTime.Anchor(0, sg.getCalMonthStartGameTime(), 2, 2);
+        sickLeave.onCalendarChanged(new CalendarChangedEvent(sg.getId(), before, after));
+        long now = sg.getCurrentGameTime();
+        assertThat(e.getAbsenceUntilGameTime() - now).isEqualTo(DAY); // 5 of 28 days -> at least one day
+        assertThat(f.getAbsenceUntilGameTime() - now).isEqualTo(DAY); // capped at the longest accident of 2-day months
+
+        sg.setCalDaysPerPeriod(28);
+        sickLeave.onCalendarChanged(new CalendarChangedEvent(sg.getId(), after, before));
+        assertThat(e.getAbsenceUntilGameTime() - now).isEqualTo(5 * DAY); // half a month again, within 2..5
+        assertThat(f.getAbsenceUntilGameTime() - now).isEqualTo(9 * DAY); // 14 days capped at 9 (10 x 28 / 30)
     }
 
     @Test

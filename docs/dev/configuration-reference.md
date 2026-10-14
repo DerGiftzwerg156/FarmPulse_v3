@@ -325,7 +325,7 @@ period is assumed (FS25 default).
 | `rpsim.formulas.satisfaction.appreciation-decay-per-day` | `1.0` | Decay of `appreciation` per game day. | Satisfaction-Formel |
 | `rpsim.formulas.satisfaction.raise-points-per-percent` | `2` | `payFairness` points per 1 % raise. | Satisfaction-Formel |
 | `rpsim.formulas.satisfaction.raise-max-points` | `30` | Cap of the points of one raise. | Satisfaction-Formel |
-| `rpsim.formulas.satisfaction.time-off-points-per-day` | `15` | `workload` points per day off. | Satisfaction-Formel |
+| `rpsim.formulas.satisfaction.time-off-points-per-day` | `15` | `workload` points per day off (per reference day of `absence-scaling`). | Satisfaction-Formel |
 | `rpsim.formulas.satisfaction.conversation-points` | `8` | `appreciation` points per conversation (mail/call with the employee). | Satisfaction-Formel |
 | `rpsim.formulas.satisfaction.conversation-cooldown-days` | `1` | Cool-down between counted conversations. | Satisfaction-Formel |
 | `rpsim.formulas.satisfaction.salary-overdue-delta` | `-15` | `payFairness` event when the salary could not be paid. | Satisfaction-Formel |
@@ -364,7 +364,7 @@ period is assumed (FS25 default).
 
 | Key | Default | Meaning | Concept |
 | --- | --- | --- | --- |
-| `rpsim.formulas.training.duration-days` | `1` | Game days a machine operator is away at a training (ON_LEAVE for the mod, no helper); the qualification counts afterwards. Owner decision 2026-10-06: the absence starts with the next game day (0:00) - on the booking day he still works; days off overlapping it are refused and no sickness is rolled while it is booked. | Schulungen |
+| `rpsim.formulas.training.duration-days` | `1` | Days a machine operator is away at a training (scaled to the month length, see `absence-scaling`, at least 1 game day) (ON_LEAVE for the mod, no helper); the qualification counts afterwards. Owner decision 2026-10-06: the absence starts with the next game day (0:00) - on the booking day he still works; days off overlapping it are refused and no sickness is rolled while it is booked. | Schulungen |
 | `rpsim.formulas.training.appreciation-points` | `8` | Appreciation points a booked training brings. | Schulungen |
 | `rpsim.formulas.training.cost.LARGE_TRACTOR` | `4500` | Price (€) of the training `LARGE_TRACTOR`, booked as `TRAINING`. | Schulungen |
 | `rpsim.formulas.training.cost.SELF_PROPELLED` | `6000` | Price (€) of the training `SELF_PROPELLED`, booked as `TRAINING`. | Schulungen |
@@ -1278,10 +1278,12 @@ Owner decisions of 2026-10-05 in `QUESTIONS.md`. Bills of a grant repayment and 
 | `rpsim.formulas.sick-leave.risk-bad-factor` | `1.5` | … (multiplied). | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.risk-good-threshold` | `70` | Both needs from this value … | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.risk-good-factor` | `0.5` | … lower the accident risk by this factor. | Roadmap V3.1 R31-B5 |
-| `rpsim.formulas.sick-leave.sickness-days-min` | `2` | Game days away when sick, at least … | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.sick-leave.sickness-days-min` | `2` | Days away when sick, at least … (scaled to the month length, see `absence-scaling`) | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.sickness-days-max` | `5` | … and at most (ON_LEAVE, salary continues). | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.accident-days-min` | `3` | Game days away after an accident, at least … | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.accident-days-max` | `10` | … and at most. | Roadmap V3.1 R31-B5 |
+| `rpsim.formulas.absence-scaling.enabled` | `true` | Absences of employees – sickness and accident (ranges above), days off (`satisfaction`, 1–30 in the form) and trainings (`training.duration-days`) – are days of a month with `reference-days-per-period` days and are scaled to the FS25 "days per period" of the savegame: × days per period / `reference-days-per-period`, rounded, at least 1 game day (2 days per period: sickness and accident 1 day, 7 days off 1 day). The sickness / accident chances per game day are × (mean of the configured range / mean of the scaled range), so the expected share of absent days stays the same – shorter months mean more frequent but shorter absences. Days off relieve `time-off-points-per-day` × the reference days they stand for. Running absences are rescaled when the days per period change. Per savegame the player can additionally cap the sick leave and set the frequency of sickness / accidents in percent (settings, tab „Experte“); the cap only shortens, it does not change the chances. `false` = all days are game days as before. | Owner request 2026-10-14 |
+| `rpsim.formulas.absence-scaling.reference-days-per-period` | `30` | Month length the days are meant for. | Owner request 2026-10-14 |
 | `rpsim.formulas.sick-leave.get-well-appreciation` | `8` | Get-well wishes (once per absence): appreciation points … | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.get-well-trust-delta` | `2` | … and trust of the employee. | Roadmap V3.1 R31-B5 |
 
@@ -1470,6 +1472,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_CALLBACK` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_SPECIAL_REPAYMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_PREPAYMENT_FEE` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
+| `rpsim.formulas.finance.categories.RPSIM_OVERDRAFT_INTEREST` | `FINANCING` | tool booking: financing (not part of the cash flow), interest on a negative balance while the overdraft is on. | owner decisions 2026-10-14 |
 | `rpsim.formulas.finance.categories.RPSIM_STARTING_CAPITAL_ADJUSTMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_COOP_SHARES` | `FINANCING` | tool booking: financing (not part of the cash flow) (cooperative shares and their repayment at face value, R31-D7). | Roadmap V3.1 R31-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_INVESTOR_CAPITAL` | `FINANCING` | tool booking: financing (not part of the cash flow) (capital of a large investor, R32-I2). | Roadmap V3.2 R32-Q1 |

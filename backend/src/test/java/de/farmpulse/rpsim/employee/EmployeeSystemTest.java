@@ -280,7 +280,7 @@ class EmployeeSystemTest {
         e.setAppreciation(0);
         satisfaction.checkEscalation(e);
         satisfaction.raise(e, e.getMonthlySalary() * 2); // +30 pay fairness
-        satisfaction.timeOff(e, 5);                       // +75 workload
+        satisfaction.timeOff(e, 5);                       // one game day of a 1-day month: +450 workload (capped)
         satisfaction.checkEscalation(e);
         assertThat(e.getLowSatisfactionSinceGameTime()).isNull();
     }
@@ -304,6 +304,80 @@ class EmployeeSystemTest {
         payroll.paySalaries(sg);
         assertThat(e.isSalaryOverdue()).isFalse();
         assertThat(outbox.findBySavegameOrderByIdAsc(sg)).anyMatch(o -> o.getPayloadJson().contains("SALARY_PAYMENT"));
+    }
+
+    private void balance(long balance) {
+        long t = sg.getCurrentGameTime() + 1;
+        fx.snapshot(sg, t, balance, de.farmpulse.rpsim.support.TestData.farmFacts(sg.getBridgeSavegameId(), t, balance));
+    }
+
+    private List<OutboxInstruction> salaryPayments() {
+        return outbox.findBySavegameOrderByIdAsc(sg).stream()
+                .filter(o -> o.getPayloadJson().contains("SALARY_PAYMENT")).toList();
+    }
+
+    /** Owner decisions 2026-10-14: with the overdraft on the salary is paid on time into the red, without a malus. */
+    @Test
+    void theOverdraftPaysTheSalaryOnTimeDownToTheLimit() {
+        Employee e = employee();
+        sg.setOverdraftEnabled(true);
+        sg.setOverdraftLimit(e.getMonthlySalary());
+        balance(0);
+        sg.setCurrentGameTime(e.getNextSalaryDueGameTime());
+        payroll.paySalaries(sg);
+        assertThat(e.isSalaryOverdue()).isFalse();
+        assertThat(salaryPayments()).singleElement().satisfies(o ->
+                assertThat(o.getPayloadJson()).contains("\"minBalance\":" + (-e.getMonthlySalary())));
+        assertThat(satisfactionEvents.findByEmployeeOrderByGameTimeAscIdAsc(e)).noneMatch(ev -> ev.getDelta() < 0);
+        // the next month the limit is used up: the salary stays overdue as without the overdraft
+        sg.setCurrentGameTime(e.getNextSalaryDueGameTime());
+        payroll.paySalaries(sg);
+        assertThat(e.isSalaryOverdue()).isTrue();
+        assertThat(salaryPayments()).hasSize(1);
+    }
+
+    @Test
+    void withoutTheOverdraftADebitCarriesNoMinimumBalance() {
+        Employee e = employee();
+        sg.setOverdraftLimit(50_000); // the limit alone does nothing while the overdraft is off
+        sg.setCurrentGameTime(e.getNextSalaryDueGameTime());
+        payroll.paySalaries(sg);
+        assertThat(salaryPayments()).singleElement().satisfies(o -> assertThat(o.getPayloadJson()).doesNotContain("minBalance"));
+    }
+
+    /** Owner decisions 2026-10-14: the button pays an overdue salary right away; refused without money or debt. */
+    @Test
+    void anOverdueSalaryCanBePaidWithTheButton() {
+        Employee e = employee();
+        assertThatThrownBy(() -> payroll.payOverdue(e)).hasMessageContaining("kein Gehalt offen");
+        balance(0);
+        sg.setCurrentGameTime(e.getNextSalaryDueGameTime());
+        payroll.paySalaries(sg);
+        assertThat(e.isSalaryOverdue()).isTrue();
+        assertThatThrownBy(() -> payroll.payOverdue(e)).hasMessageContaining("reicht für das Gehalt nicht");
+        assertThat(e.isSalaryOverdue()).isTrue();
+        balance(1_000_000);
+        long due = e.getNextSalaryDueGameTime();
+        payroll.payOverdue(e);
+        assertThat(e.isSalaryOverdue()).isFalse();
+        assertThat(e.getNextSalaryDueGameTime()).isGreaterThan(due);
+        assertThat(salaryPayments()).hasSize(1);
+        assertThat(satisfactionEvents.findByEmployeeOrderByGameTimeAscIdAsc(e).stream()
+                .filter(ev -> ev.getDelta() < 0).count()).isEqualTo(1); // only the malus of the overdue episode
+    }
+
+    @Test
+    void theButtonUsesTheOverdraftToo() {
+        Employee e = employee();
+        balance(0);
+        sg.setCurrentGameTime(e.getNextSalaryDueGameTime());
+        payroll.paySalaries(sg);
+        assertThat(e.isSalaryOverdue()).isTrue();
+        sg.setOverdraftEnabled(true);
+        sg.setOverdraftLimit(e.getMonthlySalary());
+        payroll.payOverdue(e);
+        assertThat(e.isSalaryOverdue()).isFalse();
+        assertThat(salaryPayments()).hasSize(1);
     }
 
     @Test
