@@ -64,5 +64,7 @@ public enum MoneyReason {
     INVESTOR_REPAYMENT,
     INVESTOR_PAYOUT,
     INVESTOR_COMPENSATION,
+    /** Owner decisions 2026-10-14: interest on a negative balance while the overdraft is on, at every month start. */
+    OVERDRAFT_INTEREST,
     OTHER
 }

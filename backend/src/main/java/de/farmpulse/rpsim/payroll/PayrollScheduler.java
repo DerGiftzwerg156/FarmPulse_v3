@@ -3,6 +3,7 @@ package de.farmpulse.rpsim.payroll;
 import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.bridge.OutboxService;
 import de.farmpulse.rpsim.bridge.OutboxService.Related;
+import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.credit.CreditApplicationService;
 import de.farmpulse.rpsim.credit.LoanService;
 import de.farmpulse.rpsim.diary.PaymentDelayService;
@@ -26,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
  * Salaries and installments, triggered by game-time jumps of incoming snapshots - no real-time cron
  * (technical concept "PayrollScheduler"). Credit decisions that became visible are released first.
  * If liquidity is too low for a salary, the payment is not booked and the employee's payFairness drops
- * (system coupling bank/events/employees).
+ * (system coupling bank/events/employees). Liquidity includes the overdraft while it is on (owner decisions
+ * 2026-10-14): the salary is then paid on time into the red down to the limit, without a malus. An overdue salary is
+ * paid automatically as soon as liquidity allows, or right away with the button in the staff app ({@link #payOverdue}).
  */
 @Component
 public class PayrollScheduler {
@@ -100,20 +103,46 @@ public class PayrollScheduler {
     public void paySalaries(Savegame sg) {
         long now = sg.getCurrentGameTime();
         for (Employee emp : employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE)) {
-            while (emp.getNextSalaryDueGameTime() <= now) {
-                if (liquidity.available(sg) < emp.getMonthlySalary()) {
-                    if (!emp.isSalaryOverdue()) {
-                        emp.setSalaryOverdue(true);
-                        satisfaction.salaryOverdue(emp);
-                        delays.record(sg, PaymentDelay.SALARY, now);
-                    }
-                    break;
-                }
-                outbox.money(sg, -emp.getMonthlySalary(), MoneyReason.SALARY_PAYMENT,
-                        "Gehalt " + emp.getCharacter().getName(), new Related(SatisfactionService.RELATED, emp.getId()));
-                emp.setNextSalaryDueGameTime(gameTime.addMonths(sg, emp.getNextSalaryDueGameTime(), 1));
-                emp.setSalaryOverdue(false);
+            if (payDue(sg, emp, now) && !emp.isSalaryOverdue()) {
+                emp.setSalaryOverdue(true);
+                satisfaction.salaryOverdue(emp);
+                delays.record(sg, PaymentDelay.SALARY, now);
             }
         }
+    }
+
+    /**
+     * Owner decisions 2026-10-14: the button "Gehalt nachzahlen" of an overdue salary - pays the due months like the
+     * automatic payment (with the overdraft while it is on). Refused when nothing is overdue or not even one month is
+     * covered; months that stay unpaid keep the salary overdue.
+     */
+    @Transactional
+    public void payOverdue(Employee emp) {
+        if (emp.getStatus() != EmployeeStatus.ACTIVE || !emp.isSalaryOverdue()) {
+            throw new BusinessRuleException("SALARY_NOT_OVERDUE", "Es ist kein Gehalt offen.");
+        }
+        Savegame sg = emp.getSavegame();
+        long now = sg.getCurrentGameTime();
+        long dueBefore = emp.getNextSalaryDueGameTime();
+        boolean stillDue = payDue(sg, emp, now);
+        if (dueBefore <= now && emp.getNextSalaryDueGameTime() == dueBefore) {
+            throw new BusinessRuleException("INSUFFICIENT_FUNDS", "Der Kontostand reicht für das Gehalt nicht.");
+        }
+        // months left unpaid belong to the same overdue episode (no second malus)
+        emp.setSalaryOverdue(stillDue);
+    }
+
+    /** Books every due month that liquidity covers; true when a due month stays unpaid. */
+    private boolean payDue(Savegame sg, Employee emp, long now) {
+        while (emp.getNextSalaryDueGameTime() <= now) {
+            if (liquidity.available(sg) < emp.getMonthlySalary()) {
+                return true;
+            }
+            outbox.money(sg, -emp.getMonthlySalary(), MoneyReason.SALARY_PAYMENT,
+                    "Gehalt " + emp.getCharacter().getName(), new Related(SatisfactionService.RELATED, emp.getId()));
+            emp.setNextSalaryDueGameTime(gameTime.addMonths(sg, emp.getNextSalaryDueGameTime(), 1));
+            emp.setSalaryOverdue(false);
+        }
+        return false;
     }
 }

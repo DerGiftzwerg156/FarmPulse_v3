@@ -153,6 +153,13 @@ public final class Views {
     public record HelperSettingsView(String helperWageMode, boolean strictHelperLimit, boolean workforceTracked) {
     }
 
+    /**
+     * Overdraft (owner decisions 2026-10-14): every debit of the tool may go down to -limit; interest per year on a
+     * negative balance at every month start. balance = latest snapshot balance.
+     */
+    public record OverdraftSettingsView(boolean enabled, long limit, double interestPercent, long balance) {
+    }
+
     /** Roadmap V2 R2-C: fruitType and phase (EMPTY, GROWING, HARVESTABLE, HARVESTED, WITHERED) of own fields only. */
     public record FarmlandView(int farmlandId, double hectares, long referencePrice, String ownerType, CharacterRef owner,
                                boolean inNegotiation, boolean tradeable, boolean leased, String fruitType, String phase,

@@ -604,6 +604,14 @@ export interface FieldSettingsView {
   fieldsTracked: boolean;
 }
 
+/** Owner decisions 2026-10-14: overdraft down to -limit, interest per year; balance = latest snapshot. */
+export interface OverdraftSettingsView {
+  enabled: boolean;
+  limit: number;
+  interestPercent: number;
+  balance: number;
+}
+
 export interface HelperSettingsView {
   helperWageMode: 'EMPLOYEES' | 'VANILLA';
   strictHelperLimit: boolean;

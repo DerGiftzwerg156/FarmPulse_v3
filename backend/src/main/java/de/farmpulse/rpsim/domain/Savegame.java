@@ -315,6 +315,21 @@ public class Savegame {
     @Column(name = "investors_enabled", nullable = false)
     private boolean investorsEnabled = true;
 
+    /**
+     * Overdraft (owner decisions 2026-10-14): every debit of the tool may push the balance down to -overdraftLimit
+     * (salaries, installments, bills and own purchases alike). Off = no debit below zero (T-03).
+     */
+    @Column(name = "overdraft_enabled", nullable = false)
+    private boolean overdraftEnabled;
+
+    /** Overdraft: the lowest balance a debit may leave is -overdraftLimit (euro, >= 0). */
+    @Column(name = "overdraft_limit", nullable = false)
+    private long overdraftLimit;
+
+    /** Overdraft: interest in percent per year, charged at every month start on a negative balance (default 10). */
+    @Column(name = "overdraft_interest_percent", nullable = false)
+    private double overdraftInterestPercent = 10;
+
     /** Roadmap V3.2 R32-I1: FS25 year of the last investor offer (at most one per year; extensions do not count). */
     @Column(name = "investor_offer_year")
     private Integer investorOfferYear;

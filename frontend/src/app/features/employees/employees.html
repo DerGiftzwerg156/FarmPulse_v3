@@ -208,6 +208,10 @@
                     <app-button variant="secondary" (pressed)="openPanel(e, 'raise')" data-testid="raise-open">{{ 'employees.raise' | t }}</app-button>
                   }
                   <app-button variant="secondary" (pressed)="openPanel(e, 'timeOff')" data-testid="timeoff-open">{{ 'employees.timeOff' | t }}</app-button>
+                  @if (e.salaryOverdue) {
+                    <!-- owner decisions 2026-10-14: only while a salary is overdue -->
+                    <app-button (pressed)="paySalary(e)" data-testid="pay-salary">{{ 'employees.paySalary' | t }}</app-button>
+                  }
                   @if (e.absenceKind && !e.getWellSent) {
                     <app-button variant="secondary" (pressed)="getWell(e)" data-testid="get-well">{{ 'employees.absence.getWell' | t }}</app-button>
                   }
