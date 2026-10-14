@@ -1,9 +1,8 @@
--- Roadmap V4 against the fake engine. Section D (R4-D1) is built: the consumption counter per own field with the hooks
--- on SowingMachine / Sprayer.onEndWorkAreaProcessing, its savegame persistence and export, and the purchase prices of
--- market_context.fillTypeCosts. Section F (R4-F1) is built: the food values of the husbandries, the feed counter with
--- the hook on PlaceableHusbandryFood.removeFood, the feed stock of the own silos and the food groups of the map. Still
--- contract only (Q): the sowing / harvest windows of the crops (R4-A2) - the adapter does not read them yet, so the
--- values are missing ("not collected"), never empty.
+-- Roadmap V4 against the fake engine. Section D (R4-D1): the consumption counter per own field with the hooks on
+-- SowingMachine / Sprayer.onEndWorkAreaProcessing, its savegame persistence and export, and the purchase prices of
+-- market_context.fillTypeCosts. Section F (R4-F1): the food values of the husbandries, the feed counter with the hook on
+-- PlaceableHusbandryFood.removeFood, the feed stock of the own silos and the food groups of the map. Section A (R4-A2):
+-- seed use, base yield and the sowing / harvest windows of the crops.
 local lu = require("luaunit")
 local helpers = require("helpers")
 local T = {}
@@ -69,14 +68,20 @@ local function feedGame()
         getMixturesByAnimalTypeIndex = function(_, typeIndex) return typeIndex == 1 and { 6 } or {} end,
     }
     FruitType = { UNKNOWN = 0 }
+    -- winter wheat: sown in periods 6..7 (August, September), harvested in 4..5 with seasonal growth (growth mode 1);
+    -- without seasons (growth mode 2) any time
     local wheat = { index = 3, name = "WHEAT", regrows = false, seedUsagePerSqm = 0.1, literPerSqm = 0.9,
         fillType = { title = "Weizen" } }
+    function wheat.getIsPlantableInPeriod(_, mode, period) return mode ~= 1 or period == 6 or period == 7 end
+    function wheat.getIsHarvestableInPeriod(_, mode, period) return mode ~= 1 or period == 4 or period == 5 end
     g_fruitTypeManager = {
         getFruitTypeByIndex = function(_, i) return i == 3 and wheat or nil end,
         getFruitTypeNameByIndex = function(_, i) return i == 3 and "WHEAT" or nil end,
         getFillTypeNameByFruitTypeIndex = function(_, i) return i == 3 and "WHEAT" or nil end,
         getFruitTypes = function() return { wheat } end,
     }
+    g_currentMission.missionInfo.growthMode = 1
+    game.wheat = wheat
     game.own = g_currentMission.placeableSystem.placeables[1]
     game.foreign = g_currentMission.placeableSystem.placeables[2]
     return game
@@ -124,11 +129,38 @@ function T.TestRoadmapV4:testMarketContextCarriesTheFoodGroupsOnce()
             mixtures = {} } })
     adapter:collectMarketContext({})
     lu.assertEquals(game.foodCalls, 2) -- read once per mission
-    -- the crop windows are still contract only
-    lu.assertEquals(doc.fruitTypes[1].name, "WHEAT")
-    for _, key in ipairs({ "seedUsagePerSqm", "litersPerSqm", "plantablePeriods", "harvestablePeriods" }) do
-        lu.assertNil(doc.fruitTypes[1][key], key)
-    end
+end
+
+-- ------------------------------------------------------------------------------------------ R4-A2
+
+function T.TestRoadmapV4:testCropsCarrySeedUseYieldAndTheirWindows()
+    feedGame()
+    local doc = RPSimMarketContext.build(RPSimGameAdapter.new():collectMarketContext({}), RPSimConfig.new())
+    local wheat = doc.fruitTypes[1]
+    lu.assertEquals(wheat.name, "WHEAT")
+    lu.assertEquals(wheat.seedUsagePerSqm, 0.1)
+    lu.assertEquals(wheat.litersPerSqm, 0.9)
+    lu.assertEquals(wheat.plantablePeriods, { 6, 7 })
+    lu.assertEquals(wheat.harvestablePeriods, { 4, 5 })
+end
+
+function T.TestRoadmapV4:testWindowsFollowTheGrowthModeAndStayMissingWithoutIt()
+    local game = feedGame()
+    g_currentMission.missionInfo.growthMode = 2
+    local doc = RPSimMarketContext.build(RPSimGameAdapter.new():collectMarketContext({}), RPSimConfig.new())
+    lu.assertEquals(#doc.fruitTypes[1].plantablePeriods, 12)
+    g_currentMission.missionInfo.growthMode = nil
+    doc = RPSimMarketContext.build(RPSimGameAdapter.new():collectMarketContext({}), RPSimConfig.new())
+    lu.assertNil(doc.fruitTypes[1].plantablePeriods)
+    lu.assertEquals(doc.fruitTypes[1].seedUsagePerSqm, 0.1)
+    -- a crop without the methods (older game version) or a failing call: no windows, the rest stays
+    g_currentMission.missionInfo.growthMode = 1
+    game.wheat.getIsHarvestableInPeriod = function() error("boom") end
+    game.wheat.getIsPlantableInPeriod = nil
+    doc = RPSimMarketContext.build(RPSimGameAdapter.new():collectMarketContext({}), RPSimConfig.new())
+    lu.assertNil(doc.fruitTypes[1].plantablePeriods)
+    lu.assertNil(doc.fruitTypes[1].harvestablePeriods)
+    lu.assertEquals(doc.fruitTypes[1].litersPerSqm, 0.9)
 end
 
 function T.TestRoadmapV4:testNoAnimalFoodSystemNoFoodGroups()

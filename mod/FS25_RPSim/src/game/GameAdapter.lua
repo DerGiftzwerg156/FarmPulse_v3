@@ -576,7 +576,8 @@ function RPSimGameAdapter:collectMarketContext(conflictMods)
     return raw
 end
 
---- Roadmap V3.3 R33-F4 (contract R33-Q1): every crop of the map for the crop dropdown of the field book.
+--- Roadmap V3.3 R33-F4 (contract R33-Q1): every crop of the map for the crop dropdown of the field book. Roadmap V4
+-- R4-A2: plus seedUsagePerSqm, litersPerSqm and the sowing / harvest windows (periodsWhere).
 -- g_fruitTypeManager:getFruitTypes() (LUADOC Fruits/FruitTypeManager.md); per fruit type: name and index
 -- (FruitTypeDesc), the standard product getFillTypeNameByFruitTypeIndex, the title of its fill type
 -- (FruitTypeDesc.fillType = the FillTypeDesc, FillTypeDesc.title), regrows and needsRolling (FruitTypeDesc.md). Further
@@ -593,12 +594,21 @@ function RPSimGameAdapter:collectFruitTypes()
         return nil
     end
     local converters = safe(function() return g_fruitTypeManager.fruitTypeConverters end, nil)
+    local growthMode = safe(function() return g_currentMission.missionInfo.growthMode end, nil)
     local list = {}
     for _, desc in pairs(fruitTypes) do
         safe(function()
             local e = { name = desc.name, regrows = desc.regrows == true, needsRolling = desc.needsRolling ~= false }
             e.fillType = safe(function() return g_fruitTypeManager:getFillTypeNameByFruitTypeIndex(desc.index) end, nil)
             e.title = safe(function() return desc.fillType.title end, nil)
+            -- Roadmap V4 R4-A2: seed use and base yield per m² (FruitTypeDesc: seeding#litersPerSqm,
+            -- harvest#litersPerSqm) and the sowing / harvest windows in the growth mode of the savegame
+            e.seedUsagePerSqm = desc.seedUsagePerSqm
+            e.litersPerSqm = desc.literPerSqm
+            if growthMode ~= nil then
+                e.plantablePeriods = RPSimGameAdapter.periodsWhere(desc, "getIsPlantableInPeriod", growthMode)
+                e.harvestablePeriods = RPSimGameAdapter.periodsWhere(desc, "getIsHarvestableInPeriod", growthMode)
+            end
             local products = {}
             for _, converter in pairs(type(converters) == "table" and converters or {}) do
                 local entry = type(converter) == "table" and converter[desc.index] or nil
@@ -615,6 +625,25 @@ function RPSimGameAdapter:collectFruitTypes()
     end
     self.fruitTypeCache = list
     return list
+end
+
+--- Roadmap V4 R4-A2: the periods 1..12 in which `method` (getIsPlantableInPeriod / getIsHarvestableInPeriod of
+-- FruitTypeDesc, LUADOC Fruits/FruitTypeDesc.md; SowingMachine calls the first with missionInfo.growthMode and
+-- environment.currentPeriod) is true; nil when the crop has no such method or a call fails.
+function RPSimGameAdapter.periodsWhere(desc, method, growthMode)
+    if type(desc[method]) ~= "function" then
+        return nil
+    end
+    local ok, list = pcall(function()
+        local out = {}
+        for period = 1, 12 do
+            if desc[method](desc, growthMode, period) then
+                out[#out + 1] = period
+            end
+        end
+        return out
+    end)
+    return ok and list or nil
 end
 
 --- Roadmap V3.3 R33-F3: field, crop and product of litres a harvesting machine got into its tank, or nil when it does

@@ -77,7 +77,9 @@ function T.TestRoadmapV33:testCropsOfTheMapAreReadOnce()
         { name = "GRASS", fillType = "GRASS_WINDROW", title = "Gras", regrows = true, needsRolling = false, products = {} },
         { name = "MAIZE", fillType = "MAIZE", title = "Mais", regrows = false, needsRolling = true,
             products = { "CHAFF" } },
-        { name = "WHEAT", fillType = "WHEAT", title = "Weizen", regrows = false, needsRolling = true, products = {} } })
+        -- Roadmap V4 R4-A2: the base yield of the crop (no windows without a growth mode)
+        { name = "WHEAT", fillType = "WHEAT", title = "Weizen", regrows = false, needsRolling = true, products = {},
+            litersPerSqm = 0.9 } })
     -- read once per mission: a later export keeps the list
     g_fruitTypeManager.getFruitTypes = function() error("not read again") end
     lu.assertEquals(#RPSimMarketContext.build(adapter:collectMarketContext({}), RPSimConfig.new()).fruitTypes, 3)
