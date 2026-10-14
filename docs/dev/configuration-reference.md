@@ -1472,6 +1472,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_CALLBACK` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_SPECIAL_REPAYMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_PREPAYMENT_FEE` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
+| `rpsim.formulas.finance.categories.RPSIM_OVERDRAFT_INTEREST` | `FINANCING` | tool booking: financing (not part of the cash flow), interest on a negative balance while the overdraft is on. | owner decisions 2026-10-14 |
 | `rpsim.formulas.finance.categories.RPSIM_STARTING_CAPITAL_ADJUSTMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_COOP_SHARES` | `FINANCING` | tool booking: financing (not part of the cash flow) (cooperative shares and their repayment at face value, R31-D7). | Roadmap V3.1 R31-Q1 |
 | `rpsim.formulas.finance.categories.RPSIM_INVESTOR_CAPITAL` | `FINANCING` | tool booking: financing (not part of the cash flow) (capital of a large investor, R32-I2). | Roadmap V3.2 R32-Q1 |

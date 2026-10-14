@@ -618,7 +618,8 @@
       "INVESTOR_CAPITAL": "Investorenkapital",
       "INVESTOR_REPAYMENT": "Rückzahlung an Investor",
       "INVESTOR_PAYOUT": "Ausschüttung an Investor",
-      "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor"
+      "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor",
+      "OVERDRAFT_INTEREST": "Dispozinsen"
     },
     "cycleEvent": {
       "GameTimeAdvancedEvent": "Spielzeit",
@@ -917,7 +918,8 @@
       "RPSIM_INVESTOR_CAPITAL": "Investorenkapital",
       "RPSIM_INVESTOR_REPAYMENT": "Rückzahlung an Investor",
       "RPSIM_INVESTOR_PAYOUT": "Ausschüttung an Investor",
-      "RPSIM_INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor"
+      "RPSIM_INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor",
+      "RPSIM_OVERDRAFT_INTEREST": "Dispozinsen"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",
@@ -1393,6 +1395,9 @@
     },
     "warning": "Kündigung droht",
     "salaryOverdue": "Gehalt überfällig",
+    "paySalary": "Gehalt nachzahlen",
+    "salaryPaid": "Das offene Gehalt von {name} ist bezahlt.",
+    "salaryPartlyPaid": "Ein Teil des offenen Gehalts von {name} ist bezahlt – der Rest bleibt überfällig.",
     "timeOffUntil": "Frei bis {at}",
     "needs": {
       "payFairness": "Bezahlung",
@@ -1838,6 +1843,15 @@
       "hint": "Einfache Ja/Nein-Entscheidungen erscheinen als Dialog direkt im Spiel – immer zu den Bedingungen, die hier im Browser stehen. Gespräche, Gegenforderungen und Formulare mit Beträgen bleiben im Browser.",
       "off": "Fragen im Spiel sind in der Konfiguration abgeschaltet (rpsim.bridge.ingame-prompts).",
       "key": "Ist gerade ein Menü offen, wartet die Frage. Mit der Taste „FarmPulse: offene Frage“ (Steuerung im Spiel, Standard Alt+J) öffnest du sie jederzeit, auch im Fahrzeug."
+    },
+    "overdraft": {
+      "title": "Dispo",
+      "enabled": "Dispo erlauben: Abbuchungen dürfen das Konto bis zum Limit ins Minus ziehen",
+      "onHint": "Gilt für alle Abbuchungen von FarmPulse – Gehälter, Kreditraten, Rechnungen und eigene Käufe. Am Monatsanfang kosten Schulden die eingestellten Dispozinsen; die Zinsen werden auch über das Limit hinaus gebucht.",
+      "offHint": "Aus: Abbuchungen gehen nicht unter 0 €. Ein Gehalt, das nicht gedeckt ist, bleibt offen – in Personal kannst du es mit „Gehalt nachzahlen“ begleichen, sonst zahlt FarmPulse es, sobald wieder genug Geld da ist.",
+      "limit": "Limit (€)",
+      "interest": "Dispozinsen (% pro Jahr)",
+      "negative": "Kontostand: {balance}"
     },
     "farm": {
       "title": "Hof",

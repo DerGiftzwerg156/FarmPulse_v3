@@ -217,6 +217,10 @@ export class ApiService {
   getWell(id: number): Observable<M.EmployeeView> {
     return this.post(`/employees/${id}/get-well`, {});
   }
+  /** Owner decisions 2026-10-14: pays an overdue salary right away. */
+  paySalary(id: number): Observable<M.EmployeeView> {
+    return this.post(`/employees/${id}/pay-salary`, {});
+  }
   trainings(): Observable<M.TrainingOfferView[]> {
     return this.get('/trainings');
   }
@@ -426,6 +430,13 @@ export class ApiService {
   }
   saveHelperSettings(r: { helperWageMode: string; strictHelperLimit: boolean }): Observable<M.HelperSettingsView> {
     return this.http.put<M.HelperSettingsView>(`${this.base}/settings/helpers`, r);
+  }
+  /** Owner decisions 2026-10-14: overdraft for every debit of the tool. */
+  overdraftSettings(): Observable<M.OverdraftSettingsView> {
+    return this.get('/settings/overdraft');
+  }
+  saveOverdraftSettings(r: { enabled: boolean; limit: number; interestPercent: number }): Observable<M.OverdraftSettingsView> {
+    return this.http.put<M.OverdraftSettingsView>(`${this.base}/settings/overdraft`, r);
   }
   // Roadmap V2 R2-F2: questions in the game
   promptSettings(): Observable<M.PromptSettingsView> {

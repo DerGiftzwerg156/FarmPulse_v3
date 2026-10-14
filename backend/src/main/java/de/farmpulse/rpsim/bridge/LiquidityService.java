@@ -28,7 +28,9 @@ public class LiquidityService {
             // one-off damage/compensation bookings of simulated incidents (TODO T-20)
             "DAMAGE", "INSURANCE_PAYOUT", "WILDLIFE_COMPENSATION",
             // Roadmap V3.2 R32-I: investor capital, repayment and payouts are financing (journal class FINANCING)
-            "INVESTOR_CAPITAL", "INVESTOR_REPAYMENT", "INVESTOR_PAYOUT");
+            "INVESTOR_CAPITAL", "INVESTOR_REPAYMENT", "INVESTOR_PAYOUT",
+            // overdraft interest is a financing cost like the credit penalty (owner decisions 2026-10-14)
+            "OVERDRAFT_INTEREST");
 
     private final FactsSnapshotRepository snapshots;
     private final OutboxInstructionRepository outbox;
@@ -54,13 +56,22 @@ public class LiquidityService {
     public static final String INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS";
 
     /**
-     * Balance available for new payments. T-03: after the mod refused a debit for lack of money, the snapshot balance
-     * is not trusted until a newer snapshot arrived - otherwise the same payment would be re-queued every cycle.
+     * Overdraft (owner decisions 2026-10-14): the lowest balance a debit of the tool may leave - {@code -limit} while the
+     * overdraft is on, otherwise 0 (T-03).
+     */
+    public static long minBalance(Savegame sg) {
+        return sg.isOverdraftEnabled() ? -Math.max(0, sg.getOverdraftLimit()) : 0;
+    }
+
+    /**
+     * Money available for new payments: balance plus queued money plus the unused overdraft. T-03: after the mod
+     * refused a debit for lack of money, the snapshot balance is not trusted until a newer snapshot arrived - otherwise
+     * the same payment would be re-queued every cycle.
      */
     public long available(Savegame sg) {
         Optional<FactsSnapshot> latest = snapshots.findFirstBySavegameOrderByGameTimeDescIdDesc(sg);
         long balance = latest.map(FactsSnapshot::getBalance).orElse(0L);
-        long value = balance + pendingMoney(sg);
+        long value = balance + pendingMoney(sg) - minBalance(sg);
         long refusedAt = lastRefusedForFunds(sg);
         if (latest.isPresent() && refusedAt >= 0 && latest.get().getGameTime() <= refusedAt) {
             return Math.min(value, 0);

@@ -19,12 +19,31 @@ function T.TestInstructions:testAllMoneyReasonsAccepted()
         "CONTRACTOR_FEE", "MACHINE_RENT", "LIVESTOCK_PURCHASE", "LIVESTOCK_SALE", "WINTER_SERVICE", "DIRECT_PAYMENT",
         "INVESTMENT_GRANT", "SOCIAL_INSURANCE", "GUEST_INCOME", "COOP_SHARES", "COOP_DIVIDEND", "FARM_HOLIDAY_SETUP",
         "TANK_LOCK", "SEVERANCE", "INVESTOR_CAPITAL", "INVESTOR_REPAYMENT", "INVESTOR_PAYOUT",
-        "INVESTOR_COMPENSATION" }) do
+        "INVESTOR_COMPENSATION", "OVERDRAFT_INTEREST" }) do
         lu.assertTrue(RPSimInstructions.validate(money("i", 1, r)), r)
     end
     local ok, why = RPSimInstructions.validate(money("i", 1, "FREE_MONEY"))
     lu.assertFalse(ok)
     lu.assertStrContains(why, "unknown reason")
+end
+
+--- Overdraft (owner decisions 2026-10-14): optional minBalance (<= 0) and ignoreFunds (boolean).
+function T.TestInstructions:testOverdraftFieldsAreValidated()
+    local function m(fields)
+        local ins = { instructionId = "x", type = "MONEY_TRANSACTION", amount = -10, reason = "SALARY_PAYMENT" }
+        for k, v in pairs(fields) do ins[k] = v end
+        return RPSimInstructions.validate(ins)
+    end
+    lu.assertTrue(m({ minBalance = -5000 }))
+    lu.assertTrue(m({ minBalance = 0 }))
+    lu.assertTrue(m({ ignoreFunds = true }))
+    lu.assertFalse(m({ minBalance = 1 }))
+    lu.assertFalse(m({ minBalance = "-5" }))
+    lu.assertFalse(m({ ignoreFunds = "yes" }))
+    lu.assertTrue(RPSimInstructions.checkFunds(0, { { type = "MONEY_TRANSACTION", amount = -10, minBalance = -10 } }))
+    lu.assertFalse(RPSimInstructions.checkFunds(0, { { type = "MONEY_TRANSACTION", amount = -11, minBalance = -10 } }))
+    lu.assertTrue(RPSimInstructions.checkFunds(-100, { { type = "MONEY_TRANSACTION", amount = -10, ignoreFunds = true } }))
+    lu.assertFalse(RPSimInstructions.checkFunds(0, { { type = "MONEY_TRANSACTION", amount = -1 } }))
 end
 
 function T.TestInstructions:testValidationRejectsBrokenEnvelopes()

@@ -12,6 +12,15 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Dispo and paying overdue salaries** (owner decisions 2026-10-14 in `QUESTIONS.md`): a new card *Dispo* in
+  *Einstellungen → Hof* (off by default). Switched on, every debit of FarmPulse (salaries, installments, bills,
+  contracts and own purchases) may push the balance down to the set limit; a salary is then paid on time without the
+  pay fairness malus. At every month start a negative balance costs the overdraft interest (default 10 % per year,
+  booked as *Dispozinsen* / `OVERDRAFT_INTEREST`, even beyond the limit). Switched off nothing changes; an overdue
+  salary can now be paid right away with the button *Gehalt nachzahlen* in *Personal* (shown only while a salary is
+  overdue), the automatic payment as soon as money is there stays. Bridge: `MONEY_TRANSACTION` and `VEHICLE_SPAWN`
+  carry the optional `minBalance`, the interest `ignoreFunds`; the mod checks the funds against that floor.
+
 - **Roadmap V4 - gaps closed** (owner decisions 2026-10-14 in `QUESTIONS.md`): the contribution margin card colours the
   crops like the field book evaluation, links each calculation to its field book entry and back (`?entry=`), shows the
   expected revenue of a running season with a plan, and corrects lines by litres, price per 1000 l or amount (own

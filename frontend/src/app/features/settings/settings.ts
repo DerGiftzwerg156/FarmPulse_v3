@@ -14,6 +14,7 @@ import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { HelperSettingsCard } from './helper-settings-card';
+import { OverdraftSettingsCard } from './overdraft-settings-card';
 import { LanSettingsCard } from '../lan/lan-settings-card';
 
 /** Providers that need an API key / that talk to a configurable local endpoint. */
@@ -29,7 +30,8 @@ export const URL_PROVIDERS = ['OLLAMA'];
  */
 @Component({
   selector: 'app-settings',
-  imports: [TranslatePipe, LabelPipe, NumberPipe, Card, Badge, Button, LanSettingsCard, HelperSettingsCard],
+  imports: [TranslatePipe, LabelPipe, NumberPipe, Card, Badge, Button, LanSettingsCard, HelperSettingsCard,
+    OverdraftSettingsCard],
   templateUrl: './settings.html',
 })
 export class Settings {

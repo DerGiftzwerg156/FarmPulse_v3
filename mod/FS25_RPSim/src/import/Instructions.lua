@@ -43,6 +43,8 @@ RPSimInstructions.MONEY_REASONS = {
     -- Roadmap V3.2 (R32-Q1): capital of a large investor (I2), buy-back / repayment (I4/I5), profit share or fixed
     -- payout (I3, R1/R2), compensation for a shortfall or a missed obligation (I4)
     INVESTOR_CAPITAL = true, INVESTOR_REPAYMENT = true, INVESTOR_PAYOUT = true, INVESTOR_COMPENSATION = true,
+    -- owner decisions 2026-10-14: interest on a negative balance while the overdraft is on
+    OVERDRAFT_INTEREST = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
@@ -140,6 +142,14 @@ local function validatePrompt(ins)
     return true
 end
 
+--- Overdraft (owner decisions 2026-10-14): optional minBalance (<= 0) = the lowest balance a debit may leave.
+local function validateMinBalance(ins)
+    if ins.minBalance ~= nil and (not isNumber(ins.minBalance) or ins.minBalance > 0) then
+        return false, "minBalance must be a number <= 0"
+    end
+    return true
+end
+
 --- Roadmap V3 R3-V2: used vehicle from the shop catalog. price > 0 is booked by the mod as -price with moneyReason.
 -- Roadmap V3.1 R31-A2: price 0 = borrowed or demo machine, nothing is booked (the rent runs as MACHINE_RENT).
 local function validateVehicleSpawn(ins)
@@ -162,7 +172,7 @@ local function validateVehicleSpawn(ins)
     if not RPSimInstructions.MONEY_REASONS[ins.moneyReason] then
         return false, "unknown moneyReason " .. tostring(ins.moneyReason)
     end
-    return true
+    return validateMinBalance(ins)
 end
 
 --- Roadmap V3.1 R31-A1: end state of a field work on an own field; fruitType (FS25 fruit type name) only for SOW.
@@ -237,6 +247,13 @@ function RPSimInstructions.validate(ins)
         end
         if not RPSimInstructions.MONEY_REASONS[ins.reason] then
             return false, "unknown reason " .. tostring(ins.reason)
+        end
+        local okMin, errMin = validateMinBalance(ins)
+        if not okMin then
+            return false, errMin
+        end
+        if ins.ignoreFunds ~= nil and type(ins.ignoreFunds) ~= "boolean" then
+            return false, "ignoreFunds must be a boolean"
         end
     elseif ins.type == "PRICE_EVENT" then
         if not RPSimInstructions.PRICE_MODES[ins.priceMode] then
@@ -341,16 +358,24 @@ function RPSimInstructions.validate(ins)
     return true
 end
 
---- Funds check for a batch (T-03): the net money change of the batch must not push the balance below 0.
--- Credits in the same batch (e.g. a farmland sale) count against its debits. Returns ok, err.
+--- Funds check for a batch (T-03): the net money change of the batch must not push the balance below its floor.
+-- Credits in the same batch (e.g. a farmland sale) count against its debits. The floor is 0 (T-03); overdraft (owner
+-- decisions 2026-10-14): a debit may carry minBalance (<= 0), the batch floor is the highest floor of its debits.
+-- Bookings with ignoreFunds (the overdraft interest) are booked regardless and stay out of the check. Returns ok, err.
 function RPSimInstructions.checkFunds(balance, items)
     local net = 0
+    local floor = nil
     for _, ins in ipairs(items or {}) do
-        if type(ins) == "table" and ins.type == "MONEY_TRANSACTION" and isNumber(ins.amount) then
+        if type(ins) == "table" and ins.type == "MONEY_TRANSACTION" and isNumber(ins.amount)
+            and ins.ignoreFunds ~= true then
             net = net + ins.amount
+            if ins.amount < 0 then
+                local min = isNumber(ins.minBalance) and math.min(ins.minBalance, 0) or 0
+                floor = floor == nil and min or math.max(floor, min)
+            end
         end
     end
-    if net < 0 and (balance or 0) + net < 0 then
+    if net < 0 and (balance or 0) + net < (floor or 0) then
         return false, "INSUFFICIENT_FUNDS"
     end
     return true

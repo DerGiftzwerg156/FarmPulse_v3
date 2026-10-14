@@ -142,6 +142,25 @@ test('debits the balance does not cover are refused for the whole batch (INSUFFI
   assert.equal(sim.farmlands.find((f) => f.farmlandId === 1).ownerFarmId, 0);
 });
 
+// owner decisions 2026-10-14: overdraft parity with RPSimInstructions.checkFunds
+test('a debit with minBalance may go into the red down to that floor, the interest beyond it', () => {
+  const sim = new BridgeSimulator({ dir: mkdtempSync(join(tmpdir(), 'rpsim-sim-')), scenario: 'knappe-kasse' });
+  sim.start();
+  const start = sim.balance;
+  writeFileSync(sim.paths.instructions, JSON.stringify({ savegameId: sim.savegameId, instructions: [
+    { instructionId: 'sal', type: 'MONEY_TRANSACTION', amount: -(start + 1000), reason: 'SALARY_PAYMENT', minBalance: -1000 },
+    { instructionId: 'tax', type: 'MONEY_TRANSACTION', amount: -1, reason: 'TAX_PAYMENT', minBalance: -1000 },
+    { instructionId: 'int', type: 'MONEY_TRANSACTION', amount: -10, reason: 'OVERDRAFT_INTEREST', ignoreFunds: true },
+  ] }));
+  sim.processInstructions();
+  const acks = Object.fromEntries(JSON.parse(readFileSync(sim.paths.ack, 'utf8')).acks.map((a) => [a.instructionId, a]));
+  assert.equal(acks.sal.status, 'APPLIED');
+  assert.equal(acks.tax.status, 'FAILED');
+  assert.equal(acks.tax.message, 'INSUFFICIENT_FUNDS');
+  assert.equal(acks.int.status, 'APPLIED');
+  assert.equal(sim.balance, -1010);
+});
+
 test('reload without saving restores the saved game and forgets later bookings', () => {
   const sim = new BridgeSimulator({ dir: mkdtempSync(join(tmpdir(), 'rpsim-sim-')), scenario: 'wohlhabender-hof' });
   sim.start();

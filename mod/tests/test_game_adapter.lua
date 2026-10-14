@@ -43,6 +43,40 @@ function T.TestGameAdapter:testDebitAboveBalanceIsRefused()
     lu.assertTrue(a:checkBatchFunds({ { type = "MONEY_TRANSACTION", amount = 5000, reason = "SUBSIDY" } }))
 end
 
+--- Overdraft (owner decisions 2026-10-14): a debit with minBalance may go down to that floor, not further.
+function T.TestGameAdapter:testDebitWithMinBalanceMayGoIntoTheRed()
+    helpers.fakeGame({ money = 1000 })
+    local a = RPSimGameAdapter.new()
+    lu.assertTrue(a:checkBatchFunds({ { type = "MONEY_TRANSACTION", amount = -3000, reason = "SALARY_PAYMENT",
+        minBalance = -2000 } }))
+    local ok, err = a:checkBatchFunds({ { type = "MONEY_TRANSACTION", amount = -3001, reason = "SALARY_PAYMENT",
+        minBalance = -2000 } })
+    lu.assertFalse(ok)
+    lu.assertEquals(err, "INSUFFICIENT_FUNDS")
+    -- the highest floor of the batch counts: a debit without minBalance keeps the batch above zero
+    lu.assertFalse(a:checkBatchFunds({
+        { type = "MONEY_TRANSACTION", amount = -1000, reason = "SALARY_PAYMENT", minBalance = -2000 },
+        { type = "MONEY_TRANSACTION", amount = -500, reason = "TAX_PAYMENT" } }))
+end
+
+function T.TestGameAdapter:testOverdraftInterestIsBookedBeyondTheLimit()
+    local game = helpers.fakeGame({ money = -5000 })
+    local bridge, fs, paths = realBridge(game)
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = {
+        { instructionId = "int", type = "MONEY_TRANSACTION", amount = -50, reason = "OVERDRAFT_INTEREST",
+            ignoreFunds = true },
+        { instructionId = "sal", type = "MONEY_TRANSACTION", amount = -100, reason = "SALARY_PAYMENT",
+            minBalance = -5000 } } })
+    bridge:pollInstructions()
+    lu.assertEquals(game.farm.money, -5050)
+    local ack = RPSimJson.decode(fs.files[paths.instructionsAck])
+    local byId = {}
+    for _, a in ipairs(ack.acks) do byId[a.instructionId] = a end
+    lu.assertEquals(byId.int.status, "APPLIED")
+    lu.assertEquals(byId.sal.status, "FAILED")
+    lu.assertEquals(byId.sal.message, "INSUFFICIENT_FUNDS")
+end
+
 function T.TestGameAdapter:testInsufficientFundsYieldsFailedAckAndNoBooking()
     local game = helpers.fakeGame({ money = 1000 })
     local bridge, fs, paths = realBridge(game)
@@ -909,6 +943,17 @@ function T.TestGameAdapter:testUsedVehicleFailuresBookNothing()
     clearStoreGame()
     storeGame({ money = 50000 })
     lu.assertEquals(select(2, RPSimGameAdapter.new():spawnVehicle(SPAWN, done)), "INSUFFICIENT_FUNDS")
+    clearStoreGame()
+    -- overdraft (owner decisions 2026-10-14): with minBalance the purchase may go down to that floor
+    local overdraft = {}
+    for k, val in pairs(SPAWN) do overdraft[k] = val end
+    overdraft.minBalance = -(SPAWN.price - 50000) - 1
+    storeGame({ money = 50000 })
+    local underLimit = {}
+    for k, val in pairs(overdraft) do underLimit[k] = val end
+    underLimit.minBalance = overdraft.minBalance + 2
+    lu.assertEquals(select(2, RPSimGameAdapter.new():spawnVehicle(underLimit, done)), "INSUFFICIENT_FUNDS")
+    lu.assertTrue(RPSimGameAdapter.new():spawnVehicle(overdraft, function() end))
     clearStoreGame()
     -- the engine reports no space only in the callback: the loaded parts are deleted, nothing booked
     local game = storeGame({ money = 60000 })

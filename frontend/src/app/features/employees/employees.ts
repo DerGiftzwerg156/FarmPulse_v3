@@ -271,6 +271,18 @@ export class Employees {
     });
   }
 
+  /** Owner decisions 2026-10-14: pays an overdue salary right away (with the overdraft while it is on). */
+  paySalary(e: EmployeeView): void {
+    this.api.paySalary(e.id).subscribe({
+      next: (updated) => {
+        this.replace(updated);
+        this.flash(updated.salaryOverdue ? 'employees.salaryPartlyPaid' : 'employees.salaryPaid', { name: e.character.name });
+        this.store.refresh();
+      },
+      error: (err) => this.fail(err),
+    });
+  }
+
   /** Roadmap V3.1 R31-B5: get-well wishes (once per absence). */
   getWell(e: EmployeeView): void {
     this.api.getWell(e.id).subscribe({

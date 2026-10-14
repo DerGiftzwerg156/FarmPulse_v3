@@ -270,6 +270,8 @@ class ApiIntegrationTest {
         postJson("/api/employees/" + eid + "/raise", java.util.Map.of("newSalary", 99999)).andExpect(status().isOk());
         postJson("/api/employees/" + eid + "/time-off", java.util.Map.of("days", 2)).andExpect(status().isOk());
         postJson("/api/employees/" + eid + "/time-off", java.util.Map.of("days", 0)).andExpect(status().isBadRequest());
+        // owner decisions 2026-10-14: the button only works while a salary is overdue
+        mvc.perform(post("/api/employees/" + eid + "/pay-salary")).andExpect(jsonPath("$.code").value("SALARY_NOT_OVERDUE"));
         mvc.perform(delete("/api/employees/" + eid)).andExpect(jsonPath("$.status").value("TERMINATED"));
         postJson("/api/job-postings", java.util.Map.of("jobRole", "ASTRONAUT")).andExpect(status().isBadRequest());
     }
@@ -670,6 +672,16 @@ class ApiIntegrationTest {
                 .andExpect(jsonPath("$.strictHelperLimit").value(true));
         mvc.perform(put("/api/settings/helpers").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"helperWageMode\":\"FREE\",\"strictHelperLimit\":true}"))
+                .andExpect(status().isBadRequest());
+        // owner decisions 2026-10-14: overdraft
+        mvc.perform(get("/api/settings/overdraft")).andExpect(jsonPath("$.enabled").value(false))
+                .andExpect(jsonPath("$.limit").value(0)).andExpect(jsonPath("$.interestPercent").value(10.0));
+        mvc.perform(put("/api/settings/overdraft").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":true,\"limit\":25000,\"interestPercent\":8.5}"))
+                .andExpect(jsonPath("$.enabled").value(true)).andExpect(jsonPath("$.limit").value(25000))
+                .andExpect(jsonPath("$.interestPercent").value(8.5));
+        mvc.perform(put("/api/settings/overdraft").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":true,\"limit\":-1,\"interestPercent\":8.5}"))
                 .andExpect(status().isBadRequest());
         // Roadmap V2 R2-C6
         mvc.perform(get("/api/settings/fields")).andExpect(jsonPath("$.fieldHintsEnabled").value(true))
