@@ -75,6 +75,11 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Exportiert für den **Anbauplaner** (Roadmap V4, R4-A2) je Kultur der Karte Saatbedarf und Grundertrag je m² und die
   Saat- und Erntefenster im Wachstumsmodus des Spielstands (`market_context.fruitTypes[].plantablePeriods` /
   `harvestablePeriods`).
+- Kennt den Vertrag für den **Fahrzeughändler** (Roadmap Fahrzeughändler, RFH-Q): die Datei `store_catalog.json` mit
+  allen Ausstattungen jeder Shop-Maschine (einmal je Spielstart, Schalter `storeCatalogExport`, Obergrenze
+  `storeCatalogMaxEntries`), die im Spiel per Taste gesetzten Lieferorte (`farm_facts.deliveryPoints`) und die
+  Shop-Plätze (`market_context.storePlaces`). Ausgelesen werden die Werte erst mit den Funktionen (RFH-K1 Ausstattungen,
+  RFH-O1 Taste und Lieferorte, RFH-L6 Shop-Plätze); bis dahin fehlen Datei und Blöcke.
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben
@@ -130,6 +135,10 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     (`removeHusbandryFillLevel` über die Beladestation, nur Milch-Sorten des Stalls, Bestand vorher geprüft); bleibt
     eine Restmenge, bucht der Mod das Entnommene zurück (`addHusbandryFillLevelFromTool`). `FAILED` mit
     `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE`, `WRONG_FILLTYPE` oder `INSUFFICIENT_STOCK`
+  - `VEHICLE_DELIVERY` (Roadmap Fahrzeughändler, RFH-Q3) – Lieferung neuer Maschinen mit Ausstattung an einen Lieferort
+    oder auf die Shop-Plätze, mit Buchungen und Inzahlungnahmen. Bis RFH-L5 wird die Anweisung nur geprüft und mit
+    `FAILED` / `NOT_SUPPORTED` quittiert; die Quittung trägt später `placeUsed`, `vehicleCount`, `vehicleId1` … und
+    `tradeInsRemoved`
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.
@@ -155,6 +164,7 @@ Dokumente/My Games/FarmingSimulator2025/modSettings/FS25_RPSim/
   export/
     farm_facts.json          (Mod schreibt, alle 10 s)
     market_context.json      (Mod schreibt, beim Spielstart + jede Minute + nach FARMLAND_TRANSFER + bei Änderung)
+    store_catalog.json       (Mod schreibt, einmal beim Spielstart; Fahrzeughändler, ab RFH-K1)
   import/
     instructions.json        (Backend schreibt, lesbare Fassung für Tools/Simulator)
     instructions.xml         (Backend schreibt, dieselben Daten - diese Datei liest der Mod)

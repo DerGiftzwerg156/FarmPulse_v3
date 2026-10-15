@@ -90,6 +90,11 @@ public class Savegame {
     @Column(name = "market_context_json")
     private String marketContextJson;
 
+    /** Roadmap vehicle dealer RFH-Q1: raw export/store_catalog.json (shop catalog with every option), null = none. */
+    @Lob
+    @Column(name = "store_catalog_json")
+    private String storeCatalogJson;
+
     @Column(name = "generation_seed", nullable = false)
     private long generationSeed;
 

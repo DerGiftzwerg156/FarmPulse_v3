@@ -238,6 +238,27 @@
             <en>Overdraft interest</en>
             <de>Dispozinsen</de>
         </text>
+        <!-- Roadmap vehicle dealer (RFH-Q4, owner decisions 2026-10-15) -->
+        <text name="rpsim_money_VEHICLE_DEPOSIT">
+            <en>Vehicle deposit</en>
+            <de>Anzahlung Neumaschine</de>
+        </text>
+        <text name="rpsim_money_VEHICLE_DELIVERY_FEE">
+            <en>Vehicle delivery</en>
+            <de>Lieferkosten Neumaschine</de>
+        </text>
+        <text name="rpsim_money_VEHICLE_EXPRESS_FEE">
+            <en>Express delivery</en>
+            <de>Expresslieferung</de>
+        </text>
+        <text name="rpsim_money_VEHICLE_REFUND">
+            <en>Deposit refund</en>
+            <de>Rückzahlung Anzahlung</de>
+        </text>
+        <text name="rpsim_money_VEHICLE_CANCELLATION_FEE">
+            <en>Cancellation fee</en>
+            <de>Stornogebühr</de>
+        </text>
         <!-- Schulungen: start of a helper refused in the strict mode (no free machine operator with the training) -->
         <text name="rpsim_ai_noTraining">
             <en>No trained machine operator available</en>

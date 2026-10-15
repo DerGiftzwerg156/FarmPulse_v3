@@ -12,6 +12,17 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Vehicle dealer - bridge contract [RFH-Q]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`): the new file
+  `export/store_catalog.json` (shop catalog with every option: price and daily upkeep per option, default, selectable,
+  yes/no, colour, dependent options, manufacturer packages; written once per mission start once the mod reads the
+  options with RFH-K1), the optional blocks `farm_facts.deliveryPoints` and `market_context.storePlaces`, the
+  instruction `VEHICLE_DELIVERY` (several configured machines, delivery point or shop places, bookings, trade-ins;
+  validated by the mod and acknowledged `FAILED` / `NOT_SUPPORTED` until RFH-L5, notice "Mod aktualisieren") and the
+  money reasons `VEHICLE_DEPOSIT`, `VEHICLE_DELIVERY_FEE`, `VEHICLE_EXPRESS_FEE` (investment), `VEHICLE_REFUND`
+  (divestment) and `VEHICLE_CANCELLATION_FEE` (operating expense) with booking titles. The backend stores the catalog
+  at the linked savegame (migration V50). Bridge simulator: scenario `fahrzeughaendler`, `VEHICLE_DELIVERY` like the
+  planned mod action, control endpoints `POST /delivery-point`, `/delivery-place-blocked`, `/shop-full`. Manual test
+  plan section 31.
 - **Dispo and paying overdue salaries** (owner decisions 2026-10-14 in `QUESTIONS.md`): a new card *Dispo* in
   *Einstellungen → Hof* (off by default). Switched on, every debit of FarmPulse (salaries, installments, bills,
   contracts and own purchases) may push the balance down to the set limit; a salary is then paid on time without the

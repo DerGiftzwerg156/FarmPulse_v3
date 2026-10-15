@@ -619,7 +619,12 @@
       "INVESTOR_REPAYMENT": "Rückzahlung an Investor",
       "INVESTOR_PAYOUT": "Ausschüttung an Investor",
       "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor",
-      "OVERDRAFT_INTEREST": "Dispozinsen"
+      "OVERDRAFT_INTEREST": "Dispozinsen",
+      "VEHICLE_DEPOSIT": "Anzahlung Neumaschine",
+      "VEHICLE_DELIVERY_FEE": "Lieferkosten Neumaschine",
+      "VEHICLE_EXPRESS_FEE": "Expresslieferung",
+      "VEHICLE_REFUND": "Rückzahlung Anzahlung",
+      "VEHICLE_CANCELLATION_FEE": "Stornogebühr"
     },
     "cycleEvent": {
       "GameTimeAdvancedEvent": "Spielzeit",
@@ -919,7 +924,12 @@
       "RPSIM_INVESTOR_REPAYMENT": "Rückzahlung an Investor",
       "RPSIM_INVESTOR_PAYOUT": "Ausschüttung an Investor",
       "RPSIM_INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor",
-      "RPSIM_OVERDRAFT_INTEREST": "Dispozinsen"
+      "RPSIM_OVERDRAFT_INTEREST": "Dispozinsen",
+      "RPSIM_VEHICLE_DEPOSIT": "Anzahlung Neumaschine",
+      "RPSIM_VEHICLE_DELIVERY_FEE": "Lieferkosten Neumaschine",
+      "RPSIM_VEHICLE_EXPRESS_FEE": "Expresslieferung",
+      "RPSIM_VEHICLE_REFUND": "Rückzahlung Anzahlung",
+      "RPSIM_VEHICLE_CANCELLATION_FEE": "Stornogebühr"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",

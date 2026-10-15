@@ -30,7 +30,9 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   // Roadmap V3.2 (R32-Q1)
   'INVESTOR_CAPITAL', 'INVESTOR_REPAYMENT', 'INVESTOR_PAYOUT', 'INVESTOR_COMPENSATION',
   // owner decisions 2026-10-14: interest on a negative balance (overdraft)
-  'OVERDRAFT_INTEREST']);
+  'OVERDRAFT_INTEREST',
+  // Roadmap vehicle dealer (RFH-Q4, owner decisions 2026-10-15)
+  'VEHICLE_DEPOSIT', 'VEHICLE_DELIVERY_FEE', 'VEHICLE_EXPRESS_FEE', 'VEHICLE_REFUND', 'VEHICLE_CANCELLATION_FEE']);
 // Roadmap V3.1 R31-A1: works of the contractor
 const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'FERTILIZE', 'HARVEST'];
 // crop details a field loses when the contractor plows, cultivates or sows (R2-C1 fields of a standing crop)
@@ -180,6 +182,9 @@ export function validateInstruction(ins) {
       if (typeof ins.vehicleId !== 'string' || !ins.vehicleId) return 'vehicleId is required';
       if (!num(ins.delta) || ins.delta >= 0) return 'delta must be < 0';
       return null;
+    // Roadmap vehicle dealer (RFH-Q3): same checks as RPSimInstructions.validate
+    case 'VEHICLE_DELIVERY':
+      return validateVehicleDelivery(ins);
     // Roadmap V3.2 (R32-Q1): same checks as RPSimInstructions.validate
     case 'HUSBANDRY_TRANSFER':
       if (typeof ins.husbandryUniqueId !== 'string' || !ins.husbandryUniqueId) return 'husbandryUniqueId is required';
@@ -189,6 +194,45 @@ export function validateInstruction(ins) {
     default:
       return `unknown type ${ins.type}`;
   }
+}
+
+/** Roadmap vehicle dealer (RFH-Q3): like validateVehicleDelivery of RPSimInstructions (same messages). */
+function validateVehicleDelivery(ins) {
+  const num = (v) => typeof v === 'number' && Number.isFinite(v);
+  const str = (v) => typeof v === 'string' && v !== '';
+  if (!str(ins.deliveryId)) return 'deliveryId is required';
+  if (!Array.isArray(ins.items) || ins.items.length === 0) return 'items must be a non-empty array';
+  for (const [n, item] of ins.items.entries()) {
+    const i = n + 1;
+    if (!item || typeof item !== 'object' || !str(item.storeXmlFilename)) return `items[${i}].storeXmlFilename is required`;
+    const c = item.configurations;
+    if (c === undefined) continue;
+    if (!c || typeof c !== 'object' || (Array.isArray(c) && c.length > 0)) return `items[${i}].configurations must be an object`;
+    for (const [name, o] of Object.entries(c)) {
+      const prefix = `items[${i}].configurations.${name}`;
+      if (!o || typeof o !== 'object') return `${prefix} must be an object`;
+      if (o.saveId !== undefined && !str(o.saveId)) return `${prefix}.saveId must be a non-empty string`;
+      if (o.index !== undefined && (!Number.isInteger(o.index) || o.index < 1)) return `${prefix}.index must be a whole number >= 1`;
+      if (o.saveId === undefined && o.index === undefined) return `${prefix} needs saveId or index`;
+    }
+  }
+  if (ins.place !== undefined && (!ins.place || !num(ins.place.x) || !num(ins.place.z) || !num(ins.place.ry))) {
+    return 'place needs the numbers x, z and ry';
+  }
+  if (ins.fallbackToShop !== undefined && typeof ins.fallbackToShop !== 'boolean') return 'fallbackToShop must be a boolean';
+  if (!Array.isArray(ins.bookings)) return 'bookings must be an array';
+  for (const [n, b] of ins.bookings.entries()) {
+    const i = n + 1;
+    if (!b || !num(b.amount) || b.amount < 0) return `bookings[${i}].amount must be >= 0`;
+    if (!MONEY_REASONS.has(b.moneyReason)) return `bookings[${i}]: unknown moneyReason ${b.moneyReason}`;
+    if (b.note !== undefined && typeof b.note !== 'string') return `bookings[${i}].note must be a string`;
+  }
+  if (ins.tradeIns !== undefined) {
+    if (!Array.isArray(ins.tradeIns)) return 'tradeIns must be an array';
+    for (const [n, id] of ins.tradeIns.entries()) if (!str(id)) return `tradeIns[${n + 1}] must be a vehicleId`;
+  }
+  if (ins.minBalance !== undefined && (!num(ins.minBalance) || ins.minBalance > 0)) return 'minBalance must be a number <= 0';
+  return null;
 }
 
 /** Mod parity (RPSimInstructions.checkFunds): the net money change of a batch must not push the balance below 0. */
@@ -217,6 +261,7 @@ export class BridgeSimulator {
       instructions: join(dir, 'import', 'instructions.json'),
       ack: join(dir, 'import', 'instructions_ack.json'),
       playerResponses: join(dir, 'export', 'player_responses.json'), // Roadmap V2 R2-F1
+      storeCatalog: join(dir, 'export', 'store_catalog.json'), // Roadmap vehicle dealer RFH-Q1
       savegame: join(dir, 'simulator_savegame.json'),
     };
     this.log = log;
@@ -285,6 +330,15 @@ export class BridgeSimulator {
     this.feedStock = this.roadmapV4 ? structuredClone(preset.feedStock ?? []) : null;
     this.fillTypeCosts = this.roadmapV4 ? structuredClone(preset.fillTypeCosts ?? []) : null;
     this.animalFood = this.roadmapV4 ? structuredClone(preset.animalFood ?? []) : null;
+    // Roadmap vehicle dealer (RFH-Q5): a mod with the RFH-Q contract (vehicleDealer) writes store_catalog.json once per
+    // start, exports the delivery points set by key (kept in its savegame) and the shop places; deliveryPlaceBlocked /
+    // shopFull stand for an occupied delivery point (overlapBox) and full shop places (control API)
+    this.vehicleDealer = preset.vehicleDealer === true;
+    this.storeCatalog = this.vehicleDealer && preset.storeCatalog ? structuredClone(preset.storeCatalog) : null;
+    this.deliveryPoints = this.vehicleDealer ? structuredClone(preset.deliveryPoints ?? []) : null;
+    this.storePlaces = this.vehicleDealer && preset.storePlaces ? structuredClone(preset.storePlaces) : null;
+    this.deliveryPlaceBlocked = false;
+    this.shopFull = false;
     this.roster = null; // R2-A0: last EMPLOYEE_ROSTER (replaced completely)
     this.prompts = []; // R2-F2: yes/no questions shown to the "player" (waiting for an answer)
     this.responses = []; // R2-F1: answers not yet acknowledged by the backend (ackedResponses)
@@ -308,7 +362,13 @@ export class BridgeSimulator {
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, processed: this.processed, priceEvents: this.priceEvents,
       contractReports: this.contractReports, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State(), ...this.roadmapV4State() });
+      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State(), ...this.roadmapV4State(),
+      ...this.vehicleDealerState() });
+  }
+
+  /** Roadmap vehicle dealer state the mod keeps in its savegame XML: the delivery points set by key (RFH-Q2). */
+  vehicleDealerState() {
+    return { deliveryPoints: this.deliveryPoints };
   }
 
   /**
@@ -394,7 +454,7 @@ export class BridgeSimulator {
       for (const k of ['gameTime', 'balance', 'vanillaLoan', 'vehicles', 'leasedVehicles', 'placeables', 'animals',
         'storage', 'farmlands', 'calendar', 'finances', 'bookings', 'workforce', 'husbandries', 'fields', 'weather', 'roster',
         'prompts', 'responses', 'handledPrompts', 'npcFields', 'tradeStorage', 'toolMissions', 'missionLimitReached',
-        'vehiclePositions', 'stables', 'harvests', 'inputs', 'feedStock']) {
+        'vehiclePositions', 'stables', 'harvests', 'inputs', 'feedStock', 'deliveryPoints']) {
         if (s[k] !== undefined) this[k] = s[k];
       }
     } catch (e) {
@@ -407,7 +467,8 @@ export class BridgeSimulator {
       contractReports: this.contractReports, gameTime: this.gameTime, balance: this.balance, vanillaLoan: this.vanillaLoan,
       vehicles: this.vehicles, leasedVehicles: this.leasedVehicles, placeables: this.placeables, animals: this.animals,
       storage: this.storage, farmlands: this.farmlands, calendar: this.calendar, ...this.roadmapV2State(),
-      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State(), ...this.roadmapV4State() };
+      ...this.roadmapV3State(), ...this.roadmapV31State(), ...this.roadmapV33State(), ...this.roadmapV4State(),
+      ...this.vehicleDealerState() };
     this.writeJson(this.paths.savegame, s);
   }
 
@@ -702,6 +763,103 @@ export class BridgeSimulator {
     this.vehicles.splice(i, 1);
     this.log(`vehicle ${ins.vehicleId} removed`);
     return null;
+  }
+
+  // --------------------------------------------------------------- Roadmap vehicle dealer (RFH-Q5)
+  /**
+   * RFH-Q3 like the planned mod action (RFH-L5): trade-ins checked first (like VEHICLE_REMOVE), funds against the sum of
+   * the bookings (overdraft floor minBalance), every item from the catalog; then the delivery point when it is free,
+   * otherwise (fallbackToShop) the shop places, otherwise NO_SPACE. Loaded vehicles, trade-ins removed, then every
+   * booking of the delivery; result { placeUsed, vehicleCount, vehicleId1..n, tradeInsRemoved }.
+   */
+  vehicleDelivery(ins) {
+    const ids = ins.tradeIns ?? [];
+    for (const id of ids) {
+      if (this.leasedVehicles.some((v) => v.uniqueId === id)) return 'TRADE_IN_NOT_OWN';
+      const v = this.vehicles.find((x) => x.uniqueId === id);
+      if (!v) return 'TRADE_IN_NOT_FOUND';
+      if (v.attached) return 'TRADE_IN_ATTACHED';
+      if ((this.vehiclePositions ?? []).some((p) => p.uniqueId === id)) return 'TRADE_IN_IN_USE';
+    }
+    const total = ins.bookings.reduce((sum, b) => sum + b.amount, 0);
+    if (this.balance - total < (typeof ins.minBalance === 'number' ? Math.min(ins.minBalance, 0) : 0)) {
+      return 'INSUFFICIENT_FUNDS';
+    }
+    const catalog = this.storeCatalog ?? this.storeVehicles ?? [];
+    const items = ins.items.map((it) => ({ it, entry: catalog.find((c) => c.xmlFilename === it.storeXmlFilename) }));
+    if (items.some((x) => !x.entry)) return 'UNKNOWN_STORE_ITEM';
+    let placeUsed;
+    if (ins.place && !this.deliveryPlaceBlocked) placeUsed = 'DELIVERY_POINT';
+    else if ((!ins.place || ins.fallbackToShop === true) && !this.shopFull) placeUsed = 'SHOP';
+    else return 'NO_SPACE';
+    const vehicleIds = [];
+    for (const { entry } of items) {
+      const next = Math.max(0, ...this.vehicles.map((v) => Number(v.uniqueId.replace(/\D/g, '')) || 0)) + 1;
+      const uniqueId = `veh_${String(next).padStart(5, '0')}`;
+      this.vehicles.push({ uniqueId, value: entry.price, damage: 0, name: entry.name, xmlFilename: entry.xmlFilename,
+        ...(this.roadmapV31 && entry.categoryName ? { category: entry.categoryName } : {}) });
+      vehicleIds.push(uniqueId);
+    }
+    this.vehicles = this.vehicles.filter((v) => !ids.includes(v.uniqueId));
+    for (const b of ins.bookings) {
+      if (b.amount <= 0) continue;
+      this.balance -= b.amount;
+      this.moneyLog.push({ id: ins.instructionId, amount: -b.amount, reason: b.moneyReason, note: b.note });
+      this.book(`RPSIM_${b.moneyReason}`, -b.amount, { note: b.note });
+    }
+    // the ack result holds plain values only (RPSimProcessor.normalizeResult): one key per loaded vehicle
+    this.applyResult = { placeUsed, vehicleCount: vehicleIds.length, tradeInsRemoved: ids.length,
+      ...Object.fromEntries(vehicleIds.map((id, i) => [`vehicleId${i + 1}`, id])) };
+    this.log(`delivery ${ins.deliveryId}: ${items.map((x) => x.entry.name).join(', ')} on ${placeUsed}`);
+    return null;
+  }
+
+  /** Adds the optional vehicle dealer farm_facts block (RFH-Q2) when the scenario stands for a mod with it. */
+  vehicleDealerBlocks() {
+    if (!this.deliveryPoints) return {};
+    return { deliveryPoints: this.deliveryPoints.map((p) => ({ ...p })).sort((a, b) => a.seq - b.seq) };
+  }
+
+  /**
+   * Control API (RFH-O1 like the planned key of the mod): the player stands at x / z (facing ry) and presses "Lieferort
+   * hier festlegen". Only on own (or leased) farmland, otherwise refused like the mod's in-game hint.
+   */
+  setDeliveryPoint({ x, y = 100, z, ry = 0, farmlandId }) {
+    if (!this.deliveryPoints) throw new Error(`scenario ${this.scenario} exports no deliveryPoints`);
+    for (const [k, v] of Object.entries({ x, y, z, ry })) {
+      if (typeof v !== 'number' || !Number.isFinite(v)) throw new Error(`${k} must be a number`);
+    }
+    const farmland = this.farmlands.find((f) => f.farmlandId === farmlandId);
+    if (!farmland || farmland.ownerFarmId !== 1) throw new Error('Lieferort nur auf eigenem oder gepachtetem Land');
+    const seq = Math.max(0, ...this.deliveryPoints.map((p) => p.seq)) + 1;
+    const point = { seq, x, y, z, ry, farmlandId, day: this.monotonicDay(),
+      dayTimeMs: Math.floor(this.gameTime % MS_PER_GAME_DAY) };
+    this.deliveryPoints.push(point);
+    this.deliveryPoints = this.deliveryPoints.slice(-20); // like the mod setting deliveryPointsMax
+    return point;
+  }
+
+  /** Control API (RFH-Q5): the delivery point is occupied (overlapBox finds something) or free again. */
+  setDeliveryPlaceBlocked(blocked) {
+    this.deliveryPlaceBlocked = blocked === true;
+    return { deliveryPlaceBlocked: this.deliveryPlaceBlocked };
+  }
+
+  /** Control API (RFH-Q5): no shop place is free (setLoadingPlace returns false) or places are free again. */
+  setShopFull(full) {
+    this.shopFull = full === true;
+    return { shopFull: this.shopFull };
+  }
+
+  /** RFH-Q1: store_catalog.json once per start, like the mod (items sorted by xmlFilename). */
+  exportStoreCatalog() {
+    if (!this.storeCatalog) return null;
+    const doc = { savegameId: this.savegameId, items: structuredClone(this.storeCatalog)
+      .sort((a, b) => a.xmlFilename.localeCompare(b.xmlFilename)) };
+    const err = validate('storeCatalog', doc);
+    if (err) throw new Error(`store_catalog.json does not match schema: ${err}`);
+    this.writeJson(this.paths.storeCatalog, doc);
+    return doc;
   }
 
   // --------------------------------------------------------------- Roadmap V3.1 (R31-Q2)
@@ -1213,6 +1371,7 @@ export class BridgeSimulator {
       ...this.roadmapV31Blocks(),
       ...this.roadmapV33Blocks(),
       ...this.roadmapV4Blocks(),
+      ...this.vehicleDealerBlocks(),
     };
   }
 
@@ -1257,6 +1416,8 @@ export class BridgeSimulator {
         .sort((a, b) => a.fillType.localeCompare(b.fillType)) } : {}),
       ...(this.animalFood ? { animalFood: structuredClone(this.animalFood)
         .sort((a, b) => a.animalType.localeCompare(b.animalType)) } : {}),
+      // Roadmap vehicle dealer RFH-Q2: shop places (delivery costs by distance), only from a mod with the contract
+      ...(this.storePlaces ? { storePlaces: structuredClone(this.storePlaces) } : {}),
     };
   }
 
@@ -1366,6 +1527,9 @@ export class BridgeSimulator {
       // Roadmap V3.2 (R32-Q2): executed like the mod action
       case 'HUSBANDRY_TRANSFER':
         return this.husbandryTransfer(ins);
+      // Roadmap vehicle dealer (RFH-Q5): executed like the planned mod action (RFH-L5)
+      case 'VEHICLE_DELIVERY':
+        return this.vehicleDelivery(ins);
       default:
         return 'unsupported type';
     }
@@ -1532,6 +1696,7 @@ export class BridgeSimulator {
   start() {
     this.bootstrap();
     this.exportMarketContext();
+    this.exportStoreCatalog(); // RFH-Q1: once per start, like the mod at the mission start
     this.marketContextRefreshedAt = this.now();
     this.exportFarmFacts();
     this.writeAck();
@@ -1551,7 +1716,7 @@ export class BridgeSimulator {
 
   reset() {
     for (const p of [this.paths.savegame, this.paths.farmFacts, this.paths.marketContext, this.paths.ack,
-      this.paths.playerResponses]) {
+      this.paths.playerResponses, this.paths.storeCatalog]) {
       rmSync(p, { force: true });
     }
   }

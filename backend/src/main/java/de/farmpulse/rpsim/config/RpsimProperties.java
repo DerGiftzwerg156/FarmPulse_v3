@@ -2051,17 +2051,22 @@ public class RpsimProperties {
             m.put("RPSIM_LIVESTOCK_PURCHASE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_SOCIAL_INSURANCE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_INVESTOR_COMPENSATION", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.2 (R32-Q1)
+            m.put("RPSIM_VEHICLE_CANCELLATION_FEE", FinanceClass.OPERATING_EXPENSE); // vehicle dealer (RFH-Q4)
             m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_BUY", FinanceClass.INVESTMENT);
             m.put("FIELD_BUY", FinanceClass.INVESTMENT);
             m.put("RPSIM_FARMLAND_PURCHASE", FinanceClass.INVESTMENT);
             m.put("RPSIM_VEHICLE_PURCHASE", FinanceClass.INVESTMENT); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_VEHICLE_DEPOSIT", FinanceClass.INVESTMENT); // vehicle dealer (RFH-Q4)
+            m.put("RPSIM_VEHICLE_DELIVERY_FEE", FinanceClass.INVESTMENT); // vehicle dealer (RFH-Q4)
+            m.put("RPSIM_VEHICLE_EXPRESS_FEE", FinanceClass.INVESTMENT); // vehicle dealer (RFH-Q4)
             m.put("SHOP_VEHICLE_SELL", FinanceClass.DIVESTMENT);
             m.put("SHOP_PROPERTY_SELL", FinanceClass.DIVESTMENT);
             m.put("FIELD_SELL", FinanceClass.DIVESTMENT);
             m.put("RPSIM_FARMLAND_SALE", FinanceClass.DIVESTMENT);
             m.put("RPSIM_VEHICLE_SALE", FinanceClass.DIVESTMENT); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_VEHICLE_REFUND", FinanceClass.DIVESTMENT); // vehicle dealer (RFH-Q4)
             m.put("RPSIM_CREDIT_DISBURSEMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_INSTALLMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_PENALTY", FinanceClass.FINANCING);

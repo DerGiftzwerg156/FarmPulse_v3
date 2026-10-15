@@ -55,6 +55,19 @@ function RPSimMarketContext.capStoreVehicles(raw, maxEntries)
     return list, dropped
 end
 
+--- Roadmap vehicle dealer (RFH-Q2, contract; read with RFH-L6): centre of every shop place in world coordinates
+-- (metres, 0.1) - g_currentMission.storeSpawnPlaces. raw = { {x, z} }; incomplete entries are dropped, the order
+-- of the game is kept.
+function RPSimMarketContext.buildStorePlaces(raw)
+    local list = RPSimJson.array({})
+    for _, p in ipairs(raw) do
+        if type(p) == "table" and type(p.x) == "number" and type(p.z) == "number" and p.x == p.x and p.z == p.z then
+            list[#list + 1] = { x = math.floor(p.x * 10 + 0.5) / 10, z = math.floor(p.z * 10 + 0.5) / 10 }
+        end
+    end
+    return list
+end
+
 --- Roadmap V3.1 (R31-Q1, K1): outline of every field and the map size. raw = { mapSize, fields = { {farmlandId, name,
 -- points = { {x, z} }} } }; x / z = world coordinates in metres (rounded to 0.1). A field keeps at most maxPoints
 -- points, picked evenly along the outline (the first point stays); an outline needs at least 3 points. nil without a
@@ -237,7 +250,8 @@ end
 --         storeVehicles = <see buildStoreVehicles> | nil (Roadmap V3, nil = not collected),
 --         fieldShapes = <see buildFieldShapes> | nil (Roadmap V3.1, nil = not collected),
 --         fruitTypes = <see buildFruitTypes> | nil (Roadmap V3.3, nil = not collected),
---         fillTypeCosts = <see buildFillTypeCosts> | nil, animalFood = <see buildAnimalFood> | nil (Roadmap V4) }
+--         fillTypeCosts = <see buildFillTypeCosts> | nil, animalFood = <see buildAnimalFood> | nil (Roadmap V4),
+--         storePlaces = <see buildStorePlaces> | nil (Roadmap vehicle dealer RFH-Q2) }
 -- cfg: RPSimConfig (fieldShapeMaxPoints), defaults when missing.
 function RPSimMarketContext.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
@@ -300,6 +314,10 @@ function RPSimMarketContext.build(raw, cfg)
     end
     if type(raw.animalFood) == "table" then
         doc.animalFood = RPSimMarketContext.buildAnimalFood(raw.animalFood)
+    end
+    -- Roadmap vehicle dealer (RFH-Q2, L6): shop places for the delivery costs by distance
+    if type(raw.storePlaces) == "table" then
+        doc.storePlaces = RPSimMarketContext.buildStorePlaces(raw.storePlaces)
     end
     return doc
 end

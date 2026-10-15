@@ -71,7 +71,7 @@ Punkt-IDs: `RFH-<Bereich><Nummer>`, z. B. `RFH-L3`. Alle Pfade sind relativ zum 
 
 | Phase | Bereich | Inhalt | Mod-Eingriff | Hängt ab von |
 | --- | --- | --- | --- | --- |
-| 0 | [Q – Querschnitt](#q--querschnitt) | Katalog mit Konfigurationen, Lieferorte aus dem Spiel, Anweisung `VEHICLE_DELIVERY`, Buchungsgründe, Simulator, Tests, Doku | ja | R3-V1..V3 |
+| 0 | [Q – Querschnitt](#q--querschnitt) | Katalog mit Konfigurationen, Lieferorte aus dem Spiel, Anweisung `VEHICLE_DELIVERY`, Buchungsgründe, Simulator, Tests, Doku (**Vertrag umgesetzt 15.10.2026**) | ja | R3-V1..V3 |
 | 1 | [H – Händler](#h--der-händler) | Neue Rolle `MACHINE_DEALER`, Händler-Oberfläche | nein | – |
 | 2 | [K – Konfigurator und Sammelbestellung](#k--konfigurator-und-sammelbestellung) | Katalog durchsuchen, Maschine konfigurieren, Warenkorb | nein (über Q1) | Q1, H |
 | 3 | [O – Lieferorte](#o--lieferorte) | Lieferort im Spiel per Taste festlegen, benennen, verwalten; Shop-Platz als Standard | ja (über Q2) | Q2 |
@@ -130,9 +130,22 @@ stateDiagram-v2
 Wie R3-Q, R31-Q und R4-Q legt Q **zuerst den Vertrag** an: Schemas, DTOs, Validator, Normalisierung im Mod,
 Simulator und Doku. Das Auslesen im Spiel und die neue Anweisung kommen mit K, O und L.
 
+**Stand 15.10.2026: Vertrag umgesetzt.** Im Mod: `RPSimStoreCatalog.build` und `RPSimBridge:exportStoreCatalog`
+(schreibt `store_catalog.json`, sobald der Adapter die Ausstattungen liest – RFH-K1), `RPSimFarmFacts.buildDeliveryPoints`,
+`RPSimMarketContext.buildStorePlaces`, die Prüfung von `VEHICLE_DELIVERY` (bis RFH-L5 `FAILED` / `NOT_SUPPORTED`) und
+die fünf Buchungsgründe mit ihren Titeln. Im Backend: DTOs, Validator, das Einlesen von `store_catalog.json` an den
+verknüpften Spielstand (Spalte `savegame.store_catalog_json`, `FactsService.storeCatalog`), `InstructionType.VEHICLE_DELIVERY`
+mit dem Hinweis „Mod aktualisieren“, die Buchungsgründe mit ihren Klassen. Simulator: Szenario `fahrzeughaendler`,
+`VEHICLE_DELIVERY` wie die geplante Mod-Aktion, `POST /delivery-point`, `/delivery-place-blocked`, `/shop-full`.
+Umsetzungshinweis (kein neues Verhalten, `QUESTIONS.md` 15.10.2026): Eine Quittung trägt nur einfache Werte
+(`RPSimProcessor.normalizeResult`, seit R3-Q1), deshalb meldet `VEHICLE_DELIVERY` je Maschine einen Schlüssel
+`vehicleId1` … statt einer Liste. Noch offen in Q, weil es zum jeweiligen Bereich gehört: Taste und Speicherung der
+Lieferorte (O1), Auslesen der Ausstattungen (K1) und der Shop-Plätze (L6), die Ausführung von `VEHICLE_DELIVERY` (L5)
+und die Konfigwerte `rpsim.formulas.machine-dealer.*` (mit H, K, B, L, S, V).
+
 ### RFH-Q1 Katalog mit Konfigurationen
 
-- [ ] Je Katalog-Eintrag zusätzlich (`storeVehicles[]` aus R3-V1 bleibt, die neuen Felder sind optional):
+- [x] Je Katalog-Eintrag zusätzlich (`storeVehicles[]` aus R3-V1 bleibt, die neuen Felder sind optional):
   - `brand` (Rohname der Marke, `storeItem.brandNameRaw`), `dailyUpkeep` (`storeItem.dailyUpkeep`),
     `allowLeasing` nur als Info (Leasing gibt es beim Händler nicht, siehe „Bewusst nicht aufgenommen“),
   - `isBundle` (`storeItem.bundleInfo ~= nil`: mehrere Fahrzeuge in einem Eintrag, z. B. Gespann),
@@ -145,12 +158,12 @@ Simulator und Doku. Das Auslesen im Spiel und die neue Anweisung kommen mit K, O
     index`).
 - [ ] Der Listenpreis einer Zusammenstellung ist **Grundpreis + Summe der Optionspreise**. Das rechnet das Backend
   genau wie das Spiel (`StoreItemUtil.getDefaultPrice` → `getCosts(storeItem, configurations, "price")`).
-- [ ] Der Katalog steht in einer **eigenen Datei `store_catalog.json`**, geschrieben einmal je Spielstart
+- [x] Der Katalog steht in einer **eigenen Datei `store_catalog.json`**, geschrieben einmal je Spielstart
   (Entscheidung 15.10.2026). `market_context.json` bleibt dadurch klein. Ausweichlösung, falls die Datei im Spieltest
   zu groß oder zu langsam ist: Details je Maschine auf Anfrage (eine Anweisung, die Antwort in einer Datei).
-- [ ] Der Händler führt den ganzen Fahrzeug-Katalog (K1); die Obergrenze `storeCatalogMaxEntries` aus R3-V1 gilt
+- [x] Der Händler führt den ganzen Fahrzeug-Katalog (K1); die Obergrenze `storeCatalogMaxEntries` aus R3-V1 gilt
   auch hier.
-- [ ] `docs/dev/bridge-protocol.md` je Feld mit Quelle im FS25-Code.
+- [x] `docs/dev/bridge-protocol.md` je Feld mit Quelle im FS25-Code.
 
 **Beleg:**
 
@@ -192,12 +205,13 @@ Simulator und Doku. Das Auslesen im Spiel und die neue Anweisung kommen mit K, O
 - [ ] **Nur auf eigenem oder gepachtetem Land** (Entscheidung 15.10.2026): Gehört das Flurstück an der Stelle nicht der
   Spieler-Farm (`g_farmlandManager:getFarmlandOwner(farmlandId) ~= farmId`), speichert der Mod nichts und zeigt
   „Lieferort nur auf eigenem oder gepachtetem Land“.
-- [ ] `farm_facts.json`, neuer optionaler Block `deliveryPoints[]` = `{ seq, x, y, z, ry, farmlandId, day, dayTimeMs }`:
+- [x] `farm_facts.json`, neuer optionaler Block `deliveryPoints[]` = `{ seq, x, y, z, ry, farmlandId, day, dayTimeMs }`
+  (Vertrag; die Speicherung im Mod-Spielstand kommt mit der Taste, RFH-O1):
   die letzten **20** festgelegten Punkte (Mod-Einstellung `deliveryPointsMax`, Entscheidung 15.10.2026), fortlaufend
   nummeriert (`seq`). Der Mod speichert sie im
   Mod-Spielstand (`FS25_RPSim.xml`, `RPSimPersistence`). Das Backend übernimmt jeden neuen `seq` einmal; Name und
   Verwaltung liegen danach nur im Backend (O1).
-- [ ] `market_context.json`, neuer optionaler Block `storePlaces[]` = `{ x, z }`: Mittelpunkt jedes Shop-Platzes, nur für
+- [x] `market_context.json`, neuer optionaler Block `storePlaces[]` = `{ x, z }`: Mittelpunkt jedes Shop-Platzes, nur für
   die Lieferkosten nach Entfernung (L6).
 
 **Beleg:**
@@ -260,13 +274,15 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
      entfernen, dann die `bookings` der Reihe nach abbuchen (Rest `VEHICLE_PURCHASE`, Lieferkosten und Aufpreis für
      einen neuen Versuch `VEHICLE_DELIVERY_FEE`, Express `VEHICLE_EXPRESS_FEE`). Schlägt etwas fehl, werden die
      geladenen Maschinen wieder gelöscht (wie `onVehicleSpawned` heute) und nichts gebucht.
-  7. Quittung mit `result = { vehicleIds[], placeUsed: "DELIVERY_POINT" | "SHOP", removedTradeIns[] }`.
+  7. Quittung mit `result = { placeUsed: "DELIVERY_POINT" | "SHOP", vehicleCount, vehicleId1 … vehicleIdN,
+     tradeInsRemoved }`: eine Quittung trägt nur einfache Werte (`RPSimProcessor.normalizeResult`, seit R3-Q1), deshalb
+     je geladener Maschine ein eigener Schlüssel in der Reihenfolge der Positionen.
 - [ ] Bis zur Quittung bleibt die Anweisung offen (keine Quittung, nicht im Spielstand), wie `VEHICLE_SPAWN`. Nach einem
   Neuladen ohne Speichern sendet das Backend sie erneut; `processedInstructions` verhindert eine doppelte
   Ausführung.
-- [ ] `bookings` statt eines einzelnen `price`, weil eine Lieferung mehrere Buchungsgründe trägt; jede Buchung
+- [x] `bookings` statt eines einzelnen `price`, weil eine Lieferung mehrere Buchungsgründe trägt; jede Buchung
   erscheint einzeln im Kontoauszug.
-- [ ] Fehlercodes: `NO_SPACE`, `UNKNOWN_STORE_ITEM`, `INSUFFICIENT_FUNDS`, `LOAD_FAILED`, dazu die Codes von
+- [x] Fehlercodes: `NO_SPACE`, `UNKNOWN_STORE_ITEM`, `INSUFFICIENT_FUNDS`, `LOAD_FAILED`, dazu die Codes von
   `VEHICLE_REMOVE` mit dem Zusatz der Inzahlungsmaschine (`TRADE_IN_NOT_FOUND`, `TRADE_IN_IN_USE`,
   `TRADE_IN_ATTACHED`, `TRADE_IN_NOT_OWN`).
 - [ ] Ein Mod ohne Q3 lehnt den Typ ab (`REJECTED`, „unknown type …“). Das Backend fällt dann auf `VEHICLE_SPAWN` je
@@ -318,7 +334,7 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
 
 ### RFH-Q4 Buchungsgründe und Konfiguration
 
-- [ ] Neue `MoneyReason`-Werte in Mod, Backend und `modDesc.xml` (`rpsim_money_<REASON>`), Entscheidung 15.10.2026:
+- [x] Neue `MoneyReason`-Werte in Mod, Backend und `modDesc.xml` (`rpsim_money_<REASON>`), Entscheidung 15.10.2026:
 
   | Grund | Wofür | Klasse (`rpsim.formulas.finance.categories`) |
   | --- | --- | --- |
@@ -341,17 +357,19 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
 
 ### RFH-Q5 Simulator, Tests, Doku
 
-- [ ] `tools/bridge-simulator`: neues Szenario `fahrzeughaendler` mit Katalog inkl. Konfigurationen, zwei
+- [x] `tools/bridge-simulator`: neues Szenario `fahrzeughaendler` mit Katalog inkl. Konfigurationen, zwei
   Lieferpunkten und Shop-Plätzen; der Simulator führt `VEHICLE_DELIVERY` aus wie der spätere Mod, ein Endpunkt
   `POST /delivery-point` simuliert den Tastendruck (auch auf fremdem Land), ein Schalter belegt den Lieferort bzw.
   den Shop-Platz (Ausweichen, Warten und „erneut versuchen“ testen).
-- [ ] Mod-Tests (`mod/tests/test_machine_dealer.lua`) mit gemockten FS25-Globals: Konfigurationen exportieren,
+- [x] Mod-Tests (`mod/tests/test_machine_dealer.lua`) mit gemockten FS25-Globals: Konfigurationen exportieren,
   `saveId` → Index, Lieferpunkt speichern und laden, `overlapBox` frei/belegt, Ausweichen, Inzahlungnahme belegt,
   Buchung erst im Callback, Löschen bei Fehlschlag.
-- [ ] Backend: Grenzwert-Tests für jede Formel (Lieferzeit bei 1, 3 und 30 Spieltagen je Monat, 9-Uhr-Regel, Verzug,
+- [ ] Backend (Vertrag erledigt: `MachineDealerContractTest`, `BridgeSyncIntegrationTest`, `FailedInstructionTest`,
+  End-to-End gegen den Simulator; die Formeln folgen mit ihren Bereichen): Grenzwert-Tests für jede Formel (Lieferzeit bei 1, 3 und 30 Spieltagen je Monat, 9-Uhr-Regel, Verzug,
   Express, Lieferkosten, Stornogebühr, Rabatt-Grenze, Aufpreis neuer Versuch), End-to-End-Test gegen den Simulator.
-- [ ] `docs/dev/manual-test-plan.md`: neuer Abschnitt mit je einer Zeile pro 🟡 dieser Roadmap.
-- [ ] `docs/dev/bridge-protocol.md`, `docs/user-guide/funktionen.md`, `mod/README.md`, `CHANGELOG.md`.
+- [x] `docs/dev/manual-test-plan.md`: neuer Abschnitt mit je einer Zeile pro 🟡 dieser Roadmap.
+- [x] `docs/dev/bridge-protocol.md`, `mod/README.md`, `CHANGELOG.md`, `docs/dev/testing.md`;
+  `docs/user-guide/funktionen.md` folgt mit der ersten sichtbaren Funktion (H, K).
 
 **Beleg:** –.
 

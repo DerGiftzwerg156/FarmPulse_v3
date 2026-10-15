@@ -406,6 +406,58 @@ class SimulatorScenariosEndToEndTest {
         });
     }
 
+    /**
+     * Roadmap vehicle dealer (RFH-Q5): store_catalog.json, the delivery points and the shop places of fahrzeughaendler
+     * reach the backend; a VEHICLE_DELIVERY goes out and comes back with the ids of the new machines.
+     */
+    @Test
+    void vehicleDealerContractArrivesAndADeliveryComesBack() {
+        String id = "sim_dealer_" + System.nanoTime();
+        Savegame sg = link("fahrzeughaendler", id);
+        tx.executeWithoutResult(s -> {
+            Savegame stored = savegames.findById(sg.getId()).orElseThrow();
+            var catalog = facts.storeCatalog(stored).orElseThrow();
+            assertThat(catalog.items()).extracting(i -> i.xmlFilename()).contains(
+                    "data/vehicles/fendt/vario700/vario700.xml");
+            assertThat(catalog.items()).filteredOn(i -> i.xmlFilename().contains("vario700")).singleElement()
+                    .satisfies(i -> assertThat(i.configurations()).extracting(c -> c.name())
+                            .containsExactly("baseColor", "motor", "wheel"));
+            assertThat(facts.latest(stored).orElseThrow().deliveryPoints()).extracting(p -> p.seq()).containsExactly(1, 2);
+            assertThat(facts.marketContext(stored).orElseThrow().storePlaces()).hasSize(2);
+        });
+        String instructionId = tx.execute(s -> {
+            OutboxInstruction o = new OutboxInstruction();
+            o.setSavegame(savegames.findById(sg.getId()).orElseThrow());
+            o.setInstructionId(OutboxService.newInstructionId());
+            o.setType(de.farmpulse.rpsim.domain.InstructionType.VEHICLE_DELIVERY);
+            o.setPayloadJson("""
+                    {"deliveryId":"dlv_1","items":[{"storeXmlFilename":"data/vehicles/fendt/vario700/vario700.xml",
+                     "configurations":{"motor":{"index":2}}}],"place":{"x":-412.5,"z":233.75,"ry":1.571},
+                     "fallbackToShop":true,"bookings":[{"amount":200000,"moneyReason":"VEHICLE_PURCHASE"},
+                     {"amount":1100,"moneyReason":"VEHICLE_DELIVERY_FEE"}],"tradeIns":["veh_00001"]}""");
+            o.setStatus(InstructionStatus.PENDING);
+            o.setCreatedAtGameTime(0);
+            o.setCreatedAt(java.time.Instant.now());
+            return outbox.save(o).getInstructionId();
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "fahrzeughaendler", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            OutboxInstruction done = outbox.findByInstructionId(instructionId).orElseThrow();
+            assertThat(done.getStatus()).isEqualTo(InstructionStatus.APPLIED);
+            assertThat(outboxService.ackResult(done)).containsEntry("placeUsed", "DELIVERY_POINT")
+                    .containsEntry("vehicleId1", "veh_00003").containsEntry("tradeInsRemoved", 1);
+        });
+        // an older scenario writes no catalog file and has no delivery blocks
+        Savegame old = link("nachbarhandel", "sim_old_dealer_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame stored = savegames.findById(old.getId()).orElseThrow();
+            assertThat(facts.latest(stored).orElseThrow().deliveryPoints()).isNull();
+            assertThat(facts.marketContext(stored).orElseThrow().storePlaces()).isNull();
+        });
+    }
+
     @Test
     void konfliktModsAreShownInTheHeaderContext() {
         link("konflikt-mods", "sim_mods_" + System.nanoTime());

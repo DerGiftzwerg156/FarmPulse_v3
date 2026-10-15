@@ -44,7 +44,8 @@ import tools.jackson.databind.json.JsonMapper;
  * Roadmap V3 (R3-Q1): an older mod refuses the new instruction types ({@link #ROADMAP_V3_TYPES}) with "unknown type …"
  * (REJECTED) or NOT_SUPPORTED; the notice then carries {@code modOutdated = true} and says "Mod aktualisieren". The
  * features that send these types cancel their deal themselves. Roadmap V3.1 (R31-Q1): the same for
- * {@link #ROADMAP_V31_TYPES}, Roadmap V3.2 (R32-Q1) for {@link #ROADMAP_V32_TYPES}.
+ * {@link #ROADMAP_V31_TYPES}, Roadmap V3.2 (R32-Q1) for {@link #ROADMAP_V32_TYPES}, the vehicle dealer (RFH-Q3) for
+ * {@link #ROADMAP_RFH_TYPES}.
  */
 @Service
 public class FailedInstructionService {
@@ -61,6 +62,9 @@ public class FailedInstructionService {
 
     /** Roadmap V3.2 (R32-Q1): instruction types an older mod does not know. */
     public static final Set<InstructionType> ROADMAP_V32_TYPES = EnumSet.of(InstructionType.HUSBANDRY_TRANSFER);
+
+    /** Roadmap vehicle dealer (RFH-Q3): instruction types an older mod does not know. */
+    public static final Set<InstructionType> ROADMAP_RFH_TYPES = EnumSet.of(InstructionType.VEHICLE_DELIVERY);
 
     private static final Logger log = LoggerFactory.getLogger(FailedInstructionService.class);
 
@@ -264,9 +268,13 @@ public class FailedInstructionService {
         notices.raise(sg, NoticeKind.INSTRUCTION_FAILED, d, RELATED, ins.getId());
     }
 
-    /** Roadmap V3 (R3-Q1) / V3.1 (R31-Q1) / V3.2 (R32-Q1): an instruction type an older mod does not know. */
+    /**
+     * Roadmap V3 (R3-Q1) / V3.1 (R31-Q1) / V3.2 (R32-Q1) / vehicle dealer (RFH-Q3): an instruction type an older mod does
+     * not know.
+     */
     static boolean newType(InstructionType type) {
-        return ROADMAP_V3_TYPES.contains(type) || ROADMAP_V31_TYPES.contains(type) || ROADMAP_V32_TYPES.contains(type);
+        return ROADMAP_V3_TYPES.contains(type) || ROADMAP_V31_TYPES.contains(type) || ROADMAP_V32_TYPES.contains(type)
+                || ROADMAP_RFH_TYPES.contains(type);
     }
 
     /**

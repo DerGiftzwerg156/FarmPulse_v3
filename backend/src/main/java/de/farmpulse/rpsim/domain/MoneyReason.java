@@ -66,5 +66,12 @@ public enum MoneyReason {
     INVESTOR_COMPENSATION,
     /** Owner decisions 2026-10-14: interest on a negative balance while the overdraft is on, at every month start. */
     OVERDRAFT_INTEREST,
+    // Roadmap vehicle dealer (RFH-Q4, owner decisions 2026-10-15): deposit at the order, delivery costs and the fee of a
+    // new delivery attempt, express surcharge, refund of the deposit and the part kept on a cancellation
+    VEHICLE_DEPOSIT,
+    VEHICLE_DELIVERY_FEE,
+    VEHICLE_EXPRESS_FEE,
+    VEHICLE_REFUND,
+    VEHICLE_CANCELLATION_FEE,
     OTHER
 }

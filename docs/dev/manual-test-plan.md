@@ -655,3 +655,29 @@ feed). Note the result in the row's issue and, if the fallback is needed, switch
 | 30.13 | Acceptance F (R4-F) | A dairy stable with 40 cows, silage in a bunker silo, hay in a silo, 20 round bales of straw entered in *Stall → Futter*; play three game days; let the silage fall below one game month; buy ten cows | after three days the need per group is "gemessen"; silage and hay appear without input, the bales count; reach in days and months with "leer am"; below one month the silage turns red, the animal keeper (without one the cooperative) writes once, *Aufgaben* shows "Futter: Silage reicht noch x Tage" with the date, the home tile appears; in the next game month at most one more mail; with ten more cows the reach drops at once; with an older mod the tab only asks to update the mod | – |
 | 30.14 | Acceptance A (R4-A) | Plan three fields in *Feldbuch → Anbauplanung*: wheat after wheat, a sowing month outside the window, a field with field book values and a new one; open the needs; wait for the sowing window; sow one field with another crop and harvest it | wheat after wheat shows the rotation hint with the premium; the month outside the window is reported; the forecast names the field's average and the base yield with their source; seed, share sold ahead and feed coverage appear; at the start of the window *Aufgaben* shows "Feld x: … säen" and the calendar the window; the other crop marks the plan "abweichend", after the harvest *Plan / Ist* shows both | – |
 | 30.15 | Links and presets (R4-D5 / R4-A4 / R4-A5) | From a calculation in *Bank → Betriebsergebnis* open *Im Feldbuch*, from the field book entry *Deckungsbeitrag*; in *Anbauplanung* open *Lohnunternehmer beauftragen* and *Vorkontrakt abschließen* | the field book highlights the entry and the bank opens its calculation; the map selects the field with "Säen" and the crop ticked; the forward contract form starts with the fill type | – |
+
+## 31. Roadmap vehicle dealer in the real FS25
+
+Every point of [`ROADMAP_FAHRZEUGHÄNDLER.md`](../architecture/ROADMAP_FAHRZEUGH%C3%84NDLER.md) marked 🟡 ("Im Spiel
+prüfen") gets one row here, the acceptance criteria follow with their sections. RFH-Q fixes the contract only
+([bridge protocol](bridge-protocol.md#roadmap-vehicle-dealer-block-optional-rfh-q2)): the mod reads the options with
+RFH-K1, sets delivery points with RFH-O1, reads the shop places with RFH-L6 and delivers with RFH-L5, so these rows can
+only be checked once those sections are built. Without FS25 the bridge simulator scenario `fahrzeughaendler` shows the
+contract (control endpoints `POST /delivery-point`, `POST /delivery-place-blocked`, `POST /shop-full`). Note the result
+in the row's issue and, if the fallback is needed, switch the implementation to it.
+
+| # | Check (roadmap item) | How | Expected / note result | Fallback if not |
+| --- | --- | --- | --- | --- |
+| 31.1 | 🟡 Display name of an option type (RFH-Q1) | Look at `store_catalog.json` → `configurations[].title` for a tractor with colour, wheels and engine | note the field that holds the second argument of `addConfigurationType` | the tablet translates the technical name (`baseColor` → „Farbe“), unknown types keep their name |
+| 31.2 | 🟡 Price of the shop (RFH-Q1) | Configure the same tractor in the shop of the game and in the tablet, compare the prices at two difficulty levels | note whether `EconomyManager:getBuyPrice` differs from base price + options | the tablet says „Listenpreis laut Shop-Daten“ |
+| 31.3 | 🟡 Size and time of the catalog export (RFH-Q1) | Start a savegame with many mod vehicles, note the size of `store_catalog.json` and the loading time | note size and time | details per machine on request (instruction, answer in a file) |
+| 31.4 | 🟡 Player position (RFH-Q2) | Press the key on flat ground and on a slope, compare `deliveryPoints[].y` with the terrain | note whether `getPosition()` is feet or eye height | the delivery always takes the terrain height (`setPosition(x, nil, z)`) |
+| 31.5 | 🟡 Default key (RFH-Q2) | Look for a free key combination in the controls of the game | note the combination | no default, the player sets the key |
+| 31.6 | 🟡 Shop places (RFH-Q2 / L6) | Look at `market_context.storePlaces` on two maps and compare with the shop places in the game | note the fields of a place and whether the centre fits | only the base fee of the delivery costs |
+| 31.7 | 🟡 Position and direction of a delivery (RFH-Q3) | Deliver a tractor and a trailer to a delivery point | note whether the machine stands centred and facing the saved direction | `setIgnoreShopOffset(true)` and 10 m in the facing direction |
+| 31.8 | 🟡 Collision check (RFH-Q3) | Deliver to a point with a parked vehicle, a fence, a building corner and the player standing there | note which of them `overlapBox` finds | all bits and `includeStatics`; in doubt the place counts as taken and the delivery goes to the shop places |
+| 31.9 | 🟡 Options in the game (RFH-Q3) | Deliver a tractor with another colour, wheels and engine, open the vehicle menu of the game | colour, wheels and engine as ordered | none – same path as the shop of the game; a difference is a bug |
+| 31.10 | 🟡 Bundle at an own place (RFH-Q3) | Deliver a bundle (e.g. tractor with implement) to a delivery point | note whether the parts keep their offset | bundles always to the shop places |
+| 31.11 | 🟡 Bales and pallets at an own place (RFH-K1) | Deliver a pallet and a bale offer to a delivery point | note number and position | entries with `multipleItemPurchase` always to the shop places |
+| 31.12 | 🟡 Leasing in the shop of the game (RFH-S1) | Lease a machine in the shop of the game, look at the booking statement | note the money type of the first leasing payment | the dealer reacts only to `SHOP_VEHICLE_BUY` |
+

@@ -143,6 +143,10 @@
       "properties": { "farmlandId": { "type": "integer" }, "fillType": { "type": "string", "minLength": 1 },
         "liters": { "type": "integer", "minimum": 0 }, "helperLiters": { "type": "integer", "minimum": 0 } } } },
     "feedStock": { "type": "array", "items": { "type": "object", "required": ["fillType", "amount"],
-      "properties": { "fillType": { "type": "string", "minLength": 1 }, "amount": { "type": "integer", "minimum": 1 } } } }
+      "properties": { "fillType": { "type": "string", "minLength": 1 }, "amount": { "type": "integer", "minimum": 1 } } } },
+    "deliveryPoints": { "type": "array", "items": { "type": "object", "required": ["seq", "x", "y", "z", "ry"],
+      "properties": { "seq": { "type": "integer", "minimum": 1 }, "x": { "type": "number" }, "y": { "type": "number" },
+        "z": { "type": "number" }, "ry": { "type": "number" }, "farmlandId": { "type": "integer" },
+        "day": { "type": "integer" }, "dayTimeMs": { "type": "integer", "minimum": 0 } } } }
   }
 }

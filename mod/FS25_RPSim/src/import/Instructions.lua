@@ -12,7 +12,10 @@ RPSimInstructions.TYPES = { MONEY_TRANSACTION = true, PRICE_EVENT = true, FARMLA
     -- Roadmap V3.1 (R31-Q1): executed with R31-A1 (FIELD_WORK), R31-A3 (ANIMAL_TRANSFER) and R31-D8 (VEHICLE_FUEL)
     FIELD_WORK = true, ANIMAL_TRANSFER = true, VEHICLE_FUEL = true,
     -- Roadmap V3.2 (R32-Q1): milk out of the storage of an own husbandry (executed since Q, used by R32-I3 type W3)
-    HUSBANDRY_TRANSFER = true }
+    HUSBANDRY_TRANSFER = true,
+    -- Roadmap vehicle dealer (RFH-Q3): delivery of new machines; validated now, executed with RFH-L5, until then
+    -- acknowledged FAILED / NOT_SUPPORTED
+    VEHICLE_DELIVERY = true }
 
 RPSimInstructions.MONEY_REASONS = {
     CREDIT_DISBURSEMENT = true, CREDIT_INSTALLMENT = true, CREDIT_PENALTY = true, CREDIT_CALLBACK = true,
@@ -45,6 +48,10 @@ RPSimInstructions.MONEY_REASONS = {
     INVESTOR_CAPITAL = true, INVESTOR_REPAYMENT = true, INVESTOR_PAYOUT = true, INVESTOR_COMPENSATION = true,
     -- owner decisions 2026-10-14: interest on a negative balance while the overdraft is on
     OVERDRAFT_INTEREST = true,
+    -- Roadmap vehicle dealer (RFH-Q4, owner decisions 2026-10-15): deposit at the order, delivery costs and the fee of
+    -- a new delivery attempt, express surcharge, refund of the deposit and the part kept on a cancellation
+    VEHICLE_DEPOSIT = true, VEHICLE_DELIVERY_FEE = true, VEHICLE_EXPRESS_FEE = true, VEHICLE_REFUND = true,
+    VEHICLE_CANCELLATION_FEE = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }
@@ -171,6 +178,88 @@ local function validateVehicleSpawn(ins)
     end
     if not RPSimInstructions.MONEY_REASONS[ins.moneyReason] then
         return false, "unknown moneyReason " .. tostring(ins.moneyReason)
+    end
+    return validateMinBalance(ins)
+end
+
+--- Roadmap vehicle dealer RFH-Q3: one option per configuration name - { saveId = string } and/or { index = whole
+-- number >= 1 } (the mod prefers saveId, ConfigurationUtil.getConfigIdBySaveId).
+local function validateConfigurations(configurations, i)
+    if configurations == nil then
+        return true
+    end
+    if type(configurations) ~= "table" or isList(configurations) and next(configurations) ~= nil then
+        return false, string.format("items[%d].configurations must be an object", i)
+    end
+    for name, c in pairs(configurations) do
+        local prefix = string.format("items[%d].configurations.%s", i, tostring(name))
+        if type(name) ~= "string" or type(c) ~= "table" then
+            return false, prefix .. " must be an object"
+        end
+        if c.saveId ~= nil and not isNonEmptyString(c.saveId) then
+            return false, prefix .. ".saveId must be a non-empty string"
+        end
+        if c.index ~= nil and (not isNumber(c.index) or c.index < 1 or c.index ~= math.floor(c.index)) then
+            return false, prefix .. ".index must be a whole number >= 1"
+        end
+        if c.saveId == nil and c.index == nil then
+            return false, prefix .. " needs saveId or index"
+        end
+    end
+    return true
+end
+
+--- Roadmap vehicle dealer RFH-Q3: delivery of one or more new machines with their options, at an own place (x, z,
+-- rotation ry) or on the shop places, the bookings of the delivery (each amount >= 0, booked by the mod as -amount
+-- after loading) and the trade-ins removed with it.
+local function validateVehicleDelivery(ins)
+    if not isNonEmptyString(ins.deliveryId) then
+        return false, "deliveryId is required"
+    end
+    if not isList(ins.items) or #ins.items == 0 then
+        return false, "items must be a non-empty array"
+    end
+    for i, item in ipairs(ins.items) do
+        if type(item) ~= "table" or not isNonEmptyString(item.storeXmlFilename) then
+            return false, string.format("items[%d].storeXmlFilename is required", i)
+        end
+        local ok, err = validateConfigurations(item.configurations, i)
+        if not ok then
+            return false, err
+        end
+    end
+    if ins.place ~= nil then
+        if type(ins.place) ~= "table" or not isNumber(ins.place.x) or not isNumber(ins.place.z)
+            or not isNumber(ins.place.ry) then
+            return false, "place needs the numbers x, z and ry"
+        end
+    end
+    if ins.fallbackToShop ~= nil and type(ins.fallbackToShop) ~= "boolean" then
+        return false, "fallbackToShop must be a boolean"
+    end
+    if not isList(ins.bookings) then
+        return false, "bookings must be an array"
+    end
+    for i, b in ipairs(ins.bookings) do
+        if type(b) ~= "table" or not isNumber(b.amount) or b.amount < 0 then
+            return false, string.format("bookings[%d].amount must be >= 0", i)
+        end
+        if not RPSimInstructions.MONEY_REASONS[b.moneyReason] then
+            return false, string.format("bookings[%d]: unknown moneyReason %s", i, tostring(b.moneyReason))
+        end
+        if b.note ~= nil and type(b.note) ~= "string" then
+            return false, string.format("bookings[%d].note must be a string", i)
+        end
+    end
+    if ins.tradeIns ~= nil then
+        if not isList(ins.tradeIns) then
+            return false, "tradeIns must be an array"
+        end
+        for i, id in ipairs(ins.tradeIns) do
+            if not isNonEmptyString(id) then
+                return false, string.format("tradeIns[%d] must be a vehicleId", i)
+            end
+        end
     end
     return validateMinBalance(ins)
 end
@@ -335,6 +424,8 @@ function RPSimInstructions.validate(ins)
         end
     elseif ins.type == "VEHICLE_SPAWN" then
         return validateVehicleSpawn(ins)
+    elseif ins.type == "VEHICLE_DELIVERY" then
+        return validateVehicleDelivery(ins)
     elseif ins.type == "VEHICLE_REMOVE" then
         -- Roadmap V3 R3-V3: own vehicle by its uniqueId (as in assets.vehicles)
         if not isNonEmptyString(ins.vehicleId) then

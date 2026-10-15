@@ -53,5 +53,12 @@ public enum InstructionType {
      * investor, R32-I3 type W3). An own type instead of a field of STORAGE_TRANSFER: an older mod would skip an unknown
      * field and book from the silos, an unknown type is refused (notice "Mod aktualisieren").
      */
-    HUSBANDRY_TRANSFER
+    HUSBANDRY_TRANSFER,
+    /**
+     * Roadmap vehicle dealer (RFH-Q3): delivery of new machines with their options at an own place or on the shop
+     * places, with its bookings and trade-ins. Like VEHICLE_SPAWN the mod books in the loading callback; the ack result
+     * (plain values) carries placeUsed, vehicleCount, vehicleId1..n (order of the items) and tradeInsRemoved. Executed with RFH-L5 (until then FAILED / NOT_SUPPORTED);
+     * an older mod refuses the type (notice "Mod aktualisieren").
+     */
+    VEHICLE_DELIVERY
 }

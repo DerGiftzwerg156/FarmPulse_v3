@@ -153,6 +153,18 @@ normalisation in `test_farm_facts.lua` and `test_market_context.lua`; the simula
 endpoints `POST /input`, `POST /feed` and `POST /eat` and their place in the savegame in `test/roadmap-v4.test.js`. Q
 brings no formula, no table and no configuration value; they come with D, F and A. In the game: manual test plan
 section 30.
+Roadmap vehicle dealer (RFH-Q5): `SimulatorScenariosEndToEndTest.vehicleDealerContractArrivesAndADeliveryComesBack`
+checks that `store_catalog.json`, the delivery points and the shop places of `fahrzeughaendler` arrive (and stay `null`
+for `nachbarhandel`) and that a `VEHICLE_DELIVERY` comes back with `placeUsed`, `vehicleId1` and `tradeInsRemoved`;
+`MachineDealerContractTest` (delivery points, shop places, the catalog file, the new type and money reasons),
+`BridgeSyncIntegrationTest.storeCatalogIsStoredAtTheLinkedSavegameOnly` and `FailedInstructionTest` (notice "Mod
+aktualisieren" for `VEHICLE_DELIVERY`) cover the backend side. The mod covers the validation of `VEHICLE_DELIVERY`,
+`FAILED` / `NOT_SUPPORTED` without the action, the plain ack result, the new money reasons and their titles, the
+normalisation of the catalog, the delivery points and the shop places and the catalog file in `test_machine_dealer.lua`;
+the simulator the scenario, the delivery (place, shop places, `NO_SPACE`, trade-ins, bookings, failure codes), the
+validation, the key `POST /delivery-point` and the points in the savegame in `test/machine-dealer.test.js`. Q brings no
+formula, no table besides the catalog column and no configuration value; they come with H, K, O, B, L, S and V. In the
+game: manual test plan section 31.
 Roadmap V4 R4-D (contribution margin): `FieldMarginTest` covers the direct costs from the counter at the price of the
 moment with the helper surcharge and free farmyard manure, a falling counter, the estimate of an older mod and its
 replacement by an entered line, contractor fees, rent and premiums (each booked once), the realised price of the sales

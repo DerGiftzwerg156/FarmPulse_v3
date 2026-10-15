@@ -46,6 +46,11 @@ public class BridgeFiles {
         return base().resolve("export").resolve("market_context.json");
     }
 
+    /** Roadmap vehicle dealer RFH-Q1: the shop catalog with every configuration option, once per mission start. */
+    public Path storeCatalog() {
+        return base().resolve("export").resolve("store_catalog.json");
+    }
+
     public Path instructions() {
         return base().resolve("import").resolve("instructions.json");
     }
