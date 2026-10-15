@@ -408,7 +408,7 @@ class SimulatorScenariosEndToEndTest {
 
     /**
      * Roadmap vehicle dealer (RFH-Q5): store_catalog.json, the delivery points and the shop places of fahrzeughaendler
-     * reach the backend; a VEHICLE_DELIVERY goes out and comes back with the ids of the new machines.
+     * reach the backend (RFH-K1: with display names and power); a VEHICLE_DELIVERY goes out and comes back with the ids of the new machines.
      */
     @Test
     void vehicleDealerContractArrivesAndADeliveryComesBack() {
@@ -420,8 +420,16 @@ class SimulatorScenariosEndToEndTest {
             assertThat(catalog.items()).extracting(i -> i.xmlFilename()).contains(
                     "data/vehicles/fendt/vario700/vario700.xml");
             assertThat(catalog.items()).filteredOn(i -> i.xmlFilename().contains("vario700")).singleElement()
-                    .satisfies(i -> assertThat(i.configurations()).extracting(c -> c.name())
-                            .containsExactly("baseColor", "motor", "wheel"));
+                    .satisfies(i -> {
+                        assertThat(i.configurations()).extracting(c -> c.name())
+                                .containsExactly("baseColor", "motor", "wheel");
+                        // RFH-K1: display names of the game and the power in hp
+                        assertThat(i.brandTitle()).isEqualTo("Fendt");
+                        assertThat(i.categoryTitle()).isEqualTo("Große Traktoren");
+                        assertThat(i.powerMax()).isEqualTo(280);
+                        assertThat(i.configurations().get(1).options()).extracting(o -> o.power())
+                                .containsExactly(200, 240, 280);
+                    });
             assertThat(facts.latest(stored).orElseThrow().deliveryPoints()).extracting(p -> p.seq()).containsExactly(1, 2);
             assertThat(facts.marketContext(stored).orElseThrow().storePlaces()).hasSize(2);
         });

@@ -2273,3 +2273,135 @@ export interface DealerContactView {
 export interface DealerView {
   dealer: DealerContactView | null;
 }
+
+/** Roadmap vehicle dealer RFH-K1: one line of the catalog list. */
+export interface CatalogEntry {
+  xmlFilename: string;
+  name: string;
+  brand: string | null;
+  brandTitle: string | null;
+  categoryName: string | null;
+  categoryTitle: string | null;
+  price: number;
+  dailyUpkeep: number;
+  powerMin: number | null;
+  powerMax: number | null;
+  isMod: boolean;
+  motorized: boolean | null;
+}
+
+export interface CatalogFilterValue {
+  name: string;
+  title: string | null;
+}
+
+export interface CatalogPage {
+  items: CatalogEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  categories: CatalogFilterValue[];
+  brands: CatalogFilterValue[];
+}
+
+/** RFH-K1: available = false while the mod sent no catalog. */
+export interface CatalogView {
+  available: boolean;
+  page: CatalogPage | null;
+}
+
+export interface CatalogQuery {
+  text?: string;
+  category?: string;
+  brand?: string;
+  priceMin?: number;
+  priceMax?: number;
+  sort?: 'CATEGORY' | 'NAME' | 'PRICE' | 'POWER';
+  desc?: boolean;
+  page?: number;
+}
+
+/** RFH-K2: one option of a configuration type (store_catalog.json). */
+export interface CatalogOption {
+  index: number;
+  saveId: string | null;
+  name: string;
+  desc: string | null;
+  price: number | null;
+  dailyUpkeep: number | null;
+  isDefault: boolean | null;
+  isSelectable: boolean | null;
+  isYesNoOption: boolean | null;
+  color: { r: number; g: number; b: number } | null;
+  dependent: { name: string; index: number }[] | null;
+  power: number | null;
+}
+
+export interface CatalogConfiguration {
+  name: string;
+  title: string | null;
+  options: CatalogOption[];
+}
+
+export interface CatalogItem {
+  xmlFilename: string;
+  name: string;
+  brand: string | null;
+  brandTitle: string | null;
+  categoryName: string | null;
+  categoryTitle: string | null;
+  price: number | null;
+  dailyUpkeep: number | null;
+  powerMin: number | null;
+  powerMax: number | null;
+  isMod: boolean | null;
+  configurations: CatalogConfiguration[] | null;
+  defaultConfigurations: Record<string, number> | null;
+  configurationSets: { name: string; isDefault: boolean; configurations: Record<string, number> }[] | null;
+}
+
+/** RFH-K2: a type and option of a configuration ("legt auch fest", deviations). */
+export interface TypeOption {
+  type: string;
+  title: string | null;
+  index: number;
+  option: string;
+}
+
+/** RFH-L1..L3: game times of the expected delivery; earliestAt = 9:00 of the next game day. */
+export interface DeliveryEstimate {
+  fromGameTime: number;
+  earliestAt: number;
+  minAt: number;
+  maxAt: number;
+  expressMinAt: number;
+  expressMaxAt: number;
+}
+
+export interface QuoteView {
+  xmlFilename: string;
+  name: string;
+  configurations: Record<string, number>;
+  listPrice: number;
+  dailyUpkeep: number;
+  configurationSet: string | null;
+  setWith: TypeOption[];
+  deviations: TypeOption[];
+  extraDays: number;
+  delivery: DeliveryEstimate;
+}
+
+/** RFH-K3: quote = null when the machine left the catalog or its options changed. */
+export interface CartPosition {
+  id: number;
+  xmlFilename: string;
+  name: string;
+  choice: Record<string, number>;
+  quote: QuoteView | null;
+}
+
+export interface CartView {
+  positions: CartPosition[];
+  maxPositions: number;
+  listPriceSum: number;
+}

@@ -7,15 +7,18 @@ import { GameStateStore } from '../../core/state/game-state.store';
 import { LabelPipe } from '../../shared/format/label.pipe';
 import { Card } from '../../shared/ui/card';
 import { TrustMeter } from '../village/trust-meter';
+import { DealerCart } from './dealer-cart';
+import { DealerCatalog } from './dealer-catalog';
 
 /**
  * Hof-Tablet app "Händler" (Roadmap vehicle dealer RFH-H2, owner decisions 2026-10-15): tabs Katalog, Warenkorb,
- * Bestellungen, Lieferorte. Until the areas K, O, B and L fill them, every tab shows the dealer as contact and the hint
- * "Folgt mit dem nächsten Ausbau". Opening the app brings the dealer into an older savegame (RFH-H1).
+ * Bestellungen, Lieferorte, each with the dealer as contact. Katalog (with the configurator) and Warenkorb come with
+ * RFH-K; until the areas O, B and L fill the others they show the hint "Folgt mit dem nächsten Ausbau". Opening the app
+ * brings the dealer into an older savegame (RFH-H1).
  */
 @Component({
   selector: 'app-dealer',
-  imports: [RouterLink, TranslatePipe, LabelPipe, Card, TrustMeter],
+  imports: [RouterLink, TranslatePipe, LabelPipe, Card, TrustMeter, DealerCatalog, DealerCart],
   template: `
     <section class="grid grid-cols-1 gap-4 xl:grid-cols-2" [attr.data-tab]="tab()">
       @if (dealer(); as d) {
@@ -25,9 +28,19 @@ import { TrustMeter } from '../village/trust-meter';
             class="font-display text-[13px] text-text hover:text-accent" data-testid="dealer-name">{{ d.character.name }}</a>
         </app-card>
       }
-      <app-card [title]="'tabs.dealer.' + tab() | t" data-testid="coming-soon">
-        <p class="text-[13px] text-muted">{{ 'dealer.comingSoon' | t }}</p>
-      </app-card>
+      @switch (tab()) {
+        @case ('katalog') {
+          <app-dealer-catalog class="xl:col-span-2" />
+        }
+        @case ('warenkorb') {
+          <app-dealer-cart class="xl:col-span-2" />
+        }
+        @default {
+          <app-card [title]="'tabs.dealer.' + tab() | t" data-testid="coming-soon">
+            <p class="text-[13px] text-muted">{{ 'dealer.comingSoon' | t }}</p>
+          </app-card>
+        }
+      }
     </section>
   `,
 })

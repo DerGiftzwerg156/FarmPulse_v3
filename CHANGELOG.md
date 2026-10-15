@@ -12,6 +12,17 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Vehicle dealer - catalog, configurator and cart [RFH-K]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`, owner
+  decisions 2026-10-15 in `QUESTIONS.md`): the mod now reads every shop machine with all options and writes
+  `store_catalog.json`, with the new optional fields `brandTitle`, `categoryTitle` (display names of the game),
+  `powerMin` / `powerMax` and `power` per motor option (hp). In the app *Händler* the tab *Katalog* lists the whole
+  catalog (search, category, brand, price range; sorted by category and name, 50 per page) with a configurator per
+  machine: the selectable options with surcharge and daily upkeep, colours as colour fields, the options set with
+  another one, the matching package of the manufacturer, list price (base price + options), daily upkeep and the
+  expected delivery time with and without express (days of a 30-day month scaled to the month length, never before
+  9:00 of the next game day). The tab *Warenkorb* keeps up to 10 positions per savegame (change, remove). New
+  configuration `rpsim.formulas.machine-dealer.*`, migration V51 (`dealer_cart_item`), endpoints `/api/dealer/catalog`,
+  `/api/dealer/catalog/item`, `/api/dealer/configure`, `/api/dealer/cart`. Asking for the offer comes with RFH-B.
 - **Vehicle dealer - the dealer and the app [RFH-H]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`, owner
   decisions 2026-10-15 in `QUESTIONS.md`): the new mandatory role `MACHINE_DEALER` (*Landmaschinenhändler/in*) belongs
   to the start cast of a new savegame; an older savegame gets the dealer, with introduction mail and diary entry, when

@@ -738,21 +738,22 @@ stays small). Written next to `market_context.json` at the mission start, with t
 and **without a cap** (owner decision 2026-10-15: the dealer offers the whole catalog; `storeCatalogMaxEntries` still cuts
 only `storeVehicles`), sorted by `xmlFilename`. RFH-Q fixes the **contract only**
 (`RPSimStoreCatalog.build`, `RPSimBridge:exportStoreCatalog`, `BridgeDtos.StoreCatalog`, `BridgeValidator`, schema
-`store_catalog.schema.json`); the mod reads the options in the game with RFH-K1 (`RPSimGameAdapter:collectStoreCatalogDetails`),
-until then no file is written. The backend stores the raw file at its linked savegame (`savegame.store_catalog_json`,
+`store_catalog.schema.json`); since RFH-K1 the mod reads the options in the game (`RPSimGameAdapter:collectStoreCatalogDetails`,
+same selection as `storeVehicles`: `species == VEHICLE` and `showInStore`; an entry that cannot be read is left out). The backend stores the raw file at its linked savegame (`savegame.store_catalog_json`,
 `FactsService.storeCatalog`); a file of an unlinked savegame or an invalid one is left alone. The bridge simulator writes
 it only in `fahrzeughaendler`.
 
 ```json
 { "savegameId": "…", "items": [
   { "xmlFilename": "data/vehicles/fendt/vario700/vario700.xml", "name": "Fendt 700 Vario", "brand": "FENDT",
-    "categoryName": "TRACTORSL", "price": 245000, "dailyUpkeep": 120, "lifetime": 600, "isMod": false,
-    "motorized": true, "isBundle": false, "multipleItemPurchase": false,
-    "configurations": [{ "name": "motor", "title": "Motor", "options": [
+    "brandTitle": "Fendt", "categoryName": "TRACTORSL", "categoryTitle": "Große Traktoren", "price": 245000,
+    "dailyUpkeep": 120, "lifetime": 600, "isMod": false, "motorized": true, "powerMin": 200, "powerMax": 240,
+    "isBundle": false, "multipleItemPurchase": false,
+    "configurations": [{ "name": "motor", "options": [
       { "index": 1, "name": "720 Vario", "price": 0, "dailyUpkeep": 0, "isDefault": true, "isSelectable": true,
-        "isYesNoOption": false, "dependent": [] },
+        "isYesNoOption": false, "dependent": [], "power": 200 },
       { "index": 2, "saveId": "724", "name": "724 Vario", "price": 18000, "dailyUpkeep": 10, "isDefault": false,
-        "isSelectable": true, "isYesNoOption": false, "dependent": [{ "name": "wheel", "index": 2 }] }] }],
+        "isSelectable": true, "isYesNoOption": false, "dependent": [{ "name": "wheel", "index": 2 }], "power": 240 }] }],
     "defaultConfigurations": { "motor": 1 },
     "configurationSets": [{ "name": "Profi-Paket", "isDefault": false, "configurations": { "motor": 2 } }] }] }
 ```
@@ -761,11 +762,13 @@ it only in `fahrzeughaendler`.
 | --- | --- | --- |
 | `items[].xmlFilename`, `name`, `categoryName`, `lifetime`, `isMod`, `motorized` | As `storeVehicles` (R3-V1) | `g_storeManager:getItems()` (LUADOC `Shop/StoreManager.md`) |
 | `items[].brand` | Raw brand name | `storeItem.brandNameRaw` (`StoreManager:loadItem`) |
+| `items[].brandTitle` / `categoryTitle` | RFH-K1 (owner decision 2026-10-15): display name of brand and shop category as the game shows them (optional) | `g_brandManager:getBrandByIndex(storeItem.brandIndex).title` (LUADOC `Shop/BrandManager.md`, `addBrand`: `$l10n_` titles translated), `g_storeManager:getCategoryByName(categoryName).title` (`StoreManager:addCategory`, title through `g_i18n:convertText`) |
+| `items[].powerMin` / `powerMax` | RFH-K1: power range in hp over the selectable motor options, else the power of the store data (optional, both or none) | `Motorized.getSpecValuePower(storeItem, nil, nil, nil, true)` after `StoreItemUtil.loadSpecsFromXML` (LUADOC `Specializations/Motorized.md`); hp: `VehicleConfigurationItemMotor` reads `#hp` |
 | `items[].price` / `dailyUpkeep` | List price and daily upkeep **without** options (whole €); with options = + Σ option values, as the game (`StoreItemUtil.getDefaultPrice` / `getDailyUpkeep` → `getCosts`, LUADOC `Utils/StoreItemUtil.md`) | `storeItem.price`, `storeItem.dailyUpkeep` |
 | `items[].isBundle` | Several vehicles in one entry (summed option prices) | `storeItem.bundleInfo ~= nil` (`StoreManager:loadItem`) |
-| `items[].multipleItemPurchase` | Bales / pallets bought as a loading vehicle | `vehicle.multipleItemPurchase` (`Shop/BuyVehicleData.md`, `Specializations/MultipleItemPurchase.md`) |
-| `items[].configurations[]` | Option types sorted by `name`, types without options left out; `title` = display name of the type (optional, 🟡 field of `addConfigurationType`) | `storeItem.configurations` (`ConfigurationUtil.getConfigurationsFromXML`, dump) |
-| `…options[]` | Sorted by `index` (1-based position in the type); `saveId` (optional), `name`, `desc` (optional), `price`, `dailyUpkeep`, `isDefault`, `isSelectable`, `isYesNoOption`, `color { r, g, b }` (0..1, colour types only), `dependent[] { name, index }` (options it sets with it) | `VehicleConfigurationItem` (`new`, `loadFromXML`), `VehicleConfigurationItemColor:getColor()`, `configItem.dependentConfigurations` (LUADOC `Configurations/…`, dump `VehicleLoadingData.lua`) |
+| `items[].multipleItemPurchase` | Bales / pallets bought as a loading vehicle | `vehicle.multipleItemPurchase` in the vehicle XML, read like `BuyVehicleData:getIsLimitedObjectPurchase` (`XMLFile.load` + `hasProperty`; `Shop/BuyVehicleData.md`, `Specializations/MultipleItemPurchase.md`) |
+| `items[].configurations[]` | Option types sorted by `name`, types without options left out; `title` = display name of the type (optional): the `#title` the vehicle XML sets (`overwrittenTitle` of an option), else the title the type was registered with (🟡 field of `addConfigurationType`, `g_vehicleConfigurationManager:getConfigurationDescByName(name).title`; manual test plan 31.1) | `storeItem.configurations` (`ConfigurationUtil.getConfigurationsFromXML`, dump) |
+| `…options[]` | Sorted by `index` (1-based position in the type); `saveId` (optional), `name`, `desc` (optional), `price`, `dailyUpkeep`, `isDefault`, `isSelectable`, `isYesNoOption`, `color { r, g, b }` (0..1, colour types only), `dependent[] { name, index }` (options it sets with it), `power` (hp, motor options only, RFH-K1) | `VehicleConfigurationItem` (`new`, `loadFromXML`), `VehicleConfigurationItemColor:getColor()`, `configItem.dependentConfigurations` (LUADOC `Configurations/…`, dump `VehicleLoadingData.lua`) |
 | `items[].defaultConfigurations` | Default option per type (`name → index`) | `storeItem.defaultConfigurationIds` (`ConfigurationUtil.getDefaultConfigIdFromItems`) |
 | `items[].configurationSets[]` | Packages of the manufacturer `{ name, isDefault, configurations: name → index }` | `storeItem.configurationSets` (`ConfigurationUtil.getConfigurationSetsFromXML`) |
 

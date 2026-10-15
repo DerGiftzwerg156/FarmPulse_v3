@@ -879,6 +879,38 @@ rpsim:
     absence-scaling:              # owner request 2026-10-14: sickness, accident, days off and training are days of a
       enabled: true               # month with reference-days-per-period days, scaled to the FS25 days per period
       reference-days-per-period: 30   # (at least 1 game day); sickness / accident chances adjusted
+    machine-dealer:               # Roadmap vehicle dealer (owner decisions 2026-10-15); days = days of the month of
+      catalog-page-size: 50       # absence-scaling, scaled to the days per period. RFH-K1: entries per page
+      max-positions: 10           # RFH-K3: positions of the cart
+      delivery-groups:            # RFH-L1: delivery time span per group of shop categories (upper case)
+        TRACTORS:
+          days-min: 5
+          days-max: 10
+          categories: [TRACTORSS, TRACTORSM, TRACTORSL]
+        HARVESTERS:
+          days-min: 10
+          days-max: 20
+          categories: [HARVESTERS, FORAGEHARVESTERS, BEETVEHICLES, POTATOVEHICLES, VEGETABLEVEHICLES, COTTONVEHICLES,
+                       SUGARCANEVEHICLES, GRAPEVEHICLES, OLIVEVEHICLES]
+        LARGE_IMPLEMENTS:
+          days-min: 4
+          days-max: 8
+          categories: [SEEDERS, PLANTERS, SPRAYERS, SLURRYTANKS, MANURESPREADERS, BALERS, LOADERWAGONS,
+                       FORAGEHARVESTERCUTTERS, CUTTERS]
+        SMALL_IMPLEMENTS:
+          days-min: 2
+          days-max: 5
+          categories: [PLOWS, CULTIVATORS, DISCHARROWS, POWERHARROWS, ROLLERS, MOWERS, TEDDERS, WINDROWERS,
+                       FERTILIZERSPREADERS, WEEDERS]
+      default-delivery-days-min: 3  # every category no group lists
+      default-delivery-days-max: 7
+      option-extra-days:          # RFH-L2: per type whose option deviates from the standard
+        motor: 3
+        wheel: 2
+        baseColor: 1
+      other-option-extra-days: 1  # every other type
+      express-factor: 0.5         # RFH-L3: express halves the delivery time ...
+      earliest-delivery-hour: 9   # ... never before 9:00 of the next game day
     sick-leave:                   # Roadmap V3.1 R31-B5: sickness and work accident (owner decisions, placeholders)
       enabled: true
       sickness-probability-per-day: 0.005

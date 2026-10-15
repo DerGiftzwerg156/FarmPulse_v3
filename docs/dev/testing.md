@@ -171,6 +171,16 @@ diary entry "<Name> stellt sich vor") with the first `POST /api/dealer/open` and
 a dealer of the start cast is not introduced again; `OnboardingFlowIntegrationTest` counts the dealer in the start cast. In the
 frontend `dealer.spec.ts` covers the contact (role, name with link to the profile, trust tier) and the hint of every
 tab, also without a dealer; `app-hints.spec.ts` and `app.routes.spec.ts` cover the hint and the route of the new app.
+Roadmap vehicle dealer (RFH-K): `MachineCatalogTest` covers the catalog list (no catalog, filters, sort by category /
+name / price, pages), the configurator (list price = base price + options including the ones set with another one,
+package, deviations, refused options), the delivery time (category group, L2 extra days against the default or a
+package, express, 30 / 3 / 1 days per period, never before 9:00 of the next game day) and the cart (10 positions, the
+same machine twice, change, remove, a machine that left the catalog, another savegame); `SimulatorScenariosEndToEndTest`
+checks the new catalog fields of `fahrzeughaendler`. The mod covers `collectStoreCatalogDetails` (every option, titles,
+power, bales, bundles) in `test_game_adapter.lua`, the simulator the new fields and their schema in
+`test/machine-dealer.test.js`; `dealer-k.spec.ts` covers the texts (power, type names, delivery span), the catalog
+(missing, filters, sort, pages), the configurator (options, colour fields, yes/no as a selection, price, delivery, full
+cart) and the cart. In the game: manual test plan 31.13–31.15.
 Roadmap V4 R4-D (contribution margin): `FieldMarginTest` covers the direct costs from the counter at the price of the
 moment with the helper surcharge and free farmyard manure, a falling counter, the estimate of an older mod and its
 replacement by an entered line, contractor fees, rent and premiums (each booked once), the realised price of the sales

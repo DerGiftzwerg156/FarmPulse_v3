@@ -20,7 +20,7 @@ describe('Dealer (RFH-H2)', () => {
   }
 
   it('opening the app brings the dealer and shows the contact with the hint of the tab', () => {
-    const { fixture, http, el } = setup('warenkorb');
+    const { fixture, http, el } = setup('bestellungen');
     const req = http.expectOne('/api/dealer/open');
     expect(req.request.method).toBe('POST');
     req.flush({ dealer: { character: { id: 7, name: 'Rieke Lüders', role: 'MACHINE_DEALER', status: 'ACTIVE' }, trustLevel: 'NEUTRAL' } });
@@ -31,7 +31,7 @@ describe('Dealer (RFH-H2)', () => {
     expect(el.querySelector('[data-testid="dealer-name"]')?.getAttribute('href')).toBe('/village?character=7');
     expect(el.querySelector('[data-testid="trust-meter"]')?.getAttribute('data-level')).toBe('NEUTRAL');
     const hint = el.querySelector('[data-testid="coming-soon"]')?.textContent;
-    expect(hint).toContain('Warenkorb');
+    expect(hint).toContain('Bestellungen');
     expect(hint).toContain('Folgt mit dem nächsten Ausbau');
   });
 

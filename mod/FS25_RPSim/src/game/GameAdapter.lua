@@ -9,6 +9,7 @@
 -- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
 -- luacheck: globals StoreSpecies StoreItemUtil VehicleLoadingData VehicleLoadingState FieldSprayType
 -- luacheck: globals FillType ToolType FieldState getWorldTranslation
+-- luacheck: globals g_brandManager g_vehicleConfigurationManager Motorized XMLFile
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -866,6 +867,93 @@ function RPSimGameAdapter:collectStoreVehicles()
                     e.motorized = item.specs.power ~= nil
                 end
                 list[#list + 1] = e
+            end
+            return true
+        end)
+    end
+    return list
+end
+
+-- ---------------------------------------------------------------------------------------------- Roadmap vehicle dealer
+
+--- RFH-K1: one option of a configuration type (VehicleConfigurationItem, LUADOC Configurations/VehicleConfigurationItem.md;
+-- getColor of VehicleConfigurationItemColor; power = #hp of VehicleConfigurationItemMotor; dependentConfigurations of
+-- VehicleConfigurationDataDependentConfig.loadConfigItem).
+local function readConfigOption(item)
+    local o = { index = item.index, name = item.name, desc = item.desc, price = item.price,
+        dailyUpkeep = item.dailyUpkeep, isDefault = item.isDefault, isSelectable = item.isSelectable,
+        saveId = item.saveId, isYesNoOption = item.isYesNoOption, power = item.power, dependent = {} }
+    if item.getColor ~= nil then
+        o.color = safe(function() return item:getColor() end, nil)
+    end
+    for _, d in ipairs(type(item.dependentConfigurations) == "table" and item.dependentConfigurations or {}) do
+        o.dependent[#o.dependent + 1] = { name = d.name, index = d.index }
+    end
+    return o
+end
+
+--- RFH-K1: display name of a configuration type - the #title the vehicle XML sets (overwrittenTitle) or the title the
+-- type was registered with (addConfigurationType(name, title, ...), field 🟡: manual test plan 31.1); nil otherwise
+-- (the tablet then uses its own table).
+local function configTypeTitle(name, items)
+    for _, item in ipairs(items) do
+        if type(item.overwrittenTitle) == "string" and item.overwrittenTitle ~= "" then
+            return item.overwrittenTitle
+        end
+    end
+    return safe(function()
+        local desc = g_vehicleConfigurationManager:getConfigurationDescByName(name)
+        return desc ~= nil and desc.title or nil
+    end, nil)
+end
+
+--- RFH-K1: one catalog entry with every option (fields of StoreManager:loadItem, LUADOC Shop/StoreManager.md).
+-- Display names: g_brandManager:getBrandByIndex(brandIndex).title, g_storeManager:getCategoryByName(name).title;
+-- power range in hp: Motorized.getSpecValuePower(storeItem, nil, nil, nil, true) after StoreItemUtil.loadSpecsFromXML;
+-- bales and pallets: vehicle.multipleItemPurchase in the vehicle XML (BuyVehicleData:getIsLimitedObjectPurchase).
+function RPSimGameAdapter:readStoreItemDetails(item)
+    local e = { xmlFilename = item.xmlFilename, name = item.name, price = item.price, dailyUpkeep = item.dailyUpkeep,
+        lifetime = item.lifetime, categoryName = item.categoryName, isMod = item.isMod == true,
+        brand = item.brandNameRaw, isBundle = item.bundleInfo ~= nil, configurations = {},
+        defaultConfigurations = item.defaultConfigurationIds, configurationSets = {} }
+    e.brandTitle = safe(function() return g_brandManager:getBrandByIndex(item.brandIndex).title end, nil)
+    e.categoryTitle = safe(function() return g_storeManager:getCategoryByName(item.categoryName).title end, nil)
+    if pcall(StoreItemUtil.loadSpecsFromXML, item) and type(item.specs) == "table" then
+        e.motorized = item.specs.power ~= nil
+        local ok, minPower, maxPower = pcall(Motorized.getSpecValuePower, item, nil, nil, nil, true)
+        if ok then
+            e.powerMin, e.powerMax = minPower, maxPower
+        end
+    end
+    e.multipleItemPurchase = safe(function()
+        local xmlFile = XMLFile.load("RPSimStoreItemXML", item.xmlFilename, nil)
+        local has = xmlFile:hasProperty("vehicle.multipleItemPurchase")
+        xmlFile:delete()
+        return has
+    end, false)
+    for name, items in pairs(type(item.configurations) == "table" and item.configurations or {}) do
+        local c = { name = name, title = configTypeTitle(name, items), options = {} }
+        for _, configItem in ipairs(items) do
+            c.options[#c.options + 1] = readConfigOption(configItem)
+        end
+        e.configurations[#e.configurations + 1] = c
+    end
+    for _, set in ipairs(type(item.configurationSets) == "table" and item.configurationSets or {}) do
+        e.configurationSets[#e.configurationSets + 1] = { name = set.name, isDefault = set.isDefault,
+            configurations = set.configurations }
+    end
+    return e
+end
+
+--- RFH-K1: the whole vehicle catalog of the shop with every option (owner decision 2026-10-15: no cap), for
+-- store_catalog.json. Same selection as collectStoreVehicles; an entry that cannot be read is left out.
+function RPSimGameAdapter:collectStoreCatalogDetails()
+    local list = {}
+    local items = safe(function() return g_storeManager:getItems() end, {})
+    for _, item in ipairs(items) do
+        safe(function()
+            if item.species == StoreSpecies.VEHICLE and item.showInStore then
+                list[#list + 1] = self:readStoreItemDetails(item)
             end
             return true
         end)

@@ -54,7 +54,7 @@ Homescreen.
 | **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge; Anbauplanung der nächsten Saison | Dokumentation · Auswertung · Anbauplanung |
 | **Stall** | Tiere, Tierpfleger, Futterbilanz, Tierarzt, Viehhandel und Tierwohl | Ställe · Futter · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
-| **Händler** | Neue Maschinen ausstatten, bestellen und liefern lassen (im Aufbau) | Katalog · Warenkorb · Bestellungen · Lieferorte |
+| **Händler** | Neue Maschinen ausstatten, bestellen und liefern lassen (Bestellen und Liefern im Aufbau) | Katalog · Warenkorb · Bestellungen · Lieferorte |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
 | **Tagebuch** | Die Chronik deines Hofs | – |
 | **Einstellungen** | Alle Einstellungen: KI, Hof, Ereignisse, Fragen und Helfer im Spiel, Tablet & Netzwerk, Experteneinstellungen | KI · Hof · Ereignisse · Im Spiel · Tablet & Netzwerk · Experte |
@@ -823,8 +823,21 @@ Mod-Version.
 Der **Landmaschinenhändler** gehört in neuen Spielständen zur Startbesetzung; in einem älteren Spielstand stellt er
 sich per Mail und Tagebuch vor, sobald du die App **Händler** zum ersten Mal öffnest. Er steht in den **Kontakten** und
 hat ein Vertrauen wie jede Rolle. Die App hat die Tabs **Katalog**, **Warenkorb**, **Bestellungen** und **Lieferorte**;
-sie zeigen vorerst den Händler als Kontakt und den Hinweis „Folgt mit dem nächsten Ausbau“. Gebrauchte Maschinen,
-Leih- und Vorführmaschinen der Werkstatt bleiben in der **Werkstatt**.
+jeder zeigt oben den Händler als Kontakt. Gebrauchte Maschinen, Leih- und Vorführmaschinen der Werkstatt bleiben in der
+**Werkstatt**.
+
+- **Katalog.** Der Händler führt den ganzen Fahrzeug-Katalog des Shops, auch Mod-Fahrzeuge („Mod“), Paletten und
+  Ballen. Du suchst nach Namen und filterst nach Kategorie, Marke und Preis; ein Klick auf Name, Grundpreis oder Leistung
+  sortiert um. Die Liste kommt mit dem ersten Spielstart nach dem Mod-Update.
+- **Konfigurieren.** Wie im Shop des Spiels wählst du je Ausstattung eine Option (Farben als Farbfelder); Aufpreis und
+  Tageskosten stehen an jeder Option, die Standardausstattung des Spiels ist vorbelegt. Legt eine Option eine andere
+  mit fest, steht das darunter. Passt deine Auswahl zu einem Ausstattungspaket des Herstellers, steht sein Name da,
+  sonst „individuell“. Laufend siehst du Listenpreis, Tageskosten und die voraussichtliche Lieferzeit mit und ohne
+  Express – sie richtet sich nach der Art der Maschine, wird mit jeder vom Standard abweichenden Ausstattung länger und
+  passt sich der Monatslänge deines Spielstands an; geliefert wird nie vor 9 Uhr am nächsten Spieltag.
+- **Warenkorb.** Bis zu 10 Maschinen, auch dieselbe mehrfach mit anderer Ausstattung; je Position kannst du die
+  Ausstattung ändern oder sie entfernen. Das Angebot fragst du mit dem nächsten Ausbau an; Bestellungen und Lieferorte
+  zeigen bis dahin „Folgt mit dem nächsten Ausbau“.
 
 ## Handel
 

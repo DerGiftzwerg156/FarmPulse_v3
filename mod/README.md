@@ -78,8 +78,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
 - Kennt den Vertrag für den **Fahrzeughändler** (Roadmap Fahrzeughändler, RFH-Q): die Datei `store_catalog.json` mit
   allen Ausstattungen jeder Shop-Maschine (einmal je Spielstart, Schalter `storeCatalogExport`, ohne Obergrenze),
   die im Spiel per Taste gesetzten Lieferorte (`farm_facts.deliveryPoints`) und die
-  Shop-Plätze (`market_context.storePlaces`). Ausgelesen werden die Werte erst mit den Funktionen (RFH-K1 Ausstattungen,
-  RFH-O1 Taste und Lieferorte, RFH-L6 Shop-Plätze); bis dahin fehlen Datei und Blöcke.
+  Shop-Plätze (`market_context.storePlaces`). Seit RFH-K1 liest der Mod die Ausstattungen, die Anzeigenamen von Marke
+  und Kategorie und die Leistung (PS) aus und schreibt `store_catalog.json`; Lieferorte (RFH-O1) und Shop-Plätze
+  (RFH-L6) folgen, bis dahin fehlen diese Blöcke.
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).
 - Liest `instructions.json` und wendet an:
   - `MONEY_TRANSACTION` – Geld buchen (Kredit, Gehalt, Förderung, Feldkauf …); Abbuchungen, die das Guthaben

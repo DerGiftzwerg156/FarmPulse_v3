@@ -2215,7 +2215,68 @@
     }
   },
   "dealer": {
-    "comingSoon": "Folgt mit dem nächsten Ausbau"
+    "comingSoon": "Folgt mit dem nächsten Ausbau",
+    "catalog": {
+      "search": "Name suchen",
+      "category": "Kategorie",
+      "brand": "Marke",
+      "all": "Alle",
+      "priceFrom": "Preis von",
+      "priceTo": "bis",
+      "name": "Name",
+      "basePrice": "Grundpreis",
+      "power": "Leistung",
+      "dailyUpkeep": "Tageskosten",
+      "mod": "Mod",
+      "powerValue": "{power} PS",
+      "powerRange": "{min}–{max} PS",
+      "empty": "Kein Eintrag passt zu den Filtern.",
+      "missing": "Der Katalog kommt mit dem nächsten Spielstart (Mod ab Version mit Fahrzeughändler).",
+      "configure": "Konfigurieren",
+      "next": "Weiter",
+      "prev": "Zurück"
+    },
+    "config": {
+      "package": "Ausstattungspaket",
+      "individual": "individuell",
+      "surcharge": "+ {amount}",
+      "upkeep": "+ {amount}/Tag",
+      "standard": "(Standard)",
+      "setsAlso": "legt auch fest: {list}",
+      "listPrice": "Listenpreis",
+      "dailyUpkeep": "Tageskosten",
+      "delivery": "Voraussichtliche Lieferzeit",
+      "days": "{min}–{max} Spieltage",
+      "day": "{n} Spieltage",
+      "hours": "{min}–{max} Stunden",
+      "hour": "{n} Stunden",
+      "express": "Express: {span}",
+      "earliest": "frühestens morgen 9 Uhr",
+      "deliveryCostsLater": "Lieferkosten folgen mit den Lieferorten.",
+      "addToCart": "In den Warenkorb",
+      "cancel": "Abbrechen",
+      "apply": "Übernehmen"
+    },
+    "configTypes": {
+      "baseColor": "Farbe",
+      "designColor": "Designfarbe",
+      "rimColor": "Felgenfarbe",
+      "wheel": "Bereifung",
+      "motor": "Motor",
+      "design": "Design",
+      "vehicleType": "Ausführung",
+      "fillUnit": "Volumen",
+      "multipleItemPurchaseAmount": "Menge"
+    },
+    "cart": {
+      "change": "Ändern",
+      "remove": "Entfernen",
+      "sum": "Summe Listenpreise",
+      "count": "{count} von {max} Positionen",
+      "full": "Der Warenkorb ist voll (höchstens {max} Positionen).",
+      "empty": "Der Warenkorb ist leer.",
+      "offerLater": "Das Angebot fragst du mit dem nächsten Ausbau an."
+    }
   },
   "authorities": {
     "taxOffice": "Finanzamt",

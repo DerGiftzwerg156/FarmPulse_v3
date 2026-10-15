@@ -588,14 +588,16 @@ public final class BridgeDtos {
     /**
      * Roadmap vehicle dealer RFH-Q1: one catalog entry - list price and daily upkeep without options, brand, bundle
      * (several vehicles), multipleItemPurchase (bales, pallets), the option types, the game's default option per type
-     * and the packages of the manufacturer.
+     * and the packages of the manufacturer. RFH-K1 (owner decision 2026-10-15): display names of brand and category as
+     * the game shows them and the power range in hp (all optional; an older mod sends none).
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CatalogItem(String xmlFilename, String name, String brand, String categoryName, Double price,
                               Double dailyUpkeep, Double lifetime, Boolean isMod, Boolean motorized, Boolean isBundle,
                               Boolean multipleItemPurchase, List<CatalogConfiguration> configurations,
                               java.util.Map<String, Integer> defaultConfigurations,
-                              List<CatalogConfigurationSet> configurationSets) {
+                              List<CatalogConfigurationSet> configurationSets, String brandTitle, String categoryTitle,
+                              Integer powerMin, Integer powerMax) {
     }
 
     /** Roadmap vehicle dealer RFH-Q1: one configuration type (e.g. baseColor, wheel, motor) with its options. */
@@ -605,12 +607,13 @@ public final class BridgeDtos {
 
     /**
      * Roadmap vehicle dealer RFH-Q1: one option - index in the type (1-based), saveId, surcharge and daily upkeep,
-     * default / selectable / yes-no option, colour (colour types only) and the options it sets with it.
+     * default / selectable / yes-no option, colour (colour types only) and the options it sets with it; RFH-K1: power in
+     * hp of a motor option (optional).
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CatalogOption(Integer index, String saveId, String name, String desc, Double price, Double dailyUpkeep,
                                 Boolean isDefault, Boolean isSelectable, Boolean isYesNoOption, CatalogColor color,
-                                List<CatalogDependent> dependent) {
+                                List<CatalogDependent> dependent, Integer power) {
     }
 
     /** Roadmap vehicle dealer RFH-Q1: colour of an option, 0..1 per channel. */

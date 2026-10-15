@@ -47,6 +47,35 @@ export class ApiService {
   openDealer(): Observable<M.DealerView> {
     return this.post('/dealer/open', {});
   }
+  /** RFH-K1: the catalog list (filters, sort, page). */
+  dealerCatalog(q: M.CatalogQuery): Observable<M.CatalogView> {
+    const params: Record<string, string | number> = {};
+    for (const [k, v] of Object.entries(q)) {
+      if (v !== undefined && v !== null && v !== '') params[k] = typeof v === 'boolean' ? String(v) : v;
+    }
+    return this.get('/dealer/catalog', params);
+  }
+  /** RFH-K2: one catalog entry with every option. */
+  dealerCatalogItem(xmlFilename: string): Observable<M.CatalogItem> {
+    return this.get('/dealer/catalog/item', { xmlFilename });
+  }
+  /** RFH-K2: list price, daily upkeep, package and expected delivery of a choice. */
+  dealerConfigure(xmlFilename: string, configurations: Record<string, number>): Observable<M.QuoteView> {
+    return this.post('/dealer/configure', { xmlFilename, configurations });
+  }
+  /** RFH-K3: the cart of the dealer. */
+  dealerCart(): Observable<M.CartView> {
+    return this.get('/dealer/cart');
+  }
+  dealerCartAdd(xmlFilename: string, configurations: Record<string, number>): Observable<M.CartView> {
+    return this.post('/dealer/cart', { xmlFilename, configurations });
+  }
+  dealerCartChange(id: number, configurations: Record<string, number>): Observable<M.CartView> {
+    return this.http.put<M.CartView>(`${this.base}/dealer/cart/${id}`, { configurations });
+  }
+  dealerCartRemove(id: number): Observable<M.CartView> {
+    return this.http.delete<M.CartView>(`${this.base}/dealer/cart/${id}`);
+  }
   /** TODO T-22: ask the workshop for a maintenance contract. */
   requestMaintenanceOffer(): Observable<M.ContractView> {
     return this.post('/maintenance/offer', {});

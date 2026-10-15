@@ -73,7 +73,7 @@ Punkt-IDs: `RFH-<Bereich><Nummer>`, z. B. `RFH-L3`. Alle Pfade sind relativ zum 
 | --- | --- | --- | --- | --- |
 | 0 | [Q – Querschnitt](#q--querschnitt) | Katalog mit Konfigurationen, Lieferorte aus dem Spiel, Anweisung `VEHICLE_DELIVERY`, Buchungsgründe, Simulator, Tests, Doku (**Vertrag umgesetzt 15.10.2026**) | ja | R3-V1..V3 |
 | 1 | [H – Händler](#h--der-händler) | Neue Rolle `MACHINE_DEALER`, Händler-Oberfläche (**Rolle und App-Gerüst umgesetzt 15.10.2026**) | nein | – |
-| 2 | [K – Konfigurator und Sammelbestellung](#k--konfigurator-und-sammelbestellung) | Katalog durchsuchen, Maschine konfigurieren, Warenkorb | nein (über Q1) | Q1, H |
+| 2 | [K – Konfigurator und Sammelbestellung](#k--konfigurator-und-sammelbestellung) | Katalog durchsuchen, Maschine konfigurieren, Warenkorb (**umgesetzt 15.10.2026**; Anfrage des Angebots mit B) | nein (über Q1) | Q1, H |
 | 3 | [O – Lieferorte](#o--lieferorte) | Lieferort im Spiel per Taste festlegen, benennen, verwalten; Shop-Platz als Standard | ja (über Q2) | Q2 |
 | 4 | [B – Angebot, Verhandlung und Bezahlung](#b--angebot-verhandlung-und-bezahlung) | Angebot, Verhandlung, Anzahlung, Finanzierung, Inzahlungnahme, Stornierung | nein | K, H |
 | 5 | [L – Lieferzeit und Lieferung](#l--lieferzeit-und-lieferung) | Lieferzeit nach Monatslänge je Kategorie, Konfig-Zuschlag, Express, Verzug, Lieferung mit Platzprüfung und Ausweichen, Lieferkosten nach Entfernung, Knopf „Lieferung erneut versuchen“ | ja (über Q3) | Q3, O, B |
@@ -140,7 +140,7 @@ mit dem Hinweis „Mod aktualisieren“, die Buchungsgründe mit ihren Klassen. 
 Umsetzungshinweis (kein neues Verhalten, `QUESTIONS.md` 15.10.2026): Eine Quittung trägt nur einfache Werte
 (`RPSimProcessor.normalizeResult`, seit R3-Q1), deshalb meldet `VEHICLE_DELIVERY` je Maschine einen Schlüssel
 `vehicleId1` … statt einer Liste. Noch offen in Q, weil es zum jeweiligen Bereich gehört: Taste und Speicherung der
-Lieferorte (O1), Auslesen der Ausstattungen (K1) und der Shop-Plätze (L6), die Ausführung von `VEHICLE_DELIVERY` (L5)
+Lieferorte (O1), Auslesen der Shop-Plätze (L6), die Ausführung von `VEHICLE_DELIVERY` (L5)
 und die Konfigwerte `rpsim.formulas.machine-dealer.*` (mit H, K, B, L, S, V).
 
 ### RFH-Q1 Katalog mit Konfigurationen
@@ -427,14 +427,36 @@ Warenkorb, Bestellungen und Lieferorte; mit offener Bestellung steht die Kachel 
 
 ## K – Konfigurator und Sammelbestellung
 
+**Stand 15.10.2026: umgesetzt** (Entscheidungen 15.10.2026, `QUESTIONS.md`). Im Mod liest
+`RPSimGameAdapter:collectStoreCatalogDetails` jede Shop-Maschine mit allen Ausstattungen, den Anzeigenamen von Marke und
+Kategorie und der Leistung (PS) aus; `store_catalog.json` wird damit geschrieben. Im Backend: `MachineCatalogService`
+(Liste mit Filtern, Sortierung, 50 je Seite), `MachineConfigurator` (Konfiguration, Listenpreis, Tageskosten, Paket,
+„legt auch fest“), `DeliveryTime` (voraussichtliche Lieferzeit nach L1–L3), `DealerCartService` (Warenkorb, Tabelle
+`dealer_cart_item`, Migration V51), Konfig `rpsim.formulas.machine-dealer.*`, Endpunkte `/api/dealer/catalog`,
+`/api/dealer/catalog/item`, `/api/dealer/configure`, `/api/dealer/cart`. In der App „Händler“ die Tabs **Katalog** (mit
+Konfigurator) und **Warenkorb**. Die Anfrage des Angebots mit der Wahl „zusammen“ / „einzeln“ kommt mit B
+(Entscheidung 15.10.2026); die Lieferkosten im Konfigurator kommen mit O und L6.
+
+Umsetzungshinweise (kein neues Verhalten, `QUESTIONS.md` 15.10.2026): Für den Zuschlag L2 zählt von den Standards
+(Standard des Spiels oder ein Paket des Herstellers) der mit den wenigsten Zusatztagen; Optionen, die eine andere Option
+mitsetzt (`dependent`), sind nicht gewählt und verlängern nichts. Der Listenpreis zählt die mitgesetzten Optionen mit
+(die Maschine, wie sie geliefert wird).
+
 ### RFH-K1 Katalog durchsuchen
 
-- [ ] Liste aus dem Katalog (Q1): Kategorie, Marke, Name, Grundpreis, Leistung (`motorized` aus R3-V1), Tageskosten,
-  „Mod“-Kennzeichen. Filter nach Kategorie, Marke, Preisspanne, Suche nach Name.
-- [ ] Der Händler führt den **ganzen** Fahrzeug-Katalog des Shops, auch Paletten, Ballen, Big Bags und
+- [x] Liste aus dem Katalog (Q1): Kategorie, Marke, Name, Grundpreis, Leistung, Tageskosten, „Mod“-Kennzeichen. Filter
+  nach Kategorie, Marke, Preisspanne, Suche nach Name. Entscheidungen 15.10.2026: Anzeigenamen von Marke und Kategorie
+  aus dem Spiel (`brandTitle`, `categoryTitle`) und die Leistung als Spanne in PS (`powerMin`, `powerMax`, je
+  Motor-Option `power`) kommen neu in die Katalog-Datei; sortiert nach Kategorie, dann Name (Name, Grundpreis, Leistung
+  per Klick), 50 Einträge je Seite.
+- [x] Der Händler führt den **ganzen** Fahrzeug-Katalog des Shops, auch Paletten, Ballen, Big Bags und
   Mod-Fahrzeuge (Entscheidung 15.10.2026).
 
-**Beleg:** ✅ R3-V1, Q1. ✅ `Specializations/MultipleItemPurchase.md` (LUADOC): Einträge mit `multipleItemPurchase`
+**Beleg:** ✅ R3-V1, Q1. ✅ Anzeigenamen: `Shop/BrandManager.md` (`addBrand`: `brand.title`, `$l10n_` übersetzt),
+`Shop/StoreManager.md` (`addCategory`: `category.title`, über `g_i18n:convertText`). ✅ Leistung:
+`Specializations/Motorized.md` (`getSpecValuePower` mit `returnValues`: kleinste/größte Leistung der wählbaren
+Motor-Optionen, sonst `storeItem.specs.power`); PS: `Configurations/VehicleConfigurationItemMotor.md` liest `#hp`.
+✅ `Specializations/MultipleItemPurchase.md` (LUADOC): Einträge mit `multipleItemPurchase`
 (Ballen, Paletten) sind selbst ein Fahrzeug, das beim Laden die eigentlichen Ballen bzw. Fahrzeuge an seiner Position
 erzeugt (`loadItemAtPosition`, `VehicleLoadingData` mit `setPosition`) und danach entfernt wird.
 
@@ -443,23 +465,32 @@ erzeugt (`loadItemAtPosition`, `VehicleLoadingData` mit `setPosition`) und danac
 
 ### RFH-K2 Maschine konfigurieren
 
-- [ ] Je Konfigurationstyp eine Auswahl mit allen Optionen, deren Aufpreis und Tageskosten; nicht wählbare Optionen
+- [x] Je Konfigurationstyp eine Auswahl mit allen Optionen, deren Aufpreis und Tageskosten; nicht wählbare Optionen
   (`isSelectable = false`) erscheinen nicht. Vorbelegt ist die Standardkonfiguration des Spiels
-  (`defaultConfigurations`).
-- [ ] Farben als Farbfelder (`color`), Ja/Nein-Optionen (`isYesNoOption`) als Schalter.
-- [ ] Abhängige Optionen (`dependent[]`) werden sofort mitgesetzt und angezeigt („legt auch fest: …“).
-- [ ] Ausstattungspakete (`configurationSets`) als Schnellauswahl; passt die Auswahl zu keinem Paket, steht
-  „individuell“.
-- [ ] Laufend sichtbar: Listenpreis (Grundpreis + Optionen), Tageskosten, **voraussichtliche Lieferzeit** (L1, L2) mit
-  und ohne Express (L3) und, sobald ein Lieferort gewählt ist, die Lieferkosten (L6).
+  (`defaultConfigurations`). Name des Typs (Entscheidung 15.10.2026): Titel aus der Fahrzeug-XML → Titel des Spiels
+  (🟡) → Tabelle im Tablet (`baseColor` „Farbe“, `designColor` „Designfarbe“, `rimColor` „Felgenfarbe“, `wheel`
+  „Bereifung“, `motor` „Motor“, `design` „Design“, `vehicleType` „Ausführung“, `fillUnit` „Volumen“,
+  `multipleItemPurchaseAmount` „Menge“) → technischer Name.
+- [x] Farben als Farbfelder (`color`). Ja/Nein-Optionen (`isYesNoOption`) bleiben bis zur Prüfung im Spiel eine Auswahl
+  mit den Optionsnamen des Spiels (Entscheidung 15.10.2026; welche Option „Ja“ ist, steht in keiner Quelle –
+  Testplan 31.14); der Schalter kommt danach.
+- [x] Abhängige Optionen (`dependent[]`) werden sofort mitgesetzt und angezeigt („legt auch fest: …“).
+- [x] Ausstattungspakete (`configurationSets`): Das Paket, zu dem die Auswahl passt, steht beim Konfigurator, sonst
+  „individuell“ (`ConfigurationUtil.getConfigurationsMatchConfigSets`).
+- [x] Laufend sichtbar: Listenpreis (Grundpreis + Optionen), Tageskosten, **voraussichtliche Lieferzeit** (L1, L2) mit
+  und ohne Express (L3) (Entscheidung 15.10.2026: schon mit K, „2–4 Spieltage“, unter einem Tag in Stunden, am
+  frühesten Termin „frühestens morgen 9 Uhr“) und der Hinweis „Lieferkosten folgen mit den Lieferorten.“
+- [ ] Lieferkosten (L6), sobald ein Lieferort gewählt ist – mit O und L6.
 
 **Beleg:** ✅ Q1 (`getDefaultConfigIdFromItems`, `dependentConfigurations`, `getConfigurationSetsFromXML`,
 `getColor`, `getCosts`).
 
 ### RFH-K3 Warenkorb und Sammelbestellung
 
-- [ ] Eine konfigurierte Maschine kommt in den Warenkorb; der Warenkorb hält **bis zu 10 Positionen** (Entscheidung
-  15.10.2026, Konfig `max-positions: 10`), auch dieselbe Maschine mehrfach mit anderer Konfiguration.
+- [x] Eine konfigurierte Maschine kommt in den Warenkorb; der Warenkorb hält **bis zu 10 Positionen** (Entscheidung
+  15.10.2026, Konfig `max-positions: 10`), auch dieselbe Maschine mehrfach mit anderer Konfiguration. Gespeichert je
+  Spielstand im Backend (Entscheidung 15.10.2026); je Position Name, abweichende Optionen, Listenpreis, Lieferzeit,
+  „Ändern“ und „Entfernen“.
 - [ ] Beim Anfragen des Angebots wählt der Spieler (Entscheidung 14.10.2026):
   - **zusammen liefern:** ein Liefertermin für alle (die längste Lieferzeit der Positionen), ein Lieferort, einmal
     Lieferkosten, eine `VEHICLE_DELIVERY` mit allen Positionen;
@@ -615,6 +646,11 @@ Spielstunden = Tage im 30-Tage-Monat × daysPerPeriod / 30 × 24
 **Beleg:** – (Backend). `calendar.daysPerPeriod`, `monotonicDay` (seit V1) und `dayTimeMs` (seit R31-D4) stehen in
 `farm_facts.json` (`docs/dev/bridge-protocol.md`); das Backend sieht die Uhrzeit mit jedem Export (alle 10 s).
 
+**Stand 15.10.2026:** Die Rechnung steht mit K (`dealer/DeliveryTime`, `MachineConfigurator`, Konfig
+`rpsim.formulas.machine-dealer.*` mit den Werten von L1–L3 und der Zuordnung der Shop-Kategorien zu den Gruppen,
+Entscheidung 15.10.2026) und zeigt die voraussichtliche Lieferzeit im Konfigurator und im Warenkorb. Den Termin
+würfeln, Express wählen, den Aufpreis buchen und liefern kommt mit B und L.
+
 ### RFH-L1 Lieferzeit je Kategorie
 
 - [ ] Je Shop-Kategorie (`categoryName`) eine Spanne in Tagen des 30-Tage-Monats (Entscheidung 15.10.2026, Konfig,
@@ -628,8 +664,12 @@ Spielstunden = Tage im 30-Tage-Monat × daysPerPeriod / 30 × 24
   | kleine Anbaugeräte | 2–5 |
   | alle übrigen Kategorien (Standard) | 3–7 |
 
-  Welche Shop-Kategorien zu welcher Gruppe gehören, steht als Liste in der Konfig. Das Backend würfelt bei der
-  Einigung einen Wert in der Spanne.
+  Welche Shop-Kategorien zu welcher Gruppe gehören, steht als Liste in der Konfig (Entscheidung 15.10.2026: Traktoren
+  `TRACTORSS`, `TRACTORSM`, `TRACTORSL`; Ernte `HARVESTERS`, `FORAGEHARVESTERS` und die Spezial-Erntemaschinen der
+  Schulungsliste; große Anbaugeräte `SEEDERS`, `PLANTERS`, `SPRAYERS`, `SLURRYTANKS`, `MANURESPREADERS`, `BALERS`,
+  `LOADERWAGONS`, `FORAGEHARVESTERCUTTERS`, `CUTTERS`; kleine Anbaugeräte `PLOWS`, `CULTIVATORS`, `DISCHARROWS`,
+  `POWERHARROWS`, `ROLLERS`, `MOWERS`, `TEDDERS`, `WINDROWERS`, `FERTILIZERSPREADERS`, `WEEDERS` – die Namen werden im
+  Spiel geprüft, Testplan 31.13). Das Backend würfelt bei der Einigung einen Wert in der Spanne.
 
 **Beleg:** – (Backend); `categoryName` ✅ R3-V1.
 

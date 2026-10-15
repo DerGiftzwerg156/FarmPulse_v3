@@ -220,6 +220,7 @@ public class RpsimProperties {
         private SocialInsurance socialInsurance = new SocialInsurance();
         private SickLeave sickLeave = new SickLeave();
         private AbsenceScaling absenceScaling = new AbsenceScaling();
+        private MachineDealer machineDealer = new MachineDealer();
         private VillageNewspaper villageNewspaper = new VillageNewspaper();
         private VillageChat villageChat = new VillageChat();
         private Stammtisch stammtisch = new Stammtisch();
@@ -1717,6 +1718,58 @@ public class RpsimProperties {
     public static class AbsenceScaling {
         private boolean enabled = true;
         private int referenceDaysPerPeriod = 30;
+    }
+
+    /**
+     * Roadmap vehicle dealer (ROADMAP_FAHRZEUGHÄNDLER.md), owner decisions 2026-10-15. Delivery times are days of a month
+     * with absence-scaling.reference-days-per-period days, scaled to the FS25 "days per period" of the savegame.
+     */
+    @Getter @Setter
+    public static class MachineDealer {
+        /** RFH-K1: catalog entries per page of the tablet list. */
+        private int catalogPageSize = 50;
+        /** RFH-K3: positions of the cart (and of one order). */
+        private int maxPositions = 10;
+        /** RFH-L1: delivery time span per group of shop categories (StoreItem.categoryName, upper case). */
+        private Map<String, DeliveryGroup> deliveryGroups = defaultDeliveryGroups();
+        /** RFH-L1: span of every category no group lists. */
+        private double defaultDeliveryDaysMin = 3;
+        private double defaultDeliveryDaysMax = 7;
+        /** RFH-L2: extra days per configuration type whose chosen option deviates from the game's default. */
+        private Map<String, Double> optionExtraDays = new LinkedHashMap<>(Map.of("motor", 3.0, "wheel", 2.0,
+                "baseColor", 1.0));
+        /** RFH-L2: extra days of every other configuration type. */
+        private double otherOptionExtraDays = 1;
+        /** RFH-L3: the express delivery multiplies the delivery time by this factor. */
+        private double expressFactor = 0.5;
+        /** Never delivered before this hour of the next game day after the order; earlier times move to this hour. */
+        private int earliestDeliveryHour = 9;
+
+        private static Map<String, DeliveryGroup> defaultDeliveryGroups() {
+            Map<String, DeliveryGroup> m = new LinkedHashMap<>();
+            m.put("TRACTORS", group(5, 10, "TRACTORSS", "TRACTORSM", "TRACTORSL"));
+            m.put("HARVESTERS", group(10, 20, "HARVESTERS", "FORAGEHARVESTERS", "BEETVEHICLES", "POTATOVEHICLES",
+                    "VEGETABLEVEHICLES", "COTTONVEHICLES", "SUGARCANEVEHICLES", "GRAPEVEHICLES", "OLIVEVEHICLES"));
+            m.put("LARGE_IMPLEMENTS", group(4, 8, "SEEDERS", "PLANTERS", "SPRAYERS", "SLURRYTANKS", "MANURESPREADERS",
+                    "BALERS", "LOADERWAGONS", "FORAGEHARVESTERCUTTERS", "CUTTERS"));
+            m.put("SMALL_IMPLEMENTS", group(2, 5, "PLOWS", "CULTIVATORS", "DISCHARROWS", "POWERHARROWS", "ROLLERS",
+                    "MOWERS", "TEDDERS", "WINDROWERS", "FERTILIZERSPREADERS", "WEEDERS"));
+            return m;
+        }
+
+        private static DeliveryGroup group(double min, double max, String... categories) {
+            return new DeliveryGroup(min, max, new ArrayList<>(List.of(categories)));
+        }
+    }
+
+    /** RFH-L1: delivery time span (days of the reference month) of a group of shop categories. */
+    @Getter @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeliveryGroup {
+        private double daysMin;
+        private double daysMax;
+        private List<String> categories = new ArrayList<>();
     }
 
     /** Roadmap V3.1 R31-D1: village newspaper "Dorfblatt" (owner decisions 2026-10-05). */

@@ -1287,6 +1287,35 @@ Owner decisions of 2026-10-05 in `QUESTIONS.md`. Bills of a grant repayment and 
 | `rpsim.formulas.sick-leave.get-well-appreciation` | `8` | Get-well wishes (once per absence): appreciation points … | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.get-well-trust-delta` | `2` | … and trust of the employee. | Roadmap V3.1 R31-B5 |
 
+## `rpsim.formulas.machine-dealer` (Roadmap vehicle dealer)
+
+Owner decisions 2026-10-15 (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`). The app „Händler“ shows the expected delivery in the configurator from RFH-K on; the delivery itself comes with RFH-L.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.machine-dealer.catalog-page-size` | `50` | RFH-K1: entries per page of the catalog list in the app „Händler“ (sorted by category and name; name, base price and power on click). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.max-positions` | `10` | RFH-K3: positions of the cart; the same machine may stand several times with other options. A further position is refused (409 `DEALER_CART_FULL`). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.TRACTORS.days-min` | `5` | RFH-L1: delivery time of the group `TRACTORS`, at least … (days of the month of `absence-scaling.reference-days-per-period`, scaled to the days per period of the savegame, counted to the hour) | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.TRACTORS.days-max` | `10` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.TRACTORS.categories` | `[TRACTORSS, TRACTORSM, TRACTORSL]` | Shop categories (`StoreItem.categoryName`, upper case) of the group; the names are checked in the game (manual test plan 31.13). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.HARVESTERS.days-min` | `10` | RFH-L1: delivery time of the group `HARVESTERS`, at least … (days of the month of `absence-scaling.reference-days-per-period`, scaled to the days per period of the savegame, counted to the hour) | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.HARVESTERS.days-max` | `20` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.HARVESTERS.categories` | `[HARVESTERS, FORAGEHARVESTERS, BEETVEHICLES, POTATOVEHICLES, VEGETABLEVEHICLES, COTTONVEHICLES, SUGARCANEVEHICLES, GRAPEVEHICLES, OLIVEVEHICLES]` | Shop categories (`StoreItem.categoryName`, upper case) of the group; the names are checked in the game (manual test plan 31.13). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.LARGE_IMPLEMENTS.days-min` | `4` | RFH-L1: delivery time of the group `LARGE_IMPLEMENTS`, at least … (days of the month of `absence-scaling.reference-days-per-period`, scaled to the days per period of the savegame, counted to the hour) | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.LARGE_IMPLEMENTS.days-max` | `8` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.LARGE_IMPLEMENTS.categories` | `[SEEDERS, PLANTERS, SPRAYERS, SLURRYTANKS, MANURESPREADERS, BALERS, LOADERWAGONS, FORAGEHARVESTERCUTTERS, CUTTERS]` | Shop categories (`StoreItem.categoryName`, upper case) of the group; the names are checked in the game (manual test plan 31.13). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.SMALL_IMPLEMENTS.days-min` | `2` | RFH-L1: delivery time of the group `SMALL_IMPLEMENTS`, at least … (days of the month of `absence-scaling.reference-days-per-period`, scaled to the days per period of the savegame, counted to the hour) | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.SMALL_IMPLEMENTS.days-max` | `5` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.SMALL_IMPLEMENTS.categories` | `[PLOWS, CULTIVATORS, DISCHARROWS, POWERHARROWS, ROLLERS, MOWERS, TEDDERS, WINDROWERS, FERTILIZERSPREADERS, WEEDERS]` | Shop categories (`StoreItem.categoryName`, upper case) of the group; the names are checked in the game (manual test plan 31.13). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.default-delivery-days-min` | `3` | RFH-L1: delivery time of every category no group lists, at least … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.default-delivery-days-max` | `7` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.option-extra-days.motor` | `3` | RFH-L2: extra days when the chosen motor deviates from the standard. The standard is the game's default or a package of the manufacturer – the one with the fewest extra days counts; options another option sets with it add nothing. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.option-extra-days.wheel` | `2` | … wheels. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.option-extra-days.baseColor` | `1` | … colour. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.other-option-extra-days` | `1` | … every other configuration type. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.express-factor` | `0.5` | RFH-L3: the express delivery multiplies the delivery time by this factor … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.earliest-delivery-hour` | `9` | … but a delivery never comes before this hour of the next game day after the order; a time before this hour of its day moves to this hour. | Roadmap vehicle dealer |
+
 ## `rpsim.formulas.village-newspaper` / `village-chat` / `stammtisch` / `night-work` / `crop-damage` / `farm-holiday` / `school-visit` / `coop-shares` / `coop-assembly` / `coop-board` / `diesel-theft` (Roadmap V3.1 R31-D)
 
 Owner decisions of 2026-10-05 in `QUESTIONS.md`. Night work (D4), crop damage (D5) and diesel theft (D8) are burdening events switched per savegame (settings; crop damage off by default); in the world mode IDYLLIC the diesel theft is off and the trust losses and compensations of D4 / D5 are × `burdening-events.idyllic-factor`.

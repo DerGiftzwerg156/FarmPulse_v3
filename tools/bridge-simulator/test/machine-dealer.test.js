@@ -56,6 +56,14 @@ test('store_catalog.json carries every option, sorted by xmlFilename, and matche
   assert.equal(fendt.configurations.find((c) => c.name === 'motor').options[2].price, 34000);
   assert.deepEqual(fendt.configurations.find((c) => c.name === 'wheel').options[1].dependent,
     [{ name: 'wheelWeight', index: 2 }]);
+  // RFH-K1: display names of the game and power in hp (range of the item, value per motor option)
+  assert.equal(fendt.brandTitle, 'Fendt');
+  assert.equal(fendt.categoryTitle, 'Große Traktoren');
+  assert.deepEqual([fendt.powerMin, fendt.powerMax], [200, 280]);
+  assert.deepEqual(fendt.configurations.find((c) => c.name === 'motor').options.map((o) => o.power), [200, 240, 280]);
+  const noPower = structuredClone(cat);
+  noPower.items.find((i) => i.xmlFilename === FENDT).powerMin = 0;
+  assert.notEqual(validate('storeCatalog', noPower), null);
   // the schema refuses an option without index
   const broken = structuredClone(cat);
   delete broken.items[0].configurations[0].options[0].index;

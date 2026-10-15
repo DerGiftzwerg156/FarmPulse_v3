@@ -31,7 +31,8 @@ local function buildDependent(raw)
 end
 
 --- One option of a configuration type (VehicleConfigurationItem: name, desc, price, dailyUpkeep, isDefault,
--- isSelectable, saveId, isYesNoOption; colours: getColor()). index = position in storeItem.configurations[name].
+-- isSelectable, saveId, isYesNoOption; colours: getColor(); motor options: power = #hp of
+-- VehicleConfigurationItemMotor, RFH-K1). index = position in storeItem.configurations[name].
 local function buildOption(o)
     if type(o) ~= "table" or not isNumber(o.index) or o.index < 1 then
         return nil
@@ -51,6 +52,9 @@ local function buildOption(o)
     local color = buildColor(o.color)
     if color ~= nil then
         e.color = color
+    end
+    if isNumber(o.power) and o.power > 0 then
+        e.power = round(o.power)
     end
     return e
 end
@@ -120,6 +124,17 @@ function RPSimStoreCatalog.buildItem(v)
     end
     if isNonEmptyString(v.categoryName) then
         e.categoryName = v.categoryName
+    end
+    -- RFH-K1 (owner decision 2026-10-15): display names of the game and the power range in hp
+    if isNonEmptyString(v.brandTitle) then
+        e.brandTitle = v.brandTitle
+    end
+    if isNonEmptyString(v.categoryTitle) then
+        e.categoryTitle = v.categoryTitle
+    end
+    if isNumber(v.powerMin) and isNumber(v.powerMax) and v.powerMin > 0 and v.powerMax >= v.powerMin then
+        e.powerMin = round(v.powerMin)
+        e.powerMax = round(v.powerMax)
     end
     if isNumber(v.lifetime) then
         e.lifetime = v.lifetime

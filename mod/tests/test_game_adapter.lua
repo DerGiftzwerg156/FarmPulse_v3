@@ -881,6 +881,79 @@ function T.TestGameAdapter:testStoreCatalogListsShopVehiclesWithMotorFlag()
     clearStoreGame()
 end
 
+-- Roadmap vehicle dealer RFH-K1: every option of a shop item, display names and power for store_catalog.json
+function T.TestGameAdapter:testStoreCatalogDetailsReadEveryOption()
+    local function option(index, fields)
+        local o = { index = index, name = "opt" .. index, price = 0, dailyUpkeep = 0, isDefault = false,
+            isSelectable = true, saveId = tostring(index), isYesNoOption = false }
+        for k, v in pairs(fields or {}) do o[k] = v end
+        return o
+    end
+    local black = option(2, { name = "Schwarz", price = 1500, color = { 0, 0, 0 } })
+    function black:getColor() return { self.color[1], self.color[2], self.color[3] } end
+    local fendt = { xmlFilename = "data/vehicles/fendt/vario700.xml", name = "Fendt 700 Vario", species = 1,
+        showInStore = true, price = 245000, dailyUpkeep = 90, lifetime = 600, categoryName = "TRACTORSL",
+        isMod = false, power = 200, brandNameRaw = "FENDT", brandIndex = 4,
+        configurations = {
+            motor = { option(1, { power = 200, isDefault = true }),
+                option(2, { power = 240, price = 34000, dependentConfigurations = { { name = "wheel", index = 2 } } }) },
+            wheel = { option(1, { overwrittenTitle = "Reifen laut XML" }), option(2, { price = 4000 }) },
+            baseColor = { option(1, { isDefault = true }), black },
+        },
+        defaultConfigurationIds = { motor = 1, wheel = 1, baseColor = 1 },
+        configurationSets = { { name = "Profi", isDefault = false, configurations = { motor = 2, wheel = 2 },
+            overwrittenTitle = "x", index = 1 } } }
+    local bale = { xmlFilename = "data/objects/bales/straw.xml", name = "Strohballen", species = 1, showInStore = true,
+        price = 300, lifetime = 600, categoryName = "BALES", isMod = false, specsFail = true, bundleInfo = {} }
+    storeGame({ items = { fendt, bale } })
+    g_brandManager = { getBrandByIndex = function(_, i) return i == 4 and { title = "Fendt" } or nil end }
+    g_storeManager.getCategoryByName = function(_, n) return n == "TRACTORSL" and { title = "Große Traktoren" } or nil end
+    g_vehicleConfigurationManager = { getConfigurationDescByName = function(_, n)
+        return n == "baseColor" and { title = "Grundfarbe" } or {} end }
+    Motorized = { getSpecValuePower = function(item, _, _, _, returnValues)
+        lu.assertTrue(returnValues)
+        return 200, item.configurations.motor ~= nil and 240 or 200
+    end }
+    XMLFile = { load = function(_, filename)
+        return { hasProperty = function(_, key)
+            return key == "vehicle.multipleItemPurchase" and filename:find("bales") ~= nil
+        end, delete = function() end }
+    end }
+    local list = RPSimGameAdapter.new():collectStoreCatalogDetails()
+    lu.assertEquals(#list, 2)
+    local f, b = list[1], list[2]
+    lu.assertEquals(f.brand, "FENDT")
+    lu.assertEquals(f.brandTitle, "Fendt")
+    lu.assertEquals(f.categoryTitle, "Große Traktoren")
+    lu.assertEquals(f.dailyUpkeep, 90)
+    lu.assertTrue(f.motorized)
+    lu.assertEquals({ f.powerMin, f.powerMax }, { 200, 240 })
+    lu.assertFalse(f.multipleItemPurchase)
+    lu.assertFalse(f.isBundle)
+    lu.assertTrue(b.multipleItemPurchase)
+    lu.assertTrue(b.isBundle)
+    lu.assertNil(b.powerMin) -- specs could not be read
+    lu.assertNil(b.categoryTitle)
+    -- the normalised file: types by name, titles from the XML, the registered type or none
+    local doc = RPSimStoreCatalog.build({ savegameId = "sg", items = list })
+    local item = doc.items[1]
+    lu.assertEquals(item.xmlFilename, "data/objects/bales/straw.xml")
+    local types = {}
+    for _, c in ipairs(doc.items[2].configurations) do types[c.name] = c end
+    lu.assertEquals(types.baseColor.title, "Grundfarbe")
+    lu.assertEquals(types.wheel.title, "Reifen laut XML")
+    lu.assertNil(types.motor.title)
+    lu.assertEquals(types.baseColor.options[2].color, { r = 0, g = 0, b = 0 })
+    lu.assertEquals(types.motor.options[2].power, 240)
+    lu.assertEquals(types.motor.options[2].dependent, { { name = "wheel", index = 2 } })
+    lu.assertEquals(doc.items[2].defaultConfigurations, { motor = 1, wheel = 1, baseColor = 1 })
+    lu.assertEquals(doc.items[2].configurationSets, { { name = "Profi", isDefault = false,
+        configurations = { motor = 2, wheel = 2 } } })
+    lu.assertEquals({ doc.items[2].powerMin, doc.items[2].powerMax }, { 200, 240 })
+    g_brandManager, g_vehicleConfigurationManager, Motorized, XMLFile = nil, nil, nil, nil
+    clearStoreGame()
+end
+
 function T.TestGameAdapter:testStoreCatalogIsExportedOnceAtTheStartAndCanBeSwitchedOff()
     storeGame()
     local bridge, fs, paths = realBridge()
