@@ -627,6 +627,44 @@ ist der Lieferort ungültig und die Lieferung geht auf den Shop-Platz.
 
 **Beleg:** –.
 
+**Entscheidungen 15.10.2026 zum Ablauf (`QUESTIONS.md`):** Zusammen/einzeln, Lieferort (vorbelegt: Standard) und
+Express wählt der Spieler bei der Anfrage im Warenkorb; der Lieferort bleibt bis zum Termin änderbar, Express ist nach
+der Einigung fest. Die Positionen wandern in die Anfrage (Warenkorb leer); nach „Keine Einigung“ oder „Abgelaufen“
+bringt „Zurück in den Warenkorb“ sie zurück, eine neue Anfrage geht sofort. Verhandelt wird **ein Netto-Betrag**
+(Maschinen − Inzahlungnahme): Start = Listenpreis − Angebot des Händlers für die Inzahlungsmaschinen (90–100 % des
+Spielwerts, linear nach dem Vertrauen zum Händler: schlechtestes 90 %, bestes 100 %); Untergrenze = Listenpreis mit
+höchstens 15 % Rabatt − 100 % des Spielwerts. Ein Gebot braucht nur die Anzahlung (30 % des Gebots) als verfügbares
+Guthaben (mit Dispo gegen dessen Grenze). Die Anzahlung ist 30 % des vereinbarten Netto-Betrags. Bei „einzeln“ trägt
+jede Position den Anteil ihres Listenpreises am vereinbarten Preis (Anzahlung und Storno je Position daraus); die
+Inzahlungsmaschinen gehen mit der ersten Lieferung weg. Abzug bei mehr Schaden: Reparaturpreis bei Lieferung −
+bei Einigung (neues optionales Feld `assets.vehicles[].repairPrice`, `Vehicle:getRepairPrice`, Dump; ohne Feld kein
+Abzug). Fällt eine Inzahlungsmaschine weg, kommt ihr Wert aus dem Angebot zum Rest dazu.
+
+**Abgestimmte Texte (15.10.2026):**
+
+- Warenkorb: „Inzahlungnahme“ mit Haken „In Zahlung geben“ + Name + „Spielwert 42.000 €“ (leer: „Keine eigenen
+  Maschinen zum In-Zahlung-Geben.“); „Lieferung“: „zusammen liefern“ / „einzeln liefern“; „Lieferort“ (Auswahl
+  „Shop-Platz des Spiels“ + gültige Lieferorte); „Express (halbe Lieferzeit, + 5 % vom Listenpreis)“; Knopf „Angebot
+  anfragen“, danach „Angefragt – der Händler antwortet am nächsten Spieltag.“
+- Tab „Bestellungen“, Status: „Angefragt“, „Angebot“, „Bestellt“, „verzögert“, „Wartet beim Händler“, „Geliefert“,
+  „Storniert“, „Keine Einigung“, „Abgelaufen“, „Nicht zustande gekommen“. Angebot: je Position Name, „Listenpreis“,
+  „Lieferzeit 2–4 Spieltage“, „Express + 12.250 €“, „Lieferkosten 610 €“; „Inzahlungnahme − 38.000 €“,
+  „Angebotspreis“, „Anzahlung bei Einigung (30 %)“, „Gültig bis Tag 14, 09:00“; „Dein Gebot“ + „Bieten“, „Zum
+  Angebotspreis annehmen“, „Ablehnen“, „Runde 1 von 3“; „Zurück in den Warenkorb“. Bestellung: „Vereinbart“,
+  „Anzahlung bezahlt“, „Rest bei Lieferung“, „Liefertermin Tag 18, 14:00“, „Lieferort“ (änderbar), Abzeichen
+  „Express“ / „verzögert“; „Finanzieren“; „Stornieren“ mit Rückfrage „Bestellung wirklich stornieren? Du bekommst
+  21.000 € der Anzahlung zurück.“ („Stornieren“ / „Abbrechen“); Fehlschlag „Letzter Versuch: <Grund>“ („Shop-Platz
+  belegt“, „<Name> ist angekoppelt“, „<Name> ist in Benutzung“, „Es fehlen 12.300 €“), „Lieferung erneut versuchen
+  (+ 500 €)“, „Sonst neuer Versuch am nächsten Spieltag.“; „Geliefert Tag 18, 14:00 – <Lieferort>“; leer „Noch keine
+  Anfragen oder Bestellungen.“
+- Mails (Vorlagen ohne KI): Angebot „Ihr Angebot: {Maschinen}“; „Bestellung bestätigt: {Maschinen}“; „Bestellung nicht
+  zustande gekommen“; „Lieferung verspätet sich: {Maschinen}“ (Storno jetzt mit voller Erstattung); „Ihre {Maschinen}
+  sind da“; „Lieferung klappt nicht: {Maschinen}“ (wartet beim Händler, morgen neuer Versuch oder „Lieferung erneut
+  versuchen“ + 500 €); „Stornierung bestätigt“; „Inzahlungnahme entfällt: {Name}“; Klatsch ab 150.000 €.
+- Hinweise im Spiel: „Deine neue {Maschine} steht bei {Lieferort}“; „FarmPulse: {Maschine} wartet beim Händler –
+  {Grund}“. Kalender „Lieferung {Maschine}“ mit Restbetrag; Liquiditätsplanung „Restzahlung Neumaschine“; Tagebuch
+  „Neumaschine bestellt: …“, „Neumaschine geliefert: …“, „Bestellung storniert: …“.
+
 **Akzeptanz B:** Ein Angebot für zwei Maschinen und eine Inzahlungnahme kommt am nächsten Spieltag und wird in drei
 Runden verhandelt, höchstens 15 % unter Liste. 30 % Anzahlung sind sofort gebucht, der Rest steht im Kalender und in der
 Liquiditätsplanung. „Finanzieren“ öffnet den Kreditantrag mit vorbelegtem Betrag. Eine Stornierung zahlt 50 % der
@@ -752,6 +790,11 @@ würfeln, Express wählen, den Aufpreis buchen und liefern kommt mit B und L.
 
 **Beleg:** – (Backend und Oberfläche; die Anweisung ist Q3).
 
+**Entscheidungen 15.10.2026 (`QUESTIONS.md`):** Mehrere Maschinen einer Lieferung stehen am eigenen Lieferort mit
+**2 m** Abstand nebeneinander quer zur Blickrichtung (Konfig). Shop-Platz für die Entfernung: Mitte = Start + Breite/2 ×
+Richtung wie `PalletSpawner` (🟡). Ist der Lieferort am Liefertag ungültig, geht die Lieferung auf den Shop-Platz und
+kostet die Shop-Platz-Pauschale (250 €).
+
 **Akzeptanz L:** Bei 1 Spieltag je Monat kommt eine Bestellung frühestens um 9 Uhr am nächsten Spieltag, bei 30
 Spieltagen je Monat nach der vollen Zahl Tage. Eine abweichende Farbe verlängert die Lieferzeit, Express halbiert sie
 gegen 5 %. Ein Verzug verschiebt den Termin mit Mail. Am Termin steht die Maschine am Lieferort, bei belegtem Lieferort
@@ -784,6 +827,10 @@ liefert „Lieferung erneut versuchen“ sofort und bucht 500 € nur bei Erfolg
 
 **Beleg:** – (Backend).
 
+**Abgestimmter Text (15.10.2026):** Betreff „Ihr Kauf im Shop“ – „Hallo, ich habe gehört, Sie haben sich den
+{Maschinen} im Shop gekauft. Schade – den hätten Sie bei mir günstiger bekommen, nach Ihren Wünschen ausgestattet und
+auf den Hof geliefert. Beim nächsten Mal fragen Sie mich doch einfach in der App ‚Händler‘. {Name}“
+
 **Akzeptanz S:** Nach jedem Kauf im Spiel-Shop kommt eine Mail des Händlers, und sein Vertrauen ist um 5 gesunken.
 
 ---
@@ -802,6 +849,17 @@ liefert „Lieferung erneut versuchen“ sofort und bucht 500 € nur bei Erfolg
 - [ ] Die **Vorführung der Werkstatt** aus R31-A2 **bleibt zusätzlich bestehen** (Entscheidung 15.10.2026).
 
 **Beleg:** ✅ R31-A2 / R3-V2 / R3-V3 (`VEHICLE_SPAWN` mit Preis 0, `VEHICLE_REMOVE`).
+
+**Entscheidungen 15.10.2026 (`QUESTIONS.md`):** Eine Händler-Vorführung gleichzeitig, unabhängig von R31-A2.
+Belegt oder angekoppelt bei der Abholung: Hinweis, neuer Versuch am nächsten Spieltag und **500 € je
+Verspätungstag** (Konfig, neuer Buchungsgrund `VEHICLE_DEMO_LATE_FEE` „Verzögerung Vorführmaschine“ / „Demo machine
+late fee“, operativ). Verschwindet die Maschine: letzter Spielwert als Ersatz und Vertrauen wie R31-A2.
+
+**Abgestimmte Texte (15.10.2026):** Katalog „Vorführung anfragen“ (aus mit Hinweis „Es läuft schon eine
+Vorführung.“ / „Diese Maschine wurde in diesem Spieljahr schon vorgeführt.“); Bestellungen oben „Vorführung“: „{Maschine}
+steht bis Tag {n}, {hh:mm} auf dem Shop-Platz“, „Wird gebracht …“, „Abholung verspätet – {Grund}, + 500 € je Tag“,
+„In den Warenkorb“ (Standardausstattung). Mails: „Vorführmaschine ist da: {Maschine}“, „Vorführung beendet:
+{Maschine}“, „Bitte {Maschine} abstellen“, „Vorführung verschoben: {Maschine}“; verschwunden wie R31-A2.
 
 **Akzeptanz V:** Eine Vorführmaschine steht kostenlos auf dem Shop-Platz, wird nach der Frist abgeholt, und die Maschine
 lässt sich danach direkt bestellen. Eine zweite Vorführung derselben Maschine im selben Spieljahr lehnt der Händler ab.
