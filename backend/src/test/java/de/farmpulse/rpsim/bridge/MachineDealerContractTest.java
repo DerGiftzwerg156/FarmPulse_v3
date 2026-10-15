@@ -117,6 +117,7 @@ class MachineDealerContractTest {
     void newMoneyReasonsHaveTheirFinanceClass() {
         var classes = new RpsimProperties().getFormulas().getFinance().getCategories();
         assertThat(classes).containsEntry("RPSIM_VEHICLE_DEPOSIT", RpsimProperties.FinanceClass.INVESTMENT)
+                .containsEntry("RPSIM_VEHICLE_NEW_PURCHASE", RpsimProperties.FinanceClass.INVESTMENT)
                 .containsEntry("RPSIM_VEHICLE_DELIVERY_FEE", RpsimProperties.FinanceClass.INVESTMENT)
                 .containsEntry("RPSIM_VEHICLE_EXPRESS_FEE", RpsimProperties.FinanceClass.INVESTMENT)
                 .containsEntry("RPSIM_VEHICLE_REFUND", RpsimProperties.FinanceClass.DIVESTMENT)

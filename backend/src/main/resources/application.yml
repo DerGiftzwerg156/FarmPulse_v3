@@ -1083,8 +1083,9 @@ rpsim:
         SHOP_VEHICLE_BUY: INVESTMENT
         FIELD_BUY: INVESTMENT
         RPSIM_FARMLAND_PURCHASE: INVESTMENT
-        RPSIM_VEHICLE_PURCHASE: INVESTMENT            # Roadmap V3 (R3-Q1): used vehicle (R3-V2); new machine rest (RFH-L5)
+        RPSIM_VEHICLE_PURCHASE: INVESTMENT            # Roadmap V3 (R3-Q1): used vehicle (R3-V2)
         RPSIM_VEHICLE_DEPOSIT: INVESTMENT             # vehicle dealer (RFH-Q4): deposit at the order (RFH-B3)
+        RPSIM_VEHICLE_NEW_PURCHASE: INVESTMENT        # vehicle dealer (RFH-Q4): rest of a new machine at the delivery (L5)
         RPSIM_VEHICLE_DELIVERY_FEE: INVESTMENT        # vehicle dealer (RFH-Q4): delivery costs, new delivery attempt (L6, L7)
         RPSIM_VEHICLE_EXPRESS_FEE: INVESTMENT         # vehicle dealer (RFH-Q4): express surcharge (RFH-L3)
         SHOP_VEHICLE_SELL: DIVESTMENT

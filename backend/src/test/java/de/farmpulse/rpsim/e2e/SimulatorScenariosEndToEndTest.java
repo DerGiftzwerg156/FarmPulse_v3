@@ -433,7 +433,7 @@ class SimulatorScenariosEndToEndTest {
             o.setPayloadJson("""
                     {"deliveryId":"dlv_1","items":[{"storeXmlFilename":"data/vehicles/fendt/vario700/vario700.xml",
                      "configurations":{"motor":{"index":2}}}],"place":{"x":-412.5,"z":233.75,"ry":1.571},
-                     "fallbackToShop":true,"bookings":[{"amount":200000,"moneyReason":"VEHICLE_PURCHASE"},
+                     "fallbackToShop":true,"bookings":[{"amount":200000,"moneyReason":"VEHICLE_NEW_PURCHASE"},
                      {"amount":1100,"moneyReason":"VEHICLE_DELIVERY_FEE"}],"tradeIns":["veh_00001"]}""");
             o.setStatus(InstructionStatus.PENDING);
             o.setCreatedAtGameTime(0);

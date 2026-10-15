@@ -2059,6 +2059,7 @@ public class RpsimProperties {
             m.put("RPSIM_FARMLAND_PURCHASE", FinanceClass.INVESTMENT);
             m.put("RPSIM_VEHICLE_PURCHASE", FinanceClass.INVESTMENT); // Roadmap V3 (R3-Q1)
             m.put("RPSIM_VEHICLE_DEPOSIT", FinanceClass.INVESTMENT); // vehicle dealer (RFH-Q4)
+            m.put("RPSIM_VEHICLE_NEW_PURCHASE", FinanceClass.INVESTMENT); // vehicle dealer (owner decision 2026-10-15)
             m.put("RPSIM_VEHICLE_DELIVERY_FEE", FinanceClass.INVESTMENT); // vehicle dealer (RFH-Q4)
             m.put("RPSIM_VEHICLE_EXPRESS_FEE", FinanceClass.INVESTMENT); // vehicle dealer (RFH-Q4)
             m.put("SHOP_VEHICLE_SELL", FinanceClass.DIVESTMENT);

@@ -14,7 +14,7 @@ local function delivery(extra)
             configurations = { baseColor = { saveId = "RED", index = 3 }, wheel = { index = 2 } } },
             { storeXmlFilename = "data/vehicles/poettinger/terradisc/terradisc.xml" } },
         place = { x = 12.5, z = -340, ry = 1.57 }, fallbackToShop = true,
-        bookings = { { amount = 98000, moneyReason = "VEHICLE_PURCHASE", note = "Fendt 724 Vario" },
+        bookings = { { amount = 98000, moneyReason = "VEHICLE_NEW_PURCHASE", note = "Fendt 724 Vario" },
             { amount = 850, moneyReason = "VEHICLE_DELIVERY_FEE" },
             { amount = 500, moneyReason = "VEHICLE_DELIVERY_FEE", note = "Neuer Lieferversuch" },
             { amount = 0, moneyReason = "VEHICLE_EXPRESS_FEE" } },
@@ -59,8 +59,8 @@ function T.TestMachineDealer:testInvalidDeliveries()
 end
 
 function T.TestMachineDealer:testNewMoneyReasonsAreKnown()
-    for _, r in ipairs({ "VEHICLE_DEPOSIT", "VEHICLE_DELIVERY_FEE", "VEHICLE_EXPRESS_FEE", "VEHICLE_REFUND",
-        "VEHICLE_CANCELLATION_FEE" }) do
+    for _, r in ipairs({ "VEHICLE_DEPOSIT", "VEHICLE_NEW_PURCHASE", "VEHICLE_DELIVERY_FEE", "VEHICLE_EXPRESS_FEE",
+        "VEHICLE_REFUND", "VEHICLE_CANCELLATION_FEE" }) do
         lu.assertTrue(RPSimInstructions.MONEY_REASONS[r], r)
         lu.assertTrue(RPSimInstructions.validate({ instructionId = "m", type = "MONEY_TRANSACTION", amount = -1,
             reason = r }), r)
@@ -185,9 +185,11 @@ function T.TestMachineDealer:testCatalogFileIsWrittenOnlyWithTheAdapterReader()
     bridge2:collectStoreCatalog()
     local doc = RPSimJson.decode(fs2.files[paths2.storeCatalog])
     lu.assertEquals(doc.savegameId, SG)
-    -- the R3-V1 cap applies: sorted by xmlFilename, cut to 1
-    lu.assertEquals(#doc.items, 1)
+    -- no cap (owner decision 2026-10-15: the whole catalog), sorted by xmlFilename; storeCatalogMaxEntries = 1 only
+    -- cuts market_context.storeVehicles of R3-V1
+    lu.assertEquals(#doc.items, 2)
     lu.assertEquals(doc.items[1].xmlFilename, "a.xml")
+    lu.assertEquals(doc.items[2].xmlFilename, "b.xml")
     lu.assertEquals(doc.items[1].configurations[1].options[1].name, "Rot")
 end
 

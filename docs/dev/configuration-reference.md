@@ -1473,6 +1473,7 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_SPECIAL_REPAYMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_PREPAYMENT_FEE` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
 | `rpsim.formulas.finance.categories.RPSIM_VEHICLE_DEPOSIT` | `INVESTMENT` | tool booking: investment, deposit of a new machine at the order (RFH-B3). | Roadmap vehicle dealer RFH-Q4 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_NEW_PURCHASE` | `INVESTMENT` | tool booking: investment, rest of a new machine at the delivery (RFH-B3, L5). | Roadmap vehicle dealer RFH-Q4, owner decision 2026-10-15 |
 | `rpsim.formulas.finance.categories.RPSIM_VEHICLE_DELIVERY_FEE` | `INVESTMENT` | tool booking: investment, delivery costs and the fee of a new delivery attempt (RFH-L6, L7). | Roadmap vehicle dealer RFH-Q4 |
 | `rpsim.formulas.finance.categories.RPSIM_VEHICLE_EXPRESS_FEE` | `INVESTMENT` | tool booking: investment, express surcharge (RFH-L3). | Roadmap vehicle dealer RFH-Q4 |
 | `rpsim.formulas.finance.categories.RPSIM_VEHICLE_REFUND` | `DIVESTMENT` | tool booking: divestment, refund of the deposit on a cancellation (RFH-B6). | Roadmap vehicle dealer RFH-Q4 |

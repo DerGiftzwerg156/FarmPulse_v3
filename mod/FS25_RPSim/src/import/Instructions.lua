@@ -48,9 +48,11 @@ RPSimInstructions.MONEY_REASONS = {
     INVESTOR_CAPITAL = true, INVESTOR_REPAYMENT = true, INVESTOR_PAYOUT = true, INVESTOR_COMPENSATION = true,
     -- owner decisions 2026-10-14: interest on a negative balance while the overdraft is on
     OVERDRAFT_INTEREST = true,
-    -- Roadmap vehicle dealer (RFH-Q4, owner decisions 2026-10-15): deposit at the order, delivery costs and the fee of
-    -- a new delivery attempt, express surcharge, refund of the deposit and the part kept on a cancellation
-    VEHICLE_DEPOSIT = true, VEHICLE_DELIVERY_FEE = true, VEHICLE_EXPRESS_FEE = true, VEHICLE_REFUND = true,
+    -- Roadmap vehicle dealer (RFH-Q4, owner decisions 2026-10-15): deposit at the order, rest of a new machine at the
+    -- delivery, delivery costs and the fee of a new delivery attempt, express surcharge, refund of the deposit and the
+    -- part kept on a cancellation
+    VEHICLE_DEPOSIT = true, VEHICLE_NEW_PURCHASE = true, VEHICLE_DELIVERY_FEE = true, VEHICLE_EXPRESS_FEE = true,
+    VEHICLE_REFUND = true,
     VEHICLE_CANCELLATION_FEE = true,
 }
 

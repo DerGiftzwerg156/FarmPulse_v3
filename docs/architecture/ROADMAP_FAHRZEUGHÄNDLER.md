@@ -161,8 +161,9 @@ und die Konfigwerte `rpsim.formulas.machine-dealer.*` (mit H, K, B, L, S, V).
 - [x] Der Katalog steht in einer **eigenen Datei `store_catalog.json`**, geschrieben einmal je Spielstart
   (Entscheidung 15.10.2026). `market_context.json` bleibt dadurch klein. Ausweichlösung, falls die Datei im Spieltest
   zu groß oder zu langsam ist: Details je Maschine auf Anfrage (eine Anweisung, die Antwort in einer Datei).
-- [x] Der Händler führt den ganzen Fahrzeug-Katalog (K1); die Obergrenze `storeCatalogMaxEntries` aus R3-V1 gilt
-  auch hier.
+- [x] Der Händler führt den ganzen Fahrzeug-Katalog (K1). Für `store_catalog.json` gilt deshalb **keine Obergrenze**
+  (Entscheidung 15.10.2026); `storeCatalogMaxEntries` kürzt weiter nur `storeVehicles` aus R3-V1. Der Schalter
+  `storeCatalogExport` gilt für beide.
 - [x] `docs/dev/bridge-protocol.md` je Feld mit Quelle im FS25-Code.
 
 **Beleg:**
@@ -248,7 +249,7 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
   "items": [ { "storeXmlFilename": "…", "configurations": { "baseColor": { "saveId": "…", "index": 3 } } } ],
   "place": { "x": 12.5, "z": -340.0, "ry": 1.57 },
   "fallbackToShop": true,
-  "bookings": [ { "amount": 98000, "moneyReason": "VEHICLE_PURCHASE", "note": "…" },
+  "bookings": [ { "amount": 98000, "moneyReason": "VEHICLE_NEW_PURCHASE", "note": "…" },
                 { "amount": 850, "moneyReason": "VEHICLE_DELIVERY_FEE", "note": "Lieferung" },
                 { "amount": 500, "moneyReason": "VEHICLE_DELIVERY_FEE", "note": "Neuer Lieferversuch" } ],
   "minBalance": 0,
@@ -271,7 +272,7 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
      Optionen als gekauft), am Lieferort `setPosition(x, nil, z)` + `setRotation(0, ry, 0)`, sonst `setLoadingPlace`,
      `setPropertyState(OWNED)`, `setOwnerFarmId`, `load(callback)`.
   6. Im Callback, wenn **alle** Maschinen geladen sind: Inzahlungnahmen erneut prüfen und mit `vehicle:delete()`
-     entfernen, dann die `bookings` der Reihe nach abbuchen (Rest `VEHICLE_PURCHASE`, Lieferkosten und Aufpreis für
+     entfernen, dann die `bookings` der Reihe nach abbuchen (Rest `VEHICLE_NEW_PURCHASE`, Lieferkosten und Aufpreis für
      einen neuen Versuch `VEHICLE_DELIVERY_FEE`, Express `VEHICLE_EXPRESS_FEE`). Schlägt etwas fehl, werden die
      geladenen Maschinen wieder gelöscht (wie `onVehicleSpawned` heute) und nichts gebucht.
   7. Quittung mit `result = { placeUsed: "DELIVERY_POINT" | "SHOP", vehicleCount, vehicleId1 … vehicleIdN,
@@ -339,7 +340,7 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
   | Grund | Wofür | Klasse (`rpsim.formulas.finance.categories`) |
   | --- | --- | --- |
   | `VEHICLE_DEPOSIT` | Anzahlung bei Bestellung | Investition |
-  | `VEHICLE_PURCHASE` (gibt es) | Rest bei Lieferung | Investition |
+  | `VEHICLE_NEW_PURCHASE` | Rest bei Lieferung, Titel „Maschinenkauf (neu)“ (Entscheidung 15.10.2026: eigener Grund, weil `VEHICLE_PURCHASE` „Maschinenkauf (gebraucht)“ heißt) | Investition |
   | `VEHICLE_DELIVERY_FEE` | Lieferkosten und Aufpreis für einen neuen Lieferversuch | Investition |
   | `VEHICLE_EXPRESS_FEE` | Expresszuschlag | Investition |
   | `VEHICLE_REFUND` | Rückzahlung der Anzahlung bei Stornierung | Desinvestition |
@@ -523,8 +524,8 @@ ist der Lieferort ungültig und die Lieferung geht auf den Shop-Platz.
 - [ ] Bei Einigung bucht FarmPulse **30 % Anzahlung** sofort (Entscheidung 15.10.2026, `MONEY_TRANSACTION`
   `VEHICLE_DEPOSIT`). Reicht das Guthaben nicht (`INSUFFICIENT_FUNDS`, mit Dispo gegen dessen Grenze
   `minBalance`), kommt die Bestellung nicht zustande.
-- [ ] Der **Rest** (vereinbarter Preis − Anzahlung − Inzahlungnahme) sowie Lieferkosten und Expresszuschlag werden bei
-  der Lieferung im Lade-Callback von `VEHICLE_DELIVERY` gebucht (Q3).
+- [ ] Der **Rest** (vereinbarter Preis − Anzahlung − Inzahlungnahme, `VEHICLE_NEW_PURCHASE`) sowie Lieferkosten und
+  Expresszuschlag werden bei der Lieferung im Lade-Callback von `VEHICLE_DELIVERY` gebucht (Q3).
 - [ ] **Reicht das Geld am Liefertermin nicht** (`INSUFFICIENT_FUNDS`), wartet die Maschine beim Händler **ohne
   Frist** (Entscheidung 15.10.2026): täglich ein Hinweis und ein automatischer Versuch, dazu jederzeit der Knopf
   „Lieferung erneut versuchen“ (L7). Ist der Dispo eingeschaltet, prüft der Mod gegen dessen Grenze (`minBalance`,
@@ -702,7 +703,7 @@ liefert „Lieferung erneut versuchen“ sofort und bucht 500 € nur bei Erfolg
 
 - [ ] Der Kontoauszug enthält jeden Kauf im Spiel-Shop als Einzelbuchung `SHOP_VEHICLE_BUY` mit den Namen der
   neuen Maschinen (seit R2-B1, Mod-Konfig `bookingLogSingleTypes`). Eigene FarmPulse-Käufe laufen unter
-  `RPSIM_VEHICLE_PURCHASE` / `RPSIM_VEHICLE_DEPOSIT` und werden nicht verwechselt.
+  `RPSIM_VEHICLE_NEW_PURCHASE` / `RPSIM_VEHICLE_DEPOSIT` und werden nicht verwechselt.
 - [ ] Jede neue Buchung `SHOP_VEHICLE_BUY` löst die Reaktion in S2 aus.
 
 **Beleg:** ✅ `docs/dev/bridge-protocol.md` (`bookings`, `entries[].single`, Namen der neuen Maschinen bei
@@ -753,6 +754,10 @@ Alle Punkte, die am 14.10.2026 als Vorschlag offen waren, hat der Projektinhaber
 | --- | --- | --- | --- |
 | Q1 | Wo steht der Katalog mit Konfigurationen? | eigene Datei je Spielstart, Anfrage als Fallback | ✅ wie vorgeschlagen |
 | Q4 | Buchungsgründe | `VEHICLE_DEPOSIT`, `VEHICLE_DELIVERY_FEE`, `VEHICLE_EXPRESS_FEE` (Investition), `VEHICLE_REFUND` (Desinvestition), `VEHICLE_CANCELLATION_FEE` (operativ) | ✅ wie vorgeschlagen |
+| Q1 | (15.10.2026, nach der Umsetzung von Q) Obergrenze der Katalog-Datei | wie R3-V1 (2000) | ✅ **keine Obergrenze** für `store_catalog.json` |
+| Q3 | (15.10.2026) Format der Quittung einer Lieferung | `vehicleId1` … `vehicleIdN` (Quittungen tragen nur einfache Werte) | ✅ wie vorgeschlagen |
+| Q4 | (15.10.2026) Titel der Buchungsgründe | „Anzahlung Neumaschine“, „Lieferkosten Neumaschine“, „Expresslieferung“, „Rückzahlung Anzahlung“, „Stornogebühr“ | ✅ wie vorgeschlagen |
+| Q4 | (15.10.2026) Rest einer Neumaschine | über `VEHICLE_PURCHASE` („Maschinenkauf (gebraucht)“) | ✅ **eigener Grund** `VEHICLE_NEW_PURCHASE` „Maschinenkauf (neu)“ |
 | Q2 | Wie viele Lieferpunkte merkt sich der Mod? | die letzten 20 | ✅ wie vorgeschlagen |
 | H2 | Ort im Tablet | eigene App nach „Werkstatt“ und Kachel | ✅ wie vorgeschlagen |
 | K1 | Welche Einträge führt der Händler nicht? | ohne Paletten, Ballen, Big Bags | ✅ **alle** Einträge, auch Paletten und Ballen |

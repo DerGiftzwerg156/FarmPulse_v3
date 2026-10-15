@@ -76,8 +76,8 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
   Saat- und Erntefenster im Wachstumsmodus des Spielstands (`market_context.fruitTypes[].plantablePeriods` /
   `harvestablePeriods`).
 - Kennt den Vertrag für den **Fahrzeughändler** (Roadmap Fahrzeughändler, RFH-Q): die Datei `store_catalog.json` mit
-  allen Ausstattungen jeder Shop-Maschine (einmal je Spielstart, Schalter `storeCatalogExport`, Obergrenze
-  `storeCatalogMaxEntries`), die im Spiel per Taste gesetzten Lieferorte (`farm_facts.deliveryPoints`) und die
+  allen Ausstattungen jeder Shop-Maschine (einmal je Spielstart, Schalter `storeCatalogExport`, ohne Obergrenze),
+  die im Spiel per Taste gesetzten Lieferorte (`farm_facts.deliveryPoints`) und die
   Shop-Plätze (`market_context.storePlaces`). Ausgelesen werden die Werte erst mit den Funktionen (RFH-K1 Ausstattungen,
   RFH-O1 Taste und Lieferorte, RFH-L6 Shop-Plätze); bis dahin fehlen Datei und Blöcke.
 - Der erste Export läuft erst, wenn der Spielstand vollständig geladen ist (`Mission00.onStartMission`).

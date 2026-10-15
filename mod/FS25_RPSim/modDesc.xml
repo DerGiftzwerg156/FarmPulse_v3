@@ -243,6 +243,10 @@
             <en>Vehicle deposit</en>
             <de>Anzahlung Neumaschine</de>
         </text>
+        <text name="rpsim_money_VEHICLE_NEW_PURCHASE">
+            <en>New vehicle purchase</en>
+            <de>Maschinenkauf (neu)</de>
+        </text>
         <text name="rpsim_money_VEHICLE_DELIVERY_FEE">
             <en>Vehicle delivery</en>
             <de>Lieferkosten Neumaschine</de>

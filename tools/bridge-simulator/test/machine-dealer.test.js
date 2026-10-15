@@ -29,7 +29,7 @@ const delivery = (id, extra = {}) => ({ instructionId: id, type: 'VEHICLE_DELIVE
   items: [{ storeXmlFilename: FENDT, configurations: { baseColor: { saveId: 'BLACK', index: 2 }, motor: { index: 2 } } },
     { storeXmlFilename: CATROS }],
   place: { x: -412.5, z: 233.75, ry: 1.571 }, fallbackToShop: true,
-  bookings: [{ amount: 180000, moneyReason: 'VEHICLE_PURCHASE', note: 'Fendt 700 Vario, Amazone Catros' },
+  bookings: [{ amount: 180000, moneyReason: 'VEHICLE_NEW_PURCHASE', note: 'Fendt 700 Vario, Amazone Catros' },
     { amount: 1100, moneyReason: 'VEHICLE_DELIVERY_FEE', note: 'Lieferung' }],
   tradeIns: ['veh_00001'], ...extra });
 
@@ -78,7 +78,7 @@ test('delivery to the delivery point: vehicles loaded, trade-in removed, every b
   assert.ok(facts.assets.vehicles.some((v) => v.xmlFilename === FENDT && v.category === 'TRACTORSL'));
   const own = facts.bookings.entries.filter((e) => e.category.startsWith('RPSIM_VEHICLE'));
   assert.deepEqual(own.map((e) => [e.category, e.amount]),
-    [['RPSIM_VEHICLE_PURCHASE', -180000], ['RPSIM_VEHICLE_DELIVERY_FEE', -1100]]);
+    [['RPSIM_VEHICLE_NEW_PURCHASE', -180000], ['RPSIM_VEHICLE_DELIVERY_FEE', -1100]]);
 });
 
 test('occupied delivery point: to the shop places, or NO_SPACE without fallback or with full shop places', () => {
@@ -137,7 +137,7 @@ test('VEHICLE_DELIVERY and the new money reasons are validated like the mod', ()
   assert.match(acks.a.message, /deliveryId is required/);
   assert.match(acks.c.message, /needs saveId or index/);
   assert.match(acks.g.message, /unknown moneyReason NEW_TRACTOR/);
-  for (const reason of ['VEHICLE_DEPOSIT', 'VEHICLE_DELIVERY_FEE', 'VEHICLE_EXPRESS_FEE', 'VEHICLE_REFUND',
+  for (const reason of ['VEHICLE_DEPOSIT', 'VEHICLE_NEW_PURCHASE', 'VEHICLE_DELIVERY_FEE', 'VEHICLE_EXPRESS_FEE', 'VEHICLE_REFUND',
     'VEHICLE_CANCELLATION_FEE']) {
     const doc = { savegameId: sim.savegameId, instructions: [{ instructionId: reason, type: 'MONEY_TRANSACTION',
       amount: -1, reason }] };

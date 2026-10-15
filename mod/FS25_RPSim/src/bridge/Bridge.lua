@@ -430,8 +430,8 @@ end
 
 --- Roadmap vehicle dealer RFH-Q1 (owner decision 2026-10-15): store_catalog.json with every configuration option,
 -- written once per mission start next to market_context.json. The adapter reads the options with RFH-K1
--- (collectStoreCatalogDetails); without it no file is written. Same switch and cap as the R3-V1 catalog.
--- Returns true when the file was written.
+-- (collectStoreCatalogDetails); without it no file is written. Same switch as the R3-V1 catalog, but no cap: the dealer
+-- offers the whole catalog (owner decision 2026-10-15). Returns true when the file was written.
 function RPSimBridge:exportStoreCatalog()
     if self.adapter.collectStoreCatalogDetails == nil then
         return false
@@ -441,9 +441,8 @@ function RPSimBridge:exportStoreCatalog()
         RPSimLog.warning("Reading the shop configurations failed: %s", tostring(raw))
         return false
     end
-    local items = RPSimMarketContext.capStoreVehicles(raw, self.cfg.storeCatalogMaxEntries)
     return self:writeJson(self.paths.storeCatalog,
-        RPSimStoreCatalog.build({ savegameId = self.state.savegameId, items = items }))
+        RPSimStoreCatalog.build({ savegameId = self.state.savegameId, items = raw }))
 end
 
 --- Roadmap V3 R3-V2: outcome of an asynchronous instruction (VEHICLE_SPAWN) - recorded and acknowledged at once.

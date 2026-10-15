@@ -32,7 +32,7 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   // owner decisions 2026-10-14: interest on a negative balance (overdraft)
   'OVERDRAFT_INTEREST',
   // Roadmap vehicle dealer (RFH-Q4, owner decisions 2026-10-15)
-  'VEHICLE_DEPOSIT', 'VEHICLE_DELIVERY_FEE', 'VEHICLE_EXPRESS_FEE', 'VEHICLE_REFUND', 'VEHICLE_CANCELLATION_FEE']);
+  'VEHICLE_DEPOSIT', 'VEHICLE_NEW_PURCHASE', 'VEHICLE_DELIVERY_FEE', 'VEHICLE_EXPRESS_FEE', 'VEHICLE_REFUND', 'VEHICLE_CANCELLATION_FEE']);
 // Roadmap V3.1 R31-A1: works of the contractor
 const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'FERTILIZE', 'HARVEST'];
 // crop details a field loses when the contractor plows, cultivates or sows (R2-C1 fields of a standing crop)
