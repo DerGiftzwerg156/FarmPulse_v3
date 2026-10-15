@@ -520,6 +520,17 @@ function RPSimBridge:pollInstructions()
                         end
                         return true, RPSimProcessor.PENDING
                     end or nil,
+                    -- Roadmap vehicle dealer RFH-L5 (asynchronous like VEHICLE_SPAWN)
+                    vehicleDelivery = adapter.deliverVehicles ~= nil and function(ins)
+                        local id = ins.instructionId
+                        local started, why = adapter:deliverVehicles(ins, function(done, why2, res)
+                            self:completeInstruction(id, done, why2, res)
+                        end, self.cfg)
+                        if not started then
+                            return false, why
+                        end
+                        return true, RPSimProcessor.PENDING
+                    end or nil,
                     vehicleRemove = adapter.removeVehicle ~= nil
                         and function(ins) return adapter:removeVehicle(ins.vehicleId) end or nil,
                     -- Roadmap V3.1 R31-A1, R31-A3 and R31-D8

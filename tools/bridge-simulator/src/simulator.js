@@ -32,7 +32,8 @@ const MONEY_REASONS = new Set(['CREDIT_DISBURSEMENT', 'CREDIT_INSTALLMENT', 'CRE
   // owner decisions 2026-10-14: interest on a negative balance (overdraft)
   'OVERDRAFT_INTEREST',
   // Roadmap vehicle dealer (RFH-Q4, owner decisions 2026-10-15)
-  'VEHICLE_DEPOSIT', 'VEHICLE_NEW_PURCHASE', 'VEHICLE_DELIVERY_FEE', 'VEHICLE_EXPRESS_FEE', 'VEHICLE_REFUND', 'VEHICLE_CANCELLATION_FEE']);
+  'VEHICLE_DEPOSIT', 'VEHICLE_NEW_PURCHASE', 'VEHICLE_DELIVERY_FEE', 'VEHICLE_EXPRESS_FEE', 'VEHICLE_REFUND', 'VEHICLE_CANCELLATION_FEE',
+  'VEHICLE_DEMO_LATE_FEE']);
 // Roadmap V3.1 R31-A1: works of the contractor
 const FIELD_WORKS = ['PLOW', 'CULTIVATE', 'LIME', 'SOW', 'FERTILIZE', 'HARVEST'];
 // crop details a field loses when the contractor plows, cultivates or sows (R2-C1 fields of a standing crop)
@@ -1348,7 +1349,9 @@ export class BridgeSimulator {
           // R3-V3: optional name and shop XML (getFullName / configFileName)
           ...(v.name ? { name: v.name } : {}), ...(v.xmlFilename ? { xmlFilename: v.xmlFilename } : {}),
           // R31-Q1: shop category (A4, D8) and diesel of a vehicle with a diesel tank (D8)
-          ...(v.category ? { category: v.category } : {}), ...(v.fuel ? { fuel: { ...v.fuel } } : {}) })),
+          ...(v.category ? { category: v.category } : {}), ...(v.fuel ? { fuel: { ...v.fuel } } : {}),
+          // RFH-B4: repair price (Vehicle:getRepairPrice) - only a mod with the vehicle dealer exports it
+          ...(this.vehicleDealer && typeof v.repairPrice === 'number' ? { repairPrice: v.repairPrice } : {}) })),
         placeables: this.placeables.map((p) => ({ ...p })),
         farmland: this.farmlands.filter((f) => f.ownerFarmId === 1)
           .map((f) => ({ farmlandId: f.farmlandId, hectares: f.hectares, price: f.price })),

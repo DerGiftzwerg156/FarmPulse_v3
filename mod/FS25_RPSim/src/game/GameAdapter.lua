@@ -9,7 +9,8 @@
 -- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
 -- luacheck: globals StoreSpecies StoreItemUtil VehicleLoadingData VehicleLoadingState FieldSprayType
 -- luacheck: globals FillType ToolType FieldState getWorldTranslation
--- luacheck: globals g_brandManager g_vehicleConfigurationManager Motorized XMLFile MathUtil
+-- luacheck: globals g_brandManager g_vehicleConfigurationManager Motorized XMLFile MathUtil ConfigurationUtil
+-- luacheck: globals getTerrainHeightAtWorldPos g_terrainNode overlapBox
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -440,7 +441,10 @@ function RPSimGameAdapter:collectFarmFacts()
                             return item ~= nil and item.categoryName or nil
                         end, nil),
                         -- Roadmap V3.1 R31-D8: diesel level and tank capacity
-                        fuel = safe(function() return RPSimGameAdapter.dieselFuel(v) end, nil) }
+                        fuel = safe(function() return RPSimGameAdapter.dieselFuel(v) end, nil),
+                        -- Roadmap vehicle dealer RFH-B4: repair price (Vehicle:getRepairPrice, part of getSellPrice)
+                        repairPrice = safe(function() return v.getRepairPrice ~= nil and v:getRepairPrice() or nil end,
+                            nil) }
                 elseif state == "LEASED" then
                     -- Leasing costs per vehicle have no documented API yet (manual test plan) - list only.
                     raw.leasedVehicles[#raw.leasedVehicles + 1] = { uniqueId = v:getUniqueId() }
@@ -574,7 +578,27 @@ function RPSimGameAdapter:collectMarketContext(conflictMods)
     raw.fruitTypes = self:collectFruitTypes()
     -- Roadmap V4 R4-F1: the food groups per animal type for the feed balance (read once per mission start)
     raw.animalFood = self:collectAnimalFood()
+    -- Roadmap vehicle dealer RFH-L6: centres of the shop places for the delivery costs by distance
+    raw.storePlaces = self:collectStorePlaces()
     return raw
+end
+
+--- Roadmap vehicle dealer RFH-L6 / Q2 (owner decision 2026-10-15): centre of every shop place of
+-- g_currentMission.storeSpawnPlaces (Missions/AbstractMission.md), computed like PalletSpawner computes the centre of a
+-- place: start + width / 2 x direction (Placement/PalletSpawner.md; that shop places have the same fields is
+-- 🟡 manual test plan 31.6). A place with a missing field is left out; nil when the places cannot be read.
+function RPSimGameAdapter:collectStorePlaces()
+    return safe(function()
+        local list = {}
+        for _, place in ipairs(g_currentMission.storeSpawnPlaces or {}) do
+            if type(place) == "table" and type(place.startX) == "number" and type(place.startZ) == "number"
+                    and type(place.width) == "number" and type(place.dirX) == "number" and type(place.dirZ) == "number" then
+                list[#list + 1] = { x = place.startX + place.width / 2 * place.dirX,
+                    z = place.startZ + place.width / 2 * place.dirZ }
+            end
+        end
+        return list
+    end, nil)
 end
 
 --- Roadmap V3.3 R33-F4 (contract R33-Q1): every crop of the map for the crop dropdown of the field book. Roadmap V4
@@ -1040,30 +1064,40 @@ function RPSimGameAdapter:onVehicleSpawned(ins, vehicles, loadState, done)
     done(true, nil, { vehicleId = id })
 end
 
---- R3-V3: an own vehicle sold to a neighbour (VehicleSystem:getVehicleByUniqueId, dump VehicleSystem.lua). Only an
--- owned vehicle of the player farm, nobody inside (Enterable getIsControlled), no helper (getIsAIActive), and - until
--- the playtest of the manual test plan - only a root vehicle with nothing attached (getRootVehicle,
--- getAttachedImplements). Then vehicle:delete() like AbstractMission removes its vehicles.
-function RPSimGameAdapter:removeVehicle(vehicleId)
+--- R3-V3 / RFH-Q3: the vehicle when it may be removed (sold or traded in), else nil and VEHICLE_NOT_FOUND,
+-- NOT_OWN_VEHICLE, VEHICLE_IN_USE or VEHICLE_ATTACHED (checks of removeVehicle below).
+function RPSimGameAdapter:removableVehicle(vehicleId)
     local v = safe(function() return g_currentMission.vehicleSystem:getVehicleByUniqueId(vehicleId) end, nil)
     if v == nil then
-        return false, "VEHICLE_NOT_FOUND"
+        return nil, "VEHICLE_NOT_FOUND"
     end
     local owner = safe(function() return v:getOwnerFarmId() end, nil)
     if owner ~= self:getFarmId() or RPSimGameAdapter.propertyState(v) ~= "OWNED" then
-        return false, "NOT_OWN_VEHICLE"
+        return nil, "NOT_OWN_VEHICLE"
     end
     local controlled = safe(function() return v.getIsControlled ~= nil and v:getIsControlled() end, false)
     local ai = safe(function() return v.getIsAIActive ~= nil and v:getIsAIActive() end, false)
     if controlled or ai then
-        return false, "VEHICLE_IN_USE"
+        return nil, "VEHICLE_IN_USE"
     end
     local root = safe(function() return v.getRootVehicle ~= nil and v:getRootVehicle() or v end, v)
     local attached = safe(function()
         return v.getAttachedImplements ~= nil and next(v:getAttachedImplements() or {}) ~= nil
     end, false)
     if root ~= v or attached then
-        return false, "VEHICLE_ATTACHED"
+        return nil, "VEHICLE_ATTACHED"
+    end
+    return v
+end
+
+--- R3-V3: an own vehicle sold to a neighbour (VehicleSystem:getVehicleByUniqueId, dump VehicleSystem.lua). Only an
+-- owned vehicle of the player farm, nobody inside (Enterable getIsControlled), no helper (getIsAIActive), and - until
+-- the playtest of the manual test plan - only a root vehicle with nothing attached (getRootVehicle,
+-- getAttachedImplements). Then vehicle:delete() like AbstractMission removes its vehicles.
+function RPSimGameAdapter:removeVehicle(vehicleId)
+    local v, code = self:removableVehicle(vehicleId)
+    if v == nil then
+        return false, code
     end
     local ok, err = pcall(function() v:delete() end)
     if not ok then
@@ -1071,6 +1105,219 @@ function RPSimGameAdapter:removeVehicle(vehicleId)
     end
     RPSimLog.info("Vehicle %s removed (sold to a neighbour)", tostring(vehicleId))
     return true
+end
+
+-- ---------------------------------------------------------------------------------------------- Roadmap vehicle dealer
+
+local TRADE_IN_CODES = { VEHICLE_NOT_FOUND = "TRADE_IN_NOT_FOUND", NOT_OWN_VEHICLE = "TRADE_IN_NOT_OWN",
+    VEHICLE_IN_USE = "TRADE_IN_IN_USE", VEHICLE_ATTACHED = "TRADE_IN_ATTACHED" }
+
+--- RFH-Q3: the trade-ins of a delivery when all may be removed, else nil and the TRADE_IN_* code.
+function RPSimGameAdapter:tradeInVehicles(ids)
+    local list = {}
+    for _, id in ipairs(ids or {}) do
+        local v, code = self:removableVehicle(id)
+        if v == nil then
+            return nil, TRADE_IN_CODES[code] or code
+        end
+        list[#list + 1] = v
+    end
+    return list
+end
+
+--- RFH-Q3: index per configuration type of a shop item - saveId through ConfigurationUtil.getConfigIdBySaveId, else the
+-- index; options the item does not have are left out (the game then takes its default, VehicleLoadingData:
+-- getConfigurations). Returns configurations and bought configurations (name -> { [index] = true }).
+function RPSimGameAdapter.deliveryConfigurations(storeItem, wanted)
+    local configs, bought = {}, {}
+    for name, c in pairs(type(wanted) == "table" and wanted or {}) do
+        local options = type(storeItem.configurations) == "table" and storeItem.configurations[name] or nil
+        if options ~= nil and type(c) == "table" then
+            local index = c.index
+            if type(c.saveId) == "string" then
+                index = safe(function()
+                    return ConfigurationUtil.getConfigIdBySaveId(storeItem.xmlFilename, name, c.saveId)
+                end, c.index)
+            end
+            if type(index) == "number" and options[index] ~= nil then
+                configs[name] = index
+                bought[name] = { [index] = true }
+            end
+        end
+    end
+    return configs, bought
+end
+
+--- RFH-Q3 / L5: whether the places of a delivery at an own point are free. Machines stand side by side across the
+-- facing direction (gap deliveryMachineGap), the row centred on the point; size per machine from
+-- StoreItemUtil.getSizeValues(xmlFilename, "vehicle", ry, configurations) (LUADOC Utils/StoreItemUtil.md). Each place
+-- is checked with overlapBox (engine/Physics/overlapBox.md: all collision bits, dynamics, kinematics and statics,
+-- exact) above the terrain (getTerrainHeightAtWorldPos + deliveryGroundClearance, so the ground itself is not hit).
+-- Returns the list of { x, z } or nil when a place is taken (🟡 manual test plan 31.8).
+function RPSimGameAdapter:deliveryPlaces(items, place, cfg)
+    local sizes, total = {}, 0
+    for i, it in ipairs(items) do
+        local size = StoreItemUtil.getSizeValues(it.storeItem.xmlFilename, "vehicle", place.ry, it.configs)
+        sizes[i] = size
+        total = total + size.width
+    end
+    local gap = cfg.deliveryMachineGap or 2
+    total = total + gap * (#items - 1)
+    local dirX, dirZ = MathUtil.getDirectionFromYRotation(place.ry)
+    local perpX, perpZ = dirZ, -dirX
+    local offset = -total / 2
+    local spots = {}
+    self.deliveryHits = 0
+    for i, size in ipairs(sizes) do
+        local along = offset + size.width / 2
+        local x, z = place.x + perpX * along, place.z + perpZ * along
+        local y = getTerrainHeightAtWorldPos(g_terrainNode, x, 0, z) + (cfg.deliveryGroundClearance or 0.5)
+        local hits = overlapBox(x, y + size.height / 2, z, 0, place.ry, 0, size.width / 2, size.height / 2,
+            size.length / 2, "onDeliveryOverlap", self, nil, true, true, true, true)
+        if (hits or 0) > 0 then
+            return nil
+        end
+        spots[i] = { x = x, z = z }
+        offset = offset + size.width + gap
+    end
+    return spots
+end
+
+--- overlapBox callback: nothing to do, the number of hits is the return value of overlapBox.
+function RPSimGameAdapter:onDeliveryOverlap()
+    return true
+end
+
+--- RFH-Q3 / L5: delivers new machines (VEHICLE_DELIVERY). 1. trade-ins removable, 2. funds for all bookings (with
+-- the overdraft down to minBalance), 3. the shop items and their options, 4. free places at the delivery point - else,
+-- with fallbackToShop, every machine on the shop places, 5. VehicleLoadingData per machine (setStoreItem,
+-- setConfigurations, setBoughtConfigurations, at the point setPosition(x, nil, z) + setRotation(0, ry, 0), else
+-- setLoadingPlace(storeSpawnPlaces, usedStorePlaces), OWNED, own farm; dump VehicleLoadingData.lua, LUADOC
+-- Shop/BuyVehicleData.md). The callbacks finish in onDeliveryLoaded. done(ok, err, result) exactly once. Returns true
+-- (loading started) or false, err.
+function RPSimGameAdapter:deliverVehicles(ins, done, cfg)
+    cfg = cfg or {}
+    local _, tradeErr = self:tradeInVehicles(ins.tradeIns)
+    if tradeErr ~= nil then
+        return false, tradeErr
+    end
+    local total = 0
+    for _, b in ipairs(ins.bookings or {}) do
+        total = total + b.amount
+    end
+    local floor = type(ins.minBalance) == "number" and math.min(ins.minBalance, 0) or 0
+    local balance = self:getBalance()
+    if balance == nil or balance - total < floor then
+        return false, "INSUFFICIENT_FUNDS"
+    end
+    local items = {}
+    for _, item in ipairs(ins.items) do
+        local storeItem = safe(function() return g_storeManager:getItemByXMLFilename(item.storeXmlFilename) end, nil)
+        if storeItem == nil then
+            return false, "UNKNOWN_STORE_ITEM"
+        end
+        local configs, bought = RPSimGameAdapter.deliveryConfigurations(storeItem, item.configurations)
+        items[#items + 1] = { storeItem = storeItem, configs = configs, bought = bought }
+    end
+    local spots
+    if type(ins.place) == "table" then
+        local ok, res = pcall(self.deliveryPlaces, self, items, ins.place, cfg)
+        spots = ok and res or nil
+        if spots == nil and ins.fallbackToShop ~= true then
+            return false, "NO_SPACE"
+        end
+    end
+    local farmId = self:getFarmId()
+    local job = { ins = ins, done = done, pending = #items, results = {},
+        placeUsed = spots ~= nil and "DELIVERY_POINT" or "SHOP" }
+    local ok, err = pcall(function()
+        local datas = {}
+        for i, it in ipairs(items) do
+            local data = VehicleLoadingData.new()
+            data:setStoreItem(it.storeItem)
+            data:setConfigurations(it.configs)
+            data:setBoughtConfigurations(it.bought)
+            if spots ~= nil then
+                data:setPosition(spots[i].x, nil, spots[i].z)
+                data:setRotation(0, ins.place.ry, 0)
+            elseif not data:setLoadingPlace(g_currentMission.storeSpawnPlaces, g_currentMission.usedStorePlaces) then
+                error("NO_SPACE")
+            end
+            data:setPropertyState(VehiclePropertyState.OWNED)
+            data:setOwnerFarmId(farmId)
+            datas[i] = data
+        end
+        for i, data in ipairs(datas) do
+            data:load(function(_, vehicles, loadState)
+                self:onDeliveryLoaded(job, i, vehicles, loadState)
+            end, self, nil)
+        end
+    end)
+    if not ok then
+        local msg = tostring(err)
+        return false, msg:match("NO_SPACE") and "NO_SPACE" or msg
+    end
+    return true
+end
+
+local function deleteAll(list)
+    for _, v in ipairs(list) do
+        pcall(function() v:delete() end)
+    end
+end
+
+--- RFH-Q3: loading callback of one machine of a delivery. When all machines are loaded: the trade-ins once more, the
+-- funds once more, then the trade-ins are removed and the bookings booked in their order. A failure deletes every
+-- loaded machine and books nothing.
+function RPSimGameAdapter:onDeliveryLoaded(job, index, vehicles, loadState)
+    local okLoad = type(vehicles) == "table" and vehicles[1] ~= nil
+        and (VehicleLoadingState == nil or loadState == VehicleLoadingState.OK)
+    job.results[index] = { ok = okLoad, vehicles = type(vehicles) == "table" and vehicles or {},
+        noSpace = VehicleLoadingState ~= nil and loadState == VehicleLoadingState.NO_SPACE }
+    job.pending = job.pending - 1
+    if job.pending > 0 then
+        return
+    end
+    local loaded, failure = {}, nil
+    for i = 1, #job.ins.items do
+        local r = job.results[i]
+        for _, v in ipairs(r.vehicles) do
+            loaded[#loaded + 1] = v
+        end
+        if not r.ok and failure == nil then
+            failure = r.noSpace and "NO_SPACE" or "LOAD_FAILED"
+        end
+    end
+    if failure ~= nil then
+        deleteAll(loaded)
+        job.done(false, failure)
+        return
+    end
+    local tradeIns, tradeErr = self:tradeInVehicles(job.ins.tradeIns)
+    local total = 0
+    for _, b in ipairs(job.ins.bookings or {}) do
+        total = total + b.amount
+    end
+    local floor = type(job.ins.minBalance) == "number" and math.min(job.ins.minBalance, 0) or 0
+    local balance = self:getBalance()
+    local err = tradeErr or ((balance == nil or balance - total < floor) and "INSUFFICIENT_FUNDS" or nil)
+    if err ~= nil then
+        deleteAll(loaded)
+        job.done(false, err)
+        return
+    end
+    deleteAll(tradeIns)
+    for _, b in ipairs(job.ins.bookings or {}) do
+        if b.amount > 0 then
+            self:addMoney(-b.amount, b.moneyReason, b.note)
+        end
+    end
+    local result = { placeUsed = job.placeUsed, vehicleCount = #job.ins.items, tradeInsRemoved = #tradeIns }
+    for i = 1, #job.ins.items do
+        result["vehicleId" .. i] = safe(function() return job.results[i].vehicles[1]:getUniqueId() end, nil)
+    end
+    RPSimLog.info("Delivery %s: %d machine(s) at %s", tostring(job.ins.deliveryId), #job.ins.items, job.placeUsed)
+    job.done(true, nil, result)
 end
 
 -- ---------------------------------------------------------------------------------------------- Roadmap V3.1 R31-D

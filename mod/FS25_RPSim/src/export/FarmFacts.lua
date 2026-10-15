@@ -469,7 +469,8 @@ end
 
 --- raw: {
 --   savegameId, gameTime, balance,
---   vehicles = { {uniqueId, value, damage, name?, xmlFilename?, category?, fuel?} }, placeables = { {uniqueId, value} },
+--   vehicles = { {uniqueId, value, damage, name?, xmlFilename?, category?, fuel?, repairPrice?} },
+--   placeables = { {uniqueId, value} },
 --   leasedVehicles = { {uniqueId, costPerPeriod?} },
 --   farmland = { {farmlandId, hectares, price} }, animals = { {husbandryUniqueId, type, count, estimatedValue} },
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
@@ -501,6 +502,10 @@ function RPSimFarmFacts.build(raw, cfg)
             e.category = string.upper(v.category)
         end
         e.fuel = RPSimFarmFacts.buildFuel(v.fuel)
+        -- Roadmap vehicle dealer RFH-B4 (owner decision 2026-10-15): repair price, whole euros, optional
+        if type(v.repairPrice) == "number" and v.repairPrice == v.repairPrice and v.repairPrice >= 0 then
+            e.repairPrice = round(v.repairPrice)
+        end
         vehicles[#vehicles + 1] = e
     end
     local placeables = RPSimJson.array({})

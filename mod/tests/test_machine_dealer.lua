@@ -60,14 +60,14 @@ end
 
 function T.TestMachineDealer:testNewMoneyReasonsAreKnown()
     for _, r in ipairs({ "VEHICLE_DEPOSIT", "VEHICLE_NEW_PURCHASE", "VEHICLE_DELIVERY_FEE", "VEHICLE_EXPRESS_FEE",
-        "VEHICLE_REFUND", "VEHICLE_CANCELLATION_FEE" }) do
+        "VEHICLE_REFUND", "VEHICLE_CANCELLATION_FEE", "VEHICLE_DEMO_LATE_FEE" }) do
         lu.assertTrue(RPSimInstructions.MONEY_REASONS[r], r)
         lu.assertTrue(RPSimInstructions.validate({ instructionId = "m", type = "MONEY_TRANSACTION", amount = -1,
             reason = r }), r)
     end
 end
 
-function T.TestMachineDealer:testDeliveryIsNotSupportedUntilRfhL5()
+function T.TestMachineDealer:testDeliveryIsNotSupportedWithoutTheAdapterAction()
     local state = RPSimProcessor.newState(RPSimConfig.new())
     local booked = 0
     local res = RPSimProcessor.process(state, { savegameId = SG, instructions = { delivery() } },
@@ -282,6 +282,16 @@ function T.TestMachineDealer:testDeliveryPointsSurviveTheSavegame()
     RPSimPersistence.load({ getString = function() return nil end, getInt = function() return nil end,
         getFloat = function() return nil end }, old)
     lu.assertEquals(old.deliveryPoints, { seq = 0, points = {} })
+end
+
+-- RFH-B4 (owner decision 2026-10-15): the repair price of an own vehicle, whole euros, optional
+function T.TestMachineDealer:testRepairPriceIsExported()
+    local doc = RPSimFarmFacts.build({ savegameId = SG, gameTime = 1, balance = 0, vehicles = {
+        { uniqueId = "veh_1", value = 1000, damage = 0.2, repairPrice = 1234.6 },
+        { uniqueId = "veh_2", value = 1000, damage = 0 }, { uniqueId = "veh_3", value = 1, repairPrice = -1 } } })
+    lu.assertEquals(doc.assets.vehicles[1].repairPrice, 1235)
+    lu.assertNil(doc.assets.vehicles[2].repairPrice)
+    lu.assertNil(doc.assets.vehicles[3].repairPrice)
 end
 
 return T

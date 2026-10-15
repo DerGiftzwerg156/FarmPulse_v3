@@ -54,6 +54,8 @@ RPSimInstructions.MONEY_REASONS = {
     VEHICLE_DEPOSIT = true, VEHICLE_NEW_PURCHASE = true, VEHICLE_DELIVERY_FEE = true, VEHICLE_EXPRESS_FEE = true,
     VEHICLE_REFUND = true,
     VEHICLE_CANCELLATION_FEE = true,
+    -- RFH-V1 (owner decision 2026-10-15): fixed fee per day a demo machine of the dealer is returned late
+    VEHICLE_DEMO_LATE_FEE = true,
 }
 
 RPSimInstructions.PRICE_MODES = { MULTIPLIER = true, FIXED = true }

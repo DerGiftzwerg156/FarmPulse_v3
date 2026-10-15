@@ -979,6 +979,177 @@ function T.TestGameAdapter:testPlayerPlaceForADeliveryPoint()
     g_localPlayer, MathUtil = nil, nil
 end
 
+-- Roadmap vehicle dealer RFH-L5: VEHICLE_DELIVERY in the game (fake engine)
+local function deliveryGame(opts)
+    opts = opts or {}
+    helpers.fakeGame()
+    local g = { loads = {}, booked = {}, deleted = {}, boxes = {}, hits = opts.hits or 0, balance = opts.balance or 500000 }
+    VehicleLoadingState = { OK = 1, ERROR = 2, NO_SPACE = 3 }
+    VehiclePropertyState = { OWNED = 1, LEASED = 2 }
+    g_terrainNode = 1
+    getTerrainHeightAtWorldPos = function() return 100 end
+    overlapBox = function(x, y, z, rx, ry, rz, ex, ey, ez)
+        g.boxes[#g.boxes + 1] = { x = x, y = y, z = z, ry = ry, ex = ex, ey = ey, ez = ez }
+        return g.hits
+    end
+    MathUtil = { getDirectionFromYRotation = function() return 0, 1 end } -- facing +z: the row runs along x
+    StoreItemUtil = { getSizeValues = function(xml) return xml:find("fendt") and { width = 3, length = 6, height = 3 }
+        or { width = 5, length = 4, height = 2 } end }
+    ConfigurationUtil = { getConfigIdBySaveId = function(_, name, saveId) return saveId == "BLACK" and 2 or 1 end }
+    local items = {
+        ["fendt.xml"] = { xmlFilename = "fendt.xml", configurations = { baseColor = { {}, {} }, motor = { {}, {}, {} } } },
+        ["catros.xml"] = { xmlFilename = "catros.xml" },
+    }
+    g_storeManager = { getItemByXMLFilename = function(_, xml) return items[xml] end }
+    g_currentMission.storeSpawnPlaces, g_currentMission.usedStorePlaces = {}, {}
+    VehicleLoadingData = { new = function()
+        local d = { }
+        function d:setStoreItem(i) self.storeItem = i end
+        function d:setConfigurations(c) self.configs = c end
+        function d:setBoughtConfigurations(b) self.bought = b end
+        function d:setPosition(x, y, z) self.pos = { x, y, z } end
+        function d:setRotation(rx, ry, rz) self.rot = { rx, ry, rz } end
+        function d:setLoadingPlace() self.shop = true; return opts.shopFree ~= false end
+        function d:setPropertyState(p) self.property = p end
+        function d:setOwnerFarmId(id) self.farm = id end
+        function d:load(cb, target) self.cb, self.target = cb, target; g.loads[#g.loads + 1] = self end
+        return d
+    end }
+    local adapter = RPSimGameAdapter.new()
+    function adapter:getBalance() return g.balance end
+    function adapter:addMoney(amount, reason, note)
+        g.booked[#g.booked + 1] = { amount = amount, reason = reason, note = note }
+        g.balance = g.balance + amount
+        return true
+    end
+    local tradeIn = { deleted = false }
+    function tradeIn:delete() self.deleted = true end
+    g.tradeIn = tradeIn
+    g.tradeInState = opts.tradeInState
+    function adapter:removableVehicle(id)
+        if id ~= "veh_00042" then return nil, "VEHICLE_NOT_FOUND" end
+        if g.tradeInState ~= nil then return nil, g.tradeInState end
+        return tradeIn
+    end
+    function g.finish(state)
+        local n = 0
+        for _, d in ipairs(g.loads) do
+            n = n + 1
+            local v = { id = "veh_new" .. n }
+            function v:getUniqueId() return self.id end
+            function v:delete() g.deleted[#g.deleted + 1] = self.id end
+            d.cb(d.target, { v }, state or VehicleLoadingState.OK)
+        end
+    end
+    return adapter, g
+end
+
+local function clearDeliveryGame()
+    VehicleLoadingState, VehiclePropertyState, g_terrainNode, getTerrainHeightAtWorldPos, overlapBox = nil, nil, nil, nil, nil
+    MathUtil, StoreItemUtil, ConfigurationUtil, g_storeManager, VehicleLoadingData = nil, nil, nil, nil, nil
+end
+
+local DELIVERY = { instructionId = "d1", type = "VEHICLE_DELIVERY", deliveryId = "dlv_1",
+    items = { { storeXmlFilename = "fendt.xml", configurations = { baseColor = { saveId = "BLACK", index = 9 },
+        motor = { index = 3 }, roof = { index = 2 } } }, { storeXmlFilename = "catros.xml" } },
+    place = { x = 10, z = 20, ry = 0 }, fallbackToShop = true, tradeIns = { "veh_00042" },
+    bookings = { { amount = 150000, moneyReason = "VEHICLE_NEW_PURCHASE", note = "Fendt" },
+        { amount = 290, moneyReason = "VEHICLE_DELIVERY_FEE", note = "Lieferung" },
+        { amount = 0, moneyReason = "VEHICLE_EXPRESS_FEE" } } }
+
+function T.TestGameAdapter:testDeliveryAtTheDeliveryPointRemovesTheTradeInAndBooksAfterLoading()
+    local adapter, g = deliveryGame()
+    local result
+    lu.assertTrue(adapter:deliverVehicles(DELIVERY, function(ok, err, res) result = { ok, err, res } end,
+        { deliveryMachineGap = 2, deliveryGroundClearance = 0.5 }))
+    lu.assertEquals(#g.booked, 0) -- nothing booked before the machines are there
+    lu.assertEquals(#g.loads, 2)
+    -- row across the facing direction: widths 3 + 2 + 5 = 10, centred on x = 10
+    lu.assertEquals(g.loads[1].pos, { 6.5, nil, 20 })
+    lu.assertEquals(g.loads[2].pos, { 12.5, nil, 20 })
+    lu.assertEquals(g.loads[1].rot, { 0, 0, 0 })
+    lu.assertEquals(g.boxes[1], { x = 6.5, y = 102, z = 20, ry = 0, ex = 1.5, ey = 1.5, ez = 3 })
+    -- options: saveId wins over the index, an unknown type is left out
+    lu.assertEquals(g.loads[1].configs, { baseColor = 2, motor = 3 })
+    lu.assertEquals(g.loads[1].bought, { baseColor = { [2] = true }, motor = { [3] = true } })
+    lu.assertEquals(g.loads[1].property, VehiclePropertyState.OWNED)
+    g.finish()
+    lu.assertTrue(result[1])
+    lu.assertEquals(result[3], { placeUsed = "DELIVERY_POINT", vehicleCount = 2, vehicleId1 = "veh_new1",
+        vehicleId2 = "veh_new2", tradeInsRemoved = 1 })
+    lu.assertTrue(g.tradeIn.deleted)
+    lu.assertEquals(g.booked, { { amount = -150000, reason = "VEHICLE_NEW_PURCHASE", note = "Fendt" },
+        { amount = -290, reason = "VEHICLE_DELIVERY_FEE", note = "Lieferung" } })
+    clearDeliveryGame()
+end
+
+function T.TestGameAdapter:testATakenDeliveryPointFallsBackToTheShopPlaces()
+    local adapter, g = deliveryGame({ hits = 1 })
+    local result
+    lu.assertTrue(adapter:deliverVehicles(DELIVERY, function(ok, err, res) result = { ok, err, res } end, {}))
+    lu.assertTrue(g.loads[1].shop)
+    lu.assertNil(g.loads[1].pos)
+    g.finish()
+    lu.assertEquals(result[3].placeUsed, "SHOP")
+    -- without fallback: NO_SPACE at once, nothing loaded
+    local adapter2, g2 = deliveryGame({ hits = 1 })
+    local ins = {}
+    for k, v in pairs(DELIVERY) do ins[k] = v end
+    ins.fallbackToShop = false
+    local ok, err = adapter2:deliverVehicles(ins, function() end, {})
+    lu.assertFalse(ok)
+    lu.assertEquals(err, "NO_SPACE")
+    lu.assertEquals(#g2.loads, 0)
+    -- full shop places
+    local adapter3 = deliveryGame({ hits = 1, shopFree = false })
+    lu.assertEquals(select(2, adapter3:deliverVehicles(DELIVERY, function() end, {})), "NO_SPACE")
+    clearDeliveryGame()
+end
+
+function T.TestGameAdapter:testDeliveryFailuresLoadAndBookNothing()
+    local adapter, g = deliveryGame({ tradeInState = "VEHICLE_ATTACHED" })
+    lu.assertEquals(select(2, adapter:deliverVehicles(DELIVERY, function() end, {})), "TRADE_IN_ATTACHED")
+    g.tradeInState = "VEHICLE_IN_USE"
+    lu.assertEquals(select(2, adapter:deliverVehicles(DELIVERY, function() end, {})), "TRADE_IN_IN_USE")
+    g.tradeInState = nil
+    g.balance = 1000
+    lu.assertEquals(select(2, adapter:deliverVehicles(DELIVERY, function() end, {})), "INSUFFICIENT_FUNDS")
+    local ins = {}
+    for k, v in pairs(DELIVERY) do ins[k] = v end
+    ins.minBalance = -200000 -- overdraft
+    lu.assertTrue(adapter:deliverVehicles(ins, function() end, {}))
+    ins.items = { { storeXmlFilename = "unicorn.xml" } }
+    lu.assertEquals(select(2, adapter:deliverVehicles(ins, function() end, {})), "UNKNOWN_STORE_ITEM")
+    lu.assertEquals(#g.booked, 0)
+    -- a machine fails to load: every loaded one is deleted, nothing booked
+    local adapter2, g2 = deliveryGame()
+    local result
+    adapter2:deliverVehicles(DELIVERY, function(ok, err) result = { ok, err } end, {})
+    g2.loads[1].cb(g2.loads[1].target, { { getUniqueId = function() return "a" end,
+        delete = function() g2.deleted[#g2.deleted + 1] = "a" end } }, VehicleLoadingState.OK)
+    g2.loads[2].cb(g2.loads[2].target, {}, VehicleLoadingState.NO_SPACE)
+    lu.assertEquals(result, { false, "NO_SPACE" })
+    lu.assertEquals(g2.deleted, { "a" })
+    lu.assertEquals(#g2.booked, 0)
+    -- the trade-in got coupled while loading: delete the machines, book nothing
+    local adapter3, g3 = deliveryGame()
+    adapter3:deliverVehicles(DELIVERY, function(ok, err) result = { ok, err } end, {})
+    g3.tradeInState = "VEHICLE_ATTACHED"
+    g3.finish()
+    lu.assertEquals(result, { false, "TRADE_IN_ATTACHED" })
+    lu.assertEquals(g3.deleted, { "veh_new1", "veh_new2" })
+    lu.assertFalse(g3.tradeIn.deleted)
+    lu.assertEquals(#g3.booked, 0)
+    clearDeliveryGame()
+end
+
+function T.TestGameAdapter:testStorePlacesAreCentredLikePalletPlaces()
+    helpers.fakeGame()
+    g_currentMission.storeSpawnPlaces = { { startX = 100, startZ = -40, width = 8, dirX = 1, dirZ = 0 },
+        { startX = 1 } }
+    lu.assertEquals(RPSimGameAdapter.new():collectStorePlaces(), { { x = 104, z = -40 } })
+end
+
 function T.TestGameAdapter:testStoreCatalogIsExportedOnceAtTheStartAndCanBeSwitchedOff()
     storeGame()
     local bridge, fs, paths = realBridge()

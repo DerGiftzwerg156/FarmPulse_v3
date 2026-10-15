@@ -17,7 +17,7 @@
           "properties": { "uniqueId": { "type": "string" }, "value": { "type": "number", "minimum": 0 },
             "condition": { "type": "number", "minimum": 0, "maximum": 100 },
             "name": { "type": "string" }, "xmlFilename": { "type": "string" },
-            "category": { "type": "string", "minLength": 1 },
+            "category": { "type": "string", "minLength": 1 }, "repairPrice": { "type": "integer", "minimum": 0 },
             "fuel": { "type": "object", "required": ["liters", "capacity"], "properties": {
               "liters": { "type": "number", "minimum": 0 }, "capacity": { "type": "number", "exclusiveMinimum": 0 } } } } } },
         "placeables": { "type": "array", "items": { "type": "object", "required": ["uniqueId", "value"],

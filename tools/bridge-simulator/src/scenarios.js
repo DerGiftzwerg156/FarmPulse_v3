@@ -559,7 +559,7 @@ Object.assign(SCENARIOS, {
     journal: { income: 'SOLD_PRODUCTS', expense: 'PURCHASE_FUEL' },
     vehicles: [
       { ...vehicle(1, 62000, 0.25), name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml',
-        category: 'TRACTORSM', fuel: { liters: 90, capacity: 150 } },
+        category: 'TRACTORSM', fuel: { liters: 90, capacity: 150 }, repairPrice: 2400 },
       { ...vehicle(2, 18000, 0.1), name: 'Amazone Catros', xmlFilename: 'data/vehicles/amazone/catros/catros.xml',
         category: 'CULTIVATORS', attached: true },
     ],

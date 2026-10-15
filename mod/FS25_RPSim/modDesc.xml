@@ -263,6 +263,11 @@
             <en>Cancellation fee</en>
             <de>Stornogebühr</de>
         </text>
+        <!-- Roadmap vehicle dealer RFH-V1 (owner decision 2026-10-15) -->
+        <text name="rpsim_money_VEHICLE_DEMO_LATE_FEE">
+            <en>Demo machine late fee</en>
+            <de>Verzögerung Vorführmaschine</de>
+        </text>
         <!-- Schulungen: start of a helper refused in the strict mode (no free machine operator with the training) -->
         <text name="rpsim_ai_noTraining">
             <en>No trained machine operator available</en>

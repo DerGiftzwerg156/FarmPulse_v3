@@ -223,7 +223,8 @@ RPSimProcessor.V31_ACTIONS = { FIELD_WORK = "fieldWork", ANIMAL_TRANSFER = "anim
 RPSimProcessor.V32_ACTIONS = { HUSBANDRY_TRANSFER = "husbandryTransfer" }
 
 --- Roadmap vehicle dealer (RFH-Q3): VEHICLE_DELIVERY loads new machines asynchronously like VEHICLE_SPAWN (PENDING
--- until the loading callback). The adapter action comes with RFH-L5; until then FAILED / NOT_SUPPORTED.
+-- until the loading callback). Executed since RFH-L5 (RPSimGameAdapter:deliverVehicles); an adapter without the action
+-- acknowledges FAILED / NOT_SUPPORTED.
 RPSimProcessor.RFH_ACTIONS = { VEHICLE_DELIVERY = "vehicleDelivery" }
 
 --- Roadmap V3 R3-V2: records the outcome of an asynchronous action (see PENDING). Ignored when the instruction already
