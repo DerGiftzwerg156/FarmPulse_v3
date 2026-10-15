@@ -27,8 +27,10 @@ versions or this changelog do not match.
   at the order and the rest at delivery. Delivery times per shop category with extra days for non-default options,
   express delivery and delays; delivery locations are set in the game by a key at the player's position, the shop
   place stays the default and the fallback when the location is taken. Delivery costs by distance, trade-in, cancellation,
-  financing via the bank and a demo machine. The in-game shop stays; purchases there make the dealer react. Owner
-  decisions and open proposals are in `QUESTIONS.md` (2026-10-14).
+  financing via the bank and a demo machine. The in-game shop stays; purchases there make the dealer react. All points
+  decided by the owner (`QUESTIONS.md`, 2026-10-14 and 2026-10-15): delivery times are days of a 30-day month scaled
+  to the savegame's month length, hour-precise and never before 9:00 of the next game day; delivery locations only on
+  own or leased land; a new button *Lieferung erneut versuchen* retries a failed delivery at once for 500 €.
 - **Roadmap V4 - gaps closed** (owner decisions 2026-10-14 in `QUESTIONS.md`): the contribution margin card colours the
   crops like the field book evaluation, links each calculation to its field book entry and back (`?entry=`), shows the
   expected revenue of a running season with a plan, and corrects lines by litres, price per 1000 l or amount (own
