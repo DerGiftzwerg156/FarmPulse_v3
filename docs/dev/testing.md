@@ -165,6 +165,12 @@ the simulator the scenario, the delivery (place, shop places, `NO_SPACE`, trade-
 validation, the key `POST /delivery-point` and the points in the savegame in `test/machine-dealer.test.js`. Q brings no
 formula, no table besides the catalog column and no configuration value; they come with H, K, O, B, L, S and V. In the
 game: manual test plan section 31.
+Roadmap vehicle dealer (RFH-H): `MachineDealerTest` checks that the dealer belongs to the start cast, that an older
+savegame without the dealer reads `null` from `GET /api/dealer`, gets the dealer (mandatory, one introduction mail, the
+diary entry "<Name> stellt sich vor") with the first `POST /api/dealer/open` and no second one with the next, and that
+a dealer of the start cast is not introduced again; `OnboardingFlowIntegrationTest` counts the dealer in the start cast. In the
+frontend `dealer.spec.ts` covers the contact (role, name with link to the profile, trust tier) and the hint of every
+tab, also without a dealer; `app-hints.spec.ts` and `app.routes.spec.ts` cover the hint and the route of the new app.
 Roadmap V4 R4-D (contribution margin): `FieldMarginTest` covers the direct costs from the counter at the price of the
 moment with the helper surcharge and free farmyard manure, a falling counter, the estimate of an older mod and its
 replacement by an entered line, contractor fees, rent and premiums (each booked once), the realised price of the sales

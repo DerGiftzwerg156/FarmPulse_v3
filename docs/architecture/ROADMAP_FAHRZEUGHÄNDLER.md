@@ -72,7 +72,7 @@ Punkt-IDs: `RFH-<Bereich><Nummer>`, z. B. `RFH-L3`. Alle Pfade sind relativ zum 
 | Phase | Bereich | Inhalt | Mod-Eingriff | Hängt ab von |
 | --- | --- | --- | --- | --- |
 | 0 | [Q – Querschnitt](#q--querschnitt) | Katalog mit Konfigurationen, Lieferorte aus dem Spiel, Anweisung `VEHICLE_DELIVERY`, Buchungsgründe, Simulator, Tests, Doku (**Vertrag umgesetzt 15.10.2026**) | ja | R3-V1..V3 |
-| 1 | [H – Händler](#h--der-händler) | Neue Rolle `MACHINE_DEALER`, Händler-Oberfläche | nein | – |
+| 1 | [H – Händler](#h--der-händler) | Neue Rolle `MACHINE_DEALER`, Händler-Oberfläche (**Rolle und App-Gerüst umgesetzt 15.10.2026**) | nein | – |
 | 2 | [K – Konfigurator und Sammelbestellung](#k--konfigurator-und-sammelbestellung) | Katalog durchsuchen, Maschine konfigurieren, Warenkorb | nein (über Q1) | Q1, H |
 | 3 | [O – Lieferorte](#o--lieferorte) | Lieferort im Spiel per Taste festlegen, benennen, verwalten; Shop-Platz als Standard | ja (über Q2) | Q2 |
 | 4 | [B – Angebot, Verhandlung und Bezahlung](#b--angebot-verhandlung-und-bezahlung) | Angebot, Verhandlung, Anzahlung, Finanzierung, Inzahlungnahme, Stornierung | nein | K, H |
@@ -382,13 +382,25 @@ Lieferpunkt, bei belegtem Punkt auf dem Shop-Platz, ohne Platz gar nicht – und
 
 ## H – Der Händler
 
+**Stand 15.10.2026: Rolle und App-Gerüst umgesetzt.** Rolle `CharacterRole.MACHINE_DEALER` mit Pool-Texten
+(Titel „Landmaschinenhändler/in“, Beschreibung „verkauft neue Landmaschinen nach Wunsch ausgestattet und liefert sie auf
+den Hof“, Kontakte „Landmaschinenhändler:in“). Entscheidung 15.10.2026: Der Händler gehört in neuen Spielständen zur
+**Startbesetzung** des Onboardings (`OnboardingService.MANDATORY_ROLES`); ältere Spielstände bekommen ihn beim ersten
+Öffnen der App über `POST /api/dealer/open` (`dealer/MachineDealerService.open` → `ServiceRoleService.ensure`, Vorstellung
+per Mail und Tagebuch). `GET /api/dealer` liest nur. Die App „Händler“ (`/haendler`, Symbol `tractor`, Untertitel „Neue
+Maschinen ausstatten, bestellen und liefern lassen“, Hinweis beim ersten Öffnen) hat die vier Tabs; bis K, O, B und L
+zeigt jeder Tab den Händler als Kontakt (Rolle, Name mit Link zum Profil, Vertrauensstufe) und den Hinweis „Folgt mit dem
+nächsten Ausbau“ (Entscheidung 15.10.2026). Noch offen in H, weil es zum jeweiligen Bereich gehört: die Mails zu Angebot,
+Bestellung, Verzug, Lieferung, Platzproblem und Stornierung (B, L), Spiel-Shop-Kauf (S) und Vorführung (V), der Inhalt der
+Tabs (K, O, B, L) und die Startbildschirm-Kachel (mit B/L).
+
 ### RFH-H1 Neue Rolle Landmaschinenhändler
 
-- [ ] Neue Pflichtrolle `CharacterRole.MACHINE_DEALER` (Entscheidung 14.10.2026) als Dienstleister-Rolle wie die
-  Werkstatt: Name, Persönlichkeit, Gedächtnis, Vertrauen. Sie entsteht über
-  `character/ServiceRoleService.ensure(sg, role)` beim ersten Anlass (erstes Öffnen des Händlers, erster
-  Spiel-Shop-Kauf) – auch in älteren Spielständen – und stellt sich wie ein neuer Dorfbewohner vor (Mail,
-  Tagebuch).
+- [x] Neue Pflichtrolle `CharacterRole.MACHINE_DEALER` (Entscheidung 14.10.2026) als Dienstleister-Rolle wie die
+  Werkstatt: Name, Persönlichkeit, Gedächtnis, Vertrauen. In neuen Spielständen gehört sie zur Startbesetzung
+  (Entscheidung 15.10.2026); in älteren Spielständen entsteht sie über `character/ServiceRoleService.ensure(sg, role)`
+  beim ersten Anlass (erstes Öffnen des Händlers ✅ 15.10.2026, erster Spiel-Shop-Kauf mit S) und stellt sich wie ein
+  neuer Dorfbewohner vor (Mail, Tagebuch).
 - [ ] Der Händler schreibt Mails zu Angebot, Bestellbestätigung, Verzug, Lieferung, Platzproblem, Stornierung,
   Spiel-Shop-Kauf (S) und Vorführung (V). Alle Zahlen kommen aus dem Backend, die KI formuliert nur; ohne KI gibt es
   Texte aus `fallback-templates`.
@@ -399,9 +411,10 @@ Lieferpunkt, bei belegtem Punkt auf dem Shop-Platz, ohne Platz gar nicht – und
 
 ### RFH-H2 Händler-Oberfläche
 
-- [ ] Eigene App **„Händler“** direkt nach „Werkstatt“ (Entscheidung 15.10.2026), Ton `farm`, mit den Tabs
+- [x] Eigene App **„Händler“** direkt nach „Werkstatt“ (Entscheidung 15.10.2026), Ton `farm`, mit den Tabs
   **Katalog** (mit Konfigurator), **Warenkorb**, **Bestellungen** (Status, Liefertermin mit Uhrzeit, Zahlungen,
-  Storno, „Lieferung erneut versuchen“) und **Lieferorte**. Eintrag in `frontend/src/app/layout/apps.ts`.
+  Storno, „Lieferung erneut versuchen“) und **Lieferorte**. Eintrag in `frontend/src/app/layout/apps.ts`. Umgesetzt
+  15.10.2026 als Gerüst: die Tabs stehen, ihren Inhalt bringen K, O, B und L.
 - [ ] Startbildschirm: Kachel **„Nächste Lieferung: <Maschine> am <Tag>, <Uhrzeit>“**, solange eine Bestellung offen
   ist (Entscheidung 15.10.2026).
 

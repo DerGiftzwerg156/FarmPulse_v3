@@ -12,6 +12,12 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Vehicle dealer - the dealer and the app [RFH-H]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`, owner
+  decisions 2026-10-15 in `QUESTIONS.md`): the new mandatory role `MACHINE_DEALER` (*Landmaschinenhändler/in*) belongs
+  to the start cast of a new savegame; an older savegame gets the dealer, with introduction mail and diary entry, when
+  the new app *Händler* is opened for the first time (`POST /api/dealer/open`; `GET /api/dealer` only reads). The app
+  *Händler* (`/haendler`, after *Werkstatt*) has the tabs *Katalog*, *Warenkorb*, *Bestellungen* and *Lieferorte*; until
+  the areas K, O, B and L fill them, each shows the dealer as contact and the hint "Folgt mit dem nächsten Ausbau".
 - **Vehicle dealer - bridge contract [RFH-Q]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`): the new file
   `export/store_catalog.json` (shop catalog with every option: price and daily upkeep per option, default, selectable,
   yes/no, colour, dependent options, manufacturer packages; written once per mission start once the mod reads the

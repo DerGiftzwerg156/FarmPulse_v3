@@ -42,6 +42,8 @@ const pages: Routes = [
   ...tabbed('insurance', 'versicherung', () => import('./features/insurance/insurance').then((m) => m.Insurance), 'nav.insurance'),
   ...tabbed('stable', 'stall', () => import('./features/stable/stable').then((m) => m.Stable), 'nav.stable'),
   ...tabbed('workshop', 'werkstatt', () => import('./features/workshop/workshop').then((m) => m.Workshop), 'nav.workshop'),
+  /** Roadmap vehicle dealer RFH-H2 */
+  ...tabbed('dealer', 'haendler', () => import('./features/dealer/dealer').then((m) => m.Dealer), 'nav.dealer'),
   ...tabbed('trade', 'handel', () => import('./features/trade/trade').then((m) => m.Trade), 'nav.trade'),
   /** Old address of "Verträge & Vorgänge" (links in stored mails): forwards to the app of the entry. */
   { path: 'contracts', loadComponent: () => import('./features/contracts/contracts-redirect').then((m) => m.ContractsRedirect) },

@@ -54,6 +54,7 @@ Homescreen.
 | **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge; Anbauplanung der nächsten Saison | Dokumentation · Auswertung · Anbauplanung |
 | **Stall** | Tiere, Tierpfleger, Futterbilanz, Tierarzt, Viehhandel und Tierwohl | Ställe · Futter · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
+| **Händler** | Neue Maschinen ausstatten, bestellen und liefern lassen (im Aufbau) | Katalog · Warenkorb · Bestellungen · Lieferorte |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
 | **Tagebuch** | Die Chronik deines Hofs | – |
 | **Einstellungen** | Alle Einstellungen: KI, Hof, Ereignisse, Fragen und Helfer im Spiel, Tablet & Netzwerk, Experteneinstellungen | KI · Hof · Ereignisse · Im Spiel · Tablet & Netzwerk · Experte |
@@ -816,6 +817,14 @@ Mod-Version.
   Dorf redet darüber. Ein **Tankschloss** für 250 € je Maschine macht das bei dieser Maschine deutlich unwahrscheinlicher;
   die Liste zeigt den Dieselstand jeder Maschine und die bisherigen Diebstähle. Dieselklau ist unter **Einstellungen**
   abschaltbar und kommt im idyllischen Weltmodus nicht vor.
+
+## Händler
+
+Der **Landmaschinenhändler** gehört in neuen Spielständen zur Startbesetzung; in einem älteren Spielstand stellt er
+sich per Mail und Tagebuch vor, sobald du die App **Händler** zum ersten Mal öffnest. Er steht in den **Kontakten** und
+hat ein Vertrauen wie jede Rolle. Die App hat die Tabs **Katalog**, **Warenkorb**, **Bestellungen** und **Lieferorte**;
+sie zeigen vorerst den Händler als Kontakt und den Hinweis „Folgt mit dem nächsten Ausbau“. Gebrauchte Maschinen,
+Leih- und Vorführmaschinen der Werkstatt bleiben in der **Werkstatt**.
 
 ## Handel
 

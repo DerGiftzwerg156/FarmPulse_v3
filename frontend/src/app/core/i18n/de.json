@@ -35,6 +35,7 @@
     "insurance": "Versicherung",
     "stable": "Stall",
     "workshop": "Werkstatt",
+    "dealer": "Händler",
     "trade": "Handel",
     "newspaper": "Dorfblatt",
     "chat": "Dorfchat"
@@ -54,6 +55,7 @@
     "fieldbook": "Jedes Feld, jedes Erntejahr – was angebaut, gedüngt und geerntet wurde",
     "stable": "Tiere, Tierarzt, Viehhandel und Tierwohl",
     "workshop": "Wartungsvertrag, Reparaturen, Mechaniker und Gebrauchtmaschinen",
+    "dealer": "Neue Maschinen ausstatten, bestellen und liefern lassen",
     "diary": "Die Chronik deines Hofs",
     "settings": "KI, Spielstand und Fragen im Spiel",
     "trade": "Ware und Arbeit mit den Nachbarn",
@@ -154,6 +156,7 @@
       "ENERGY_SUPPLIER": "Energieversorger",
       "WORKSHOP": "Landmaschinenwerkstatt",
       "CONTRACTOR": "Lohnunternehmer:in",
+      "MACHINE_DEALER": "Landmaschinenhändler:in",
       "TAX_OFFICE": "Finanzamt",
       "TAX_ADVISOR": "Steuerberater:in",
       "FAMILY": "Familie",
@@ -2211,6 +2214,9 @@
       "paid": "Versicherung zahlte {amount}"
     }
   },
+  "dealer": {
+    "comingSoon": "Folgt mit dem nächsten Ausbau"
+  },
   "authorities": {
     "taxOffice": "Finanzamt",
     "agriOffice": "Landwirtschaftsamt",
@@ -2621,6 +2627,12 @@
       "leihen": "Leihen & Vorführen",
       "tankschloesser": "Tankschlösser"
     },
+    "dealer": {
+      "katalog": "Katalog",
+      "warenkorb": "Warenkorb",
+      "bestellungen": "Bestellungen",
+      "lieferorte": "Lieferorte"
+    },
     "trade": {
       "nachbarn": "Nachbarn & Ware",
       "tiere": "Tierhandel",
@@ -2645,7 +2657,8 @@
     "contacts": "Hier stehen die Menschen aus Dorf, Familie, Vereinen und deinem Personal. Im Profil siehst du Charakterzüge, Hintergrund und Felder, unter „Nachricht“ schreibst du ihnen oder rufst an – die Antwort kommt in Spielzeit. Vertrauen und Ansehen zeigt das Tablet nur als Stufe, nie als Zahl. Die Anfragen der Vereine stehen unter „Vereine & Sponsoring“.",
     "newspaper": "Das Dorfblatt erscheint zu Beginn jeder Periode mit Neuigkeiten aus dem Dorf, vom Hof und vom Markt, mit Amtlichem und Kleinanzeigen. Die neueste Ausgabe ist geöffnet, ältere Ausgaben bleiben in der Liste lesbar.",
     "calendar": "Der Kalender folgt dem FS25-Kalender. „Nächste Tage“ zeigt Fristen und Termine und was zum Monatsbeginn automatisch abgebucht wird. Unter „Einladungen“ antwortest du auf Dorffeste, Stammtisch und Versammlungen, „Jahr“ zeigt Dorffeste, Steuertermine, Familien- und Amtstermine im Überblick.",
-    "fieldbook": "Das Feldbuch führt für jedes eigene und gepachtete Feld eine laufende Saison und je Erntejahr einen Eintrag: Kultur, Ernteprodukt, 1. und 2. Düngung, Kalk, Walzen, Unkraut, Mulchen und die geernteten Liter. Fast alles erkennt FarmPulse aus dem Spiel; mit der Ernte endet der Eintrag, alles danach zählt zur nächsten Saison. Jeden Wert kannst du korrigieren („manuell“) und mit ↺ wieder der Erkennung überlassen. Ein abgeschlossenes Erntejahr ist gesperrt; was das Spiel danach noch meldet, erscheint als Hinweis und wird übernommen, wenn du das Jahr wieder öffnest."
+    "fieldbook": "Das Feldbuch führt für jedes eigene und gepachtete Feld eine laufende Saison und je Erntejahr einen Eintrag: Kultur, Ernteprodukt, 1. und 2. Düngung, Kalk, Walzen, Unkraut, Mulchen und die geernteten Liter. Fast alles erkennt FarmPulse aus dem Spiel; mit der Ernte endet der Eintrag, alles danach zählt zur nächsten Saison. Jeden Wert kannst du korrigieren („manuell“) und mit ↺ wieder der Erkennung überlassen. Ein abgeschlossenes Erntejahr ist gesperrt; was das Spiel danach noch meldet, erscheint als Hinweis und wird übernommen, wenn du das Jahr wieder öffnest.",
+    "dealer": "Beim Landmaschinenhändler stellst du neue Maschinen wie im Shop des Spiels zusammen, sammelst sie im Warenkorb und lässt sie an einen Lieferort bringen, den du im Spiel per Taste festlegst."
   },
   "investors": {
     "title": "Großinvestoren",

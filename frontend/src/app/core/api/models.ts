@@ -2263,3 +2263,13 @@ export interface FieldMarginExpected {
   priceSource: string | null;
   revenue: number | null;
 }
+
+/** Roadmap vehicle dealer RFH-H1: the machine dealer as contact; null until the dealer exists in the savegame. */
+export interface DealerContactView {
+  character: CharacterRef;
+  trustLevel: TrustLevel;
+}
+
+export interface DealerView {
+  dealer: DealerContactView | null;
+}

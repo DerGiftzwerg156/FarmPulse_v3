@@ -43,6 +43,10 @@ export class ApiService {
   contractAction(id: number, action: 'accept' | 'decline' | 'cancel' | string, body: unknown = {}): Observable<M.ContractView> {
     return this.post(`/contracts/${id}/${action}`, body);
   }
+  /** Roadmap vehicle dealer RFH-H1: opening the app "Händler" brings the dealer into an older savegame. */
+  openDealer(): Observable<M.DealerView> {
+    return this.post('/dealer/open', {});
+  }
   /** TODO T-22: ask the workshop for a maintenance contract. */
   requestMaintenanceOffer(): Observable<M.ContractView> {
     return this.post('/maintenance/offer', {});
