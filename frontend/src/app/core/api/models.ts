@@ -2405,3 +2405,22 @@ export interface CartView {
   maxPositions: number;
   listPriceSum: number;
 }
+
+/** RFH-O1: a delivery point set in the game by key; name = null until named ("Lieferort <seq>"). */
+export interface DeliveryPointView {
+  id: number;
+  seq: number;
+  name: string | null;
+  farmlandId: number | null;
+  day: number | null;
+  dayTimeMs: number | null;
+  valid: boolean;
+  isDefault: boolean;
+}
+
+/** RFH-O1: supported = the mod exports delivery points; the shop place of the game is always there. */
+export interface DeliveryPlacesView {
+  supported: boolean;
+  shopIsDefault: boolean;
+  points: DeliveryPointView[];
+}

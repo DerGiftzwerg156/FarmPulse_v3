@@ -24,6 +24,7 @@ function RPSimProcessor.newState(cfg)
         harvests = RPSimHarvestCounter.new(), -- Roadmap V3.3 R33-F3
         inputs = RPSimInputCounter.new(), -- Roadmap V4 R4-D1
         feed = RPSimFeedCounter.new(), -- Roadmap V4 R4-F1
+        deliveryPoints = { seq = 0, points = {} }, -- Roadmap vehicle dealer RFH-O1
     }
 end
 

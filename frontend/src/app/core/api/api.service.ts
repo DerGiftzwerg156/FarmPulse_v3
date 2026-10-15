@@ -76,6 +76,19 @@ export class ApiService {
   dealerCartRemove(id: number): Observable<M.CartView> {
     return this.http.delete<M.CartView>(`${this.base}/dealer/cart/${id}`);
   }
+  /** RFH-O1: the delivery points and the shop place of the game. */
+  dealerDeliveryPoints(): Observable<M.DeliveryPlacesView> {
+    return this.get('/dealer/delivery-points');
+  }
+  dealerRenameDeliveryPoint(id: number, name: string): Observable<M.DeliveryPlacesView> {
+    return this.http.put<M.DeliveryPlacesView>(`${this.base}/dealer/delivery-points/${id}/name`, { name });
+  }
+  dealerDefaultDeliveryPoint(id: number | 'shop'): Observable<M.DeliveryPlacesView> {
+    return this.post(`/dealer/delivery-points/${id}/default`, {});
+  }
+  dealerDeleteDeliveryPoint(id: number): Observable<M.DeliveryPlacesView> {
+    return this.http.delete<M.DeliveryPlacesView>(`${this.base}/dealer/delivery-points/${id}`);
+  }
   /** TODO T-22: ask the workshop for a maintenance contract. */
   requestMaintenanceOffer(): Observable<M.ContractView> {
     return this.post('/maintenance/offer', {});

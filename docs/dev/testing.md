@@ -181,6 +181,11 @@ power, bales, bundles) in `test_game_adapter.lua`, the simulator the new fields 
 `test/machine-dealer.test.js`; `dealer-k.spec.ts` covers the texts (power, type names, delivery span), the catalog
 (missing, filters, sort, pages), the configurator (options, colour fields, yes/no as a selection, price, delivery, full
 cart) and the cart. In the game: manual test plan 31.13–31.15.
+Roadmap vehicle dealer (RFH-O1): `DeliveryPointTest` covers the take-over of each `seq` once, an older mod, rename,
+default, delete (the mod cannot bring a point back), validity by the farmlands of the farm and the shop place as default
+when the default point is deleted or invalid; the mod covers the key (own / foreign land, the last points, export only
+with the key registered) and the points in the mod savegame in `test_machine_dealer.lua` and `readPlayerPlace` in
+`test_game_adapter.lua`; `dealer-places.spec.ts` the tab. In the game: manual test plan 31.4, 31.5, 31.16.
 Roadmap V4 R4-D (contribution margin): `FieldMarginTest` covers the direct costs from the counter at the price of the
 moment with the helper surcharge and free farmyard manure, a falling counter, the estimate of an older mod and its
 replacement by an entered line, contractor fees, rent and premiums (each booked once), the realised price of the sales

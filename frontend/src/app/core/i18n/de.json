@@ -2276,6 +2276,23 @@
       "full": "Der Warenkorb ist voll (höchstens {max} Positionen).",
       "empty": "Der Warenkorb ist leer.",
       "offerLater": "Das Angebot fragst du mit dem nächsten Ausbau an."
+    },
+    "places": {
+      "pointName": "Lieferort {seq}",
+      "farmland": "Flurstück {id}",
+      "setAt": "festgelegt Tag {day}, {time}",
+      "default": "Standard",
+      "unnamed": "neu – bitte benennen",
+      "invalid": "ungültig",
+      "invalidText": "Das Flurstück gehört nicht mehr zu deinem Hof – Lieferungen gehen auf den Shop-Platz.",
+      "rename": "Umbenennen",
+      "name": "Name",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "makeDefault": "Als Standard",
+      "delete": "Löschen",
+      "shopPlace": "Shop-Platz des Spiels",
+      "empty": "Noch keine Lieferorte. Geh im Spiel zu Fuß an die Stelle, schau in die Richtung, in die die Maschine zeigen soll, und drücke ‚FarmPulse: Lieferort hier festlegen‘ (Alt+L)."
     }
   },
   "authorities": {

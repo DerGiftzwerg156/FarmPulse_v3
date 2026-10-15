@@ -954,6 +954,31 @@ function T.TestGameAdapter:testStoreCatalogDetailsReadEveryOption()
     clearStoreGame()
 end
 
+-- Roadmap vehicle dealer RFH-O1: place of the player for a delivery point (position, facing, farmland, owner)
+function T.TestGameAdapter:testPlayerPlaceForADeliveryPoint()
+    helpers.fakeGame()
+    local inVehicle = false
+    g_localPlayer = { getPosition = function() return 10, 98.5, -20 end,
+        getCurrentFacingDirection = function() return 0, 1 end, getIsInVehicle = function() return inVehicle end }
+    MathUtil = { getYRotationFromDirection = function(dx, dz) return math.atan2(dx, dz) end }
+    local owners = { [3] = 1, [9] = 2 }
+    local at = 3
+    g_farmlandManager.getFarmlandIdAtWorldPosition = function(_, x, z)
+        lu.assertEquals({ x, z }, { 10, -20 })
+        return at
+    end
+    g_farmlandManager.getFarmlandOwner = function(_, id) return owners[id] end
+    local adapter = RPSimGameAdapter.new()
+    lu.assertEquals(adapter:readPlayerPlace(), { x = 10, y = 98.5, z = -20, ry = 0, farmlandId = 3, owned = true })
+    at = 9
+    lu.assertFalse(adapter:readPlayerPlace().owned)
+    at = 0 -- no farmland (road)
+    lu.assertFalse(adapter:readPlayerPlace().owned)
+    inVehicle = true
+    lu.assertNil(adapter:readPlayerPlace())
+    g_localPlayer, MathUtil = nil, nil
+end
+
 function T.TestGameAdapter:testStoreCatalogIsExportedOnceAtTheStartAndCanBeSwitchedOff()
     storeGame()
     local bridge, fs, paths = realBridge()

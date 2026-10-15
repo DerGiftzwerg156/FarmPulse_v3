@@ -457,4 +457,8 @@ public class Savegame {
 
     @Column(name = "coop_grain_store", nullable = false)
     private boolean coopGrainStore;
+
+    /** Roadmap vehicle dealer RFH-O1: the default delivery point (id of dealer_delivery_point), null = shop place. */
+    @Column(name = "dealer_default_point_id")
+    private Long dealerDefaultPointId;
 }

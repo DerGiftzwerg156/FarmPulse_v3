@@ -9,7 +9,7 @@
 -- luacheck: globals g_gui g_localPlayer YesNoDialog g_inputBinding BunkerSilo g_storeManager
 -- luacheck: globals StoreSpecies StoreItemUtil VehicleLoadingData VehicleLoadingState FieldSprayType
 -- luacheck: globals FillType ToolType FieldState getWorldTranslation
--- luacheck: globals g_brandManager g_vehicleConfigurationManager Motorized XMLFile
+-- luacheck: globals g_brandManager g_vehicleConfigurationManager Motorized XMLFile MathUtil
 RPSimGameAdapter = {}
 RPSimGameAdapter.__index = RPSimGameAdapter
 
@@ -2104,6 +2104,29 @@ function RPSimGameAdapter:stopStrikingJob(jobId, name)
         RPSimLog.warning("Could not stop the helper of %s: %s", tostring(name), tostring(err))
     end
     return ok
+end
+
+--- Text of modDesc.xml in the language of the game (g_i18n:getText); the key itself when it cannot be read.
+function RPSimGameAdapter:getText(key)
+    return safe(function() return g_i18n:getText(key) end, key)
+end
+
+--- Roadmap vehicle dealer RFH-O1 / Q2: the place of the player on foot - position (g_localPlayer:getPosition),
+-- facing direction as rotation about the vertical axis (getCurrentFacingDirection -> MathUtil.getYRotationFromDirection,
+-- as VehicleLoadingData:setLoadingPlace; dump VehicleSystem.lua / VehicleLoadingData.lua), the farmland there
+-- (g_farmlandManager:getFarmlandIdAtWorldPosition) and whether the player farm owns it (getFarmlandOwner; leased land
+-- belongs to the player during the lease). nil when the player is not on foot.
+function RPSimGameAdapter:readPlayerPlace()
+    if g_localPlayer == nil or (g_localPlayer.getIsInVehicle ~= nil and g_localPlayer:getIsInVehicle()) then
+        return nil
+    end
+    local x, y, z = g_localPlayer:getPosition()
+    local dirX, dirZ = g_localPlayer:getCurrentFacingDirection()
+    local farmlandId = safe(function() return g_farmlandManager:getFarmlandIdAtWorldPosition(x, z) end, nil)
+    local owned = farmlandId ~= nil and farmlandId ~= 0
+        and safe(function() return g_farmlandManager:getFarmlandOwner(farmlandId) end, nil) == self:getFarmId()
+    return { x = x, y = y, z = z, ry = MathUtil.getYRotationFromDirection(dirX, dirZ), farmlandId = farmlandId,
+        owned = owned == true }
 end
 
 function RPSimGameAdapter:notify(text, level)

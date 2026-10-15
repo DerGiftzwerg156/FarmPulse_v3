@@ -108,6 +108,10 @@ function RPSimBridge:exportFarmFacts()
     if self.harvestCounterEnabled and self.state.harvests ~= nil then
         raw.harvests = RPSimHarvestCounter.toRaw(self.state.harvests)
     end
+    -- Roadmap vehicle dealer RFH-O1: only exported while the key is registered; otherwise the block stays missing
+    if self.deliveryPointKeyEnabled and self.state.deliveryPoints ~= nil then
+        raw.deliveryPoints = self.state.deliveryPoints.points
+    end
     -- Roadmap V4 R4-D1: only exported while an input hook is installed; otherwise the block stays missing
     if self.inputCounterEnabled and self.state.inputs ~= nil then
         raw.inputs = RPSimInputCounter.toRaw(self.state.inputs)
@@ -642,6 +646,46 @@ end
 
 function RPSimBridge:openNextPrompt()
     return self:updatePrompts(true)
+end
+
+--- Roadmap vehicle dealer RFH-O1 / Q2: key "FarmPulse: Lieferort hier festlegen". Takes the place of the player on foot
+-- (adapter:readPlayerPlace) when it lies on own or leased land (owner decision 2026-10-15), numbers it, keeps the last
+-- deliveryPointsMax points (in the mod savegame) and exports them at once. Returns true, or false and the reason.
+function RPSimBridge:setDeliveryPointHere()
+    if self.adapter.readPlayerPlace == nil then
+        return false, "NOT_SUPPORTED"
+    end
+    local ok, place = pcall(self.adapter.readPlayerPlace, self.adapter)
+    if not ok or type(place) ~= "table" then
+        RPSimLog.warning("Delivery point: place of the player not readable: %s", tostring(place))
+        return false, "NO_PLACE"
+    end
+    if not place.owned then
+        self:notifyText("rpsim_delivery_point_foreign", "CRITICAL")
+        return false, "NOT_OWN_LAND"
+    end
+    local dp = self.state.deliveryPoints
+    dp.seq = dp.seq + 1
+    local gameTime = self.adapter:getGameTime()
+    dp.points[#dp.points + 1] = { seq = dp.seq, x = place.x, y = place.y, z = place.z, ry = place.ry,
+        farmlandId = place.farmlandId, day = math.floor(gameTime / RPSimConfig.MS_PER_GAME_DAY),
+        dayTimeMs = gameTime % RPSimConfig.MS_PER_GAME_DAY }
+    while #dp.points > math.max(1, self.cfg.deliveryPointsMax or 20) do
+        table.remove(dp.points, 1)
+    end
+    RPSimLog.info("Delivery point %d set on farmland %s", dp.seq, tostring(place.farmlandId))
+    self:notifyText("rpsim_delivery_point_saved", "OK")
+    self:exportFarmFacts()
+    return true
+end
+
+--- In-game notification with a text of modDesc.xml (adapter:getText); silently skipped without a notify function.
+function RPSimBridge:notifyText(key, level)
+    if self.adapter.notify == nil then
+        return
+    end
+    local text = self.adapter.getText ~= nil and self.adapter:getText(key) or key
+    self.adapter:notify(text, level)
 end
 
 --- Dialog callback: the answer goes to the backend at once (not with the next regular export).

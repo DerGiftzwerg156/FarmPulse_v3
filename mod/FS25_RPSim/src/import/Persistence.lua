@@ -208,6 +208,22 @@ function RPSimPersistence.save(writer, state)
         writer:setFloat(k .. "#liters", e.liters)
         writer:setFloat(k .. "#helperLiters", e.helperLiters)
     end
+    -- Roadmap vehicle dealer RFH-O1: the delivery points set by key and the last number given
+    local dp = state.deliveryPoints or { seq = 0, points = {} }
+    writer:setInt(ROOT .. ".deliveryPoints#seq", dp.seq or 0)
+    for i, p in ipairs(dp.points) do
+        local k = string.format("%s.deliveryPoints.point(%d)", ROOT, i - 1)
+        writer:setInt(k .. "#seq", p.seq)
+        writer:setFloat(k .. "#x", p.x)
+        writer:setFloat(k .. "#y", p.y)
+        writer:setFloat(k .. "#z", p.z)
+        writer:setFloat(k .. "#ry", p.ry)
+        if p.farmlandId ~= nil then
+            writer:setInt(k .. "#farmlandId", p.farmlandId)
+        end
+        writer:setInt(k .. "#day", p.day or 0)
+        writer:setFloat(k .. "#dayTimeMs", p.dayTimeMs or 0)
+    end
     -- Roadmap V4 R4-F1: feed counter per husbandry (sorted by RPSimFeedCounter.toRaw)
     for i, e in ipairs(RPSimFeedCounter.toRaw(state.feed)) do
         local k = string.format("%s.feed.counter(%d)", ROOT, i - 1)
@@ -395,6 +411,20 @@ function RPSimPersistence.load(reader, state)
         if farmlandId == nil then break end
         RPSimInputCounter.restore(state.inputs, farmlandId, reader:getString(k .. "#fillType"),
             reader:getFloat(k .. "#liters"), reader:getFloat(k .. "#helperLiters"))
+        i = i + 1
+    end
+    -- Roadmap vehicle dealer RFH-O1 (an older savegame has none)
+    state.deliveryPoints = { seq = reader:getInt(ROOT .. ".deliveryPoints#seq") or 0, points = {} }
+    i = 0
+    while true do
+        local k = string.format("%s.deliveryPoints.point(%d)", ROOT, i)
+        local seq = reader:getInt(k .. "#seq")
+        if seq == nil then break end
+        state.deliveryPoints.points[#state.deliveryPoints.points + 1] = { seq = seq, x = reader:getFloat(k .. "#x"),
+            y = reader:getFloat(k .. "#y"), z = reader:getFloat(k .. "#z"), ry = reader:getFloat(k .. "#ry"),
+            farmlandId = reader:getInt(k .. "#farmlandId"), day = reader:getInt(k .. "#day"),
+            dayTimeMs = reader:getFloat(k .. "#dayTimeMs") }
+        state.deliveryPoints.seq = math.max(state.deliveryPoints.seq, seq)
         i = i + 1
     end
     -- Roadmap V4 R4-F1

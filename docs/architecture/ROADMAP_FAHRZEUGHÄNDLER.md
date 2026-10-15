@@ -74,7 +74,7 @@ Punkt-IDs: `RFH-<Bereich><Nummer>`, z. B. `RFH-L3`. Alle Pfade sind relativ zum 
 | 0 | [Q – Querschnitt](#q--querschnitt) | Katalog mit Konfigurationen, Lieferorte aus dem Spiel, Anweisung `VEHICLE_DELIVERY`, Buchungsgründe, Simulator, Tests, Doku (**Vertrag umgesetzt 15.10.2026**) | ja | R3-V1..V3 |
 | 1 | [H – Händler](#h--der-händler) | Neue Rolle `MACHINE_DEALER`, Händler-Oberfläche (**Rolle und App-Gerüst umgesetzt 15.10.2026**) | nein | – |
 | 2 | [K – Konfigurator und Sammelbestellung](#k--konfigurator-und-sammelbestellung) | Katalog durchsuchen, Maschine konfigurieren, Warenkorb (**umgesetzt 15.10.2026**; Anfrage des Angebots mit B) | nein (über Q1) | Q1, H |
-| 3 | [O – Lieferorte](#o--lieferorte) | Lieferort im Spiel per Taste festlegen, benennen, verwalten; Shop-Platz als Standard | ja (über Q2) | Q2 |
+| 3 | [O – Lieferorte](#o--lieferorte) | Lieferort im Spiel per Taste festlegen, benennen, verwalten; Shop-Platz als Standard (**O1 umgesetzt 15.10.2026**; O2 mit B) | ja (über Q2) | Q2 |
 | 4 | [B – Angebot, Verhandlung und Bezahlung](#b--angebot-verhandlung-und-bezahlung) | Angebot, Verhandlung, Anzahlung, Finanzierung, Inzahlungnahme, Stornierung | nein | K, H |
 | 5 | [L – Lieferzeit und Lieferung](#l--lieferzeit-und-lieferung) | Lieferzeit nach Monatslänge je Kategorie, Konfig-Zuschlag, Express, Verzug, Lieferung mit Platzprüfung und Ausweichen, Lieferkosten nach Entfernung, Knopf „Lieferung erneut versuchen“ | ja (über Q3) | Q3, O, B |
 | 6 | [S – Spiel-Shop bleibt, der Händler merkt es](#s--spiel-shop-bleibt-der-händler-merkt-es) | Käufe im Spiel-Shop erkennen, Reaktion des Händlers | nein | H |
@@ -198,12 +198,14 @@ und die Konfigwerte `rpsim.formulas.machine-dealer.*` (mit H, K, B, L, S, V).
 
 ### RFH-Q2 Lieferorte aus dem Spiel
 
-- [ ] Neue Taste **„FarmPulse: Lieferort hier festlegen“** (Aktion `RPSIM_SET_DELIVERY_POINT` in `modDesc.xml`,
-  Kategorie `ONFOOT`, in der Steuerung änderbar). Registriert wie `RPSIM_OPEN_PROMPT`.
-- [ ] Beim Druck merkt sich der Mod: Position des Spielers (`x`, `y`, `z`), Blickrichtung als Drehung um die
+- [x] Neue Taste **„FarmPulse: Lieferort hier festlegen“** (Aktion `RPSIM_SET_DELIVERY_POINT` in `modDesc.xml`,
+  Kategorie `ONFOOT`, in der Steuerung änderbar). Registriert wie `RPSIM_OPEN_PROMPT`. Standardbelegung **Alt+L**
+  (Entscheidung 15.10.2026; ob frei: Testplan 31.5); englische Texte „FarmPulse: set delivery point here“, „Delivery
+  point saved – name it in the farm tablet“, „Delivery points only on own or leased land“ (Entscheidung 15.10.2026).
+- [x] Beim Druck merkt sich der Mod: Position des Spielers (`x`, `y`, `z`), Blickrichtung als Drehung um die
   Hochachse (`ry`), das Flurstück an der Stelle (`farmlandId`) und Spieltag/Uhrzeit. Hinweis im Spiel: „Lieferort
   gespeichert – im Hof-Tablet benennen“.
-- [ ] **Nur auf eigenem oder gepachtetem Land** (Entscheidung 15.10.2026): Gehört das Flurstück an der Stelle nicht der
+- [x] **Nur auf eigenem oder gepachtetem Land** (Entscheidung 15.10.2026): Gehört das Flurstück an der Stelle nicht der
   Spieler-Farm (`g_farmlandManager:getFarmlandOwner(farmlandId) ~= farmId`), speichert der Mod nichts und zeigt
   „Lieferort nur auf eigenem oder gepachtetem Land“.
 - [x] `farm_facts.json`, neuer optionaler Block `deliveryPoints[]` = `{ seq, x, y, z, ry, farmlandId, day, dayTimeMs }`
@@ -508,22 +510,30 @@ einmal „zusammen“, einmal „einzeln“. Eine elfte Position lässt der Ware
 
 ## O – Lieferorte
 
+**Stand 15.10.2026: O1 umgesetzt** (Entscheidungen 15.10.2026, `QUESTIONS.md`). Im Mod die Taste (Alt+L,
+`RPSimBridge:setDeliveryPointHere`, `RPSimGameAdapter:readPlayerPlace`, Mod-Einstellung `deliveryPointsMax`, Speicherung im
+Mod-Spielstand). Im Backend `DeliveryPointService` (Tabelle `dealer_delivery_point`, Migration V52, Spalte
+`savegame.dealer_default_point_id`) und die Endpunkte `/api/dealer/delivery-points`. Im Tablet der Tab **Lieferorte**.
+O2 (Lieferort in der Bestellung) kommt mit den Bestellungen (B).
+
 ### RFH-O1 Lieferort festlegen und verwalten
 
-- [ ] Im Spiel: Der Spieler geht zu Fuß an die gewünschte Stelle, schaut in die Richtung, in die die Maschine zeigen
+- [x] Im Spiel: Der Spieler geht zu Fuß an die gewünschte Stelle, schaut in die Richtung, in die die Maschine zeigen
   soll, und drückt die Taste (Q2). Im Tablet erscheint der neue Punkt unter **Lieferorte** mit der Bitte um einen
   Namen („Maschinenhalle“, „Hof Nord“ …) und dem Flurstück.
-- [ ] Lieferorte gibt es **nur auf eigenem oder gepachtetem Land** (Entscheidung 15.10.2026). Steht der Spieler auf
+- [x] Lieferorte gibt es **nur auf eigenem oder gepachtetem Land** (Entscheidung 15.10.2026). Steht der Spieler auf
   fremdem Land, speichert der Mod nichts und zeigt den Hinweis „Lieferort nur auf eigenem oder gepachtetem Land“.
   Gepachtete Flurstücke gehören während der Pacht auch im Spiel dem Spieler (`FARMLAND_TRANSFER` bei Beginn und Ende
   der Pacht), die Prüfung im Mod deckt beide Fälle ab.
-- [ ] Verwalten: umbenennen, löschen, **Standard-Lieferort** festlegen. Der **Shop-Platz des Spiels** steht immer in
-  der Liste, kann nicht gelöscht werden und ist Standard, solange nichts anderes gewählt ist (Entscheidung
-  14.10.2026).
-- [ ] Gehört das Flurstück eines Lieferorts nicht mehr dem Spieler (Feld verkauft, Pacht vorbei), markiert das Tablet
-  den Lieferort als **ungültig**. Eine Lieferung dorthin geht auf den Shop-Platz, mit Hinweis in Mail und Tablet
-  (Entscheidung 15.10.2026). Das Backend erkennt es an den eigenen Flurstücken in `farm_facts`.
-- [ ] Die Lieferorte gehören zum Spielstand (gleicher Schlüssel wie die übrigen Spielstand-Daten des Backends).
+- [x] Verwalten: umbenennen (höchstens 40 Zeichen), löschen, **Standard-Lieferort** festlegen. Der **Shop-Platz des
+  Spiels** steht immer oben in der Liste, kann nicht gelöscht werden und ist Standard, solange nichts anderes gewählt ist
+  (Entscheidung 14.10.2026). Wird der Standard-Lieferort gelöscht oder ungültig, ist der Shop-Platz **dauerhaft** wieder
+  Standard (Entscheidung 15.10.2026).
+- [x] Gehört das Flurstück eines Lieferorts nicht mehr dem Spieler (Feld verkauft, Pacht vorbei), markiert das Tablet
+  den Lieferort als **ungültig**; kommt das Flurstück zurück, ist er wieder gültig (Entscheidung 15.10.2026). Das
+  Backend erkennt es an den eigenen Flurstücken in `farm_facts`. Die Lieferung dorthin auf den Shop-Platz mit Hinweis
+  in Mail und Tablet kommt mit L5.
+- [x] Die Lieferorte gehören zum Spielstand (gleicher Schlüssel wie die übrigen Spielstand-Daten des Backends).
 
 **Beleg:** ✅ Q2; ✅ `Economy/FarmlandManager.md`: `getFarmlandOwner(farmlandId)` (im Mod seit V1 für die eigenen
 Flurstücke genutzt, `GameAdapter.lua`); Pacht über `FARMLAND_TRANSFER` (R3-L, `mod/README.md`).

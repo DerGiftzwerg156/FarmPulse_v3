@@ -835,9 +835,14 @@ jeder zeigt oben den Händler als Kontakt. Gebrauchte Maschinen, Leih- und Vorf�
   sonst „individuell“. Laufend siehst du Listenpreis, Tageskosten und die voraussichtliche Lieferzeit mit und ohne
   Express – sie richtet sich nach der Art der Maschine, wird mit jeder vom Standard abweichenden Ausstattung länger und
   passt sich der Monatslänge deines Spielstands an; geliefert wird nie vor 9 Uhr am nächsten Spieltag.
+- **Lieferorte.** Geh im Spiel zu Fuß an die Stelle, an der neue Maschinen stehen sollen, schau in die Richtung, in die
+  sie zeigen sollen, und drücke **Alt+L** („FarmPulse: Lieferort hier festlegen“, in der Steuerung änderbar). Das geht
+  nur auf eigenem oder gepachtetem Land. Im Tab erscheint der Punkt mit Flurstück und Zeit; du benennst ihn, machst ihn
+  zum Standard oder löschst ihn. Der Shop-Platz des Spiels steht immer in der Liste. Gehört das Flurstück nicht mehr zu
+  deinem Hof, ist der Lieferort „ungültig“ und der Shop-Platz wird wieder Standard.
 - **Warenkorb.** Bis zu 10 Maschinen, auch dieselbe mehrfach mit anderer Ausstattung; je Position kannst du die
-  Ausstattung ändern oder sie entfernen. Das Angebot fragst du mit dem nächsten Ausbau an; Bestellungen und Lieferorte
-  zeigen bis dahin „Folgt mit dem nächsten Ausbau“.
+  Ausstattung ändern oder sie entfernen. Das Angebot fragst du mit dem nächsten Ausbau an; Bestellungen zeigen bis
+  dahin „Folgt mit dem nächsten Ausbau“.
 
 ## Handel
 

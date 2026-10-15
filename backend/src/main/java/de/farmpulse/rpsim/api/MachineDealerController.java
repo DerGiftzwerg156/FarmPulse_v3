@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import de.farmpulse.rpsim.bridge.BridgeDtos;
 import de.farmpulse.rpsim.dealer.DealerCartService;
+import de.farmpulse.rpsim.dealer.DeliveryPointService;
 import de.farmpulse.rpsim.dealer.DeliveryTime;
 import de.farmpulse.rpsim.dealer.MachineCatalogService;
 import de.farmpulse.rpsim.dealer.MachineConfigurator;
@@ -73,19 +74,36 @@ public class MachineDealerController {
     public record CartView(List<CartPositionView> positions, int maxPositions, long listPriceSum) {
     }
 
+    /**
+     * RFH-O1: a delivery point - {@code name} null until named ("Lieferort <seq>"), farmland, when it was set (game day
+     * and time of day), {@code valid} = its farmland belongs to the farm, {@code isDefault}.
+     */
+    public record DeliveryPointView(long id, int seq, String name, Integer farmlandId, Integer day, Long dayTimeMs,
+                                    boolean valid, boolean isDefault) {
+    }
+
+    /** RFH-O1: {@code supported} = the mod exports delivery points; the shop place of the game is always there. */
+    public record DeliveryPlacesView(boolean supported, boolean shopIsDefault, List<DeliveryPointView> points) {
+    }
+
+    public record RenameRequest(@NotBlank String name) {
+    }
+
     private final SavegameContext context;
     private final MachineDealerService dealers;
     private final ApiMapper mapper;
     private final MachineCatalogService catalog;
     private final DealerCartService cart;
+    private final DeliveryPointService places;
 
     public MachineDealerController(SavegameContext context, MachineDealerService dealers, ApiMapper mapper,
-                                   MachineCatalogService catalog, DealerCartService cart) {
+                                   MachineCatalogService catalog, DealerCartService cart, DeliveryPointService places) {
         this.context = context;
         this.dealers = dealers;
         this.mapper = mapper;
         this.catalog = catalog;
         this.cart = cart;
+        this.places = places;
     }
 
     @GetMapping("/api/dealer")
@@ -164,6 +182,52 @@ public class MachineDealerController {
         Savegame sg = context.requireActive();
         cart.remove(sg, id);
         return cartView(sg);
+    }
+
+    @GetMapping("/api/dealer/delivery-points")
+    @Transactional(readOnly = true)
+    public DeliveryPlacesView deliveryPoints() {
+        return placesView(context.requireActive());
+    }
+
+    @PutMapping("/api/dealer/delivery-points/{id}/name")
+    @Transactional
+    public DeliveryPlacesView renameDeliveryPoint(@PathVariable long id, @Valid @RequestBody RenameRequest req) {
+        Savegame sg = context.requireActive();
+        places.rename(sg, id, req.name());
+        return placesView(sg);
+    }
+
+    @PostMapping("/api/dealer/delivery-points/{id}/default")
+    @Transactional
+    public DeliveryPlacesView defaultDeliveryPoint(@PathVariable long id) {
+        Savegame sg = context.requireActive();
+        places.makeDefault(sg, id);
+        return placesView(sg);
+    }
+
+    @PostMapping("/api/dealer/delivery-points/shop/default")
+    @Transactional
+    public DeliveryPlacesView defaultShopPlace() {
+        Savegame sg = context.requireActive();
+        places.makeShopDefault(sg);
+        return placesView(sg);
+    }
+
+    @DeleteMapping("/api/dealer/delivery-points/{id}")
+    @Transactional
+    public DeliveryPlacesView deleteDeliveryPoint(@PathVariable long id) {
+        Savegame sg = context.requireActive();
+        places.delete(sg, id);
+        return placesView(sg);
+    }
+
+    private DeliveryPlacesView placesView(Savegame sg) {
+        DeliveryPointService.Places p = places.places(sg);
+        return new DeliveryPlacesView(p.supported(), p.shopIsDefault(), p.points().stream()
+                .map(x -> new DeliveryPointView(x.point().getId(), x.point().getSeq(), x.point().getName(),
+                        x.point().getFarmlandId(), x.point().getSetDay(), x.point().getSetDayTimeMs(), x.valid(),
+                        x.isDefault())).toList());
     }
 
     private CartView cartView(Savegame sg) {

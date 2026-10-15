@@ -36,10 +36,10 @@ describe('Dealer (RFH-H2)', () => {
   });
 
   it('every tab shows the hint, also when the dealer cannot be loaded', () => {
-    const { fixture, http, el } = setup('lieferorte');
+    const { fixture, http, el } = setup('bestellungen');
     http.expectOne('/api/dealer/open').flush({ message: 'kein Spielstand' }, { status: 409, statusText: 'Conflict' });
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="dealer-contact"]')).toBeNull();
-    expect(el.querySelector('[data-testid="coming-soon"]')?.textContent).toContain('Lieferorte');
+    expect(el.querySelector('[data-testid="coming-soon"]')?.textContent).toContain('Bestellungen');
   });
 });

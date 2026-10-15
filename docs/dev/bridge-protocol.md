@@ -559,9 +559,13 @@ without `feedConsumed` it counts the fall of `trough` between two exports.
 
 One more **optional** block for [`ROADMAP_FAHRZEUGHÄNDLER.md`](../architecture/ROADMAP_FAHRZEUGHÄNDLER.md), same rules
 (`schemaVersion` stays `1`, missing = older mod, an empty block is a real answer). RFH-Q fixes the **contract only**
-(`BridgeDtos.DeliveryPoint`, `BridgeValidator`, the simulator schema, `RPSimFarmFacts.buildDeliveryPoints`); the key
-"FarmPulse: Lieferort hier festlegen" and the points in the mod savegame come with RFH-O1, until then the block is
-missing. The bridge simulator exports it only in the scenario `fahrzeughaendler` (`POST /delivery-point` = key press).
+(`BridgeDtos.DeliveryPoint`, `BridgeValidator`, the simulator schema, `RPSimFarmFacts.buildDeliveryPoints`). Since
+RFH-O1 the mod has the key "FarmPulse: Lieferort hier festlegen" (action `RPSIM_SET_DELIVERY_POINT`, on foot, default
+Alt+L, owner decision 2026-10-15; `RPSimBridge:setDeliveryPointHere`, `RPSimGameAdapter:readPlayerPlace`) and keeps the
+points in its savegame; the block is exported while the key is registered (missing otherwise). On foreign land the mod
+stores nothing and shows "Lieferort nur auf eigenem oder gepachtetem Land", a stored point shows "Lieferort gespeichert –
+im Hof-Tablet benennen" and is exported at once. The backend (`DeliveryPointService`, table `dealer_delivery_point`)
+takes every new `seq` once; a deleted point stays deleted. The bridge simulator exports it only in the scenario `fahrzeughaendler` (`POST /delivery-point` = key press).
 
 ```json
 { "deliveryPoints": [{ "seq": 1, "x": -412.5, "y": 98.2, "z": 233.75, "ry": 1.571, "farmlandId": 1, "day": 1,

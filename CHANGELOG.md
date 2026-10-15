@@ -12,6 +12,12 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Vehicle dealer - delivery points [RFH-O1]** (owner decisions 2026-10-15): the new mod key "FarmPulse: Lieferort
+  hier festlegen" (default Alt+L, on foot) stores the place, facing direction and farmland of the player - only on own
+  or leased land - and keeps the last 20 points in the mod savegame (`deliveryPointsMax`). The backend takes every new
+  point once (migration V52, `dealer_delivery_point`); in the app *Händler* the tab *Lieferorte* lists the shop place of
+  the game and the points (rename, default, delete; invalid while the farmland does not belong to the farm). Endpoints
+  `/api/dealer/delivery-points`.
 - **Vehicle dealer - catalog, configurator and cart [RFH-K]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`, owner
   decisions 2026-10-15 in `QUESTIONS.md`): the mod now reads every shop machine with all options and writes
   `store_catalog.json`, with the new optional fields `brandTitle`, `categoryTitle` (display names of the game),

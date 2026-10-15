@@ -212,4 +212,76 @@ function T.TestMachineDealer:testFailingReaderWritesNoFile()
     lu.assertEquals(helpers.countLogs("warning", "shop configurations"), 1)
 end
 
+-- Roadmap vehicle dealer RFH-O1 (owner decisions 2026-10-15): key "Lieferort hier festlegen" - only on own or leased
+-- land, the last 20 points, exported and kept in the mod savegame
+local function placeAdapter(places)
+    local i = 0
+    return { readPlayerPlace = function()
+        i = i + 1
+        return places[i] or places[#places]
+    end, getText = function(_, key) return "txt:" .. key end, gameTime = 3 * 86400000 + 36000000 }
+end
+
+function T.TestMachineDealer:testTheKeySetsAPointOnOwnLandOnly()
+    local bridge, fs, adapter, paths = helpers.newBridge({ adapter = placeAdapter({
+        { x = -412.519, y = 98.2, z = 233.75, ry = 1.5708, farmlandId = 3, owned = true },
+        { x = 1, y = 1, z = 1, ry = 0, farmlandId = 9, owned = false } }) })
+    bridge:bootstrap()
+    bridge.deliveryPointKeyEnabled = true
+    lu.assertTrue(bridge:setDeliveryPointHere())
+    lu.assertEquals(adapter.notifications[1], { text = "txt:rpsim_delivery_point_saved", level = "OK" })
+    local doc = RPSimJson.decode(fs.files[paths.farmFacts])
+    lu.assertEquals(doc.deliveryPoints, { { seq = 1, x = -412.52, y = 98.2, z = 233.75, ry = 1.571, farmlandId = 3,
+        day = 3, dayTimeMs = 36000000 } })
+    -- foreign land: nothing stored, hint
+    local ok, err = bridge:setDeliveryPointHere()
+    lu.assertFalse(ok)
+    lu.assertEquals(err, "NOT_OWN_LAND")
+    lu.assertEquals(adapter.notifications[2], { text = "txt:rpsim_delivery_point_foreign", level = "CRITICAL" })
+    lu.assertEquals(#bridge.state.deliveryPoints.points, 1)
+end
+
+function T.TestMachineDealer:testOnlyTheLastPointsAreKeptAndTheBlockNeedsTheKey()
+    local bridge, fs, _, paths = helpers.newBridge({ config = { deliveryPointsMax = 3 },
+        adapter = placeAdapter({ { x = 1, y = 2, z = 3, ry = 0, farmlandId = 1, owned = true } }) })
+    bridge:bootstrap()
+    bridge:exportFarmFacts()
+    lu.assertNil(RPSimJson.decode(fs.files[paths.farmFacts]).deliveryPoints) -- key not registered: block missing
+    bridge.deliveryPointKeyEnabled = true
+    for _ = 1, 5 do
+        bridge:setDeliveryPointHere()
+    end
+    local seqs = {}
+    for _, p in ipairs(RPSimJson.decode(fs.files[paths.farmFacts]).deliveryPoints) do
+        seqs[#seqs + 1] = p.seq
+    end
+    lu.assertEquals(seqs, { 3, 4, 5 })
+    -- without an adapter function nothing happens
+    local b2 = helpers.newBridge()
+    lu.assertEquals(select(2, b2:setDeliveryPointHere()), "NOT_SUPPORTED")
+end
+
+function T.TestMachineDealer:testDeliveryPointsSurviveTheSavegame()
+    local state = RPSimProcessor.newState(RPSimConfig.new())
+    state.deliveryPoints = { seq = 7, points = { { seq = 6, x = 1.5, y = 2, z = 3, ry = 0.5, farmlandId = 4, day = 2,
+        dayTimeMs = 100 }, { seq = 7, x = 4, y = 5, z = 6, ry = 1, day = 3, dayTimeMs = 0 } } }
+    local data = {}
+    local xml = {}
+    function xml:setString(k, v) data[k] = v end
+    function xml:setInt(k, v) data[k] = v end
+    function xml:setFloat(k, v) data[k] = v end
+    function xml:getString(k) return data[k] ~= nil and tostring(data[k]) or nil end
+    function xml:getInt(k) return data[k] end
+    function xml:getFloat(k) return data[k] end
+    RPSimPersistence.save(xml, state)
+    local loaded = RPSimProcessor.newState(RPSimConfig.new())
+    RPSimPersistence.load(xml, loaded)
+    lu.assertEquals(loaded.deliveryPoints, state.deliveryPoints)
+    -- an older savegame has no points
+    local old = RPSimProcessor.newState(RPSimConfig.new())
+    RPSimPersistence.load({ getString = function() return nil end, getInt = function() return nil end,
+        getFloat = function() return nil end }, old)
+    lu.assertEquals(old.deliveryPoints, { seq = 0, points = {} })
+end
+
 return T

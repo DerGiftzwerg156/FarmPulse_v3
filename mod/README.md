@@ -104,6 +104,9 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     Die Antwort schreibt der Mod sofort nach `export/player_responses.json` (R2-F1); vom Backend quittierte Antworten
     (`ackedResponses`) und zurückgezogene Fragen (`withdrawnPrompts`) verschwinden. Die Taste „FarmPulse: offene
     Frage“ (Standard Alt+J, in der Steuerung änderbar; R2-F3) öffnet die nächste Frage, auch im Fahrzeug
+- Taste „FarmPulse: Lieferort hier festlegen“ (Fahrzeughändler RFH-O1, Standard Alt+L, in der Steuerung änderbar, nur zu
+  Fuß): merkt sich Position, Blickrichtung und Flurstück, wenn das Flurstück dem Hof gehört (eigen oder gepachtet), und
+  exportiert die letzten `deliveryPointsMax` Punkte in `farm_facts.deliveryPoints`; auf fremdem Land nur ein Hinweis
   - `STORAGE_TRANSFER` (Roadmap V3, R3-H3/H4) – füllt die Ware in die eigenen Silos (`IN`) oder entnimmt sie
     (`OUT`), ohne Spielbuchung; das Geld bucht die `MONEY_TRANSACTION` desselben Batches. `FAILED` mit `NO_CAPACITY`,
     `INSUFFICIENT_STOCK` oder `UNKNOWN_FILLTYPE`, dann bucht der Batch nichts
@@ -207,6 +210,7 @@ Die Schlüssel stehen als JSON im Element `json` (die frühere `rpsim_config.jso
 | `npcFieldExport` | `true` | Roadmap V3 R3-H1: die Felder der Nachbarn (ohne Besitzer) mit exportieren (`npcFields`, gleiche Taktung wie die eigenen Felder); aus = keine Ernte-Vorräte und keine Aufträge der Nachbarn |
 | `storeCatalogExport` | `true` | Roadmap V3 R3-V1: den Fahrzeug-Katalog des Shops einmal beim Spielstart exportieren (`storeVehicles`); aus = keine Gebrauchtmaschinen-Angebote |
 | `storeCatalogMaxEntries` | `2000` | Roadmap V3 R3-V1: höchstens so viele Katalog-Einträge (nach `xmlFilename` sortiert, der Rest wird mit Log-Eintrag weggelassen) |
+| `deliveryPointsMax` | `20` | Fahrzeughändler RFH-O1: so viele mit der Taste festgelegte Lieferorte behält der Mod im Spielstand (`farm_facts.deliveryPoints`); ältere fallen weg |
 | `fieldShapeMaxPoints` | `64` | Roadmap V3.1 R31-K1 (Vertrag R31-Q1): höchstens so viele Punkte je Feldumriss in `market_context.fieldShapes`; längere Umrisse werden gleichmäßig ausgedünnt |
 | `promptsInVehicle` | `true` | Roadmap V2 R2-F2: Ja/Nein-Fragen erscheinen auch, während du im Fahrzeug sitzt; `false` = nur zu Fuß (die Taste öffnet sie trotzdem) |
 | `moneyTypeStatistics` | `{}` | Finanzstatistik je Buchungsgrund, z. B. `{ "SALARY_PAYMENT": "wagePayment" }`. Belegt ist nur `other` (FS25 `FillTrigger.lua`); andere Namen erst im Spiel prüfen (Testplan 8.18) |

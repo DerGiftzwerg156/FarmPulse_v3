@@ -288,14 +288,33 @@
             <en>FarmPulse: open question</en>
             <de>FarmPulse: offene Frage</de>
         </text>
+        <!-- Roadmap vehicle dealer RFH-O1 (owner decisions 2026-10-15): key and hints of the delivery points -->
+        <text name="input_RPSIM_SET_DELIVERY_POINT">
+            <en>FarmPulse: set delivery point here</en>
+            <de>FarmPulse: Lieferort hier festlegen</de>
+        </text>
+        <text name="rpsim_delivery_point_saved">
+            <en>Delivery point saved – name it in the farm tablet</en>
+            <de>Lieferort gespeichert – im Hof-Tablet benennen</de>
+        </text>
+        <text name="rpsim_delivery_point_foreign">
+            <en>Delivery points only on own or leased land</en>
+            <de>Lieferort nur auf eigenem oder gepachtetem Land</de>
+        </text>
     </l10n>
     <!-- Roadmap V2 R2-F3: opens the next waiting yes/no question (rebindable in the controls menu) -->
     <actions>
         <action name="RPSIM_OPEN_PROMPT" category="ONFOOT VEHICLE" axisType="HALF"/>
+        <!-- Roadmap vehicle dealer RFH-O1: sets a delivery point where the player stands (on foot only) -->
+        <action name="RPSIM_SET_DELIVERY_POINT" category="ONFOOT" axisType="HALF"/>
     </actions>
     <inputBinding>
         <actionBinding action="RPSIM_OPEN_PROMPT">
             <binding device="KB_MOUSE_DEFAULT" input="KEY_lalt KEY_j"/>
+        </actionBinding>
+        <!-- owner decision 2026-10-15: Alt+L (whether it is free in the game: manual test plan 31.5) -->
+        <actionBinding action="RPSIM_SET_DELIVERY_POINT">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_lalt KEY_l"/>
         </actionBinding>
     </inputBinding>
 </modDesc>
