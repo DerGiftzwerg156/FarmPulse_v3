@@ -90,6 +90,7 @@ public class FailedInstructionService {
     private final de.farmpulse.rpsim.farmwork.MachineLoanService machineLoans;
     private final de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade;
     private final DieselTheftService dieselThefts;
+    private final de.farmpulse.rpsim.repository.DealerDeliveryRepository dealerDeliveries;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
@@ -104,7 +105,9 @@ public class FailedInstructionService {
                                     de.farmpulse.rpsim.neighbor.LivestockTradeService livestockTrade,
                                     DieselTheftService dieselThefts,
                                     de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
-                                    de.farmpulse.rpsim.investor.InvestorService investors) {
+                                    de.farmpulse.rpsim.investor.InvestorService investors,
+                                    de.farmpulse.rpsim.repository.DealerDeliveryRepository dealerDeliveries) {
+        this.dealerDeliveries = dealerDeliveries;
         this.bulkOrders = bulkOrders;
         this.investors = investors;
         this.dieselThefts = dieselThefts;
@@ -231,6 +234,16 @@ public class FailedInstructionService {
         } else if (LoanService.COLLATERAL_RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.FARMLAND_TRANSFER) {
             handled = loans.onRealisationFailed(sg, relatedId); // R3-K1: realisation refused, the field stays
+        } else if (de.farmpulse.rpsim.dealer.DealerOrderService.RELATED_ORDER.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.MONEY_TRANSACTION) {
+            handled = true; // RFH-B3: DealerOrderService ends the order (no deposit, no order)
+        } else if (de.farmpulse.rpsim.dealer.DealerOrderService.RELATED_DELIVERY.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.VEHICLE_DELIVERY) {
+            handled = true; // RFH-L5: DealerOrderService lets the delivery wait at the dealer and tries again every day
+            var delivery = dealerDeliveries.findById(relatedId).orElse(null);
+            if (delivery != null && delivery.getAttempts() > 1 && !delivery.isSentAsRetry()) {
+                return; // the daily attempt of a waiting delivery: hint in the game and status on the tablet suffice
+            }
         }
         if (handled && ins.getType() == InstructionType.VEHICLE_FUEL && !modOutdated(ins.getType(), ins.getAckMessage())) {
             return; // R31-D8: a refused theft is tried again in the next night - the player does not learn of it

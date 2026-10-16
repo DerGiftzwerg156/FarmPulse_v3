@@ -258,7 +258,7 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
   "tradeIns": [ "<vehicleId>" ] }
 ```
 
-- [ ] Ablauf im Mod:
+- [x] Ablauf im Mod (umgesetzt 16.10.2026, `RPSimGameAdapter:deliverVehicles` / `onDeliveryLoaded`):
   1. **Inzahlungnahmen prüfen** wie `VEHICLE_REMOVE` (R3-V3): eigene Maschine, `OWNED`, niemand drin, kein Helfer,
      nichts angehängt. Sonst `FAILED` mit dem Code von R3-V3, **nichts** wird geladen oder gebucht.
   2. **Guthaben prüfen** gegen die Summe der `bookings` (wie `VEHICLE_SPAWN`; mit Dispo bis `minBalance`).
@@ -280,17 +280,19 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
   7. Quittung mit `result = { placeUsed: "DELIVERY_POINT" | "SHOP", vehicleCount, vehicleId1 … vehicleIdN,
      tradeInsRemoved }`: eine Quittung trägt nur einfache Werte (`RPSimProcessor.normalizeResult`, seit R3-Q1), deshalb
      je geladener Maschine ein eigener Schlüssel in der Reihenfolge der Positionen.
-- [ ] Bis zur Quittung bleibt die Anweisung offen (keine Quittung, nicht im Spielstand), wie `VEHICLE_SPAWN`. Nach einem
+- [x] Bis zur Quittung bleibt die Anweisung offen (keine Quittung, nicht im Spielstand), wie `VEHICLE_SPAWN`. Nach einem
   Neuladen ohne Speichern sendet das Backend sie erneut; `processedInstructions` verhindert eine doppelte
   Ausführung.
 - [x] `bookings` statt eines einzelnen `price`, weil eine Lieferung mehrere Buchungsgründe trägt; jede Buchung
   erscheint einzeln im Kontoauszug.
 - [x] Fehlercodes: `NO_SPACE`, `UNKNOWN_STORE_ITEM`, `INSUFFICIENT_FUNDS`, `LOAD_FAILED`, dazu die Codes von
   `VEHICLE_REMOVE` mit dem Zusatz der Inzahlungsmaschine (`TRADE_IN_NOT_FOUND`, `TRADE_IN_IN_USE`,
-  `TRADE_IN_ATTACHED`, `TRADE_IN_NOT_OWN`).
-- [ ] Ein Mod ohne Q3 lehnt den Typ ab (`REJECTED`, „unknown type …“). Das Backend fällt dann auf `VEHICLE_SPAWN` je
-  Maschine ohne Konfiguration und ohne Lieferort zurück und sagt das im Tablet („Mod aktualisieren“, Merkmal
-  `modOutdated` wie seit R3-Q1).
+  `TRADE_IN_ATTACHED`, `TRADE_IN_NOT_OWN`). Seit 16.10.2026 folgt diesen Codes die `uniqueId` der Maschine
+  (`TRADE_IN_ATTACHED: veh_00007`), damit das Tablet „<Name> ist angekoppelt“ nennen kann.
+- [x] Ein Mod ohne Q3 lehnt den Typ ab (`REJECTED`, „unknown type …“) bzw. ein Mod mit Q, aber ohne L5 quittiert
+  `NOT_SUPPORTED`. **Entscheidung 16.10.2026: kein Rückfall auf `VEHICLE_SPAWN`.** Die Lieferung wartet beim Händler
+  wie bei jedem anderen Fehlschlag; der Grund im Tablet heißt „Mod aktualisieren“, die Meldung trägt `modOutdated`
+  wie seit R3-Q1 (vorher vorgeschlagen: `VEHICLE_SPAWN` je Maschine ohne Konfiguration und ohne Lieferort).
 
 **Beleg:**
 

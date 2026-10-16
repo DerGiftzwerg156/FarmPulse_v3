@@ -1,0 +1,6 @@
+Vorführmaschine ist da: {{machine}}
+Hallo,
+
+der {{machine}} steht für Sie auf dem Shop-Platz – kostenlos bis {{until}}. Probieren Sie ihn in Ruhe aus.
+
+{{characterName}}

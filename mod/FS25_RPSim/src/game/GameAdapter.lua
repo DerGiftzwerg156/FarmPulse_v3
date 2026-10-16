@@ -1112,13 +1112,14 @@ end
 local TRADE_IN_CODES = { VEHICLE_NOT_FOUND = "TRADE_IN_NOT_FOUND", NOT_OWN_VEHICLE = "TRADE_IN_NOT_OWN",
     VEHICLE_IN_USE = "TRADE_IN_IN_USE", VEHICLE_ATTACHED = "TRADE_IN_ATTACHED" }
 
---- RFH-Q3: the trade-ins of a delivery when all may be removed, else nil and the TRADE_IN_* code.
+--- RFH-Q3: the trade-ins of a delivery when all may be removed, else nil and "<TRADE_IN_* code>: <uniqueId>" (the
+-- backend names the machine in the tablet, "<Name> ist angekoppelt").
 function RPSimGameAdapter:tradeInVehicles(ids)
     local list = {}
     for _, id in ipairs(ids or {}) do
         local v, code = self:removableVehicle(id)
         if v == nil then
-            return nil, TRADE_IN_CODES[code] or code
+            return nil, (TRADE_IN_CODES[code] or code) .. ": " .. tostring(id)
         end
         list[#list + 1] = v
     end

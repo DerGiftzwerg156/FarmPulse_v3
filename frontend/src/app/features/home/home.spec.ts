@@ -35,7 +35,8 @@ describe('Home (start screen)', () => {
     http.match('/api/notices').forEach((r) => r.flush([]));
   }
 
-  function flushAll(http: HttpTestingController, phase: string | null = 'HARVESTABLE', worst: object | null = null) {
+  function flushAll(http: HttpTestingController, phase: string | null = 'HARVESTABLE', worst: object | null = null,
+    next: object = { machines: null, dueGameTime: null }) {
     http.expectOne('/api/calendar').flush({ gameTime: 5 * DAY, currentPeriod: 2, year: 1, daysPerPeriod: 1, nextMonthStart: 6 * DAY,
       nextPeriod: 3, agenda: [], monthStartDebits: [], monthStartTotal: 8315, yearEvents: [] });
     http.expectOne('/api/village-reputation').flush({ tier: 'GOOD', label: 'gut angesehen' });
@@ -56,6 +57,7 @@ describe('Home (start screen)', () => {
         { husbandryUniqueId: 'h2', type: 'CHICKEN', count: 120, value: 1, health: 94, productivity: 92, food: 0.7, water: 1, conditions: [], inspectionDeadline: null }] });
     http.expectOne('/api/feed-balance').flush({ tracked: true, counted: true, measureDays: 3, okMonths: 3, warnMonths: 1, daysPerPeriod: 3,
       animals: [], stables: [], manual: [], baleSizes: {}, worst, monthlyCost: null });
+    http.expectOne('/api/dealer/next-delivery').flush(next);
   }
 
   it('invites to the onboarding without a savegame', () => {
@@ -142,5 +144,19 @@ describe('Home (start screen)', () => {
     expect(badges[1].textContent).toContain('100 ha bewirtschaftet');
     expect(el.querySelector('[data-testid="milestones-widget"]')?.getAttribute('href')).toBe('/diary');
   });
-});
 
+  it('shows the next delivery of the dealer only while one is planned (RFH-H2)', () => {
+    const { el, http, fixture } = setup();
+    flushAll(http);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="delivery-widget"]')).toBeNull();
+    TestBed.resetTestingModule();
+    const again = setup();
+    flushAll(again.http, 'HARVESTABLE', null, { machines: 'Fendt 700 Vario', dueGameTime: 18 * DAY + 14 * 3_600_000 });
+    again.fixture.detectChanges();
+    const tile = again.el.querySelector('[data-testid="delivery-widget"]')!;
+    expect(tile.getAttribute('href')).toBe('/haendler/bestellungen');
+    expect(tile.querySelector('[data-testid="next-delivery"]')?.textContent?.replace(/\s+/g, ' ').trim())
+      .toBe('Nächste Lieferung: Fendt 700 Vario am Tag 18, 14:00');
+  });
+});

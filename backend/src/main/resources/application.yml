@@ -921,7 +921,7 @@ rpsim:
       express-share: 0.05         # RFH-L3: express surcharge = 5 % of the list price per machine
       delay-probability: 0.15     # RFH-L4: chance of a delay per delivery ...
       express-delay-factor: 0.5   # ... halved with express ...
-      delay-check-remaining-share: 0.3333333333 # ... rolled when a third of the delivery time is left
+      delay-check-remaining-share: 0.3333333333333333 # ... rolled when a third of the delivery time is left
       delay-days-min: 1           # RFH-L4: delay 1-5 days of the reference month (scaled)
       delay-days-max: 5
       gossip-from-list-price: 150000 # RFH-L5: gossip in the village from this list price of a delivery

@@ -72,6 +72,9 @@ export class Bank {
   /** Roadmap V4 R4-D5: `?entry=` opens the contribution margin of a field book entry (link from the field book). */
   readonly entry = input<string>();
   readonly openedEntry = computed(() => Number(this.entry()) || null);
+  /** Roadmap vehicle dealer RFH-B5: "Finanzieren" opens the application with `?amount=` and `?purpose=` prefilled. */
+  readonly amount = input<string>();
+  readonly purpose = input<string>();
   private readonly picker = viewChild(CollateralPicker);
   /** Roadmap V3 R3-K1: own fields offered as collateral in the form. */
   readonly collateralIds = signal<number[]>([]);
@@ -112,6 +115,14 @@ export class Bank {
       this.store.stateVersion();
       this.store.mailVersion();
       untracked(() => this.load());
+    });
+    effect(() => {
+      const amount = Number(this.amount());
+      const purpose = this.purpose();
+      untracked(() => {
+        if (amount > 0) this.form.controls.amount.setValue(Math.round(amount));
+        if (purpose) this.form.controls.purpose.setValue(purpose.slice(0, 200));
+      });
     });
   }
 

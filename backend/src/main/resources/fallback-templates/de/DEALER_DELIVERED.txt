@@ -1,0 +1,6 @@
+Ihre {{machines}} sind da
+Hallo,
+
+Ihre {{machines}} stehen bei {{place}}.{{shopReason}} Gebucht sind jetzt der Rest von {{rest}} € und {{fees}} € Lieferkosten und Aufpreise. Viel Freude damit!
+
+{{characterName}}

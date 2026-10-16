@@ -2424,3 +2424,118 @@ export interface DeliveryPlacesView {
   shopIsDefault: boolean;
   points: DeliveryPointView[];
 }
+
+/** RFH-B4: an own machine that may be given in trade (name and game value). */
+export interface TradeInCandidateView {
+  uniqueId: string;
+  name: string;
+  value: number;
+}
+
+/** RFH-B1: delivery choice of a request (null = shop place of the game). */
+export interface DealerChoice {
+  deliveryPointId: number | null;
+  express: boolean;
+}
+
+/** RFH-B1: "Angebot anfragen" - "zusammen" uses `all`, "einzeln" `perPosition` (cart position id -> choice). */
+export interface DealerOrderRequest {
+  together: boolean;
+  tradeIns: string[];
+  all: DealerChoice | null;
+  perPosition: Record<number, DealerChoice> | null;
+}
+
+/** A position of an order: delivery time span in game days (express already applied). */
+export interface DealerOrderItemView {
+  id: number;
+  position: number;
+  name: string;
+  listPrice: number;
+  expressFee: number;
+  daysMin: number;
+  daysMax: number;
+  priceShare: number | null;
+  depositShare: number | null;
+  status: string;
+}
+
+/** A delivery of an order (status OPEN, PLANNED, SENT, WAITING, DELIVERED, CANCELLED). */
+export interface DealerDeliveryView {
+  id: number;
+  status: string;
+  express: boolean;
+  delayed: boolean;
+  deliveryPointId: number | null;
+  placeName: string;
+  deliveryFee: number;
+  dueGameTime: number | null;
+  deliveredGameTime: number | null;
+  deliveredPlace: string | null;
+  due: number;
+  rest: number;
+  carriesTradeIns: boolean;
+  lastFailure: string | null;
+  refund: number;
+  placeChangeable: boolean;
+  cancellable: boolean;
+  retryable: boolean;
+  items: DealerOrderItemView[];
+}
+
+export interface DealerTradeInView {
+  vehicleId: string;
+  name: string;
+  gameValue: number;
+  offerValue: number | null;
+  status: string;
+}
+
+export interface DealerOfferNegotiationView {
+  id: number;
+  status: string;
+  roundsUsed: number;
+  maxRounds: number;
+  lastCounterOffer: number | null;
+  closesAtGameTime: number | null;
+}
+
+/**
+ * An order (status REQUESTED, OFFERED, DEPOSIT_PENDING, ORDERED, COMPLETED, REJECTED, EXPIRED, FAILED, CANCELLED);
+ * `openAmount` prefills "Finanzieren" (offer: total, order: rest).
+ */
+export interface DealerOrderView {
+  id: number;
+  status: string;
+  together: boolean;
+  requestedGameTime: number;
+  listTotal: number;
+  tradeInValue: number;
+  tradeInOffer: number;
+  offerPrice: number | null;
+  currentPrice: number;
+  depositAtAgreement: number;
+  validUntilGameTime: number | null;
+  negotiation: DealerOfferNegotiationView | null;
+  agreedPrice: number | null;
+  deposit: number | null;
+  depositPaid: boolean;
+  openAmount: number;
+  machines: string;
+  returnedToCart: boolean;
+  closedGameTime: number | null;
+  tradeIns: DealerTradeInView[];
+  deliveries: DealerDeliveryView[];
+}
+
+export interface DealerOrdersView {
+  orders: DealerOrderView[];
+  depositPercent: number;
+  retryFee: number;
+}
+
+/** RFH-H2: the next planned delivery (both null while none is planned). */
+export interface NextDeliveryView {
+  machines: string | null;
+  dueGameTime: number | null;
+}

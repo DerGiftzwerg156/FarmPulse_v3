@@ -1,0 +1,6 @@
+Vorführung beendet: {{machine}}
+Hallo,
+
+ich habe den {{machine}} wieder abgeholt. Wenn er Ihnen gefallen hat, bestellen Sie ihn einfach in der App „Händler“.
+
+{{characterName}}

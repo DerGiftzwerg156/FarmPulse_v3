@@ -1,0 +1,6 @@
+Bitte {{machine}} abstellen
+Hallo,
+
+ich wollte den {{machine}} abholen, aber {{reason}}. Bitte stellen Sie ihn abgekoppelt ab – morgen komme ich wieder. Jeder weitere Tag kostet {{fee}} €.
+
+{{characterName}}

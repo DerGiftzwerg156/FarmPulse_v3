@@ -1108,9 +1108,9 @@ end
 
 function T.TestGameAdapter:testDeliveryFailuresLoadAndBookNothing()
     local adapter, g = deliveryGame({ tradeInState = "VEHICLE_ATTACHED" })
-    lu.assertEquals(select(2, adapter:deliverVehicles(DELIVERY, function() end, {})), "TRADE_IN_ATTACHED")
+    lu.assertEquals(select(2, adapter:deliverVehicles(DELIVERY, function() end, {})), "TRADE_IN_ATTACHED: veh_00042")
     g.tradeInState = "VEHICLE_IN_USE"
-    lu.assertEquals(select(2, adapter:deliverVehicles(DELIVERY, function() end, {})), "TRADE_IN_IN_USE")
+    lu.assertEquals(select(2, adapter:deliverVehicles(DELIVERY, function() end, {})), "TRADE_IN_IN_USE: veh_00042")
     g.tradeInState = nil
     g.balance = 1000
     lu.assertEquals(select(2, adapter:deliverVehicles(DELIVERY, function() end, {})), "INSUFFICIENT_FUNDS")
@@ -1136,7 +1136,7 @@ function T.TestGameAdapter:testDeliveryFailuresLoadAndBookNothing()
     adapter3:deliverVehicles(DELIVERY, function(ok, err) result = { ok, err } end, {})
     g3.tradeInState = "VEHICLE_ATTACHED"
     g3.finish()
-    lu.assertEquals(result, { false, "TRADE_IN_ATTACHED" })
+    lu.assertEquals(result, { false, "TRADE_IN_ATTACHED: veh_00042" })
     lu.assertEquals(g3.deleted, { "veh_new1", "veh_new2" })
     lu.assertFalse(g3.tradeIn.deleted)
     lu.assertEquals(#g3.booked, 0)

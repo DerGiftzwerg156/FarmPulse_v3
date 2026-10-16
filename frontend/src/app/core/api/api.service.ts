@@ -89,6 +89,41 @@ export class ApiService {
   dealerDeleteDeliveryPoint(id: number): Observable<M.DeliveryPlacesView> {
     return this.http.delete<M.DeliveryPlacesView>(`${this.base}/dealer/delivery-points/${id}`);
   }
+  /** RFH-B / L: requests, offers, orders and deliveries of the dealer. */
+  dealerOrders(): Observable<M.DealerOrdersView> {
+    return this.get('/dealer/orders');
+  }
+  dealerTradeInCandidates(): Observable<M.TradeInCandidateView[]> {
+    return this.get('/dealer/trade-in-candidates');
+  }
+  dealerRequest(req: M.DealerOrderRequest): Observable<M.DealerOrdersView> {
+    return this.post('/dealer/orders', req);
+  }
+  dealerBid(orderId: number, amount: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/orders/${orderId}/bid`, { amount });
+  }
+  dealerAccept(orderId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/orders/${orderId}/accept`, {});
+  }
+  dealerDecline(orderId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/orders/${orderId}/decline`, {});
+  }
+  dealerBackToCart(orderId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/orders/${orderId}/back-to-cart`, {});
+  }
+  dealerChangePlace(deliveryId: number, deliveryPointId: number | null): Observable<M.DealerOrdersView> {
+    return this.http.put<M.DealerOrdersView>(`${this.base}/dealer/deliveries/${deliveryId}/place`, { deliveryPointId });
+  }
+  dealerRetry(deliveryId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/deliveries/${deliveryId}/retry`, {});
+  }
+  dealerCancel(deliveryId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/deliveries/${deliveryId}/cancel`, {});
+  }
+  /** RFH-H2: start screen tile "Nächste Lieferung". */
+  dealerNextDelivery(): Observable<M.NextDeliveryView> {
+    return this.get('/dealer/next-delivery');
+  }
   /** TODO T-22: ask the workshop for a maintenance contract. */
   requestMaintenanceOffer(): Observable<M.ContractView> {
     return this.post('/maintenance/offer', {});

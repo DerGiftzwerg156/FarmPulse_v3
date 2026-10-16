@@ -1013,7 +1013,8 @@
       "BULK_ORDER": "Großauftrag (erwartet)",
       "INVESTOR_REPAYMENT": "Rückzahlung an Investor",
       "INVESTOR_PAYOUT": "Ausschüttung an Investor",
-      "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor"
+      "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor",
+      "MACHINE_ORDER": "Restzahlung Neumaschine"
     },
     "fieldWork": {
       "PLOW": "Pflügen",
@@ -1795,6 +1796,7 @@
     }
   },
   "home": {
+    "nextDelivery": "Nächste Lieferung: {machine} am {time}",
     "welcomeTitle": "Willkommen bei FarmPulse",
     "welcomeText": "Noch ist kein Spielstand verknüpft. Erzähle im Onboarding die Vorgeschichte deines Hofs, lerne dein Dorf kennen und verknüpfe anschließend deinen FS25-Spielstand.",
     "result": "Monatsergebnis",
@@ -2092,6 +2094,7 @@
       "bulkOrderEnd": "Liefermonat endet: {quantity} l {fillType} an {sellPoint}",
       "investorDelivery": "{name} wartet noch auf {remaining} {unit} {what}",
       "investorRepayment": "Rückzahlung an {name}: {amount}",
+      "machineDelivery": "Lieferung {machine}: {amount}",
       "feedEmpty": "Futter leer: {group} ({animal})",
       "sowWindowStart": "Saatfenster beginnt: Feld {field} ({crop})",
       "sowWindowEnd": "Saatfenster endet: Feld {field} ({crop})"
@@ -2274,8 +2277,62 @@
       "sum": "Summe Listenpreise",
       "count": "{count} von {max} Positionen",
       "full": "Der Warenkorb ist voll (höchstens {max} Positionen).",
-      "empty": "Der Warenkorb ist leer.",
-      "offerLater": "Das Angebot fragst du mit dem nächsten Ausbau an."
+      "empty": "Der Warenkorb ist leer."
+    },
+    "orders": {
+      "status": {
+        "REQUESTED": "Angefragt",
+        "OFFERED": "Angebot",
+        "ORDERED": "Bestellt",
+        "WAITING": "Wartet beim Händler",
+        "COMPLETED": "Geliefert",
+        "CANCELLED": "Storniert",
+        "REJECTED": "Keine Einigung",
+        "EXPIRED": "Abgelaufen",
+        "FAILED": "Nicht zustande gekommen"
+      },
+      "listPrice": "Listenpreis",
+      "deliveryTime": "Lieferzeit {min}–{max} Spieltage",
+      "expressFee": "Express + {amount}",
+      "deliveryFee": "Lieferkosten {amount}",
+      "tradeIn": "Inzahlungnahme − {amount}",
+      "offerPrice": "Angebotspreis",
+      "depositAtAgreement": "Anzahlung bei Einigung ({percent} %)",
+      "validUntil": "Gültig bis {time}",
+      "yourBid": "Dein Gebot",
+      "bid": "Bieten",
+      "accept": "Zum Angebotspreis annehmen",
+      "decline": "Ablehnen",
+      "round": "Runde {round} von {max}",
+      "backToCart": "Zurück in den Warenkorb",
+      "agreed": "Vereinbart",
+      "depositPaid": "Anzahlung bezahlt",
+      "rest": "Rest bei Lieferung",
+      "dueAt": "Liefertermin {time}",
+      "express": "Express",
+      "delayed": "verzögert",
+      "finance": "Finanzieren",
+      "financePurpose": "Neumaschine: {machines}",
+      "cancel": "Stornieren",
+      "cancelQuestion": "Bestellung wirklich stornieren? Du bekommst {amount} der Anzahlung zurück.",
+      "lastAttempt": "Letzter Versuch: {reason}",
+      "retry": "Lieferung erneut versuchen (+ {fee})",
+      "nextDay": "Sonst neuer Versuch am nächsten Spieltag.",
+      "delivered": "Geliefert {time} – {place}",
+      "empty": "Noch keine Anfragen oder Bestellungen."
+    },
+    "request": {
+      "tradeIn": "Inzahlungnahme",
+      "giveInTrade": "In Zahlung geben",
+      "gameValue": "Spielwert {value}",
+      "noTradeIn": "Keine eigenen Maschinen zum In-Zahlung-Geben.",
+      "delivery": "Lieferung",
+      "together": "zusammen liefern",
+      "separately": "einzeln liefern",
+      "place": "Lieferort",
+      "express": "Express (halbe Lieferzeit, + 5 % vom Listenpreis)",
+      "ask": "Angebot anfragen",
+      "requested": "Angefragt – der Händler antwortet am nächsten Spieltag."
     },
     "places": {
       "pointName": "Lieferort {seq}",

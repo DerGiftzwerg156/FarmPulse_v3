@@ -1,0 +1,6 @@
+Ihr Kauf im Shop
+Hallo,
+
+ich habe gehört, Sie haben sich den {{machines}} im Shop gekauft. Schade – den hätten Sie bei mir günstiger bekommen, nach Ihren Wünschen ausgestattet und auf den Hof geliefert. Beim nächsten Mal fragen Sie mich doch einfach in der App ‚Händler‘.
+
+{{characterName}}

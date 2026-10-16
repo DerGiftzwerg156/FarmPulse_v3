@@ -1,0 +1,6 @@
+Inzahlungnahme entfällt: {{name}}
+Hallo,
+
+den {{name}}, den Sie mir in Zahlung geben wollten, gibt es auf Ihrem Hof nicht mehr. Damit entfällt die Inzahlungnahme, und der Rest bei der Lieferung steigt um {{amount}} €.
+
+{{characterName}}

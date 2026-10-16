@@ -776,11 +776,11 @@ export class BridgeSimulator {
   vehicleDelivery(ins) {
     const ids = ins.tradeIns ?? [];
     for (const id of ids) {
-      if (this.leasedVehicles.some((v) => v.uniqueId === id)) return 'TRADE_IN_NOT_OWN';
+      if (this.leasedVehicles.some((v) => v.uniqueId === id)) return `TRADE_IN_NOT_OWN: ${id}`;
       const v = this.vehicles.find((x) => x.uniqueId === id);
-      if (!v) return 'TRADE_IN_NOT_FOUND';
-      if (v.attached) return 'TRADE_IN_ATTACHED';
-      if ((this.vehiclePositions ?? []).some((p) => p.uniqueId === id)) return 'TRADE_IN_IN_USE';
+      if (!v) return `TRADE_IN_NOT_FOUND: ${id}`;
+      if (v.attached) return `TRADE_IN_ATTACHED: ${id}`;
+      if ((this.vehiclePositions ?? []).some((p) => p.uniqueId === id)) return `TRADE_IN_IN_USE: ${id}`;
     }
     const total = ins.bookings.reduce((sum, b) => sum + b.amount, 0);
     if (this.balance - total < (typeof ins.minBalance === 'number' ? Math.min(ins.minBalance, 0) : 0)) {

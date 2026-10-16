@@ -21,7 +21,8 @@ CREATE TABLE dealer_order (
     agreed_price BIGINT,
     deposit BIGINT,
     negotiation_id BIGINT,
-    closed_game_time BIGINT
+    closed_game_time BIGINT,
+    returned_to_cart BOOLEAN DEFAULT FALSE NOT NULL
 );
 CREATE INDEX ix_dealer_order_sg ON dealer_order (savegame_id, status);
 -- one delivery = one VEHICLE_DELIVERY ("zusammen": one per order, "einzeln": one per position). status OPEN (before the

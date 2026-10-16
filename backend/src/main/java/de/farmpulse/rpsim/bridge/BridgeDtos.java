@@ -383,7 +383,7 @@ public final class BridgeDtos {
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename,
-                          String category, Fuel fuel) {
+                          String category, Fuel fuel, Long repairPrice) {
 
         public Vehicle(String uniqueId, Double value, Double condition) {
             this(uniqueId, value, condition, null, null);
@@ -391,7 +391,13 @@ public final class BridgeDtos {
 
         /** Roadmap V3 contract without category and diesel (older mod). */
         public Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename) {
-            this(uniqueId, value, condition, name, xmlFilename, null, null);
+            this(uniqueId, value, condition, name, xmlFilename, null, null, null);
+        }
+
+        /** Roadmap V3.1 contract without the repair price of the vehicle dealer (RFH-B4, older mod). */
+        public Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename, String category,
+                       Fuel fuel) {
+            this(uniqueId, value, condition, name, xmlFilename, category, fuel, null);
         }
     }
 

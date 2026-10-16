@@ -54,13 +54,16 @@ public class CalendarPlanService {
     private final de.farmpulse.rpsim.investor.InvestorService investors;
     private final de.farmpulse.rpsim.feed.FeedBalanceService feed;
     private final de.farmpulse.rpsim.planning.CropPlanService cropPlans;
+    private final de.farmpulse.rpsim.dealer.DealerOrderService dealerOrders;
 
     public CalendarPlanService(EmployeeRepository employees, LoanRepository loans, ContractRepository contracts,
                                FamilyService family, TaxService tax, FactsService facts, GameTime gameTime,
                                RpsimProperties props, de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
                                de.farmpulse.rpsim.investor.InvestorService investors,
                                de.farmpulse.rpsim.feed.FeedBalanceService feed,
-                               de.farmpulse.rpsim.planning.CropPlanService cropPlans) {
+                               de.farmpulse.rpsim.planning.CropPlanService cropPlans,
+                               de.farmpulse.rpsim.dealer.DealerOrderService dealerOrders) {
+        this.dealerOrders = dealerOrders;
         this.feed = feed;
         this.cropPlans = cropPlans;
         this.bulkOrders = bulkOrders;
@@ -229,6 +232,13 @@ public class CalendarPlanService {
                     && at <= until) {
                 out.add(new AgendaEntryView(at, "INVESTOR_REPAYMENT", c.getCapitalType(),
                         c.getCharacter() == null ? null : c.getCharacter().getName(), c.getAmount(), c.getKind()));
+            }
+        }
+        // Roadmap vehicle dealer RFH-B3 / L: "Lieferung {Maschine}" with what it books (rest, delivery costs, express)
+        for (var d : dealerOrders.planned(sg)) {
+            if (d.getDueGameTime() > now && d.getDueGameTime() <= until) {
+                out.add(new AgendaEntryView(d.getDueGameTime(), "MACHINE_DELIVERY", null,
+                        dealerOrders.names(dealerOrders.itemsOf(d)), dealerOrders.due(sg, d), String.valueOf(d.getId())));
             }
         }
         out.sort(Comparator.comparingLong(AgendaEntryView::gameTime));

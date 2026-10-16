@@ -97,6 +97,7 @@ export function taskAppId(t: TaskView): string {
   if (t.type === 'CASE') return caseAppId(t.kind ?? '');
   if (t.type === 'CONTRACT_OFFER') return contractAppId(t.kind ?? '');
   if (t.type === 'NEGOTIATION' && t.negotiation?.assetType === 'VEHICLE') return known('workshop'); // R3-V
+  if (t.type === 'NEGOTIATION' && t.negotiation?.assetType === 'MACHINE_ORDER') return known('dealer'); // RFH-B2
   return known(TYPE_APP[t.type] ?? FALLBACK_APP);
 }
 
@@ -118,7 +119,8 @@ export function taskTabId(t: TaskView): string | undefined {
       tab = 'antrag';
       break;
     case 'NEGOTIATION':
-      tab = t.negotiation?.assetType === 'VEHICLE' ? 'gebraucht' : 'verhandlungen';
+      tab = t.negotiation?.assetType === 'VEHICLE' ? 'gebraucht'
+        : t.negotiation?.assetType === 'MACHINE_ORDER' ? 'bestellungen' : 'verhandlungen';
       break;
     case 'MARKET_OFFER':
       tab = 'ereignisse';

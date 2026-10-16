@@ -210,7 +210,7 @@ describe('Händler – Katalog, Konfigurator, Warenkorb (RFH-K)', () => {
     expect(el.querySelector('[data-testid="cart-sum"]')?.textContent).toContain('247.500');
     expect(el.querySelector('[data-testid="cart-count"]')?.textContent).toContain('2 von 2 Positionen');
     expect(el.querySelector('[data-testid="cart-full"]')?.textContent).toContain('Der Warenkorb ist voll (höchstens 2 Positionen).');
-    expect(el.textContent).toContain('Das Angebot fragst du mit dem nächsten Ausbau an.');
+    expect(el.querySelector('[data-testid="request-form"]')).not.toBeNull();
 
     (rows[1].querySelector('[data-testid="position-remove"] button') as HTMLButtonElement).click();
     const del = http.expectOne('/api/dealer/cart/2');

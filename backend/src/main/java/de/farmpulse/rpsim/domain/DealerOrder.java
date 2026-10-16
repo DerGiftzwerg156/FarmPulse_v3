@@ -68,4 +68,8 @@ public class DealerOrder extends SavegameScoped {
 
     @Column(name = "closed_game_time")
     private Long closedGameTime;
+
+    /** "Zurück in den Warenkorb" was used after "Keine Einigung" / "Abgelaufen" (the positions are in the cart again). */
+    @Column(name = "returned_to_cart", nullable = false)
+    private boolean returnedToCart;
 }

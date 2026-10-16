@@ -9,17 +9,18 @@ import { Card } from '../../shared/ui/card';
 import { TrustMeter } from '../village/trust-meter';
 import { DealerCart } from './dealer-cart';
 import { DealerCatalog } from './dealer-catalog';
+import { DealerOrders } from './dealer-orders';
 import { DealerPlaces } from './dealer-places';
 
 /**
  * Hof-Tablet app "Händler" (Roadmap vehicle dealer RFH-H2, owner decisions 2026-10-15): tabs Katalog, Warenkorb,
  * Bestellungen, Lieferorte, each with the dealer as contact. Katalog (with the configurator) and Warenkorb come with
- * RFH-K, Lieferorte with RFH-O1; until the areas B and L fill Bestellungen it shows "Folgt mit dem nächsten Ausbau". Opening the app
- * brings the dealer into an older savegame (RFH-H1).
+ * RFH-K, Lieferorte with RFH-O1, Bestellungen with RFH-B / L. Opening the app brings the dealer into an older savegame
+ * (RFH-H1).
  */
 @Component({
   selector: 'app-dealer',
-  imports: [RouterLink, TranslatePipe, LabelPipe, Card, TrustMeter, DealerCatalog, DealerCart, DealerPlaces],
+  imports: [RouterLink, TranslatePipe, LabelPipe, Card, TrustMeter, DealerCatalog, DealerCart, DealerOrders, DealerPlaces],
   template: `
     <section class="grid grid-cols-1 gap-4 xl:grid-cols-2" [attr.data-tab]="tab()">
       @if (dealer(); as d) {
@@ -35,6 +36,9 @@ import { DealerPlaces } from './dealer-places';
         }
         @case ('warenkorb') {
           <app-dealer-cart class="xl:col-span-2" />
+        }
+        @case ('bestellungen') {
+          <app-dealer-orders class="xl:col-span-2" />
         }
         @case ('lieferorte') {
           <app-dealer-places class="xl:col-span-2" />

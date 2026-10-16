@@ -9,15 +9,16 @@ import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 import { DealerConfigurator } from './dealer-configurator';
 import { deliveryText, typeTitle } from './dealer-format';
+import { DealerRequest } from './dealer-request';
 
 /**
  * Roadmap vehicle dealer RFH-K3 (owner decisions 2026-10-15): the cart, stored per savegame, at most 10 positions -
  * name, deviating options, list price and delivery time per position; "Ändern" opens the configurator, "Entfernen".
- * Asking for the offer comes with the next area (B).
+ * RFH-B1: below the positions the request ("Angebot anfragen", {@link DealerRequest}).
  */
 @Component({
   selector: 'app-dealer-cart',
-  imports: [TranslatePipe, MoneyPipe, Button, Card, DealerConfigurator],
+  imports: [TranslatePipe, MoneyPipe, Button, Card, DealerConfigurator, DealerRequest],
   template: `
     @if (editing(); as pos) {
       <app-dealer-configurator [xmlFilename]="pos.xmlFilename" [initialChoice]="pos.choice" [positionId]="pos.id"
@@ -58,7 +59,12 @@ import { deliveryText, typeTitle } from './dealer-format';
           @if (c.positions.length >= c.maxPositions) {
             <p class="mt-2 text-[12px] text-warn" data-testid="cart-full">{{ 'dealer.cart.full' | t: { max: c.maxPositions } }}</p>
           }
-          <p class="mt-2 text-[12px] text-muted">{{ 'dealer.cart.offerLater' | t }}</p>
+          @if (requested()) {
+            <p class="mt-2 text-[12px] text-accent" data-testid="requested">{{ 'dealer.request.requested' | t }}</p>
+          }
+          @if (c.positions.length > 0) {
+            <app-dealer-request [positions]="c.positions" (requested)="onRequested()" />
+          }
         }
         @if (error(); as e) {
           <p class="mt-2 text-[12px] text-danger">{{ e }}</p>
@@ -73,11 +79,21 @@ export class DealerCart implements OnInit {
 
   readonly cart = signal<CartView | null>(null);
   readonly editing = signal<CartPosition | null>(null);
+  readonly requested = signal(false);
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  private load(): void {
     this.api.dealerCart().subscribe({ next: (c) => this.cart.set(c), error: () => this.cart.set(null) });
+  }
+
+  onRequested(): void {
+    this.requested.set(true);
+    this.load();
   }
 
   deviations(list: TypeOption[]): string {

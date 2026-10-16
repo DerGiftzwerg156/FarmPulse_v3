@@ -1,0 +1,6 @@
+Bestellung bestätigt: {{machines}}
+Hallo,
+
+vielen Dank für Ihre Bestellung zum Preis von {{price}} €. Die Anzahlung von {{deposit}} € ist gebucht. Liefertermin: {{dates}}, Lieferort: {{place}}. Den Rest buchen wir bei der Lieferung.
+
+{{characterName}}

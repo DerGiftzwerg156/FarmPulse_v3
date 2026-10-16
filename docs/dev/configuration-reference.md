@@ -1325,7 +1325,7 @@ Owner decisions 2026-10-15 (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`). Th
 | `rpsim.formulas.machine-dealer.express-share` | `0.05` | RFH-L3: express surcharge per machine, share of its list price (`VEHICLE_EXPRESS_FEE`, booked with the delivery). | Roadmap vehicle dealer |
 | `rpsim.formulas.machine-dealer.delay-probability` | `0.15` | RFH-L4: chance of a delay per delivery … | Roadmap vehicle dealer |
 | `rpsim.formulas.machine-dealer.express-delay-factor` | `0.5` | … times this factor with express … | Roadmap vehicle dealer |
-| `rpsim.formulas.machine-dealer.delay-check-remaining-share` | `0.3333333333` | … rolled once when this share of the delivery time is left. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delay-check-remaining-share` | `0.3333333333333333` (⅓) | … rolled once when this share of the delivery time is left. | Roadmap vehicle dealer |
 | `rpsim.formulas.machine-dealer.delay-days-min` | `1` | RFH-L4: delay, days of the reference month (scaled), at least … | Roadmap vehicle dealer |
 | `rpsim.formulas.machine-dealer.delay-days-max` | `5` | … and at most. | Roadmap vehicle dealer |
 | `rpsim.formulas.machine-dealer.gossip-from-list-price` | `150000` | RFH-L5: the village gossips about a delivery from this list price. | Roadmap vehicle dealer |

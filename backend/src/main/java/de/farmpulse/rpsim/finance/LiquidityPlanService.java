@@ -75,6 +75,7 @@ public class LiquidityPlanService {
     private final de.farmpulse.rpsim.market.BulkOrderService bulkOrders;
     private final de.farmpulse.rpsim.investor.InvestorService investors;
     private final de.farmpulse.rpsim.planning.CropPlanService cropPlans;
+    private final de.farmpulse.rpsim.dealer.DealerOrderService dealerOrders;
 
     public LiquidityPlanService(SavegameRepository savegames, FactsService facts, FinanceJournalService journal,
                                 EmployeeRepository employees, LoanRepository loans, ContractRepository contracts,
@@ -83,7 +84,9 @@ public class LiquidityPlanService {
                                 de.farmpulse.rpsim.market.ForwardContractService forwardContracts,
                                 de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
                                 de.farmpulse.rpsim.investor.InvestorService investors,
-                                de.farmpulse.rpsim.planning.CropPlanService cropPlans) {
+                                de.farmpulse.rpsim.planning.CropPlanService cropPlans,
+                                de.farmpulse.rpsim.dealer.DealerOrderService dealerOrders) {
+        this.dealerOrders = dealerOrders;
         this.cropPlans = cropPlans;
         this.forwardContracts = forwardContracts;
         this.bulkOrders = bulkOrders;
@@ -219,6 +222,13 @@ public class LiquidityPlanService {
             // Roadmap V4 R4-A4: seed and expected direct costs of the crop plan in the month its sowing window starts
             for (var cp : cropCosts.getOrDefault(idx, List.of())) {
                 postings.add(new Posting("CROP_PLAN", cp.label(), cp.amount(), true));
+            }
+            // Roadmap vehicle dealer RFH-B3: "Restzahlung Neumaschine" (rest, delivery costs, express) in the delivery month
+            for (var d : dealerOrders.planned(sg)) {
+                if (anchor.monthIndex(d.getDueGameTime()) == idx) {
+                    postings.add(new Posting("MACHINE_ORDER", dealerOrders.names(dealerOrders.itemsOf(d)),
+                            -dealerOrders.due(sg, d), false));
+                }
             }
             if (hasCalendar && PREPAYMENT_PERIODS.contains(period)) {
                 boolean afterYearChange = y > year;

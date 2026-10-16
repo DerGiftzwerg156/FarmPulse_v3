@@ -116,9 +116,9 @@ test('failure codes of a delivery book and load nothing', () => {
     delivery('gone', { tradeIns: ['veh_09999'] }),
     delivery('unk', { tradeIns: [], items: [{ storeXmlFilename: 'data/vehicles/unicorn.xml' }] }),
     delivery('poor', { tradeIns: [], bookings: [{ amount: 900000, moneyReason: 'VEHICLE_PURCHASE' }] })]);
-  assert.equal(acks.busy.message, 'TRADE_IN_IN_USE');
-  assert.equal(acks.att.message, 'TRADE_IN_ATTACHED');
-  assert.equal(acks.gone.message, 'TRADE_IN_NOT_FOUND');
+  assert.equal(acks.busy.message, 'TRADE_IN_IN_USE: veh_00001');
+  assert.equal(acks.att.message, 'TRADE_IN_ATTACHED: veh_00002');
+  assert.equal(acks.gone.message, 'TRADE_IN_NOT_FOUND: veh_09999');
   assert.equal(acks.unk.message, 'UNKNOWN_STORE_ITEM');
   assert.equal(acks.poor.message, 'INSUFFICIENT_FUNDS');
   assert.equal(sim.vehicles.length, vehicles);

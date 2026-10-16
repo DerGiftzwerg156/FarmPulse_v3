@@ -17,6 +17,10 @@ public enum TrustReason {
     TONE_FRIENDLY,
     TONE_RUDE,
     NEGOTIATION_DEAL,
+    /** Roadmap vehicle dealer RFH-S2: the player bought a machine in the game shop. */
+    DEALER_SHOP_PURCHASE,
+    /** Roadmap vehicle dealer RFH-V1: the dealer's demo machine disappeared. */
+    DEALER_DEMO_LOST,
     /** TODO T-20: wildlife damage settled amicably / with a joint measure. */
     WILDLIFE_AGREEMENT,
     /** TODO T-20: compensation refused, dispute. */

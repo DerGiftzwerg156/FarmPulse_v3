@@ -1,0 +1,6 @@
+Lieferung klappt nicht: {{machines}}
+Hallo,
+
+wir konnten {{machines}} heute nicht liefern: {{reason}}. Die Maschine wartet bei mir; morgen versuchen wir es noch einmal. Wenn es schneller gehen soll, drücken Sie in der App „Händler“ auf „Lieferung erneut versuchen“ (+ {{retryFee}} €, nur bei erfolgreicher Lieferung).
+
+{{characterName}}

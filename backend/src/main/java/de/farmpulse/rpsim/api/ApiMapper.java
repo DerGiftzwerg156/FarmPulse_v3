@@ -165,7 +165,9 @@ public class ApiMapper {
                 .toList();
         return new NegotiationView(n.getId(), n.getAssetType().name(), n.getAssetId(), n.getKind().name(),
                 n.getDirection().name(), n.getInitiatedBy().name(), n.getStatus().name(), ref(n.getCounterpartCharacter()),
-                ref(n.getAnnouncingCharacter()), n.getBasePrice(), n.getAskingPrice(), n.getRoundsUsed(), n.getMaxRounds(),
+                ref(n.getAnnouncingCharacter()), n.getBasePrice(),
+                n.getAssetType() == de.farmpulse.rpsim.domain.AssetType.MACHINE_ORDER ? null : n.getAskingPrice(), // RFH-B2: hidden floor
+                n.getRoundsUsed(), n.getMaxRounds(),
                 n.getLastCounterOffer(), n.getFinalPrice(), n.getClosesAtGameTime(), ref(n.getWinnerCharacter()), offers,
                 n.getLeaseTermMonths());
     }
