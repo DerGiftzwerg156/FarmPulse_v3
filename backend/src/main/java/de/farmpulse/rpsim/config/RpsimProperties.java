@@ -1744,6 +1744,41 @@ public class RpsimProperties {
         private double expressFactor = 0.5;
         /** Never delivered before this hour of the next game day after the order; earlier times move to this hour. */
         private int earliestDeliveryHour = 9;
+        /** RFH-B1: an offer is valid this many game days. */
+        private double offerValidDays = 7;
+        /** RFH-B2: at most this discount on the list price. */
+        private double maxDiscount = 0.15;
+        /** RFH-B3: deposit share of the agreed net price, booked at the agreement. */
+        private double depositShare = 0.30;
+        /** RFH-B4: the dealer offers this share of the game value for a trade-in - worst trust ... */
+        private double tradeInMin = 0.90;
+        /** ... to best trust (linear). */
+        private double tradeInMax = 1.0;
+        /** RFH-B6: share of the deposit refunded on a cancellation, and with a delay. */
+        private double cancelRefundShare = 0.5;
+        private double cancelRefundShareDelayed = 1.0;
+        /** RFH-L3: express surcharge, share of the list price per machine. */
+        private double expressShare = 0.05;
+        /** RFH-L4: chance of a delay per delivery (express: x express-delay-factor), checked when a third of the time is left. */
+        private double delayProbability = 0.15;
+        private double expressDelayFactor = 0.5;
+        private double delayCheckRemainingShare = 1.0 / 3;
+        /** RFH-L4: delay in days of the reference month. */
+        private double delayDaysMin = 1;
+        private double delayDaysMax = 5;
+        /** RFH-L5: gossip in the village from this list price of a delivery. */
+        private long gossipFromListPrice = 150000;
+        /** RFH-L6: delivery costs = base + per km (straight line from the nearest shop place); the shop place: base. */
+        private long deliveryBaseFee = 250;
+        private double deliveryFeePerKm = 2;
+        /** RFH-L7: surcharge of "Lieferung erneut versuchen", booked only with a successful delivery. */
+        private long retryFee = 500;
+        /** RFH-S2: trust change of the dealer per purchase in the game shop. */
+        private double shopPurchaseTrustDelta = -5;
+        /** RFH-V1: demo of the dealer - days of the reference month (scaled, at least until 9:00 the next game day). */
+        private double demoDays = 2;
+        /** RFH-V1: fee per day a demo machine is returned late (VEHICLE_DEMO_LATE_FEE). */
+        private long demoLateFee = 500;
 
         private static Map<String, DeliveryGroup> defaultDeliveryGroups() {
             Map<String, DeliveryGroup> m = new LinkedHashMap<>();
@@ -2105,6 +2140,7 @@ public class RpsimProperties {
             m.put("RPSIM_SOCIAL_INSURANCE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_INVESTOR_COMPENSATION", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.2 (R32-Q1)
             m.put("RPSIM_VEHICLE_CANCELLATION_FEE", FinanceClass.OPERATING_EXPENSE); // vehicle dealer (RFH-Q4)
+            m.put("RPSIM_VEHICLE_DEMO_LATE_FEE", FinanceClass.OPERATING_EXPENSE); // vehicle dealer (RFH-V1)
             m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_BUY", FinanceClass.INVESTMENT);

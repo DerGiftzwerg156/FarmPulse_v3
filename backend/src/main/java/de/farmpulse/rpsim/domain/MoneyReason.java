@@ -75,5 +75,7 @@ public enum MoneyReason {
     VEHICLE_EXPRESS_FEE,
     VEHICLE_REFUND,
     VEHICLE_CANCELLATION_FEE,
+    /** RFH-V1 (owner decision 2026-10-15): fixed fee per day a demo machine of the dealer is returned late. */
+    VEHICLE_DEMO_LATE_FEE,
     OTHER
 }

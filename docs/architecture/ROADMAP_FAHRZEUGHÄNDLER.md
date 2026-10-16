@@ -638,7 +638,8 @@ Guthaben (mit Dispo gegen dessen Grenze). Die Anzahlung ist 30 % des vereinbarte
 jede Position den Anteil ihres Listenpreises am vereinbarten Preis (Anzahlung und Storno je Position daraus); die
 Inzahlungsmaschinen gehen mit der ersten Lieferung weg. Abzug bei mehr Schaden: Reparaturpreis bei Lieferung −
 bei Einigung (neues optionales Feld `assets.vehicles[].repairPrice`, `Vehicle:getRepairPrice`, Dump; ohne Feld kein
-Abzug). Fällt eine Inzahlungsmaschine weg, kommt ihr Wert aus dem Angebot zum Rest dazu.
+Abzug). Fällt eine Inzahlungsmaschine weg, kommt ihr Wert aus dem Angebot zum Rest dazu. Erreicht der Spielwert der Inzahlungsmaschinen den Listenpreis, lehnt der Warenkorb die Anfrage ab
+(„Die Inzahlungsmaschinen sind mehr wert als die Bestellung – bitte weniger in Zahlung geben.“, Entscheidung 16.10.2026).
 
 **Abgestimmte Texte (15.10.2026):**
 
