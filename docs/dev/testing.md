@@ -186,6 +186,15 @@ default, delete (the mod cannot bring a point back), validity by the farmlands o
 when the default point is deleted or invalid; the mod covers the key (own / foreign land, the last points, export only
 with the key registered) and the points in the mod savegame in `test_machine_dealer.lua` and `readPlayerPlace` in
 `test_game_adapter.lua`; `dealer-places.spec.ts` the tab. In the game: manual test plan 31.4, 31.5, 31.16.
+Roadmap vehicle dealer (RFH-B / L / O2): `DealerOrderTest` covers the request (trade-in candidates, the refused request
+when the trade-ins reach the list price), the offer at the next game day (trade-in share by trust, floor), "Zurück in
+den Warenkorb", the agreement with the 30 % deposit and the date, a refused deposit, the delivery with rest, delivery
+costs, express and the deduction for more damage, the waiting delivery with the reason texts, "Lieferung erneut
+versuchen" (500 €), an older mod ("Mod aktualisieren"), the missing money, a lost trade-in, the delay and the
+cancellation (50 % / 100 %, batch) and the delivery point until it is sent; `dealer-orders.spec.ts` the tab and the
+request in the cart, `home.spec.ts` the tile. RFH-S: `DealerShopPurchaseTest`; RFH-V1: `DealerDemoTest` (shop place,
+2 days, independent of R31-A2, once per game year, late fee, disappeared machine, postponed delivery) and the specs of
+the catalog and the tab. In the game: manual test plan 31.17-31.20.
 Roadmap V4 R4-D (contribution margin): `FieldMarginTest` covers the direct costs from the counter at the price of the
 moment with the helper surcharge and free farmyard manure, a falling counter, the estimate of an older mod and its
 replacement by an entered line, contractor fees, rent and premiums (each booked once), the realised price of the sales

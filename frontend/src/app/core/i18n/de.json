@@ -2279,6 +2279,16 @@
       "full": "Der Warenkorb ist voll (höchstens {max} Positionen).",
       "empty": "Der Warenkorb ist leer."
     },
+    "demo": {
+      "request": "Vorführung anfragen",
+      "running": "Es läuft schon eine Vorführung.",
+      "thisYear": "Diese Maschine wurde in diesem Spieljahr schon vorgeführt.",
+      "title": "Vorführung",
+      "standsUntil": "{machine} steht bis {time} auf dem Shop-Platz",
+      "delivering": "Wird gebracht …",
+      "late": "Abholung verspätet – {reason}, + {fee} je Tag",
+      "toCart": "In den Warenkorb"
+    },
     "orders": {
       "status": {
         "REQUESTED": "Angefragt",

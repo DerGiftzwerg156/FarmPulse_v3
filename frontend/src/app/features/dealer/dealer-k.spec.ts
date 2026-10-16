@@ -234,4 +234,29 @@ describe('Händler – Katalog, Konfigurator, Warenkorb (RFH-K)', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="cart-empty"]')?.textContent).toContain('Der Warenkorb ist leer.');
   });
+
+  it('"Vorführung anfragen" in the catalog, off with the hints of the dealer (RFH-V1)', () => {
+    const http = providers();
+    const fixture = TestBed.createComponent(DealerCatalog);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/api/dealer/catalog').flush(page);
+    http.expectOne('/api/dealer/demo').flush({ running: null, last: null, demonstratedThisYear: [FENDT], lateFee: 500 });
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const rows = el.querySelectorAll('[data-testid="catalog-entry"]');
+    expect((rows[0].querySelector('[data-testid="request-demo"] button') as HTMLButtonElement).disabled).toBe(true);
+    expect(rows[0].querySelector('[data-testid="demo-done-hint"]')?.textContent)
+      .toContain('Diese Maschine wurde in diesem Spieljahr schon vorgeführt.');
+    const second = rows[1].querySelector('[data-testid="request-demo"] button') as HTMLButtonElement;
+    expect(second.textContent).toContain('Vorführung anfragen');
+    second.click();
+    const req = http.expectOne('/api/dealer/demo');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ xmlFilename: 'mods/x.xml' });
+    req.flush({ running: { id: 1, status: 'DELIVERING', xmlFilename: 'mods/x.xml', machine: 'Big Trailer', untilGameTime: null,
+      lateDays: 0, lateReason: null }, last: null, demonstratedThisYear: [FENDT, 'mods/x.xml'], lateFee: 500 });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="demo-running-hint"]')?.textContent).toContain('Es läuft schon eine Vorführung.');
+    expect((el.querySelectorAll('[data-testid="request-demo"] button')[1] as HTMLButtonElement).disabled).toBe(true);
+  });
 });

@@ -120,6 +120,13 @@ export class ApiService {
   dealerCancel(deliveryId: number): Observable<M.DealerOrdersView> {
     return this.post(`/dealer/deliveries/${deliveryId}/cancel`, {});
   }
+  /** RFH-V1: the dealer's demo machine. */
+  dealerDemo(): Observable<M.DealerDemoState> {
+    return this.get('/dealer/demo');
+  }
+  dealerRequestDemo(xmlFilename: string): Observable<M.DealerDemoState> {
+    return this.post('/dealer/demo', { xmlFilename });
+  }
   /** RFH-H2: start screen tile "Nächste Lieferung". */
   dealerNextDelivery(): Observable<M.NextDeliveryView> {
     return this.get('/dealer/next-delivery');

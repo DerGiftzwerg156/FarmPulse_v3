@@ -140,9 +140,11 @@ Der Mod ist der **reine Sensor/Aktuator** der FS25 KI-Rollenspiel-Simulation.
     eine Restmenge, bucht der Mod das Entnommene zurück (`addHusbandryFillLevelFromTool`). `FAILED` mit
     `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE`, `WRONG_FILLTYPE` oder `INSUFFICIENT_STOCK`
   - `VEHICLE_DELIVERY` (Roadmap Fahrzeughändler, RFH-Q3) – Lieferung neuer Maschinen mit Ausstattung an einen Lieferort
-    oder auf die Shop-Plätze, mit Buchungen und Inzahlungnahmen. Bis RFH-L5 wird die Anweisung nur geprüft und mit
-    `FAILED` / `NOT_SUPPORTED` quittiert; die Quittung trägt später `placeUsed`, `vehicleCount`, `vehicleId1` … und
-    `tradeInsRemoved`
+    oder auf die Shop-Plätze, mit Buchungen und Inzahlungnahmen (seit RFH-L5 ausgeführt): Inzahlungnahmen wie
+    `VEHICLE_REMOVE` geprüft, Platz am Lieferort per `overlapBox` (mehrere Maschinen mit `deliveryMachineGap` Abstand),
+    sonst die Shop-Plätze, gebucht erst im Lade-Callback. Quittung `placeUsed`, `vehicleCount`, `vehicleId1` … und
+    `tradeInsRemoved`; `FAILED` mit `NO_SPACE`, `UNKNOWN_STORE_ITEM`, `INSUFFICIENT_FUNDS`, `LOAD_FAILED` oder
+    `TRADE_IN_*: <uniqueId>` der blockierenden Inzahlungsmaschine
 - Bucht Geld mit eigenen Bezeichnungen je Buchungsgrund (`MoneyType.register`, Texte in `modDesc.xml`).
 - Schreibt `instructions_ack.json` (Quittungen + Rückmeldung zu beendeten Sonderkontrakten).
 - Merkt sich bereits ausgeführte Instruktionen im Spielstand (`FS25_RPSim.xml`), damit nichts doppelt gebucht wird.

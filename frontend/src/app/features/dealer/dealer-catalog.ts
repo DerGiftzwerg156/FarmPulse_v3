@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, output, signal } from '@angular/core';
+import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { CartView, CatalogEntry, CatalogFilterValue, CatalogQuery, CatalogView } from '../../core/api/models';
+import { CartView, CatalogEntry, CatalogFilterValue, CatalogQuery, CatalogView, DealerDemoState } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { MoneyPipe } from '../../shared/format/format.pipes';
@@ -15,7 +16,8 @@ type SortKey = 'CATEGORY' | 'NAME' | 'PRICE' | 'POWER';
 /**
  * Roadmap vehicle dealer RFH-K1 (owner decisions 2026-10-15): the whole vehicle catalog of the shop - search by name,
  * filter by category, brand and price range; sorted by category and name, name / base price / power on click; 50 per
- * page. "Konfigurieren" opens the configurator (RFH-K2).
+ * page. "Konfigurieren" opens the configurator (RFH-K2). RFH-V1: "Vorführung anfragen" (standard configuration), off
+ * with a hint while a demo runs or when the machine was demonstrated in this game year.
  */
 @Component({
   selector: 'app-dealer-catalog',
@@ -55,6 +57,12 @@ type SortKey = 'CATEGORY' | 'NAME' | 'PRICE' | 'POWER';
                 <input class="fp-input" type="number" min="0" [value]="priceMax()"
                   (change)="priceMax.set($any($event.target).value); reload(0)" data-testid="catalog-price-max" /></label>
             </div>
+            @if (demo()?.running) {
+              <p class="mb-2 text-[12px] text-muted" data-testid="demo-running-hint">{{ 'dealer.demo.running' | t }}</p>
+            }
+            @if (demoError(); as err) {
+              <p class="mb-2 text-[12px] text-danger" data-testid="demo-error">{{ err }}</p>
+            }
             <div class="overflow-x-auto">
               <table class="w-full text-left text-[13px]">
                 <thead>
@@ -82,8 +90,15 @@ type SortKey = 'CATEGORY' | 'NAME' | 'PRICE' | 'POWER';
                       <td class="py-1.5 pr-3 text-right font-mono" data-testid="power">{{ power(e) }}</td>
                       <td class="py-1.5 pr-3 text-right font-mono">{{ e.dailyUpkeep | money }}</td>
                       <td class="py-1.5 text-right">
-                        <app-button variant="secondary" (pressed)="configuring.set(e.xmlFilename)" data-testid="configure">
-                          {{ 'dealer.catalog.configure' | t }}</app-button></td>
+                        <div class="flex flex-wrap justify-end gap-2">
+                          <app-button variant="secondary" (pressed)="configuring.set(e.xmlFilename)" data-testid="configure">
+                            {{ 'dealer.catalog.configure' | t }}</app-button>
+                          <app-button variant="secondary" [disabled]="demoBusy() || !!demo()?.running || demonstrated(e)"
+                            (pressed)="requestDemo(e)" data-testid="request-demo">{{ 'dealer.demo.request' | t }}</app-button>
+                        </div>
+                        @if (demonstrated(e)) {
+                          <div class="text-[11px] text-muted" data-testid="demo-done-hint">{{ 'dealer.demo.thisYear' | t }}</div>
+                        }</td>
                     </tr>
                   } @empty {
                     <tr><td colspan="7" class="py-3 text-muted" data-testid="catalog-empty">{{ 'dealer.catalog.empty' | t }}</td></tr>
@@ -123,8 +138,33 @@ export class DealerCatalog implements OnInit {
   readonly sort = signal<SortKey>('CATEGORY');
   readonly desc = signal(false);
 
+  /** RFH-V1: the dealer's demo (null while unknown). */
+  readonly demo = signal<DealerDemoState | null>(null);
+  readonly demoBusy = signal(false);
+  readonly demoError = signal<string | null>(null);
+
   ngOnInit(): void {
     this.reload(0);
+    this.api.dealerDemo().subscribe({ next: (d) => this.demo.set(d), error: () => this.demo.set(null) });
+  }
+
+  demonstrated(e: CatalogEntry): boolean {
+    return this.demo()?.demonstratedThisYear.includes(e.xmlFilename) ?? false;
+  }
+
+  requestDemo(e: CatalogEntry): void {
+    this.demoBusy.set(true);
+    this.demoError.set(null);
+    this.api.dealerRequestDemo(e.xmlFilename).subscribe({
+      next: (d) => {
+        this.demoBusy.set(false);
+        this.demo.set(d);
+      },
+      error: (err) => {
+        this.demoBusy.set(false);
+        this.demoError.set(apiErrorMessage(err, this.i18n.t('common.error')));
+      },
+    });
   }
 
   reload(page: number): void {

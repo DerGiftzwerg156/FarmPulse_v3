@@ -2539,3 +2539,22 @@ export interface NextDeliveryView {
   machines: string | null;
   dueGameTime: number | null;
 }
+
+/** RFH-V1: a demo of the dealer (status DELIVERING, ACTIVE, RETURNING, RETURNED, ...); `lateReason` of a late pick-up. */
+export interface DealerDemoView {
+  id: number;
+  status: string;
+  xmlFilename: string;
+  machine: string;
+  untilGameTime: number | null;
+  lateDays: number;
+  lateReason: string | null;
+}
+
+/** RFH-V1: the running demo, the last finished one and the machines demonstrated in this game year. */
+export interface DealerDemoState {
+  running: DealerDemoView | null;
+  last: DealerDemoView | null;
+  demonstratedThisYear: string[];
+  lateFee: number;
+}

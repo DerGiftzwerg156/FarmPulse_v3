@@ -12,6 +12,29 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Vehicle dealer - demo machine [RFH-V1]** (owner decisions 2026-10-15): "Vorführung anfragen" in the catalog brings
+  the machine in its standard configuration to the shop place (VEHICLE_SPAWN, price 0) for 2 days of a 30-day month
+  (scaled, at least until 9:00 of the next game day) and takes it back with VEHICLE_REMOVE; one demo at a time
+  (independent of the workshop's demo of R31-A2), each machine once per game year; no free shop place: postponed to the
+  next game day; in use or coupled at the pick-up: 500 € per late day (`VEHICLE_DEMO_LATE_FEE`); a machine that
+  disappears costs its last game value and trust. The tab *Bestellungen* shows the demo with "In den Warenkorb".
+  Migration V55, endpoints `/api/dealer/demo`.
+- **Vehicle dealer - purchases in the game shop [RFH-S]** (owner decisions 2026-10-15/16): every `SHOP_VEHICLE_BUY`
+  booking of the statement costs 5 trust to the dealer and brings the mail "Ihr Kauf im Shop" (several purchases at once:
+  one mail; without a name: "eine Maschine"; purchases stored before the update count as handled, migration V54).
+- **Vehicle dealer - offer, order and delivery [RFH-B / RFH-L / RFH-O2]** (owner decisions 2026-10-15/16): the cart
+  becomes a request ("zusammen" / "einzeln liefern", delivery point, express, trade-ins of own machines); the dealer
+  answers the next game day with one net offer (trade-ins at 90-100 % of the game value by trust, at most 15 % discount),
+  negotiated in up to three rounds (`AssetType.MACHINE_ORDER`); the agreement books 30 % deposit (`VEHICLE_DEPOSIT`) and
+  rolls the delivery date (L1-L3), possibly delayed once (L4). On the date `VEHICLE_DELIVERY` brings the machines and
+  books the rest, delivery costs (250 € + 2 €/km from the nearest shop place) and express; a damaged trade-in reduces
+  the price by its higher repair price, a lost one adds its offered value. A failed delivery waits at the dealer (hint
+  and a new attempt every game day, "Lieferung erneut versuchen" for 500 € booked only on success; an older mod: "Mod
+  aktualisieren", no fallback). Cancelling refunds 50 % of the deposit (100 % after a delay). The tab *Bestellungen*,
+  the calendar ("Lieferung …"), the liquidity plan ("Restzahlung Neumaschine"), the start screen tile "Nächste Lieferung"
+  and "Finanzieren" (credit application prefilled) show it. Migration V53, endpoints `/api/dealer/orders`,
+  `/api/dealer/deliveries/{id}/…`, `/api/dealer/trade-in-candidates`, `/api/dealer/next-delivery`. The mod appends the
+  uniqueId to the `TRADE_IN_*` codes of `VEHICLE_DELIVERY`.
 - **Vehicle dealer - delivery points [RFH-O1]** (owner decisions 2026-10-15): the new mod key "FarmPulse: Lieferort
   hier festlegen" (default Alt+L, on foot) stores the place, facing direction and farmland of the player - only on own
   or leased land - and keeps the last 20 points in the mod savegame (`deliveryPointsMax`). The backend takes every new
@@ -28,7 +51,7 @@ versions or this changelog do not match.
   expected delivery time with and without express (days of a 30-day month scaled to the month length, never before
   9:00 of the next game day). The tab *Warenkorb* keeps up to 10 positions per savegame (change, remove). New
   configuration `rpsim.formulas.machine-dealer.*`, migration V51 (`dealer_cart_item`), endpoints `/api/dealer/catalog`,
-  `/api/dealer/catalog/item`, `/api/dealer/configure`, `/api/dealer/cart`. Asking for the offer comes with RFH-B.
+  `/api/dealer/catalog/item`, `/api/dealer/configure`, `/api/dealer/cart`.
 - **Vehicle dealer - the dealer and the app [RFH-H]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`, owner
   decisions 2026-10-15 in `QUESTIONS.md`): the new mandatory role `MACHINE_DEALER` (*Landmaschinenhändler/in*) belongs
   to the start cast of a new savegame; an older savegame gets the dealer, with introduction mail and diary entry, when

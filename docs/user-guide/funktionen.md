@@ -54,7 +54,7 @@ Homescreen.
 | **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge; Anbauplanung der nächsten Saison | Dokumentation · Auswertung · Anbauplanung |
 | **Stall** | Tiere, Tierpfleger, Futterbilanz, Tierarzt, Viehhandel und Tierwohl | Ställe · Futter · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
-| **Händler** | Neue Maschinen ausstatten, bestellen und liefern lassen (Bestellen und Liefern im Aufbau) | Katalog · Warenkorb · Bestellungen · Lieferorte |
+| **Händler** | Neue Maschinen ausstatten, bestellen und liefern lassen | Katalog · Warenkorb · Bestellungen · Lieferorte |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
 | **Tagebuch** | Die Chronik deines Hofs | – |
 | **Einstellungen** | Alle Einstellungen: KI, Hof, Ereignisse, Fragen und Helfer im Spiel, Tablet & Netzwerk, Experteneinstellungen | KI · Hof · Ereignisse · Im Spiel · Tablet & Netzwerk · Experte |
@@ -841,8 +841,31 @@ jeder zeigt oben den Händler als Kontakt. Gebrauchte Maschinen, Leih- und Vorf�
   zum Standard oder löschst ihn. Der Shop-Platz des Spiels steht immer in der Liste. Gehört das Flurstück nicht mehr zu
   deinem Hof, ist der Lieferort „ungültig“ und der Shop-Platz wird wieder Standard.
 - **Warenkorb.** Bis zu 10 Maschinen, auch dieselbe mehrfach mit anderer Ausstattung; je Position kannst du die
-  Ausstattung ändern oder sie entfernen. Das Angebot fragst du mit dem nächsten Ausbau an; Bestellungen zeigen bis
-  dahin „Folgt mit dem nächsten Ausbau“.
+  Ausstattung ändern oder sie entfernen. Darunter fragst du das **Angebot** an: eigene Maschinen **in Zahlung geben**
+  (mit Spielwert; keine Leih- oder Vorführmaschinen), **zusammen** oder **einzeln liefern**, den **Lieferort** (der
+  Shop-Platz des Spiels oder ein gültiger Lieferort, vorbelegt mit dem Standard) und **Express** (halbe Lieferzeit,
+  + 5 % vom Listenpreis). Danach ist der Warenkorb leer; der Händler antwortet am nächsten Spieltag. Sind die
+  Inzahlungsmaschinen mehr wert als die Bestellung, lehnt er die Anfrage ab.
+- **Bestellungen.** Das **Angebot** nennt je Maschine Listenpreis, Lieferzeit und Express-Aufpreis, die Lieferkosten
+  (250 € plus 2 € je km vom nächsten Shop-Platz), die Inzahlungnahme (90–100 % des Spielwerts, je nach Vertrauen), den
+  Angebotspreis und die Anzahlung (30 %); es gilt 7 Spieltage. Du bietest in bis zu drei Runden, nimmst zum
+  Angebotspreis an oder lehnst ab; nach „Keine Einigung“ oder „Abgelaufen“ bringt „Zurück in den Warenkorb“ die
+  Maschinen zurück. Bei der Einigung wird die Anzahlung gebucht und der **Liefertermin** steht fest (im Kalender, in
+  der Liquiditätsplanung und als Kachel „Nächste Lieferung“ auf dem Startbildschirm). Der Händler kann sich einmal
+  verspäten – dann zahlt eine Stornierung die ganze Anzahlung zurück, sonst die Hälfte. Bis zum Termin kannst du den
+  Lieferort ändern. Am Termin stehen die Maschinen am Lieferort (ist er belegt, auf dem Shop-Platz); gebucht werden
+  dann der Rest, die Lieferkosten und Express, die Inzahlungsmaschine ist weg. Ist sie stärker beschädigt als bei der
+  Einigung, steigt der Rest um den Mehrschaden; ist sie vorher verkauft, um ihren Wert aus dem Angebot. Klappt die
+  Lieferung nicht (Shop-Platz belegt, Inzahlungsmaschine angekoppelt oder in Benutzung, Geld fehlt), wartet sie beim
+  Händler: jeden Spieltag ein neuer Versuch, oder sofort mit **„Lieferung erneut versuchen“** für 500 € (nur bei
+  Erfolg gebucht). **Finanzieren** öffnet den Kreditantrag der Bank mit Betrag und Verwendungszweck.
+- **Vorführung.** Im Katalog fragst du eine **Vorführung** an: Der Händler bringt die Maschine in
+  Standardausstattung kostenlos auf den Shop-Platz und holt sie nach 2 Tagen eines 30-Tage-Monats (umgerechnet auf
+  deinen Spielstand) wieder ab. Es gibt eine Vorführung zur Zeit und je Maschine eine je Spieljahr; die Werkstatt hat
+  ihre eigene. Ist die Maschine bei der Abholung angekoppelt oder in Benutzung, kostet jeder weitere Tag 500 €; ist sie
+  verschwunden, verlangt der Händler ihren Wert. In *Bestellungen* legt „In den Warenkorb“ sie direkt in den Warenkorb.
+- **Kauf im Spiel-Shop.** Der Spiel-Shop bleibt offen. Kaufst du dort eine Maschine, schreibt dir der Händler und
+  sein Vertrauen sinkt um 5.
 
 ## Handel
 

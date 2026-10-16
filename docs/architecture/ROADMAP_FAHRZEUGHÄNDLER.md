@@ -1,6 +1,6 @@
 # FarmPulse – Roadmap Fahrzeughändler
 
-Stand 15.10.2026. Ziel: Neue Maschinen kauft der Spieler beim **Landmaschinenhändler im Hof-Tablet**. Er stellt sich
+Stand 16.10.2026 (alle Bereiche umgesetzt; offen sind nur die 🟡-Prüfungen im Spiel und der End-to-End-Test gegen den Simulator). Ziel: Neue Maschinen kauft der Spieler beim **Landmaschinenhändler im Hof-Tablet**. Er stellt sich
 die Maschine wie im Spiel-Shop zusammen (Farbe, Reifen, Motor, Ausstattung …), legt mehrere Maschinen in eine
 **Sammelbestellung**, verhandelt den Preis, zahlt an, wartet die **Lieferzeit** ab und bekommt die Maschine an einen
 **selbst festgelegten Lieferort** geliefert. Dazu kommen Inzahlungnahme, Stornierung, Finanzierung über die Bank und
@@ -72,18 +72,18 @@ Punkt-IDs: `RFH-<Bereich><Nummer>`, z. B. `RFH-L3`. Alle Pfade sind relativ zum 
 | Phase | Bereich | Inhalt | Mod-Eingriff | Hängt ab von |
 | --- | --- | --- | --- | --- |
 | 0 | [Q – Querschnitt](#q--querschnitt) | Katalog mit Konfigurationen, Lieferorte aus dem Spiel, Anweisung `VEHICLE_DELIVERY`, Buchungsgründe, Simulator, Tests, Doku (**Vertrag umgesetzt 15.10.2026**) | ja | R3-V1..V3 |
-| 1 | [H – Händler](#h--der-händler) | Neue Rolle `MACHINE_DEALER`, Händler-Oberfläche (**Rolle und App-Gerüst umgesetzt 15.10.2026**) | nein | – |
-| 2 | [K – Konfigurator und Sammelbestellung](#k--konfigurator-und-sammelbestellung) | Katalog durchsuchen, Maschine konfigurieren, Warenkorb (**umgesetzt 15.10.2026**; Anfrage des Angebots mit B) | nein (über Q1) | Q1, H |
-| 3 | [O – Lieferorte](#o--lieferorte) | Lieferort im Spiel per Taste festlegen, benennen, verwalten; Shop-Platz als Standard (**O1 umgesetzt 15.10.2026**; O2 mit B) | ja (über Q2) | Q2 |
-| 4 | [B – Angebot, Verhandlung und Bezahlung](#b--angebot-verhandlung-und-bezahlung) | Angebot, Verhandlung, Anzahlung, Finanzierung, Inzahlungnahme, Stornierung | nein | K, H |
-| 5 | [L – Lieferzeit und Lieferung](#l--lieferzeit-und-lieferung) | Lieferzeit nach Monatslänge je Kategorie, Konfig-Zuschlag, Express, Verzug, Lieferung mit Platzprüfung und Ausweichen, Lieferkosten nach Entfernung, Knopf „Lieferung erneut versuchen“ | ja (über Q3) | Q3, O, B |
-| 6 | [S – Spiel-Shop bleibt, der Händler merkt es](#s--spiel-shop-bleibt-der-händler-merkt-es) | Käufe im Spiel-Shop erkennen, Reaktion des Händlers | nein | H |
-| 7 | [V – Vorführmaschine](#v--vorführmaschine) | Vorführung einer Katalog-Maschine vor der Bestellung | nein | H, K |
+| 1 | [H – Händler](#h--der-händler) | Neue Rolle `MACHINE_DEALER`, Händler-Oberfläche (**Rolle und App-Gerüst umgesetzt 15.10.2026, Mails und Kachel 16.10.2026**) | nein | – |
+| 2 | [K – Konfigurator und Sammelbestellung](#k--konfigurator-und-sammelbestellung) | Katalog durchsuchen, Maschine konfigurieren, Warenkorb (**umgesetzt 15.10.2026**; Anfrage des Angebots **16.10.2026**) | nein (über Q1) | Q1, H |
+| 3 | [O – Lieferorte](#o--lieferorte) | Lieferort im Spiel per Taste festlegen, benennen, verwalten; Shop-Platz als Standard (**O1 umgesetzt 15.10.2026, O2 16.10.2026**) | ja (über Q2) | Q2 |
+| 4 | [B – Angebot, Verhandlung und Bezahlung](#b--angebot-verhandlung-und-bezahlung) | Angebot, Verhandlung, Anzahlung, Finanzierung, Inzahlungnahme, Stornierung (**umgesetzt 16.10.2026**) | nein | K, H |
+| 5 | [L – Lieferzeit und Lieferung](#l--lieferzeit-und-lieferung) | Lieferzeit nach Monatslänge je Kategorie, Konfig-Zuschlag, Express, Verzug, Lieferung mit Platzprüfung und Ausweichen, Lieferkosten nach Entfernung, Knopf „Lieferung erneut versuchen“ (**umgesetzt 16.10.2026**) | ja (über Q3) | Q3, O, B |
+| 6 | [S – Spiel-Shop bleibt, der Händler merkt es](#s--spiel-shop-bleibt-der-händler-merkt-es) | Käufe im Spiel-Shop erkennen, Reaktion des Händlers (**umgesetzt 16.10.2026**) | nein | H |
+| 7 | [V – Vorführmaschine](#v--vorführmaschine) | Vorführung einer Katalog-Maschine vor der Bestellung (**umgesetzt 16.10.2026**) | nein | H, K |
 
 Q zuerst, weil K, O und L den neuen Vertrag brauchen. H und K können parallel laufen. L kommt nach B, weil die
 Lieferung den Restbetrag bucht. S und V sind klein und unabhängig. Alle Bereiche funktionieren mit einem älteren Mod
-(ohne Q) eingeschränkt: Dann gibt es nur die Standardkonfiguration und nur den Shop-Platz (die Lieferung läuft dann
-über das bekannte `VEHICLE_SPAWN`).
+(ohne Q) eingeschränkt. Entscheidung 16.10.2026: Eine Lieferung fällt dabei **nicht** auf `VEHICLE_SPAWN` zurück,
+sondern wartet beim Händler mit dem Grund „Mod aktualisieren“.
 
 ### Ablauf einer Bestellung
 
@@ -156,7 +156,7 @@ und die Konfigwerte `rpsim.formulas.machine-dealer.*` (mit H, K, B, L, S, V).
   - `defaultConfigurations` (`storeItem.defaultConfigurationIds`),
   - `configurationSets[]` (Ausstattungspakete des Herstellers): `name`, `isDefault`, `configurations` (`name →
     index`).
-- [ ] Der Listenpreis einer Zusammenstellung ist **Grundpreis + Summe der Optionspreise**. Das rechnet das Backend
+- [x] Der Listenpreis einer Zusammenstellung ist **Grundpreis + Summe der Optionspreise**. Das rechnet das Backend
   genau wie das Spiel (`StoreItemUtil.getDefaultPrice` → `getCosts(storeItem, configurations, "price")`).
 - [x] Der Katalog steht in einer **eigenen Datei `store_catalog.json`**, geschrieben einmal je Spielstart
   (Entscheidung 15.10.2026). `market_context.json` bleibt dadurch klein. Ausweichlösung, falls die Datei im Spieltest
@@ -352,7 +352,7 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
 
   Ein älterer Mod lehnt einen unbekannten Grund ab (wie bei jedem neuen Grund seit R3-Q1); der Vorgang wird dann
   storniert und das Tablet sagt „Mod aktualisieren“.
-- [ ] Alle Werte unter `rpsim.formulas.machine-dealer.*` in `application.yml` und `RpsimProperties.java`
+- [x] Alle Werte unter `rpsim.formulas.machine-dealer.*` in `application.yml` und `RpsimProperties.java`
   (Anzahlung, Rabatt, Spannen, Zuschläge, Express, Verzug, Lieferkosten, Aufpreis neuer Versuch, Storno, Vertrauen,
   Klatsch-Grenze, Vorführung, Positionen je Bestellung).
   **Achtung:** `ConfigurationReferenceDocTest` schlägt fehl, wenn ein Schlüssel in
@@ -372,6 +372,9 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
 - [ ] Backend (Vertrag erledigt: `MachineDealerContractTest`, `BridgeSyncIntegrationTest`, `FailedInstructionTest`,
   End-to-End gegen den Simulator; die Formeln folgen mit ihren Bereichen): Grenzwert-Tests für jede Formel (Lieferzeit bei 1, 3 und 30 Spieltagen je Monat, 9-Uhr-Regel, Verzug,
   Express, Lieferkosten, Stornogebühr, Rabatt-Grenze, Aufpreis neuer Versuch), End-to-End-Test gegen den Simulator.
+  Stand 16.10.2026: `DealerOrderTest` (Angebot, Untergrenze, Anzahlung, Termin, Lieferung mit Rest/Lieferkosten/
+  Express, Abzug für Schaden, Warten, erneuter Versuch, Verzug, Storno 50 %/100 %), `DealerShopPurchaseTest`,
+  `DealerDemoTest`; offen bleibt der End-to-End-Test gegen den Simulator.
 - [x] `docs/dev/manual-test-plan.md`: neuer Abschnitt mit je einer Zeile pro 🟡 dieser Roadmap.
 - [x] `docs/dev/bridge-protocol.md`, `mod/README.md`, `CHANGELOG.md`, `docs/dev/testing.md`;
   `docs/user-guide/funktionen.md` folgt mit der ersten sichtbaren Funktion (H, K).
@@ -394,9 +397,9 @@ den Hof“, Kontakte „Landmaschinenhändler:in“). Entscheidung 15.10.2026: D
 per Mail und Tagebuch). `GET /api/dealer` liest nur. Die App „Händler“ (`/haendler`, Symbol `tractor`, Untertitel „Neue
 Maschinen ausstatten, bestellen und liefern lassen“, Hinweis beim ersten Öffnen) hat die vier Tabs; bis K, O, B und L
 zeigt jeder Tab den Händler als Kontakt (Rolle, Name mit Link zum Profil, Vertrauensstufe) und den Hinweis „Folgt mit dem
-nächsten Ausbau“ (Entscheidung 15.10.2026). Noch offen in H, weil es zum jeweiligen Bereich gehört: die Mails zu Angebot,
-Bestellung, Verzug, Lieferung, Platzproblem und Stornierung (B, L), Spiel-Shop-Kauf (S) und Vorführung (V), der Inhalt der
-Tabs (K, O, B, L) und die Startbildschirm-Kachel (mit B/L).
+nächsten Ausbau“ (Entscheidung 15.10.2026). Stand 16.10.2026: Mails zu Angebot,
+Bestellung, Verzug, Lieferung, Platzproblem und Stornierung (B, L), Spiel-Shop-Kauf (S) und Vorführung (V), alle Tabs
+(K, O, B, L) und die Startbildschirm-Kachel sind umgesetzt.
 
 ### RFH-H1 Neue Rolle Landmaschinenhändler
 
@@ -405,10 +408,10 @@ Tabs (K, O, B, L) und die Startbildschirm-Kachel (mit B/L).
   (Entscheidung 15.10.2026); in älteren Spielständen entsteht sie über `character/ServiceRoleService.ensure(sg, role)`
   beim ersten Anlass (erstes Öffnen des Händlers ✅ 15.10.2026, erster Spiel-Shop-Kauf mit S) und stellt sich wie ein
   neuer Dorfbewohner vor (Mail, Tagebuch).
-- [ ] Der Händler schreibt Mails zu Angebot, Bestellbestätigung, Verzug, Lieferung, Platzproblem, Stornierung,
+- [x] Der Händler schreibt Mails zu Angebot, Bestellbestätigung, Verzug, Lieferung, Platzproblem, Stornierung,
   Spiel-Shop-Kauf (S) und Vorführung (V). Alle Zahlen kommen aus dem Backend, die KI formuliert nur; ohne KI gibt es
   Texte aus `fallback-templates`.
-- [ ] Die Werkstatt (`WORKSHOP`) bleibt für Reparatur, Wartung, Gebrauchtmaschinen (R3-V2) und ihre eigene
+- [x] Die Werkstatt (`WORKSHOP`) bleibt für Reparatur, Wartung, Gebrauchtmaschinen (R3-V2) und ihre eigene
   Vorführung (R31-A2) zuständig.
 
 **Beleg:** – (Charaktersystem seit V1, `ServiceRoleService`).
@@ -419,7 +422,7 @@ Tabs (K, O, B, L) und die Startbildschirm-Kachel (mit B/L).
   **Katalog** (mit Konfigurator), **Warenkorb**, **Bestellungen** (Status, Liefertermin mit Uhrzeit, Zahlungen,
   Storno, „Lieferung erneut versuchen“) und **Lieferorte**. Eintrag in `frontend/src/app/layout/apps.ts`. Umgesetzt
   15.10.2026 als Gerüst: die Tabs stehen, ihren Inhalt bringen K, O, B und L.
-- [ ] Startbildschirm: Kachel **„Nächste Lieferung: <Maschine> am <Tag>, <Uhrzeit>“**, solange eine Bestellung offen
+- [x] Startbildschirm: Kachel **„Nächste Lieferung: <Maschine> am <Tag>, <Uhrzeit>“**, solange eine Bestellung offen
   ist (Entscheidung 15.10.2026).
 
 **Beleg:** – (Oberfläche).
@@ -484,7 +487,8 @@ erzeugt (`loadItemAtPosition`, `VehicleLoadingData` mit `setPosition`) und danac
 - [x] Laufend sichtbar: Listenpreis (Grundpreis + Optionen), Tageskosten, **voraussichtliche Lieferzeit** (L1, L2) mit
   und ohne Express (L3) (Entscheidung 15.10.2026: schon mit K, „2–4 Spieltage“, unter einem Tag in Stunden, am
   frühesten Termin „frühestens morgen 9 Uhr“) und der Hinweis „Lieferkosten folgen mit den Lieferorten.“
-- [ ] Lieferkosten (L6), sobald ein Lieferort gewählt ist – mit O und L6.
+- [x] Lieferkosten (L6), sobald ein Lieferort gewählt ist – mit O und L6. Stand 16.10.2026: Der Lieferort wird bei
+  der Anfrage im Warenkorb gewählt (Entscheidung 15.10.2026); die Lieferkosten nennt das Angebot im Tab „Bestellungen“.
 
 **Beleg:** ✅ Q1 (`getDefaultConfigIdFromItems`, `dependentConfigurations`, `getConfigurationSetsFromXML`,
 `getColor`, `getCosts`).
@@ -495,12 +499,12 @@ erzeugt (`loadItemAtPosition`, `VehicleLoadingData` mit `setPosition`) und danac
   15.10.2026, Konfig `max-positions: 10`), auch dieselbe Maschine mehrfach mit anderer Konfiguration. Gespeichert je
   Spielstand im Backend (Entscheidung 15.10.2026); je Position Name, abweichende Optionen, Listenpreis, Lieferzeit,
   „Ändern“ und „Entfernen“.
-- [ ] Beim Anfragen des Angebots wählt der Spieler (Entscheidung 14.10.2026):
+- [x] Beim Anfragen des Angebots wählt der Spieler (Entscheidung 14.10.2026):
   - **zusammen liefern:** ein Liefertermin für alle (die längste Lieferzeit der Positionen), ein Lieferort, einmal
     Lieferkosten, eine `VEHICLE_DELIVERY` mit allen Positionen;
   - **einzeln liefern:** jede Position mit eigenem Termin, eigenem Lieferort und eigenen Lieferkosten, je eine
     `VEHICLE_DELIVERY`.
-- [ ] Verhandelt wird die **ganze Bestellung** auf einmal (B2).
+- [x] Verhandelt wird die **ganze Bestellung** auf einmal (B2).
 
 **Beleg:** – (Backend und Oberfläche); Lieferung mehrerer Maschinen: ✅ Q3.
 
@@ -542,7 +546,7 @@ Flurstücke genutzt, `GameAdapter.lua`); Pacht über `FARMLAND_TRANSFER` (R3-L, 
 
 ### RFH-O2 Lieferort in der Bestellung
 
-- [ ] Bei jeder Bestellung (bzw. bei „einzeln liefern“ je Position) wählt der Spieler den Lieferort; vorbelegt ist
+- [x] Bei jeder Bestellung (bzw. bei „einzeln liefern“ je Position) wählt der Spieler den Lieferort; vorbelegt ist
   der Standard. Bis zum Liefertermin kann er ihn ändern; die Lieferkosten werden dann neu berechnet und mit dem Rest
   bei der Lieferung verrechnet.
 
@@ -556,9 +560,15 @@ ist der Lieferort ungültig und die Lieferung geht auf den Shop-Platz.
 
 ## B – Angebot, Verhandlung und Bezahlung
 
+**Stand 16.10.2026: B umgesetzt** (`dealer/DealerOrderService`, `api/DealerOrderController`, Tab „Bestellungen“
+`features/dealer/dealer-orders.ts`, Anfrage im Warenkorb `dealer-request.ts`; Entscheidungen 15./16.10.2026 in
+`QUESTIONS.md`). Die Mails kommen aus `fallback-templates/de/DEALER_*.txt` bzw. der KI (`prompt-tasks`). Eine
+Inzahlungsmaschine darf keine Leih- oder Vorführmaschine sein (R31-A2, V1). Die offene Verhandlung erscheint unter
+„Aufgaben“ und führt in den Tab „Bestellungen“.
+
 ### RFH-B1 Angebot
 
-- [ ] Aus dem Warenkorb fragt der Spieler ein **Angebot** an. Der Händler antwortet **am nächsten Spieltag**; das
+- [x] Aus dem Warenkorb fragt der Spieler ein **Angebot** an. Der Händler antwortet **am nächsten Spieltag**; das
   Angebot gilt **7 Spieltage** (Entscheidung 15.10.2026, wie Gebrauchtmaschinen). Es nennt: Listenpreis je Position
   (inkl. Optionen), Lieferzeit je Position (L1–L2), Expressoption mit Aufpreis (L3), Lieferkosten (L6), Wert der
   Inzahlungnahme (B4) und Anzahlung (B3).
@@ -567,9 +577,10 @@ ist der Lieferort ungültig und die Lieferung geht auf den Shop-Platz.
 
 ### RFH-B2 Verhandlung
 
-- [ ] Verhandlung über den **Gesamtpreis** der Maschinen mit der bestehenden Engine (`AssetType.VEHICLE`, bis zu drei
+- [x] Verhandlung über den **Gesamtpreis** der Maschinen mit der bestehenden Engine (umgesetzt als eigener
+  `AssetType.MACHINE_ORDER`, bis zu drei
   Runden wie bei Gebrauchtmaschinen und Feldern, Entscheidung 14.10.2026).
-- [ ] Höchstens **15 % Rabatt** auf den Listenpreis; das Vertrauen zum Händler verschiebt seinen Startpunkt wie bei der
+- [x] Höchstens **15 % Rabatt** auf den Listenpreis; das Vertrauen zum Händler verschiebt seinen Startpunkt wie bei der
   bestehenden Verkäufer-Formel. Lieferkosten, Expresszuschlag und der Aufpreis für einen neuen Lieferversuch sind
   **nicht verhandelbar** (Entscheidung 15.10.2026).
 
@@ -577,16 +588,16 @@ ist der Lieferort ungültig und die Lieferung geht auf den Shop-Platz.
 
 ### RFH-B3 Anzahlung und Rest
 
-- [ ] Bei Einigung bucht FarmPulse **30 % Anzahlung** sofort (Entscheidung 15.10.2026, `MONEY_TRANSACTION`
+- [x] Bei Einigung bucht FarmPulse **30 % Anzahlung** sofort (Entscheidung 15.10.2026, `MONEY_TRANSACTION`
   `VEHICLE_DEPOSIT`). Reicht das Guthaben nicht (`INSUFFICIENT_FUNDS`, mit Dispo gegen dessen Grenze
   `minBalance`), kommt die Bestellung nicht zustande.
-- [ ] Der **Rest** (vereinbarter Preis − Anzahlung − Inzahlungnahme, `VEHICLE_NEW_PURCHASE`) sowie Lieferkosten und
+- [x] Der **Rest** (vereinbarter Preis − Anzahlung − Inzahlungnahme, `VEHICLE_NEW_PURCHASE`) sowie Lieferkosten und
   Expresszuschlag werden bei der Lieferung im Lade-Callback von `VEHICLE_DELIVERY` gebucht (Q3).
-- [ ] **Reicht das Geld am Liefertermin nicht** (`INSUFFICIENT_FUNDS`), wartet die Maschine beim Händler **ohne
+- [x] **Reicht das Geld am Liefertermin nicht** (`INSUFFICIENT_FUNDS`), wartet die Maschine beim Händler **ohne
   Frist** (Entscheidung 15.10.2026): täglich ein Hinweis und ein automatischer Versuch, dazu jederzeit der Knopf
   „Lieferung erneut versuchen“ (L7). Ist der Dispo eingeschaltet, prüft der Mod gegen dessen Grenze (`minBalance`,
   seit #57).
-- [ ] Beide Zahlungen erscheinen in **Bank** (Kontoauszug), in der **Liquiditätsplanung** (R3-K2: der Rest als
+- [x] Beide Zahlungen erscheinen in **Bank** (Kontoauszug), in der **Liquiditätsplanung** (R3-K2: der Rest als
   „geplant“ im Liefermonat) und im **Kalender** (Liefertermin mit Betrag).
 
 **Beleg:** – (Buchung im Callback: ✅ wie R3-V2 / Q3; Dispo mit `minBalance` an `MONEY_TRANSACTION` und
@@ -594,37 +605,38 @@ ist der Lieferort ungültig und die Lieferung geht auf den Shop-Platz.
 
 ### RFH-B4 Inzahlungnahme
 
-- [ ] Im Warenkorb kann der Spieler eine oder mehrere **eigene** Maschinen zur Inzahlungnahme wählen (nur `OWNED`,
+- [x] Im Warenkorb kann der Spieler eine oder mehrere **eigene** Maschinen zur Inzahlungnahme wählen (nur `OWNED`,
   keine Leih- oder Leasingmaschinen).
-- [ ] Grundlage ist der **Spielwert** (`assets.vehicles[].value` = `getSellPrice()`). Der Händler startet mit
+- [x] Grundlage ist der **Spielwert** (`assets.vehicles[].value` = `getSellPrice()`). Der Händler startet mit
   **90–100 %** davon (Entscheidung 15.10.2026); der Betrag ist Teil der Verhandlung.
-- [ ] Die Maschine bleibt **bis zur Lieferung** nutzbar (Entscheidung 14.10.2026) und wird in der
+- [x] Die Maschine bleibt **bis zur Lieferung** nutzbar (Entscheidung 14.10.2026) und wird in der
   `VEHICLE_DELIVERY` entfernt (Q3). Ist sie am Liefertermin belegt oder angekoppelt, wird **nicht** geliefert: Der
   Händler meldet sich („Bitte stellen Sie den <Name> abgekoppelt ab“), Hinweis im Spiel, neuer Versuch am nächsten
   Spieltag oder sofort über „Lieferung erneut versuchen“ (L7).
-- [ ] **Wertverlust bis zur Lieferung:** Der vereinbarte Betrag gilt. Nur wenn die Maschine bei der Lieferung stärker
-  beschädigt ist als bei der Einigung (`assets.vehicles[].condition`), wird der Unterschied im Spielwert abgezogen;
+- [x] **Wertverlust bis zur Lieferung:** Der vereinbarte Betrag gilt. Nur wenn die Maschine bei der Lieferung stärker
+  beschädigt ist als bei der Einigung, wird der Unterschied abgezogen (Entscheidung 15.10.2026: Reparaturpreis
+  `assets.vehicles[].repairPrice` bei Lieferung − bei Einigung, nie negativ; ohne das Feld kein Abzug);
   Alter und Betriebsstunden zählen nicht (Entscheidung 15.10.2026).
-- [ ] Wird die Inzahlungsmaschine vorher verkauft oder geht verloren, fällt ihr Wert aus der Rechnung; der Rest steigt
+- [x] Wird die Inzahlungsmaschine vorher verkauft oder geht verloren, fällt ihr Wert aus der Rechnung; der Rest steigt
   entsprechend (Mail des Händlers).
 
 **Beleg:** ✅ R3-V3 (`VEHICLE_REMOVE`-Prüfungen) und Q3; `condition` (0–100) und `value` an `assets.vehicles[]` seit V1 (`docs/dev/bridge-protocol.md`).
 
 ### RFH-B5 Finanzierung über die Bank
 
-- [ ] Knopf **„Finanzieren“** im Angebot bzw. in der Bestellung: öffnet den Kreditantrag der Bank mit vorbelegtem
+- [x] Knopf **„Finanzieren“** im Angebot bzw. in der Bestellung: öffnet den Kreditantrag der Bank mit vorbelegtem
   Betrag (Rest bzw. Gesamtbetrag) und Verwendungszweck „Neumaschine: <Namen>“. Die Bank entscheidet wie immer
   (Bonität, Gegenangebot, Ablehnung); FarmPulse ändert an der Kreditprüfung nichts.
-- [ ] Die Bestellung ist vom Kredit unabhängig: Wird der Kredit abgelehnt, bleibt die Bestellung bestehen.
+- [x] Die Bestellung ist vom Kredit unabhängig: Wird der Kredit abgelehnt, bleibt die Bestellung bestehen.
 
 **Beleg:** – (Kreditantrag mit `purpose` seit V1).
 
 ### RFH-B6 Stornierung
 
-- [ ] Der Spieler kann eine Bestellung **jederzeit bis zur Lieferung** stornieren (bei „zusammen“ ganz, bei
+- [x] Der Spieler kann eine Bestellung **jederzeit bis zur Lieferung** stornieren (bei „zusammen“ ganz, bei
   „einzeln“ je Position). Er bekommt **50 % der Anzahlung** zurück; bei einem **Lieferverzug** (L4) **100 %**
   (Entscheidung 15.10.2026).
-- [ ] Buchung als Batch: `VEHICLE_REFUND` (+ ganze Anzahlung) und `VEHICLE_CANCELLATION_FEE` (− einbehaltener Teil),
+- [x] Buchung als Batch: `VEHICLE_REFUND` (+ ganze Anzahlung) und `VEHICLE_CANCELLATION_FEE` (− einbehaltener Teil),
   damit der Hofbericht die Stornogebühr als Ausgabe zeigt. Tagebuch.
 
 **Beleg:** –.
@@ -702,9 +714,15 @@ Spielstunden = Tage im 30-Tage-Monat × daysPerPeriod / 30 × 24
 Entscheidung 15.10.2026) und zeigt die voraussichtliche Lieferzeit im Konfigurator und im Warenkorb. Den Termin
 würfeln, Express wählen, den Aufpreis buchen und liefern kommt mit B und L.
 
+**Stand 16.10.2026: L umgesetzt** – Termin bei der Einigung gewürfelt (längste Position, Express halbiert), Verzug
+beim letzten Drittel, `VEHICLE_DELIVERY` am Termin (Mod: `RPSimGameAdapter:deliverVehicles`), Warten beim Händler mit
+täglichem Versuch, „Lieferung erneut versuchen“ mit 500 €, Lieferkosten nach Entfernung zum nächsten Shop-Platz,
+Kalender („Lieferung {Maschine}: {Betrag}“), Liquiditätsplanung („Restzahlung Neumaschine“) und Kachel. Ein älterer
+Mod: kein Rückfall, die Lieferung wartet mit „Mod aktualisieren“ (Entscheidung 16.10.2026).
+
 ### RFH-L1 Lieferzeit je Kategorie
 
-- [ ] Je Shop-Kategorie (`categoryName`) eine Spanne in Tagen des 30-Tage-Monats (Entscheidung 15.10.2026, Konfig,
+- [x] Je Shop-Kategorie (`categoryName`) eine Spanne in Tagen des 30-Tage-Monats (Entscheidung 15.10.2026, Konfig,
   Feinschliff beim Spieltest):
 
   | Gruppe | Tage im 30-Tage-Monat |
@@ -726,17 +744,17 @@ würfeln, Express wählen, den Aufpreis buchen und liefern kommt mit B und L.
 
 ### RFH-L2 Zuschlag für abweichende Konfiguration
 
-- [ ] Jede gewählte Option, die vom Standard des Spiels abweicht, verlängert die Lieferzeit um einen Wert **je
+- [x] Jede gewählte Option, die vom Standard des Spiels abweicht, verlängert die Lieferzeit um einen Wert **je
   Konfigurationstyp** in Tagen des 30-Tage-Monats (Entscheidung 15.10.2026): Motor 3, Reifen 2, Farbe 1, alle übrigen
   Typen 1 (Konfig).
-- [ ] Ein **Ausstattungspaket des Herstellers** (`configurationSets`) gilt als Standard; nur Abweichungen davon
+- [x] Ein **Ausstattungspaket des Herstellers** (`configurationSets`) gilt als Standard; nur Abweichungen davon
   verlängern (Entscheidung 15.10.2026).
 
 **Beleg:** – (Backend); Standard je Typ und Pakete ✅ Q1.
 
 ### RFH-L3 Expresslieferung
 
-- [ ] Je Position bzw. je Bestellung wählbar: Die Lieferzeit wird **halbiert**, aber höchstens bis **9 Uhr am
+- [x] Je Position bzw. je Bestellung wählbar: Die Lieferzeit wird **halbiert**, aber höchstens bis **9 Uhr am
   nächsten Spieltag** verkürzt. Aufpreis **5 % des Listenpreises** je Maschine, nicht verhandelbar (Entscheidung
   15.10.2026, `VEHICLE_EXPRESS_FEE`, bei der Lieferung gebucht).
 
@@ -744,26 +762,26 @@ würfeln, Express wählen, den Aufpreis buchen und liefern kommt mit B und L.
 
 ### RFH-L4 Lieferverzug
 
-- [ ] Mit **15 %** Wahrscheinlichkeit je Bestellung verschiebt sich der Liefertermin um **1–5 Tage** des
+- [x] Mit **15 %** Wahrscheinlichkeit je Bestellung verschiebt sich der Liefertermin um **1–5 Tage** des
   30-Tage-Monats (umgerechnet). Gewürfelt wird, wenn **ein Drittel** der Lieferzeit vor dem Termin liegt. Express
   **halbiert** die Wahrscheinlichkeit. Es gibt keine Entschädigung, aber die Stornierung zahlt dann 100 % der Anzahlung
   zurück (B6). (Entscheidung 15.10.2026.)
-- [ ] Der Händler meldet sich per Mail mit dem neuen Termin; Kalender, Aufgaben, Kachel und Liquiditätsplanung ziehen
+- [x] Der Händler meldet sich per Mail mit dem neuen Termin; Kalender, Aufgaben, Kachel und Liquiditätsplanung ziehen
   mit.
 
 **Beleg:** –.
 
 ### RFH-L5 Lieferung
 
-- [ ] Ist der Termin erreicht (Spieltag und Uhrzeit, siehe Zeitrechnung), sendet das Backend die `VEHICLE_DELIVERY`
+- [x] Ist der Termin erreicht (Spieltag und Uhrzeit, siehe Zeitrechnung), sendet das Backend die `VEHICLE_DELIVERY`
   (Q3).
-- [ ] **Kein Platz am Lieferort** → Ausweichen auf den Shop-Platz (`fallbackToShop`, Entscheidung 14.10.2026); die
+- [x] **Kein Platz am Lieferort** → Ausweichen auf den Shop-Platz (`fallbackToShop`, Entscheidung 14.10.2026); die
   Quittung sagt `placeUsed: "SHOP"`, der Händler erwähnt es in der Mail. Die **Lieferkosten bleiben wie vereinbart**
   (Entscheidung 15.10.2026).
-- [ ] **Auch der Shop-Platz voll** (`NO_SPACE`), **Inzahlungsmaschine belegt** oder **Geld fehlt** → die Maschine
+- [x] **Auch der Shop-Platz voll** (`NO_SPACE`), **Inzahlungsmaschine belegt** oder **Geld fehlt** → die Maschine
   **wartet beim Händler ohne Frist** (Entscheidung 15.10.2026): Hinweis im Spiel, Mail beim ersten Fehlschlag, danach
   täglich ein Hinweis und ein automatischer Versuch zum Spieltagwechsel; jederzeit der Knopf aus L7.
-- [ ] Nach der Lieferung: Hinweis im Spiel („Deine neue <Maschine> steht bei <Lieferort>“), Mail und Tagebuch wie bei
+- [x] Nach der Lieferung: Hinweis im Spiel („Deine neue <Maschine> steht bei <Lieferort>“), Mail und Tagebuch wie bei
   Gebrauchtmaschinen. **Klatsch im Dorf**, wenn der Listenpreis der Lieferung mindestens **150.000 €** beträgt
   (Entscheidung 15.10.2026, Konfig).
 
@@ -771,10 +789,10 @@ würfeln, Express wählen, den Aufpreis buchen und liefern kommt mit B und L.
 
 ### RFH-L6 Lieferkosten nach Entfernung
 
-- [ ] Lieferkosten = **250 € Grundpauschale + 2 € je km Luftlinie** vom nächsten Shop-Platz (`storePlaces[]`, Q2)
+- [x] Lieferkosten = **250 € Grundpauschale + 2 € je km Luftlinie** vom nächsten Shop-Platz (`storePlaces[]`, Q2)
   zum Lieferort. Auch eine Lieferung auf den Shop-Platz kostet die Grundpauschale von 250 € (Entscheidung
   15.10.2026, `VEHICLE_DELIVERY_FEE`, nicht verhandelbar).
-- [ ] Bei „zusammen liefern“ einmal je Bestellung, bei „einzeln“ je Position.
+- [x] Bei „zusammen liefern“ einmal je Bestellung, bei „einzeln“ je Position.
 
 **Beleg:** 🟡 `storePlaces[]` (Q2). **Fallback:** ohne Shop-Platz-Koordinaten nur die Grundpauschale.
 
@@ -782,13 +800,13 @@ würfeln, Express wählen, den Aufpreis buchen und liefern kommt mit B und L.
 
 **Neu (Wunsch des Projektinhabers, 15.10.2026).**
 
-- [ ] Ist eine Lieferung fehlgeschlagen (kein Platz, auch nicht auf dem Shop-Platz; Inzahlungsmaschine belegt oder
+- [x] Ist eine Lieferung fehlgeschlagen (kein Platz, auch nicht auf dem Shop-Platz; Inzahlungsmaschine belegt oder
   angekoppelt; Geld fehlt), zeigt die Bestellung den Knopf **„Lieferung erneut versuchen“**. Ein Klick sendet die
   `VEHICLE_DELIVERY` sofort neu (nächster Bridge-Zyklus) statt erst zum nächsten Spieltagwechsel.
-- [ ] Aufpreis **500 € je Versuch**, beliebig oft (Entscheidung 15.10.2026, Konfig `retry-fee: 500`). Er wird **nur bei
+- [x] Aufpreis **500 € je Versuch**, beliebig oft (Entscheidung 15.10.2026, Konfig `retry-fee: 500`). Er wird **nur bei
   erfolgreicher Lieferung** gebucht, zusammen mit dem Rest im Lade-Callback (`VEHICLE_DELIVERY_FEE` mit Notiz „Neuer
   Lieferversuch“); ein erneut fehlgeschlagener Versuch kostet nichts. Der Aufpreis ist nicht verhandelbar.
-- [ ] Die Prüfung des Guthabens schließt den Aufpreis ein. Vor dem Klick zeigt das Tablet den Grund des
+- [x] Die Prüfung des Guthabens schließt den Aufpreis ein. Vor dem Klick zeigt das Tablet den Grund des
   letzten Fehlschlags („Shop-Platz belegt“, „<Name> ist angekoppelt“, „Es fehlen 12.300 €“) und den Aufpreis.
 
 **Beleg:** – (Backend und Oberfläche; die Anweisung ist Q3).
@@ -808,12 +826,16 @@ liefert „Lieferung erneut versuchen“ sofort und bucht 500 € nur bei Erfolg
 
 ## S – Spiel-Shop bleibt, der Händler merkt es
 
+**Stand 16.10.2026: S umgesetzt** (`dealer/DealerShopPurchaseService`, Migration V54). Entscheidungen 16.10.2026:
+ohne Namen „eine Maschine“; mehrere Käufe zwischen zwei Exporten = eine Mail, −5 je Kauf; Käufe vor dem Update lösen
+nichts aus. Der Händler eines älteren Spielstands kommt mit dem ersten Kauf (H1).
+
 ### RFH-S1 Kauf im Spiel-Shop erkennen
 
-- [ ] Der Kontoauszug enthält jeden Kauf im Spiel-Shop als Einzelbuchung `SHOP_VEHICLE_BUY` mit den Namen der
+- [x] Der Kontoauszug enthält jeden Kauf im Spiel-Shop als Einzelbuchung `SHOP_VEHICLE_BUY` mit den Namen der
   neuen Maschinen (seit R2-B1, Mod-Konfig `bookingLogSingleTypes`). Eigene FarmPulse-Käufe laufen unter
   `RPSIM_VEHICLE_NEW_PURCHASE` / `RPSIM_VEHICLE_DEPOSIT` und werden nicht verwechselt.
-- [ ] Jede neue Buchung `SHOP_VEHICLE_BUY` löst die Reaktion in S2 aus.
+- [x] Jede neue Buchung `SHOP_VEHICLE_BUY` löst die Reaktion in S2 aus.
 
 **Beleg:** ✅ `docs/dev/bridge-protocol.md` (`bookings`, `entries[].single`, Namen der neuen Maschinen bei
 `SHOP_VEHICLE_BUY`), `mod/FS25_RPSim/src/bridge/Config.lua` (`bookingLogSingleTypes`).
@@ -823,10 +845,10 @@ liefert „Lieferung erneut versuchen“ sofort und bucht 500 € nur bei Erfolg
 
 ### RFH-S2 Reaktion des Händlers
 
-- [ ] **Bei jedem Kauf** im Spiel-Shop schreibt der Händler eine Mail („Schade, den <Maschine> hätten Sie bei mir
+- [x] **Bei jedem Kauf** im Spiel-Shop schreibt der Händler eine Mail („Schade, den <Maschine> hätten Sie bei mir
   günstiger bekommen …“), und das Vertrauen zum Händler sinkt um **5** (Entscheidung 15.10.2026, Konfig). Der Ton der
   Mail folgt dem Ton der Welt.
-- [ ] Der Spiel-Shop wird **nicht** gesperrt (Entscheidung 14.10.2026, siehe „Bewusst nicht aufgenommen“).
+- [x] Der Spiel-Shop wird **nicht** gesperrt (Entscheidung 14.10.2026, siehe „Bewusst nicht aufgenommen“).
 
 **Beleg:** – (Backend).
 
@@ -840,16 +862,20 @@ auf den Hof geliefert. Beim nächsten Mal fragen Sie mich doch einfach in der Ap
 
 ## V – Vorführmaschine
 
+**Stand 16.10.2026: V umgesetzt** (`dealer/DealerDemoService`, `machine_loan` der Art `DEALER_DEMO`, Migration V55,
+Knopf im Katalog, Abschnitt „Vorführung“ im Tab „Bestellungen“ mit „In den Warenkorb“). Kein freier Shop-Platz:
+„Vorführung verschoben“ und ein neuer Versuch am nächsten Spieltag (höchstens `spawn-max-attempts` wie R3-V2).
+
 ### RFH-V1 Vorführung vor dem Kauf
 
-- [ ] Im Katalog: **„Vorführung anfragen“** für eine Maschine (Standardkonfiguration). Der Händler liefert sie mit
+- [x] Im Katalog: **„Vorführung anfragen“** für eine Maschine (Standardkonfiguration). Der Händler liefert sie mit
   `VEHICLE_SPAWN` und Preis 0 (Weg von R31-A2) **auf den Shop-Platz** und holt sie nach der Frist mit
   `VEHICLE_REMOVE` wieder ab. Belegt oder angekoppelt → Erinnerung und Aufschlag wie R31-A2.
-- [ ] Dauer **2 Tage im 30-Tage-Monat** (umgerechnet nach der Zeitrechnung, mindestens bis 9 Uhr am nächsten
+- [x] Dauer **2 Tage im 30-Tage-Monat** (umgerechnet nach der Zeitrechnung, mindestens bis 9 Uhr am nächsten
   Spieltag), **kostenlos**, **eine Vorführung gleichzeitig**, je Maschine **einmal je Spieljahr** (Entscheidung
   15.10.2026).
-- [ ] Danach: Bestellen mit vorbelegter Maschine im Warenkorb.
-- [ ] Die **Vorführung der Werkstatt** aus R31-A2 **bleibt zusätzlich bestehen** (Entscheidung 15.10.2026).
+- [x] Danach: Bestellen mit vorbelegter Maschine im Warenkorb.
+- [x] Die **Vorführung der Werkstatt** aus R31-A2 **bleibt zusätzlich bestehen** (Entscheidung 15.10.2026).
 
 **Beleg:** ✅ R31-A2 / R3-V2 / R3-V3 (`VEHICLE_SPAWN` mit Preis 0, `VEHICLE_REMOVE`).
 

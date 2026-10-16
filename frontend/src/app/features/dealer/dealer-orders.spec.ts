@@ -232,3 +232,53 @@ describe('Händler – Anfrage im Warenkorb (RFH-B1)', () => {
       .toContain('Die Inzahlungsmaschinen sind mehr wert als die Bestellung – bitte weniger in Zahlung geben.');
   });
 });
+
+describe('Händler – Vorführung (RFH-V1)', () => {
+  const demoState = (extra: object = {}) => ({
+    running: { id: 3, status: 'ACTIVE', xmlFilename: 'data/f.xml', machine: 'Fendt 700 Vario', untilGameTime: 4 * DAY + 9 * H,
+      lateDays: 0, lateReason: null },
+    last: null, demonstratedThisYear: ['data/f.xml'], lateFee: 500, ...extra,
+  });
+
+  it('the tab "Bestellungen" shows the running demo, a late pick-up and puts the machine into the cart', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.inject(GameStateStore).savegame.set(savegame({}));
+    const http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(DealerOrders);
+    fixture.detectChanges();
+    http.expectOne('/api/dealer/orders').flush(view([]));
+    http.expectOne('/api/dealer/delivery-points').flush(places);
+    http.expectOne('/api/dealer/demo').flush(demoState({ running: { id: 3, status: 'ACTIVE', xmlFilename: 'data/f.xml',
+      machine: 'Fendt 700 Vario', untilGameTime: 4 * DAY + 9 * H, lateDays: 1, lateReason: 'Fendt 700 Vario ist angekoppelt' } }));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="demo"]')?.textContent).toContain('Vorführung');
+    expect(el.querySelector('[data-testid="demo-text"]')?.textContent).toContain('Fendt 700 Vario steht bis Tag 4, 09:00 auf dem Shop-Platz');
+    expect(norm(el.querySelector('[data-testid="demo-late"]')?.textContent))
+      .toMatch(/Abholung verspätet – Fendt 700 Vario ist angekoppelt, \+ 500\s€ je Tag/);
+    (el.querySelector('[data-testid="demo-to-cart"] button') as HTMLButtonElement).click();
+    const add = http.expectOne('/api/dealer/cart');
+    expect(add.request.body).toEqual({ xmlFilename: 'data/f.xml', configurations: {} });
+    add.flush({ positions: [], maxPositions: 10, listPriceSum: 0 });
+    fixture.detectChanges();
+    expect((el.querySelector('[data-testid="demo-to-cart"] button') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('while it is brought it says "Wird gebracht …"; without a demo there is no section', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.inject(GameStateStore).savegame.set(savegame({}));
+    const http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(DealerOrders);
+    fixture.detectChanges();
+    http.expectOne('/api/dealer/orders').flush(view([]));
+    http.expectOne('/api/dealer/delivery-points').flush(places);
+    http.expectOne('/api/dealer/demo').flush(demoState({ running: { id: 3, status: 'DELIVERING', xmlFilename: 'data/f.xml',
+      machine: 'Fendt 700 Vario', untilGameTime: null, lateDays: 0, lateReason: null } }));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="demo-text"]')?.textContent).toContain('Fendt 700 Vario · Wird gebracht …');
+    fixture.componentInstance.demo.set({ running: null, last: null, demonstratedThisYear: [], lateFee: 500 });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="demo"]')).toBeNull();
+  });
+});

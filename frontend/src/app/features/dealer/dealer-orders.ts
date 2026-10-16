@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { ApiService } from '../../core/api/api.service';
-import { DealerDeliveryView, DealerOrdersView, DealerOrderView, DeliveryPlacesView } from '../../core/api/models';
+import { DealerDeliveryView, DealerDemoState, DealerOrdersView, DealerOrderView, DeliveryPlacesView } from '../../core/api/models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { GameStateStore } from '../../core/state/game-state.store';
@@ -25,12 +25,33 @@ function days(v: number): string {
  * offer with the negotiation ("Dein Gebot" / "Bieten", "Zum Angebotspreis annehmen", "Ablehnen", "Zurück in den
  * Warenkorb"), the order with its deliveries (date, delivery point changeable until it is sent, "Finanzieren",
  * "Stornieren" with the refund, "Lieferung erneut versuchen" after a failure) and the history. Amounts only from the
- * form fields; the dealer's limits are never shown.
+ * form fields; the dealer's limits are never shown. RFH-V1: on top the dealer's demo machine ("Vorführung").
  */
 @Component({
   selector: 'app-dealer-orders',
   imports: [RouterLink, TranslatePipe, MoneyPipe, GameTimePipe, Badge, Button, Card],
   template: `
+    @if (demoShown(); as d) {
+      <!-- RFH-V1: the dealer's demo machine (running or the last one), "In den Warenkorb" with the standard configuration -->
+      <app-card [title]="'dealer.demo.title' | t" class="mb-4 block" data-testid="demo">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-[13px]">
+          <div>
+            @if (d.status === 'DELIVERING') {
+              <span class="text-text" data-testid="demo-text">{{ d.machine }} · {{ 'dealer.demo.delivering' | t }}</span>
+            } @else if (d.status === 'ACTIVE' || d.status === 'RETURNING') {
+              <span class="text-text" data-testid="demo-text">{{ 'dealer.demo.standsUntil' | t: { machine: d.machine, time: (d.untilGameTime | gameTime) } }}</span>
+            } @else {
+              <span class="text-text" data-testid="demo-text">{{ d.machine }}</span>
+            }
+            @if (d.lateReason) {
+              <div class="text-[12px] text-warn" data-testid="demo-late">{{ 'dealer.demo.late' | t: { reason: d.lateReason, fee: (demo()!.lateFee | money) } }}</div>
+            }
+          </div>
+          <app-button variant="secondary" [disabled]="busy() || demoAdded() === d.id" (pressed)="demoToCart(d.id, d.xmlFilename)"
+            data-testid="demo-to-cart">{{ 'dealer.demo.toCart' | t }}</app-button>
+        </div>
+      </app-card>
+    }
     <app-card data-testid="orders">
       @if (error(); as e) {
         <p class="mb-2 text-[12px] text-danger" data-testid="orders-error">{{ e }}</p>
@@ -188,6 +209,9 @@ export class DealerOrders {
   readonly places = signal<DeliveryPlacesView | null>(null);
   readonly amounts = signal<Record<number, number | null>>({});
   readonly confirming = signal<number | null>(null);
+  /** RFH-V1: the dealer's demo; the id of the demo whose machine was put into the cart. */
+  readonly demo = signal<DealerDemoState | null>(null);
+  readonly demoAdded = signal<number | null>(null);
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -202,6 +226,29 @@ export class DealerOrders {
   load(): void {
     this.api.dealerOrders().subscribe({ next: (v) => this.view.set(v), error: () => this.view.set(null) });
     this.api.dealerDeliveryPoints().subscribe({ next: (v) => this.places.set(v), error: () => this.places.set(null) });
+    this.api.dealerDemo().subscribe({ next: (d) => this.demo.set(d), error: () => this.demo.set(null) });
+  }
+
+  /** The running demo, else the last finished one. */
+  demoShown() {
+    const d = this.demo();
+    return d?.running ?? d?.last ?? null;
+  }
+
+  /** "In den Warenkorb": the demonstrated machine with its standard configuration. */
+  demoToCart(id: number, xmlFilename: string): void {
+    this.busy.set(true);
+    this.error.set(null);
+    this.api.dealerCartAdd(xmlFilename, {}).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.demoAdded.set(id);
+      },
+      error: (e) => {
+        this.busy.set(false);
+        this.error.set(apiErrorMessage(e, this.i18n.t('common.error')));
+      },
+    });
   }
 
   /** Status of the order; an order with a delivery waiting at the dealer additionally shows "Wartet beim Händler". */
