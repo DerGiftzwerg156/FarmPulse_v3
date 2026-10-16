@@ -194,7 +194,10 @@ versuchen" (500 €), an older mod ("Mod aktualisieren"), the missing money, a l
 cancellation (50 % / 100 %, batch) and the delivery point until it is sent; `dealer-orders.spec.ts` the tab and the
 request in the cart, `home.spec.ts` the tile. RFH-S: `DealerShopPurchaseTest`; RFH-V1: `DealerDemoTest` (shop place,
 2 days, independent of R31-A2, once per game year, late fee, disappeared machine, postponed delivery) and the specs of
-the catalog and the tab. In the game: manual test plan 31.17-31.20.
+the catalog and the tab. In the game: manual test plan 31.17-31.20. `DealerOrderTest` also covers the investment
+grant (deposit and rest recognised, a cancellation takes the deposit out, a funded machine given in trade is repaid)
+and the task of a waiting delivery; `tasks.spec.ts` its title and link.
+`SimulatorScenariosEndToEndTest.aWholeDealerOrderRunsThroughTheBridge` runs a whole order through the bridge simulator.
 Roadmap V4 R4-D (contribution margin): `FieldMarginTest` covers the direct costs from the counter at the price of the
 moment with the helper surcharge and free farmyard manure, a falling counter, the estimate of an older mod and its
 replacement by an entered line, contractor fees, rent and premiums (each booked once), the realised price of the sales

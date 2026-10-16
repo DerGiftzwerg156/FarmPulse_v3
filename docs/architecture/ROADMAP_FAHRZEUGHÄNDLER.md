@@ -1,6 +1,6 @@
 # FarmPulse – Roadmap Fahrzeughändler
 
-Stand 16.10.2026 (alle Bereiche umgesetzt; offen sind nur die 🟡-Prüfungen im Spiel und der End-to-End-Test gegen den Simulator). Ziel: Neue Maschinen kauft der Spieler beim **Landmaschinenhändler im Hof-Tablet**. Er stellt sich
+Stand 16.10.2026 (alle Bereiche umgesetzt; offen sind nur die 🟡-Prüfungen im Spiel). Ziel: Neue Maschinen kauft der Spieler beim **Landmaschinenhändler im Hof-Tablet**. Er stellt sich
 die Maschine wie im Spiel-Shop zusammen (Farbe, Reifen, Motor, Ausstattung …), legt mehrere Maschinen in eine
 **Sammelbestellung**, verhandelt den Preis, zahlt an, wartet die **Lieferzeit** ab und bekommt die Maschine an einen
 **selbst festgelegten Lieferort** geliefert. Dazu kommen Inzahlungnahme, Stornierung, Finanzierung über die Bank und
@@ -369,12 +369,13 @@ nach dem Laden. Dafür kommt eine eigene Anweisung:
 - [x] Mod-Tests (`mod/tests/test_machine_dealer.lua`) mit gemockten FS25-Globals: Konfigurationen exportieren,
   `saveId` → Index, Lieferpunkt speichern und laden, `overlapBox` frei/belegt, Ausweichen, Inzahlungnahme belegt,
   Buchung erst im Callback, Löschen bei Fehlschlag.
-- [ ] Backend (Vertrag erledigt: `MachineDealerContractTest`, `BridgeSyncIntegrationTest`, `FailedInstructionTest`,
+- [x] Backend (Vertrag erledigt: `MachineDealerContractTest`, `BridgeSyncIntegrationTest`, `FailedInstructionTest`,
   End-to-End gegen den Simulator; die Formeln folgen mit ihren Bereichen): Grenzwert-Tests für jede Formel (Lieferzeit bei 1, 3 und 30 Spieltagen je Monat, 9-Uhr-Regel, Verzug,
   Express, Lieferkosten, Stornogebühr, Rabatt-Grenze, Aufpreis neuer Versuch), End-to-End-Test gegen den Simulator.
   Stand 16.10.2026: `DealerOrderTest` (Angebot, Untergrenze, Anzahlung, Termin, Lieferung mit Rest/Lieferkosten/
   Express, Abzug für Schaden, Warten, erneuter Versuch, Verzug, Storno 50 %/100 %), `DealerShopPurchaseTest`,
-  `DealerDemoTest`; offen bleibt der End-to-End-Test gegen den Simulator.
+  `DealerDemoTest`; End-to-End gegen den Simulator: `SimulatorScenariosEndToEndTest.aWholeDealerOrderRunsThroughTheBridge`
+  (Anfrage mit Inzahlungnahme, Einigung, Anzahlung und Lieferung im Simulator gebucht, Bestellung abgeschlossen).
 - [x] `docs/dev/manual-test-plan.md`: neuer Abschnitt mit je einer Zeile pro 🟡 dieser Roadmap.
 - [x] `docs/dev/bridge-protocol.md`, `mod/README.md`, `CHANGELOG.md`, `docs/dev/testing.md`;
   `docs/user-guide/funktionen.md` folgt mit der ersten sichtbaren Funktion (H, K).
@@ -559,6 +560,10 @@ ist der Lieferort ungültig und die Lieferung geht auf den Shop-Platz.
 ---
 
 ## B – Angebot, Verhandlung und Bezahlung
+
+**Investitionsförderung (Entscheidungen 16.10.2026):** Anzahlung und Rest zählen für eine bewilligte
+Maschinen-Förderung (R31-B2) wie ein Kauf im Spiel-Shop, eine Stornierung nimmt die Anzahlung wieder heraus; eine
+geförderte Maschine, die in Zahlung geht, gilt als verkauft.
 
 **Stand 16.10.2026: B umgesetzt** (`dealer/DealerOrderService`, `api/DealerOrderController`, Tab „Bestellungen“
 `features/dealer/dealer-orders.ts`, Anfrage im Warenkorb `dealer-request.ts`; Entscheidungen 15./16.10.2026 in
@@ -767,7 +772,8 @@ Mod: kein Rückfall, die Lieferung wartet mit „Mod aktualisieren“ (Entscheid
   **halbiert** die Wahrscheinlichkeit. Es gibt keine Entschädigung, aber die Stornierung zahlt dann 100 % der Anzahlung
   zurück (B6). (Entscheidung 15.10.2026.)
 - [x] Der Händler meldet sich per Mail mit dem neuen Termin; Kalender, Aufgaben, Kachel und Liquiditätsplanung ziehen
-  mit.
+  mit. Unter **Aufgaben** steht eine Lieferung, die beim Händler wartet („Lieferung wartet: {Maschine} – {Grund}“,
+  Entscheidung 16.10.2026); geplante Lieferungen stehen im Kalender.
 
 **Beleg:** –.
 

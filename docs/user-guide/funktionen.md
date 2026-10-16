@@ -361,8 +361,10 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
   geplante Summe (ab 10.000 €). Nach etwa 10 Tagen ist sie bewilligt (mit Bürokraft schneller). Erst dann kaufst du im
   Spiel – was du vorher kaufst, zählt nicht. Innerhalb von 6 Monaten reichst du mit *Nachweis einreichen* ein (sonst
   geschieht es zum Fristende von selbst): 30 % der Kosten, höchstens 50.000 €. Gebrauchtkäufe bei Nachbarn und
-  Leasing zählen nicht. Verkaufst du eine geförderte Maschine innerhalb von 24 Monaten, fordert das Amt anteilig
-  zurück – die **Rückforderung** bezahlst du wie einen Steuerbescheid.
+  Leasing zählen nicht. Neue Maschinen vom **Händler** zählen mit Anzahlung und Rest (nicht Lieferkosten, Express und
+  Aufpreise); eine stornierte Bestellung zählt nicht. Verkaufst du eine geförderte Maschine innerhalb von 24 Monaten
+  oder gibst sie beim Händler in Zahlung, fordert das Amt anteilig zurück – die **Rückforderung** bezahlst du wie
+  einen Steuerbescheid.
 - **Düngeverordnung:** Von November bis Januar ist Gülle und Mist auf Ackerland verboten (Grünland ausgenommen).
   Bringst du sie trotzdem aus, kündigt das Amt eine Kontrolle an: beim ersten Mal eine Verwarnung, danach 1.000 €
   Bußgeld, und das Dorf redet. Ist das Güllelager eines Stalls lange fast voll, warnt dein Tierpfleger (ohne ihn die
@@ -857,8 +859,8 @@ jeder zeigt oben den Händler als Kontakt. Gebrauchte Maschinen, Leih- und Vorf�
   dann der Rest, die Lieferkosten und Express, die Inzahlungsmaschine ist weg. Ist sie stärker beschädigt als bei der
   Einigung, steigt der Rest um den Mehrschaden; ist sie vorher verkauft, um ihren Wert aus dem Angebot. Klappt die
   Lieferung nicht (Shop-Platz belegt, Inzahlungsmaschine angekoppelt oder in Benutzung, Geld fehlt), wartet sie beim
-  Händler: jeden Spieltag ein neuer Versuch, oder sofort mit **„Lieferung erneut versuchen“** für 500 € (nur bei
-  Erfolg gebucht). **Finanzieren** öffnet den Kreditantrag der Bank mit Betrag und Verwendungszweck.
+  Händler – sie steht dann auch unter **Aufgaben** („Lieferung wartet: …“): jeden Spieltag ein neuer Versuch, oder
+  sofort mit **„Lieferung erneut versuchen“** für 500 € (nur bei Erfolg gebucht). **Finanzieren** öffnet den Kreditantrag der Bank mit Betrag und Verwendungszweck.
 - **Vorführung.** Im Katalog fragst du eine **Vorführung** an: Der Händler bringt die Maschine in
   Standardausstattung kostenlos auf den Shop-Platz und holt sie nach 2 Tagen eines 30-Tage-Monats (umgerechnet auf
   deinen Spielstand) wieder ab. Es gibt eine Vorführung zur Zeit und je Maschine eine je Spieljahr; die Werkstatt hat

@@ -149,7 +149,7 @@ describe('Händler – Katalog, Konfigurator, Warenkorb (RFH-K)', () => {
     expect(el.querySelector('[data-testid="list-price"]')?.textContent).toContain('245.000');
     expect(el.querySelector('[data-testid="delivery"]')?.textContent).toContain('2–4 Spieltage');
     expect(el.querySelector('[data-testid="express"]')?.textContent).toContain('Express: 1–2 Spieltage');
-    expect(el.textContent).toContain('Lieferkosten folgen mit den Lieferorten.');
+    expect(el.textContent).toContain('Die Lieferkosten nennt das Angebot – je nach Lieferort.');
 
     (types[0].querySelectorAll('[data-testid="color-option"]')[1] as HTMLButtonElement).click();
     const configure = http.expectOne('/api/dealer/configure');

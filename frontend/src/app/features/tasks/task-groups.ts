@@ -53,7 +53,9 @@ export function taskTitle(t: TaskView, i18n: TranslationService): string {
     case 'CALL':
       return i18n.t('tasks.calling', { name: t.call?.character?.name ?? '' });
     case 'NEGOTIATION':
-      return i18n.t('enums.negotiationKind.' + t.kind) + ' · ' + i18n.t('farmland.fieldLabel', { id: t.negotiation?.assetId });
+      return i18n.t('enums.negotiationKind.' + t.kind) + ' · ' + (t.negotiation?.assetType === 'VEHICLE'
+        || t.negotiation?.assetType === 'MACHINE_ORDER' ? i18n.t('workshop.machine')
+        : i18n.t('farmland.fieldLabel', { id: t.negotiation?.assetId }));
     case 'MARKET_OFFER':
       return i18n.t('enums.marketEventType.' + t.kind);
     case 'POSTING':
@@ -64,6 +66,8 @@ export function taskTitle(t: TaskView, i18n: TranslationService): string {
       return feedTaskTitle(t, i18n);
     case 'SOW':
       return i18n.t('tasks.sowDue', { field: t.sowDue?.fieldName ?? '', crop: t.sowDue?.fruitType ?? '' });
+    case 'DEALER_DELIVERY':
+      return i18n.t('tasks.deliveryWaiting', { machine: t.deliveryWaiting?.machines ?? '', reason: t.deliveryWaiting?.reason ?? '' });
   }
 }
 

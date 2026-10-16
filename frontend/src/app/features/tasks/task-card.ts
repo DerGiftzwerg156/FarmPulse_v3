@@ -124,6 +124,10 @@ import { dueLabel, feedTaskTitle, isUrgent } from './task-groups';
           <div class="text-[15px] font-semibold text-text">{{ 'tasks.sowDue' | t: { field: t.sowDue?.fieldName ?? '', crop: (t.sowDue?.fruitType | label: 'fruitType') } }}</div>
           <div class="text-[12px] text-[#8FA39A]" data-testid="sow-due">{{ 'tasks.sowHint' | t }}</div>
         }
+        @case ('DEALER_DELIVERY') {
+          <!-- Roadmap vehicle dealer RFH-L5: a delivery waiting at the dealer -->
+          <div class="text-[15px] font-semibold text-text" data-testid="delivery-waiting">{{ 'tasks.deliveryWaiting' | t: { machine: t.deliveryWaiting?.machines ?? '', reason: t.deliveryWaiting?.reason ?? '' } }}</div>
+        }
         @case ('POSTING') {
           <div class="text-[15px] font-semibold text-text">{{ 'tasks.applicants' | t: { role: (t.kind | label: 'jobRole'), n: t.pendingApplicants } }}</div>
           <div class="text-[12px] text-[#8FA39A]">{{ 'tasks.applicantsHint' | t }}</div>

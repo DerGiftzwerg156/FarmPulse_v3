@@ -54,6 +54,12 @@ class SimulatorScenariosEndToEndTest {
     @Autowired de.farmpulse.rpsim.repository.GrowingFieldMonthRepository growing;
     @Autowired de.farmpulse.rpsim.time.GameTime gameTime;
     @Autowired de.farmpulse.rpsim.field.FieldBookService fieldBook;
+    @Autowired de.farmpulse.rpsim.dealer.DealerCartService dealerCart;
+    @Autowired de.farmpulse.rpsim.dealer.DealerOrderService dealerOrders;
+    @Autowired de.farmpulse.rpsim.negotiation.NegotiationEngine engine;
+    @Autowired de.farmpulse.rpsim.repository.DealerOrderRepository dealerOrderRepo;
+    @Autowired de.farmpulse.rpsim.repository.DealerDeliveryRepository dealerDeliveryRepo;
+    @Autowired de.farmpulse.rpsim.repository.DealerTradeInRepository dealerTradeInRepo;
 
     @BeforeEach
     void requireSimulator() {
@@ -471,5 +477,54 @@ class SimulatorScenariosEndToEndTest {
         link("konflikt-mods", "sim_mods_" + System.nanoTime());
         assertThat(header.current().getBody().detectedMods()).containsExactly("FS25_MarketDynamics", "FS25_UsedPlus");
         assertThat(header.current().getBody().calendar()).isNotNull();
+    }
+
+    /**
+     * Roadmap vehicle dealer RFH-B / L (RFH-Q5): a whole order through the bridge - request with a trade-in, offer,
+     * agreement, the deposit booked by the simulator, the delivery on the date with rest and delivery costs, the
+     * trade-in removed and the order completed.
+     */
+    @Test
+    void aWholeDealerOrderRunsThroughTheBridge() {
+        String id = "sim_dealer_order_" + System.nanoTime();
+        Savegame sg = link("fahrzeughaendler", id);
+        long orderId = tx.execute(s -> {
+            Savegame stored = savegames.findById(sg.getId()).orElseThrow();
+            dealerCart.add(stored, "data/vehicles/fendt/vario700/vario700.xml", java.util.Map.of());
+            var o = dealerOrders.request(stored, new de.farmpulse.rpsim.dealer.DealerOrderService.RequestInput(true,
+                    java.util.List.of("veh_00001"), new de.farmpulse.rpsim.dealer.DealerOrderService.DeliveryChoice(null, false),
+                    null));
+            dealerOrders.offer(stored, o);
+            engine.placeOffer(stored, o.getNegotiationId(), o.getOfferPrice());
+            return o.getId();
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "fahrzeughaendler", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            var o = dealerOrderRepo.findById(orderId).orElseThrow();
+            assertThat(o.getStatus()).isEqualTo(de.farmpulse.rpsim.domain.DealerOrder.ORDERED);
+            Savegame stored = savegames.findById(sg.getId()).orElseThrow();
+            var d = dealerDeliveryRepo.findByOrderIdOrderByIdAsc(orderId).getFirst();
+            d.setDueGameTime(stored.getCurrentGameTime()); // the date is reached
+            d.setDelayChecked(true);
+            dealerOrders.tick(stored);
+            assertThat(d.getStatus()).isEqualTo(de.farmpulse.rpsim.domain.DealerDelivery.SENT);
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "fahrzeughaendler", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            var d = dealerDeliveryRepo.findByOrderIdOrderByIdAsc(orderId).getFirst();
+            assertThat(d.getStatus()).isEqualTo(de.farmpulse.rpsim.domain.DealerDelivery.DELIVERED);
+            assertThat(d.getPlaceUsed()).isEqualTo("SHOP");
+            assertThat(d.getVehicleIds()).isNotBlank();
+            assertThat(dealerOrderRepo.findById(orderId).orElseThrow().getStatus())
+                    .isEqualTo(de.farmpulse.rpsim.domain.DealerOrder.COMPLETED);
+            assertThat(dealerTradeInRepo.findByOrderIdOrderByIdAsc(orderId)).extracting(t -> t.getStatus())
+                    .containsExactly(de.farmpulse.rpsim.domain.DealerTradeIn.REMOVED);
+            var vehicles = facts.latest(savegames.findById(sg.getId()).orElseThrow()).orElseThrow().assets().vehicles();
+            assertThat(vehicles).extracting(v -> v.uniqueId()).doesNotContain("veh_00001");
+        });
     }
 }

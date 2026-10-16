@@ -1084,7 +1084,7 @@ export interface ApiError {
 
 /** Hof-Tablet "Aufgaben": one open decision of any area (type names the payload that is set). */
 export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING'
-  | 'INVESTOR_DUE' | 'FEED' | 'SOW';
+  | 'INVESTOR_DUE' | 'FEED' | 'SOW' | 'DEALER_DELIVERY';
 
 export interface TaskView {
   key: string;
@@ -1106,6 +1106,15 @@ export interface TaskView {
   feedDue?: FeedDueView | null;
   /** Roadmap V4 R4-A5: a planned field in its sowing window (type SOW, kind = crop). */
   sowDue?: SowDueView | null;
+  /** Roadmap vehicle dealer RFH-L5: a delivery waiting at the dealer (type DEALER_DELIVERY, kind = failure code). */
+  deliveryWaiting?: DeliveryWaitingView | null;
+}
+
+export interface DeliveryWaitingView {
+  deliveryId: number;
+  orderId: number;
+  machines: string;
+  reason: string;
 }
 
 export interface SowDueView {

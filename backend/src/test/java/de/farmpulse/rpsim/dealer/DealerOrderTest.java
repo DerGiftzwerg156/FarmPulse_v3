@@ -66,6 +66,9 @@ class DealerOrderTest {
     @Autowired FailedInstructionService failed;
     @Autowired RpsimProperties props;
     @Autowired JsonMapper json;
+    @Autowired de.farmpulse.rpsim.repository.InvestmentGrantRepository grants;
+    @Autowired de.farmpulse.rpsim.repository.InvestmentGrantObjectRepository grantObjects;
+    @Autowired de.farmpulse.rpsim.tablet.TaskService tasks;
 
     Savegame sg;
     double delayProbability;
@@ -390,5 +393,80 @@ class DealerOrderTest {
         static long of(Savegame sg) {
             return de.farmpulse.rpsim.bridge.LiquidityService.minBalance(sg);
         }
+    }
+
+    /** An approved machine grant (R31-B2) with a purchase deadline in 3 game days. */
+    private de.farmpulse.rpsim.domain.InvestmentGrant approvedGrant() {
+        var g = new de.farmpulse.rpsim.domain.InvestmentGrant();
+        g.setSavegame(sg);
+        g.setCharacter(fx.character(sg, de.farmpulse.rpsim.domain.CharacterRole.AUTHORITY,
+                de.farmpulse.rpsim.domain.CharacterCategory.MANDATORY, "Frau Amt"));
+        g.setKind(de.farmpulse.rpsim.domain.InvestmentGrant.MACHINE);
+        g.setStatus(de.farmpulse.rpsim.domain.InvestmentGrant.APPROVED);
+        g.setPlannedSum(300000);
+        g.setApprovedGameTime(0L);
+        g.setPurchaseDeadlineGameTime(sg.getCurrentGameTime() + 30 * DAY);
+        return grants.save(g);
+    }
+
+    @Test
+    void depositAndRestOfTheDealerCountForAnApprovedMachineGrant() {
+        var g = approvedGrant();
+        DealerOrder o = order(false);
+        assertThat(g.getRecognisedSum()).isEqualTo(o.getDeposit()); // the deposit like a purchase in the shop
+        DealerDelivery d = deliveries.findByOrderIdOrderByIdAsc(o.getId()).getFirst();
+        sg.setCurrentGameTime(d.getDueGameTime());
+        export(500000, 4000L); // 3.000 more damage: part of the rest the mod books
+        service.tick(sg);
+        ack(of(InstructionType.VEHICLE_DELIVERY).getLast(), "APPLIED", null, Map.of("placeUsed", "SHOP", "vehicleCount", 2,
+                "vehicleId1", "veh_100", "vehicleId2", "veh_101", "tradeInsRemoved", 1));
+        // delivery costs and express do not count
+        assertThat(g.getRecognisedSum()).isEqualTo(o.getAgreedPrice() + 3000);
+    }
+
+    @Test
+    void aCancelledOrderTakesItsDepositOutOfTheGrant() {
+        var g = approvedGrant();
+        DealerOrder o = order(false);
+        controller.cancel(deliveries.findByOrderIdOrderByIdAsc(o.getId()).getFirst().getId());
+        assertThat(g.getRecognisedSum()).isZero();
+    }
+
+    @Test
+    void aFundedMachineGivenInTradeIsRepaidLikeASale() {
+        var g = approvedGrant();
+        g.setStatus(de.farmpulse.rpsim.domain.InvestmentGrant.PAID);
+        g.setGrantAmount(20000L);
+        g.setPaidGameTime(0L);
+        g.setBindingEndsGameTime(sg.getCurrentGameTime() + 400 * DAY);
+        var funded = new de.farmpulse.rpsim.domain.InvestmentGrantObject();
+        funded.setSavegame(sg);
+        funded.setGrantId(g.getId());
+        funded.setVehicleUniqueId("veh_00007");
+        funded.setVehicleValue(40000);
+        grantObjects.save(funded);
+        DealerOrder o = order(false);
+        DealerDelivery d = deliveries.findByOrderIdOrderByIdAsc(o.getId()).getFirst();
+        sg.setCurrentGameTime(d.getDueGameTime());
+        service.tick(sg);
+        ack(of(InstructionType.VEHICLE_DELIVERY).getLast(), "APPLIED", null, Map.of("placeUsed", "SHOP", "vehicleCount", 2,
+                "vehicleId1", "veh_100", "vehicleId2", "veh_101", "tradeInsRemoved", 1));
+        assertThat(funded.getSoldGameTime()).isNotNull();
+        assertThat(funded.getRepayment()).isPositive();
+        assertThat(g.getRepaidAmount()).isEqualTo(funded.getRepayment());
+    }
+
+    @Test
+    void aWaitingDeliveryIsATask() {
+        DealerOrder o = order(false);
+        DealerDelivery d = deliveries.findByOrderIdOrderByIdAsc(o.getId()).getFirst();
+        sg.setCurrentGameTime(d.getDueGameTime());
+        service.tick(sg);
+        assertThat(tasks.tasks(sg).items()).noneMatch(t -> t.type().equals("DEALER_DELIVERY"));
+        ack(of(InstructionType.VEHICLE_DELIVERY).getLast(), "FAILED", "NO_SPACE", Map.of());
+        var task = tasks.tasks(sg).items().stream().filter(t -> t.type().equals("DEALER_DELIVERY")).findFirst().orElseThrow();
+        assertThat(task.kind()).isEqualTo("NO_SPACE");
+        assertThat(task.deliveryWaiting().machines()).isEqualTo("Fendt 700 Vario, Amazone Catros");
+        assertThat(task.deliveryWaiting().reason()).isEqualTo("Shop-Platz belegt");
     }
 }

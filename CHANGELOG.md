@@ -34,7 +34,9 @@ versions or this changelog do not match.
   the calendar ("Lieferung …"), the liquidity plan ("Restzahlung Neumaschine"), the start screen tile "Nächste Lieferung"
   and "Finanzieren" (credit application prefilled) show it. Migration V53, endpoints `/api/dealer/orders`,
   `/api/dealer/deliveries/{id}/…`, `/api/dealer/trade-in-candidates`, `/api/dealer/next-delivery`. The mod appends the
-  uniqueId to the `TRADE_IN_*` codes of `VEHICLE_DELIVERY`.
+  uniqueId to the `TRADE_IN_*` codes of `VEHICLE_DELIVERY`. A delivery waiting at the dealer is a task ("Lieferung wartet: …"). For an
+  approved machine grant (R31-B2) deposit and rest count like a purchase in the game shop (a cancellation takes the
+  deposit out again), and a funded machine given in trade counts as sold (owner decisions 2026-10-16).
 - **Vehicle dealer - delivery points [RFH-O1]** (owner decisions 2026-10-15): the new mod key "FarmPulse: Lieferort
   hier festlegen" (default Alt+L, on foot) stores the place, facing direction and farmland of the player - only on own
   or leased land - and keeps the last 20 points in the mod savegame (`deliveryPointsMax`). The backend takes every new

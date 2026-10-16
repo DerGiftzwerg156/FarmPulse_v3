@@ -116,6 +116,7 @@ public class DealerOrderService {
     private final RpsimProperties props;
     private final JsonMapper json;
     private final LoanedVehicles loaned;
+    private final de.farmpulse.rpsim.authority.InvestmentGrantService grants;
 
     public DealerOrderService(DealerOrderRepository orders, DealerDeliveryRepository deliveries,
                               DealerOrderItemRepository items, DealerTradeInRepository tradeIns,
@@ -125,7 +126,8 @@ public class DealerOrderService {
                               FactsService facts, OutboxService outbox, OutboxInstructionRepository instructions,
                               NarrationRequestService narration, DiaryService diary, TrustScoreService trust,
                               CharacterLookup lookup, SavegameRepository savegames, AbsenceScale absence,
-                              RandomSource random, RpsimProperties props, JsonMapper json, LoanedVehicles loaned) {
+                              RandomSource random, RpsimProperties props, JsonMapper json, LoanedVehicles loaned,
+                              de.farmpulse.rpsim.authority.InvestmentGrantService grants) {
         this.orders = orders;
         this.deliveries = deliveries;
         this.items = items;
@@ -151,6 +153,7 @@ public class DealerOrderService {
         this.props = props;
         this.json = json;
         this.loaned = loaned;
+        this.grants = grants;
     }
 
     private RpsimProperties.MachineDealer cfg() {
@@ -487,6 +490,8 @@ public class DealerOrderService {
         o.setStatus(DealerOrder.ORDERED);
         List<DealerOrderItem> all = items.findByOrderIdOrderByPositionAsc(o.getId());
         List<DealerDelivery> ds = deliveries.findByOrderIdOrderByIdAsc(o.getId());
+        // investment grant (owner decision 2026-10-16): the deposit counts like a purchase in the shop
+        grants.onDealerPurchase(sg, nz(o.getDeposit()), agreedAt(ds, sg));
         narration.request(sg, NarrationEventType.DEALER_ORDER_CONFIRMED).from(dealer(sg))
                 .facts(NarrationFacts.builder().put("machines", names(all)).put("price", o.getAgreedPrice())
                         .put("deposit", o.getDeposit())
@@ -497,6 +502,12 @@ public class DealerOrderService {
                 .formLink("/haendler/bestellungen").submit();
         diary.addAuto(sg, "NEGOTIATION", "Neumaschine bestellt: " + names(all),
                 "Vereinbart: " + o.getAgreedPrice() + " €, Anzahlung " + o.getDeposit() + " €.", RELATED_ORDER, o.getId());
+    }
+
+    /** Game time of the agreement (the deliveries carry it). */
+    private static long agreedAt(List<DealerDelivery> ds, Savegame sg) {
+        return ds.stream().map(DealerDelivery::getAgreedGameTime).filter(Objects::nonNull).findFirst()
+                .orElse(sg.getCurrentGameTime());
     }
 
     private Character dealer(Savegame sg) {
@@ -742,19 +753,19 @@ public class DealerOrderService {
         }
         d.setVehicleIds(String.join(",", ids));
         its.forEach(i -> i.setStatus(DealerOrderItem.DELIVERED));
-        if (d.isCarriesTradeIns()) {
-            tradeIns.findByOrderIdOrderByIdAsc(d.getOrderId()).stream()
-                    .filter(t -> DealerTradeIn.OPEN.equals(t.getStatus())).forEach(t -> t.setStatus(DealerTradeIn.REMOVED));
-        }
+        List<DealerTradeIn> removed = d.isCarriesTradeIns() ? tradeIns.findByOrderIdOrderByIdAsc(d.getOrderId()).stream()
+                .filter(t -> DealerTradeIn.OPEN.equals(t.getStatus())).toList() : List.of();
+        removed.forEach(t -> t.setStatus(DealerTradeIn.REMOVED));
+        // investment grant (owner decisions 2026-10-16): a funded machine given in trade counts as sold
         String names = names(its);
         String shopReason = "";
         if (d.getDeliveryPointId() != null && !"DELIVERY_POINT".equals(placeUsed)) {
             shopReason = point.isEmpty() ? " Der Lieferort gehört nicht mehr zu Ihrem Hof, deshalb stehen sie auf dem Shop-Platz."
                     : " Am Lieferort war kein Platz frei, deshalb stehen sie auf dem Shop-Platz.";
         }
-        List<Map<String, Object>> b = bookings(sg, d, d.isSentAsRetry());
-        long rest = b.stream().filter(x -> MoneyReason.VEHICLE_NEW_PURCHASE.name().equals(x.get("moneyReason")))
-                .mapToLong(x -> ((Number) x.get("amount")).longValue()).sum();
+        long rest = sentRest(d);
+        grants.onTradeIn(sg, removed.stream().map(DealerTradeIn::getVehicleId).toList(), sg.getCurrentGameTime());
+        grants.onDealerPurchase(sg, rest, sg.getCurrentGameTime()); // the rest counts like a purchase in the shop
         hint(sg, d, "Deine neue " + names + " steht bei " + where);
         narration.request(sg, NarrationEventType.DEALER_DELIVERED).from(dealer(sg))
                 .facts(NarrationFacts.builder().put("machines", names).put("place", where).put("shopReason", shopReason)
@@ -774,6 +785,21 @@ public class DealerOrderService {
             o.setStatus(DealerOrder.COMPLETED);
             o.setClosedGameTime(sg.getCurrentGameTime());
         }
+    }
+
+    /** The rest (VEHICLE_NEW_PURCHASE) of the VEHICLE_DELIVERY the mod booked - as sent, with the trade-in deductions. */
+    private long sentRest(DealerDelivery d) {
+        return instructions.findByInstructionId(d.getInstructionId())
+                .map(ins -> json.readTree(ins.getPayloadJson()).path("bookings"))
+                .map(list -> {
+                    long sum = 0;
+                    for (var x : list) {
+                        if (MoneyReason.VEHICLE_NEW_PURCHASE.name().equals(x.path("moneyReason").asString(""))) {
+                            sum += x.path("amount").asLong(0);
+                        }
+                    }
+                    return sum;
+                }).orElse(0L);
     }
 
     /** A failed delivery waits at the dealer (mail at the first failure); a lost trade-in is dropped from it. */
@@ -894,6 +920,7 @@ public class DealerOrderService {
                         new Related(RELATED_DELIVERY, d.getId()), batch, null);
             }
         }
+        grants.onDealerRefund(sg, deposit, d.getAgreedGameTime() == null ? sg.getCurrentGameTime() : d.getAgreedGameTime());
         d.setStatus(DealerDelivery.CANCELLED);
         its.forEach(i -> i.setStatus(DealerOrderItem.CANCELLED));
         List<DealerDelivery> rest = deliveries.findByOrderIdOrderByIdAsc(o.getId()).stream()

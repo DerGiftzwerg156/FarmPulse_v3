@@ -628,7 +628,8 @@
       "VEHICLE_DELIVERY_FEE": "Lieferkosten Neumaschine",
       "VEHICLE_EXPRESS_FEE": "Expresslieferung",
       "VEHICLE_REFUND": "Rückzahlung Anzahlung",
-      "VEHICLE_CANCELLATION_FEE": "Stornogebühr"
+      "VEHICLE_CANCELLATION_FEE": "Stornogebühr",
+      "VEHICLE_DEMO_LATE_FEE": "Verzögerung Vorführmaschine"
     },
     "cycleEvent": {
       "GameTimeAdvancedEvent": "Spielzeit",
@@ -646,7 +647,8 @@
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
       "PRICE_EVENT": "Preis-Ereignis",
-      "FARMLAND_TRANSFER": "Feldübertragung"
+      "FARMLAND_TRANSFER": "Feldübertragung",
+      "VEHICLE_DELIVERY": "Lieferung Neumaschine"
     },
     "period": {
       "1": "März",
@@ -934,7 +936,8 @@
       "RPSIM_VEHICLE_DELIVERY_FEE": "Lieferkosten Neumaschine",
       "RPSIM_VEHICLE_EXPRESS_FEE": "Expresslieferung",
       "RPSIM_VEHICLE_REFUND": "Rückzahlung Anzahlung",
-      "RPSIM_VEHICLE_CANCELLATION_FEE": "Stornogebühr"
+      "RPSIM_VEHICLE_CANCELLATION_FEE": "Stornogebühr",
+      "RPSIM_VEHICLE_DEMO_LATE_FEE": "Verzögerung Vorführmaschine"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",
@@ -2058,6 +2061,7 @@
     "investorDue": "Lieferung an {name}",
     "feedDue": "Futter: {group} reicht noch {days} Tage",
     "sowDue": "Feld {field}: {crop} säen",
+    "deliveryWaiting": "Lieferung wartet: {machine} – {reason}",
     "sowHint": "Saatfenster laut Anbauplanung"
   },
   "calendar": {
@@ -2255,7 +2259,7 @@
       "hour": "{n} Stunden",
       "express": "Express: {span}",
       "earliest": "frühestens morgen 9 Uhr",
-      "deliveryCostsLater": "Lieferkosten folgen mit den Lieferorten.",
+      "deliveryCostsLater": "Die Lieferkosten nennt das Angebot – je nach Lieferort.",
       "addToCart": "In den Warenkorb",
       "cancel": "Abbrechen",
       "apply": "Übernehmen"

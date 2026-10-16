@@ -74,6 +74,7 @@ const TYPE_APP: Record<string, string> = {
   INVESTOR_DUE: 'bank', // Roadmap V3.2 R32-I4
   FEED: 'stable', // Roadmap V4 R4-F4
   SOW: 'fieldbook', // Roadmap V4 R4-A5
+  DEALER_DELIVERY: 'dealer', // Roadmap vehicle dealer RFH-L5
 };
 
 /** Where an unknown kind shows up: the task list itself. */
@@ -137,6 +138,9 @@ export function taskTabId(t: TaskView): string | undefined {
     case 'SOW':
       tab = 'anbauplanung';
       break;
+    case 'DEALER_DELIVERY':
+      tab = 'bestellungen';
+      break;
   }
   return isTab(appId, tab) ? tab : undefined;
 }
@@ -171,6 +175,7 @@ export function taskLink(t: TaskView): { path: string; query: Record<string, num
     case 'INVESTOR_DUE':
     case 'FEED':
     case 'SOW':
+    case 'DEALER_DELIVERY':
       return { path, query: {} };
   }
 }

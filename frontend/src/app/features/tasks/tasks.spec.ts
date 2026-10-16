@@ -72,6 +72,19 @@ describe('task helpers', () => {
     expect(taskAppId(sow)).toBe('fieldbook');
     expect(taskLink(sow)).toEqual({ path: '/feldbuch/anbauplanung', query: {} });
   });
+
+  // Roadmap vehicle dealer RFH-L5 (owner decision 2026-10-16): a delivery waiting at the dealer opens "Bestellungen"
+  it('names a waiting delivery and a machine negotiation and links them to the dealer', () => {
+    const i18n = TestBed.inject(TranslationService);
+    const waiting = task({ type: 'DEALER_DELIVERY', kind: 'TRADE_IN_ATTACHED', deliveryWaiting: { deliveryId: 4, orderId: 2,
+      machines: 'Fendt 700 Vario', reason: 'Fendt 312 ist angekoppelt' } });
+    expect(taskTitle(waiting, i18n)).toBe('Lieferung wartet: Fendt 700 Vario – Fendt 312 ist angekoppelt');
+    expect(taskAppId(waiting)).toBe('dealer');
+    expect(taskLink(waiting)).toEqual({ path: '/haendler/bestellungen', query: {} });
+    const offer = task({ type: 'NEGOTIATION', kind: 'DIRECT', negotiation: { id: 30, assetType: 'MACHINE_ORDER', assetId: '7' } as never });
+    expect(taskTitle(offer, i18n)).not.toContain('Feld');
+    expect(taskLink(offer)).toEqual({ path: '/haendler/bestellungen', query: { negotiation: 30 } });
+  });
 });
 
 describe('Tasks', () => {
