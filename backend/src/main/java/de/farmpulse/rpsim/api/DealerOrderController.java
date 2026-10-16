@@ -48,6 +48,10 @@ public class DealerOrderController {
     public record BidRequest(@Positive long amount) {
     }
 
+    /** RFH-V1: "Vorführung anfragen" for a catalog entry (standard configuration). */
+    public record DemoRequest(@jakarta.validation.constraints.NotBlank String xmlFilename) {
+    }
+
     public record PlaceRequest(Long deliveryPointId) {
     }
 
@@ -98,11 +102,14 @@ public class DealerOrderController {
 
     private final SavegameContext context;
     private final DealerOrderService orders;
+    private final de.farmpulse.rpsim.dealer.DealerDemoService demos;
     private final NegotiationEngine engine;
     private final RpsimProperties props;
 
     public DealerOrderController(SavegameContext context, DealerOrderService orders, NegotiationEngine engine,
-                                 RpsimProperties props) {
+                                 RpsimProperties props,
+                                 de.farmpulse.rpsim.dealer.DealerDemoService demos) {
+        this.demos = demos;
         this.context = context;
         this.orders = orders;
         this.engine = engine;
@@ -127,6 +134,21 @@ public class DealerOrderController {
         Savegame sg = context.requireActive();
         orders.sync(sg);
         return view(sg);
+    }
+
+    @GetMapping("/api/dealer/demo")
+    @Transactional(readOnly = true)
+    public de.farmpulse.rpsim.dealer.DealerDemoService.DemoState demo() {
+        return demos.state(context.requireActive());
+    }
+
+    @PostMapping("/api/dealer/demo")
+    @Transactional
+    public de.farmpulse.rpsim.dealer.DealerDemoService.DemoState requestDemo(
+            @jakarta.validation.Valid @RequestBody DemoRequest req) {
+        Savegame sg = context.requireActive();
+        demos.request(sg, req.xmlFilename());
+        return demos.state(sg);
     }
 
     @GetMapping("/api/dealer/next-delivery")

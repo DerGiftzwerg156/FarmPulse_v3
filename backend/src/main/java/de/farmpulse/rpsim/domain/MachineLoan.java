@@ -19,6 +19,8 @@ public class MachineLoan extends SavegameScoped {
 
     public static final String LOAN = "LOAN";
     public static final String DEMO = "DEMO";
+    /** Roadmap vehicle dealer RFH-V1: the dealer's demo machine (own service, independent of LOAN and DEMO). */
+    public static final String DEALER_DEMO = "DEALER_DEMO";
     /** VEHICLE_SPAWN on its way (or waiting for a new attempt after NO_SPACE). */
     public static final String DELIVERING = "DELIVERING";
     /** On the farm. */
@@ -40,7 +42,7 @@ public class MachineLoan extends SavegameScoped {
     @Column(name = "status", nullable = false, length = 16)
     private String status;
 
-    /** The neighbour (LOAN) or the workshop (DEMO). */
+    /** The neighbour (LOAN), the workshop (DEMO) or the dealer (DEALER_DEMO). */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "character_id")
     private Character character;
@@ -127,6 +129,10 @@ public class MachineLoan extends SavegameScoped {
 
     @Column(name = "closed_game_time")
     private Long closedGameTime;
+
+    /** RFH-V1: game year of a dealer demo (each machine once per game year). */
+    @Column(name = "game_year")
+    private Integer gameYear;
 
     public boolean running() {
         return DELIVERING.equals(status) || ACTIVE.equals(status) || RETURNING.equals(status)
