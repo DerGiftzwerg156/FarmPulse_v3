@@ -15,6 +15,9 @@ public interface BookingEntryRepository extends JpaRepository<BookingEntry, Long
     /** Entries the game no longer has after a reload without saving (seq at or after the mod's nextSeq). */
     List<BookingEntry> findBySavegameAndSeqGreaterThanEqual(Savegame savegame, long seq);
 
+    /** RFH-S2: purchases in the game shop the dealer has not reacted to yet. */
+    List<BookingEntry> findBySavegameAndCategoryAndDealerReactedFalseOrderBySeqAsc(Savegame savegame, String category);
+
     List<BookingEntry> findBySavegameAndVehicleMatchAndCategoryOrderBySeqAsc(Savegame savegame, String vehicleMatch,
                                                                              String category);
 
