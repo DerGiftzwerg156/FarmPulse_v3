@@ -282,8 +282,9 @@ public class MachineLoanService {
         }
     }
 
+    /** The running loan or demo of R31-A2 (the dealer's demo, RFH-V1, runs independently). */
     public Optional<MachineLoan> running(Savegame sg) {
-        return loans.findBySavegameOrderByIdDesc(sg).stream().filter(MachineLoan::running).findFirst();
+        return list(sg).stream().filter(MachineLoan::running).findFirst();
     }
 
     // ------------------------------------------------------------------------------------------ demo offer
@@ -708,7 +709,8 @@ public class MachineLoanService {
     }
 
     public List<MachineLoan> list(Savegame sg) {
-        return loans.findBySavegameOrderByIdDesc(sg);
+        return loans.findBySavegameOrderByIdDesc(sg).stream()
+                .filter(l -> !MachineLoan.DEALER_DEMO.equals(l.getKind())).toList();
     }
 
     private static double round2(double v) {

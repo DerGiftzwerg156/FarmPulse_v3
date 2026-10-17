@@ -48,6 +48,8 @@
           "properties": { "title": { "type": "string", "minLength": 1 },
             "productionWeight": { "type": "number", "minimum": 0 },
             "fillTypes": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } } } },
-        "mixtures": { "type": "array", "items": { "type": "string", "minLength": 1 } } } } }
+        "mixtures": { "type": "array", "items": { "type": "string", "minLength": 1 } } } } },
+    "storePlaces": { "type": "array", "items": { "type": "object", "required": ["x", "z"],
+      "properties": { "x": { "type": "number" }, "z": { "type": "number" } } } }
   }
 }

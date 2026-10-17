@@ -80,7 +80,10 @@ export function startControlServer(sim, port, log = () => {}) {
         '/harvest': (b) => sim.addHarvest(b.farmlandId, b.fruitType, b.fillType, b.liters),
         // Roadmap V4 (R4-Q3): consumption on an own field, feed into / out of silo or trough, animals eat
         '/input': (b) => sim.addInput(b.farmlandId, b.fillType, b.liters, b.helper === true),
-        '/feed': (b) => sim.changeFeed(b), '/eat': (b) => sim.eat(b.husbandryUniqueId, b.fillType, b.liters) };
+        '/feed': (b) => sim.changeFeed(b), '/eat': (b) => sim.eat(b.husbandryUniqueId, b.fillType, b.liters),
+        // Roadmap vehicle dealer (RFH-Q5): key "Lieferort hier festlegen", occupied delivery point, full shop places
+        '/delivery-point': (b) => sim.setDeliveryPoint(b), '/delivery-place-blocked': (b) => sim.setDeliveryPlaceBlocked(b.blocked),
+        '/shop-full': (b) => sim.setShopFull(b.full) };
       if (req.method === 'POST' && patches[url.pathname]) {
         const result = patches[url.pathname](await body(req));
         sim.exportFarmFacts();

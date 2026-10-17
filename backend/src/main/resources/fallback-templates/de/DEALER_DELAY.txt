@@ -1,0 +1,6 @@
+Lieferung verspätet sich: {{machines}}
+Hallo,
+
+es tut mir leid – die Lieferung von {{machines}} verspätet sich. Neuer Termin: {{date}}. Wenn Sie jetzt stornieren, erstatte ich Ihnen die volle Anzahlung.
+
+{{characterName}}

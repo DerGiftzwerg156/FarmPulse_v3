@@ -311,4 +311,14 @@ class FailedInstructionTest {
                 .containsEntry("fillType", "MILK").containsEntry("amount", 5000.0)
                 .containsEntry("husbandryUniqueId", "hus_00001"));
     }
+
+    // Roadmap vehicle dealer (RFH-Q3): VEHICLE_DELIVERY counts as "Mod aktualisieren" like the V3 / V3.1 / V3.2 types
+
+    @Test
+    void anOlderModRefusingVehicleDeliveryAsksForAModUpdate() {
+        assertThat(FailedInstructionService.modOutdated(InstructionType.VEHICLE_DELIVERY,
+                "d: unknown type VEHICLE_DELIVERY")).isTrue();
+        assertThat(FailedInstructionService.modOutdated(InstructionType.VEHICLE_DELIVERY, "NOT_SUPPORTED")).isTrue();
+        assertThat(FailedInstructionService.modOutdated(InstructionType.VEHICLE_DELIVERY, "NO_SPACE")).isFalse();
+    }
 }

@@ -1084,7 +1084,7 @@ export interface ApiError {
 
 /** Hof-Tablet "Aufgaben": one open decision of any area (type names the payload that is set). */
 export type TaskType = 'CASE' | 'CONTRACT_OFFER' | 'LEASE_RENEWAL' | 'CREDIT_COUNTER' | 'CALL' | 'NEGOTIATION' | 'MARKET_OFFER' | 'POSTING'
-  | 'INVESTOR_DUE' | 'FEED' | 'SOW';
+  | 'INVESTOR_DUE' | 'FEED' | 'SOW' | 'DEALER_DELIVERY';
 
 export interface TaskView {
   key: string;
@@ -1106,6 +1106,15 @@ export interface TaskView {
   feedDue?: FeedDueView | null;
   /** Roadmap V4 R4-A5: a planned field in its sowing window (type SOW, kind = crop). */
   sowDue?: SowDueView | null;
+  /** Roadmap vehicle dealer RFH-L5: a delivery waiting at the dealer (type DEALER_DELIVERY, kind = failure code). */
+  deliveryWaiting?: DeliveryWaitingView | null;
+}
+
+export interface DeliveryWaitingView {
+  deliveryId: number;
+  orderId: number;
+  machines: string;
+  reason: string;
 }
 
 export interface SowDueView {
@@ -2262,4 +2271,299 @@ export interface FieldMarginExpected {
   pricePerLiter: number | null;
   priceSource: string | null;
   revenue: number | null;
+}
+
+/** Roadmap vehicle dealer RFH-H1: the machine dealer as contact; null until the dealer exists in the savegame. */
+export interface DealerContactView {
+  character: CharacterRef;
+  trustLevel: TrustLevel;
+}
+
+export interface DealerView {
+  dealer: DealerContactView | null;
+}
+
+/** Roadmap vehicle dealer RFH-K1: one line of the catalog list. */
+export interface CatalogEntry {
+  xmlFilename: string;
+  name: string;
+  brand: string | null;
+  brandTitle: string | null;
+  categoryName: string | null;
+  categoryTitle: string | null;
+  price: number;
+  dailyUpkeep: number;
+  powerMin: number | null;
+  powerMax: number | null;
+  isMod: boolean;
+  motorized: boolean | null;
+}
+
+export interface CatalogFilterValue {
+  name: string;
+  title: string | null;
+}
+
+export interface CatalogPage {
+  items: CatalogEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  categories: CatalogFilterValue[];
+  brands: CatalogFilterValue[];
+}
+
+/** RFH-K1: available = false while the mod sent no catalog. */
+export interface CatalogView {
+  available: boolean;
+  page: CatalogPage | null;
+}
+
+export interface CatalogQuery {
+  text?: string;
+  category?: string;
+  brand?: string;
+  priceMin?: number;
+  priceMax?: number;
+  sort?: 'CATEGORY' | 'NAME' | 'PRICE' | 'POWER';
+  desc?: boolean;
+  page?: number;
+}
+
+/** RFH-K2: one option of a configuration type (store_catalog.json). */
+export interface CatalogOption {
+  index: number;
+  saveId: string | null;
+  name: string;
+  desc: string | null;
+  price: number | null;
+  dailyUpkeep: number | null;
+  isDefault: boolean | null;
+  isSelectable: boolean | null;
+  isYesNoOption: boolean | null;
+  color: { r: number; g: number; b: number } | null;
+  dependent: { name: string; index: number }[] | null;
+  power: number | null;
+}
+
+export interface CatalogConfiguration {
+  name: string;
+  title: string | null;
+  options: CatalogOption[];
+}
+
+export interface CatalogItem {
+  xmlFilename: string;
+  name: string;
+  brand: string | null;
+  brandTitle: string | null;
+  categoryName: string | null;
+  categoryTitle: string | null;
+  price: number | null;
+  dailyUpkeep: number | null;
+  powerMin: number | null;
+  powerMax: number | null;
+  isMod: boolean | null;
+  configurations: CatalogConfiguration[] | null;
+  defaultConfigurations: Record<string, number> | null;
+  configurationSets: { name: string; isDefault: boolean; configurations: Record<string, number> }[] | null;
+}
+
+/** RFH-K2: a type and option of a configuration ("legt auch fest", deviations). */
+export interface TypeOption {
+  type: string;
+  title: string | null;
+  index: number;
+  option: string;
+}
+
+/** RFH-L1..L3: game times of the expected delivery; earliestAt = 9:00 of the next game day. */
+export interface DeliveryEstimate {
+  fromGameTime: number;
+  earliestAt: number;
+  minAt: number;
+  maxAt: number;
+  expressMinAt: number;
+  expressMaxAt: number;
+}
+
+export interface QuoteView {
+  xmlFilename: string;
+  name: string;
+  configurations: Record<string, number>;
+  listPrice: number;
+  dailyUpkeep: number;
+  configurationSet: string | null;
+  setWith: TypeOption[];
+  deviations: TypeOption[];
+  extraDays: number;
+  delivery: DeliveryEstimate;
+}
+
+/** RFH-K3: quote = null when the machine left the catalog or its options changed. */
+export interface CartPosition {
+  id: number;
+  xmlFilename: string;
+  name: string;
+  choice: Record<string, number>;
+  quote: QuoteView | null;
+}
+
+export interface CartView {
+  positions: CartPosition[];
+  maxPositions: number;
+  listPriceSum: number;
+}
+
+/** RFH-O1: a delivery point set in the game by key; name = null until named ("Lieferort <seq>"). */
+export interface DeliveryPointView {
+  id: number;
+  seq: number;
+  name: string | null;
+  farmlandId: number | null;
+  day: number | null;
+  dayTimeMs: number | null;
+  valid: boolean;
+  isDefault: boolean;
+}
+
+/** RFH-O1: supported = the mod exports delivery points; the shop place of the game is always there. */
+export interface DeliveryPlacesView {
+  supported: boolean;
+  shopIsDefault: boolean;
+  points: DeliveryPointView[];
+}
+
+/** RFH-B4: an own machine that may be given in trade (name and game value). */
+export interface TradeInCandidateView {
+  uniqueId: string;
+  name: string;
+  value: number;
+}
+
+/** RFH-B1: delivery choice of a request (null = shop place of the game). */
+export interface DealerChoice {
+  deliveryPointId: number | null;
+  express: boolean;
+}
+
+/** RFH-B1: "Angebot anfragen" - "zusammen" uses `all`, "einzeln" `perPosition` (cart position id -> choice). */
+export interface DealerOrderRequest {
+  together: boolean;
+  tradeIns: string[];
+  all: DealerChoice | null;
+  perPosition: Record<number, DealerChoice> | null;
+}
+
+/** A position of an order: delivery time span in game days (express already applied). */
+export interface DealerOrderItemView {
+  id: number;
+  position: number;
+  name: string;
+  listPrice: number;
+  expressFee: number;
+  daysMin: number;
+  daysMax: number;
+  priceShare: number | null;
+  depositShare: number | null;
+  status: string;
+}
+
+/** A delivery of an order (status OPEN, PLANNED, SENT, WAITING, DELIVERED, CANCELLED). */
+export interface DealerDeliveryView {
+  id: number;
+  status: string;
+  express: boolean;
+  delayed: boolean;
+  deliveryPointId: number | null;
+  placeName: string;
+  deliveryFee: number;
+  dueGameTime: number | null;
+  deliveredGameTime: number | null;
+  deliveredPlace: string | null;
+  due: number;
+  rest: number;
+  carriesTradeIns: boolean;
+  lastFailure: string | null;
+  refund: number;
+  placeChangeable: boolean;
+  cancellable: boolean;
+  retryable: boolean;
+  items: DealerOrderItemView[];
+}
+
+export interface DealerTradeInView {
+  vehicleId: string;
+  name: string;
+  gameValue: number;
+  offerValue: number | null;
+  status: string;
+}
+
+export interface DealerOfferNegotiationView {
+  id: number;
+  status: string;
+  roundsUsed: number;
+  maxRounds: number;
+  lastCounterOffer: number | null;
+  closesAtGameTime: number | null;
+}
+
+/**
+ * An order (status REQUESTED, OFFERED, DEPOSIT_PENDING, ORDERED, COMPLETED, REJECTED, EXPIRED, FAILED, CANCELLED);
+ * `openAmount` prefills "Finanzieren" (offer: total, order: rest).
+ */
+export interface DealerOrderView {
+  id: number;
+  status: string;
+  together: boolean;
+  requestedGameTime: number;
+  listTotal: number;
+  tradeInValue: number;
+  tradeInOffer: number;
+  offerPrice: number | null;
+  currentPrice: number;
+  depositAtAgreement: number;
+  validUntilGameTime: number | null;
+  negotiation: DealerOfferNegotiationView | null;
+  agreedPrice: number | null;
+  deposit: number | null;
+  depositPaid: boolean;
+  openAmount: number;
+  machines: string;
+  returnedToCart: boolean;
+  closedGameTime: number | null;
+  tradeIns: DealerTradeInView[];
+  deliveries: DealerDeliveryView[];
+}
+
+export interface DealerOrdersView {
+  orders: DealerOrderView[];
+  depositPercent: number;
+  retryFee: number;
+}
+
+/** RFH-H2: the next planned delivery (both null while none is planned). */
+export interface NextDeliveryView {
+  machines: string | null;
+  dueGameTime: number | null;
+}
+
+/** RFH-V1: a demo of the dealer (status DELIVERING, ACTIVE, RETURNING, RETURNED, ...); `lateReason` of a late pick-up. */
+export interface DealerDemoView {
+  id: number;
+  status: string;
+  xmlFilename: string;
+  machine: string;
+  untilGameTime: number | null;
+  lateDays: number;
+  lateReason: string | null;
+}
+
+/** RFH-V1: the running demo, the last finished one and the machines demonstrated in this game year. */
+export interface DealerDemoState {
+  running: DealerDemoView | null;
+  last: DealerDemoView | null;
+  demonstratedThisYear: string[];
+  lateFee: number;
 }

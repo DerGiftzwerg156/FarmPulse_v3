@@ -1,0 +1,6 @@
+Bestellung nicht zustande gekommen
+Hallo,
+
+leider ist aus der Bestellung von {{machines}} nichts geworden – die Anzahlung konnte nicht gebucht werden ({{reason}}). Sie können jederzeit ein neues Angebot anfragen.
+
+{{characterName}}

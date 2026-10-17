@@ -65,8 +65,9 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class OnboardingService {
 
+    /** Roadmap vehicle dealer RFH-H1 (owner decision 2026-10-15): the machinery dealer joins the starting cast. */
     public static final List<CharacterRole> MANDATORY_ROLES = List.of(CharacterRole.BANK_ADVISOR,
-            CharacterRole.COOPERATIVE, CharacterRole.AUTHORITY);
+            CharacterRole.COOPERATIVE, CharacterRole.AUTHORITY, CharacterRole.MACHINE_DEALER);
     public static final List<CharacterRole> DYNAMIC_ROLES = List.of(CharacterRole.LAND_AGENT,
             CharacterRole.NEIGHBOR_FARMER, CharacterRole.NEIGHBOR_FARMER, CharacterRole.VILLAGER, CharacterRole.SUPPLIER,
             CharacterRole.VILLAGER, CharacterRole.NEIGHBOR_FARMER, CharacterRole.SUPPLIER);

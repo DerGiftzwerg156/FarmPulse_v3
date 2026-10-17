@@ -153,6 +153,51 @@ normalisation in `test_farm_facts.lua` and `test_market_context.lua`; the simula
 endpoints `POST /input`, `POST /feed` and `POST /eat` and their place in the savegame in `test/roadmap-v4.test.js`. Q
 brings no formula, no table and no configuration value; they come with D, F and A. In the game: manual test plan
 section 30.
+Roadmap vehicle dealer (RFH-Q5): `SimulatorScenariosEndToEndTest.vehicleDealerContractArrivesAndADeliveryComesBack`
+checks that `store_catalog.json`, the delivery points and the shop places of `fahrzeughaendler` arrive (and stay `null`
+for `nachbarhandel`) and that a `VEHICLE_DELIVERY` comes back with `placeUsed`, `vehicleId1` and `tradeInsRemoved`;
+`MachineDealerContractTest` (delivery points, shop places, the catalog file, the new type and money reasons),
+`BridgeSyncIntegrationTest.storeCatalogIsStoredAtTheLinkedSavegameOnly` and `FailedInstructionTest` (notice "Mod
+aktualisieren" for `VEHICLE_DELIVERY`) cover the backend side. The mod covers the validation of `VEHICLE_DELIVERY`,
+`FAILED` / `NOT_SUPPORTED` without the action, the plain ack result, the new money reasons and their titles, the
+normalisation of the catalog, the delivery points and the shop places and the catalog file in `test_machine_dealer.lua`;
+the simulator the scenario, the delivery (place, shop places, `NO_SPACE`, trade-ins, bookings, failure codes), the
+validation, the key `POST /delivery-point` and the points in the savegame in `test/machine-dealer.test.js`. Q brings no
+formula, no table besides the catalog column and no configuration value; they come with H, K, O, B, L, S and V. In the
+game: manual test plan section 31.
+Roadmap vehicle dealer (RFH-H): `MachineDealerTest` checks that the dealer belongs to the start cast, that an older
+savegame without the dealer reads `null` from `GET /api/dealer`, gets the dealer (mandatory, one introduction mail, the
+diary entry "<Name> stellt sich vor") with the first `POST /api/dealer/open` and no second one with the next, and that
+a dealer of the start cast is not introduced again; `OnboardingFlowIntegrationTest` counts the dealer in the start cast. In the
+frontend `dealer.spec.ts` covers the contact (role, name with link to the profile, trust tier) and the hint of every
+tab, also without a dealer; `app-hints.spec.ts` and `app.routes.spec.ts` cover the hint and the route of the new app.
+Roadmap vehicle dealer (RFH-K): `MachineCatalogTest` covers the catalog list (no catalog, filters, sort by category /
+name / price, pages), the configurator (list price = base price + options including the ones set with another one,
+package, deviations, refused options), the delivery time (category group, L2 extra days against the default or a
+package, express, 30 / 3 / 1 days per period, never before 9:00 of the next game day) and the cart (10 positions, the
+same machine twice, change, remove, a machine that left the catalog, another savegame); `SimulatorScenariosEndToEndTest`
+checks the new catalog fields of `fahrzeughaendler`. The mod covers `collectStoreCatalogDetails` (every option, titles,
+power, bales, bundles) in `test_game_adapter.lua`, the simulator the new fields and their schema in
+`test/machine-dealer.test.js`; `dealer-k.spec.ts` covers the texts (power, type names, delivery span), the catalog
+(missing, filters, sort, pages), the configurator (options, colour fields, yes/no as a selection, price, delivery, full
+cart) and the cart. In the game: manual test plan 31.13–31.15.
+Roadmap vehicle dealer (RFH-O1): `DeliveryPointTest` covers the take-over of each `seq` once, an older mod, rename,
+default, delete (the mod cannot bring a point back), validity by the farmlands of the farm and the shop place as default
+when the default point is deleted or invalid; the mod covers the key (own / foreign land, the last points, export only
+with the key registered) and the points in the mod savegame in `test_machine_dealer.lua` and `readPlayerPlace` in
+`test_game_adapter.lua`; `dealer-places.spec.ts` the tab. In the game: manual test plan 31.4, 31.5, 31.16.
+Roadmap vehicle dealer (RFH-B / L / O2): `DealerOrderTest` covers the request (trade-in candidates, the refused request
+when the trade-ins reach the list price), the offer at the next game day (trade-in share by trust, floor), "Zurück in
+den Warenkorb", the agreement with the 30 % deposit and the date, a refused deposit, the delivery with rest, delivery
+costs, express and the deduction for more damage, the waiting delivery with the reason texts, "Lieferung erneut
+versuchen" (500 €), an older mod ("Mod aktualisieren"), the missing money, a lost trade-in, the delay and the
+cancellation (50 % / 100 %, batch) and the delivery point until it is sent; `dealer-orders.spec.ts` the tab and the
+request in the cart, `home.spec.ts` the tile. RFH-S: `DealerShopPurchaseTest`; RFH-V1: `DealerDemoTest` (shop place,
+2 days, independent of R31-A2, once per game year, late fee, disappeared machine, postponed delivery) and the specs of
+the catalog and the tab. In the game: manual test plan 31.17-31.20. `DealerOrderTest` also covers the investment
+grant (deposit and rest recognised, a cancellation takes the deposit out, a funded machine given in trade is repaid)
+and the task of a waiting delivery; `tasks.spec.ts` its title and link.
+`SimulatorScenariosEndToEndTest.aWholeDealerOrderRunsThroughTheBridge` runs a whole order through the bridge simulator.
 Roadmap V4 R4-D (contribution margin): `FieldMarginTest` covers the direct costs from the counter at the price of the
 moment with the helper surcharge and free farmyard manure, a falling counter, the estimate of an older mod and its
 replacement by an entered line, contractor fees, rent and premiums (each booked once), the realised price of the sales

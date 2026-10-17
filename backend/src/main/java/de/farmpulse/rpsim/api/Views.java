@@ -384,11 +384,18 @@ public final class Views {
                            ContractView contract, CreditApplicationView application, MessageView call,
                            NegotiationView negotiation, MarketEventView marketEvent, JobPostingView posting,
                            Integer pendingApplicants, InvestorDueView investorDue, FeedDueView feedDue,
-                           SowDueView sowDue) {
+                           SowDueView sowDue, DeliveryWaitingView deliveryWaiting) {
     }
 
     /** Roadmap V4 R4-A5: a planned field whose sowing window is now (task "SOW", kind = crop, deadline = end of window). */
     public record SowDueView(int farmlandId, String fieldName, String fruitType, String fillType) {
+    }
+
+    /**
+     * Roadmap vehicle dealer RFH-L5 (owner decision 2026-10-16): a delivery waiting at the dealer (task "DEALER_DELIVERY",
+     * kind = code of the last failure) with the machines and the reason text of the tablet.
+     */
+    public record DeliveryWaitingView(long deliveryId, long orderId, String machines, String reason) {
     }
 
     /**

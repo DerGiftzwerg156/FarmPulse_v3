@@ -90,6 +90,11 @@ public class Savegame {
     @Column(name = "market_context_json")
     private String marketContextJson;
 
+    /** Roadmap vehicle dealer RFH-Q1: raw export/store_catalog.json (shop catalog with every option), null = none. */
+    @Lob
+    @Column(name = "store_catalog_json")
+    private String storeCatalogJson;
+
     @Column(name = "generation_seed", nullable = false)
     private long generationSeed;
 
@@ -452,4 +457,8 @@ public class Savegame {
 
     @Column(name = "coop_grain_store", nullable = false)
     private boolean coopGrainStore;
+
+    /** Roadmap vehicle dealer RFH-O1: the default delivery point (id of dealer_delivery_point), null = shop place. */
+    @Column(name = "dealer_default_point_id")
+    private Long dealerDefaultPointId;
 }

@@ -137,8 +137,8 @@ export class Farmland {
         const terms: number[] = [];
         for (let y = leaseOut.termYearsMin; y <= leaseOut.termYearsMax; y++) terms.push(y);
         this.leaseTerms.set(terms);
-        // Roadmap V3 R3-V: machine negotiations live in the workshop app
-        const own = negotiations.filter((n) => n.assetType !== 'VEHICLE');
+        // Roadmap V3 R3-V: machine negotiations live in the workshop app, new machines (RFH-B2) in the dealer app
+        const own = negotiations.filter((n) => n.assetType === 'FARMLAND');
         this.fields.set(fields);
         this.negotiations.set(own);
         this.mails.set(mails);

@@ -75,6 +75,7 @@ local function loadMapImpl(self)
     self.bridge.harvestCounterEnabled = RPSim.harvestHook
     self.bridge.inputCounterEnabled = RPSim.inputHook
     self.bridge.feedCounterEnabled = RPSim.feedHook
+    self.bridge.deliveryPointKeyEnabled = RPSim.promptKeyHook -- RFH-O1: registered with the same player hook
     self.bridge:bootstrap()
     if Mission00 == nil or Mission00.onStartMission == nil then
         -- No start hook available: start right away (degraded, first export may be incomplete).
@@ -449,9 +450,38 @@ function RPSim.registerPromptAction(_)
     end
 end
 
+-- ------------------------------------------------------------------ Roadmap vehicle dealer RFH-O1: delivery points
+
+--- Key press (action RPSIM_SET_DELIVERY_POINT of modDesc.xml, on foot): sets a delivery point where the player stands.
+function RPSim.onSetDeliveryPointKey()
+    if RPSim.bridge ~= nil then
+        RPSim.bridge:setDeliveryPointHere()
+    end
+end
+
+--- Registers the action like RPSIM_OPEN_PROMPT (category ONFOOT in modDesc.xml, rebindable in the controls menu).
+function RPSim.registerDeliveryPointAction(_)
+    if RPSim.adapter == nil or InputAction == nil or InputAction.RPSIM_SET_DELIVERY_POINT == nil or g_inputBinding == nil then
+        return
+    end
+    local ok, err = pcall(function()
+        local _, eventId = g_inputBinding:registerActionEvent(InputAction.RPSIM_SET_DELIVERY_POINT, RPSim,
+            RPSim.onSetDeliveryPointKey, false, true, false, true, nil, true)
+        if eventId ~= nil then
+            g_inputBinding:setActionEventText(eventId, g_i18n:getText("input_RPSIM_SET_DELIVERY_POINT"))
+        end
+    end)
+    if not ok and not RPSim.deliveryPointKeyWarned then
+        RPSim.deliveryPointKeyWarned = true
+        RPSimLog.warning("Key for delivery points not available: %s", tostring(err))
+    end
+end
+
 if PlayerInputComponent ~= nil and PlayerInputComponent.registerGlobalPlayerActionEvents ~= nil and Utils ~= nil then
     PlayerInputComponent.registerGlobalPlayerActionEvents = Utils.appendedFunction(
         PlayerInputComponent.registerGlobalPlayerActionEvents, RPSim.registerPromptAction)
+    PlayerInputComponent.registerGlobalPlayerActionEvents = Utils.appendedFunction(
+        PlayerInputComponent.registerGlobalPlayerActionEvents, RPSim.registerDeliveryPointAction)
     RPSim.promptKeyHook = true
 end
 

@@ -1,0 +1,6 @@
+Vorführung verschoben: {{machine}}
+Hallo,
+
+ich wollte Ihnen den {{machine}} bringen, aber auf dem Shop-Platz ist kein Platz frei. Morgen versuche ich es noch einmal.
+
+{{characterName}}

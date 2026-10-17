@@ -78,6 +78,13 @@ export const APP_TABS: Record<string, TabDef[]> = {
     { id: 'leihen', label: 'tabs.workshop.leihen' },
     { id: 'tankschloesser', label: 'tabs.workshop.tankschloesser' },
   ],
+  // Roadmap vehicle dealer RFH-H2 (owner decision 2026-10-15)
+  dealer: [
+    { id: 'katalog', label: 'tabs.dealer.katalog' },
+    { id: 'warenkorb', label: 'tabs.dealer.warenkorb' },
+    { id: 'bestellungen', label: 'tabs.dealer.bestellungen' },
+    { id: 'lieferorte', label: 'tabs.dealer.lieferorte' },
+  ],
   trade: [
     { id: 'nachbarn', label: 'tabs.trade.nachbarn' },
     { id: 'tiere', label: 'tabs.trade.tiere' },

@@ -131,7 +131,7 @@ class ApiIntegrationTest {
                 "initialEmployees", List.of("MECHANIC"), "villageRelation", "UNKNOWN")).andExpect(status().isOk()));
         long id = created.get("id").asLong();
         long firstCharacter = created.get("cast").get(0).get("characterId").asLong();
-        mvc.perform(get("/api/onboarding/" + id)).andExpect(status().isOk()).andExpect(jsonPath("$.cast", hasSize(9)));
+        mvc.perform(get("/api/onboarding/" + id)).andExpect(status().isOk()).andExpect(jsonPath("$.cast", hasSize(10)));
         postJson("/api/onboarding/" + id + "/reroll", java.util.Map.of("characterId", firstCharacter))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.cast[*].characterId", not(hasItem((int) firstCharacter))));
         mvc.perform(post("/api/onboarding/" + id + "/reroll")).andExpect(status().isOk());

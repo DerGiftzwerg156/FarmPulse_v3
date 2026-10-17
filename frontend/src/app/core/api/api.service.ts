@@ -43,6 +43,94 @@ export class ApiService {
   contractAction(id: number, action: 'accept' | 'decline' | 'cancel' | string, body: unknown = {}): Observable<M.ContractView> {
     return this.post(`/contracts/${id}/${action}`, body);
   }
+  /** Roadmap vehicle dealer RFH-H1: opening the app "Händler" brings the dealer into an older savegame. */
+  openDealer(): Observable<M.DealerView> {
+    return this.post('/dealer/open', {});
+  }
+  /** RFH-K1: the catalog list (filters, sort, page). */
+  dealerCatalog(q: M.CatalogQuery): Observable<M.CatalogView> {
+    const params: Record<string, string | number> = {};
+    for (const [k, v] of Object.entries(q)) {
+      if (v !== undefined && v !== null && v !== '') params[k] = typeof v === 'boolean' ? String(v) : v;
+    }
+    return this.get('/dealer/catalog', params);
+  }
+  /** RFH-K2: one catalog entry with every option. */
+  dealerCatalogItem(xmlFilename: string): Observable<M.CatalogItem> {
+    return this.get('/dealer/catalog/item', { xmlFilename });
+  }
+  /** RFH-K2: list price, daily upkeep, package and expected delivery of a choice. */
+  dealerConfigure(xmlFilename: string, configurations: Record<string, number>): Observable<M.QuoteView> {
+    return this.post('/dealer/configure', { xmlFilename, configurations });
+  }
+  /** RFH-K3: the cart of the dealer. */
+  dealerCart(): Observable<M.CartView> {
+    return this.get('/dealer/cart');
+  }
+  dealerCartAdd(xmlFilename: string, configurations: Record<string, number>): Observable<M.CartView> {
+    return this.post('/dealer/cart', { xmlFilename, configurations });
+  }
+  dealerCartChange(id: number, configurations: Record<string, number>): Observable<M.CartView> {
+    return this.http.put<M.CartView>(`${this.base}/dealer/cart/${id}`, { configurations });
+  }
+  dealerCartRemove(id: number): Observable<M.CartView> {
+    return this.http.delete<M.CartView>(`${this.base}/dealer/cart/${id}`);
+  }
+  /** RFH-O1: the delivery points and the shop place of the game. */
+  dealerDeliveryPoints(): Observable<M.DeliveryPlacesView> {
+    return this.get('/dealer/delivery-points');
+  }
+  dealerRenameDeliveryPoint(id: number, name: string): Observable<M.DeliveryPlacesView> {
+    return this.http.put<M.DeliveryPlacesView>(`${this.base}/dealer/delivery-points/${id}/name`, { name });
+  }
+  dealerDefaultDeliveryPoint(id: number | 'shop'): Observable<M.DeliveryPlacesView> {
+    return this.post(`/dealer/delivery-points/${id}/default`, {});
+  }
+  dealerDeleteDeliveryPoint(id: number): Observable<M.DeliveryPlacesView> {
+    return this.http.delete<M.DeliveryPlacesView>(`${this.base}/dealer/delivery-points/${id}`);
+  }
+  /** RFH-B / L: requests, offers, orders and deliveries of the dealer. */
+  dealerOrders(): Observable<M.DealerOrdersView> {
+    return this.get('/dealer/orders');
+  }
+  dealerTradeInCandidates(): Observable<M.TradeInCandidateView[]> {
+    return this.get('/dealer/trade-in-candidates');
+  }
+  dealerRequest(req: M.DealerOrderRequest): Observable<M.DealerOrdersView> {
+    return this.post('/dealer/orders', req);
+  }
+  dealerBid(orderId: number, amount: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/orders/${orderId}/bid`, { amount });
+  }
+  dealerAccept(orderId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/orders/${orderId}/accept`, {});
+  }
+  dealerDecline(orderId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/orders/${orderId}/decline`, {});
+  }
+  dealerBackToCart(orderId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/orders/${orderId}/back-to-cart`, {});
+  }
+  dealerChangePlace(deliveryId: number, deliveryPointId: number | null): Observable<M.DealerOrdersView> {
+    return this.http.put<M.DealerOrdersView>(`${this.base}/dealer/deliveries/${deliveryId}/place`, { deliveryPointId });
+  }
+  dealerRetry(deliveryId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/deliveries/${deliveryId}/retry`, {});
+  }
+  dealerCancel(deliveryId: number): Observable<M.DealerOrdersView> {
+    return this.post(`/dealer/deliveries/${deliveryId}/cancel`, {});
+  }
+  /** RFH-V1: the dealer's demo machine. */
+  dealerDemo(): Observable<M.DealerDemoState> {
+    return this.get('/dealer/demo');
+  }
+  dealerRequestDemo(xmlFilename: string): Observable<M.DealerDemoState> {
+    return this.post('/dealer/demo', { xmlFilename });
+  }
+  /** RFH-H2: start screen tile "Nächste Lieferung". */
+  dealerNextDelivery(): Observable<M.NextDeliveryView> {
+    return this.get('/dealer/next-delivery');
+  }
   /** TODO T-22: ask the workshop for a maintenance contract. */
   requestMaintenanceOffer(): Observable<M.ContractView> {
     return this.post('/maintenance/offer', {});

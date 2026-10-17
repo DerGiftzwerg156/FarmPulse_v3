@@ -81,7 +81,21 @@ public final class BridgeValidator {
         validateRoadmapV31(f, e);
         validateRoadmapV33(f, e);
         validateRoadmapV4(f, e);
+        validateVehicleDealer(f, e);
         return e;
+    }
+
+    /** Roadmap vehicle dealer (RFH-Q2): the optional delivery points need seq >= 1 and a position with direction. */
+    private static void validateVehicleDealer(FarmFacts f, List<String> e) {
+        if (f.deliveryPoints() == null) {
+            return;
+        }
+        f.deliveryPoints().forEach(p -> {
+            if (p == null || p.seq() == null || p.seq() < 1
+                    || Stream.of(p.x(), p.y(), p.z(), p.ry()).anyMatch(v -> v == null || v.isNaN())) {
+                e.add("invalid delivery point " + p);
+            }
+        });
     }
 
     /** Roadmap V4 (R4-Q1 / R4-Q2): the optional consumption counter and feed stock are only checked when present. */
@@ -321,6 +335,41 @@ public final class BridgeValidator {
                 }
             });
         }
+        if (m.storePlaces() != null) { // Roadmap vehicle dealer (RFH-Q2 / RFH-L6)
+            m.storePlaces().forEach(p -> {
+                if (p == null || p.x() == null || p.z() == null) e.add("invalid store place " + p);
+            });
+        }
+        return e;
+    }
+
+    /**
+     * Roadmap vehicle dealer (RFH-Q1): store_catalog.json needs the savegameId and the items; an item needs its
+     * xmlFilename and a price >= 0, every option an index >= 1 and a price >= 0. The whole file is skipped when one item
+     * is broken (retry next cycle) - the mod writes it complete.
+     */
+    public static List<String> validate(BridgeDtos.StoreCatalog c) {
+        List<String> e = new ArrayList<>();
+        if (blank(c.savegameId())) e.add("savegameId missing");
+        if (c.items() == null) {
+            e.add("items missing");
+            return e;
+        }
+        c.items().forEach(i -> {
+            if (i == null || blank(i.xmlFilename()) || negativeOrNull(i.price())
+                    || (i.dailyUpkeep() != null && i.dailyUpkeep() < 0)) {
+                e.add("invalid catalog item " + (i == null ? null : i.xmlFilename()));
+                return;
+            }
+            if (i.configurations() != null) {
+                i.configurations().forEach(t -> {
+                    if (t == null || blank(t.name()) || t.options() == null || t.options().stream().anyMatch(o ->
+                            o == null || o.index() == null || o.index() < 1 || (o.price() != null && o.price() < 0))) {
+                        e.add("invalid configuration of " + i.xmlFilename() + ": " + (t == null ? null : t.name()));
+                    }
+                });
+            }
+        });
         return e;
     }
 

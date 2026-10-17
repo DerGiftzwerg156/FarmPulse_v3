@@ -147,6 +147,7 @@ public class BookingStatementService {
             x.setVehicleMatch(null);
             x.setVehicleNames(null);
             x.setMatchExports(0);
+            x.setDealerReacted(false); // RFH-S2: another booking - the dealer reacts to it once
         }
         if (x.getVehicleMatch() == null && (VEHICLE_BUY.equals(l.category()) || VEHICLE_SELL.equals(l.category()))) {
             x.setVehicleMatch(BookingEntry.MATCH_PENDING);

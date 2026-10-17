@@ -79,6 +79,26 @@ class BridgeSyncIntegrationTest {
     }
 
     @Test
+    void storeCatalogIsStoredAtTheLinkedSavegameOnly() {
+        // Roadmap vehicle dealer RFH-Q1: store_catalog.json is kept raw like the market context
+        Savegame sg = savegames.save(TestData.activeSavegame("sg_cat"));
+        String catalog = """
+                { "savegameId": "sg_cat", "items": [{ "xmlFilename": "a.xml", "name": "A", "price": 1000,
+                  "configurations": [], "defaultConfigurations": {}, "configurationSets": [] }] }""";
+        TestBridge.write(files.storeCatalog(), catalog);
+        sync.runCycle();
+        Savegame stored = savegames.findById(sg.getId()).orElseThrow();
+        assertThat(stored.getStoreCatalogJson()).isEqualTo(catalog);
+
+        // a catalog of another (unlinked) savegame is left alone, an invalid one skipped
+        TestBridge.write(files.storeCatalog(), catalog.replace("sg_cat", "sg_other"));
+        sync.runCycle();
+        TestBridge.write(files.storeCatalog(), "{ \"savegameId\": \"sg_cat\" }");
+        sync.runCycle();
+        assertThat(savegames.findById(sg.getId()).orElseThrow().getStoreCatalogJson()).isEqualTo(catalog);
+    }
+
+    @Test
     void truncatedOrInvalidFilesAreSkipped() {
         savegames.save(TestData.activeSavegame("sg_x"));
         TestBridge.write(files.farmFacts(), "{\"schemaVersion\":1,\"gameTime\":5,\"savegameId\":\"sg_x\",\"liqu");

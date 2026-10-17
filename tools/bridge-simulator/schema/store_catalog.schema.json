@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "store_catalog.schema.json",
+  "title": "store_catalog.json (FS25_RPSim export, Roadmap vehicle dealer RFH-Q1, display names and power since RFH-K1)",
+  "type": "object",
+  "required": ["savegameId", "items"],
+  "properties": {
+    "savegameId": { "type": "string", "minLength": 1 },
+    "items": { "type": "array", "items": { "type": "object",
+      "required": ["xmlFilename", "name", "price", "dailyUpkeep", "isMod", "isBundle", "multipleItemPurchase",
+        "configurations", "defaultConfigurations", "configurationSets"],
+      "properties": {
+        "xmlFilename": { "type": "string", "minLength": 1 }, "name": { "type": "string" },
+        "brand": { "type": "string", "minLength": 1 }, "categoryName": { "type": "string", "minLength": 1 },
+        "price": { "type": "integer", "minimum": 0 }, "dailyUpkeep": { "type": "integer", "minimum": 0 },
+        "lifetime": { "type": "number", "minimum": 0 }, "isMod": { "type": "boolean" },
+        "motorized": { "type": "boolean" }, "isBundle": { "type": "boolean" },
+        "multipleItemPurchase": { "type": "boolean" },
+        "brandTitle": { "type": "string", "minLength": 1 }, "categoryTitle": { "type": "string", "minLength": 1 },
+        "powerMin": { "type": "integer", "minimum": 1 }, "powerMax": { "type": "integer", "minimum": 1 },
+        "configurations": { "type": "array", "items": { "type": "object", "required": ["name", "options"],
+          "properties": { "name": { "type": "string", "minLength": 1 }, "title": { "type": "string", "minLength": 1 },
+            "options": { "type": "array", "minItems": 1, "items": { "type": "object",
+              "required": ["index", "name", "price", "dailyUpkeep", "isDefault", "isSelectable", "isYesNoOption",
+                "dependent"],
+              "properties": { "index": { "type": "integer", "minimum": 1 }, "saveId": { "type": "string", "minLength": 1 },
+                "name": { "type": "string" }, "desc": { "type": "string", "minLength": 1 },
+                "price": { "type": "integer", "minimum": 0 }, "dailyUpkeep": { "type": "integer", "minimum": 0 },
+                "isDefault": { "type": "boolean" }, "isSelectable": { "type": "boolean" },
+                "isYesNoOption": { "type": "boolean" }, "power": { "type": "integer", "minimum": 1 },
+                "color": { "type": "object", "required": ["r", "g", "b"], "properties": {
+                  "r": { "type": "number" }, "g": { "type": "number" }, "b": { "type": "number" } } },
+                "dependent": { "type": "array", "items": { "type": "object", "required": ["name", "index"],
+                  "properties": { "name": { "type": "string", "minLength": 1 },
+                    "index": { "type": "integer", "minimum": 1 } } } } } } } } } },
+        "defaultConfigurations": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 } },
+        "configurationSets": { "type": "array", "items": { "type": "object", "required": ["name", "isDefault", "configurations"],
+          "properties": { "name": { "type": "string", "minLength": 1 }, "isDefault": { "type": "boolean" },
+            "configurations": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 } } } } }
+      } } }
+  }
+}

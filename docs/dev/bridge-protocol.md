@@ -555,6 +555,36 @@ husbandry without counter then gets `[]`). `feedStock` comes from the storage pl
 (`FeedBalanceService`) books the difference of every counter since the last export (a falling counter is taken back);
 without `feedConsumed` it counts the fall of `trough` between two exports.
 
+### Roadmap vehicle dealer block (optional, RFH-Q2)
+
+One more **optional** block for [`ROADMAP_FAHRZEUGHÄNDLER.md`](../architecture/ROADMAP_FAHRZEUGHÄNDLER.md), same rules
+(`schemaVersion` stays `1`, missing = older mod, an empty block is a real answer). RFH-Q fixes the **contract only**
+(`BridgeDtos.DeliveryPoint`, `BridgeValidator`, the simulator schema, `RPSimFarmFacts.buildDeliveryPoints`). Since
+RFH-O1 the mod has the key "FarmPulse: Lieferort hier festlegen" (action `RPSIM_SET_DELIVERY_POINT`, on foot, default
+Alt+L, owner decision 2026-10-15; `RPSimBridge:setDeliveryPointHere`, `RPSimGameAdapter:readPlayerPlace`) and keeps the
+points in its savegame; the block is exported while the key is registered (missing otherwise). On foreign land the mod
+stores nothing and shows "Lieferort nur auf eigenem oder gepachtetem Land", a stored point shows "Lieferort gespeichert –
+im Hof-Tablet benennen" and is exported at once. The backend (`DeliveryPointService`, table `dealer_delivery_point`)
+takes every new `seq` once; a deleted point stays deleted. The bridge simulator exports it only in the scenario `fahrzeughaendler` (`POST /delivery-point` = key press).
+
+```json
+{ "deliveryPoints": [{ "seq": 1, "x": -412.5, "y": 98.2, "z": 233.75, "ry": 1.571, "farmlandId": 1, "day": 1,
+                       "dayTimeMs": 36000000 }] }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `deliveryPoints[]` | The last points (mod setting `deliveryPointsMax`, 20) the player set by key, sorted by `seq`; the backend takes every new `seq` once and keeps name and management itself | mod savegame (`FS25_RPSim.xml`), RFH-O1 |
+| `.seq` | Running number ≥ 1 | mod |
+| `.x` / `.y` / `.z` | Position of the player in metres (0.01); `y` only for information, a delivery takes the terrain height | `g_localPlayer:getPosition()` (dump `VehicleSystem.lua`, `consoleCommandLoadAllVehiclesNext`). 🟡 feet or eye height |
+| `.ry` | Facing direction as rotation about the vertical axis in radians (0.001) | `g_localPlayer:getCurrentFacingDirection()` → `MathUtil.getYRotationFromDirection(dirX, dirZ)` (dump `VehicleSystem.lua`, `VehicleLoadingData.lua`) |
+| `.farmlandId` | Farmland at the place (optional); the key works only on own or leased farmland (owner decision 2026-10-15) | `g_farmlandManager:getFarmlandIdAtWorldPosition(x, z)`, `getFarmlandOwner` (LUADOC `Economy/FarmlandManager.md`) |
+| `.day` / `.dayTimeMs` | Game day (`calendar.monotonicDay`) and time of day of the key press (optional) | as `calendar` |
+
+**Built (RFH-Q2, contract):** `RPSimFarmFacts.buildDeliveryPoints` keeps entries with `seq` ≥ 1 and numeric `x`, `y`,
+`z`, `ry` (rounded), takes `farmlandId`, `day`, `dayTimeMs` when numeric and sorts by `seq`. The backend validator refuses
+a point without `seq` ≥ 1 or with a missing coordinate or direction.
+
 ## `export/market_context.json` (mod → backend, on mission start, after each `FARMLAND_TRANSFER`, every 60 s, and on every `farm_facts` cycle when its content changed)
 
 The mod rewrites the file every `marketContextIntervalMs` (mod config, default 60 s real time) even when its content
@@ -696,6 +726,62 @@ without fill types and repeated animal types. The backend validator refuses nega
 1..12, a blank or negatively priced cost entry and an animal food entry without `animalType` or `groups` or with an
 invalid group.
 
+### Roadmap vehicle dealer field (optional, RFH-Q2)
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `storePlaces[]` | Centre `{ x, z }` of every shop place of the map in metres (0.1), order of the game; only for the delivery costs by distance (RFH-L6) | `g_currentMission.storeSpawnPlaces` (LUADOC `Missions/AbstractMission.md`); 🟡 the fields of a place (`startX` / `startZ` / `dirX` / `dirZ` / `width` as in `Placement/PalletSpawner.md`), `PlacementUtil` is in no source. Read with RFH-L6; fallback: without `storePlaces` only the base fee |
+
+**Built (RFH-Q2, contract):** `RPSimMarketContext.buildStorePlaces` drops entries without numeric `x` / `z`; the backend
+validator refuses an incomplete place. The bridge simulator exports `storePlaces` only in `fahrzeughaendler`.
+
+## `export/store_catalog.json` (mod → backend, once per mission start; Roadmap vehicle dealer RFH-Q1)
+
+The shop catalog with **every configuration option** (owner decision 2026-10-15: an own file, so `market_context.json`
+stays small). Written next to `market_context.json` at the mission start, with the switch `storeCatalogExport` of R3-V1
+and **without a cap** (owner decision 2026-10-15: the dealer offers the whole catalog; `storeCatalogMaxEntries` still cuts
+only `storeVehicles`), sorted by `xmlFilename`. RFH-Q fixes the **contract only**
+(`RPSimStoreCatalog.build`, `RPSimBridge:exportStoreCatalog`, `BridgeDtos.StoreCatalog`, `BridgeValidator`, schema
+`store_catalog.schema.json`); since RFH-K1 the mod reads the options in the game (`RPSimGameAdapter:collectStoreCatalogDetails`,
+same selection as `storeVehicles`: `species == VEHICLE` and `showInStore`; an entry that cannot be read is left out). The backend stores the raw file at its linked savegame (`savegame.store_catalog_json`,
+`FactsService.storeCatalog`); a file of an unlinked savegame or an invalid one is left alone. The bridge simulator writes
+it only in `fahrzeughaendler`.
+
+```json
+{ "savegameId": "…", "items": [
+  { "xmlFilename": "data/vehicles/fendt/vario700/vario700.xml", "name": "Fendt 700 Vario", "brand": "FENDT",
+    "brandTitle": "Fendt", "categoryName": "TRACTORSL", "categoryTitle": "Große Traktoren", "price": 245000,
+    "dailyUpkeep": 120, "lifetime": 600, "isMod": false, "motorized": true, "powerMin": 200, "powerMax": 240,
+    "isBundle": false, "multipleItemPurchase": false,
+    "configurations": [{ "name": "motor", "options": [
+      { "index": 1, "name": "720 Vario", "price": 0, "dailyUpkeep": 0, "isDefault": true, "isSelectable": true,
+        "isYesNoOption": false, "dependent": [], "power": 200 },
+      { "index": 2, "saveId": "724", "name": "724 Vario", "price": 18000, "dailyUpkeep": 10, "isDefault": false,
+        "isSelectable": true, "isYesNoOption": false, "dependent": [{ "name": "wheel", "index": 2 }], "power": 240 }] }],
+    "defaultConfigurations": { "motor": 1 },
+    "configurationSets": [{ "name": "Profi-Paket", "isDefault": false, "configurations": { "motor": 2 } }] }] }
+```
+
+| Field | Meaning | Source |
+| --- | --- | --- |
+| `items[].xmlFilename`, `name`, `categoryName`, `lifetime`, `isMod`, `motorized` | As `storeVehicles` (R3-V1) | `g_storeManager:getItems()` (LUADOC `Shop/StoreManager.md`) |
+| `items[].brand` | Raw brand name | `storeItem.brandNameRaw` (`StoreManager:loadItem`) |
+| `items[].brandTitle` / `categoryTitle` | RFH-K1 (owner decision 2026-10-15): display name of brand and shop category as the game shows them (optional) | `g_brandManager:getBrandByIndex(storeItem.brandIndex).title` (LUADOC `Shop/BrandManager.md`, `addBrand`: `$l10n_` titles translated), `g_storeManager:getCategoryByName(categoryName).title` (`StoreManager:addCategory`, title through `g_i18n:convertText`) |
+| `items[].powerMin` / `powerMax` | RFH-K1: power range in hp over the selectable motor options, else the power of the store data (optional, both or none) | `Motorized.getSpecValuePower(storeItem, nil, nil, nil, true)` after `StoreItemUtil.loadSpecsFromXML` (LUADOC `Specializations/Motorized.md`); hp: `VehicleConfigurationItemMotor` reads `#hp` |
+| `items[].price` / `dailyUpkeep` | List price and daily upkeep **without** options (whole €); with options = + Σ option values, as the game (`StoreItemUtil.getDefaultPrice` / `getDailyUpkeep` → `getCosts`, LUADOC `Utils/StoreItemUtil.md`) | `storeItem.price`, `storeItem.dailyUpkeep` |
+| `items[].isBundle` | Several vehicles in one entry (summed option prices) | `storeItem.bundleInfo ~= nil` (`StoreManager:loadItem`) |
+| `items[].multipleItemPurchase` | Bales / pallets bought as a loading vehicle | `vehicle.multipleItemPurchase` in the vehicle XML, read like `BuyVehicleData:getIsLimitedObjectPurchase` (`XMLFile.load` + `hasProperty`; `Shop/BuyVehicleData.md`, `Specializations/MultipleItemPurchase.md`) |
+| `items[].configurations[]` | Option types sorted by `name`, types without options left out; `title` = display name of the type (optional): the `#title` the vehicle XML sets (`overwrittenTitle` of an option), else the title the type was registered with (🟡 field of `addConfigurationType`, `g_vehicleConfigurationManager:getConfigurationDescByName(name).title`; manual test plan 31.1) | `storeItem.configurations` (`ConfigurationUtil.getConfigurationsFromXML`, dump) |
+| `…options[]` | Sorted by `index` (1-based position in the type); `saveId` (optional), `name`, `desc` (optional), `price`, `dailyUpkeep`, `isDefault`, `isSelectable`, `isYesNoOption`, `color { r, g, b }` (0..1, colour types only), `dependent[] { name, index }` (options it sets with it), `power` (hp, motor options only, RFH-K1) | `VehicleConfigurationItem` (`new`, `loadFromXML`), `VehicleConfigurationItemColor:getColor()`, `configItem.dependentConfigurations` (LUADOC `Configurations/…`, dump `VehicleLoadingData.lua`) |
+| `items[].defaultConfigurations` | Default option per type (`name → index`) | `storeItem.defaultConfigurationIds` (`ConfigurationUtil.getDefaultConfigIdFromItems`) |
+| `items[].configurationSets[]` | Packages of the manufacturer `{ name, isDefault, configurations: name → index }` | `storeItem.configurationSets` (`ConfigurationUtil.getConfigurationSetsFromXML`) |
+
+**Built (RFH-Q1, contract):** `RPSimStoreCatalog.buildItem` drops items without `xmlFilename` or a numeric `price`,
+options without `index` ≥ 1 and types without options; numbers are rounded (colours to 3 decimals), missing booleans get
+their default (`isSelectable` true, the others false), empty lists stay arrays and empty maps objects. The backend
+validator skips the whole file when the savegame id or the items are missing or an item / option is broken (retry next
+cycle).
+
 ## `import/instructions.json` + `import/instructions.xml` (backend → mod)
 
 ```json
@@ -727,7 +813,7 @@ optional `savegameId`.
 
 | type | fields |
 | --- | --- |
-| `MONEY_TRANSACTION` | `amount` (signed), `reason` ∈ `CREDIT_DISBURSEMENT, CREDIT_INSTALLMENT, CREDIT_PENALTY, CREDIT_CALLBACK, SALARY_PAYMENT, EMPLOYEE_EFFECT, SUBSIDY, STARTING_CAPITAL_ADJUSTMENT, FARMLAND_PURCHASE, FARMLAND_SALE, OTHER`, since TODO T-20/T-22 also `INSURANCE_PREMIUM, INSURANCE_PAYOUT, DAMAGE, WILDLIFE_COMPENSATION, VET_INVOICE, LIVESTOCK_PREMIUM, LEASE_PAYMENT, MAINTENANCE_FEE`, since Roadmap V2 (R2-Q1) also `TAX_PAYMENT, TAX_REFUND, FINE, FAMILY, SPONSORING, COMPENSATION`, since the Sondertilgung also `CREDIT_SPECIAL_REPAYMENT, CREDIT_PREPAYMENT_FEE` (the fee is sent in the same batch as the repayment; an older mod rejects the unknown reason and the backend reverses the Sondertilgung), since the "Schulungen" also `TRAINING` (a refused booking cancels the training), since Roadmap V3 (R3-Q1) also `LEASE_INCOME` (R3-L1), `GOODS_PURCHASE`, `GOODS_SALE` (R3-H3/H4, R3-M3), `VEHICLE_PURCHASE`, `VEHICLE_SALE` (R3-V2/V3) and `CONTRACT_PENALTY` (R3-M2), since Roadmap V3.1 (R31-Q1) also `CONTRACTOR_FEE` (R31-A1), `MACHINE_RENT` (A2), `LIVESTOCK_PURCHASE`, `LIVESTOCK_SALE` (A3), `WINTER_SERVICE` (A4), `DIRECT_PAYMENT` (B1), `INVESTMENT_GRANT` (B2), `SOCIAL_INSURANCE` (B5), `GUEST_INCOME` (D6), `COOP_SHARES` and `COOP_DIVIDEND` (D7), since R31-D also `FARM_HOLIDAY_SETUP` (D6) and `TANK_LOCK` (D8), since the owner decisions 2026-10-06 also `SEVERANCE` (severance when a hiring is cancelled before the first working day), since Roadmap V3.2 (R32-Q1) also `INVESTOR_CAPITAL` (R32-I2), `INVESTOR_REPAYMENT` (I4/I5), `INVESTOR_PAYOUT` (I3) and `INVESTOR_COMPENSATION` (I4), since the overdraft (owner decisions 2026-10-14) also `OVERDRAFT_INTEREST` (an older mod rejects it, the interest of that month is then not booked); `note`. Overdraft (owner decisions 2026-10-14): optional `minBalance` (number ≤ 0, only on debits while the overdraft is on) = the lowest balance the debit may leave, without it 0; optional `ignoreFunds` (boolean, only `OVERDRAFT_INTEREST`) = booked without funds check, even beyond the limit. An older mod ignores both fields and keeps refusing debits below 0. Each reason has its booking title `rpsim_money_<REASON>` in `modDesc.xml` |
+| `MONEY_TRANSACTION` | `amount` (signed), `reason` ∈ `CREDIT_DISBURSEMENT, CREDIT_INSTALLMENT, CREDIT_PENALTY, CREDIT_CALLBACK, SALARY_PAYMENT, EMPLOYEE_EFFECT, SUBSIDY, STARTING_CAPITAL_ADJUSTMENT, FARMLAND_PURCHASE, FARMLAND_SALE, OTHER`, since TODO T-20/T-22 also `INSURANCE_PREMIUM, INSURANCE_PAYOUT, DAMAGE, WILDLIFE_COMPENSATION, VET_INVOICE, LIVESTOCK_PREMIUM, LEASE_PAYMENT, MAINTENANCE_FEE`, since Roadmap V2 (R2-Q1) also `TAX_PAYMENT, TAX_REFUND, FINE, FAMILY, SPONSORING, COMPENSATION`, since the Sondertilgung also `CREDIT_SPECIAL_REPAYMENT, CREDIT_PREPAYMENT_FEE` (the fee is sent in the same batch as the repayment; an older mod rejects the unknown reason and the backend reverses the Sondertilgung), since the "Schulungen" also `TRAINING` (a refused booking cancels the training), since Roadmap V3 (R3-Q1) also `LEASE_INCOME` (R3-L1), `GOODS_PURCHASE`, `GOODS_SALE` (R3-H3/H4, R3-M3), `VEHICLE_PURCHASE`, `VEHICLE_SALE` (R3-V2/V3) and `CONTRACT_PENALTY` (R3-M2), since Roadmap V3.1 (R31-Q1) also `CONTRACTOR_FEE` (R31-A1), `MACHINE_RENT` (A2), `LIVESTOCK_PURCHASE`, `LIVESTOCK_SALE` (A3), `WINTER_SERVICE` (A4), `DIRECT_PAYMENT` (B1), `INVESTMENT_GRANT` (B2), `SOCIAL_INSURANCE` (B5), `GUEST_INCOME` (D6), `COOP_SHARES` and `COOP_DIVIDEND` (D7), since R31-D also `FARM_HOLIDAY_SETUP` (D6) and `TANK_LOCK` (D8), since the owner decisions 2026-10-06 also `SEVERANCE` (severance when a hiring is cancelled before the first working day), since Roadmap V3.2 (R32-Q1) also `INVESTOR_CAPITAL` (R32-I2), `INVESTOR_REPAYMENT` (I4/I5), `INVESTOR_PAYOUT` (I3) and `INVESTOR_COMPENSATION` (I4), since the overdraft (owner decisions 2026-10-14) also `OVERDRAFT_INTEREST` (an older mod rejects it, the interest of that month is then not booked), since the vehicle dealer (RFH-Q4) also `VEHICLE_DEPOSIT`, `VEHICLE_NEW_PURCHASE`, `VEHICLE_DELIVERY_FEE`, `VEHICLE_EXPRESS_FEE`, `VEHICLE_REFUND` and `VEHICLE_CANCELLATION_FEE`; `note`. Overdraft (owner decisions 2026-10-14): optional `minBalance` (number ≤ 0, only on debits while the overdraft is on) = the lowest balance the debit may leave, without it 0; optional `ignoreFunds` (boolean, only `OVERDRAFT_INTEREST`) = booked without funds check, even beyond the limit. An older mod ignores both fields and keeps refusing debits below 0. Each reason has its booking title `rpsim_money_<REASON>` in `modDesc.xml` |
 | `PRICE_EVENT` / `MULTIPLIER` | `fillType`, `sellPoint`, `peakMultiplier`, `rampUpHours`, `holdHours`, `decayHours` (start = `gameTimeEarliest` or time of application) |
 | `PRICE_EVENT` / `FIXED` | `fillType`, `sellPoint`, `fixedPrice` (per 1000 l), `maxQuantity` (l), `deadlineGameTime`; precedence over `MULTIPLIER` for the same sell point/fill type. Roadmap V3 R3-M2: a forward contract sends it with `gameTimeEarliest` = start of the delivery month and `deadlineGameTime` = its end; the backend allows only one fixed price per sell point and fill type at a time. Roadmap V3.2 R32-G3: a bulk order with a delivery month sends it the same way (`maxQuantity` = the whole order); a month in which the pair already carries a fixed price cannot be chosen. "Tage je Periode" changed (owner decision 2026-10-08): while the instruction is still pending (the mod waits for `gameTimeEarliest`), the backend moves `gameTimeEarliest` and `deadlineGameTime` to the new month boundaries (`OutboxService.reschedulePending`; the file is rebuilt from the pending instructions in every cycle) - for bulk orders and forward contracts; once the mod has it, it keeps its end |
 | `FARMLAND_TRANSFER` | `farmlandId`, `direction` ∈ `TO_PLAYER, FROM_PLAYER`, `price` (reference only). Without money (no batch) for the lease of an NPC field (TODO T-22) and - Roadmap V3 R3-L1 - the lease-out of an own field: `FROM_PLAYER` at the start (the game farms it as NPC field), `TO_PLAYER` at the end |
@@ -744,6 +830,7 @@ optional `savegameId`.
 | `ANIMAL_TRANSFER` (Roadmap V3.1, R31-Q1 / R31-A3) | `husbandryUniqueId` (as in `assets.animals`), `subType` (FS25 animal subtype name), `count` (whole number > 0), optional `age` (months, ≥ 0), `direction` ∈ `IN` (purchase), `OUT` (sale). In a batch before its `MONEY_TRANSACTION` (`LIVESTOCK_PURCHASE` / `LIVESTOCK_SALE`); Roadmap V3.2 R32-I3: the animal delivery to an investor (A1) is a lone `OUT` without money. Executed with R31-A3: **IN** checks the free places (`getNumOfFreeAnimalSlots()`) and the animal type of the husbandry, then `addAnimals(subTypeIndex, count, age)` with the index from `g_currentMission.animalSystem:getSubTypeByName`; **OUT** takes the animals from the clusters of this subtype with `cluster:changeNumAnimals(-n)` (LUADOC `Specializations/PlaceableHusbandryAnimals.md`, `Specializations/Rideable.md`); `FAILED` with `NO_ANIMAL_SPACE`, `NOT_ENOUGH_ANIMALS`, `HUSBANDRY_NOT_FOUND`, `WRONG_ANIMAL_TYPE` or `UNKNOWN_SUB_TYPE`. Executed since R31-A3 (`RPSimGameAdapter:animalTransfer`); a mod with R31-Q only acknowledges `FAILED` / `NOT_SUPPORTED`. |
 | `HUSBANDRY_TRANSFER` (Roadmap V3.2, R32-Q1) | `husbandryUniqueId` (as in `husbandries[]` / `assets.animals`), `fillType` (FS25 fill type name of a milk sort of the husbandry, e.g. `MILK`), `amount` (litres, > 0). Only taking out; no money (the milk delivery to an investor is the consideration, R32-I3 type W3). An own type instead of a field of `STORAGE_TRANSFER`: an older mod would skip an unknown field and book from the silos, an unknown type is refused. Executed since R32-Q1 (`RPSimGameAdapter:husbandryTransfer`): own husbandry (`husbandryByUniqueId`), sort from `g_fillTypeManager:getFillTypeIndexByName` and checked against `spec_husbandryMilk.fillTypes`, stock `getHusbandryFillLevel(fillTypeIndex, farmId)` ≥ `amount`, then `removeHusbandryFillLevel(farmId, amount, fillTypeIndex)`; it takes the milk out through the loading station of the husbandry and returns the amount **not** taken (the whole amount without a loading station; the game evaluates it the same way for water and straw, LUADOC `Specializations/PlaceableHusbandryWater.md`, `PlaceableHusbandryStraw.md`). With a rest > 0 the mod books the taken part back with `addHusbandryFillLevelFromTool(farmId, taken, fillTypeIndex, nil, nil, nil)` (as `PlaceableHusbandryMilk:updateOutput` adds the milk) and reports `INSUFFICIENT_STOCK`. `FAILED` with `HUSBANDRY_NOT_FOUND`, `UNKNOWN_FILLTYPE`, `WRONG_FILLTYPE` (no milk sort of this husbandry, also a husbandry without milk) or `INSUFFICIENT_STOCK`. 🟡 manual test plan 28.1 / 28.2. |
 | `VEHICLE_FUEL` (Roadmap V3.1, R31-Q1 / R31-D8) | `vehicleId` (uniqueId of an own vehicle), `delta` (litres, < 0). Not in a batch (no money). Executed with R31-D8: own vehicle, nobody inside (`getIsControlled()`), no helper (`getIsAIActive()`), a diesel tank (`getConsumerFillUnitIndex(FillType.DIESEL)`), then at most the level in the tank is taken (`getFillUnitFillLevel`, `addFillUnitFillLevel(farmId, fillUnitIndex, -amount, FillType.DIESEL, ToolType.UNDEFINED, nil)`; LUADOC `Specializations/FillUnit.md`, `Specializations/Motorized.md`, `Vehicles/VehicleSystem.md`); the ack `result` carries `{ "liters": <taken> }`. `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE`, `VEHICLE_IN_USE` or `NO_DIESEL_TANK`. The backend sends it for a diesel theft with `gameTimeEarliest` = the next night start (22 h) and tries a refused theft again in the next night (at most 3 times); a refused theft raises no notice (an older mod's `NOT_SUPPORTED` does). |
+| `VEHICLE_DELIVERY` (Roadmap vehicle dealer, RFH-Q3) | `deliveryId`; `items[]` (≥ 1) with `storeXmlFilename` and optional `configurations` (`name → { saveId?, index? }`, at least one of both; `index` whole ≥ 1; the mod prefers `saveId` via `ConfigurationUtil.getConfigIdBySaveId`, unknown options = default of the game); optional `place { x, z, ry }` (a delivery point, without it the shop places); optional `fallbackToShop` (boolean); `bookings[]` with `amount` (≥ 0, the mod books `-amount`), `moneyReason` (a known reason) and optional `note`; optional `minBalance` (≤ 0, overdraft as `VEHICLE_SPAWN`); optional `tradeIns[]` (uniqueIds of own vehicles removed with the delivery). Not in a batch: like `VEHICLE_SPAWN` the mod loads asynchronously and books in the loading callback (RFH-L5): trade-ins checked like `VEHICLE_REMOVE`, funds against Σ `bookings`, the place checked with `overlapBox` (sizes from `StoreItemUtil.getSizeValues`), otherwise (`fallbackToShop`) the shop places (`setLoadingPlace`), `VehicleLoadingData` with `setConfigurations` / `setBoughtConfigurations` and `setPosition` + `setRotation`, then trade-ins removed and the bookings booked (LUADOC `Shop/BuyVehicleData.md`, dump `VehicleLoadingData.lua`, `engine/Physics/overlapBox.md`). `result` (plain values): `placeUsed` (`DELIVERY_POINT` / `SHOP`), `vehicleCount`, `vehicleId1` … `vehicleIdN` (order of `items`), `tradeInsRemoved`. `FAILED` with `NO_SPACE`, `UNKNOWN_STORE_ITEM`, `INSUFFICIENT_FUNDS`, `LOAD_FAILED`, `TRADE_IN_NOT_FOUND`, `TRADE_IN_NOT_OWN`, `TRADE_IN_IN_USE`, `TRADE_IN_ATTACHED` (a trade-in code is followed by the uniqueId of the machine, `TRADE_IN_ATTACHED: veh_00007`), nothing loaded or booked. The backend does not fall back to `VEHICLE_SPAWN` for an older mod (owner decision 2026-10-16): the delivery waits at the dealer with the reason "Mod aktualisieren". Validated since RFH-Q; a mod with RFH-Q acknowledges `FAILED` / `NOT_SUPPORTED` until RFH-L5; the bridge simulator executes it like the planned action. |
 
 **Older mod (Roadmap V3, R3-Q1):** a mod older than R3-Q rejects the four types during validation
 (`message` = `"<instructionId>: unknown type <TYPE>"`, status `REJECTED`, the whole batch is rejected) and an unknown
@@ -760,6 +847,13 @@ without the feature acknowledges the type `FAILED` / `NOT_SUPPORTED` and aborts 
 `INVESTOR_REPAYMENT`, `INVESTOR_PAYOUT`, `INVESTOR_COMPENSATION`: a mod older than R32-Q rejects them
 (`unknown type …` / `unknown reason …`, `REJECTED`); an adapter without the action acknowledges `FAILED` /
 `NOT_SUPPORTED`.
+
+**Older mod (Roadmap vehicle dealer, RFH-Q3 / RFH-Q4):** the same for `VEHICLE_DELIVERY` and the money reasons
+`VEHICLE_DEPOSIT`, `VEHICLE_NEW_PURCHASE`, `VEHICLE_DELIVERY_FEE`, `VEHICLE_EXPRESS_FEE`, `VEHICLE_REFUND`,
+`VEHICLE_CANCELLATION_FEE`: a mod older
+than RFH-Q rejects them (`unknown type …` / `unknown reason …`, `REJECTED`); a mod with RFH-Q acknowledges
+`VEHICLE_DELIVERY` `FAILED` / `NOT_SUPPORTED` until RFH-L5 brings the action. The notice says "Mod aktualisieren"
+(`FailedInstructionService.ROADMAP_RFH_TYPES`).
 
 **Batches:** instructions sharing a `batchId` are validated together and applied in the same cycle, or all
 rejected. The backend always sends a purchase or sale `FARMLAND_TRANSFER` + its `MONEY_TRANSACTION` as one batch.
@@ -818,7 +912,8 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   (R31-Q1): the same for `FIELD_WORK`, `ANIMAL_TRANSFER` and `VEHICLE_FUEL`; the notice also names `work`, `fruitType`,
   `husbandryUniqueId`, `subType`, `count` and `delta`. Roadmap V3.2 (R32-Q1): the same for `HUSBANDRY_TRANSFER`
   (the notice names `husbandryUniqueId`, `fillType` and `amount`); a missing `HUSBANDRY_TRANSFER` is sent again
-  after a rewind since R32-I3 (owner decision 2026-10-08, see below). After an `INSUFFICIENT_FUNDS` ack the snapshot
+  after a rewind since R32-I3 (owner decision 2026-10-08, see below). Roadmap vehicle dealer (RFH-Q3): the same for
+  `VEHICLE_DELIVERY`. After an `INSUFFICIENT_FUNDS` ack the snapshot
   balance is not trusted until a newer `farm_facts.json` arrived. Overdraft (owner decisions 2026-10-14): while it is
   on, `LiquidityService.available` adds the limit to the balance, so every payment check of the backend allows the
   balance down to `-limit`, and every debit carries `minBalance = -limit` (`OutboxService`).

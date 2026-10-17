@@ -74,6 +74,7 @@ const TYPE_APP: Record<string, string> = {
   INVESTOR_DUE: 'bank', // Roadmap V3.2 R32-I4
   FEED: 'stable', // Roadmap V4 R4-F4
   SOW: 'fieldbook', // Roadmap V4 R4-A5
+  DEALER_DELIVERY: 'dealer', // Roadmap vehicle dealer RFH-L5
 };
 
 /** Where an unknown kind shows up: the task list itself. */
@@ -97,6 +98,7 @@ export function taskAppId(t: TaskView): string {
   if (t.type === 'CASE') return caseAppId(t.kind ?? '');
   if (t.type === 'CONTRACT_OFFER') return contractAppId(t.kind ?? '');
   if (t.type === 'NEGOTIATION' && t.negotiation?.assetType === 'VEHICLE') return known('workshop'); // R3-V
+  if (t.type === 'NEGOTIATION' && t.negotiation?.assetType === 'MACHINE_ORDER') return known('dealer'); // RFH-B2
   return known(TYPE_APP[t.type] ?? FALLBACK_APP);
 }
 
@@ -118,7 +120,8 @@ export function taskTabId(t: TaskView): string | undefined {
       tab = 'antrag';
       break;
     case 'NEGOTIATION':
-      tab = t.negotiation?.assetType === 'VEHICLE' ? 'gebraucht' : 'verhandlungen';
+      tab = t.negotiation?.assetType === 'VEHICLE' ? 'gebraucht'
+        : t.negotiation?.assetType === 'MACHINE_ORDER' ? 'bestellungen' : 'verhandlungen';
       break;
     case 'MARKET_OFFER':
       tab = 'ereignisse';
@@ -134,6 +137,9 @@ export function taskTabId(t: TaskView): string | undefined {
       break;
     case 'SOW':
       tab = 'anbauplanung';
+      break;
+    case 'DEALER_DELIVERY':
+      tab = 'bestellungen';
       break;
   }
   return isTab(appId, tab) ? tab : undefined;
@@ -169,6 +175,7 @@ export function taskLink(t: TaskView): { path: string; query: Record<string, num
     case 'INVESTOR_DUE':
     case 'FEED':
     case 'SOW':
+    case 'DEALER_DELIVERY':
       return { path, query: {} };
   }
 }

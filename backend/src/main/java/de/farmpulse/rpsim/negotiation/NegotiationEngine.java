@@ -79,6 +79,10 @@ public class NegotiationEngine {
     public record VehicleAgreed(Long savegameId, Long negotiationId) {
     }
 
+    /** Roadmap vehicle dealer RFH-B2: the dealer and the player agreed on an order of new machines. */
+    public record MachineOrderAgreed(Long savegameId, Long negotiationId) {
+    }
+
     /** Roadmap V3.2 R32-I3 P1: an investor's veto on field sales. */
     private final de.farmpulse.rpsim.investor.InvestorLedger investorLedger;
 
@@ -327,6 +331,32 @@ public class NegotiationEngine {
     }
 
     /**
+     * Roadmap vehicle dealer RFH-B2 (owner decisions 2026-10-15): the dealer's offer for an order of new machines. The
+     * player bids on one net price (machines - trade-ins), up to max-rounds rounds; {@code floorPrice} is the dealer's
+     * hidden lowest price (list price - at most max-discount, the trust shifting it like the seller formula, minus 100 %
+     * of the trade-ins' game value).
+     */
+    @Transactional
+    public Negotiation openMachineOrder(Savegame sg, long orderId, long offerPrice, long floorPrice, Character dealer,
+                                        long closesAtGameTime) {
+        Negotiation n = new Negotiation();
+        n.setSavegame(sg);
+        n.setAssetType(AssetType.MACHINE_ORDER);
+        n.setAssetId(String.valueOf(orderId));
+        n.setKind(NegotiationKind.DIRECT);
+        n.setDirection(NegotiationDirection.PLAYER_BUYS);
+        n.setInitiatedBy(Initiator.PLAYER);
+        n.setStatus(NegotiationStatus.OPEN);
+        n.setBasePrice(offerPrice);
+        n.setAskingPrice(floorPrice);
+        n.setMaxRounds(cfg().getMaxRounds());
+        n.setOpenedAtGameTime(sg.getCurrentGameTime());
+        n.setCounterpartCharacter(dealer);
+        n.setClosesAtGameTime(closesAtGameTime);
+        return negotiations.save(n);
+    }
+
+    /**
      * Roadmap V3 R3-L1: a lease-out negotiation with one interested neighbour - the amounts (guide value, desired and
      * negotiated rent) are € per ha and month; the term is fixed by the form.
      */
@@ -384,7 +414,10 @@ public class NegotiationEngine {
         if (amount <= 0) {
             throw new BusinessRuleException("INVALID_AMOUNT", "Das Gebot muss positiv sein.");
         }
-        if (n.getDirection() == NegotiationDirection.PLAYER_BUYS && liquidity.available(sg) < amount) {
+        // RFH-B2 (owner decision 2026-10-15): new machines need only the deposit share of the bid as available balance
+        long needed = n.getAssetType() == AssetType.MACHINE_ORDER
+                ? Math.round(amount * props.getFormulas().getMachineDealer().getDepositShare()) : amount;
+        if (n.getDirection() == NegotiationDirection.PLAYER_BUYS && liquidity.available(sg) < needed) {
             throw new BusinessRuleException("INSUFFICIENT_FUNDS", "Das Gebot übersteigt den verfügbaren Kontostand.");
         }
         n.setRoundsUsed(n.getRoundsUsed() + 1);
@@ -425,7 +458,9 @@ public class NegotiationEngine {
 
     private OfferOutcome directOffer(Savegame sg, Negotiation n, long amount) {
         Character seller = n.getCounterpartCharacter();
-        long effMin = NegotiationFormula.effectiveMinAccept(n.getBasePrice(), seller.getNegotiationTrait(),
+        // RFH-B2: the dealer's hidden floor was fixed with the offer (asking price of the negotiation)
+        long effMin = n.getAssetType() == AssetType.MACHINE_ORDER && n.getAskingPrice() != null ? n.getAskingPrice()
+                : NegotiationFormula.effectiveMinAccept(n.getBasePrice(), seller.getNegotiationTrait(),
                 trust.getCurrentTrust(seller), cfg());
         OfferResult r = NegotiationFormula.evaluatePurchase(amount, effMin, cfg());
         return respond(sg, n, amount, r, r == OfferResult.COUNTER ? effMin : null, seller);
@@ -451,7 +486,8 @@ public class NegotiationEngine {
         offer(n, n.getRoundsUsed(), OfferParty.PLAYER, null, amount, r, counter, null);
         if (r == OfferResult.ACCEPTED) {
             trust.recordEvent(npc, props.getFormulas().getTrust().getNegotiationDeal(), TrustReason.NEGOTIATION_DEAL,
-                    n.getAssetType() == AssetType.VEHICLE ? "Einigung Maschine" : "Einigung Feld " + n.getAssetId());
+                    n.getAssetType() == AssetType.VEHICLE || n.getAssetType() == AssetType.MACHINE_ORDER
+                            ? "Einigung Maschine" : "Einigung Feld " + n.getAssetId());
             closeWon(sg, n, amount, NarrationEventType.NEGOTIATION_ACCEPTED, npc);
             return new OfferOutcome(n, r, null, left);
         }
@@ -484,6 +520,10 @@ public class NegotiationEngine {
         if (n.getKind() == NegotiationKind.LEASE_OFFER) {
             expireSiblings(sg, n);
             events.publishEvent(new LeaseAgreed(sg.getId(), n.getId())); // R3-L1: contract, transfer, mail and diary there
+            return;
+        }
+        if (n.getAssetType() == AssetType.MACHINE_ORDER) {
+            events.publishEvent(new MachineOrderAgreed(sg.getId(), n.getId())); // RFH-B3: deposit, mail and diary there
             return;
         }
         if (n.getAssetType() == AssetType.VEHICLE) {

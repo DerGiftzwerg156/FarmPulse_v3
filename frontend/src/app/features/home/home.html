@@ -133,6 +133,19 @@
             </a>
           }
 
+          @if (nextDelivery()?.dueGameTime !== null && nextDelivery()?.dueGameTime !== undefined) {
+            <!-- Roadmap vehicle dealer RFH-H2: the next planned delivery; opens the tab "Bestellungen" -->
+            <a routerLink="/haendler/bestellungen" class="block rounded-[20px] border border-border bg-surface p-5 hover:border-accent/50"
+              data-testid="delivery-widget">
+              <div class="mb-3 flex items-center gap-2">
+                <app-icon name="tractor" size="h-4 w-4" class="text-app-farm" />
+                <span class="font-display text-[11px] font-bold uppercase tracking-[0.16em] text-text">{{ 'nav.dealer' | t }}</span>
+              </div>
+              <div class="text-[14px] text-text" data-testid="next-delivery">{{ 'home.nextDelivery' | t: { machine: nextDelivery()!.machines,
+                time: (nextDelivery()!.dueGameTime | gameTime) } }}</div>
+            </a>
+          }
+
           @if (weakestBarn(); as b) {
             <a routerLink="/stall" class="block rounded-[20px] border bg-surface p-5 hover:border-accent/50" [class.border-warn/60]="stableAlarm()" [class.border-border]="!stableAlarm()"
               data-testid="stable-widget">

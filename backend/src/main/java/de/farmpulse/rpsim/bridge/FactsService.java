@@ -43,6 +43,14 @@ public class FactsService {
         return Optional.of(json.readValue(sg.getMarketContextJson(), MarketContext.class));
     }
 
+    /** Roadmap vehicle dealer RFH-Q1: the stored shop catalog with every configuration option (store_catalog.json). */
+    public Optional<BridgeDtos.StoreCatalog> storeCatalog(Savegame sg) {
+        if (sg.getStoreCatalogJson() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(json.readValue(sg.getStoreCatalogJson(), BridgeDtos.StoreCatalog.class));
+    }
+
     /** Highest current price per fill type over all sell points (per price unit, e.g. 1000 l). */
     public static Map<String, Double> bestPrices(FarmFacts f) {
         Map<String, Double> best = new HashMap<>();
