@@ -615,7 +615,7 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | M5 | – (ohne Entscheidung); Remap nur für in Monaten geplante Zeitpunkte, Fristen in Spieltagen bleiben (Antwortfrist des Viehhändlers, Bearbeitungszeit der Förderung) | umgesetzt |
 | M6 | Leasing als Rate, aus dem Cashflow herausgerechnet (Journal und Kontostand-Trend) | umgesetzt |
 | M7 | – (ohne Entscheidung); `RPSIM_LEASE_INCOME` in `known-posting-categories`. Abgleich der übrigen Planbuchungen: Kredite und Investoren-Zahlungen sind `FINANCING` (nicht im Betriebsergebnis), der Winterdienst hat keinen `nextDueGameTime` und steht nicht im Plan | umgesetzt |
-| M8 | Kein zweiter Malus bei automatischer Teilzahlung | offen |
+| M8 | Kein zweiter Malus bei automatischer Teilzahlung | umgesetzt |
 | M9 | Sperrfrist je Figur für Antworten und Anrufe | offen |
 | M10 | Ausgleich bleibt offen; Schaden wird später erneut abgebucht | offen |
 | M11 | – (ohne Entscheidung) | offen |

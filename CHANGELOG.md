@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-M8 - second salary malus on an automatic partial payment** (owner decision 2026-10-20): when the
+  month change paid only some overdue months, the employee got a second pay-fairness malus and a second payment delay.
+  Like the button "Gehalt nachzahlen", months left unpaid now stay in the running overdue episode.
 - **Logic review LR-M7 - liquidity plan counted the rent of a leased-out field twice**: the rent was a known posting
   of the plan and part of the income estimate from the journal. `RPSIM_LEASE_INCOME` is now one of
   `liquidity-plan.known-posting-categories`, so the estimate leaves it out.
