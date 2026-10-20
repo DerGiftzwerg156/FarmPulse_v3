@@ -36,6 +36,7 @@ import de.farmpulse.rpsim.narration.NarrationRequestService;
 import de.farmpulse.rpsim.repository.EmployeeRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
@@ -467,5 +468,21 @@ public class LivestockService {
 
     private static long round10(double v) {
         return Math.round(v / 10.0) * 10;
+    }
+
+    /**
+     * T-08 / logic review LR-M5: "days per period" changed - the deadline of an accepted trader deal
+     * (trader-deadline-months) keeps its month; the answer deadline of an offer is in game days and stays.
+     */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            for (ServiceCase sc : cases.findBySavegameAndStatusOrderByIdAsc(sg, CaseStatus.IN_PROGRESS)) {
+                if (sc.getKind() == CaseKind.LIVESTOCK_OFFER) {
+                    sc.setDeadlineGameTime(ev.remap(sc.getDeadlineGameTime()));
+                }
+            }
+        });
     }
 }

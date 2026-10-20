@@ -29,6 +29,7 @@ import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
 import de.farmpulse.rpsim.repository.ContractRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
 import org.springframework.context.event.EventListener;
@@ -258,5 +259,21 @@ public class WinterServiceService {
 
     public List<Contract> contracts(Savegame sg) {
         return all(sg);
+    }
+
+    /**
+     * T-08 / logic review LR-M5: "days per period" changed - an offer valid until the winter starts (a month start)
+     * keeps its month; due and end dates of the contract follow in {@code ContractBillingService}.
+     */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            for (Contract c : contracts.findBySavegameOrderByIdDesc(sg)) {
+                if (c.getKind() == ContractKind.WINTER_SERVICE && c.getStatus() == ContractStatus.OFFERED) {
+                    c.setOfferExpiresAtGameTime(ev.remap(c.getOfferExpiresAtGameTime()));
+                }
+            }
+        });
     }
 }

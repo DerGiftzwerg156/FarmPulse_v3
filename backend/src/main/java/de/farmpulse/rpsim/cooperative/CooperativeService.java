@@ -41,6 +41,7 @@ import de.farmpulse.rpsim.repository.CoopPriceYearRepository;
 import de.farmpulse.rpsim.repository.CoopShareNoticeRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
@@ -507,5 +508,18 @@ public class CooperativeService {
                 .ifPresent(sc -> result(sg, sc, null));
         open(sg, CaseKind.COOP_BOARD_MEETING).filter(sc -> sc.getDeadlineGameTime() != null && sc.getDeadlineGameTime() < now)
                 .ifPresent(sc -> missed(sg, sc, CaseStatus.EXPIRED));
+    }
+
+    /** T-08 / logic review LR-M5: "days per period" changed - a notice of shares (notice-months) keeps its month. */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            for (CoopShareNotice n : notices.findBySavegameOrderByIdAsc(sg)) {
+                if (n.getPaidGameTime() == null) {
+                    n.setDueGameTime(ev.remap(n.getDueGameTime()));
+                }
+            }
+        });
     }
 }

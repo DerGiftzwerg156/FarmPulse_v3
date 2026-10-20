@@ -37,6 +37,7 @@ import de.farmpulse.rpsim.repository.InvestmentGrantObjectRepository;
 import de.farmpulse.rpsim.repository.InvestmentGrantRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.VehicleDealRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
 import org.springframework.context.event.EventListener;
@@ -504,5 +505,23 @@ public class InvestmentGrantService {
     private InvestmentGrant own(Savegame sg, Long id) {
         return grants.findById(id).filter(g -> g.getSavegame().getId().equals(sg.getId()))
                 .orElseThrow(() -> new NotFoundException("grant " + id));
+    }
+
+    /**
+     * T-08 / logic review LR-M5: "days per period" changed - the purchase time (purchase-months) and the binding period
+     * (binding-months) keep their month; the processing time of an application is in game days and stays.
+     */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            for (InvestmentGrant g : list(sg)) {
+                if (InvestmentGrant.APPROVED.equals(g.getStatus())) {
+                    g.setPurchaseDeadlineGameTime(ev.remap(g.getPurchaseDeadlineGameTime()));
+                } else if (InvestmentGrant.PAID.equals(g.getStatus())) {
+                    g.setBindingEndsGameTime(ev.remap(g.getBindingEndsGameTime()));
+                }
+            }
+        });
     }
 }

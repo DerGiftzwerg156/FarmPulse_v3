@@ -189,6 +189,11 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-M5 - month-based dates kept their old day after a "days per period" change** (T-08): the end of
+  an apprenticeship and of a seasonal contract of active employees, the deadline of an accepted livestock trader deal,
+  the purchase time and binding period of an investment grant, an open notice of cooperative shares, the deadline of
+  an open area payment application and the winter service offer now keep their month like installments and salaries;
+  deadlines in game days stay as they are.
 - **Logic review LR-M4 - wrong FS25 year while the clock catches up**: the clock processes skipped days one by one
   at their own game time, but tax year and prepayments, the farm report, the social insurance bill, the area payment
   form, the field margins, the crop plan reminders, the milestone "year without delay", the cooperative dividend, the

@@ -41,6 +41,7 @@ import de.farmpulse.rpsim.repository.DirectPaymentApplicationRepository;
 import de.farmpulse.rpsim.repository.DirectPaymentFieldRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.CalendarText;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
@@ -450,5 +451,21 @@ public class DirectPaymentService {
 
     static double round2(double v) {
         return Math.round(v * 100) / 100.0;
+    }
+
+    /**
+     * T-08 / logic review LR-M5: "days per period" changed - the deadline of an open application (end of the deadline
+     * period) keeps its month; the late days after it are game days.
+     */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            for (DirectPaymentApplication a : list(sg)) {
+                if (DirectPaymentApplication.OPEN.equals(a.getStatus())) {
+                    a.setDeadlineGameTime(ev.remap(a.getDeadlineGameTime()));
+                }
+            }
+        });
     }
 }
