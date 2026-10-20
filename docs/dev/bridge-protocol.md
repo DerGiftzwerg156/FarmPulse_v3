@@ -901,6 +901,10 @@ savegame), so it survives saving and loading; the backend stores it as `outbox_i
 or `message` = `INSUFFICIENT_FUNDS` when the debits of the batch would push the farm balance below its floor - the
 whole batch is then not executed). The floor is 0 (T-03); overdraft (owner decisions 2026-10-14): the highest
 `minBalance` of the debits of the batch (a debit without it = 0). Bookings with `ignoreFunds` stay out of the check.
+Logic review LR-M3: the same check covers the goods - the `STORAGE_TRANSFER` members of a batch (added up per fill
+type and direction, measured like `transferStorage` with `getFreeCapacity` / `getFillLevel` of the own silos) must fit,
+otherwise the whole batch is `FAILED` with `NO_CAPACITY` / `INSUFFICIENT_STOCK` (`UNKNOWN_FILLTYPE`) before its first
+member runs; a contractor harvest no longer cuts the field when its yield has no room.
 `endReason` ∈ `DEADLINE_REACHED`, `MAX_QUANTITY_REACHED`. The file always contains every instruction still
 inside the retention window (default 30 game days), so a missed file version never loses information.
 Whether an instruction was executed is decided solely by the mod's persisted `processedInstructions` list.

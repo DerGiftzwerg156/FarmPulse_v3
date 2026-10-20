@@ -787,7 +787,40 @@ end
 -- into the red through a tool booking - unless a debit carries minBalance (overdraft, owner decisions 2026-10-14),
 -- then down to that floor. Unknown balance => refuse debits (never book blindly).
 function RPSimGameAdapter:checkBatchFunds(items)
-    return RPSimInstructions.checkFunds(self:getBalance() or 0, items)
+    local ok, err = RPSimInstructions.checkFunds(self:getBalance() or 0, items)
+    if not ok then
+        return false, err
+    end
+    return self:checkBatchStorage(items)
+end
+
+--- Logic review LR-M3: the STORAGE_TRANSFER members of a batch are checked before its first member runs - the
+-- contractor's HARVEST (FIELD_WORK) comes before its STORAGE_TRANSFER IN, so without room the crop was cut and lost.
+-- Same rule and amounts as transferStorage (several members of one fill type and direction are added up); without
+-- room or stock nothing of the batch is executed (NO_CAPACITY / INSUFFICIENT_STOCK / UNKNOWN_FILLTYPE).
+function RPSimGameAdapter:checkBatchStorage(items)
+    local needs, order = {}, {}
+    for _, ins in ipairs(items or {}) do
+        if type(ins) == "table" and ins.type == "STORAGE_TRANSFER" then
+            local key = tostring(ins.direction) .. "|" .. tostring(ins.fillType)
+            if needs[key] == nil then
+                needs[key] = { fillType = ins.fillType, direction = ins.direction, amount = 0 }
+                order[#order + 1] = key
+            end
+            needs[key].amount = needs[key].amount + (tonumber(ins.amount) or 0)
+        end
+    end
+    for _, key in ipairs(order) do
+        local need = needs[key]
+        local index = safe(function() return g_fillTypeManager:getFillTypeIndexByName(need.fillType) end, nil)
+        if index == nil then
+            return false, "UNKNOWN_FILLTYPE"
+        end
+        if self:storageAvailable(index, need.direction) + 0.001 < need.amount then
+            return false, need.direction == "IN" and "NO_CAPACITY" or "INSUFFICIENT_STOCK"
+        end
+    end
+    return true
 end
 
 --- Money type of a booking reason (T-21): MoneyType.register(statistic, "rpsim_money_<REASON>") - FS25
@@ -2067,6 +2100,20 @@ function RPSimGameAdapter:collectTradeStorage()
     return list
 end
 
+--- What the own silo storages can take (IN: free capacity) or give (OUT: fill level) of a fill type index.
+function RPSimGameAdapter:storageAvailable(index, direction, storages)
+    local available = 0
+    for _, storage in ipairs(storages or self:ownSiloStorages()) do
+        available = available + safe(function()
+            if direction == "IN" then
+                return storage:getFreeCapacity(index)
+            end
+            return storage:getFillLevel(index)
+        end, 0)
+    end
+    return available
+end
+
 --- R3-H3 / R3-H4 / R3-M3: STORAGE_TRANSFER. IN spreads the amount over the own silo storages with free capacity like
 -- PlaceableSilo:refillAmount (getFreeCapacity -> setFillLevel(getFillLevel + moved)) but without the game's booking
 -- BOUGHT_MATERIALS (the MONEY_TRANSACTION of the batch books the money); OUT takes it out
@@ -2077,16 +2124,7 @@ function RPSimGameAdapter:transferStorage(fillType, amount, direction)
         return false, "UNKNOWN_FILLTYPE"
     end
     local storages = self:ownSiloStorages()
-    local available = 0
-    for _, storage in ipairs(storages) do
-        available = available + safe(function()
-            if direction == "IN" then
-                return storage:getFreeCapacity(index)
-            end
-            return storage:getFillLevel(index)
-        end, 0)
-    end
-    if available + 0.001 < amount then
+    if self:storageAvailable(index, direction, storages) + 0.001 < amount then
         return false, direction == "IN" and "NO_CAPACITY" or "INSUFFICIENT_STOCK"
     end
     local ok, err = pcall(function()

@@ -610,7 +610,7 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | --- | --- | --- |
 | H1 | Ganzen Batch erneut senden | umgesetzt |
 | H2 | `CRITICAL` für alle | umgesetzt |
-| M3 | Vorprüfung der Kapazität im Mod-Batch; danach wie heute storniert | offen |
+| M3 | Vorprüfung der Kapazität im Mod-Batch (und im Simulator); das Backend storniert wie bisher | umgesetzt |
 | M4 | – (ohne Entscheidung) | offen |
 | M5 | – (ohne Entscheidung) | offen |
 | M6 | Leasing als Rate, aus dem Cashflow herausgerechnet | offen |

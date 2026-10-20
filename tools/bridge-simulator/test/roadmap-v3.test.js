@@ -98,8 +98,9 @@ test('STORAGE_TRANSFER fails without capacity or stock and the batch books nothi
   assert.equal(a.ins_in.message, 'NO_CAPACITY');
   assert.equal(a.ins_out.message, 'INSUFFICIENT_STOCK');
   assert.equal(a.ins_oat.message, 'NO_CAPACITY');
-  assert.match(a.ins_m1.message, /^BATCH_ABORTED/);
-  assert.match(a.ins_m2.message, /^BATCH_ABORTED/);
+  // LR-M3: like the mod, the batch check refuses the whole batch before its first member runs
+  assert.equal(a.ins_m1.message, 'NO_CAPACITY');
+  assert.equal(a.ins_m2.message, 'INSUFFICIENT_STOCK');
   assert.equal(sim.balance, balance);
 });
 

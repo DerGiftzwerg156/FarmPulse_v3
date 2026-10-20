@@ -189,6 +189,10 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-M3 - contractor harvest lost without room in the silos**: the mod cut the field (FIELD_WORK
+  HARVEST) before the STORAGE_TRANSFER IN of the same batch found no room, so the crop disappeared and the backend
+  cancelled the order. The batch pre-check of the mod (and the bridge simulator) now checks the room and stock of all
+  STORAGE_TRANSFER members first and refuses the whole batch with `NO_CAPACITY` / `INSUFFICIENT_STOCK`.
 - **Logic review LR-H2 - four in-game hints never appeared** (owner decision 2026-10-20): the hints of a borrowed
   machine, a used machine deal, the crop damage warning and the dealer's demo machine were sent with level `WARNING`,
   which the mod refuses (`INFO`, `OK`, `CRITICAL`). They now use `CRITICAL`; the level is an enum

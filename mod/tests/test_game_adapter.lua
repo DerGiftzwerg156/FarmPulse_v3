@@ -702,9 +702,45 @@ function T.TestGameAdapter:testStorageTransferIsExecutedAsBatchWithTheMoney()
     bridge:pollInstructions()
     lu.assertEquals(state.processed.st.status, "APPLIED")
     lu.assertEquals(state.processed.m.status, "APPLIED")
+    -- LR-M3: the batch pre-check refuses the whole batch before its first member runs
     lu.assertEquals(state.processed.st2.message, "INSUFFICIENT_STOCK")
-    lu.assertStrContains(state.processed.m2.message, "BATCH_ABORTED")
+    lu.assertEquals(state.processed.m2.status, "FAILED")
+    lu.assertEquals(state.processed.m2.message, "INSUFFICIENT_STOCK")
     lu.assertEquals(bridge.adapter:getBalance(), before - 960)
+end
+
+-- Logic review LR-M3: a contractor harvest (FIELD_WORK before its STORAGE_TRANSFER IN) without room in the silos is
+-- refused as a whole before the field is touched
+function T.TestGameAdapter:testBatchWithoutRoomIsRefusedBeforeItsFirstMember()
+    tradeGame()
+    local adapter = RPSimGameAdapter.new()
+    local harvest = {
+        { instructionId = "fw", batchId = "h", type = "FIELD_WORK", farmlandId = 4, work = "HARVEST" },
+        { instructionId = "in", batchId = "h", type = "STORAGE_TRANSFER", direction = "IN", fillType = "WHEAT",
+            amount = 55001 },
+        { instructionId = "fee", batchId = "h", type = "MONEY_TRANSACTION", amount = -540, reason = "CONTRACTOR_FEE" } }
+    local ok, why = adapter:checkBatchFunds(harvest)
+    lu.assertFalse(ok)
+    lu.assertEquals(why, "NO_CAPACITY")
+    harvest[2].amount = 55000
+    lu.assertTrue(adapter:checkBatchFunds(harvest))
+    -- two members of one fill type count together
+    lu.assertEquals(select(2, adapter:checkBatchFunds({
+        { type = "STORAGE_TRANSFER", direction = "OUT", fillType = "WHEAT", amount = 30000 },
+        { type = "STORAGE_TRANSFER", direction = "OUT", fillType = "WHEAT", amount = 15001 } })), "INSUFFICIENT_STOCK")
+    lu.assertEquals(select(2, adapter:checkBatchFunds({
+        { type = "STORAGE_TRANSFER", direction = "IN", fillType = "OATS", amount = 1 } })), "UNKNOWN_FILLTYPE")
+
+    local bridge, fs, paths = realBridge()
+    harvest[2].amount = 55001
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = harvest })
+    local before = bridge.adapter:getBalance()
+    bridge:pollInstructions()
+    for _, id in ipairs({ "fw", "in", "fee" }) do
+        lu.assertEquals(bridge.state.processed[id].status, "FAILED")
+        lu.assertEquals(bridge.state.processed[id].message, "NO_CAPACITY")
+    end
+    lu.assertEquals(bridge.adapter:getBalance(), before)
 end
 
 -- Roadmap V3 R3-H5: real contracts on the field of an NPC farmland
