@@ -163,6 +163,53 @@ class InvestmentGrantTest {
         assertThat(r.path("reason").asString()).isEqualTo("INVESTMENT_GRANT");
     }
 
+    @Autowired de.farmpulse.rpsim.vehicle.VehicleTradeService vehicleTrade;
+    @Autowired de.farmpulse.rpsim.repository.VehicleDealRepository vehicleDeals;
+    @Autowired de.farmpulse.rpsim.bridge.OutboxService outboxService;
+
+    /**
+     * Logic review LR-L14 (owner decision 2026-10-20): a funded machine sold to a neighbour counts as sold like a
+     * trade-in - repaid pro rata at once; a later shop sale of another machine finds nothing.
+     */
+    @Test
+    void aFundedMachineSoldToANeighbourIsRepaidAtOnce() {
+        InvestmentGrant g = grants.apply(sg, InvestmentGrant.MACHINE, 100_000);
+        at(t0 + 10 * DAY + DAY / 4);
+        facts(11, "\"SHOP_VEHICLE_BUY\": 0");
+        day();
+        at(t0 + 10 * DAY + DAY / 2);
+        facts(11, "\"SHOP_VEHICLE_BUY\": -100000", "veh_00077:80000", "veh_00078:20000");
+        grants.submitProof(sg, g.getId());
+        assertThat(g.getStatus()).isEqualTo(InvestmentGrant.PAID);
+
+        at(t0 + 13 * DAY + DAY / 4); // veh_00077 sold to a neighbour with 20.75 of 24 months left (paid at day 10.5)
+        de.farmpulse.rpsim.domain.VehicleDeal d = new de.farmpulse.rpsim.domain.VehicleDeal();
+        d.setSavegame(sg);
+        d.setDirection(de.farmpulse.rpsim.domain.VehicleDeal.SELL);
+        d.setStatus(de.farmpulse.rpsim.domain.VehicleDeal.AGREED);
+        d.setVehicleId("veh_00077");
+        d.setVehicleName("Traktor");
+        d.setFinalPrice(60_000L);
+        d.setCreatedGameTime(sg.getCurrentGameTime());
+        vehicleDeals.save(d);
+        List<OutboxInstruction> sale = outboxService.vehicleSale(sg, "veh_00077", 60_000, "Verkauf Traktor",
+                new de.farmpulse.rpsim.bridge.OutboxService.Related(de.farmpulse.rpsim.vehicle.VehicleTradeService.RELATED,
+                        d.getId()));
+        OutboxInstruction remove = sale.stream().filter(o -> o.getType() == InstructionType.VEHICLE_REMOVE).findFirst()
+                .orElseThrow();
+        vehicleTrade.onAck(new BridgeEvents.InstructionAcked(sg.getId(), remove.getInstructionId(), "APPLIED",
+                de.farmpulse.rpsim.vehicle.VehicleTradeService.RELATED, d.getId()));
+        ServiceCase bill = cases.findBySavegameAndKindInOrderByIdDesc(sg, List.of(CaseKind.GRANT_REPAYMENT)).getFirst();
+        assertThat(bill.getOfferAmount()).isEqualTo(20_750); // 30,000 x 80/100 x 20.75/24
+
+        // later the other machine is sold in the shop: only veh_00078 (20 % of the value) is repaid, not veh_00077 again
+        at(t0 + 14 * DAY + DAY / 4);
+        facts(15, "\"SHOP_VEHICLE_SELL\": 15000");
+        List<ServiceCase> all = cases.findBySavegameAndKindInOrderByIdDesc(sg, List.of(CaseKind.GRANT_REPAYMENT));
+        assertThat(all).hasSize(2);
+        assertThat(all.getFirst().getOfferAmount()).isLessThan(bill.getOfferAmount() / 3);
+    }
+
     @Test
     void nothingBoughtUntilTheDeadlineExpires() {
         InvestmentGrant g = grants.apply(sg, InvestmentGrant.BUILDING, 40_000);

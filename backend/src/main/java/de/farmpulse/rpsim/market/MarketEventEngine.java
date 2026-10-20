@@ -471,6 +471,12 @@ public class MarketEventEngine {
     public MarketEvent decideParticipation(Savegame sg, Long eventId, boolean participate) {
         MarketEvent ev = events.findById(eventId).filter(x -> x.getSavegame().getId().equals(sg.getId()))
                 .orElseThrow(() -> new NotFoundException("market event " + eventId));
+        if (ev.getStatus() == MarketEventStatus.OFFERED && ev.getDeadlineGameTime() != null
+                && ev.getDeadlineGameTime() <= sg.getCurrentGameTime()) {
+            // logic review LR-L18: the deadline counts at once, not only at the next day change (as updateLifecycle)
+            ev.setStatus(MarketEventStatus.ENDED);
+            ev.setEndReason("NOT_ACCEPTED");
+        }
         if (ev.getStatus() != MarketEventStatus.OFFERED) {
             throw new BusinessRuleException("NOT_OFFERED", "Dieses Angebot ist nicht mehr offen.");
         }
@@ -486,6 +492,24 @@ public class MarketEventEngine {
         diary.addAuto(sg, "MARKET", "Sonderkontrakt angenommen", "Kontrakt über " + ev.getMaxQuantity() + " l "
                 + ev.getFillType() + " zu " + ev.getFixedPrice() + " €/1000 l.", RELATED, ev.getId());
         return ev;
+    }
+
+    /**
+     * FailedInstructionService, logic review LR-L19 (owner decision 2026-10-20): the game refused the fixed price of an
+     * accepted special offer - it ends (no contract report will ever come).
+     */
+    @Transactional
+    public boolean onPriceFailed(Long eventId, String instructionId) {
+        MarketEvent ev = events.findById(eventId).orElse(null);
+        if (ev == null || ev.getEventType() != MarketEventType.SPECIAL_OFFER || ev.getStatus() != MarketEventStatus.ACTIVE
+                || !java.util.Objects.equals(ev.getInstructionId(), instructionId)) {
+            return false;
+        }
+        ev.setStatus(MarketEventStatus.ENDED);
+        ev.setEndReason("FAILED");
+        diary.addAuto(ev.getSavegame(), "MARKET", "Sonderkontrakt nicht zustande gekommen", "Das Spiel hat den Festpreis für "
+                + ev.getFillType() + " nicht übernommen.", RELATED, ev.getId());
+        return true;
     }
 
     /** Reverse channel of FIXED contracts (delivered quantity reported by the mod). */

@@ -31,6 +31,7 @@ import de.farmpulse.rpsim.domain.MoneyReason;
 import de.farmpulse.rpsim.domain.Negotiation;
 import de.farmpulse.rpsim.domain.NegotiationDirection;
 import de.farmpulse.rpsim.domain.NegotiationKind;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.OutboxInstruction;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
@@ -682,7 +683,8 @@ public class MachineLoanService {
     }
 
     private void hint(Savegame sg, MachineLoan l, String text) {
-        outbox.notification(sg, text, "WARNING", sg.getCurrentGameTime() + GameTime.days(used().getNotificationDays()),
+        outbox.notification(sg, text, NotificationLevel.CRITICAL,
+                sg.getCurrentGameTime() + GameTime.days(used().getNotificationDays()),
                 new Related(RELATED, l.getId()));
     }
 

@@ -189,6 +189,89 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L21 - livestock trader premium (documented)** (owner decision 2026-10-20): the premium measures the
+  change of the exported head count, so births and deaths within an open offer count too; this stays as designed and is
+  now documented in the code and the configuration reference.
+- **Logic review LR-L20 - a lessor could move away during a running lease** (owner decision 2026-10-20): the village
+  rotation released all fields of a departing character (also a leased one) while the lease ran on with a character no
+  longer in the village. Characters with a running or offered lease (lease in or lease out) no longer move away, like
+  the FS25 field owners (T-21).
+- **Logic review LR-N2 - a refused fixed price kept the bulk order open** (owner decision 2026-10-20): a bulk order
+  with a delivery month whose `PRICE_EVENT` the game refused stayed `OPEN`, blocked its month and counted against the
+  limit of open orders without ever settling. It now ends as `FAILED` ("nicht zustande gekommen", no penalty), the
+  month notice expires, the diary notes it and the buyer leaves, like after a settled order.
+- **Logic review LR-L19 - refused fixed prices kept contracts open** (owner decision 2026-10-20): a forward contract
+  whose `PRICE_EVENT` the game refused stayed `OPEN` and blocked its sell point and fill type; an accepted special offer
+  stayed active. The forward contract now ends as `FAILED` ("nicht zustande gekommen", no penalty), the special offer
+  as `ENDED` (end reason `FAILED`), each with a diary entry.
+- **Logic review LR-L18 - deadlines counted only at the day change**: a bid in an ended negotiation or auction and the
+  acceptance of a special offer after its deadline were still taken until the next day change. Both now check the
+  deadline of the case itself first (the regular day run closes it as before).
+- **Logic review LR-L17 - refused installment of a called loan was never collected** (owner decision 2026-10-20): the
+  principal went back to the remaining debt of a `CALLED` loan that nobody collects. The loan is now `DEFAULTED` and the
+  bank collects the amount as soon as liquidity allows, like an uncollected call-back (T-03).
+- **Logic review LR-L16 - an old instruction could run twice** (mod): the mod forgets processed instructions after
+  30 game days; with the backend not running, a stale `instructions.xml` still listing them executed them again. Entries
+  still in the file are now kept (the bridge simulator follows).
+- **Logic review LR-L15 - refused re-sent investor deliveries stayed counted** (owner decision 2026-10-20): after a
+  rewind a counted delivery is sent again; when the mod refuses it now, it takes its quantities back from the periods it
+  went to for every kind (before only the W1 total); status, trust and reminders stay. Migration V57.
+- **Logic review LR-L14 - funded machine sold to a neighbour** (owner decision 2026-10-20): the sale (R3-V) books no
+  `SHOP_VEHICLE_SELL`, so the repayment came only with a later, unrelated shop sale. It now counts as sold like a
+  trade-in at the dealer: repaid pro rata at once in the binding period, before the payment it lowers the recognised sum.
+- **Logic review LR-L13 - one broken ack stopped all acks**: an entry of `instructions_ack.json` without `status` (or
+  `instructionId`) threw a NullPointerException, so no ack of the file was processed in any cycle. Such an entry is now
+  logged and skipped.
+- **Logic review LR-L12 - a failed write of the instructions file was not repeated**: the backend remembered the content
+  as written even when `instructions.json` / `instructions.xml` could not be written (e.g. a locked file), so the mod got
+  the instructions only after the next change. The write is now tried again every cycle until it succeeds.
+- **Logic review LR-N1 - stale facts after a reload without saving** (owner decision 2026-10-20): the snapshots of the
+  discarded game time stayed, and every reader of the latest facts (balance, fields, calendar, credit check) got them
+  until the game passed that time again. They are now dropped when the rewind is detected.
+- **Logic review LR-M11 - payments blocked after a reload without saving**: a debit refused for lack of money in the
+  discarded game time kept every payment check at 0 until the game passed that time again. The ack time is now stored
+  (`outbox_instruction.acked_at`, migration V56); a refusal acknowledged before a detected rewind no longer blocks.
+- **Logic review LR-M10 - refused debits without a follow-up** (owner decisions 2026-10-20): the pay buttons of a
+  bypass compensation and of a crop damage claim now check the liquidity first; a booking the mod still refuses puts
+  the claim back to "waiting for the player" with a new decision time (before: "paid", money never flowed). Refused
+  cooperative shares are taken back. A refused damage (`DAMAGE`: hail, storm, wildlife) is booked again by the new
+  `DamageDebitService` as soon as the liquidity covers it; the payout runs as before.
+- **Logic review LR-M9 - trust could be farmed by replies and calls** (owner decisions 2026-10-20): the tone of every
+  reply to a mail and of every sentence in a call changed the trust, without the pacing of "Nachricht verfassen". All
+  three now share one cooldown per character (`messages.pacing-cooldown-days`, default 1 game day); the character always
+  answers.
+- **Logic review LR-M8 - second salary malus on an automatic partial payment** (owner decision 2026-10-20): when the
+  month change paid only some overdue months, the employee got a second pay-fairness malus and a second payment delay.
+  Like the button "Gehalt nachzahlen", months left unpaid now stay in the running overdue episode.
+- **Logic review LR-M7 - liquidity plan counted the rent of a leased-out field twice**: the rent was a known posting
+  of the plan and part of the income estimate from the journal. `RPSIM_LEASE_INCOME` is now one of
+  `liquidity-plan.known-posting-categories`, so the estimate leaves it out.
+- **Logic review LR-M6 - leasing burdened the credit check twice** (owner decision 2026-10-20): the leasing costs
+  counted as an existing installment and, already paid by the game, lowered the operating cash flow as well. They
+  stay an installment; the cash flow of the check (journal or balance trend) gets them added back.
+- **Logic review LR-M5 - month-based dates kept their old day after a "days per period" change** (T-08): the end of
+  an apprenticeship and of a seasonal contract of active employees, the deadline of an accepted livestock trader deal,
+  the purchase time and binding period of an investment grant, an open notice of cooperative shares, the deadline of
+  an open area payment application and the winter service offer now keep their month like installments and salaries;
+  deadlines in game days stay as they are.
+- **Logic review LR-M4 - wrong FS25 year while the clock catches up**: the clock processes skipped days one by one
+  at their own game time, but tax year and prepayments, the farm report, the social insurance bill, the area payment
+  form, the field margins, the crop plan reminders, the milestone "year without delay", the cooperative dividend, the
+  rotation budget, the village paper's crop year and the investor payment year took the year of the latest export.
+  They now use `GameTime.yearOf` - the year of the processed month, counted from the calendar anchor (the year changes
+  with period 1).
+- **Logic review LR-M3 - contractor harvest lost without room in the silos**: the mod cut the field (FIELD_WORK
+  HARVEST) before the STORAGE_TRANSFER IN of the same batch found no room, so the crop disappeared and the backend
+  cancelled the order. The batch pre-check of the mod (and the bridge simulator) now checks the room and stock of all
+  STORAGE_TRANSFER members first and refuses the whole batch with `NO_CAPACITY` / `INSUFFICIENT_STOCK`.
+- **Logic review LR-H2 - four in-game hints never appeared** (owner decision 2026-10-20): the hints of a borrowed
+  machine, a used machine deal, the crop damage warning and the dealer's demo machine were sent with level `WARNING`,
+  which the mod refuses (`INFO`, `OK`, `CRITICAL`). They now use `CRITICAL`; the level is an enum
+  (`NotificationLevel`) checked by a contract test against the mod and the simulator schema.
+- **Logic review LR-H1 - reload without saving lost the goods of a deal** (owner decision 2026-10-20): a goods deal
+  (neighbour trade, farm shop, bulk order, investor P2 purchase) applied after the last save was re-sent with its money
+  only - the player was paid again for goods back in the silo, or paid again without getting them. The whole batch
+  (`STORAGE_TRANSFER` + `MONEY_TRANSACTION`) now goes again; the deal still counts once.
 - **Vehicle dealer without catalog** (game log 2026-10-20): `store_catalog.json` reached the dealer only if every entry
   was valid - one discount option of a mod (negative price), one broken entry or one byte that is no UTF-8 skipped the
   whole file, and as the mod writes it only once per game start the tablet kept showing "Der Katalog kommt mit dem

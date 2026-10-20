@@ -4,7 +4,6 @@ import java.util.List;
 
 import de.farmpulse.rpsim.common.BusinessRuleException;
 import de.farmpulse.rpsim.common.NotFoundException;
-import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.domain.CallStatus;
 import de.farmpulse.rpsim.domain.Channel;
 import de.farmpulse.rpsim.domain.Character;
@@ -22,7 +21,6 @@ import de.farmpulse.rpsim.narration.NarrationRequestService;
 import de.farmpulse.rpsim.repository.CharacterRepository;
 import de.farmpulse.rpsim.repository.CommunicationRepository;
 import de.farmpulse.rpsim.repository.EmployeeRepository;
-import de.farmpulse.rpsim.time.GameTime;
 import de.farmpulse.rpsim.tone.ToneClassifier;
 import de.farmpulse.rpsim.tone.ToneTrustService;
 import org.springframework.stereotype.Service;
@@ -44,12 +42,11 @@ public class ConversationService {
     private final ToneClassifier classifier;
     private final ToneTrustService toneTrust;
     private final NarrationRequestService narration;
-    private final RpsimProperties props;
 
     public ConversationService(CommunicationRepository communications, CommunicationService communicationService,
                                CharacterRepository characters, EmployeeRepository employees,
                                SatisfactionService satisfaction, ToneClassifier classifier, ToneTrustService toneTrust,
-                               NarrationRequestService narration, RpsimProperties props) {
+                               NarrationRequestService narration) {
         this.communications = communications;
         this.communicationService = communicationService;
         this.characters = characters;
@@ -58,7 +55,6 @@ public class ConversationService {
         this.classifier = classifier;
         this.toneTrust = toneTrust;
         this.narration = narration;
-        this.props = props;
     }
 
     public Communication get(Savegame sg, Long id) {
@@ -94,7 +90,7 @@ public class ConversationService {
         ToneClass tone = classifier.classify(text).tone();
         Long root = mail.getThreadRootId() == null ? mail.getId() : mail.getThreadRootId();
         Communication own = storePlayerText(sg, c, Channel.MAIL, text, root, tone, "Re: " + mail.getSubject());
-        toneTrust.apply(c, tone);
+        toneTrust.applyPaced(c, tone, sg.getCurrentGameTime()); // LR-M9: one pacing for every way to write
         employeeAppreciation(c);
         narration.request(sg, NarrationEventType.REPLY).from(c).playerMessage(text).thread(root)
                 .facts(NarrationFacts.builder().put("previousSubject", mail.getSubject()).build())
@@ -116,19 +112,13 @@ public class ConversationService {
         if (c.getStatus() == CharacterStatus.TERMINATED) {
             throw new BusinessRuleException("CHARACTER_GONE", "Dieser Charakter ist nicht mehr im Dorf.");
         }
-        long now = sg.getCurrentGameTime();
-        boolean pacing = c.getLastPacedMessageGameTime() != null
-                && GameTime.toDays(now - c.getLastPacedMessageGameTime()) < props.getFormulas().getMessages().getPacingCooldownDays();
         ToneClass tone = classifier.classify(text).tone();
         Channel ch = channel == null ? Channel.MAIL : channel;
         Communication own = storePlayerText(sg, c, ch, text, null, tone, ch == Channel.CALL ? "Anruf" : "Nachricht");
         if (ch == Channel.CALL) {
             own.setCallStatus(CallStatus.ACCEPTED);
         }
-        if (!pacing) {
-            toneTrust.apply(c, tone);
-            c.setLastPacedMessageGameTime(now);
-        }
+        boolean pacing = toneTrust.applyPaced(c, tone, sg.getCurrentGameTime());
         employeeAppreciation(c);
         // approaching the character resolves topics left open by a declined/missed call
         communications.findBySavegameAndCharacterOrderByIdDesc(sg, c).stream().filter(Communication::isOpenTopic)

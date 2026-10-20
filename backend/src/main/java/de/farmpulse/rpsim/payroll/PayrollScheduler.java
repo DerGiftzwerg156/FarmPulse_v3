@@ -103,11 +103,15 @@ public class PayrollScheduler {
     public void paySalaries(Savegame sg) {
         long now = sg.getCurrentGameTime();
         for (Employee emp : employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE)) {
-            if (payDue(sg, emp, now) && !emp.isSalaryOverdue()) {
-                emp.setSalaryOverdue(true);
+            // logic review LR-M8 (owner decision 2026-10-20): like the button, months left unpaid after a partial payment
+            // belong to the running overdue episode - no second malus, no second payment delay
+            boolean wasOverdue = emp.isSalaryOverdue();
+            boolean stillDue = payDue(sg, emp, now);
+            if (stillDue && !wasOverdue) {
                 satisfaction.salaryOverdue(emp);
                 delays.record(sg, PaymentDelay.SALARY, now);
             }
+            emp.setSalaryOverdue(stillDue);
         }
     }
 

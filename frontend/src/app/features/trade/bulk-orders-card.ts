@@ -10,7 +10,7 @@ import { LabelPipe } from '../../shared/format/label.pipe';
 import { Badge, BadgeVariant } from '../../shared/ui/badge';
 import { Card } from '../../shared/ui/card';
 
-const STATUS_BADGE: Record<string, BadgeVariant> = { OPEN: 'neutral', FULFILLED: 'positive', SHORTFALL: 'negative' };
+const STATUS_BADGE: Record<string, BadgeVariant> = { OPEN: 'neutral', FULFILLED: 'positive', SHORTFALL: 'negative', FAILED: 'neutral' };
 
 /**
  * Roadmap V3.2 R32-G3 / G4: the bulk orders with a delivery month in "Handel → Großaufträge" - sell point, amount,

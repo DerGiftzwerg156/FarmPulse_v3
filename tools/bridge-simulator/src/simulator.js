@@ -694,6 +694,25 @@ export class BridgeSimulator {
     return { missionLimitReached: this.missionLimitReached };
   }
 
+  /** LR-M3 like the mod's batch check: NO_CAPACITY / INSUFFICIENT_STOCK when the STORAGE_TRANSFER members of a batch
+   * (added up per fill type and direction) do not fit, else null. */
+  storageShortfall(pending) {
+    const needs = new Map();
+    for (const ins of pending) {
+      if (ins?.type !== 'STORAGE_TRANSFER') continue;
+      const key = `${ins.direction}|${ins.fillType}`;
+      const need = needs.get(key) ?? { fillType: ins.fillType, direction: ins.direction, amount: 0 };
+      need.amount += Number(ins.amount) || 0;
+      needs.set(key, need);
+    }
+    for (const need of needs.values()) {
+      const silo = this.tradeStorage?.[need.fillType];
+      if (need.direction === 'IN' && (!silo || silo.capacity - silo.amount < need.amount)) return 'NO_CAPACITY';
+      if (need.direction !== 'IN' && (!silo || silo.amount < need.amount)) return 'INSUFFICIENT_STOCK';
+    }
+    return null;
+  }
+
   /** R3-H3/H4 like the planned mod action: moves goods into / out of the own silos (also in assets.storage). */
   storageTransfer(ins) {
     const silo = this.tradeStorage?.[ins.fillType];
@@ -1597,6 +1616,13 @@ export class BridgeSimulator {
             this.log(`WARN batch not executed: INSUFFICIENT_FUNDS`);
             mark('FAILED', 'INSUFFICIENT_FUNDS');
             res.rejected += pending.length;
+          } else if (this.storageShortfall(pending)) {
+            // like the mod (logic review LR-M3): goods the silos cannot take or give refuse the whole batch before
+            // its first member runs (e.g. the contractor's HARVEST before its STORAGE_TRANSFER IN)
+            const why = this.storageShortfall(pending);
+            this.log(`WARN batch not executed: ${why}`);
+            mark('FAILED', why);
+            res.rejected += pending.length;
           } else {
             let aborted = null;
             for (const ins of pending) {
@@ -1619,15 +1645,18 @@ export class BridgeSimulator {
       }
     }
     this.collectEnded();
-    this.prune();
+    // like the mod (logic review LR-L16): ids still in the file stay, an unreadable file prunes nothing this cycle
+    if (!res.skipped) {
+      this.prune(new Set((doc?.instructions ?? []).map((ins) => ins?.instructionId).filter((id) => typeof id === 'string')));
+    }
     this.writeAck();
     this.saveSavegame();
     return res;
   }
 
-  prune() {
+  prune(inFile = new Set()) {
     const limit = this.gameTime - this.retentionGameDays * MS_PER_GAME_DAY;
-    for (const [id, e] of Object.entries(this.processed)) if (e.gameTime < limit) delete this.processed[id];
+    for (const [id, e] of Object.entries(this.processed)) if (e.gameTime < limit && !inFile.has(id)) delete this.processed[id];
     this.contractReports = this.contractReports.filter((r) => (r.endedAtGameTime ?? this.gameTime) >= limit);
   }
 

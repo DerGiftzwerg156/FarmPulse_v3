@@ -157,6 +157,17 @@ class NegotiationEngineTest {
                 .contains("AUCTION_ANNOUNCED", "AUCTION_WON");
     }
 
+    /** Logic review LR-L18: a bid after the end of the auction is refused at once, not only after the day change. */
+    @Test
+    void aBidAfterTheAuctionClosedIsRefused() {
+        Negotiation a = engine.startAuction(sg).orElseThrow();
+        sg.setCurrentGameTime(a.getClosesAtGameTime());
+        long limit = Math.round(a.getBasePrice() * 1.15) + 1;
+        assertThatThrownBy(() -> engine.placeOffer(sg, a.getId(), limit)).isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("beendet");
+        assertThat(instructions()).isEmpty();
+    }
+
     @Test
     void auctionLostAfterThreeLowBidsAndNpcBecomesOwner() {
         Negotiation a = engine.startAuction(sg).orElseThrow();

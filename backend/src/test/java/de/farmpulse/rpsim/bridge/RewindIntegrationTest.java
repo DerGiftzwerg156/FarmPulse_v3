@@ -174,6 +174,54 @@ class RewindIntegrationTest {
         assertThat(status(other)).isEqualTo(InstructionStatus.APPLIED);
     }
 
+    @Autowired LiquidityService liquidity;
+    @Autowired FactsService factsService;
+
+    /** Logic review LR-N1 (owner decision 2026-10-20): the snapshots of the discarded game time are dropped. */
+    @Test
+    void theLatestFactsAfterAReloadAreTheReloadedOnes() {
+        playAndApply(); // played until day 10 + 5 h
+        facts(10 * DAY); // reloaded the save of day 10
+        Savegame s = savegames.findById(sg.getId()).orElseThrow();
+        assertThat(factsService.latest(s).orElseThrow().gameTime()).isEqualTo(10 * DAY);
+        assertThat(liquidity.latestBalance(s)).isEqualTo(100_000);
+    }
+
+    /**
+     * Logic review LR-M11: a debit refused for lack of money in the discarded game time no longer blocks the balance
+     * after a reload without saving (T-03 waits for a newer snapshot - here it would wait until 10 d + 4 h again).
+     */
+    @Test
+    void aRefusalInTheDiscardedGameTimeDoesNotBlockTheBalance() {
+        facts(10 * DAY + 3 * HOUR);
+        OutboxInstruction debit = outboxService.money(sg, -500_000, MoneyReason.OTHER, "zu teuer",
+                OutboxService.Related.none());
+        sync.runCycle();
+        ack("{\"instructionId\":\"%s\",\"appliedAtGameTime\":%d,\"status\":\"FAILED\",\"message\":\"INSUFFICIENT_FUNDS\"}"
+                .formatted(debit.getInstructionId(), 10 * DAY + 4 * HOUR));
+        assertThat(liquidity.available(savegames.findById(sg.getId()).orElseThrow())).isZero();
+        facts(10 * DAY); // reloaded the save of day 10
+        assertThat(liquidity.available(savegames.findById(sg.getId()).orElseThrow())).isPositive();
+    }
+
+    /** Logic review LR-H1 (owner decision 2026-10-20): a lost goods deal goes again with goods and money. */
+    @Test
+    void lostGoodsDealIsResentAsAWholeBatch() {
+        facts(10 * DAY - 2 * HOUR);
+        List<OutboxInstruction> deal = outboxService.storageDeal(sg, false, "WHEAT", 10_000, 2_500, MoneyReason.GOODS_SALE,
+                "Weizen an Nachbar", OutboxService.Related.none());
+        sync.runCycle();
+        ack(applied(deal.get(0), 10 * DAY + HOUR), applied(deal.get(1), 10 * DAY + HOUR));
+        facts(10 * DAY + 5 * HOUR);
+        facts(10 * DAY); // reloaded the save of day 10
+        ack();
+        assertThat(rewind().getStatus()).isEqualTo(RewindStatus.RESENT);
+        assertThat(deal).extracting(OutboxInstruction::getType)
+                .containsExactly(de.farmpulse.rpsim.domain.InstructionType.STORAGE_TRANSFER,
+                        de.farmpulse.rpsim.domain.InstructionType.MONEY_TRANSACTION);
+        assertThat(deal).allSatisfy(o -> assertThat(status(o)).isEqualTo(InstructionStatus.PENDING));
+    }
+
     @Test
     void deepRewindAsksThePlayerAndResendsOnDecision() {
         OutboxInstruction[] ins = playAndApply();

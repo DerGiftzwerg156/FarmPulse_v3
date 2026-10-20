@@ -154,7 +154,7 @@ public class TaxService {
         if (!cfg().isEnabled() || f == null || f.calendar() == null || f.calendar().year() == null) {
             return;
         }
-        int year = f.calendar().year();
+        int year = gameTime.yearOf(sg, e.gameTime(), f.calendar().year()); // LR-M4: year of the processed month
         int period = gameTime.periodOfYear(sg, e.gameTime());
         TaxYear current = years.findBySavegameAndTaxYear(sg, year).orElseGet(() -> open(sg, year, e.gameTime()));
         if (period == 1) {

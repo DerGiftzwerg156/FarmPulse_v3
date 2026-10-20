@@ -101,4 +101,13 @@ public class ServiceCase extends SavegameScoped {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    /** Logic review LR-M10: a paid claim whose booking the mod refused waits for the player again until {@code deadline}. */
+    public void reopen(long deadline) {
+        status = CaseStatus.AWAITING_PLAYER;
+        resolution = null;
+        payoutAmount = null;
+        closedAtGameTime = null;
+        deadlineGameTime = deadline;
+    }
 }

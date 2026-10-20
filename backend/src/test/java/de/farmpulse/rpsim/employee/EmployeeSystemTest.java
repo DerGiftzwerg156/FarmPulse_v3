@@ -47,6 +47,8 @@ class EmployeeSystemTest {
     @Autowired NarrationJobRepository jobs;
     @Autowired OutboxInstructionRepository outbox;
     @Autowired SatisfactionEventRepository satisfactionEvents;
+    @Autowired de.farmpulse.rpsim.repository.PaymentDelayRepository delays;
+    @Autowired de.farmpulse.rpsim.time.GameTime gameTime;
 
     Savegame sg;
 
@@ -364,6 +366,26 @@ class EmployeeSystemTest {
         assertThat(salaryPayments()).hasSize(1);
         assertThat(satisfactionEvents.findByEmployeeOrderByGameTimeAscIdAsc(e).stream()
                 .filter(ev -> ev.getDelta() < 0).count()).isEqualTo(1); // only the malus of the overdue episode
+    }
+
+    /**
+     * Logic review LR-M8 (owner decision 2026-10-20): the automatic payment at the month change that covers only some
+     * overdue months keeps the rest overdue without a second malus - like the button.
+     */
+    @Test
+    void anAutomaticPartialPaymentGivesNoSecondMalus() {
+        Employee e = employee();
+        balance(0);
+        sg.setCurrentGameTime(e.getNextSalaryDueGameTime());
+        payroll.paySalaries(sg); // month 1 overdue: the malus of the episode
+        sg.setCurrentGameTime(e.getNextSalaryDueGameTime() + gameTime.msPerMonth(sg)); // month 2 due as well
+        balance(e.getMonthlySalary()); // money for one month only
+        payroll.paySalaries(sg);
+        assertThat(salaryPayments()).hasSize(1);
+        assertThat(e.isSalaryOverdue()).isTrue();
+        assertThat(satisfactionEvents.findByEmployeeOrderByGameTimeAscIdAsc(e).stream()
+                .filter(ev -> ev.getDelta() < 0).count()).isEqualTo(1);
+        assertThat(delays.findAll()).filteredOn(d -> d.getSavegame().getId().equals(sg.getId())).hasSize(1);
     }
 
     @Test

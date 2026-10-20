@@ -410,9 +410,13 @@ public class InvestorOfferService {
                 .filter(c -> c.getStatus() == CaseStatus.AWAITING_PLAYER && c.getExternalId() == null).findFirst();
     }
 
-    /** FS25 year of the current month (null without a calendar export). */
+    /**
+     * FS25 year of the current month (null without a calendar export). LR-M4: of the processed day while the clock
+     * catches up, not of the latest export.
+     */
     Integer currentYear(Savegame sg, FarmFacts f) {
-        return f == null || f.calendar() == null ? null : f.calendar().year();
+        Integer latest = f == null || f.calendar() == null ? null : f.calendar().year();
+        return gameTime.yearOf(sg, sg.getCurrentGameTime(), latest);
     }
 
     /** Month index of period 1 of the next FS25 year. */

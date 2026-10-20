@@ -29,6 +29,7 @@ import de.farmpulse.rpsim.domain.Negotiation;
 import de.farmpulse.rpsim.domain.NegotiationDirection;
 import de.farmpulse.rpsim.domain.NegotiationKind;
 import de.farmpulse.rpsim.domain.NegotiationStatus;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.VehicleDeal;
 import de.farmpulse.rpsim.narration.NarrationEventType;
@@ -83,12 +84,16 @@ public class VehicleTradeService {
 
     /** Roadmap V3.1 R31-A2: borrowed and demo machines cannot be sold. */
     private final de.farmpulse.rpsim.farmwork.LoanedVehicles loaned;
+    /** Logic review LR-L14: a funded machine sold to a neighbour counts as sold for the investment grant. */
+    private final de.farmpulse.rpsim.authority.InvestmentGrantService grants;
 
     public VehicleTradeService(VehicleDealRepository deals, NegotiationRepository negotiations, NegotiationEngine engine,
                                OutboxInstructionRepository instructions, SavegameRepository savegames,
                                CharacterRepository characters, FactsService facts, OutboxService outbox,
                                ServiceRoleService roles, CharacterLookup lookup, NarrationRequestService narration,
-                               DiaryService diary, RandomSource random, RpsimProperties props, de.farmpulse.rpsim.farmwork.LoanedVehicles loaned) {
+                               DiaryService diary, RandomSource random, RpsimProperties props, de.farmpulse.rpsim.farmwork.LoanedVehicles loaned,
+                               de.farmpulse.rpsim.authority.InvestmentGrantService grants) {
+        this.grants = grants;
         this.loaned = loaned;
         this.deals = deals;
         this.negotiations = negotiations;
@@ -357,6 +362,8 @@ public class VehicleTradeService {
         diary.addAuto(sg, "NEGOTIATION", d.getVehicleName() + " verkauft", "An "
                 + (d.getCharacter() == null ? "einen Nachbarn" : d.getCharacter().getName()) + " für "
                 + d.getFinalPrice() + " €.", RELATED, d.getId());
+        // LR-L14 (owner decision 2026-10-20): like a trade-in at the dealer - repaid pro rata in the binding period
+        grants.onTradeIn(sg, d.getVehicleId() == null ? List.of() : List.of(d.getVehicleId()), sg.getCurrentGameTime());
         gossip(sg, d);
     }
 
@@ -428,7 +435,8 @@ public class VehicleTradeService {
     }
 
     private void hint(Savegame sg, VehicleDeal d, String text) {
-        outbox.notification(sg, text, "WARNING", sg.getCurrentGameTime() + GameTime.days(cfg().getNotificationDays()),
+        outbox.notification(sg, text, NotificationLevel.CRITICAL,
+                sg.getCurrentGameTime() + GameTime.days(cfg().getNotificationDays()),
                 new Related(RELATED, d.getId()));
     }
 

@@ -129,6 +129,35 @@ class VillageSystemTest {
         assertThat(trust.getCurrentTrust(newcomer)).isPositive();
     }
 
+    @Autowired de.farmpulse.rpsim.repository.ContractRepository contracts;
+    @Autowired de.farmpulse.rpsim.config.RpsimProperties props;
+
+    /** Logic review LR-L20 (owner decision 2026-10-20): a lessor of a running lease does not move away. */
+    @Test
+    void aLessorWithARunningLeaseIsNeverRotated() {
+        Character lessor = lookup.activeDynamic(sg).get(0);
+        de.farmpulse.rpsim.domain.Contract lease = new de.farmpulse.rpsim.domain.Contract();
+        lease.setSavegame(sg);
+        lease.setKind(de.farmpulse.rpsim.domain.ContractKind.LEASE);
+        lease.setStatus(de.farmpulse.rpsim.domain.ContractStatus.ACTIVE);
+        lease.setCharacter(lessor);
+        lease.setMonthlyAmount(300);
+        lease.setCreatedAt(java.time.Instant.now());
+        contracts.save(lease);
+        var cfg = props.getFormulas().getRotation();
+        double share = cfg.getMoveAwayShare();
+        cfg.setMoveAwayShare(1); // every rotation step is a departure while enough characters live in the village
+        try {
+            for (int i = 0; i < 10; i++) {
+                sg.setDynamicRotationsThisYear(0);
+                rotation.rotate(sg);
+            }
+        } finally {
+            cfg.setMoveAwayShare(share);
+        }
+        assertThat(lessor.getStatus()).isEqualTo(CharacterStatus.ACTIVE); // without the rule the lessor moves away
+    }
+
     @Test
     void mandatoryAndEmployeesAreNeverRotated() {
         Character bank = fx.bank(sg);

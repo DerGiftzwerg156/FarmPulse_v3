@@ -21,6 +21,7 @@ import de.farmpulse.rpsim.domain.InstructionStatus;
 import de.farmpulse.rpsim.domain.InstructionType;
 import de.farmpulse.rpsim.domain.MachineLoan;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.OutboxInstruction;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.TrustReason;
@@ -363,7 +364,8 @@ public class DealerDemoService {
     }
 
     private void hint(Savegame sg, MachineLoan l, String text) {
-        outbox.notification(sg, text, "WARNING", sg.getCurrentGameTime() + GameTime.days(1), new Related(RELATED, l.getId()));
+        outbox.notification(sg, text, NotificationLevel.CRITICAL, sg.getCurrentGameTime() + GameTime.days(1),
+                new Related(RELATED, l.getId()));
     }
 
     // ------------------------------------------------------------------------------------------ view

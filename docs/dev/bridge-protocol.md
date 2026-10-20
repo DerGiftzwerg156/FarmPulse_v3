@@ -49,7 +49,8 @@ placeables of the savegame do not exist earlier). The first export writes `marke
 - `liabilities.leasing`: leased vehicles (`VehiclePropertyState.LEASED`). `costPerPeriod` (per FS25 period) is
   optional and currently not exported - there is no verified FS25 API for per-vehicle leasing costs yet (manual
   test plan). The backend counts known costs as an obligation in the credit check. Roadmap V2 R2-B3: with a booking
-  journal the real `LEASING_COSTS` per month (sum of all vehicles) replace this estimate.
+  journal the real `LEASING_COSTS` per month (sum of all vehicles) replace this estimate. Logic review LR-M6 (owner
+  decision 2026-10-20): leasing counts as an installment only - the operating cash flow of the check gets it added back.
 - `liabilities.vanillaLoan`: the loan of the game's finance menu (`farm.loan`). Roadmap V2 R2-D1: the backend compares
   `remainingAmount` with the last export - an increase is a new vanilla loan (the bank reacts), a decrease a
   repayment; a rewound game time only moves the reference point.
@@ -820,7 +821,7 @@ optional `savegameId`.
 | --- | --- |
 | `MONEY_TRANSACTION` | `amount` (signed), `reason` ∈ `CREDIT_DISBURSEMENT, CREDIT_INSTALLMENT, CREDIT_PENALTY, CREDIT_CALLBACK, SALARY_PAYMENT, EMPLOYEE_EFFECT, SUBSIDY, STARTING_CAPITAL_ADJUSTMENT, FARMLAND_PURCHASE, FARMLAND_SALE, OTHER`, since TODO T-20/T-22 also `INSURANCE_PREMIUM, INSURANCE_PAYOUT, DAMAGE, WILDLIFE_COMPENSATION, VET_INVOICE, LIVESTOCK_PREMIUM, LEASE_PAYMENT, MAINTENANCE_FEE`, since Roadmap V2 (R2-Q1) also `TAX_PAYMENT, TAX_REFUND, FINE, FAMILY, SPONSORING, COMPENSATION`, since the Sondertilgung also `CREDIT_SPECIAL_REPAYMENT, CREDIT_PREPAYMENT_FEE` (the fee is sent in the same batch as the repayment; an older mod rejects the unknown reason and the backend reverses the Sondertilgung), since the "Schulungen" also `TRAINING` (a refused booking cancels the training), since Roadmap V3 (R3-Q1) also `LEASE_INCOME` (R3-L1), `GOODS_PURCHASE`, `GOODS_SALE` (R3-H3/H4, R3-M3), `VEHICLE_PURCHASE`, `VEHICLE_SALE` (R3-V2/V3) and `CONTRACT_PENALTY` (R3-M2), since Roadmap V3.1 (R31-Q1) also `CONTRACTOR_FEE` (R31-A1), `MACHINE_RENT` (A2), `LIVESTOCK_PURCHASE`, `LIVESTOCK_SALE` (A3), `WINTER_SERVICE` (A4), `DIRECT_PAYMENT` (B1), `INVESTMENT_GRANT` (B2), `SOCIAL_INSURANCE` (B5), `GUEST_INCOME` (D6), `COOP_SHARES` and `COOP_DIVIDEND` (D7), since R31-D also `FARM_HOLIDAY_SETUP` (D6) and `TANK_LOCK` (D8), since the owner decisions 2026-10-06 also `SEVERANCE` (severance when a hiring is cancelled before the first working day), since Roadmap V3.2 (R32-Q1) also `INVESTOR_CAPITAL` (R32-I2), `INVESTOR_REPAYMENT` (I4/I5), `INVESTOR_PAYOUT` (I3) and `INVESTOR_COMPENSATION` (I4), since the overdraft (owner decisions 2026-10-14) also `OVERDRAFT_INTEREST` (an older mod rejects it, the interest of that month is then not booked), since the vehicle dealer (RFH-Q4) also `VEHICLE_DEPOSIT`, `VEHICLE_NEW_PURCHASE`, `VEHICLE_DELIVERY_FEE`, `VEHICLE_EXPRESS_FEE`, `VEHICLE_REFUND` and `VEHICLE_CANCELLATION_FEE`; `note`. Overdraft (owner decisions 2026-10-14): optional `minBalance` (number ≤ 0, only on debits while the overdraft is on) = the lowest balance the debit may leave, without it 0; optional `ignoreFunds` (boolean, only `OVERDRAFT_INTEREST`) = booked without funds check, even beyond the limit. An older mod ignores both fields and keeps refusing debits below 0. Each reason has its booking title `rpsim_money_<REASON>` in `modDesc.xml` |
 | `PRICE_EVENT` / `MULTIPLIER` | `fillType`, `sellPoint`, `peakMultiplier`, `rampUpHours`, `holdHours`, `decayHours` (start = `gameTimeEarliest` or time of application) |
-| `PRICE_EVENT` / `FIXED` | `fillType`, `sellPoint`, `fixedPrice` (per 1000 l), `maxQuantity` (l), `deadlineGameTime`; precedence over `MULTIPLIER` for the same sell point/fill type. Roadmap V3 R3-M2: a forward contract sends it with `gameTimeEarliest` = start of the delivery month and `deadlineGameTime` = its end; the backend allows only one fixed price per sell point and fill type at a time. Roadmap V3.2 R32-G3: a bulk order with a delivery month sends it the same way (`maxQuantity` = the whole order); a month in which the pair already carries a fixed price cannot be chosen. "Tage je Periode" changed (owner decision 2026-10-08): while the instruction is still pending (the mod waits for `gameTimeEarliest`), the backend moves `gameTimeEarliest` and `deadlineGameTime` to the new month boundaries (`OutboxService.reschedulePending`; the file is rebuilt from the pending instructions in every cycle) - for bulk orders and forward contracts; once the mod has it, it keeps its end |
+| `PRICE_EVENT` / `FIXED` | `fillType`, `sellPoint`, `fixedPrice` (per 1000 l), `maxQuantity` (l), `deadlineGameTime`; precedence over `MULTIPLIER` for the same sell point/fill type. Roadmap V3 R3-M2: a forward contract sends it with `gameTimeEarliest` = start of the delivery month and `deadlineGameTime` = its end; the backend allows only one fixed price per sell point and fill type at a time. Roadmap V3.2 R32-G3: a bulk order with a delivery month sends it the same way (`maxQuantity` = the whole order); a month in which the pair already carries a fixed price cannot be chosen. "Tage je Periode" changed (owner decision 2026-10-08): while the instruction is still pending (the mod waits for `gameTimeEarliest`), the backend moves `gameTimeEarliest` and `deadlineGameTime` to the new month boundaries (`OutboxService.reschedulePending`; the file is rebuilt from the pending instructions in every cycle) - for bulk orders and forward contracts; once the mod has it, it keeps its end. Logic review LR-L19/LR-N2 (owner decisions 2026-10-20): a refused `FIXED` instruction ends the forward contract and the bulk order as `FAILED` (no penalty; the bulk order's month notice gets an `expiresAtGameTime` in the past) and an accepted special offer as `ENDED` |
 | `FARMLAND_TRANSFER` | `farmlandId`, `direction` ∈ `TO_PLAYER, FROM_PLAYER`, `price` (reference only). Without money (no batch) for the lease of an NPC field (TODO T-22) and - Roadmap V3 R3-L1 - the lease-out of an own field: `FROM_PLAYER` at the start (the game farms it as NPC field), `TO_PLAYER` at the end |
 | `REPAIR_VEHICLE` (TODO T-22) | `vehicleId` (uniqueId of an own vehicle), optional `targetDamage` (0..1, R2-A6, default `0`). The mod calls `Wearable:setDamageAmount(min(targetDamage, getDamageAmount()), true)` - the damage part of the game's `repairVehicle()` without its repair booking (the maintenance contract pays); a repair never raises the damage. `FAILED` with `VEHICLE_NOT_FOUND`, `NOT_OWN_VEHICLE` or `NOT_WEARABLE`. Not re-sent after a rewind (the next monthly service repairs again). Sent with `targetDamage` by the maintenance contract and, since R2-A6, by an employed mechanic (partial repair up to the mechanic's monthly capacity). |
 | `NOTIFICATION` (TODO T-21) | `text` (German, ≤ 120 characters), optional `level` ∈ `INFO, OK, CRITICAL` (`FSBaseMission.INGAME_NOTIFICATION_*`), optional `expiresAtGameTime`; Roadmap V3.2 R32-G3: the hint of a bulk order's delivery month carries `gameTimeEarliest` = start of the month (moved with it while pending). Shown with `g_currentMission:addIngameNotification`; processed after `expiresAtGameTime` it is acknowledged `APPLIED` with `message: "EXPIRED"` and not shown. Never re-sent after a reload without saving, a failure creates no notice. |
@@ -901,8 +902,14 @@ savegame), so it survives saving and loading; the backend stores it as `outbox_i
 or `message` = `INSUFFICIENT_FUNDS` when the debits of the batch would push the farm balance below its floor - the
 whole batch is then not executed). The floor is 0 (T-03); overdraft (owner decisions 2026-10-14): the highest
 `minBalance` of the debits of the batch (a debit without it = 0). Bookings with `ignoreFunds` stay out of the check.
+Logic review LR-M3: the same check covers the goods - the `STORAGE_TRANSFER` members of a batch (added up per fill
+type and direction, measured like `transferStorage` with `getFreeCapacity` / `getFillLevel` of the own silos) must fit,
+otherwise the whole batch is `FAILED` with `NO_CAPACITY` / `INSUFFICIENT_STOCK` (`UNKNOWN_FILLTYPE`) before its first
+member runs; a contractor harvest no longer cuts the field when its yield has no room.
 `endReason` ∈ `DEADLINE_REACHED`, `MAX_QUANTITY_REACHED`. The file always contains every instruction still
-inside the retention window (default 30 game days), so a missed file version never loses information.
+inside the retention window (default 30 game days), so a missed file version never loses information. Logic review
+LR-L16: an entry whose instruction is still in the current `instructions.xml` is kept beyond the window (and an
+unreadable file prunes nothing), so a stale file of a backend that is not running never executes it again.
 Whether an instruction was executed is decided solely by the mod's persisted `processedInstructions` list.
 
 ## Backend reactions
@@ -910,7 +917,10 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
 - **FAILED / REJECTED acks** (`FailedInstructionService`): loan installment → reversed and due again (escalation
   ladder), penalty → next escalation stage, call-back → loan `DEFAULTED` (collected as soon as liquidity allows),
   salary → stays due (salary delay logic), farmland deal → negotiation `FAILED`, ownership back to the previous
-  owner. Every refused instruction raises a dashboard notice. Roadmap V3 (R3-Q1): a refused `STORAGE_TRANSFER`,
+  owner. Logic review LR-M10 (owner decisions 2026-10-20): a refused `COMPENSATION` of a bypass or crop damage claim
+  puts the claim back to "waiting for the player" with a new decision time, refused `COOP_SHARES` take the shares
+  back, a `DAMAGE` refused with `INSUFFICIENT_FUNDS` is booked again by `DamageDebitService` as soon as the liquidity
+  covers it (same case, same note). Every refused instruction raises a dashboard notice. Roadmap V3 (R3-Q1): a refused `STORAGE_TRANSFER`,
   `MISSION_CREATE`, `VEHICLE_SPAWN` or `VEHICLE_REMOVE` with `unknown type …` or `NOT_SUPPORTED` sets
   `modOutdated = true` in the notice, which then says "Mod aktualisieren"; the money part of such a batch is reported
   together with its instruction (one notice per deal). Cancelling the deal itself is part of each feature. Roadmap V3.1
@@ -919,7 +929,9 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   (the notice names `husbandryUniqueId`, `fillType` and `amount`); a missing `HUSBANDRY_TRANSFER` is sent again
   after a rewind since R32-I3 (owner decision 2026-10-08, see below). Roadmap vehicle dealer (RFH-Q3): the same for
   `VEHICLE_DELIVERY`. After an `INSUFFICIENT_FUNDS` ack the snapshot
-  balance is not trusted until a newer `farm_facts.json` arrived. Overdraft (owner decisions 2026-10-14): while it is
+  balance is not trusted until a newer `farm_facts.json` arrived; logic review LR-M11: a refusal acknowledged before a
+  detected rewind to an earlier game time (`outbox_instruction.acked_at` before `bridge_rewind.created_at`) no longer
+  counts. Overdraft (owner decisions 2026-10-14): while it is
   on, `LiquidityService.available` adds the limit to the balance, so every payment check of the backend allows the
   balance down to `-limit`, and every debit carries `minBalance = -limit` (`OutboxService`).
 - **Field book** (Roadmap V3.3 R33-F, `FieldBookService`): every `farm_facts` export first opens a running season
@@ -960,6 +972,11 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   `STORAGE_TRANSFER IN`), so the work and its payment happen again as one unit (owner decision). Roadmap V3.2 R32-I3 (owner
   decision 2026-10-08): the deliveries to an investor go again too - a missing `HUSBANDRY_TRANSFER`, an `ANIMAL_TRANSFER`
   without money (A1) and a `STORAGE_TRANSFER` of a W1 / W2 delivery (`relatedEntityType` `INVESTOR_DELIVERY`); the
-  backend counts a delivery only once, with its first ack. Rewinds up to
+  backend counts a delivery only once, with its first ack. Logic review LR-H1 (owner decision 2026-10-20): a goods
+  deal (`STORAGE_TRANSFER` + `MONEY_TRANSACTION` of one batch: neighbour trade, farm shop, bulk order, P2 purchase)
+  goes back as a whole batch, never only its money; the deal counts once (its case is closed with the first ack).
+  Rewinds up to
   `rpsim.bridge.rewind-auto-resend-max-hours` are handled automatically, deeper ones wait for the player's decision
-  on the dashboard. All other tool state (mails, trust, negotiations) is not rolled back.
+  on the dashboard. Logic review LR-N1 (owner decision 2026-10-20): the `farm_facts` snapshots after the reloaded game
+  time are dropped, so the latest facts are the reloaded ones. All other tool state (mails, trust, negotiations) is not
+  rolled back.

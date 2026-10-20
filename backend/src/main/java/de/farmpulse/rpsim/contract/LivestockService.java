@@ -36,6 +36,7 @@ import de.farmpulse.rpsim.narration.NarrationRequestService;
 import de.farmpulse.rpsim.repository.EmployeeRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
@@ -402,7 +403,11 @@ public class LivestockService {
         return sc;
     }
 
-    /** Animals moved in the agreed direction since the offer was accepted. */
+    /**
+     * Animals moved in the agreed direction since the offer was accepted. Logic review LR-L21 (owner decision
+     * 2026-10-20): deliberately measured as the change of the exported head count (no verified mod API when T-20 was
+     * built), so births (buying) and deaths (selling) within the open offer count as well - capped by the agreed quantity.
+     */
     static int moved(ServiceCase sc, int currentCount) {
         int base = sc.getBaselineCount() == null ? 0 : sc.getBaselineCount();
         int diff = "SELL".equals(sc.getDirection()) ? base - currentCount : currentCount - base;
@@ -467,5 +472,21 @@ public class LivestockService {
 
     private static long round10(double v) {
         return Math.round(v / 10.0) * 10;
+    }
+
+    /**
+     * T-08 / logic review LR-M5: "days per period" changed - the deadline of an accepted trader deal
+     * (trader-deadline-months) keeps its month; the answer deadline of an offer is in game days and stays.
+     */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            for (ServiceCase sc : cases.findBySavegameAndStatusOrderByIdAsc(sg, CaseStatus.IN_PROGRESS)) {
+                if (sc.getKind() == CaseKind.LIVESTOCK_OFFER) {
+                    sc.setDeadlineGameTime(ev.remap(sc.getDeadlineGameTime()));
+                }
+            }
+        });
     }
 }

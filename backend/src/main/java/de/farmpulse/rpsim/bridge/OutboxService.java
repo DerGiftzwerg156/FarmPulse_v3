@@ -9,6 +9,7 @@ import java.util.UUID;
 import de.farmpulse.rpsim.domain.InstructionStatus;
 import de.farmpulse.rpsim.domain.InstructionType;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.OutboxInstruction;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
@@ -395,16 +396,17 @@ public class OutboxService {
      * TODO T-21: in-game notification ({@code g_currentMission:addIngameNotification}). The mod skips it without
      * showing when the game time is past {@code expiresAtGameTime} (e.g. processed late after loading a savegame).
      */
-    public OutboxInstruction notification(Savegame sg, String text, String level, long expiresAtGameTime, Related related) {
+    public OutboxInstruction notification(Savegame sg, String text, NotificationLevel level, long expiresAtGameTime,
+                                          Related related) {
         return notification(sg, text, level, expiresAtGameTime, null, related);
     }
 
     /** Roadmap V3.2 R32-G3: the same, shown not before {@code gameTimeEarliest} (e.g. the start of a delivery month). */
-    public OutboxInstruction notification(Savegame sg, String text, String level, long expiresAtGameTime,
+    public OutboxInstruction notification(Savegame sg, String text, NotificationLevel level, long expiresAtGameTime,
                                           Long gameTimeEarliest, Related related) {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("text", text);
-        p.put("level", level);
+        p.put("level", level.name());
         p.put("expiresAtGameTime", expiresAtGameTime);
         return enqueue(sg, InstructionType.NOTIFICATION, p, null, gameTimeEarliest, related);
     }

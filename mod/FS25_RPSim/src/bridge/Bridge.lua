@@ -494,11 +494,19 @@ function RPSimBridge:pollInstructions()
     local gameTime = self.adapter:getGameTime()
     local text = RPSimFileIO.readPayload(self.paths.instructions)
     local result
+    -- LR-L16: ids still in the instructions file are not pruned; an unreadable file prunes nothing this cycle
+    local inFile, unreadable = {}, false
     if text ~= nil and text ~= "" then
         local doc, err = RPSimInstructions.parseDocument(text)
         if doc == nil then
+            unreadable = true
             RPSimLog.warning("Skipping unreadable instructions (retry next cycle): %s", tostring(err))
         else
+            for _, ins in ipairs(type(doc.instructions) == "table" and doc.instructions or {}) do
+                if type(ins) == "table" and type(ins.instructionId) == "string" then
+                    inFile[ins.instructionId] = true
+                end
+            end
             local adapter = self.adapter
             result = RPSimProcessor.process(self.state, doc, {
                 savegameId = self.state.savegameId,
@@ -566,7 +574,9 @@ function RPSimBridge:pollInstructions()
         end
     end
     RPSimProcessor.collectContractReports(self.state, gameTime)
-    RPSimProcessor.prune(self.state, gameTime, self.cfg.processedRetentionGameDays)
+    if not unreadable then
+        RPSimProcessor.prune(self.state, gameTime, self.cfg.processedRetentionGameDays, inFile)
+    end
     RPSimPrompts.prune(self.state.prompts, gameTime)
     self:writeAck()
     return result

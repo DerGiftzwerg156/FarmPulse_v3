@@ -928,7 +928,9 @@ public class CropPlanService {
             return;
         }
         FarmFacts f = facts.latest(sg).orElse(null);
-        Integer year = f != null && f.calendar() != null ? f.calendar().year() : null;
+        // LR-M4: the year of the processed month, not of the latest export
+        Integer year = gameTime.yearOf(sg, sg.getCurrentGameTime(),
+                f != null && f.calendar() != null ? f.calendar().year() : null);
         if (year == null) {
             return;
         }

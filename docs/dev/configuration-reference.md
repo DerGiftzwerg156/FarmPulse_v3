@@ -445,7 +445,7 @@ period is assumed (FS25 default).
 
 | Key | Default | Meaning | Concept |
 | --- | --- | --- | --- |
-| `rpsim.formulas.messages.pacing-cooldown-days` | `1` | Pacing: per character only one proactive message per n game days counts for trust (the answer always comes). | Proaktive Nachricht |
+| `rpsim.formulas.messages.pacing-cooldown-days` | `1` | Pacing: per character only one player message per n game days counts for trust (the answer always comes) - shared by "Nachricht verfassen", replies to mails and sentences in a call (logic review LR-M9). | Proaktive Nachricht |
 
 ## `rpsim.formulas.tone`
 
@@ -550,7 +550,7 @@ exported head count changed in the agreed direction. Vet invoices are booked as 
 | `rpsim.formulas.livestock.trader-premium-share-min` | `0.05` | Premium per animal as share of the exported value per animal (lower bound, rounded to 10 €, at least 10 €). | TODO T-20 |
 | `rpsim.formulas.livestock.trader-premium-share-max` | `0.12` | Upper bound. | TODO T-20 |
 | `rpsim.formulas.livestock.trader-answer-days` | `5` | Game days to answer an offer, afterwards it expires. | TODO T-20 |
-| `rpsim.formulas.livestock.trader-deadline-months` | `1` | Game months to carry out an accepted offer in the game; afterwards moved animals are paid (partial) or the offer lapses. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-deadline-months` | `1` | Game months to carry out an accepted offer in the game; afterwards moved animals are paid (partial) or the offer lapses. The moved animals are the change of the exported head count, so births and deaths within the offer count too (logic review LR-L21, owner decision: as designed). | TODO T-20 |
 | `rpsim.formulas.livestock.breeding-advice-every-months` | `6` | Advice of the breeding advisor every n game months per animal type (head count development since the last advice). | TODO T-20 |
 | `rpsim.formulas.livestock.vet-emergency-health-threshold` | `40` | Roadmap V2 R2-A7: a husbandry below this health (0..100, `farm_facts.husbandries`) brings the vet for an emergency visit. | Roadmap V2 R2-A7 |
 | `rpsim.formulas.livestock.vet-emergency-factor` | `2.5` | Invoice of the emergency visit = routine invoice (base fee + fee per animal) × factor (`VET_INVOICE`). | Roadmap V2 R2-A7 |
@@ -1132,7 +1132,7 @@ estimated from the tax estimate of the running year) and the income as a marked 
 | --- | --- | --- | --- |
 | `rpsim.formulas.liquidity-plan.horizon-months` | `12` | FS25 months the plan shows. | Roadmap V3 R3-K2 |
 | `rpsim.formulas.liquidity-plan.reserve-factor` | `1.0` | Liquidity reserve of a month = its known fixed postings (salaries, installments, contracts, retirement) × factor; the plan warns when the balance falls below it. | Roadmap V3 R3-K2 |
-| `rpsim.formulas.liquidity-plan.known-posting-categories` | `RPSIM_SALARY_PAYMENT`, `RPSIM_TAX_PAYMENT`, `RPSIM_INSURANCE_PREMIUM`, `RPSIM_MAINTENANCE_FEE`, `RPSIM_LEASE_PAYMENT`, `RPSIM_FAMILY` | Journal categories the plan lists as known postings; the income estimate (operating result of the same month of the previous year, else the average of the complete months) adds them back so they do not count twice. The tax advisor fee is booked as `OTHER` and cannot be separated. | Roadmap V3 R3-K2 |
+| `rpsim.formulas.liquidity-plan.known-posting-categories` | `RPSIM_SALARY_PAYMENT`, `RPSIM_TAX_PAYMENT`, `RPSIM_INSURANCE_PREMIUM`, `RPSIM_MAINTENANCE_FEE`, `RPSIM_LEASE_PAYMENT`, `RPSIM_LEASE_INCOME`, `RPSIM_FAMILY` | Journal categories the plan lists as known postings; the income estimate (operating result of the same month of the previous year, else the average of the complete months) adds them back so they do not count twice (`RPSIM_LEASE_INCOME`, the rent of a leased-out field: logic review LR-M7). The tax advisor fee is booked as `OTHER` and cannot be separated. | Roadmap V3 R3-K2 |
 | `rpsim.formulas.liquidity-plan.advisor-warning-enabled` | `true` | The bank advisor writes ahead of a shortfall. | Roadmap V3 R3-K2 |
 | `rpsim.formulas.liquidity-plan.advisor-warning-months` | `3` | Checked at every month start: the advisor writes once when the balance falls below zero within this many months (again only after that month has passed or the plan has recovered). | Roadmap V3 R3-K2 |
 

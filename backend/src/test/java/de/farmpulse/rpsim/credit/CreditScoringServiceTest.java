@@ -67,6 +67,20 @@ class CreditScoringServiceTest {
         assertThat(scoring.inputs(sg, 10_000, 12, 0.05).existingMonthlyInstallments()).isZero();
     }
 
+    /** Logic review LR-M6: without a journal the balance trend contains the leasing the game paid - added back. */
+    @Test
+    void leasingIsAddedBackToTheBalanceTrend() {
+        String leasing = " \"leasing\": [{ \"uniqueId\": \"veh_1\", \"costPerPeriod\": 1200 }]";
+        java.util.function.LongFunction<String> withLeasing = t -> TestData.farmFacts(sg.getBridgeSavegameId(), t,
+                t == now ? 110_000 : 100_000).replace("\"vanillaLoan\": { \"active\": true, \"remainingAmount\": 80000 }",
+                "\"vanillaLoan\": { \"active\": true, \"remainingAmount\": 80000 }," + leasing);
+        fx.snapshot(sg, now - GameTime.days(2), 100_000, withLeasing.apply(now - GameTime.days(2)));
+        fx.snapshot(sg, now, 110_000, withLeasing.apply(now));
+        CreditFormula.Inputs in = scoring.inputs(sg, 10_000, 12, 0.05);
+        assertThat(in.monthlyOperatingCashflow()).isCloseTo(5_000 + 1_200, within(1e-6));
+        assertThat(in.existingMonthlyInstallments()).isCloseTo(1_200, within(1e-6));
+    }
+
     /**
      * Roadmap V2 R2-B2 / R2-B3 (acceptance B): with the booking journal the cash flow comes from the complete months;
      * a machine/property purchase does not lower it, and the real leasing costs replace the estimate.
@@ -82,8 +96,9 @@ class CreditScoringServiceTest {
         fx.snapshot(sg, now, 200_000, TestData.farmFactsWithJournal(sg.getBridgeSavegameId(), now, 200_000, 1, 10, periods));
         CreditFormula.Inputs in = scoring.inputs(sg, 10_000, 12, 0.05);
         assertThat(in.hasCashflowHistory()).isTrue();
-        // V1 would see -300,000 over 2 days; the journal gives (14,000 + 14,000) / 2
-        assertThat(in.monthlyOperatingCashflow()).isCloseTo(14_000, within(1e-6));
+        // V1 would see -300,000 over 2 days; the journal gives (14,000 + 14,000) / 2 - logic review LR-M6 (owner
+        // decision 2026-10-20): the 2,000 leasing costs count as an installment only, so they are added back
+        assertThat(in.monthlyOperatingCashflow()).isCloseTo(16_000, within(1e-6));
         assertThat(in.existingMonthlyInstallments()).isCloseTo(2_000, within(1e-6));
     }
 

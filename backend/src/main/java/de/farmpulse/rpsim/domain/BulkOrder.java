@@ -22,6 +22,8 @@ public class BulkOrder extends SavegameScoped {
     public static final String OPEN = "OPEN";
     public static final String FULFILLED = "FULFILLED";
     public static final String SHORTFALL = "SHORTFALL";
+    /** Logic review LR-N2: the game refused the fixed price (PRICE_EVENT) - no order, no penalty. */
+    public static final String FAILED = "FAILED";
 
     /** The request (service case BULK_ORDER) the order was agreed on. */
     @Column(name = "case_id", nullable = false)

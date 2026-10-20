@@ -40,6 +40,7 @@ import de.farmpulse.rpsim.domain.MarketEvent;
 import de.farmpulse.rpsim.domain.MarketEventStatus;
 import de.farmpulse.rpsim.domain.MarketEventType;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
 import de.farmpulse.rpsim.domain.TerminationReason;
@@ -466,8 +467,8 @@ public class BulkOrderService {
         Related related = new Related(ORDER_RELATED, o.getId());
         o.setInstructionId(outbox.priceFixed(sg, o.getFillType(), o.getSellPoint(), o.getFixedPrice(), o.getQuantity(),
                 o.getDeadlineGameTime(), o.getDeliveryStartGameTime(), related).getInstructionId());
-        o.setNoticeInstructionId(outbox.notification(sg, noticeText(sc), "INFO", o.getDeadlineGameTime(),
-                o.getDeliveryStartGameTime(), related).getInstructionId());
+        o.setNoticeInstructionId(outbox.notification(sg, noticeText(sc), NotificationLevel.INFO,
+                o.getDeadlineGameTime(), o.getDeliveryStartGameTime(), related).getInstructionId());
         close(sc, CaseStatus.SETTLED, "TERM_AGREED");
         diary.addAuto(sg, "TRADE", "Großauftrag vereinbart", liters(o.getQuantity()) + " l "
                 + labels.label(o.getFillType()) + " an " + sc.getTitle() + " zu " + o.getFixedPrice()
@@ -514,6 +515,29 @@ public class BulkOrderService {
         Set<String> s = new HashSet<>();
         orders.findBySavegameAndStatus(sg, BulkOrder.OPEN).forEach(o -> s.add(o.getSellPoint() + "|" + o.getFillType()));
         return s;
+    }
+
+    /**
+     * FailedInstructionService, logic review LR-N2 (owner decision 2026-10-20, like LR-L19): the game refused the fixed
+     * price of the delivery month - the order did not come about (FAILED, no penalty, no trust loss), the buyer leaves as
+     * after a delivery, and the pending in-game hint expires unseen (the mod skips an expired NOTIFICATION).
+     */
+    @Transactional
+    public boolean onPriceFailed(Long orderId) {
+        BulkOrder o = orders.findById(orderId).orElse(null);
+        if (o == null || !BulkOrder.OPEN.equals(o.getStatus())) {
+            return false;
+        }
+        Savegame sg = o.getSavegame();
+        o.setStatus(BulkOrder.FAILED);
+        o.setEndReason("FAILED");
+        outbox.reschedulePending(o.getNoticeInstructionId(), null,
+                Map.of("expiresAtGameTime", sg.getCurrentGameTime() - 1));
+        diary.addAuto(sg, "TRADE", "Großauftrag nicht zustande gekommen", liters(o.getQuantity()) + " l "
+                + labels.label(o.getFillType()) + " an " + sellPointName(sg, o.getSellPoint())
+                + ": das Spiel hat den Festpreis nicht übernommen.", ORDER_RELATED, o.getId());
+        retire(o.getCharacter());
+        return true;
     }
 
     // ------------------------------------------------------------------------------------------ G4 settlement

@@ -10,6 +10,7 @@ import java.util.Optional;
 import de.farmpulse.rpsim.bridge.BridgeDtos.FarmFacts;
 import de.farmpulse.rpsim.bridge.BridgeEvents;
 import de.farmpulse.rpsim.bridge.FactsService;
+import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.bridge.OutboxService;
 import de.farmpulse.rpsim.bridge.OutboxService.Related;
 import de.farmpulse.rpsim.character.CharacterLookup;
@@ -78,11 +79,14 @@ public class VanillaBypassService {
     private final RandomSource random;
     private final RpsimProperties props;
 
+    private final LiquidityService liquidity;
+
     public VanillaBypassService(SavegameRepository savegames, FactsService facts, CharacterLookup lookup,
                                 CharacterRepository characters, ServiceCaseRepository cases,
                                 NarrationRequestService narration, TrustScoreService trust,
                                 PublicActionService publicActions, DiaryService diary, OutboxService outbox,
-                                RandomSource random, RpsimProperties props) {
+                                RandomSource random, RpsimProperties props, LiquidityService liquidity) {
+        this.liquidity = liquidity;
         this.savegames = savegames;
         this.facts = facts;
         this.lookup = lookup;
@@ -308,6 +312,9 @@ public class VanillaBypassService {
     @Transactional
     public ServiceCase pay(Savegame sg, Long caseId) {
         ServiceCase sc = openClaim(sg, caseId);
+        if (liquidity.available(sg) < sc.getOfferAmount()) { // LR-M10: like the other pay buttons
+            throw new BusinessRuleException("INSUFFICIENT_FUNDS", "Der Kontostand reicht für diesen Ausgleich nicht.");
+        }
         sc.setStatus(CaseStatus.SETTLED);
         sc.setResolution("PAID");
         sc.setPayoutAmount(sc.getOfferAmount());
@@ -321,6 +328,25 @@ public class VanillaBypassService {
         diary.addAuto(sg, "NEGOTIATION", "Ausgleich gezahlt", sc.getOfferAmount() + " € Ausgleich an "
                 + sc.getCharacter().getName() + " für Feld " + sc.getFarmlandId() + ".", RELATED, sc.getId());
         return sc;
+    }
+
+    /**
+     * FailedInstructionService, logic review LR-M10 (owner decisions 2026-10-20): the mod refused the COMPENSATION
+     * booking - the claim is open again and payable by button, with a new decision time from now on.
+     */
+    @Transactional
+    public boolean onPaymentFailed(Long caseId) {
+        ServiceCase sc = cases.findById(caseId).orElse(null);
+        if (sc == null || sc.getKind() != CaseKind.COMPENSATION_CLAIM || sc.getStatus() != CaseStatus.SETTLED
+                || !"PAID".equals(sc.getResolution())) {
+            return false;
+        }
+        Savegame sg = sc.getSavegame();
+        sc.reopen(sg.getCurrentGameTime() + GameTime.days(cfg().getCompensationDecisionDays()));
+        diary.addAuto(sg, "NEGOTIATION", "Ausgleich nicht gebucht", "Der Ausgleich über " + sc.getOfferAmount()
+                + " € für Feld " + sc.getFarmlandId() + " konnte nicht abgebucht werden. Die Forderung ist wieder offen.",
+                RELATED, sc.getId());
+        return true;
     }
 
     /** The player refuses (or ignores) the claim: more trust loss. */

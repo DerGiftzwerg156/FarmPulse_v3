@@ -536,7 +536,11 @@ public class HiringService {
         return started;
     }
 
-    /** T-08: "days per period" changed - the first working day (a month start) keeps its month. */
+    /**
+     * T-08: "days per period" changed - the first working day (a month start) keeps its month. Logic review LR-M5: the
+     * end of an apprenticeship (training years in months) and of a seasonal contract (end of a period) keep their
+     * month for active employees too (the salary date of active employees: {@code PayrollScheduler}).
+     */
     @EventListener
     @Transactional
     public void onCalendarChanged(CalendarChangedEvent ev) {
@@ -546,6 +550,11 @@ public class HiringService {
                 e.setNextSalaryDueGameTime(ev.remap(e.getNextSalaryDueGameTime()));
                 e.setNeedsUpdatedAtGameTime(ev.remap(e.getNeedsUpdatedAtGameTime()));
                 e.setApprenticeshipEndsAtGameTime(ev.remap(e.getApprenticeshipEndsAtGameTime()));
+                e.setContractEndsAtGameTime(ev.remap(e.getContractEndsAtGameTime()));
+            }
+            for (Employee e : employees.findBySavegameAndStatus(sg, EmployeeStatus.ACTIVE)) {
+                e.setApprenticeshipEndsAtGameTime(ev.remap(e.getApprenticeshipEndsAtGameTime()));
+                e.setContractEndsAtGameTime(ev.remap(e.getContractEndsAtGameTime()));
             }
         });
     }

@@ -345,7 +345,14 @@ public class LoanService {
         p.setType(LoanPaymentType.REVERSED);
         l.setRemainingAmount(l.getRemainingAmount() + principalPart);
         l.setPaidInstallments(Math.max(0, l.getPaidInstallments() - 1));
-        l.setNextDueGameTime(gameTime.addMonths(sg, l.getNextDueGameTime(), -1));
+        if (l.getStatus() == LoanStatus.CALLED) {
+            // logic review LR-L17 (owner decision 2026-10-20): the loan was called meanwhile - there is no installment
+            // plan any more; the principal is open remaining debt the bank collects as soon as liquidity allows (T-03)
+            l.setStatus(LoanStatus.DEFAULTED);
+            l.setBlocksNewCredit(true);
+        } else {
+            l.setNextDueGameTime(gameTime.addMonths(sg, l.getNextDueGameTime(), -1));
+        }
         if (l.getStatus() == LoanStatus.PAID_OFF) {
             l.setStatus(LoanStatus.ACTIVE);
         }

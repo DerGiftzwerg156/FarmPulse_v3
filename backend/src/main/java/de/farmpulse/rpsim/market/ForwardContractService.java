@@ -196,6 +196,24 @@ public class ForwardContractService {
         return s;
     }
 
+    /**
+     * FailedInstructionService, logic review LR-L19 (owner decision 2026-10-20): the game refused the fixed price - the
+     * contract did not come about (FAILED, no penalty) and no longer blocks its sell point and fill type.
+     */
+    @Transactional
+    public boolean onPriceFailed(Long contractId) {
+        ForwardContract fc = contracts.findById(contractId).orElse(null);
+        if (fc == null || !ForwardContract.OPEN.equals(fc.getStatus())) {
+            return false;
+        }
+        Savegame sg = fc.getSavegame();
+        fc.setStatus(ForwardContract.FAILED);
+        diary.addAuto(sg, "MARKET", "Vorkontrakt nicht zustande gekommen", fc.getQuantity() + " l "
+                + labels.label(fc.getFillType()) + " an " + sellPointName(sg, fc.getSellPoint())
+                + ": das Spiel hat den Festpreis nicht übernommen.", RELATED, fc.getId());
+        return true;
+    }
+
     /** The mod reports the end of the FIXED contract with the delivered quantity. */
     @EventListener
     @Transactional

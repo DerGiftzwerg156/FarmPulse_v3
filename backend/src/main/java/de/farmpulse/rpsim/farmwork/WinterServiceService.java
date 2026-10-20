@@ -22,12 +22,14 @@ import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.ContractKind;
 import de.farmpulse.rpsim.domain.ContractStatus;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
 import de.farmpulse.rpsim.narration.NarrationRequestService;
 import de.farmpulse.rpsim.repository.ContractRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
 import org.springframework.context.event.EventListener;
@@ -251,11 +253,27 @@ public class WinterServiceService {
         c.setLastSnowDay(day);
         c.setSnowDays(c.getSnowDays() + 1);
         c.setSnowDaysTotal(c.getSnowDaysTotal() + 1);
-        outbox.notification(sg, cfg().getNotificationText(), "INFO", GameTime.days(day + 1),
+        outbox.notification(sg, cfg().getNotificationText(), NotificationLevel.INFO, GameTime.days(day + 1),
                 new Related(ContractBillingService.RELATED, c.getId()));
     }
 
     public List<Contract> contracts(Savegame sg) {
         return all(sg);
+    }
+
+    /**
+     * T-08 / logic review LR-M5: "days per period" changed - an offer valid until the winter starts (a month start)
+     * keeps its month; due and end dates of the contract follow in {@code ContractBillingService}.
+     */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            for (Contract c : contracts.findBySavegameOrderByIdDesc(sg)) {
+                if (c.getKind() == ContractKind.WINTER_SERVICE && c.getStatus() == ContractStatus.OFFERED) {
+                    c.setOfferExpiresAtGameTime(ev.remap(c.getOfferExpiresAtGameTime()));
+                }
+            }
+        });
     }
 }

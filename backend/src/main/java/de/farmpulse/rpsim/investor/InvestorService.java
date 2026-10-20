@@ -38,6 +38,7 @@ import de.farmpulse.rpsim.domain.InvestorObligation;
 import de.farmpulse.rpsim.domain.InvestorPayment;
 import de.farmpulse.rpsim.domain.InvestorPeriod;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.PaymentDelay;
 import de.farmpulse.rpsim.domain.PublicActionType;
 import de.farmpulse.rpsim.domain.Savegame;
@@ -700,6 +701,7 @@ public class InvestorService {
         d.setDeliveryYear(offers.currentYear(sg, facts.latest(sg).orElse(null)));
         long q = d.getQuantity();
         long month = currentMonth(sg);
+        List<String> split = new java.util.ArrayList<>(); // LR-L15: where the quantity went
         if (type(o) == InvestorConsideration.W1) {
             o.setDeliveredTotal(o.getDeliveredTotal() + q);
             for (InvestorPeriod p : periods.findByObligationOrderByPeriodKeyAsc(o)) {
@@ -710,6 +712,7 @@ public class InvestorService {
             InvestorPeriod cur = current(o, month);
             if (cur != null) {
                 cur.setDelivered(o.getDeliveredTotal());
+                split.add(cur.getId() + ":" + q);
             }
         } else {
             for (InvestorPeriod p : periods.findByObligationOrderByPeriodKeyAsc(o)) {
@@ -717,6 +720,9 @@ public class InvestorService {
                     long take = Math.min(q, p.getRequired() - p.getDelivered());
                     p.setDelivered(p.getDelivered() + take);
                     q -= take;
+                    if (take > 0) {
+                        split.add(p.getId() + ":" + take);
+                    }
                     if (p.getDelivered() >= p.getRequired()) {
                         madeUp(sg, p);
                     }
@@ -725,8 +731,10 @@ public class InvestorService {
             InvestorPeriod cur = current(o, month);
             if (q > 0 && cur != null) {
                 cur.setDelivered(cur.getDelivered() + q);
+                split.add(cur.getId() + ":" + q);
             }
         }
+        d.setPeriodSplit(split.isEmpty() ? null : String.join(",", split));
         maybeRetire(o.getContract());
     }
 
@@ -737,9 +745,21 @@ public class InvestorService {
         if (d == null || InvestorDelivery.FAILED.equals(d.getStatus())) {
             return false;
         }
-        if (InvestorDelivery.DONE.equals(d.getStatus()) && type(d.getObligation()) == InvestorConsideration.W1) {
-            InvestorObligation o = d.getObligation(); // a re-sent delivery after a rewind was refused
-            o.setDeliveredTotal(Math.max(0, o.getDeliveredTotal() - d.getQuantity()));
+        if (InvestorDelivery.DONE.equals(d.getStatus())) { // a re-sent delivery after a rewind was refused
+            InvestorObligation o = d.getObligation();
+            if (type(o) == InvestorConsideration.W1) {
+                o.setDeliveredTotal(Math.max(0, o.getDeliveredTotal() - d.getQuantity()));
+            }
+            // LR-L15 (owner decision 2026-10-20): every kind takes back the quantities of its periods; status, trust and
+            // reminder cases stay as they are
+            if (d.getPeriodSplit() != null) {
+                for (String part : d.getPeriodSplit().split(",")) {
+                    String[] kv = part.split(":");
+                    long taken = Long.parseLong(kv[1]);
+                    periods.findById(Long.parseLong(kv[0]))
+                            .ifPresent(p -> p.setDelivered(Math.max(0, p.getDelivered() - taken)));
+                }
+            }
         }
         d.setStatus(InvestorDelivery.FAILED);
         return true;
@@ -1293,7 +1313,8 @@ public class InvestorService {
                         .formLink("/bank/investoren").submit();
                 String text = "FarmPulse: " + c.getCharacter().getName() + " wartet noch auf " + remaining
                         + (o.getFillType() != null ? " " + labels.label(o.getFillType()) : "");
-                outbox.notification(sg, text.length() <= 120 ? text : text.substring(0, 119) + "…", "INFO", end,
+                outbox.notification(sg, text.length() <= 120 ? text : text.substring(0, 119) + "…",
+                        NotificationLevel.INFO, end,
                         new Related(OfferRelated.CONTRACT, c.getId()));
             }
         }

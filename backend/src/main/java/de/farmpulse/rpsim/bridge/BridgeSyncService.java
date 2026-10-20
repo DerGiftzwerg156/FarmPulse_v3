@@ -294,6 +294,11 @@ public class BridgeSyncService {
             rewinds.onAckDocument(s, doc);
             int n = 0;
             for (BridgeDtos.Ack ack : doc.acks()) {
+                if (ack == null || ack.instructionId() == null || ack.status() == null) {
+                    // logic review LR-L13: one broken entry must not stop every other ack of the file (NPE in the switch)
+                    log.warn("Ack without instructionId or status - ignored: {}", ack);
+                    continue;
+                }
                 Optional<OutboxInstruction> o = outbox.findByInstructionId(ack.instructionId());
                 if (o.isEmpty()) {
                     continue;
@@ -313,6 +318,7 @@ public class BridgeSyncService {
                 };
                 ins.setStatus(status);
                 ins.setAckedAtGameTime(ack.appliedAtGameTime());
+                ins.setAckedAt(java.time.Instant.now()); // LR-M11
                 ins.setAckMessage(ack.message());
                 ins.setAckResultJson(outboxService.ackResultJson(ack.result())); // Roadmap V3 (R3-Q1)
                 if (status != InstructionStatus.APPLIED) {
@@ -415,9 +421,11 @@ public class BridgeSyncService {
         });
         String key = bridgeId + doc.instructions() + doc.ackedResponses() + doc.withdrawnPrompts();
         if (!key.equals(lastInstructionsWritten)) {
-            files.writeAtomic(files.instructions(), doc);         // human-readable, simulator/tooling
-            files.writeAtomicXmlPayload(files.instructionsXml(), doc); // what the FS25 mod reads
-            lastInstructionsWritten = key;
+            boolean json = files.writeAtomic(files.instructions(), doc);         // human-readable, simulator/tooling
+            boolean xml = files.writeAtomicXmlPayload(files.instructionsXml(), doc); // what the FS25 mod reads
+            if (json && xml) {
+                lastInstructionsWritten = key; // LR-L12: a failed write is tried again next cycle
+            }
         }
         return doc.instructions().size();
     }

@@ -26,6 +26,7 @@ import de.farmpulse.rpsim.domain.RewindStatus;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.notice.NoticeService;
 import de.farmpulse.rpsim.repository.BridgeRewindRepository;
+import de.farmpulse.rpsim.repository.FactsSnapshotRepository;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
 import de.farmpulse.rpsim.time.GameTime;
 import org.slf4j.Logger;
@@ -72,9 +73,14 @@ public class RewindService {
      * the backend counts a delivery once, with its first ack.
      */
     private static final String INVESTOR_DELIVERY = "INVESTOR_DELIVERY";
-    /** Roadmap V3.1: types whose whole batch is re-sent (e.g. the STORAGE_TRANSFER of a contractor harvest). */
+    /**
+     * Roadmap V3.1: types whose whole batch is re-sent (e.g. the STORAGE_TRANSFER of a contractor harvest). Logic
+     * review LR-H1 (owner decision 2026-10-20): a goods deal (STORAGE_TRANSFER + MONEY_TRANSACTION of
+     * {@link OutboxService#storageDeal}) goes again as a whole too - never only its money; a lone STORAGE_TRANSFER
+     * without a batch is not re-sent (apart from the investor deliveries).
+     */
     private static final Set<InstructionType> WHOLE_BATCH = EnumSet.of(InstructionType.FIELD_WORK,
-            InstructionType.ANIMAL_TRANSFER);
+            InstructionType.ANIMAL_TRANSFER, InstructionType.STORAGE_TRANSFER);
 
     private final BridgeRewindRepository rewinds;
     private final OutboxInstructionRepository outbox;
@@ -82,9 +88,11 @@ public class RewindService {
     private final DiaryService diary;
     private final RpsimProperties props;
     private final JsonMapper json;
+    private final FactsSnapshotRepository snapshots;
 
     public RewindService(BridgeRewindRepository rewinds, OutboxInstructionRepository outbox, NoticeService notices,
-                         DiaryService diary, RpsimProperties props, JsonMapper json) {
+                         DiaryService diary, RpsimProperties props, JsonMapper json, FactsSnapshotRepository snapshots) {
+        this.snapshots = snapshots;
         this.rewinds = rewinds;
         this.outbox = outbox;
         this.notices = notices;
@@ -98,6 +106,7 @@ public class RewindService {
     public BridgeRewind onRewind(Savegame sg, long previousGameTime, long rewoundToGameTime) {
         log.info("Savegame {} was reloaded at an earlier state ({} -> {}), checking for lost bookings", sg.getId(),
                 previousGameTime, rewoundToGameTime);
+        dropDiscardedSnapshots(sg, rewoundToGameTime);
         for (BridgeRewind r : rewinds.findBySavegameAndStatusInOrderByIdAsc(sg, EnumSet.of(RewindStatus.AWAITING_ACK))) {
             r.setRewoundToGameTime(Math.min(r.getRewoundToGameTime(), rewoundToGameTime));
             r.setPreviousGameTime(Math.max(r.getPreviousGameTime(), previousGameTime));
@@ -110,6 +119,20 @@ public class RewindService {
         r.setStatus(RewindStatus.AWAITING_ACK);
         r.setCreatedAt(Instant.now());
         return rewinds.save(r);
+    }
+
+    /**
+     * Logic review LR-N1 (owner decision 2026-10-20): the farm_facts snapshots after the reloaded game time belong to the
+     * discarded game time - "latest" (highest game time) would keep answering with them until the game passes that time
+     * again. They are dropped like the feed snapshots.
+     */
+    void dropDiscardedSnapshots(Savegame sg, long rewoundToGameTime) {
+        var discarded = snapshots.findBySavegameAndGameTimeBetweenOrderByGameTimeAscIdAsc(sg, rewoundToGameTime + 1,
+                Long.MAX_VALUE);
+        if (!discarded.isEmpty()) {
+            snapshots.deleteAll(discarded);
+            log.info("Dropped {} snapshots of the discarded game time of savegame {}", discarded.size(), sg.getId());
+        }
     }
 
     /** Evaluates an ack document against every rewind that waits for it. Called before the acks are applied. */
@@ -169,7 +192,7 @@ public class RewindService {
         List<OutboxInstruction> applied = outbox.findBySavegameAndStatusOrderByIdAsc(sg, InstructionStatus.APPLIED).stream()
                 .filter(o -> o.getAckedAtGameTime() != null && o.getAckedAtGameTime() > from)
                 .toList();
-        // Roadmap V3.1: every member of a batch with a FIELD_WORK / ANIMAL_TRANSFER goes again
+        // Roadmap V3.1 / LR-H1: every member of a batch with a FIELD_WORK / ANIMAL_TRANSFER / STORAGE_TRANSFER goes again
         Set<String> wholeBatches = new HashSet<>();
         for (OutboxInstruction o : applied) {
             if (WHOLE_BATCH.contains(o.getType()) && o.getBatchId() != null) {
@@ -253,6 +276,7 @@ public class RewindService {
         for (OutboxInstruction o : lost) {
             o.setStatus(InstructionStatus.PENDING);
             o.setAckedAtGameTime(null);
+            o.setAckedAt(null);
             o.setAckMessage(null);
         }
         log.info("Re-sending {} instructions lost by the reload: {}", lost.size(),

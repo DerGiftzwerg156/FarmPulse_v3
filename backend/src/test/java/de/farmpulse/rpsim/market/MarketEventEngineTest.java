@@ -164,6 +164,28 @@ class MarketEventEngineTest {
         assertThat(jobs.findBySavegameOrderByIdAsc(sg)).extracting(j -> j.getEventType()).contains("MARKET_CONTRACT_ENDED");
     }
 
+    /** Logic review LR-L19 (owner decision 2026-10-20): an accepted special offer whose fixed price the game refused ends. */
+    @Test
+    void aRefusedFixedPriceEndsTheSpecialOffer() {
+        MarketEvent ev = engine.spawnSpecialOffer(sg, ctx, farm).orElseThrow();
+        engine.decideParticipation(sg, ev.getId(), true);
+        assertThat(ev.getStatus()).isEqualTo(MarketEventStatus.ACTIVE);
+        assertThat(engine.onPriceFailed(ev.getId(), "ins_other")).isFalse();
+        assertThat(engine.onPriceFailed(ev.getId(), ev.getInstructionId())).isTrue();
+        assertThat(ev.getStatus()).isEqualTo(MarketEventStatus.ENDED);
+        assertThat(ev.getEndReason()).isEqualTo("FAILED");
+    }
+
+    /** Logic review LR-L18: accepting after the deadline is refused at once, not only after the day change. */
+    @Test
+    void aSpecialOfferCannotBeAcceptedAfterItsDeadline() {
+        MarketEvent ev = engine.spawnSpecialOffer(sg, ctx, farm).orElseThrow();
+        sg.setCurrentGameTime(ev.getDeadlineGameTime());
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> engine.decideParticipation(sg, ev.getId(), true))
+                .isInstanceOf(de.farmpulse.rpsim.common.BusinessRuleException.class);
+        assertThat(ev.getInstructionId()).isNull();
+    }
+
     @Test
     void declinedSpecialOfferCreatesNoInstruction() {
         MarketEvent ev = engine.spawnSpecialOffer(sg, ctx, farm).orElseThrow();

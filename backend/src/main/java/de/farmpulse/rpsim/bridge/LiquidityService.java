@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import de.farmpulse.rpsim.domain.BridgeRewind;
 import de.farmpulse.rpsim.domain.FactsSnapshot;
 import de.farmpulse.rpsim.domain.InstructionStatus;
 import de.farmpulse.rpsim.domain.InstructionType;
 import de.farmpulse.rpsim.domain.OutboxInstruction;
 import de.farmpulse.rpsim.domain.Savegame;
+import de.farmpulse.rpsim.repository.BridgeRewindRepository;
 import de.farmpulse.rpsim.repository.FactsSnapshotRepository;
 import de.farmpulse.rpsim.repository.OutboxInstructionRepository;
 import org.springframework.stereotype.Service;
@@ -35,11 +37,14 @@ public class LiquidityService {
     private final FactsSnapshotRepository snapshots;
     private final OutboxInstructionRepository outbox;
     private final JsonMapper json;
+    private final BridgeRewindRepository rewinds;
 
-    public LiquidityService(FactsSnapshotRepository snapshots, OutboxInstructionRepository outbox, JsonMapper json) {
+    public LiquidityService(FactsSnapshotRepository snapshots, OutboxInstructionRepository outbox, JsonMapper json,
+                            BridgeRewindRepository rewinds) {
         this.snapshots = snapshots;
         this.outbox = outbox;
         this.json = json;
+        this.rewinds = rewinds;
     }
 
     public long latestBalance(Savegame sg) {
@@ -79,11 +84,23 @@ public class LiquidityService {
         return value;
     }
 
-    /** Game time of the latest debit the mod refused with INSUFFICIENT_FUNDS, -1 if none. */
+    /**
+     * Game time of the latest debit the mod refused with INSUFFICIENT_FUNDS, -1 if none. Logic review LR-M11: a refusal
+     * acknowledged before a detected rewind to an earlier game time belongs to the discarded game time and does not
+     * count - otherwise every payment stays blocked until the game passes that time again.
+     */
     long lastRefusedForFunds(Savegame sg) {
+        List<BridgeRewind> detected = rewinds.findBySavegameOrderByIdAsc(sg);
         return outbox.findBySavegameAndStatusOrderByIdAsc(sg, InstructionStatus.FAILED).stream()
                 .filter(o -> INSUFFICIENT_FUNDS.equals(o.getAckMessage()) && o.getAckedAtGameTime() != null)
+                .filter(o -> detected.stream().noneMatch(r -> discardedBy(o, r)))
                 .mapToLong(OutboxInstruction::getAckedAtGameTime).max().orElse(-1);
+    }
+
+    /** LR-M11: the refusal was acknowledged before the rewind and lies after the game time it went back to. */
+    static boolean discardedBy(OutboxInstruction o, BridgeRewind r) {
+        return o.getAckedAt() != null && r.getCreatedAt() != null && o.getAckedAt().isBefore(r.getCreatedAt())
+                && o.getAckedAtGameTime() > r.getRewoundToGameTime();
     }
 
     public long amount(OutboxInstruction o) {

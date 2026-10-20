@@ -89,6 +89,27 @@ class TaxServiceTest {
         return jobs.findBySavegameOrderByIdAsc(sg).stream().map(NarrationJob::getEventType).toList();
     }
 
+    /**
+     * Logic review LR-M4: the clock catches up month by month while the latest export (and the calendar anchor) is
+     * already in year 2 - the prepayment of period 10 belongs to year 1.
+     */
+    @Test
+    void whileCatchingUpTheMonthCountsInItsOwnYear() {
+        long latest = GameTime.days(13);
+        fx.snapshot(sg, latest, 100_000, TestData.farmFactsWithJournal(sg.getBridgeSavegameId(), latest, 100_000, 2, 2,
+                yearOne()));
+        sg.setCalMonthIndex(13L); // the latest export: month 13 = period 2 of year 2, one day per period
+        sg.setCalMonthStartGameTime(latest);
+        sg.setCalDaysPerPeriod(1);
+        sg.setCalPeriod(2);
+        sg.setCalYear(2);
+        long t = GameTime.days(9); // month 9 = period 10 of year 1, processed while catching up
+        sg.setCurrentGameTime(t);
+        tax.onMonth(new GameMonthPassedEvent(sg.getId(), 9, t));
+        assertThat(years.findBySavegameAndTaxYear(sg, 1)).isPresent();
+        assertThat(years.findBySavegameAndTaxYear(sg, 2)).isEmpty();
+    }
+
     @Test
     void theCalculationIsTraceable() {
         TaxService.Calculation c = TaxService.calculate(120_000, -24_000, 40_500, 0, 20_000, 0.25, 0);

@@ -41,6 +41,7 @@ import de.farmpulse.rpsim.repository.CoopPriceYearRepository;
 import de.farmpulse.rpsim.repository.CoopShareNoticeRepository;
 import de.farmpulse.rpsim.repository.SavegameRepository;
 import de.farmpulse.rpsim.repository.ServiceCaseRepository;
+import de.farmpulse.rpsim.time.CalendarChangedEvent;
 import de.farmpulse.rpsim.time.GameDayPassedEvent;
 import de.farmpulse.rpsim.time.GameMonthPassedEvent;
 import de.farmpulse.rpsim.time.GameTime;
@@ -168,6 +169,23 @@ public class CooperativeService {
         diary.addAuto(sg, "TRADE", "Genossenschaftsanteile gezeichnet", count + " Anteile für " + amount + " €.",
                 RELATED, sg.getId());
         return sg;
+    }
+
+    /**
+     * FailedInstructionService, logic review LR-M10 (owner decision 2026-10-20): the mod refused the payment of new
+     * shares - the shares credited at the subscription are taken back (count = amount / share price).
+     */
+    @Transactional
+    public boolean onPurchaseFailed(Savegame sg, long amount) {
+        long price = cfg().getSharePrice();
+        if (amount >= 0 || price <= 0) {
+            return false;
+        }
+        int count = (int) Math.min(sg.getCoopShares(), Math.round(-amount / (double) price));
+        sg.setCoopShares(sg.getCoopShares() - count);
+        diary.addAuto(sg, "TRADE", "Zeichnung nicht gebucht", count + " Genossenschaftsanteile für " + (-amount)
+                + " € konnten nicht abgebucht werden und sind nicht gezeichnet.", RELATED, sg.getId());
+        return true;
     }
 
     /** Cancels shares; repaid at the nominal value after the notice period. */
@@ -321,7 +339,8 @@ public class CooperativeService {
     /** Year change: dividend of the year that ended and the board's reputation. */
     @Transactional
     public long dividend(Savegame sg) {
-        Integer ended = sg.getCalYear() == null ? null : sg.getCalYear() - 1;
+        Integer current = gameTime.yearOf(sg, sg.getCurrentGameTime(), null); // LR-M4: year of the processed month
+        Integer ended = current == null ? null : current - 1;
         double rate = dividendRate(sg, ended);
         sg.setCoopDividendBonus(0);
         if (sg.isCoopBoard()) {
@@ -506,5 +525,18 @@ public class CooperativeService {
                 .ifPresent(sc -> result(sg, sc, null));
         open(sg, CaseKind.COOP_BOARD_MEETING).filter(sc -> sc.getDeadlineGameTime() != null && sc.getDeadlineGameTime() < now)
                 .ifPresent(sc -> missed(sg, sc, CaseStatus.EXPIRED));
+    }
+
+    /** T-08 / logic review LR-M5: "days per period" changed - a notice of shares (notice-months) keeps its month. */
+    @EventListener
+    @Transactional
+    public void onCalendarChanged(CalendarChangedEvent ev) {
+        savegames.findById(ev.savegameId()).ifPresent(sg -> {
+            for (CoopShareNotice n : notices.findBySavegameOrderByIdAsc(sg)) {
+                if (n.getPaidGameTime() == null) {
+                    n.setDueGameTime(ev.remap(n.getDueGameTime()));
+                }
+            }
+        });
     }
 }

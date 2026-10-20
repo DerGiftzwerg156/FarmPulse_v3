@@ -142,6 +142,26 @@ test('several contractor works of one order run as one batch and build on each o
   assert.equal(field.sprayLevel, 2);
 });
 
+// Logic review LR-M3: without room in the silos the contractor's harvest is refused before the field is cut
+test('lohnunternehmer: a harvest batch without room in the silos leaves the field standing', () => {
+  const { sim, run } = setup('lohnunternehmer');
+  const silo = sim.tradeStorage.WHEAT;
+  const free = silo.capacity - silo.amount;
+  const balance = sim.balance;
+  const acks = run([
+    { instructionId: 'h1', batchId: 'b_harvest', type: 'FIELD_WORK', farmlandId: 2, work: 'HARVEST' },
+    { instructionId: 'h2', batchId: 'b_harvest', type: 'STORAGE_TRANSFER', direction: 'IN', fillType: 'WHEAT',
+      amount: free + 1 },
+    { instructionId: 'h3', batchId: 'b_harvest', type: 'MONEY_TRANSACTION', amount: -1200, reason: 'CONTRACTOR_FEE' }]);
+  for (const id of ['h1', 'h2', 'h3']) {
+    assert.equal(acks[id].status, 'FAILED', id);
+    assert.equal(acks[id].message, 'NO_CAPACITY', id);
+  }
+  const field = sim.buildFarmFacts().fields.find((f) => f.farmlandId === 2);
+  assert.notEqual(field.cut, true);
+  assert.equal(sim.balance, balance);
+});
+
 test('FIELD_WORK refuses a field that is not the player\'s or has a running contract', () => {
   const { sim, run } = setup('lohnunternehmer');
   sim.farmlands.find((f) => f.farmlandId === 7).ownerFarmId = 0;

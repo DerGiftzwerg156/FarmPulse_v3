@@ -8,6 +8,7 @@ import de.farmpulse.rpsim.domain.Character;
 import de.farmpulse.rpsim.domain.ToneClass;
 import de.farmpulse.rpsim.domain.TrustEvent;
 import de.farmpulse.rpsim.domain.TrustReason;
+import de.farmpulse.rpsim.time.GameTime;
 import de.farmpulse.rpsim.trust.TrustScoreService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,26 @@ public class ToneTrustService {
             case NEUTRAL -> 0;
         };
         return Formulas.clamp(raw, -cfg.getCap(), cfg.getCap());
+    }
+
+    /**
+     * Pacing ("Proaktive Nachricht", logic review LR-M9, owner decision 2026-10-20): the tone of a player message counts
+     * for the trust at most once per character within {@code messages.pacing-cooldown-days} - shared by "Nachricht
+     * verfassen", replies to mails and sentences in a call, so switching the channel farms nothing. The character
+     * always answers. Returns true while the cooldown is running (nothing counted).
+     */
+    @Transactional
+    public boolean applyPaced(Character character, ToneClass tone, long now) {
+        if (character == null) {
+            return false;
+        }
+        Long last = character.getLastPacedMessageGameTime();
+        if (last != null && GameTime.toDays(now - last) < props.getFormulas().getMessages().getPacingCooldownDays()) {
+            return true;
+        }
+        apply(character, tone);
+        character.setLastPacedMessageGameTime(now);
+        return false;
     }
 
     @Transactional

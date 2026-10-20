@@ -459,10 +459,12 @@ public class FieldMarginService {
         GameTime.Anchor anchor = gameTime.anchor(sg);
         long ended = e.monthIndex() - 1;
         int period = anchor.periodOf(ended);
-        int year = anchor.periodOf(e.monthIndex()) == 1 ? f.calendar().year() - 1 : f.calendar().year();
+        // LR-M4: the year of the ended month, not of the latest export (the clock may catch up several months)
+        int year = gameTime.yearOf(sg, anchor.monthStart(ended), f.calendar().year()
+                - (anchor.periodOf(e.monthIndex()) == 1 ? 1 : 0));
         distribute(sg, f, year, period, ended, anchor.monthStart(ended), e.gameTime());
         if (anchor.periodOf(e.monthIndex()) == 1) {
-            advise(sg, f.calendar().year() - 1);
+            advise(sg, year);
         }
     }
 
