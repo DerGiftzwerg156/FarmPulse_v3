@@ -189,6 +189,10 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L19 - refused fixed prices kept contracts open** (owner decision 2026-10-20): a forward contract
+  whose `PRICE_EVENT` the game refused stayed `OPEN` and blocked its sell point and fill type; an accepted special offer
+  stayed active. The forward contract now ends as `FAILED` ("nicht zustande gekommen", no penalty), the special offer
+  as `ENDED` (end reason `FAILED`), each with a diary entry.
 - **Logic review LR-L18 - deadlines counted only at the day change**: a bid in an ended negotiation or auction and the
   acceptance of a special offer after its deadline were still taken until the next day change. Both now check the
   deadline of the case itself first (the regular day run closes it as before).

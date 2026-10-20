@@ -21,6 +21,8 @@ public class ForwardContract extends SavegameScoped {
     public static final String OPEN = "OPEN";
     public static final String FULFILLED = "FULFILLED";
     public static final String SHORTFALL = "SHORTFALL";
+    /** Logic review LR-L19: the game refused the fixed price (PRICE_EVENT) - no contract, no penalty. */
+    public static final String FAILED = "FAILED";
 
     @Column(name = "fill_type", nullable = false, length = 64)
     private String fillType;

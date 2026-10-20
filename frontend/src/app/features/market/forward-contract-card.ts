@@ -11,7 +11,8 @@ import { Badge, BadgeVariant } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import { Card } from '../../shared/ui/card';
 
-const STATUS_BADGE: Record<string, BadgeVariant> = { OPEN: 'neutral', FULFILLED: 'positive', SHORTFALL: 'negative' };
+const STATUS_BADGE: Record<string, BadgeVariant> = { OPEN: 'neutral', FULFILLED: 'positive', SHORTFALL: 'negative',
+  FAILED: 'neutral' }; // logic review LR-L19: the game refused the fixed price
 
 /**
  * Roadmap V3 R3-M2: forward contracts - fill type, sell point, quantity and delivery month; the backend names the fixed

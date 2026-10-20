@@ -1698,7 +1698,8 @@
       "status": {
         "OPEN": "offen",
         "FULFILLED": "erfüllt",
-        "SHORTFALL": "Fehlmenge"
+        "SHORTFALL": "Fehlmenge",
+        "FAILED": "nicht zustande gekommen"
       },
       "hint": "Der Festpreis gilt den ganzen Liefermonat an dieser Verkaufsstelle ({factor} % je Monat Vorlauf). Fehlt am Ende Ware, kostet das {penalty} % der Fehlmenge zum Festpreis. Kein Rücktritt, höchstens {max} offene Vorkontrakte."
     }

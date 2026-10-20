@@ -95,6 +95,8 @@ public class FailedInstructionService {
     private final de.farmpulse.rpsim.bypass.VanillaBypassService vanillaBypass;
     private final de.farmpulse.rpsim.villagelife.CropDamageService cropDamage;
     private final de.farmpulse.rpsim.cooperative.CooperativeService cooperative;
+    private final de.farmpulse.rpsim.market.ForwardContractService forwardContracts;
+    private final de.farmpulse.rpsim.market.MarketEventEngine marketEvents;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
@@ -114,7 +116,11 @@ public class FailedInstructionService {
                                     de.farmpulse.rpsim.dealer.DealerDemoService dealerDemos,
                                     de.farmpulse.rpsim.bypass.VanillaBypassService vanillaBypass,
                                     de.farmpulse.rpsim.villagelife.CropDamageService cropDamage,
-                                    de.farmpulse.rpsim.cooperative.CooperativeService cooperative) {
+                                    de.farmpulse.rpsim.cooperative.CooperativeService cooperative,
+                                    de.farmpulse.rpsim.market.ForwardContractService forwardContracts,
+                                    de.farmpulse.rpsim.market.MarketEventEngine marketEvents) {
+        this.forwardContracts = forwardContracts;
+        this.marketEvents = marketEvents;
         this.vanillaBypass = vanillaBypass;
         this.cropDamage = cropDamage;
         this.cooperative = cooperative;
@@ -255,6 +261,12 @@ public class FailedInstructionService {
         } else if (de.farmpulse.rpsim.cooperative.CooperativeService.RELATED.equals(related)
                 && ins.getType() == InstructionType.MONEY_TRANSACTION && "COOP_SHARES".equals(reason)) {
             handled = cooperative.onPurchaseFailed(sg, p.path("amount").asLong(0)); // LR-M10: shares taken back
+        } else if (de.farmpulse.rpsim.market.ForwardContractService.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.PRICE_EVENT) {
+            handled = forwardContracts.onPriceFailed(relatedId); // LR-L19: the contract did not come about
+        } else if (de.farmpulse.rpsim.market.MarketEventEngine.RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.PRICE_EVENT) {
+            handled = marketEvents.onPriceFailed(relatedId, ins.getInstructionId()); // LR-L19: a special offer ends
         } else if (ins.getType() == InstructionType.MONEY_TRANSACTION && "DAMAGE".equals(reason)
                 && "INSUFFICIENT_FUNDS".equals(ins.getAckMessage())) {
             handled = true; // LR-M10: DamageDebitService books the damage again as soon as the money covers it

@@ -627,6 +627,6 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | L16 | – (Mod und Simulator) | umgesetzt |
 | L17 | Wie offene Restschuld (`DEFAULTED`, Einzug bei Deckung) | umgesetzt |
 | L18 | – (Verhandlung/Auktion und Sonderangebot) | umgesetzt |
-| L19 | – | offen |
+| L19 | Vorkontrakt `FAILED` „nicht zustande gekommen“, Sonderkontrakt `ENDED` (Nachfrage 2026-10-20) | umgesetzt |
 | L20 | Figuren mit laufender Pacht ziehen nicht weg | offen |
 | L21 | Nur dokumentieren | offen |

@@ -494,6 +494,24 @@ public class MarketEventEngine {
         return ev;
     }
 
+    /**
+     * FailedInstructionService, logic review LR-L19 (owner decision 2026-10-20): the game refused the fixed price of an
+     * accepted special offer - it ends (no contract report will ever come).
+     */
+    @Transactional
+    public boolean onPriceFailed(Long eventId, String instructionId) {
+        MarketEvent ev = events.findById(eventId).orElse(null);
+        if (ev == null || ev.getEventType() != MarketEventType.SPECIAL_OFFER || ev.getStatus() != MarketEventStatus.ACTIVE
+                || !java.util.Objects.equals(ev.getInstructionId(), instructionId)) {
+            return false;
+        }
+        ev.setStatus(MarketEventStatus.ENDED);
+        ev.setEndReason("FAILED");
+        diary.addAuto(ev.getSavegame(), "MARKET", "Sonderkontrakt nicht zustande gekommen", "Das Spiel hat den Festpreis für "
+                + ev.getFillType() + " nicht übernommen.", RELATED, ev.getId());
+        return true;
+    }
+
     /** Reverse channel of FIXED contracts (delivered quantity reported by the mod). */
     @EventListener
     @Transactional

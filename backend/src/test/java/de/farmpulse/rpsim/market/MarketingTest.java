@@ -186,6 +186,20 @@ class MarketingTest {
         assertThatThrownBy(() -> forwards.quote(sg, "BARLEY", "MillNorth", 1_000, 3)).hasMessageContaining("keinen Preis");
     }
 
+    /** Logic review LR-L19 (owner decision 2026-10-20): a fixed price the game refused ends the forward contract. */
+    @Test
+    void aRefusedFixedPriceEndsTheForwardContract() {
+        ForwardContract fc = forwards.conclude(sg, "WHEAT", "MillNorth", 10_000, 1);
+        OutboxInstruction ins = instructions().getLast();
+        ins.setStatus(de.farmpulse.rpsim.domain.InstructionStatus.REJECTED);
+        ins.setAckMessage("unknown sell point MillNorth");
+        failed.onAck(new BridgeEvents.InstructionAcked(sg.getId(), ins.getInstructionId(), "REJECTED",
+                ins.getRelatedEntityType(), ins.getRelatedEntityId()));
+        assertThat(fc.getStatus()).isEqualTo(ForwardContract.FAILED);
+        assertThat(fc.getPenalty()).isNull();
+        assertThat(forwards.openPairs(sg)).isEmpty();
+    }
+
     @Test
     void aShortfallCostsThePenaltyAndAFullDeliveryGainsTrust() {
         ForwardContract short1 = forwards.conclude(sg, "WHEAT", "MillNorth", 10_000, 1);

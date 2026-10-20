@@ -898,7 +898,7 @@ export interface PriceAlarmsView {
   alarms: PriceAlarmView[];
 }
 
-/** Roadmap V3 R3-M2: forward contract (status OPEN / FULFILLED / SHORTFALL). */
+/** Roadmap V3 R3-M2: forward contract (status OPEN / FULFILLED / SHORTFALL / FAILED, logic review LR-L19). */
 export interface ForwardContractView {
   id: number;
   fillType: string;
