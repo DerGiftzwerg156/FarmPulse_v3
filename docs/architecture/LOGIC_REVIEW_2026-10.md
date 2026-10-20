@@ -597,3 +597,35 @@ den `ANIMAL_TRANSFER`-Acks kommen. Oder ist die Bestandsänderung als vereinfach
 Jede Umsetzung sollte die Checkliste der PR-Vorlage erfüllen: `mvn -B verify`, Frontend-Build und Tests, `luacheck`
 und Mod-Tests, neue Werte als `rpsim.formulas.*` sowie Doku und CHANGELOG. Neue Entscheidungen gehören in
 [QUESTIONS.md](QUESTIONS.md).
+
+## 7. Entscheidungen und Umsetzungsstand
+
+Antworten des Owners vom 20.10.2026; eingetragen in [QUESTIONS.md](QUESTIONS.md) (Kennung `LR-…`). Seit dem Bericht
+kam mit #58 (Fahrzeughändler) eine vierte `WARNING`-Stelle hinzu (`dealer/DealerDemoService.java`), sie wird mit H2
+behoben. Zu M3: Der Mod rechnet die freie Kapazität mit `storage:getFreeCapacity(fillTypeIndex)` der FS25-Storage
+(`game/GameAdapter.lua`, `transferStorage`). Die Vorprüfung im Batch nutzt dieselbe Funktion und braucht deshalb
+keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
+
+| Nr. | Entscheidung | Stand |
+| --- | --- | --- |
+| H1 | Ganzen Batch erneut senden | offen |
+| H2 | `CRITICAL` für alle | offen |
+| M3 | Vorprüfung der Kapazität im Mod-Batch; danach wie heute storniert | offen |
+| M4 | – (ohne Entscheidung) | offen |
+| M5 | – (ohne Entscheidung) | offen |
+| M6 | Leasing als Rate, aus dem Cashflow herausgerechnet | offen |
+| M7 | – (ohne Entscheidung) | offen |
+| M8 | Kein zweiter Malus bei automatischer Teilzahlung | offen |
+| M9 | Sperrfrist je Figur für Antworten und Anrufe | offen |
+| M10 | Ausgleich bleibt offen; Schaden wird später erneut abgebucht | offen |
+| M11 | – (ohne Entscheidung) | offen |
+| L12 | – | offen |
+| L13 | – | offen |
+| L14 | Nachbarverkauf zählt als Verkauf (wie Inzahlungnahme) | offen |
+| L15 | – | offen |
+| L16 | – | offen |
+| L17 | Wie offene Restschuld (`DEFAULTED`, Einzug bei Deckung) | offen |
+| L18 | – | offen |
+| L19 | – | offen |
+| L20 | Figuren mit laufender Pacht ziehen nicht weg | offen |
+| L21 | Nur dokumentieren | offen |
