@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-M7 - liquidity plan counted the rent of a leased-out field twice**: the rent was a known posting
+  of the plan and part of the income estimate from the journal. `RPSIM_LEASE_INCOME` is now one of
+  `liquidity-plan.known-posting-categories`, so the estimate leaves it out.
 - **Logic review LR-M6 - leasing burdened the credit check twice** (owner decision 2026-10-20): the leasing costs
   counted as an existing installment and, already paid by the game, lowered the operating cash flow as well. They
   stay an installment; the cash flow of the check (journal or balance trend) gets them added back.

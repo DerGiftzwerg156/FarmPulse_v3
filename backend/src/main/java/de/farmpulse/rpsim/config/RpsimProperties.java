@@ -2052,7 +2052,7 @@ public class RpsimProperties {
          */
         private List<String> knownPostingCategories = new ArrayList<>(List.of("RPSIM_SALARY_PAYMENT",
                 "RPSIM_TAX_PAYMENT", "RPSIM_INSURANCE_PREMIUM", "RPSIM_MAINTENANCE_FEE", "RPSIM_LEASE_PAYMENT",
-                "RPSIM_FAMILY"));
+                "RPSIM_LEASE_INCOME", "RPSIM_FAMILY"));
         /** The bank advisor writes once when the balance falls below zero within this many months. */
         private boolean advisorWarningEnabled = true;
         private int advisorWarningMonths = 3;

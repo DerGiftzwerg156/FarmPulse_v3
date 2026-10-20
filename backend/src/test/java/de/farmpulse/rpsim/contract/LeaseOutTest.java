@@ -255,6 +255,20 @@ class LeaseOutTest {
         });
     }
 
+    /** Logic review LR-M7: the rent in the journal is a known posting - the income estimate leaves it out. */
+    @Test
+    void theRentDoesNotCountTwiceInTheLiquidityPlan() {
+        Contract c = leased();
+        String periods = "[{ \"year\": 1, \"period\": 10, \"byType\": { \"SOLD_PRODUCTS\": 5000, \"RPSIM_LEASE_INCOME\": "
+                + c.getMonthlyAmount() + " } }, { \"year\": 1, \"period\": 11, \"byType\": {} }]";
+        fx.snapshot(sg, sg.getCurrentGameTime(), 100_000, TestData.farmFactsWithJournal(sg.getBridgeSavegameId(),
+                sg.getCurrentGameTime(), 100_000, 1, 11, periods));
+        de.farmpulse.rpsim.finance.LiquidityPlanService.MonthPlan next = plan.plan(sg).months().getFirst();
+        assertThat(next.postings()).filteredOn(p -> "CONTRACT".equals(p.kind())).singleElement()
+                .satisfies(p -> assertThat(p.amount()).isEqualTo(c.getMonthlyAmount()));
+        assertThat(next.incomeEstimate()).isEqualTo(5000L);
+    }
+
     @Test
     void theTransferIsNeitherASaleNorAPurchaseAndTheFieldStillCountsForTheBank() {
         double before = scoring.leasedOutValue(sg);

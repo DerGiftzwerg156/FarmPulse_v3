@@ -1072,6 +1072,7 @@ rpsim:
         - RPSIM_INSURANCE_PREMIUM
         - RPSIM_MAINTENANCE_FEE
         - RPSIM_LEASE_PAYMENT
+        - RPSIM_LEASE_INCOME      # logic review LR-M7: the rent of a leased-out field is a known posting too
         - RPSIM_FAMILY
       advisor-warning-enabled: true
       advisor-warning-months: 3   # the advisor writes once when the balance falls below zero within 3 months

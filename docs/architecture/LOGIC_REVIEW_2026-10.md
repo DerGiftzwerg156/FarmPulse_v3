@@ -614,7 +614,7 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | M4 | – (ohne Entscheidung); `GameTime.yearOf` an allen Stellen, die im Tages- oder Monatslauf das Jahr lesen (12 statt der 7 genannten: zusätzlich Feldbilanz-Beratung, Anbauplan, Meilenstein, Dorfzeitung, Investor-Zahlungsjahr). Ansichten und `FactsIngested`-Handler lesen weiter das Jahr ihres Exports; `CooperativeService.samplePrices` ordnet laut Javadoc die Preise des neuesten Exports dessen Jahr zu und bleibt | umgesetzt |
 | M5 | – (ohne Entscheidung); Remap nur für in Monaten geplante Zeitpunkte, Fristen in Spieltagen bleiben (Antwortfrist des Viehhändlers, Bearbeitungszeit der Förderung) | umgesetzt |
 | M6 | Leasing als Rate, aus dem Cashflow herausgerechnet (Journal und Kontostand-Trend) | umgesetzt |
-| M7 | – (ohne Entscheidung) | offen |
+| M7 | – (ohne Entscheidung); `RPSIM_LEASE_INCOME` in `known-posting-categories`. Abgleich der übrigen Planbuchungen: Kredite und Investoren-Zahlungen sind `FINANCING` (nicht im Betriebsergebnis), der Winterdienst hat keinen `nextDueGameTime` und steht nicht im Plan | umgesetzt |
 | M8 | Kein zweiter Malus bei automatischer Teilzahlung | offen |
 | M9 | Sperrfrist je Figur für Antworten und Anrufe | offen |
 | M10 | Ausgleich bleibt offen; Schaden wird später erneut abgebucht | offen |
