@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-N1 - stale facts after a reload without saving** (owner decision 2026-10-20): the snapshots of the
+  discarded game time stayed, and every reader of the latest facts (balance, fields, calendar, credit check) got them
+  until the game passed that time again. They are now dropped when the rewind is detected.
 - **Logic review LR-M11 - payments blocked after a reload without saving**: a debit refused for lack of money in the
   discarded game time kept every payment check at 0 until the game passed that time again. The ack time is now stored
   (`outbox_instruction.acked_at`, migration V56); a refusal acknowledged before a detected rewind no longer blocks.

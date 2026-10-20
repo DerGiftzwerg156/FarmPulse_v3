@@ -175,6 +175,17 @@ class RewindIntegrationTest {
     }
 
     @Autowired LiquidityService liquidity;
+    @Autowired FactsService factsService;
+
+    /** Logic review LR-N1 (owner decision 2026-10-20): the snapshots of the discarded game time are dropped. */
+    @Test
+    void theLatestFactsAfterAReloadAreTheReloadedOnes() {
+        playAndApply(); // played until day 10 + 5 h
+        facts(10 * DAY); // reloaded the save of day 10
+        Savegame s = savegames.findById(sg.getId()).orElseThrow();
+        assertThat(factsService.latest(s).orElseThrow().gameTime()).isEqualTo(10 * DAY);
+        assertThat(liquidity.latestBalance(s)).isEqualTo(100_000);
+    }
 
     /**
      * Logic review LR-M11: a debit refused for lack of money in the discarded game time no longer blocks the balance

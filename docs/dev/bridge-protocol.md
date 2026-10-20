@@ -975,4 +975,6 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   goes back as a whole batch, never only its money; the deal counts once (its case is closed with the first ack).
   Rewinds up to
   `rpsim.bridge.rewind-auto-resend-max-hours` are handled automatically, deeper ones wait for the player's decision
-  on the dashboard. All other tool state (mails, trust, negotiations) is not rolled back.
+  on the dashboard. Logic review LR-N1 (owner decision 2026-10-20): the `farm_facts` snapshots after the reloaded game
+  time are dropped, so the latest facts are the reloaded ones. All other tool state (mails, trust, negotiations) is not
+  rolled back.
