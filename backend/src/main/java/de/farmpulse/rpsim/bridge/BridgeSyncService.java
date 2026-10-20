@@ -416,9 +416,11 @@ public class BridgeSyncService {
         });
         String key = bridgeId + doc.instructions() + doc.ackedResponses() + doc.withdrawnPrompts();
         if (!key.equals(lastInstructionsWritten)) {
-            files.writeAtomic(files.instructions(), doc);         // human-readable, simulator/tooling
-            files.writeAtomicXmlPayload(files.instructionsXml(), doc); // what the FS25 mod reads
-            lastInstructionsWritten = key;
+            boolean json = files.writeAtomic(files.instructions(), doc);         // human-readable, simulator/tooling
+            boolean xml = files.writeAtomicXmlPayload(files.instructionsXml(), doc); // what the FS25 mod reads
+            if (json && xml) {
+                lastInstructionsWritten = key; // LR-L12: a failed write is tried again next cycle
+            }
         }
         return doc.instructions().size();
     }

@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L12 - a failed write of the instructions file was not repeated**: the backend remembered the content
+  as written even when `instructions.json` / `instructions.xml` could not be written (e.g. a locked file), so the mod got
+  the instructions only after the next change. The write is now tried again every cycle until it succeeds.
 - **Logic review LR-N1 - stale facts after a reload without saving** (owner decision 2026-10-20): the snapshots of the
   discarded game time stayed, and every reader of the latest facts (balance, fields, calendar, credit check) got them
   until the game passed that time again. They are now dropped when the rewind is detected.

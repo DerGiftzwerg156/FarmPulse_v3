@@ -100,21 +100,28 @@ public class BridgeFiles {
         }
     }
 
-    /** Atomic write (tmp file + atomic move); falls back to a plain replace if atomic moves are unsupported. */
-    public void writeAtomic(Path path, Object doc) {
+    /**
+     * Atomic write (tmp file + atomic move); falls back to a plain replace if atomic moves are unsupported. False when
+     * the file could not be written (logged; logic review LR-L12: the caller writes it again next cycle).
+     */
+    public boolean writeAtomic(Path path, Object doc) {
         try {
             writeTextAtomic(path, json.writerWithDefaultPrettyPrinter().writeValueAsString(doc));
+            return true;
         } catch (IOException | JacksonException e) {
             log.warn("Could not write bridge file {}: {}", path, e.getMessage());
+            return false;
         }
     }
 
     /** Atomically writes the document as compact JSON inside the XML wrapper the mod reads (see instructionsXml). */
-    public void writeAtomicXmlPayload(Path path, Object doc) {
+    public boolean writeAtomicXmlPayload(Path path, Object doc) {
         try {
             writeTextAtomic(path, xmlPayload(json.writeValueAsString(doc)));
+            return true;
         } catch (IOException | JacksonException e) {
             log.warn("Could not write bridge file {}: {}", path, e.getMessage());
+            return false;
         }
     }
 

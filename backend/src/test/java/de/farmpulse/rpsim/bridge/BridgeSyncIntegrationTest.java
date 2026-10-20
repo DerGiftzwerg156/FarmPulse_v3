@@ -81,6 +81,25 @@ class BridgeSyncIntegrationTest {
         assertThat(sync.runCycle().factsIngested()).isFalse();
     }
 
+    /** Logic review LR-L12: an instructions file that could not be written is written again in the next cycle. */
+    @Test
+    void aFailedWriteOfTheInstructionsIsRetried() throws Exception {
+        Savegame sg = savegames.save(TestData.activeSavegame("sg_write"));
+        TestBridge.write(files.farmFacts(), TestData.farmFacts("sg_write", 90_000_000, 245000));
+        sync.runCycle();
+        OutboxInstruction ins = outboxService.money(sg, 100, MoneyReason.SUBSIDY, "Zuschuss", OutboxService.Related.none());
+        // the target is a non-empty directory: the move fails like a locked file
+        Path xml = files.instructionsXml();
+        Files.deleteIfExists(xml);
+        Files.createDirectories(xml);
+        Files.writeString(xml.resolve("lock"), "x");
+        sync.runCycle();
+        assertThat(Files.isDirectory(xml)).isTrue();
+        org.springframework.util.FileSystemUtils.deleteRecursively(xml);
+        sync.runCycle(); // nothing changed in the outbox - written again anyway
+        assertThat(Files.readString(xml, StandardCharsets.UTF_8)).contains(ins.getInstructionId());
+    }
+
     @Test
     void storeCatalogIsStoredAtTheLinkedSavegameOnly() {
         // Roadmap vehicle dealer RFH-Q1: store_catalog.json is kept raw like the market context
