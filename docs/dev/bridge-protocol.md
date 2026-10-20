@@ -927,7 +927,9 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   (the notice names `husbandryUniqueId`, `fillType` and `amount`); a missing `HUSBANDRY_TRANSFER` is sent again
   after a rewind since R32-I3 (owner decision 2026-10-08, see below). Roadmap vehicle dealer (RFH-Q3): the same for
   `VEHICLE_DELIVERY`. After an `INSUFFICIENT_FUNDS` ack the snapshot
-  balance is not trusted until a newer `farm_facts.json` arrived. Overdraft (owner decisions 2026-10-14): while it is
+  balance is not trusted until a newer `farm_facts.json` arrived; logic review LR-M11: a refusal acknowledged before a
+  detected rewind to an earlier game time (`outbox_instruction.acked_at` before `bridge_rewind.created_at`) no longer
+  counts. Overdraft (owner decisions 2026-10-14): while it is
   on, `LiquidityService.available` adds the limit to the balance, so every payment check of the backend allows the
   balance down to `-limit`, and every debit carries `minBalance = -limit` (`OutboxService`).
 - **Field book** (Roadmap V3.3 R33-F, `FieldBookService`): every `farm_facts` export first opens a running season

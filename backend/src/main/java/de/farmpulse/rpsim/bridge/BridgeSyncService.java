@@ -313,6 +313,7 @@ public class BridgeSyncService {
                 };
                 ins.setStatus(status);
                 ins.setAckedAtGameTime(ack.appliedAtGameTime());
+                ins.setAckedAt(java.time.Instant.now()); // LR-M11
                 ins.setAckMessage(ack.message());
                 ins.setAckResultJson(outboxService.ackResultJson(ack.result())); // Roadmap V3 (R3-Q1)
                 if (status != InstructionStatus.APPLIED) {

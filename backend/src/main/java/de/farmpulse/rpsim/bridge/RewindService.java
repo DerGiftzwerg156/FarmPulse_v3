@@ -258,6 +258,7 @@ public class RewindService {
         for (OutboxInstruction o : lost) {
             o.setStatus(InstructionStatus.PENDING);
             o.setAckedAtGameTime(null);
+            o.setAckedAt(null);
             o.setAckMessage(null);
         }
         log.info("Re-sending {} instructions lost by the reload: {}", lost.size(),

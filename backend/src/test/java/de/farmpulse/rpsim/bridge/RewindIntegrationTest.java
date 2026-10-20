@@ -174,6 +174,25 @@ class RewindIntegrationTest {
         assertThat(status(other)).isEqualTo(InstructionStatus.APPLIED);
     }
 
+    @Autowired LiquidityService liquidity;
+
+    /**
+     * Logic review LR-M11: a debit refused for lack of money in the discarded game time no longer blocks the balance
+     * after a reload without saving (T-03 waits for a newer snapshot - here it would wait until 10 d + 4 h again).
+     */
+    @Test
+    void aRefusalInTheDiscardedGameTimeDoesNotBlockTheBalance() {
+        facts(10 * DAY + 3 * HOUR);
+        OutboxInstruction debit = outboxService.money(sg, -500_000, MoneyReason.OTHER, "zu teuer",
+                OutboxService.Related.none());
+        sync.runCycle();
+        ack("{\"instructionId\":\"%s\",\"appliedAtGameTime\":%d,\"status\":\"FAILED\",\"message\":\"INSUFFICIENT_FUNDS\"}"
+                .formatted(debit.getInstructionId(), 10 * DAY + 4 * HOUR));
+        assertThat(liquidity.available(savegames.findById(sg.getId()).orElseThrow())).isZero();
+        facts(10 * DAY); // reloaded the save of day 10
+        assertThat(liquidity.available(savegames.findById(sg.getId()).orElseThrow())).isPositive();
+    }
+
     /** Logic review LR-H1 (owner decision 2026-10-20): a lost goods deal goes again with goods and money. */
     @Test
     void lostGoodsDealIsResentAsAWholeBatch() {

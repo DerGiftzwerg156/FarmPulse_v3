@@ -45,6 +45,10 @@ public class OutboxInstruction extends SavegameScoped {
     @Column(name = "acked_at_game_time")
     private Long ackedAtGameTime;
 
+    /** Logic review LR-M11: real time the backend processed the ack (null for acks before V56). */
+    @Column(name = "acked_at")
+    private Instant ackedAt;
+
     @Column(name = "ack_message", length = 1000)
     private String ackMessage;
 

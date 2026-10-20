@@ -618,7 +618,8 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | M8 | Kein zweiter Malus bei automatischer Teilzahlung | umgesetzt |
 | M9 | Sperrfrist je Figur für Antworten und Anrufe, gemeinsam mit „Nachricht verfassen“ (Nachfrage 2026-10-20) | umgesetzt |
 | M10 | Ausgleich bleibt offen mit neuer Entscheidungsfrist; Schaden wird später erneut abgebucht; Genossenschaftsanteile werden zurückgenommen (Nachfragen 2026-10-20) | umgesetzt |
-| M11 | – (ohne Entscheidung) | offen |
+| M11 | – (ohne Entscheidung); Echtzeit des Acks (`acked_at`, V56) gegen `bridge_rewind.created_at` | umgesetzt |
+| N1 | Neu (per Test bewiesen): nach einem Rewind lieferte `latest` den Snapshot der verworfenen Zukunft; Zukunfts-Snapshots werden gelöscht (Entscheidung 2026-10-20) | offen |
 | L12 | – | offen |
 | L13 | – | offen |
 | L14 | Nachbarverkauf zählt als Verkauf (wie Inzahlungnahme) | offen |
