@@ -207,6 +207,11 @@ public class BridgeSyncService {
             lastCatalogRaw = read.get().raw(); // not parsed again every cycle; linking resets the cache
             return false;
         }
+        List<String> dropped = BridgeValidator.clean(read.get().doc()).dropped();
+        if (!dropped.isEmpty()) {
+            log.warn("Shop catalog of {} machines: {} broken entries left out, e.g. {}", read.get().doc().items().size(),
+                    dropped.size(), dropped.subList(0, Math.min(dropped.size(), 10)));
+        }
         Long id = sg.get().getId();
         tx.executeWithoutResult(t -> savegames.findById(id).orElseThrow().setStoreCatalogJson(read.get().raw()));
         lastCatalogRaw = read.get().raw();

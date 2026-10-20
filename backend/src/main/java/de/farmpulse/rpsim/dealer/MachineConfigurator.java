@@ -119,7 +119,9 @@ public final class MachineConfigurator {
         });
         double extra = extraDays(item, config, forced.keySet(), defaults, cfg);
         double[] span = span(item.categoryName(), cfg);
-        return new Result(config, Math.round(price), Math.round(upkeep), matchingSet(item, config), setWith, deviations,
+        // discount options (negative price) never take the machine below nothing
+        return new Result(config, Math.max(0, Math.round(price)), Math.max(0, Math.round(upkeep)),
+                matchingSet(item, config), setWith, deviations,
                 span[0] + extra, span[1] + extra, extra);
     }
 

@@ -148,7 +148,10 @@ export class DealerConfigurator implements OnInit {
 
   optionLabel(c: CatalogConfiguration, o: CatalogOption): string {
     const parts = [o.name];
-    if (o.price) parts.push(this.i18n.t('dealer.config.surcharge', { amount: formatMoney(o.price) }));
+    // a discount option of a mod (negative price) shows its minus sign instead of "+"
+    const price = o.price ?? 0;
+    if (price > 0) parts.push(this.i18n.t('dealer.config.surcharge', { amount: formatMoney(price) }));
+    else if (price < 0) parts.push(formatMoney(price));
     if (o.dailyUpkeep) parts.push(this.i18n.t('dealer.config.upkeep', { amount: formatMoney(o.dailyUpkeep) }));
     if (this.item()?.defaultConfigurations?.[c.name] === o.index) parts.push(this.i18n.t('dealer.config.standard'));
     return parts.join(' ');

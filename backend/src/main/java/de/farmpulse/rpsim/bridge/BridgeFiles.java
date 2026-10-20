@@ -81,7 +81,9 @@ public class BridgeFiles {
             return Optional.empty();
         }
         try {
-            String raw = Files.readString(path, StandardCharsets.UTF_8);
+            // not Files.readString: one byte that is no UTF-8 (e.g. a mod text in the shop catalog) would throw and
+            // skip the whole file; new String replaces it with U+FFFD
+            String raw = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
             if (raw.isBlank()) {
                 return Optional.empty();
             }

@@ -125,6 +125,16 @@ describe('Händler – Katalog, Konfigurator, Warenkorb (RFH-K)', () => {
     next.flush(page);
   });
 
+  it('a discount option of a mod shows its minus sign, not "+"', () => {
+    providers();
+    const c = TestBed.createComponent(DealerConfigurator).componentInstance;
+    const type = { name: 'frontloader', title: null, options: [] };
+    const option = (price: number | null) => ({ index: 2, saveId: null, name: 'ohne', desc: null, price, dailyUpkeep: 0,
+      isDefault: false, isSelectable: true, isYesNoOption: false, color: null, dependent: [], power: null });
+    expect(c.optionLabel(type, option(-2500)).replace(/\u00a0/g, ' ')).toBe('ohne -2.500 €');
+    expect(c.optionLabel(type, option(null))).toBe('ohne');
+  });
+
   it('the configurator shows the options, swatches, prices and delivery and puts the machine into the cart', () => {
     const http = providers();
     const fixture = TestBed.createComponent(DealerConfigurator);

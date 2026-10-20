@@ -25,7 +25,7 @@
                 "dependent"],
               "properties": { "index": { "type": "integer", "minimum": 1 }, "saveId": { "type": "string", "minLength": 1 },
                 "name": { "type": "string" }, "desc": { "type": "string", "minLength": 1 },
-                "price": { "type": "integer", "minimum": 0 }, "dailyUpkeep": { "type": "integer", "minimum": 0 },
+                "price": { "type": "integer" }, "dailyUpkeep": { "type": "integer" },
                 "isDefault": { "type": "boolean" }, "isSelectable": { "type": "boolean" },
                 "isYesNoOption": { "type": "boolean" }, "power": { "type": "integer", "minimum": 1 },
                 "color": { "type": "object", "required": ["r", "g", "b"], "properties": {

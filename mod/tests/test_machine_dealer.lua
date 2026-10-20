@@ -212,6 +212,22 @@ function T.TestMachineDealer:testFailingReaderWritesNoFile()
     lu.assertEquals(helpers.countLogs("warning", "shop configurations"), 1)
 end
 
+-- the game log shows how many machines reach store_catalog.json and which could not be read
+function T.TestMachineDealer:testCatalogExportIsLoggedWithTheMachinesLeftOut()
+    helpers.logs = {}
+    local bridge, fs, _, paths = helpers.newBridge()
+    bridge.adapter.collectStoreVehicles = function() return {} end
+    bridge.adapter.collectStoreCatalogDetails = function()
+        return { { xmlFilename = "a.xml", price = 1 } }, 2, "b.xml: boom"
+    end
+    fs.dirs["/ms/FS25_RPSim/export/"] = true
+    bridge:collectStoreCatalog()
+    lu.assertEquals(#RPSimJson.decode(fs.files[paths.storeCatalog]).items, 1)
+    lu.assertEquals(helpers.countLogs("warning", "2 machines could not be read"), 1)
+    lu.assertEquals(helpers.countLogs("warning", "b.xml: boom"), 1)
+    lu.assertEquals(helpers.countLogs("info", "1 machines written to store_catalog.json"), 1)
+end
+
 -- Roadmap vehicle dealer RFH-O1 (owner decisions 2026-10-15): key "Lieferort hier festlegen" - only on own or leased
 -- land, the last 20 points, exported and kept in the mod savegame
 local function placeAdapter(places)
