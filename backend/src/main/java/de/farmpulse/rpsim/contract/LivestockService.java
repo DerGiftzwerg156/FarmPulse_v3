@@ -403,7 +403,11 @@ public class LivestockService {
         return sc;
     }
 
-    /** Animals moved in the agreed direction since the offer was accepted. */
+    /**
+     * Animals moved in the agreed direction since the offer was accepted. Logic review LR-L21 (owner decision
+     * 2026-10-20): deliberately measured as the change of the exported head count (no verified mod API when T-20 was
+     * built), so births (buying) and deaths (selling) within the open offer count as well - capped by the agreed quantity.
+     */
     static int moved(ServiceCase sc, int currentCount) {
         int base = sc.getBaselineCount() == null ? 0 : sc.getBaselineCount();
         int diff = "SELL".equals(sc.getDirection()) ? base - currentCount : currentCount - base;

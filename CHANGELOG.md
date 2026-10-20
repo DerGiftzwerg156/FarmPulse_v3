@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L21 - livestock trader premium (documented)** (owner decision 2026-10-20): the premium measures the
+  change of the exported head count, so births and deaths within an open offer count too; this stays as designed and is
+  now documented in the code and the configuration reference.
 - **Logic review LR-L20 - a lessor could move away during a running lease** (owner decision 2026-10-20): the village
   rotation released all fields of a departing character (also a leased one) while the lease ran on with a character no
   longer in the village. Characters with a running or offered lease (lease in or lease out) no longer move away, like

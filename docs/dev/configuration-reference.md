@@ -550,7 +550,7 @@ exported head count changed in the agreed direction. Vet invoices are booked as 
 | `rpsim.formulas.livestock.trader-premium-share-min` | `0.05` | Premium per animal as share of the exported value per animal (lower bound, rounded to 10 €, at least 10 €). | TODO T-20 |
 | `rpsim.formulas.livestock.trader-premium-share-max` | `0.12` | Upper bound. | TODO T-20 |
 | `rpsim.formulas.livestock.trader-answer-days` | `5` | Game days to answer an offer, afterwards it expires. | TODO T-20 |
-| `rpsim.formulas.livestock.trader-deadline-months` | `1` | Game months to carry out an accepted offer in the game; afterwards moved animals are paid (partial) or the offer lapses. | TODO T-20 |
+| `rpsim.formulas.livestock.trader-deadline-months` | `1` | Game months to carry out an accepted offer in the game; afterwards moved animals are paid (partial) or the offer lapses. The moved animals are the change of the exported head count, so births and deaths within the offer count too (logic review LR-L21, owner decision: as designed). | TODO T-20 |
 | `rpsim.formulas.livestock.breeding-advice-every-months` | `6` | Advice of the breeding advisor every n game months per animal type (head count development since the last advice). | TODO T-20 |
 | `rpsim.formulas.livestock.vet-emergency-health-threshold` | `40` | Roadmap V2 R2-A7: a husbandry below this health (0..100, `farm_facts.husbandries`) brings the vet for an emergency visit. | Roadmap V2 R2-A7 |
 | `rpsim.formulas.livestock.vet-emergency-factor` | `2.5` | Invoice of the emergency visit = routine invoice (base fee + fee per animal) × factor (`VET_INVOICE`). | Roadmap V2 R2-A7 |
