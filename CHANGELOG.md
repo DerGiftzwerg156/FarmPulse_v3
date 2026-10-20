@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L13 - one broken ack stopped all acks**: an entry of `instructions_ack.json` without `status` (or
+  `instructionId`) threw a NullPointerException, so no ack of the file was processed in any cycle. Such an entry is now
+  logged and skipped.
 - **Logic review LR-L12 - a failed write of the instructions file was not repeated**: the backend remembered the content
   as written even when `instructions.json` / `instructions.xml` could not be written (e.g. a locked file), so the mod got
   the instructions only after the next change. The write is now tried again every cycle until it succeeds.

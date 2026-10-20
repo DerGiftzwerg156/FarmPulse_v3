@@ -100,6 +100,26 @@ class BridgeSyncIntegrationTest {
         assertThat(Files.readString(xml, StandardCharsets.UTF_8)).contains(ins.getInstructionId());
     }
 
+    /** Logic review LR-L13: an ack without status is skipped, the other acks of the file still count. */
+    @Test
+    void anAckWithoutStatusDoesNotStopTheOthers() {
+        Savegame sg = savegames.save(TestData.activeSavegame("sg_ack"));
+        TestBridge.write(files.farmFacts(), TestData.farmFacts("sg_ack", 90_000_000, 245000));
+        sync.runCycle();
+        OutboxInstruction ok = outboxService.money(sg, 100, MoneyReason.SUBSIDY, "Zuschuss", OutboxService.Related.none());
+        OutboxInstruction broken = outboxService.money(sg, 200, MoneyReason.SUBSIDY, "Zuschuss", OutboxService.Related.none());
+        sync.runCycle();
+        TestBridge.write(files.ack(), "{\"savegameId\":\"sg_ack\",\"acks\":["
+                + "{\"instructionId\":\"" + broken.getInstructionId() + "\",\"appliedAtGameTime\":90000001},"
+                + "{\"instructionId\":\"" + ok.getInstructionId() + "\",\"appliedAtGameTime\":90000001,\"status\":\"APPLIED\"}"
+                + "],\"contractReports\":[]}");
+        sync.runCycle();
+        assertThat(outbox.findByInstructionId(ok.getInstructionId()).orElseThrow().getStatus())
+                .isEqualTo(InstructionStatus.APPLIED);
+        assertThat(outbox.findByInstructionId(broken.getInstructionId()).orElseThrow().getStatus())
+                .isEqualTo(InstructionStatus.PENDING);
+    }
+
     @Test
     void storeCatalogIsStoredAtTheLinkedSavegameOnly() {
         // Roadmap vehicle dealer RFH-Q1: store_catalog.json is kept raw like the market context

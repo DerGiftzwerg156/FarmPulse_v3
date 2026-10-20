@@ -621,7 +621,7 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | M11 | – (ohne Entscheidung); Echtzeit des Acks (`acked_at`, V56) gegen `bridge_rewind.created_at` | umgesetzt |
 | N1 | Neu (per Test bewiesen): nach einem Rewind lieferte `latest` den Snapshot der verworfenen Zukunft; Zukunfts-Snapshots werden gelöscht (Entscheidung 2026-10-20) | umgesetzt |
 | L12 | – | umgesetzt |
-| L13 | – | offen |
+| L13 | – | umgesetzt |
 | L14 | Nachbarverkauf zählt als Verkauf (wie Inzahlungnahme) | offen |
 | L15 | – | offen |
 | L16 | – | offen |

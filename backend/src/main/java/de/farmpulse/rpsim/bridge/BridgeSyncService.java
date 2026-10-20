@@ -294,6 +294,11 @@ public class BridgeSyncService {
             rewinds.onAckDocument(s, doc);
             int n = 0;
             for (BridgeDtos.Ack ack : doc.acks()) {
+                if (ack == null || ack.instructionId() == null || ack.status() == null) {
+                    // logic review LR-L13: one broken entry must not stop every other ack of the file (NPE in the switch)
+                    log.warn("Ack without instructionId or status - ignored: {}", ack);
+                    continue;
+                }
                 Optional<OutboxInstruction> o = outbox.findByInstructionId(ack.instructionId());
                 if (o.isEmpty()) {
                     continue;
