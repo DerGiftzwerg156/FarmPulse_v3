@@ -381,3 +381,16 @@ test('a reload without saving loses the answers given after the save (R2-F1)', (
   assert.deepEqual(read(sim.paths.playerResponses).responses, []);
   assert.deepEqual(sim.openPrompts().map((p) => p.promptId), ['prm_x']);
 });
+
+// Logic review LR-L16: like the mod, an instruction still in a stale file is neither pruned nor executed again
+test('an instruction still in the file outlives the retention window and runs once', () => {
+  const { sim, write } = setup();
+  write([{ instructionId: 'old', type: 'MONEY_TRANSACTION', amount: 1000, reason: 'SUBSIDY' }]);
+  sim.processInstructions();
+  const balance = sim.balance;
+  sim.gameTime += 31 * MS_PER_GAME_DAY;
+  sim.processInstructions();
+  sim.processInstructions();
+  assert.ok(sim.processed.old);
+  assert.equal(sim.balance, balance);
+});

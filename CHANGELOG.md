@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L16 - an old instruction could run twice** (mod): the mod forgets processed instructions after
+  30 game days; with the backend not running, a stale `instructions.xml` still listing them executed them again. Entries
+  still in the file are now kept (the bridge simulator follows).
 - **Logic review LR-L15 - refused re-sent investor deliveries stayed counted** (owner decision 2026-10-20): after a
   rewind a counted delivery is sent again; when the mod refuses it now, it takes its quantities back from the periods it
   went to for every kind (before only the W1 total); status, trust and reminders stay. Migration V57.

@@ -624,7 +624,7 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | L13 | – | umgesetzt |
 | L14 | Nachbarverkauf zählt als Verkauf (wie Inzahlungnahme) | umgesetzt |
 | L15 | Menge wie bei W1 je Periode zurück (Nachfrage 2026-10-20), Aufteilung in `period_split` (V57) | umgesetzt |
-| L16 | – | offen |
+| L16 | – (Mod und Simulator) | umgesetzt |
 | L17 | Wie offene Restschuld (`DEFAULTED`, Einzug bei Deckung) | offen |
 | L18 | – | offen |
 | L19 | – | offen |

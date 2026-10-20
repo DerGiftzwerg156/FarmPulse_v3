@@ -1645,15 +1645,18 @@ export class BridgeSimulator {
       }
     }
     this.collectEnded();
-    this.prune();
+    // like the mod (logic review LR-L16): ids still in the file stay, an unreadable file prunes nothing this cycle
+    if (!res.skipped) {
+      this.prune(new Set((doc?.instructions ?? []).map((ins) => ins?.instructionId).filter((id) => typeof id === 'string')));
+    }
     this.writeAck();
     this.saveSavegame();
     return res;
   }
 
-  prune() {
+  prune(inFile = new Set()) {
     const limit = this.gameTime - this.retentionGameDays * MS_PER_GAME_DAY;
-    for (const [id, e] of Object.entries(this.processed)) if (e.gameTime < limit) delete this.processed[id];
+    for (const [id, e] of Object.entries(this.processed)) if (e.gameTime < limit && !inFile.has(id)) delete this.processed[id];
     this.contractReports = this.contractReports.filter((r) => (r.endedAtGameTime ?? this.gameTime) >= limit);
   }
 

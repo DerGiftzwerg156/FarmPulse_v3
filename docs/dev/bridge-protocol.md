@@ -907,7 +907,9 @@ type and direction, measured like `transferStorage` with `getFreeCapacity` / `ge
 otherwise the whole batch is `FAILED` with `NO_CAPACITY` / `INSUFFICIENT_STOCK` (`UNKNOWN_FILLTYPE`) before its first
 member runs; a contractor harvest no longer cuts the field when its yield has no room.
 `endReason` ∈ `DEADLINE_REACHED`, `MAX_QUANTITY_REACHED`. The file always contains every instruction still
-inside the retention window (default 30 game days), so a missed file version never loses information.
+inside the retention window (default 30 game days), so a missed file version never loses information. Logic review
+LR-L16: an entry whose instruction is still in the current `instructions.xml` is kept beyond the window (and an
+unreadable file prunes nothing), so a stale file of a backend that is not running never executes it again.
 Whether an instruction was executed is decided solely by the mod's persisted `processedInstructions` list.
 
 ## Backend reactions

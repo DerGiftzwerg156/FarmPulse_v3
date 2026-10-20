@@ -270,11 +270,13 @@ function RPSimProcessor.collectContractReports(state, gameTime)
     end
 end
 
---- Removes processed entries and contract reports older than the retention window.
-function RPSimProcessor.prune(state, gameTime, retentionGameDays)
+--- Removes processed entries and contract reports older than the retention window. Logic review LR-L16: an entry whose
+-- instruction is still in the current instructions file (`inFile`, a set of ids) stays - otherwise a stale file (backend
+-- not running) would execute it again once the window has passed.
+function RPSimProcessor.prune(state, gameTime, retentionGameDays, inFile)
     local limit = gameTime - retentionGameDays * RPSimConfig.MS_PER_GAME_DAY
     for id, entry in pairs(state.processed) do
-        if entry.gameTime < limit then
+        if entry.gameTime < limit and not (inFile ~= nil and inFile[id]) then
             state.processed[id] = nil
         end
     end

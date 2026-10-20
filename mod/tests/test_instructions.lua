@@ -154,6 +154,21 @@ function T.TestInstructions:testProcessedEntriesPrunedAfterRetention()
     lu.assertNil(bridge.state.processed.old)
 end
 
+-- Logic review LR-L16: a stale instructions file (backend not running) does not execute an instruction again after the
+-- retention window - its entry stays while the file still lists it
+function T.TestInstructions:testAnInstructionStillInTheFileIsNotPrunedNorRepeated()
+    local bridge, fs, adapter, paths = helpers.newBridge({ config = { processedRetentionGameDays = 30 } })
+    bridge:bootstrap()
+    helpers.writeInstructions(fs, paths, { savegameId = SG, instructions = { money("old", 7) } })
+    bridge:pollInstructions()
+    local balance = adapter.balance
+    adapter.gameTime = 1001 + 31 * RPSimConfig.MS_PER_GAME_DAY
+    bridge:pollInstructions()
+    lu.assertNotNil(bridge.state.processed.old)
+    bridge:pollInstructions()
+    lu.assertEquals(adapter.balance, balance)
+end
+
 -- TODO T-21: in-game notifications
 function T.TestInstructions:testNotificationIsShownOnceAndAcked()
     local bridge, fs, adapter, paths = helpers.newBridge()
