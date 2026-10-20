@@ -187,6 +187,17 @@ versions or this changelog do not match.
   cap of one absence (`GET/PUT /api/settings/sick-leave`). The cards *Kredit und Felder im Spielmenü* (from
   *Ereignisse*) and *Erkannte Mods mit Überschneidungen* (from *Im Spiel*) moved there.
 
+### Fixed
+
+- **Vehicle dealer without catalog** (game log 2026-10-20): `store_catalog.json` reached the dealer only if every entry
+  was valid - one discount option of a mod (negative price), one broken entry or one byte that is no UTF-8 skipped the
+  whole file, and as the mod writes it only once per game start the tablet kept showing "Der Katalog kommt mit dem
+  nächsten Spielstart". The backend now leaves out only the broken entries (warning in the backend log), accepts
+  negative option prices (list price never below 0, shown as "-2.500 €" in the configurator) and reads bytes that are
+  no UTF-8 as U+FFFD in every bridge file. The mod logs how many machines it wrote to `store_catalog.json` and how many
+  could not be read (with the first error), and an entry no longer fails as a whole when `Motorized` cannot give the
+  power.
+
 ## [2.0.0] - 2026-10-09
 
 Update the mod `FS25_RPSim` together with the backend: an older mod rejects the booking reason `TRAINING` (the training

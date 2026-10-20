@@ -743,8 +743,8 @@ and **without a cap** (owner decision 2026-10-15: the dealer offers the whole ca
 only `storeVehicles`), sorted by `xmlFilename`. RFH-Q fixes the **contract only**
 (`RPSimStoreCatalog.build`, `RPSimBridge:exportStoreCatalog`, `BridgeDtos.StoreCatalog`, `BridgeValidator`, schema
 `store_catalog.schema.json`); since RFH-K1 the mod reads the options in the game (`RPSimGameAdapter:collectStoreCatalogDetails`,
-same selection as `storeVehicles`: `species == VEHICLE` and `showInStore`; an entry that cannot be read is left out). The backend stores the raw file at its linked savegame (`savegame.store_catalog_json`,
-`FactsService.storeCatalog`); a file of an unlinked savegame or an invalid one is left alone. The bridge simulator writes
+same selection as `storeVehicles`: `species == VEHICLE` and `showInStore`; an entry that cannot be read is left out and counted). The backend stores the raw file at its linked savegame (`savegame.store_catalog_json`,
+`FactsService.storeCatalog`, which leaves out broken entries); a file of an unlinked savegame or one without savegame id or items is left alone. The bridge simulator writes
 it only in `fahrzeughaendler`.
 
 ```json
@@ -778,9 +778,14 @@ it only in `fahrzeughaendler`.
 
 **Built (RFH-Q1, contract):** `RPSimStoreCatalog.buildItem` drops items without `xmlFilename` or a numeric `price`,
 options without `index` ≥ 1 and types without options; numbers are rounded (colours to 3 decimals), missing booleans get
-their default (`isSelectable` true, the others false), empty lists stay arrays and empty maps objects. The backend
-validator skips the whole file when the savegame id or the items are missing or an item / option is broken (retry next
-cycle).
+their default (`isSelectable` true, the others false), empty lists stay arrays and empty maps objects. Option prices
+may be negative (discount options of mods: the game adds `#price` as it is); the backend never lets a configured list
+price fall below 0. The mod logs `Shop catalog: N machines written to store_catalog.json` and, as a warning, how many
+entries could not be read (with the first error). The backend validator skips the file only when the savegame id or
+the items are missing; broken items (no `xmlFilename`, price missing or < 0, daily upkeep < 0) and options (no `index`
+≥ 1) are left out with a warning (`BridgeValidator.clean`) - the file comes only once per mission start, so skipping it
+would leave the dealer without a catalog until the next game start. Bytes that are no UTF-8 (mod texts) are read as
+U+FFFD instead of skipping the file (all bridge files).
 
 ## `import/instructions.json` + `import/instructions.xml` (backend → mod)
 

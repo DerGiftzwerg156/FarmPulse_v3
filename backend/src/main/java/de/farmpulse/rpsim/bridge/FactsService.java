@@ -43,12 +43,16 @@ public class FactsService {
         return Optional.of(json.readValue(sg.getMarketContextJson(), MarketContext.class));
     }
 
-    /** Roadmap vehicle dealer RFH-Q1: the stored shop catalog with every configuration option (store_catalog.json). */
+    /**
+     * Roadmap vehicle dealer RFH-Q1: the stored shop catalog with every configuration option (store_catalog.json),
+     * without its broken entries ({@link BridgeValidator#clean}).
+     */
     public Optional<BridgeDtos.StoreCatalog> storeCatalog(Savegame sg) {
         if (sg.getStoreCatalogJson() == null) {
             return Optional.empty();
         }
-        return Optional.of(json.readValue(sg.getStoreCatalogJson(), BridgeDtos.StoreCatalog.class));
+        return Optional.of(BridgeValidator.clean(json.readValue(sg.getStoreCatalogJson(), BridgeDtos.StoreCatalog.class))
+                .catalog());
     }
 
     /** Highest current price per fill type over all sell points (per price unit, e.g. 1000 l). */

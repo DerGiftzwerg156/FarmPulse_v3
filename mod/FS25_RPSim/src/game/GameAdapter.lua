@@ -944,7 +944,8 @@ function RPSimGameAdapter:readStoreItemDetails(item)
     e.categoryTitle = safe(function() return g_storeManager:getCategoryByName(item.categoryName).title end, nil)
     if pcall(StoreItemUtil.loadSpecsFromXML, item) and type(item.specs) == "table" then
         e.motorized = item.specs.power ~= nil
-        local ok, minPower, maxPower = pcall(Motorized.getSpecValuePower, item, nil, nil, nil, true)
+        -- inside the pcall: without Motorized the entry keeps its other values
+        local ok, minPower, maxPower = pcall(function() return Motorized.getSpecValuePower(item, nil, nil, nil, true) end)
         if ok then
             e.powerMin, e.powerMax = minPower, maxPower
         end
@@ -970,19 +971,23 @@ function RPSimGameAdapter:readStoreItemDetails(item)
 end
 
 --- RFH-K1: the whole vehicle catalog of the shop with every option (owner decision 2026-10-15: no cap), for
--- store_catalog.json. Same selection as collectStoreVehicles; an entry that cannot be read is left out.
+-- store_catalog.json. Same selection as collectStoreVehicles; an entry that cannot be read is left out and counted
+-- (returns list, number left out, first error - for the game log).
 function RPSimGameAdapter:collectStoreCatalogDetails()
-    local list = {}
+    local list, failed, firstError = {}, 0, nil
     local items = safe(function() return g_storeManager:getItems() end, {})
     for _, item in ipairs(items) do
-        safe(function()
+        local ok, err = pcall(function()
             if item.species == StoreSpecies.VEHICLE and item.showInStore then
                 list[#list + 1] = self:readStoreItemDetails(item)
             end
-            return true
         end)
+        if not ok then
+            failed = failed + 1
+            firstError = firstError or string.format("%s: %s", tostring(item.xmlFilename), tostring(err))
+        end
     end
-    return list
+    return list, failed, firstError
 end
 
 --- R3-V2: a used vehicle from the workshop or a neighbour, loaded like AbstractMission:spawnVehicle (LUADOC

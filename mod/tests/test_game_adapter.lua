@@ -954,6 +954,20 @@ function T.TestGameAdapter:testStoreCatalogDetailsReadEveryOption()
     clearStoreGame()
 end
 
+-- an entry that cannot be read is left out, counted and named (game log, see RPSimBridge:exportStoreCatalog)
+function T.TestGameAdapter:testStoreCatalogDetailsCountTheEntriesLeftOut()
+    local good = { xmlFilename = "a.xml", name = "A", species = 1, showInStore = true, price = 100 }
+    local broken = { xmlFilename = "b.xml", name = "B", species = 1, showInStore = true, price = 100,
+        configurationSets = { 5 } }
+    storeGame({ items = { good, broken } })
+    local list, failed, firstError = RPSimGameAdapter.new():collectStoreCatalogDetails()
+    lu.assertEquals(#list, 1)
+    lu.assertEquals(list[1].xmlFilename, "a.xml")
+    lu.assertEquals(failed, 1)
+    lu.assertStrContains(firstError, "b.xml: ")
+    clearStoreGame()
+end
+
 -- Roadmap vehicle dealer RFH-O1: place of the player for a delivery point (position, facing, farmland, owner)
 function T.TestGameAdapter:testPlayerPlaceForADeliveryPoint()
     helpers.fakeGame()

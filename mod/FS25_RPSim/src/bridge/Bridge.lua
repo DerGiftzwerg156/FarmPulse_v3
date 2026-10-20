@@ -440,13 +440,22 @@ function RPSimBridge:exportStoreCatalog()
     if self.adapter.collectStoreCatalogDetails == nil then
         return false
     end
-    local ok, raw = pcall(self.adapter.collectStoreCatalogDetails, self.adapter)
+    local ok, raw, failed, firstError = pcall(self.adapter.collectStoreCatalogDetails, self.adapter)
     if not ok or raw == nil then
         RPSimLog.warning("Reading the shop configurations failed: %s", tostring(raw))
         return false
     end
-    return self:writeJson(self.paths.storeCatalog,
-        RPSimStoreCatalog.build({ savegameId = self.state.savegameId, items = raw }))
+    if (failed or 0) > 0 then
+        RPSimLog.warning("Shop catalog: %d machines could not be read and are left out, first: %s", failed,
+            tostring(firstError))
+    end
+    local doc = RPSimStoreCatalog.build({ savegameId = self.state.savegameId, items = raw })
+    if not self:writeJson(self.paths.storeCatalog, doc) then
+        return false
+    end
+    -- the game log shows whether the dealer gets a catalog (an empty one means: nothing could be read)
+    RPSimLog.info("Shop catalog: %d machines written to store_catalog.json", #doc.items)
+    return true
 end
 
 --- Roadmap V3 R3-V2: outcome of an asynchronous instruction (VEHICLE_SPAWN) - recorded and acknowledged at once.

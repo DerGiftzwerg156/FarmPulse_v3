@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Map;
 
 import de.farmpulse.rpsim.config.RpsimProperties;
+import de.farmpulse.rpsim.dealer.MachineConfigurator;
 import de.farmpulse.rpsim.domain.InstructionType;
 import de.farmpulse.rpsim.domain.MoneyReason;
 import de.farmpulse.rpsim.notice.FailedInstructionService;
@@ -97,15 +98,42 @@ class MachineDealerContractTest {
 
         var noItems = JSON.readValue("{ \"savegameId\": \"sg\" }", BridgeDtos.StoreCatalog.class);
         assertThat(BridgeValidator.validate(noItems)).containsExactly("items missing");
-        var badItem = JSON.readValue("{ \"savegameId\": \"sg\", \"items\": [{ \"name\": \"x\", \"price\": 1 }] }",
+    }
+
+    @Test
+    void brokenCatalogEntriesAreLeftOutNotTheWholeFile() {
+        // the mod writes store_catalog.json once per mission start: one broken entry must not cost the whole catalog
+        var c = JSON.readValue("""
+                { "savegameId": "sg", "items": [
+                  { "name": "no file", "price": 1 },
+                  { "xmlFilename": "neg.xml", "price": -5 },
+                  { "xmlFilename": "a.xml", "price": 1000, "configurations": [
+                    { "name": "wheel", "options": [{ "index": 0, "name": "x" }] },
+                    { "name": "frontloader", "options": [{ "index": 1, "name": "mit", "price": 0 },
+                        { "index": 2, "name": "ohne", "price": -2500 }, { "name": "kein Index" }] }] }] }""",
                 BridgeDtos.StoreCatalog.class);
-        assertThat(BridgeValidator.validate(badItem)).singleElement().asString().startsWith("invalid catalog item");
-        var badOption = JSON.readValue("""
-                { "savegameId": "sg", "items": [{ "xmlFilename": "a.xml", "price": 1, "configurations": [
-                    { "name": "wheel", "options": [{ "index": 0, "name": "x", "price": 0 }] }] }] }""",
-                BridgeDtos.StoreCatalog.class);
-        assertThat(BridgeValidator.validate(badOption)).singleElement().asString()
-                .startsWith("invalid configuration of a.xml");
+        assertThat(BridgeValidator.validate(c)).isEmpty();
+        var clean = BridgeValidator.clean(c);
+        assertThat(clean.catalog().items()).singleElement()
+                .satisfies(i -> assertThat(i.xmlFilename()).isEqualTo("a.xml"));
+        var types = clean.catalog().items().get(0).configurations();
+        assertThat(types).singleElement().satisfies(t -> assertThat(t.name()).isEqualTo("frontloader"));
+        // a discount option (negative price, mods) stays - the game adds it as it is
+        assertThat(types.get(0).options()).extracting(BridgeDtos.CatalogOption::price).containsExactly(0.0, -2500.0);
+        assertThat(clean.dropped()).containsExactly("invalid catalog item null", "invalid catalog item neg.xml",
+                "invalid configuration of a.xml: wheel", "invalid option of a.xml: frontloader");
+    }
+
+    @Test
+    void aDiscountOptionNeverTakesTheListPriceBelowNothing() {
+        var item = JSON.readValue("""
+                { "xmlFilename": "a.xml", "price": 1000, "configurations": [{ "name": "frontloader", "options": [
+                    { "index": 1, "name": "mit", "price": 0, "isDefault": true, "isSelectable": true },
+                    { "index": 2, "name": "ohne", "price": -2500, "isSelectable": true }] }],
+                  "defaultConfigurations": { "frontloader": 1 } }""", BridgeDtos.CatalogItem.class);
+        var cfg = new RpsimProperties().getFormulas().getMachineDealer();
+        assertThat(MachineConfigurator.configure(item, Map.of(), cfg).listPrice()).isEqualTo(1000);
+        assertThat(MachineConfigurator.configure(item, Map.of("frontloader", 2), cfg).listPrice()).isZero();
     }
 
     @Test
