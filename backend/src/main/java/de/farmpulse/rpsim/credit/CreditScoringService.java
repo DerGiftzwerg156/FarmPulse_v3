@@ -119,11 +119,13 @@ public class CreditScoringService {
         double existingInstallments = active.stream().mapToDouble(Loan::getMonthlyInstallment).sum();
         long now = sg.getCurrentGameTime();
         long windowMs = GameTime.days(cfg.getCashflowWindowDays());
-        // T-04: running leasing costs are an obligation like an installment (the game pays them from the balance, so
-        // the operating cash flow below already contains them). R2-B3: the real LEASING_COSTS of the booking journal
-        // replace the estimate from the exported costs per vehicle.
-        existingInstallments += f == null ? 0 : journal.monthlyLeasingCost(f, now, windowMs)
+        // T-04: running leasing costs are an obligation like an installment. R2-B3: the real LEASING_COSTS of the
+        // booking journal replace the estimate from the exported costs per vehicle. Logic review LR-M6 (owner decision
+        // 2026-10-20): the game pays them from the balance, so the operating cash flow below contains them as an
+        // expense - they are added back there, otherwise leasing would burden the check twice.
+        double leasing = f == null ? 0 : journal.monthlyLeasingCost(f, now, windowMs)
                 .orElseGet(() -> FactsService.leasingCostPerMonth(f));
+        existingInstallments += leasing;
         double newInstallment = CreditFormula.monthlyInstallment(amount, interestRate, termMonths);
         double balance = f == null ? 0 : f.liquidity().balance();
 
@@ -137,7 +139,7 @@ public class CreditScoringService {
                 : journal.monthlyOperatingCashflow(f, now, windowMs);
         if (fromJournal.isPresent()) {
             hasHistory = true;
-            monthlyCashflow = fromJournal.get();
+            monthlyCashflow = fromJournal.get() + leasing; // LR-M6: leasing counts as an installment only
         } else if (window.size() >= 2) {
             FactsSnapshot first = window.get(0);
             FactsSnapshot last = window.get(window.size() - 1);
@@ -147,7 +149,8 @@ public class CreditScoringService {
                 long delta = last.getBalance() - first.getBalance();
                 // operating cash flow = balance change without financing/one-off bookings (installments added back)
                 long nonOperating = liquidity.nonOperatingApplied(sg, first.getGameTime(), last.getGameTime());
-                monthlyCashflow = (delta - nonOperating) / (span / (double) gameTime.msPerMonth(sg));
+                monthlyCashflow = (delta - nonOperating) / (span / (double) gameTime.msPerMonth(sg))
+                        + leasing; // LR-M6: leasing counts as an installment only
             }
         }
         double history = CreditFormula.paymentHistoryScore(

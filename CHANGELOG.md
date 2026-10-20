@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-M6 - leasing burdened the credit check twice** (owner decision 2026-10-20): the leasing costs
+  counted as an existing installment and, already paid by the game, lowered the operating cash flow as well. They
+  stay an installment; the cash flow of the check (journal or balance trend) gets them added back.
 - **Logic review LR-M5 - month-based dates kept their old day after a "days per period" change** (T-08): the end of
   an apprenticeship and of a seasonal contract of active employees, the deadline of an accepted livestock trader deal,
   the purchase time and binding period of an investment grant, an open notice of cooperative shares, the deadline of
