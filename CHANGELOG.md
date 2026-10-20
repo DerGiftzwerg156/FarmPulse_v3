@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L14 - funded machine sold to a neighbour** (owner decision 2026-10-20): the sale (R3-V) books no
+  `SHOP_VEHICLE_SELL`, so the repayment came only with a later, unrelated shop sale. It now counts as sold like a
+  trade-in at the dealer: repaid pro rata at once in the binding period, before the payment it lowers the recognised sum.
 - **Logic review LR-L13 - one broken ack stopped all acks**: an entry of `instructions_ack.json` without `status` (or
   `instructionId`) threw a NullPointerException, so no ack of the file was processed in any cycle. Such an entry is now
   logged and skipped.
