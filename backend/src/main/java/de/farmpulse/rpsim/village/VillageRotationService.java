@@ -2,6 +2,7 @@ package de.farmpulse.rpsim.village;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import de.farmpulse.rpsim.character.CharacterGeneratorService;
 import de.farmpulse.rpsim.character.CharacterGeneratorService.Spec;
@@ -15,6 +16,8 @@ import de.farmpulse.rpsim.domain.CharacterCategory;
 import de.farmpulse.rpsim.domain.CharacterRole;
 import de.farmpulse.rpsim.domain.CharacterStatus;
 import de.farmpulse.rpsim.domain.CommunicationCategory;
+import de.farmpulse.rpsim.domain.ContractKind;
+import de.farmpulse.rpsim.domain.ContractStatus;
 import de.farmpulse.rpsim.domain.FarmlandOwnership;
 import de.farmpulse.rpsim.domain.OwnerType;
 import de.farmpulse.rpsim.domain.Savegame;
@@ -53,12 +56,14 @@ public class VillageRotationService {
     private final RpsimProperties props;
     private final GameTime gameTime;
     private final VillageNewsService villageNews;
+    private final de.farmpulse.rpsim.repository.ContractRepository contracts;
 
     public VillageRotationService(SavegameRepository savegames, CharacterLookup lookup, CharacterGeneratorService generator,
                                   VillageReputationService reputation, NarrationRequestService narration,
                                   FarmlandOwnershipService ownership, DiaryService diary, RandomSource random,
                                   RpsimProperties props, GameTime gameTime,
-                                  VillageNewsService villageNews) {
+                                  VillageNewsService villageNews, de.farmpulse.rpsim.repository.ContractRepository contracts) {
+        this.contracts = contracts;
         this.villageNews = villageNews;
         this.savegames = savegames;
         this.lookup = lookup;
@@ -113,12 +118,26 @@ public class VillageRotationService {
             return Optional.empty();
         }
         // T-21: FS25 NPCs of the map (field owners) never move away and do not count against the rotation limits
-        List<Character> dynamic = lookup.activeDynamic(sg).stream().filter(c -> !GameNpcService.isGameNpc(c)).toList();
+        // LR-L20 (owner decision 2026-10-20): a lessor or tenant of a running or offered lease does not move away either
+        Set<Long> leasing = leaseParties(sg);
+        List<Character> dynamic = lookup.activeDynamic(sg).stream().filter(c -> !GameNpcService.isGameNpc(c))
+                .filter(c -> !leasing.contains(c.getId())).toList();
         boolean depart = dynamic.size() > cfg().getMinDynamicCharacters()
                 && (dynamic.size() >= cfg().getMaxDynamicCharacters() || random.chance(cfg().getMoveAwayShare()));
         Optional<Character> changed = depart ? Optional.of(depart(sg, random.pick(dynamic))) : Optional.of(arrive(sg));
         sg.setDynamicRotationsThisYear(sg.getDynamicRotationsThisYear() + 1);
         return changed;
+    }
+
+    /** LR-L20: characters of a running or offered lease (an NPC field leased in, or an own field leased out). */
+    Set<Long> leaseParties(Savegame sg) {
+        Set<Long> ids = new java.util.HashSet<>();
+        for (ContractKind kind : List.of(ContractKind.LEASE, ContractKind.LEASE_OUT)) {
+            contracts.findBySavegameAndKindAndStatusInOrderByIdAsc(sg, kind,
+                            List.of(ContractStatus.ACTIVE, ContractStatus.OFFERED)).stream()
+                    .filter(c -> c.getCharacter() != null).forEach(c -> ids.add(c.getCharacter().getId()));
+        }
+        return ids;
     }
 
     @Transactional
