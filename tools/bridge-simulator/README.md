@@ -25,7 +25,7 @@ node src/cli.js --help
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--dir` | `./runtime/modSettings/FS25_RPSim` | Bridge folder (the backend `dev` profile points here) |
-| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods`, `helfer-hof`, `tierhof-krank`, `ernte-herbst`, `nachbarhandel`, `duerre-sommer`, `winter-schnee`, `lohnunternehmer`, `viehhandel`, `grossauftrag`, `investor-milch`, `feldbuch`, `hofplanung` |
+| `--scenario` | `wohlhabender-hof` | `leerer-hof`, `verschuldeter-hof`, `wohlhabender-hof`, `voller-silobestand`, `leasing-hof`, `knappe-kasse`, `konflikt-mods`, `helfer-hof`, `tierhof-krank`, `ernte-herbst`, `nachbarhandel`, `duerre-sommer`, `winter-schnee`, `lohnunternehmer`, `viehhandel`, `grossauftrag`, `investor-milch`, `feldbuch`, `hofplanung`, `fahrzeughaendler` |
 | `--interval` | `5000` | Real-time ms between cycles |
 | `--game-minutes-per-tick` | `60` | Game time advanced per cycle |
 | `--savegame-id` | `map_erlengrund_sim_<scenario>` | Simulated savegame id |
@@ -64,6 +64,7 @@ refuses debits the balance does not cover (`FAILED`, `INSUFFICIENT_FUNDS`). Simu
 | `grossauftrag` | Roadmap V3.2 (R32-G): a full canola silo (`tradeStorage` 600 000 l, no free capacity) and the oil mill "Ölmühle Nord" (`OilMillNorth`, canola, sunflower, soybean) as an extra sell point of the map in `market_context.json` and `prices` |
 | `investor-milch` | Roadmap V3.2 (R32-I3, type W3): a cow stable with 12 000 l milk in its storage (capacity 30 000 l); `husbandries[].storage[]` exports it, `HUSBANDRY_TRANSFER` takes it out |
 | `hofplanung` | Roadmap V4 (R4-Q): September; wheat sown and fertilised once on field 2, grass after the first cut on field 4, a cow husbandry with 40 cows, a trough with silage and hay, 150 000 l silage and 30 000 l hay in stock, the consumption counter `inputs` (seed, fertiliser bought by a helper, slurry), purchase prices, the food groups of the cows and the crops with seed use, base yield and sowing / harvest windows |
+| `fahrzeughaendler` | Roadmap vehicle dealer (RFH-Q, K): the shop catalog with every option in `store_catalog.json` (Fendt 700 Vario with colour, engine (power per option, no type title: the tablet's table applies), wheels and a package; Amazone Catros; Krampe trailer; RFH-K1 display names of brand and category and the power range), two delivery points set by key (`deliveryPoints`), two shop places (`storePlaces`), a Deutz-Fahr to trade in and an attached Catros (trade-in refused) |
 | `feldbuch` | Roadmap V3.3 (R33-Q): August; own fields with rolling / mulching levels (harvestable wheat, grass after the first cut, harvestable maize still to be rolled), the crops of the map in `market_context.fruitTypes` (grass grows again, maize also gives `CHAFF`) and the harvest counter `harvests` (18 000 l grass windrow on field 4) |
 | `ernte-herbst` | Roadmap V2 (R2-C): starts in September; `fields` with ready maize, growing potatoes, withered wheat and a weedy empty field (with the crop details `withered`, `cut`, `fillType`, `litersPerSqm`), `fieldRules` with every soil mechanic on, rain in `weather`, `finances` |
 
@@ -167,6 +168,17 @@ stock or a trough, `POST /eat` lets the animals eat from the trough (like the pl
 the feed counter grows by what was really taken). Counters, trough and stock are part of the simulated savegame and go
 back on `/reload-without-saving`. The values, prices and titles are simulated examples.
 
+**Roadmap vehicle dealer** (RFH-Q5): only `fahrzeughaendler` writes `store_catalog.json` once per start and exports
+`deliveryPoints` (farm_facts) and `storePlaces` (market_context); all other scenarios stand for a mod without them.
+`VEHICLE_DELIVERY` is executed like the planned mod action of RFH-L5: trade-ins checked first (leased → `TRADE_IN_NOT_OWN`,
+missing → `TRADE_IN_NOT_FOUND`, attached → `TRADE_IN_ATTACHED`, in `vehiclePositions` → `TRADE_IN_IN_USE`), funds against
+the sum of `bookings` (overdraft `minBalance`), every item from the catalog (`UNKNOWN_STORE_ITEM`), then the delivery
+point, the shop places (`fallbackToShop` or no `place`) or `NO_SPACE`; the vehicles are added, the trade-ins removed and
+every booking lands single in the booking statement; the ack result is `placeUsed`, `vehicleCount`, `vehicleId1..n`,
+`tradeInsRemoved`. `POST /delivery-point` is the key "Lieferort hier festlegen" (own farmland only, the last 20 kept,
+part of the simulated savegame), `POST /delivery-place-blocked` and `POST /shop-full` occupy the delivery point or the
+shop places. The values and names are simulated examples.
+
 ## Control API (manual testing / E2E)
 
 | Request | Effect |
@@ -195,6 +207,9 @@ back on `/reload-without-saving`. The values, prices and titles are simulated ex
 | `POST /input {"farmlandId":2,"fillType":"LIME","liters":4000,"helper":false}` | Roadmap V4 R4-Q3: a sowing machine or sprayer uses litres on an own field (`hofplanung`); `helper: true` = a helper bought them (also counted in `helperLiters`); only farmlands the player owns, litres > 0 |
 | `POST /feed {"husbandryUniqueId":"hus_00001","fillType":"SILAGE","amount":5000}` | Roadmap V4 R4-Q3: feed into (amount > 0) or out of (amount < 0) a trough, or without `husbandryUniqueId` the silo / bunker silo stock (`hofplanung`); never below 0, the trough never above its capacity |
 | `POST /eat {"husbandryUniqueId":"hus_00001","fillType":"SILAGE","liters":1000}` | Roadmap V4 R4-Q3: the animals eat from the trough; the trough falls and `feedConsumed` grows by what was really taken |
+| `POST /delivery-point {"x":-300,"y":99,"z":120,"ry":3.14,"farmlandId":3}` | Roadmap vehicle dealer RFH-Q5: the player presses "Lieferort hier festlegen" at this place (`fahrzeughaendler`); only on own farmland (otherwise 500 with „Lieferort nur auf eigenem oder gepachtetem Land“), the last 20 are kept |
+| `POST /delivery-place-blocked {"blocked": true}` | Roadmap vehicle dealer RFH-Q5: the delivery point is taken (`overlapBox` finds something) or free again |
+| `POST /shop-full {"full": true}` | Roadmap vehicle dealer RFH-Q5: no shop place is free (`setLoadingPlace` fails) or places are free again |
 | `POST /vanilla-loan {"change": 30000}` | Roadmap V2 R2-D1: the player takes (positive) or repays (negative) the vanilla loan in the finance menu; the balance moves by the same amount |
 | `POST /vanilla-farmland {"farmlandId": 13, "toPlayer": true}` | Roadmap V2 R2-D2: the player buys (`true`) or sells a farmland in the game's field menu at its price (booked as `FIELD_BUY` / `FIELD_SELL`), market context re-exported |
 | `POST /answer {"promptId":"prm_…","answer":"YES"}` | Roadmap V2 R2-F: the player answers a yes/no question in the game (`YES` / `NO`); 400 for an unknown question |

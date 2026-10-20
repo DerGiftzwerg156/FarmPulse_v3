@@ -545,6 +545,69 @@ Object.assign(SCENARIOS, {
 });
 
 // Simulated vanilla contracts (TODO T-22); the mod reads them from g_missionManager:getMissions().
+// Roadmap vehicle dealer (RFH-Q5): fahrzeughaendler stands for a mod with the RFH-Q contract (vehicleDealer: true) -
+// store_catalog.json with the options of every shop vehicle, the delivery points set by key (farm_facts.deliveryPoints)
+// and the shop places (market_context.storePlaces). One own tractor can be traded in, one implement is attached (trade-in
+// refused). All numbers, names and coordinates are simulated examples, not values read from FS25.
+const opt = (index, name, extra = {}) => ({ index, name, price: 0, dailyUpkeep: 0, isDefault: false, isSelectable: true,
+  isYesNoOption: false, dependent: [], ...extra });
+Object.assign(SCENARIOS, {
+  fahrzeughaendler: {
+    description: 'Fahrzeughändler: Shop-Katalog mit allen Ausstattungen, zwei Lieferorte aus dem Spiel, Shop-Plätze, '
+      + 'Traktor zur Inzahlungnahme (RFH-Q).',
+    balance: 400000, vanillaLoan: 0, ownedFarmlands: [1, 2, 3], roadmapV31: true, vehicleDealer: true,
+    journal: { income: 'SOLD_PRODUCTS', expense: 'PURCHASE_FUEL' },
+    vehicles: [
+      { ...vehicle(1, 62000, 0.25), name: 'Deutz-Fahr Serie 5', xmlFilename: 'data/vehicles/deutzFahr/series5/series5.xml',
+        category: 'TRACTORSM', fuel: { liters: 90, capacity: 150 }, repairPrice: 2400 },
+      { ...vehicle(2, 18000, 0.1), name: 'Amazone Catros', xmlFilename: 'data/vehicles/amazone/catros/catros.xml',
+        category: 'CULTIVATORS', attached: true },
+    ],
+    placeables: [{ uniqueId: 'plc_00001', value: 160000 }],
+    animals: [],
+    storage: { WHEAT: { amount: 25000, capacity: 100000 } },
+    drift: { income: 2500, expense: 2000 },
+    weather: { raining: false, rainFallScale: 0, groundWetness: 0.3, temperature: 15, snowHeight: 0 },
+    storeVehicles: SCENARIOS.nachbarhandel.storeVehicles,
+    storeCatalog: [
+      { xmlFilename: 'data/vehicles/fendt/vario700/vario700.xml', name: 'Fendt 700 Vario', brand: 'FENDT',
+        brandTitle: 'Fendt', categoryName: 'TRACTORSL', categoryTitle: 'Große Traktoren', price: 245000, dailyUpkeep: 120,
+        lifetime: 600, isMod: false, motorized: true, powerMin: 200, powerMax: 280, isBundle: false,
+        multipleItemPurchase: false,
+        configurations: [
+          { name: 'baseColor', title: 'Farbe', options: [opt(1, 'Fendt Nature Green', { isDefault: true,
+            color: { r: 0.08, g: 0.3, b: 0.05 } }), opt(2, 'Schwarz', { price: 2500, saveId: 'BLACK',
+            color: { r: 0.02, g: 0.02, b: 0.02 } })] },
+          { name: 'motor', options: [opt(1, '720 Vario', { isDefault: true, power: 200 }),
+            opt(2, '724 Vario', { price: 18000, dailyUpkeep: 10, power: 240 }),
+            opt(3, '728 Vario', { price: 34000, dailyUpkeep: 20, power: 280 })] },
+          { name: 'wheel', title: 'Reifen', options: [opt(1, 'Trelleborg', { isDefault: true }),
+            opt(2, 'Michelin Zwillingsreifen', { price: 6500, saveId: 'MICHELIN_DUAL',
+              dependent: [{ name: 'wheelWeight', index: 2 }] })] },
+        ],
+        defaultConfigurations: { baseColor: 1, motor: 1, wheel: 1 },
+        configurationSets: [{ name: 'Profi-Paket', isDefault: false, configurations: { motor: 2, wheel: 2 } }] },
+      { xmlFilename: 'data/vehicles/amazone/catros/catros.xml', name: 'Amazone Catros', brand: 'AMAZONE',
+        brandTitle: 'Amazone', categoryName: 'CULTIVATORS', categoryTitle: 'Grubber', price: 32000, dailyUpkeep: 15,
+        lifetime: 600, isMod: false, motorized: false,
+        isBundle: false, multipleItemPurchase: false,
+        configurations: [{ name: 'baseColor', title: 'Farbe', options: [opt(1, 'Amazone Grün', { isDefault: true }),
+          opt(2, 'Rot', { price: 900 })] }],
+        defaultConfigurations: { baseColor: 1 }, configurationSets: [] },
+      { xmlFilename: 'data/vehicles/krampe/bandit750/bandit750.xml', name: 'Krampe Bandit 750', brand: 'KRAMPE',
+        categoryName: 'TRAILERS', price: 41000, dailyUpkeep: 20, lifetime: 600, isMod: false, isBundle: false,
+        multipleItemPurchase: false, configurations: [], defaultConfigurations: {}, configurationSets: [] },
+    ],
+    // two places set in the game by key (RFH-O1), both on own farmland
+    deliveryPoints: [
+      { seq: 1, x: -412.5, y: 98.2, z: 233.75, ry: 1.571, farmlandId: 1, day: 1, dayTimeMs: 36000000 },
+      { seq: 2, x: -380, y: 97.6, z: 301.2, ry: 0, farmlandId: 2, day: 1, dayTimeMs: 39600000 },
+    ],
+    // centres of the shop places of the map (delivery costs by distance, RFH-L6)
+    storePlaces: [{ x: 120.5, z: -40 }, { x: 128.5, z: -40 }],
+  },
+});
+
 export const MISSIONS = [
   { uniqueId: 'mission_001', title: 'Ernte', typeName: 'harvestMission', field: '7', npcIndex: 3, npcTitle: 'Otto Wendler',
     reward: 5200, status: 'AVAILABLE' },

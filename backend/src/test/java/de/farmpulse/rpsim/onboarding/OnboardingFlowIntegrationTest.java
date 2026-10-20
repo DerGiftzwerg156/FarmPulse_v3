@@ -78,7 +78,8 @@ class OnboardingFlowIntegrationTest {
         assertThat(draft.getStatus()).isEqualTo(SavegameStatus.DRAFT);
         List<OnboardingService.PreviewEntry> preview = tx.execute(s -> onboarding.preview(draft));
         assertThat(preview).extracting(OnboardingService.PreviewEntry::role)
-                .contains(CharacterRole.BANK_ADVISOR, CharacterRole.COOPERATIVE, CharacterRole.AUTHORITY);
+                .contains(CharacterRole.BANK_ADVISOR, CharacterRole.COOPERATIVE, CharacterRole.AUTHORITY,
+                        CharacterRole.MACHINE_DEALER);
         assertThat(preview).filteredOn(p -> p.category() == CharacterCategory.EMPLOYEE).hasSize(2);
         assertThat(preview).filteredOn(p -> p.category() == CharacterCategory.DYNAMIC).hasSize(5);
         // villageRelation STRAINED shifts start trust of village characters
@@ -175,7 +176,7 @@ class OnboardingFlowIntegrationTest {
         Savegame b = onboarding.create(new OnboardingService.Request(null, null, null, 0, null, null, List.of()));
         assertThat(a.getId()).isNotEqualTo(b.getId());
         List<OnboardingService.PreviewEntry> cast = tx.execute(s -> onboarding.preview(a));
-        assertThat(cast).hasSize(8);
+        assertThat(cast).hasSize(9);
         assertThat(a.getVillageRelation()).isEqualTo(VillageRelation.UNKNOWN);
         assertThat(a.getTonePreset()).isEqualTo(TonePreset.REALISTIC);
         // UNKNOWN = neutral default without trust offset

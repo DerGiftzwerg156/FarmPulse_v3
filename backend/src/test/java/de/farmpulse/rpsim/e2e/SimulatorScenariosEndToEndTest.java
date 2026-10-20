@@ -54,6 +54,12 @@ class SimulatorScenariosEndToEndTest {
     @Autowired de.farmpulse.rpsim.repository.GrowingFieldMonthRepository growing;
     @Autowired de.farmpulse.rpsim.time.GameTime gameTime;
     @Autowired de.farmpulse.rpsim.field.FieldBookService fieldBook;
+    @Autowired de.farmpulse.rpsim.dealer.DealerCartService dealerCart;
+    @Autowired de.farmpulse.rpsim.dealer.DealerOrderService dealerOrders;
+    @Autowired de.farmpulse.rpsim.negotiation.NegotiationEngine engine;
+    @Autowired de.farmpulse.rpsim.repository.DealerOrderRepository dealerOrderRepo;
+    @Autowired de.farmpulse.rpsim.repository.DealerDeliveryRepository dealerDeliveryRepo;
+    @Autowired de.farmpulse.rpsim.repository.DealerTradeInRepository dealerTradeInRepo;
 
     @BeforeEach
     void requireSimulator() {
@@ -406,10 +412,119 @@ class SimulatorScenariosEndToEndTest {
         });
     }
 
+    /**
+     * Roadmap vehicle dealer (RFH-Q5): store_catalog.json, the delivery points and the shop places of fahrzeughaendler
+     * reach the backend (RFH-K1: with display names and power); a VEHICLE_DELIVERY goes out and comes back with the ids of the new machines.
+     */
+    @Test
+    void vehicleDealerContractArrivesAndADeliveryComesBack() {
+        String id = "sim_dealer_" + System.nanoTime();
+        Savegame sg = link("fahrzeughaendler", id);
+        tx.executeWithoutResult(s -> {
+            Savegame stored = savegames.findById(sg.getId()).orElseThrow();
+            var catalog = facts.storeCatalog(stored).orElseThrow();
+            assertThat(catalog.items()).extracting(i -> i.xmlFilename()).contains(
+                    "data/vehicles/fendt/vario700/vario700.xml");
+            assertThat(catalog.items()).filteredOn(i -> i.xmlFilename().contains("vario700")).singleElement()
+                    .satisfies(i -> {
+                        assertThat(i.configurations()).extracting(c -> c.name())
+                                .containsExactly("baseColor", "motor", "wheel");
+                        // RFH-K1: display names of the game and the power in hp
+                        assertThat(i.brandTitle()).isEqualTo("Fendt");
+                        assertThat(i.categoryTitle()).isEqualTo("Große Traktoren");
+                        assertThat(i.powerMax()).isEqualTo(280);
+                        assertThat(i.configurations().get(1).options()).extracting(o -> o.power())
+                                .containsExactly(200, 240, 280);
+                    });
+            assertThat(facts.latest(stored).orElseThrow().deliveryPoints()).extracting(p -> p.seq()).containsExactly(1, 2);
+            assertThat(facts.marketContext(stored).orElseThrow().storePlaces()).hasSize(2);
+        });
+        String instructionId = tx.execute(s -> {
+            OutboxInstruction o = new OutboxInstruction();
+            o.setSavegame(savegames.findById(sg.getId()).orElseThrow());
+            o.setInstructionId(OutboxService.newInstructionId());
+            o.setType(de.farmpulse.rpsim.domain.InstructionType.VEHICLE_DELIVERY);
+            o.setPayloadJson("""
+                    {"deliveryId":"dlv_1","items":[{"storeXmlFilename":"data/vehicles/fendt/vario700/vario700.xml",
+                     "configurations":{"motor":{"index":2}}}],"place":{"x":-412.5,"z":233.75,"ry":1.571},
+                     "fallbackToShop":true,"bookings":[{"amount":200000,"moneyReason":"VEHICLE_NEW_PURCHASE"},
+                     {"amount":1100,"moneyReason":"VEHICLE_DELIVERY_FEE"}],"tradeIns":["veh_00001"]}""");
+            o.setStatus(InstructionStatus.PENDING);
+            o.setCreatedAtGameTime(0);
+            o.setCreatedAt(java.time.Instant.now());
+            return outbox.save(o).getInstructionId();
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "fahrzeughaendler", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            OutboxInstruction done = outbox.findByInstructionId(instructionId).orElseThrow();
+            assertThat(done.getStatus()).isEqualTo(InstructionStatus.APPLIED);
+            assertThat(outboxService.ackResult(done)).containsEntry("placeUsed", "DELIVERY_POINT")
+                    .containsEntry("vehicleId1", "veh_00003").containsEntry("tradeInsRemoved", 1);
+        });
+        // an older scenario writes no catalog file and has no delivery blocks
+        Savegame old = link("nachbarhandel", "sim_old_dealer_" + System.nanoTime());
+        tx.executeWithoutResult(s -> {
+            Savegame stored = savegames.findById(old.getId()).orElseThrow();
+            assertThat(facts.latest(stored).orElseThrow().deliveryPoints()).isNull();
+            assertThat(facts.marketContext(stored).orElseThrow().storePlaces()).isNull();
+        });
+    }
+
     @Test
     void konfliktModsAreShownInTheHeaderContext() {
         link("konflikt-mods", "sim_mods_" + System.nanoTime());
         assertThat(header.current().getBody().detectedMods()).containsExactly("FS25_MarketDynamics", "FS25_UsedPlus");
         assertThat(header.current().getBody().calendar()).isNotNull();
+    }
+
+    /**
+     * Roadmap vehicle dealer RFH-B / L (RFH-Q5): a whole order through the bridge - request with a trade-in, offer,
+     * agreement, the deposit booked by the simulator, the delivery on the date with rest and delivery costs, the
+     * trade-in removed and the order completed.
+     */
+    @Test
+    void aWholeDealerOrderRunsThroughTheBridge() {
+        String id = "sim_dealer_order_" + System.nanoTime();
+        Savegame sg = link("fahrzeughaendler", id);
+        long orderId = tx.execute(s -> {
+            Savegame stored = savegames.findById(sg.getId()).orElseThrow();
+            dealerCart.add(stored, "data/vehicles/fendt/vario700/vario700.xml", java.util.Map.of());
+            var o = dealerOrders.request(stored, new de.farmpulse.rpsim.dealer.DealerOrderService.RequestInput(true,
+                    java.util.List.of("veh_00001"), new de.farmpulse.rpsim.dealer.DealerOrderService.DeliveryChoice(null, false),
+                    null));
+            dealerOrders.offer(stored, o);
+            engine.placeOffer(stored, o.getNegotiationId(), o.getOfferPrice());
+            return o.getId();
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "fahrzeughaendler", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            var o = dealerOrderRepo.findById(orderId).orElseThrow();
+            assertThat(o.getStatus()).isEqualTo(de.farmpulse.rpsim.domain.DealerOrder.ORDERED);
+            Savegame stored = savegames.findById(sg.getId()).orElseThrow();
+            var d = dealerDeliveryRepo.findByOrderIdOrderByIdAsc(orderId).getFirst();
+            d.setDueGameTime(stored.getCurrentGameTime()); // the date is reached
+            d.setDelayChecked(true);
+            dealerOrders.tick(stored);
+            assertThat(d.getStatus()).isEqualTo(de.farmpulse.rpsim.domain.DealerDelivery.SENT);
+        });
+        sync.runCycle();
+        TestBridge.runSimulatorOnce(dir, "fahrzeughaendler", id);
+        sync.runCycle();
+        tx.executeWithoutResult(s -> {
+            var d = dealerDeliveryRepo.findByOrderIdOrderByIdAsc(orderId).getFirst();
+            assertThat(d.getStatus()).isEqualTo(de.farmpulse.rpsim.domain.DealerDelivery.DELIVERED);
+            assertThat(d.getPlaceUsed()).isEqualTo("SHOP");
+            assertThat(d.getVehicleIds()).isNotBlank();
+            assertThat(dealerOrderRepo.findById(orderId).orElseThrow().getStatus())
+                    .isEqualTo(de.farmpulse.rpsim.domain.DealerOrder.COMPLETED);
+            assertThat(dealerTradeInRepo.findByOrderIdOrderByIdAsc(orderId)).extracting(t -> t.getStatus())
+                    .containsExactly(de.farmpulse.rpsim.domain.DealerTradeIn.REMOVED);
+            var vehicles = facts.latest(savegames.findById(sg.getId()).orElseThrow()).orElseThrow().assets().vehicles();
+            assertThat(vehicles).extracting(v -> v.uniqueId()).doesNotContain("veh_00001");
+        });
     }
 }

@@ -1,0 +1,4 @@
+Neue Maschine auf dem Hof
+Hast du schon gesehen? Auf deinem Hof steht jetzt {{machines}} – nagelneu vom Händler. Das ganze Dorf redet davon!
+
+{{characterName}}

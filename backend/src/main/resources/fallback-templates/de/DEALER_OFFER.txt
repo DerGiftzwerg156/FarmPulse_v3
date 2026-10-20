@@ -1,0 +1,6 @@
+Ihr Angebot: {{machines}}
+Hallo,
+
+hier ist mein Angebot für {{machines}}: Listenpreis {{listTotal}} €, für Ihre Inzahlungnahme rechne ich {{tradeIn}} € an – mein Preis: {{price}} €. Bei Einigung werden {{depositPercent}} % Anzahlung ({{deposit}} €) fällig, der Rest bei der Lieferung. Lieferzeit: {{span}}. Das Angebot gilt bis {{validUntil}} – in der App „Händler“ unter „Bestellungen“.
+
+{{characterName}}

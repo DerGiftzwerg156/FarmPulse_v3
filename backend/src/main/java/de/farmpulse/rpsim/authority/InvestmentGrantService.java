@@ -56,6 +56,10 @@ import org.springframework.transaction.annotation.Transactional;
  *   machines are other money types and do not count.</li>
  *   <li>Grant = grant-share x min(recognised, planned sum), at most grant-max, as INVESTMENT_GRANT - by button
  *   "Nachweis einreichen" or automatically at the end of the deadline; nothing bought = expired.</li>
+ *   <li>Vehicle dealer (owner decisions 2026-10-16): the deposit (VEHICLE_DEPOSIT) and the rest (VEHICLE_NEW_PURCHASE) of
+ *   new machines count like SHOP_VEHICLE_BUY - the deposit when the grant was approved at the agreement, the rest when it
+ *   is booked; a cancelled order takes its deposit out again ({@link #onDealerPurchase}, {@link #onDealerRefund}). A
+ *   funded machine given in trade counts as sold ({@link #onTradeIn}).</li>
  *   <li>Binding (machines only): vehicles that appear in {@code assets.vehicles} after the approval are the funded
  *   objects. One that disappears together with a rise of SHOP_VEHICLE_SELL within binding-months after the payment
  *   is repaid pro rata: grant x (its value / value of all funded objects) x (remaining months / binding-months), as a
@@ -346,12 +350,17 @@ public class InvestmentGrantService {
             return;
         }
         Set<String> present = ids(ownVehicles(sg, f));
+        repay(sg, g, now, o -> !present.contains(o.getVehicleUniqueId()));
+    }
+
+    /** Repayment of every unsold funded machine matching {@code gone} (sold in the shop or given in trade). */
+    private void repay(Savegame sg, InvestmentGrant g, long now, java.util.function.Predicate<InvestmentGrantObject> gone) {
         List<InvestmentGrantObject> all = objects(g);
         double total = all.stream().filter(o -> o.getSoldGameTime() == null || o.getRepayment() != null)
                 .mapToDouble(InvestmentGrantObject::getVehicleValue).sum();
         double remaining = (g.getBindingEndsGameTime() - now) / (double) gameTime.msPerMonth(sg);
         for (InvestmentGrantObject o : all) {
-            if (o.getSoldGameTime() != null || present.contains(o.getVehicleUniqueId())) {
+            if (o.getSoldGameTime() != null || !gone.test(o)) {
                 continue;
             }
             long amount = repayment(g.getGrantAmount(), o.getVehicleValue(), total, remaining, cfg().getBindingMonths());
@@ -372,6 +381,55 @@ public class InvestmentGrantService {
                     .formLink("/aemter?case=" + bill.getId()).submit();
             diary.addAuto(sg, "OTHER", "Förderung anteilig zurückgefordert", "Geförderte Maschine in der Bindungsfrist "
                     + "verkauft: " + amount + " € zurück an das Amt.", RELATED, g.getId());
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------ vehicle dealer
+
+    /** An approved machine grant whose purchase time includes {@code at}. */
+    private boolean buying(InvestmentGrant g, long at) {
+        return InvestmentGrant.APPROVED.equals(g.getStatus()) && InvestmentGrant.MACHINE.equals(g.getKind())
+                && g.getApprovedGameTime() != null && g.getApprovedGameTime() <= at
+                && (g.getPurchaseDeadlineGameTime() == null || at <= g.getPurchaseDeadlineGameTime());
+    }
+
+    /** Deposit or rest of new machines booked at {@code at} (deposit: the time of the agreement). */
+    @Transactional
+    public void onDealerPurchase(Savegame sg, long amount, long at) {
+        if (amount <= 0) {
+            return;
+        }
+        list(sg).stream().filter(g -> buying(g, at)).forEach(g -> g.setRecognisedSum(g.getRecognisedSum() + amount));
+    }
+
+    /** A cancelled order: its deposit (counted at the agreement {@code agreedAt}) no longer counts. */
+    @Transactional
+    public void onDealerRefund(Savegame sg, long deposit, long agreedAt) {
+        if (deposit <= 0) {
+            return;
+        }
+        list(sg).stream().filter(g -> buying(g, agreedAt))
+                .forEach(g -> g.setRecognisedSum(Math.max(0, g.getRecognisedSum() - deposit)));
+    }
+
+    /** Machines given in trade at the dealer count as sold: before the payment they lower the recognised sum, in the
+     * binding period they are repaid pro rata. */
+    @Transactional
+    public void onTradeIn(Savegame sg, java.util.Collection<String> vehicleIds, long now) {
+        if (vehicleIds == null || vehicleIds.isEmpty()) {
+            return;
+        }
+        for (InvestmentGrant g : list(sg)) {
+            if (!InvestmentGrant.MACHINE.equals(g.getKind())) {
+                continue;
+            }
+            if (InvestmentGrant.APPROVED.equals(g.getStatus())) {
+                objects(g).stream().filter(o -> o.getSoldGameTime() == null && vehicleIds.contains(o.getVehicleUniqueId()))
+                        .forEach(o -> o.setSoldGameTime(now));
+            } else if (InvestmentGrant.PAID.equals(g.getStatus()) && g.getBindingEndsGameTime() != null
+                    && now < g.getBindingEndsGameTime()) {
+                repay(sg, g, now, o -> vehicleIds.contains(o.getVehicleUniqueId()));
+            }
         }
     }
 

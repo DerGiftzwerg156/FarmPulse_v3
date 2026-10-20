@@ -1287,6 +1287,55 @@ Owner decisions of 2026-10-05 in `QUESTIONS.md`. Bills of a grant repayment and 
 | `rpsim.formulas.sick-leave.get-well-appreciation` | `8` | Get-well wishes (once per absence): appreciation points … | Roadmap V3.1 R31-B5 |
 | `rpsim.formulas.sick-leave.get-well-trust-delta` | `2` | … and trust of the employee. | Roadmap V3.1 R31-B5 |
 
+## `rpsim.formulas.machine-dealer` (Roadmap vehicle dealer)
+
+Owner decisions 2026-10-15 (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`). The app „Händler“ shows the expected delivery in the configurator from RFH-K on; the delivery itself comes with RFH-L.
+
+| Key | Default | Meaning | Concept |
+| --- | --- | --- | --- |
+| `rpsim.formulas.machine-dealer.catalog-page-size` | `50` | RFH-K1: entries per page of the catalog list in the app „Händler“ (sorted by category and name; name, base price and power on click). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.max-positions` | `10` | RFH-K3: positions of the cart; the same machine may stand several times with other options. A further position is refused (409 `DEALER_CART_FULL`). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.TRACTORS.days-min` | `5` | RFH-L1: delivery time of the group `TRACTORS`, at least … (days of the month of `absence-scaling.reference-days-per-period`, scaled to the days per period of the savegame, counted to the hour) | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.TRACTORS.days-max` | `10` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.TRACTORS.categories` | `[TRACTORSS, TRACTORSM, TRACTORSL]` | Shop categories (`StoreItem.categoryName`, upper case) of the group; the names are checked in the game (manual test plan 31.13). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.HARVESTERS.days-min` | `10` | RFH-L1: delivery time of the group `HARVESTERS`, at least … (days of the month of `absence-scaling.reference-days-per-period`, scaled to the days per period of the savegame, counted to the hour) | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.HARVESTERS.days-max` | `20` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.HARVESTERS.categories` | `[HARVESTERS, FORAGEHARVESTERS, BEETVEHICLES, POTATOVEHICLES, VEGETABLEVEHICLES, COTTONVEHICLES, SUGARCANEVEHICLES, GRAPEVEHICLES, OLIVEVEHICLES]` | Shop categories (`StoreItem.categoryName`, upper case) of the group; the names are checked in the game (manual test plan 31.13). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.LARGE_IMPLEMENTS.days-min` | `4` | RFH-L1: delivery time of the group `LARGE_IMPLEMENTS`, at least … (days of the month of `absence-scaling.reference-days-per-period`, scaled to the days per period of the savegame, counted to the hour) | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.LARGE_IMPLEMENTS.days-max` | `8` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.LARGE_IMPLEMENTS.categories` | `[SEEDERS, PLANTERS, SPRAYERS, SLURRYTANKS, MANURESPREADERS, BALERS, LOADERWAGONS, FORAGEHARVESTERCUTTERS, CUTTERS]` | Shop categories (`StoreItem.categoryName`, upper case) of the group; the names are checked in the game (manual test plan 31.13). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.SMALL_IMPLEMENTS.days-min` | `2` | RFH-L1: delivery time of the group `SMALL_IMPLEMENTS`, at least … (days of the month of `absence-scaling.reference-days-per-period`, scaled to the days per period of the savegame, counted to the hour) | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.SMALL_IMPLEMENTS.days-max` | `5` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-groups.SMALL_IMPLEMENTS.categories` | `[PLOWS, CULTIVATORS, DISCHARROWS, POWERHARROWS, ROLLERS, MOWERS, TEDDERS, WINDROWERS, FERTILIZERSPREADERS, WEEDERS]` | Shop categories (`StoreItem.categoryName`, upper case) of the group; the names are checked in the game (manual test plan 31.13). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.default-delivery-days-min` | `3` | RFH-L1: delivery time of every category no group lists, at least … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.default-delivery-days-max` | `7` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.option-extra-days.motor` | `3` | RFH-L2: extra days when the chosen motor deviates from the standard. The standard is the game's default or a package of the manufacturer – the one with the fewest extra days counts; options another option sets with it add nothing. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.option-extra-days.wheel` | `2` | … wheels. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.option-extra-days.baseColor` | `1` | … colour. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.other-option-extra-days` | `1` | … every other configuration type. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.express-factor` | `0.5` | RFH-L3: the express delivery multiplies the delivery time by this factor … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.earliest-delivery-hour` | `9` | … but a delivery never comes before this hour of the next game day after the order; a time before this hour of its day moves to this hour. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.offer-valid-days` | `7` | RFH-B1: the dealer answers a request at the next game day change; the offer is valid this many game days. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.max-discount` | `0.15` | RFH-B2: the dealer accepts at most this discount on the list price; the trust shifts his limit like the seller formula of the negotiation engine. Delivery costs, express and the retry surcharge are not negotiable. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.deposit-share` | `0.3` | RFH-B3: deposit at the agreement, share of the agreed net price (machines − trade-ins), booked as `VEHICLE_DEPOSIT`; refused = no order. A bid needs this share of it as available balance. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.trade-in-min` | `0.9` | RFH-B4: the dealer offers this share of the game value for a trade-in at the worst trust … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.trade-in-max` | `1.0` | … and this share at the best trust (linear); the floor of the negotiation counts 100 % of the game value. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.cancel-refund-share` | `0.5` | RFH-B6: a cancellation refunds this share of the deposit (`VEHICLE_REFUND` + whole deposit, `VEHICLE_CANCELLATION_FEE` − the rest) … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.cancel-refund-share-delayed` | `1.0` | … after a delay (L4) this share. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.express-share` | `0.05` | RFH-L3: express surcharge per machine, share of its list price (`VEHICLE_EXPRESS_FEE`, booked with the delivery). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delay-probability` | `0.15` | RFH-L4: chance of a delay per delivery … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.express-delay-factor` | `0.5` | … times this factor with express … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delay-check-remaining-share` | `0.3333333333333333` (⅓) | … rolled once when this share of the delivery time is left. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delay-days-min` | `1` | RFH-L4: delay, days of the reference month (scaled), at least … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delay-days-max` | `5` | … and at most. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.gossip-from-list-price` | `150000` | RFH-L5: the village gossips about a delivery from this list price. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-base-fee` | `250` | RFH-L6: delivery costs = this base fee … | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.delivery-fee-per-km` | `2` | … + this per km straight line from the nearest shop place to the delivery point; a delivery to the shop place (also when the point is invalid) costs the base fee. Without shop places only the base fee. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.retry-fee` | `500` | RFH-L7: surcharge of "Lieferung erneut versuchen", per attempt, booked only with the successful delivery. | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.shop-purchase-trust-delta` | `-5` | RFH-S2: trust of the dealer per purchase in the game shop (with his mail). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.demo-days` | `2` | RFH-V1: demo of the dealer, days of the reference month (scaled, at least until 9:00 the next game day). | Roadmap vehicle dealer |
+| `rpsim.formulas.machine-dealer.demo-late-fee` | `500` | RFH-V1: per game day a demo machine is returned late (`VEHICLE_DEMO_LATE_FEE`). | Roadmap vehicle dealer |
+
 ## `rpsim.formulas.village-newspaper` / `village-chat` / `stammtisch` / `night-work` / `crop-damage` / `farm-holiday` / `school-visit` / `coop-shares` / `coop-assembly` / `coop-board` / `diesel-theft` (Roadmap V3.1 R31-D)
 
 Owner decisions of 2026-10-05 in `QUESTIONS.md`. Night work (D4), crop damage (D5) and diesel theft (D8) are burdening events switched per savegame (settings; crop damage off by default); in the world mode IDYLLIC the diesel theft is off and the trust losses and compensations of D4 / D5 are × `burdening-events.idyllic-factor`.
@@ -1472,6 +1521,13 @@ non-operating reasons (`LiquidityService.NON_OPERATING`).
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_CALLBACK` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_SPECIAL_REPAYMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
 | `rpsim.formulas.finance.categories.RPSIM_CREDIT_PREPAYMENT_FEE` | `FINANCING` | tool booking: financing (not part of the cash flow). | Sondertilgung |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_DEPOSIT` | `INVESTMENT` | tool booking: investment, deposit of a new machine at the order (RFH-B3). | Roadmap vehicle dealer RFH-Q4 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_NEW_PURCHASE` | `INVESTMENT` | tool booking: investment, rest of a new machine at the delivery (RFH-B3, L5). | Roadmap vehicle dealer RFH-Q4, owner decision 2026-10-15 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_DELIVERY_FEE` | `INVESTMENT` | tool booking: investment, delivery costs and the fee of a new delivery attempt (RFH-L6, L7). | Roadmap vehicle dealer RFH-Q4 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_EXPRESS_FEE` | `INVESTMENT` | tool booking: investment, express surcharge (RFH-L3). | Roadmap vehicle dealer RFH-Q4 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_REFUND` | `DIVESTMENT` | tool booking: divestment, refund of the deposit on a cancellation (RFH-B6). | Roadmap vehicle dealer RFH-Q4 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_CANCELLATION_FEE` | `OPERATING_EXPENSE` | tool booking: operating expense, the part of the deposit kept on a cancellation (RFH-B6). | Roadmap vehicle dealer RFH-Q4 |
+| `rpsim.formulas.finance.categories.RPSIM_VEHICLE_DEMO_LATE_FEE` | `OPERATING_EXPENSE` | tool booking: operating expense, fee per day a demo machine of the dealer is returned late (RFH-V1). | Roadmap vehicle dealer RFH-V1 |
 | `rpsim.formulas.finance.categories.RPSIM_OVERDRAFT_INTEREST` | `FINANCING` | tool booking: financing (not part of the cash flow), interest on a negative balance while the overdraft is on. | owner decisions 2026-10-14 |
 | `rpsim.formulas.finance.categories.RPSIM_STARTING_CAPITAL_ADJUSTMENT` | `FINANCING` | tool booking: financing (not part of the cash flow). | Roadmap V2 R2-B2 |
 | `rpsim.formulas.finance.categories.RPSIM_COOP_SHARES` | `FINANCING` | tool booking: financing (not part of the cash flow) (cooperative shares and their repayment at face value, R31-D7). | Roadmap V3.1 R31-Q1 |

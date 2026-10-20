@@ -63,6 +63,8 @@ public class MemoryService {
             case TONE_FRIENDLY -> "freundliche Nachricht erhalten";
             case TONE_RUDE -> "schroffe Nachricht erhalten";
             case NEGOTIATION_DEAL -> "Geschäft per Handschlag abgeschlossen";
+            case DEALER_SHOP_PURCHASE -> "Maschine im Spiel-Shop statt beim Händler gekauft"; // RFH-S2
+            case DEALER_DEMO_LOST -> "Vorführmaschine nicht zurückgegeben"; // RFH-V1 wie R31-A2
             case WILDLIFE_AGREEMENT -> "Wildschaden gütlich geregelt";
             case WILDLIFE_DISPUTE -> "Streit um den Wildschaden";
             case MISSION_COMPLETED -> "vermittelter Auftrag erledigt";

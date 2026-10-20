@@ -24,6 +24,7 @@ function RPSimProcessor.newState(cfg)
         harvests = RPSimHarvestCounter.new(), -- Roadmap V3.3 R33-F3
         inputs = RPSimInputCounter.new(), -- Roadmap V4 R4-D1
         feed = RPSimFeedCounter.new(), -- Roadmap V4 R4-F1
+        deliveryPoints = { seq = 0, points = {} }, -- Roadmap vehicle dealer RFH-O1
     }
 end
 
@@ -193,11 +194,11 @@ function RPSimProcessor.applyOne(state, ins, ctx)
         end
         return action(ins)
     elseif RPSimProcessor.V3_ACTIONS[ins.type] ~= nil or RPSimProcessor.V31_ACTIONS[ins.type] ~= nil
-            or RPSimProcessor.V32_ACTIONS[ins.type] ~= nil then
-        -- Roadmap V3 (R3-Q1) / V3.1 (R31-Q1) / V3.2 (R32-Q1): executed once the feature brings its adapter action;
-        -- until then NOT_SUPPORTED
+            or RPSimProcessor.V32_ACTIONS[ins.type] ~= nil or RPSimProcessor.RFH_ACTIONS[ins.type] ~= nil then
+        -- Roadmap V3 (R3-Q1) / V3.1 (R31-Q1) / V3.2 (R32-Q1) / vehicle dealer (RFH-Q3): executed once the feature
+        -- brings its adapter action; until then NOT_SUPPORTED
         local action = ctx.actions[RPSimProcessor.V3_ACTIONS[ins.type] or RPSimProcessor.V31_ACTIONS[ins.type]
-            or RPSimProcessor.V32_ACTIONS[ins.type]]
+            or RPSimProcessor.V32_ACTIONS[ins.type] or RPSimProcessor.RFH_ACTIONS[ins.type]]
         if action == nil then
             return false, "NOT_SUPPORTED"
         end
@@ -220,6 +221,11 @@ RPSimProcessor.V31_ACTIONS = { FIELD_WORK = "fieldWork", ANIMAL_TRANSFER = "anim
 --- Roadmap V3.2 (R32-Q1): HUSBANDRY_TRANSFER (milk out of an own husbandry, used by R32-I3 type W3). Executed since Q;
 -- an adapter without the action acknowledges FAILED / NOT_SUPPORTED.
 RPSimProcessor.V32_ACTIONS = { HUSBANDRY_TRANSFER = "husbandryTransfer" }
+
+--- Roadmap vehicle dealer (RFH-Q3): VEHICLE_DELIVERY loads new machines asynchronously like VEHICLE_SPAWN (PENDING
+-- until the loading callback). Executed since RFH-L5 (RPSimGameAdapter:deliverVehicles); an adapter without the action
+-- acknowledges FAILED / NOT_SUPPORTED.
+RPSimProcessor.RFH_ACTIONS = { VEHICLE_DELIVERY = "vehicleDelivery" }
 
 --- Roadmap V3 R3-V2: records the outcome of an asynchronous action (see PENDING). Ignored when the instruction already
 -- has a final status. Returns true when recorded.

@@ -220,6 +220,7 @@ public class RpsimProperties {
         private SocialInsurance socialInsurance = new SocialInsurance();
         private SickLeave sickLeave = new SickLeave();
         private AbsenceScaling absenceScaling = new AbsenceScaling();
+        private MachineDealer machineDealer = new MachineDealer();
         private VillageNewspaper villageNewspaper = new VillageNewspaper();
         private VillageChat villageChat = new VillageChat();
         private Stammtisch stammtisch = new Stammtisch();
@@ -1719,6 +1720,93 @@ public class RpsimProperties {
         private int referenceDaysPerPeriod = 30;
     }
 
+    /**
+     * Roadmap vehicle dealer (ROADMAP_FAHRZEUGHÄNDLER.md), owner decisions 2026-10-15. Delivery times are days of a month
+     * with absence-scaling.reference-days-per-period days, scaled to the FS25 "days per period" of the savegame.
+     */
+    @Getter @Setter
+    public static class MachineDealer {
+        /** RFH-K1: catalog entries per page of the tablet list. */
+        private int catalogPageSize = 50;
+        /** RFH-K3: positions of the cart (and of one order). */
+        private int maxPositions = 10;
+        /** RFH-L1: delivery time span per group of shop categories (StoreItem.categoryName, upper case). */
+        private Map<String, DeliveryGroup> deliveryGroups = defaultDeliveryGroups();
+        /** RFH-L1: span of every category no group lists. */
+        private double defaultDeliveryDaysMin = 3;
+        private double defaultDeliveryDaysMax = 7;
+        /** RFH-L2: extra days per configuration type whose chosen option deviates from the game's default. */
+        private Map<String, Double> optionExtraDays = new LinkedHashMap<>(Map.of("motor", 3.0, "wheel", 2.0,
+                "baseColor", 1.0));
+        /** RFH-L2: extra days of every other configuration type. */
+        private double otherOptionExtraDays = 1;
+        /** RFH-L3: the express delivery multiplies the delivery time by this factor. */
+        private double expressFactor = 0.5;
+        /** Never delivered before this hour of the next game day after the order; earlier times move to this hour. */
+        private int earliestDeliveryHour = 9;
+        /** RFH-B1: an offer is valid this many game days. */
+        private double offerValidDays = 7;
+        /** RFH-B2: at most this discount on the list price. */
+        private double maxDiscount = 0.15;
+        /** RFH-B3: deposit share of the agreed net price, booked at the agreement. */
+        private double depositShare = 0.30;
+        /** RFH-B4: the dealer offers this share of the game value for a trade-in - worst trust ... */
+        private double tradeInMin = 0.90;
+        /** ... to best trust (linear). */
+        private double tradeInMax = 1.0;
+        /** RFH-B6: share of the deposit refunded on a cancellation, and with a delay. */
+        private double cancelRefundShare = 0.5;
+        private double cancelRefundShareDelayed = 1.0;
+        /** RFH-L3: express surcharge, share of the list price per machine. */
+        private double expressShare = 0.05;
+        /** RFH-L4: chance of a delay per delivery (express: x express-delay-factor), checked when a third of the time is left. */
+        private double delayProbability = 0.15;
+        private double expressDelayFactor = 0.5;
+        private double delayCheckRemainingShare = 1.0 / 3;
+        /** RFH-L4: delay in days of the reference month. */
+        private double delayDaysMin = 1;
+        private double delayDaysMax = 5;
+        /** RFH-L5: gossip in the village from this list price of a delivery. */
+        private long gossipFromListPrice = 150000;
+        /** RFH-L6: delivery costs = base + per km (straight line from the nearest shop place); the shop place: base. */
+        private long deliveryBaseFee = 250;
+        private double deliveryFeePerKm = 2;
+        /** RFH-L7: surcharge of "Lieferung erneut versuchen", booked only with a successful delivery. */
+        private long retryFee = 500;
+        /** RFH-S2: trust change of the dealer per purchase in the game shop. */
+        private double shopPurchaseTrustDelta = -5;
+        /** RFH-V1: demo of the dealer - days of the reference month (scaled, at least until 9:00 the next game day). */
+        private double demoDays = 2;
+        /** RFH-V1: fee per day a demo machine is returned late (VEHICLE_DEMO_LATE_FEE). */
+        private long demoLateFee = 500;
+
+        private static Map<String, DeliveryGroup> defaultDeliveryGroups() {
+            Map<String, DeliveryGroup> m = new LinkedHashMap<>();
+            m.put("TRACTORS", group(5, 10, "TRACTORSS", "TRACTORSM", "TRACTORSL"));
+            m.put("HARVESTERS", group(10, 20, "HARVESTERS", "FORAGEHARVESTERS", "BEETVEHICLES", "POTATOVEHICLES",
+                    "VEGETABLEVEHICLES", "COTTONVEHICLES", "SUGARCANEVEHICLES", "GRAPEVEHICLES", "OLIVEVEHICLES"));
+            m.put("LARGE_IMPLEMENTS", group(4, 8, "SEEDERS", "PLANTERS", "SPRAYERS", "SLURRYTANKS", "MANURESPREADERS",
+                    "BALERS", "LOADERWAGONS", "FORAGEHARVESTERCUTTERS", "CUTTERS"));
+            m.put("SMALL_IMPLEMENTS", group(2, 5, "PLOWS", "CULTIVATORS", "DISCHARROWS", "POWERHARROWS", "ROLLERS",
+                    "MOWERS", "TEDDERS", "WINDROWERS", "FERTILIZERSPREADERS", "WEEDERS"));
+            return m;
+        }
+
+        private static DeliveryGroup group(double min, double max, String... categories) {
+            return new DeliveryGroup(min, max, new ArrayList<>(List.of(categories)));
+        }
+    }
+
+    /** RFH-L1: delivery time span (days of the reference month) of a group of shop categories. */
+    @Getter @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeliveryGroup {
+        private double daysMin;
+        private double daysMax;
+        private List<String> categories = new ArrayList<>();
+    }
+
     /** Roadmap V3.1 R31-D1: village newspaper "Dorfblatt" (owner decisions 2026-10-05). */
     @Getter @Setter
     public static class VillageNewspaper {
@@ -2051,17 +2139,24 @@ public class RpsimProperties {
             m.put("RPSIM_LIVESTOCK_PURCHASE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_SOCIAL_INSURANCE", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.1 (R31-Q1)
             m.put("RPSIM_INVESTOR_COMPENSATION", FinanceClass.OPERATING_EXPENSE); // Roadmap V3.2 (R32-Q1)
+            m.put("RPSIM_VEHICLE_CANCELLATION_FEE", FinanceClass.OPERATING_EXPENSE); // vehicle dealer (RFH-Q4)
+            m.put("RPSIM_VEHICLE_DEMO_LATE_FEE", FinanceClass.OPERATING_EXPENSE); // vehicle dealer (RFH-V1)
             m.put("RPSIM_OTHER", FinanceClass.OPERATING_EXPENSE);
             m.put("SHOP_PROPERTY_BUY", FinanceClass.INVESTMENT);
             m.put("SHOP_VEHICLE_BUY", FinanceClass.INVESTMENT);
             m.put("FIELD_BUY", FinanceClass.INVESTMENT);
             m.put("RPSIM_FARMLAND_PURCHASE", FinanceClass.INVESTMENT);
             m.put("RPSIM_VEHICLE_PURCHASE", FinanceClass.INVESTMENT); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_VEHICLE_DEPOSIT", FinanceClass.INVESTMENT); // vehicle dealer (RFH-Q4)
+            m.put("RPSIM_VEHICLE_NEW_PURCHASE", FinanceClass.INVESTMENT); // vehicle dealer (owner decision 2026-10-15)
+            m.put("RPSIM_VEHICLE_DELIVERY_FEE", FinanceClass.INVESTMENT); // vehicle dealer (RFH-Q4)
+            m.put("RPSIM_VEHICLE_EXPRESS_FEE", FinanceClass.INVESTMENT); // vehicle dealer (RFH-Q4)
             m.put("SHOP_VEHICLE_SELL", FinanceClass.DIVESTMENT);
             m.put("SHOP_PROPERTY_SELL", FinanceClass.DIVESTMENT);
             m.put("FIELD_SELL", FinanceClass.DIVESTMENT);
             m.put("RPSIM_FARMLAND_SALE", FinanceClass.DIVESTMENT);
             m.put("RPSIM_VEHICLE_SALE", FinanceClass.DIVESTMENT); // Roadmap V3 (R3-Q1)
+            m.put("RPSIM_VEHICLE_REFUND", FinanceClass.DIVESTMENT); // vehicle dealer (RFH-Q4)
             m.put("RPSIM_CREDIT_DISBURSEMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_INSTALLMENT", FinanceClass.FINANCING);
             m.put("RPSIM_CREDIT_PENALTY", FinanceClass.FINANCING);

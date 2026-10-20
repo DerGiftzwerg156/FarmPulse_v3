@@ -104,6 +104,9 @@ Großinvestoren mit Gegenleistung.
 Unkraut, Mulchen und Erntemenge, mit Auswertung über die letzten Jahre.
 [Roadmap V4](docs/architecture/ROADMAP_V4.md) – Deckungsbeitrag je Feld, Futterbilanz der Ställe und Anbauplaner für
 die nächste Saison.
+Geplant: [Roadmap Fahrzeughändler](docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md) – Neumaschinen beim Händler im
+Hof-Tablet konfigurieren und als Sammelbestellung kaufen, mit Lieferzeit, eigenen Lieferorten, Inzahlungnahme und
+Finanzierung.
 
 Weitere Werkzeuge: [Bridge-Simulator](tools/bridge-simulator/README.md) ·
 [Screenshot-Generator](tools/screenshot-generator/README.md) · [Beitragen](CONTRIBUTING.md) ·

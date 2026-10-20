@@ -88,7 +88,7 @@ import { dueLabel, feedTaskTitle, isUrgent } from './task-groups';
         }
         @case ('NEGOTIATION') {
           @let n = t.negotiation!;
-          <div class="text-[15px] font-semibold text-text">{{ n.kind | label: 'negotiationKind' }} · @if (n.assetType === 'VEHICLE') { {{ 'workshop.machine' | t }} } @else { {{ 'farmland.fieldLabel' | t: { id: n.assetId } }} }</div>
+          <div class="text-[15px] font-semibold text-text">{{ n.kind | label: 'negotiationKind' }} · @if (n.assetType === 'VEHICLE' || n.assetType === 'MACHINE_ORDER') { {{ 'workshop.machine' | t }} } @else { {{ 'farmland.fieldLabel' | t: { id: n.assetId } }} }</div>
           <div class="text-[12px] text-[#8FA39A]">
             {{ n.counterpart?.name ?? n.announcer?.name }} · {{ 'tasks.round' | t: { used: n.roundsUsed, max: n.maxRounds } }}
             @if (n.lastCounterOffer) { · {{ 'tasks.lastCounter' | t: { amount: (n.lastCounterOffer | money) } }} }
@@ -123,6 +123,10 @@ import { dueLabel, feedTaskTitle, isUrgent } from './task-groups';
           <!-- Roadmap V4 R4-A5: a planned field in its sowing window -->
           <div class="text-[15px] font-semibold text-text">{{ 'tasks.sowDue' | t: { field: t.sowDue?.fieldName ?? '', crop: (t.sowDue?.fruitType | label: 'fruitType') } }}</div>
           <div class="text-[12px] text-[#8FA39A]" data-testid="sow-due">{{ 'tasks.sowHint' | t }}</div>
+        }
+        @case ('DEALER_DELIVERY') {
+          <!-- Roadmap vehicle dealer RFH-L5: a delivery waiting at the dealer -->
+          <div class="text-[15px] font-semibold text-text" data-testid="delivery-waiting">{{ 'tasks.deliveryWaiting' | t: { machine: t.deliveryWaiting?.machines ?? '', reason: t.deliveryWaiting?.reason ?? '' } }}</div>
         }
         @case ('POSTING') {
           <div class="text-[15px] font-semibold text-text">{{ 'tasks.applicants' | t: { role: (t.kind | label: 'jobRole'), n: t.pendingApplicants } }}</div>

@@ -20,7 +20,8 @@ public final class BridgeDtos {
      * (R3-H5): the game's contract limit of the player farm (MissionManager:hasFarmReachedMissionLimit), null = unknown.
      * Roadmap V3.1 (R31-Q1): {@code vehiclePositions} (R31-D5) follows the same rule as the optional blocks.
      * Roadmap V3.3 (R33-Q1): {@code harvests} (R33-F3) likewise. Roadmap V4 (R4-Q1 / R4-Q2): {@code inputs} (R4-D1)
-     * and {@code feedStock} (R4-F2) likewise.
+     * and {@code feedStock} (R4-F2) likewise. Roadmap vehicle dealer (RFH-Q2): {@code deliveryPoints} (RFH-O1)
+     * likewise.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
@@ -29,7 +30,20 @@ public final class BridgeDtos {
                             Weather weather, FieldRules fieldRules, List<Field> npcFields,
                             List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached,
                             List<VehiclePosition> vehiclePositions, Bookings bookings, List<HarvestCounter> harvests,
-                            List<InputCounter> inputs, List<FeedAmount> feedStock) {
+                            List<InputCounter> inputs, List<FeedAmount> feedStock, List<DeliveryPoint> deliveryPoints) {
+
+        /** Roadmap V4 contract without the delivery points of the vehicle dealer (older mod). */
+        public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
+                         Liabilities liabilities, List<Price> prices, Calendar calendar, List<Mission> missions,
+                         Finances finances, Workforce workforce, List<Husbandry> husbandries, List<Field> fields,
+                         Weather weather, FieldRules fieldRules, List<Field> npcFields,
+                         List<TradeStorageEntry> tradeStorage, Boolean missionLimitReached,
+                         List<VehiclePosition> vehiclePositions, Bookings bookings, List<HarvestCounter> harvests,
+                         List<InputCounter> inputs, List<FeedAmount> feedStock) {
+            this(schemaVersion, gameTime, savegameId, liquidity, assets, liabilities, prices, calendar, missions, finances,
+                    workforce, husbandries, fields, weather, fieldRules, npcFields, tradeStorage, missionLimitReached,
+                    vehiclePositions, bookings, harvests, inputs, feedStock, null);
+        }
 
         /** Roadmap V3.3 contract without the blocks of Roadmap V4 (older mod). */
         public FarmFacts(Integer schemaVersion, Long gameTime, String savegameId, Liquidity liquidity, Assets assets,
@@ -369,7 +383,7 @@ public final class BridgeDtos {
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename,
-                          String category, Fuel fuel) {
+                          String category, Fuel fuel, Long repairPrice) {
 
         public Vehicle(String uniqueId, Double value, Double condition) {
             this(uniqueId, value, condition, null, null);
@@ -377,7 +391,13 @@ public final class BridgeDtos {
 
         /** Roadmap V3 contract without category and diesel (older mod). */
         public Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename) {
-            this(uniqueId, value, condition, name, xmlFilename, null, null);
+            this(uniqueId, value, condition, name, xmlFilename, null, null, null);
+        }
+
+        /** Roadmap V3.1 contract without the repair price of the vehicle dealer (RFH-B4, older mod). */
+        public Vehicle(String uniqueId, Double value, Double condition, String name, String xmlFilename, String category,
+                       Fuel fuel) {
+            this(uniqueId, value, condition, name, xmlFilename, category, fuel, null);
         }
     }
 
@@ -426,13 +446,23 @@ public final class BridgeDtos {
     /**
      * Roadmap V3 (R3-Q1): {@code storeVehicles} (R3-V1) is optional; null = not present (older mod or switched off).
      * Roadmap V3.1 (R31-Q1): {@code fieldShapes} (R31-K1) likewise. Roadmap V3.3 (R33-Q1): {@code fruitTypes} likewise.
-     * Roadmap V4 (R4-Q1 / R4-Q2): {@code fillTypeCosts} (R4-D1) and {@code animalFood} (R4-F1) likewise.
+     * Roadmap V4 (R4-Q1 / R4-Q2): {@code fillTypeCosts} (R4-D1) and {@code animalFood} (R4-F1) likewise. Roadmap
+     * vehicle dealer (RFH-Q2): {@code storePlaces} (RFH-L6) likewise.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
                                 List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles,
                                 FieldShapes fieldShapes, List<FruitTypeEntry> fruitTypes, List<FillTypeCost> fillTypeCosts,
-                                List<AnimalFood> animalFood) {
+                                List<AnimalFood> animalFood, List<StorePlace> storePlaces) {
+
+        /** Roadmap V4 contract without the shop places of the vehicle dealer (older mod). */
+        public MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
+                             List<MapFarmland> farmlands, List<String> detectedMods, List<StoreVehicle> storeVehicles,
+                             FieldShapes fieldShapes, List<FruitTypeEntry> fruitTypes, List<FillTypeCost> fillTypeCosts,
+                             List<AnimalFood> animalFood) {
+            this(savegameId, mapName, sellPoints, fillTypes, farmlands, detectedMods, storeVehicles, fieldShapes,
+                    fruitTypes, fillTypeCosts, animalFood, null);
+        }
 
         /** Roadmap V3.3 contract without the purchase prices and food groups of Roadmap V4 (older mod). */
         public MarketContext(String savegameId, String mapName, List<SellPoint> sellPoints, List<String> fillTypes,
@@ -536,6 +566,75 @@ public final class BridgeDtos {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record StoreVehicle(String xmlFilename, String name, Double price, Double lifetime, String categoryName,
                                Boolean isMod, Boolean motorized) {
+    }
+
+    /**
+     * Roadmap vehicle dealer RFH-Q2: a delivery point the player set in the game by key (RFH-O1) - position in metres,
+     * facing direction {@code ry} in radians, the farmland at the place, game day and time of day. {@code seq} counts
+     * up; the backend takes every new seq once.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DeliveryPoint(Integer seq, Double x, Double y, Double z, Double ry, Integer farmlandId, Integer day,
+                                Long dayTimeMs) {
+    }
+
+    /** Roadmap vehicle dealer RFH-Q2: centre of a shop place (g_currentMission.storeSpawnPlaces), metres. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record StorePlace(Double x, Double z) {
+    }
+
+    /**
+     * Roadmap vehicle dealer RFH-Q1 (owner decision 2026-10-15): export/store_catalog.json, the shop catalog with every
+     * configuration option, written once per mission start.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record StoreCatalog(String savegameId, List<CatalogItem> items) {
+    }
+
+    /**
+     * Roadmap vehicle dealer RFH-Q1: one catalog entry - list price and daily upkeep without options, brand, bundle
+     * (several vehicles), multipleItemPurchase (bales, pallets), the option types, the game's default option per type
+     * and the packages of the manufacturer. RFH-K1 (owner decision 2026-10-15): display names of brand and category as
+     * the game shows them and the power range in hp (all optional; an older mod sends none).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CatalogItem(String xmlFilename, String name, String brand, String categoryName, Double price,
+                              Double dailyUpkeep, Double lifetime, Boolean isMod, Boolean motorized, Boolean isBundle,
+                              Boolean multipleItemPurchase, List<CatalogConfiguration> configurations,
+                              java.util.Map<String, Integer> defaultConfigurations,
+                              List<CatalogConfigurationSet> configurationSets, String brandTitle, String categoryTitle,
+                              Integer powerMin, Integer powerMax) {
+    }
+
+    /** Roadmap vehicle dealer RFH-Q1: one configuration type (e.g. baseColor, wheel, motor) with its options. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CatalogConfiguration(String name, String title, List<CatalogOption> options) {
+    }
+
+    /**
+     * Roadmap vehicle dealer RFH-Q1: one option - index in the type (1-based), saveId, surcharge and daily upkeep,
+     * default / selectable / yes-no option, colour (colour types only) and the options it sets with it; RFH-K1: power in
+     * hp of a motor option (optional).
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CatalogOption(Integer index, String saveId, String name, String desc, Double price, Double dailyUpkeep,
+                                Boolean isDefault, Boolean isSelectable, Boolean isYesNoOption, CatalogColor color,
+                                List<CatalogDependent> dependent, Integer power) {
+    }
+
+    /** Roadmap vehicle dealer RFH-Q1: colour of an option, 0..1 per channel. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CatalogColor(Double r, Double g, Double b) {
+    }
+
+    /** Roadmap vehicle dealer RFH-Q1: an option set together with another one (type name and index). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CatalogDependent(String name, Integer index) {
+    }
+
+    /** Roadmap vehicle dealer RFH-Q1: a package of the manufacturer (type name -> index). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CatalogConfigurationSet(String name, Boolean isDefault, java.util.Map<String, Integer> configurations) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -12,6 +12,66 @@ versions or this changelog do not match.
 
 ### Added
 
+- **Vehicle dealer - demo machine [RFH-V1]** (owner decisions 2026-10-15): "Vorführung anfragen" in the catalog brings
+  the machine in its standard configuration to the shop place (VEHICLE_SPAWN, price 0) for 2 days of a 30-day month
+  (scaled, at least until 9:00 of the next game day) and takes it back with VEHICLE_REMOVE; one demo at a time
+  (independent of the workshop's demo of R31-A2), each machine once per game year; no free shop place: postponed to the
+  next game day; in use or coupled at the pick-up: 500 € per late day (`VEHICLE_DEMO_LATE_FEE`); a machine that
+  disappears costs its last game value and trust. The tab *Bestellungen* shows the demo with "In den Warenkorb".
+  Migration V55, endpoints `/api/dealer/demo`.
+- **Vehicle dealer - purchases in the game shop [RFH-S]** (owner decisions 2026-10-15/16): every `SHOP_VEHICLE_BUY`
+  booking of the statement costs 5 trust to the dealer and brings the mail "Ihr Kauf im Shop" (several purchases at once:
+  one mail; without a name: "eine Maschine"; purchases stored before the update count as handled, migration V54).
+- **Vehicle dealer - offer, order and delivery [RFH-B / RFH-L / RFH-O2]** (owner decisions 2026-10-15/16): the cart
+  becomes a request ("zusammen" / "einzeln liefern", delivery point, express, trade-ins of own machines); the dealer
+  answers the next game day with one net offer (trade-ins at 90-100 % of the game value by trust, at most 15 % discount),
+  negotiated in up to three rounds (`AssetType.MACHINE_ORDER`); the agreement books 30 % deposit (`VEHICLE_DEPOSIT`) and
+  rolls the delivery date (L1-L3), possibly delayed once (L4). On the date `VEHICLE_DELIVERY` brings the machines and
+  books the rest, delivery costs (250 € + 2 €/km from the nearest shop place) and express; a damaged trade-in reduces
+  the price by its higher repair price, a lost one adds its offered value. A failed delivery waits at the dealer (hint
+  and a new attempt every game day, "Lieferung erneut versuchen" for 500 € booked only on success; an older mod: "Mod
+  aktualisieren", no fallback). Cancelling refunds 50 % of the deposit (100 % after a delay). The tab *Bestellungen*,
+  the calendar ("Lieferung …"), the liquidity plan ("Restzahlung Neumaschine"), the start screen tile "Nächste Lieferung"
+  and "Finanzieren" (credit application prefilled) show it. Migration V53, endpoints `/api/dealer/orders`,
+  `/api/dealer/deliveries/{id}/…`, `/api/dealer/trade-in-candidates`, `/api/dealer/next-delivery`. The mod appends the
+  uniqueId to the `TRADE_IN_*` codes of `VEHICLE_DELIVERY`. A delivery waiting at the dealer is a task ("Lieferung wartet: …"). For an
+  approved machine grant (R31-B2) deposit and rest count like a purchase in the game shop (a cancellation takes the
+  deposit out again), and a funded machine given in trade counts as sold (owner decisions 2026-10-16).
+- **Vehicle dealer - delivery points [RFH-O1]** (owner decisions 2026-10-15): the new mod key "FarmPulse: Lieferort
+  hier festlegen" (default Alt+L, on foot) stores the place, facing direction and farmland of the player - only on own
+  or leased land - and keeps the last 20 points in the mod savegame (`deliveryPointsMax`). The backend takes every new
+  point once (migration V52, `dealer_delivery_point`); in the app *Händler* the tab *Lieferorte* lists the shop place of
+  the game and the points (rename, default, delete; invalid while the farmland does not belong to the farm). Endpoints
+  `/api/dealer/delivery-points`.
+- **Vehicle dealer - catalog, configurator and cart [RFH-K]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`, owner
+  decisions 2026-10-15 in `QUESTIONS.md`): the mod now reads every shop machine with all options and writes
+  `store_catalog.json`, with the new optional fields `brandTitle`, `categoryTitle` (display names of the game),
+  `powerMin` / `powerMax` and `power` per motor option (hp). In the app *Händler* the tab *Katalog* lists the whole
+  catalog (search, category, brand, price range; sorted by category and name, 50 per page) with a configurator per
+  machine: the selectable options with surcharge and daily upkeep, colours as colour fields, the options set with
+  another one, the matching package of the manufacturer, list price (base price + options), daily upkeep and the
+  expected delivery time with and without express (days of a 30-day month scaled to the month length, never before
+  9:00 of the next game day). The tab *Warenkorb* keeps up to 10 positions per savegame (change, remove). New
+  configuration `rpsim.formulas.machine-dealer.*`, migration V51 (`dealer_cart_item`), endpoints `/api/dealer/catalog`,
+  `/api/dealer/catalog/item`, `/api/dealer/configure`, `/api/dealer/cart`.
+- **Vehicle dealer - the dealer and the app [RFH-H]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`, owner
+  decisions 2026-10-15 in `QUESTIONS.md`): the new mandatory role `MACHINE_DEALER` (*Landmaschinenhändler/in*) belongs
+  to the start cast of a new savegame; an older savegame gets the dealer, with introduction mail and diary entry, when
+  the new app *Händler* is opened for the first time (`POST /api/dealer/open`; `GET /api/dealer` only reads). The app
+  *Händler* (`/haendler`, after *Werkstatt*) has the tabs *Katalog*, *Warenkorb*, *Bestellungen* and *Lieferorte*; until
+  the areas K, O, B and L fill them, each shows the dealer as contact and the hint "Folgt mit dem nächsten Ausbau".
+- **Vehicle dealer - bridge contract [RFH-Q]** (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`): the new file
+  `export/store_catalog.json` (shop catalog with every option: price and daily upkeep per option, default, selectable,
+  yes/no, colour, dependent options, manufacturer packages; written once per mission start once the mod reads the
+  options with RFH-K1, the whole catalog without a cap), the optional blocks `farm_facts.deliveryPoints` and `market_context.storePlaces`, the
+  instruction `VEHICLE_DELIVERY` (several configured machines, delivery point or shop places, bookings, trade-ins;
+  validated by the mod and acknowledged `FAILED` / `NOT_SUPPORTED` until RFH-L5, notice "Mod aktualisieren") and the
+  money reasons `VEHICLE_DEPOSIT`, `VEHICLE_NEW_PURCHASE` (*Maschinenkauf (neu)*), `VEHICLE_DELIVERY_FEE`,
+  `VEHICLE_EXPRESS_FEE` (investment), `VEHICLE_REFUND`
+  (divestment) and `VEHICLE_CANCELLATION_FEE` (operating expense) with booking titles. The backend stores the catalog
+  at the linked savegame (migration V50). Bridge simulator: scenario `fahrzeughaendler`, `VEHICLE_DELIVERY` like the
+  planned mod action, control endpoints `POST /delivery-point`, `/delivery-place-blocked`, `/shop-full`. Manual test
+  plan section 31.
 - **Dispo and paying overdue salaries** (owner decisions 2026-10-14 in `QUESTIONS.md`): a new card *Dispo* in
   *Einstellungen → Hof* (off by default). Switched on, every debit of FarmPulse (salaries, installments, bills,
   contracts and own purchases) may push the balance down to the set limit; a salary is then paid on time without the
@@ -20,7 +80,17 @@ versions or this changelog do not match.
   salary can now be paid right away with the button *Gehalt nachzahlen* in *Personal* (shown only while a salary is
   overdue), the automatic payment as soon as money is there stays. Bridge: `MONEY_TRANSACTION` and `VEHICLE_SPAWN`
   carry the optional `minBalance`, the interest `ignoreFunds`; the mod checks the funds against that floor.
-
+- **Roadmap vehicle dealer (`docs/architecture/ROADMAP_FAHRZEUGHÄNDLER.md`):** plan for buying new machines from a
+  new dealer character in the tablet, checked against the FS25 code (dump and LUADOC). The machine is configured like
+  in the in-game shop (all options with their prices, default configuration, dependent options, packages), several
+  machines go into one collective order (delivered together or one by one), the price is negotiated, a deposit is paid
+  at the order and the rest at delivery. Delivery times per shop category with extra days for non-default options,
+  express delivery and delays; delivery locations are set in the game by a key at the player's position, the shop
+  place stays the default and the fallback when the location is taken. Delivery costs by distance, trade-in, cancellation,
+  financing via the bank and a demo machine. The in-game shop stays; purchases there make the dealer react. All points
+  decided by the owner (`QUESTIONS.md`, 2026-10-14 and 2026-10-15): delivery times are days of a 30-day month scaled
+  to the savegame's month length, hour-precise and never before 9:00 of the next game day; delivery locations only on
+  own or leased land; a new button *Lieferung erneut versuchen* retries a failed delivery at once for 500 €.
 - **Roadmap V4 - gaps closed** (owner decisions 2026-10-14 in `QUESTIONS.md`): the contribution margin card colours the
   crops like the field book evaluation, links each calculation to its field book entry and back (`?entry=`), shows the
   expected revenue of a running season with a plan, and corrects lines by litres, price per 1000 l or amount (own
@@ -116,6 +186,17 @@ versions or this changelog do not match.
   frequency of sickness and of work accidents in percent (0-500, with the expected cases per employee and year) and the
   cap of one absence (`GET/PUT /api/settings/sick-leave`). The cards *Kredit und Felder im Spielmenü* (from
   *Ereignisse*) and *Erkannte Mods mit Überschneidungen* (from *Im Spiel*) moved there.
+
+### Fixed
+
+- **Vehicle dealer without catalog** (game log 2026-10-20): `store_catalog.json` reached the dealer only if every entry
+  was valid - one discount option of a mod (negative price), one broken entry or one byte that is no UTF-8 skipped the
+  whole file, and as the mod writes it only once per game start the tablet kept showing "Der Katalog kommt mit dem
+  nächsten Spielstart". The backend now leaves out only the broken entries (warning in the backend log), accepts
+  negative option prices (list price never below 0, shown as "-2.500 €" in the configurator) and reads bytes that are
+  no UTF-8 as U+FFFD in every bridge file. The mod logs how many machines it wrote to `store_catalog.json` and how many
+  could not be read (with the first error), and an entry no longer fails as a whole when `Motorized` cannot give the
+  power.
 
 ## [2.0.0] - 2026-10-09
 

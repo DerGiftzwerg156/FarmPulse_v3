@@ -3,6 +3,8 @@ package de.farmpulse.rpsim.bridge;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import de.farmpulse.rpsim.domain.InstructionStatus;
@@ -44,6 +46,7 @@ class BridgeSyncIntegrationTest {
     @Autowired OutboxService outboxService;
     @Autowired DetectedSavegameRegistry detected;
     @Autowired JsonMapper json;
+    @Autowired FactsService facts;
 
     @BeforeEach
     void clean() throws Exception {
@@ -76,6 +79,48 @@ class BridgeSyncIntegrationTest {
         assertThat(savegames.findById(sg.getId()).orElseThrow().getCurrentGameTime()).isEqualTo(90_000_000);
         // unchanged file is not ingested twice
         assertThat(sync.runCycle().factsIngested()).isFalse();
+    }
+
+    @Test
+    void storeCatalogIsStoredAtTheLinkedSavegameOnly() {
+        // Roadmap vehicle dealer RFH-Q1: store_catalog.json is kept raw like the market context
+        Savegame sg = savegames.save(TestData.activeSavegame("sg_cat"));
+        String catalog = """
+                { "savegameId": "sg_cat", "items": [{ "xmlFilename": "a.xml", "name": "A", "price": 1000,
+                  "configurations": [], "defaultConfigurations": {}, "configurationSets": [] }] }""";
+        TestBridge.write(files.storeCatalog(), catalog);
+        sync.runCycle();
+        Savegame stored = savegames.findById(sg.getId()).orElseThrow();
+        assertThat(stored.getStoreCatalogJson()).isEqualTo(catalog);
+
+        // a catalog of another (unlinked) savegame is left alone, an invalid one skipped
+        TestBridge.write(files.storeCatalog(), catalog.replace("sg_cat", "sg_other"));
+        sync.runCycle();
+        TestBridge.write(files.storeCatalog(), "{ \"savegameId\": \"sg_cat\" }");
+        sync.runCycle();
+        assertThat(savegames.findById(sg.getId()).orElseThrow().getStoreCatalogJson()).isEqualTo(catalog);
+    }
+
+    @Test
+    void storeCatalogWithBrokenEntriesOrNoUtf8IsStillStored() throws Exception {
+        // the mod writes the file once per mission start: a broken entry or a byte that is no UTF-8 (mod text) must
+        // not keep the dealer without a catalog until the next game start
+        Savegame sg = savegames.save(TestData.activeSavegame("sg_cat2"));
+        byte[] bytes = """
+                { "savegameId": "sg_cat2", "items": [{ "xmlFilename": "a.xml", "name": "A#", "price": 1000,
+                  "configurations": [{ "name": "frontloader", "options": [{ "index": 1, "name": "ohne",
+                  "price": -2500 }] }], "defaultConfigurations": {}, "configurationSets": [] },
+                  { "name": "kaputt", "price": 1 }] }""".getBytes(StandardCharsets.UTF_8);
+        for (int i = 0; i < bytes.length; i++) {
+            if (bytes[i] == '#') bytes[i] = (byte) 0xE4; // Latin-1 "ä" in a UTF-8 file
+        }
+        Files.createDirectories(files.storeCatalog().getParent());
+        Files.write(files.storeCatalog(), bytes);
+        sync.runCycle();
+        Savegame stored = savegames.findById(sg.getId()).orElseThrow();
+        assertThat(stored.getStoreCatalogJson()).contains("a.xml");
+        assertThat(facts.storeCatalog(stored).orElseThrow().items()).singleElement()
+                .satisfies(i -> assertThat(i.name()).isEqualTo("A\uFFFD"));
     }
 
     @Test

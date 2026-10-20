@@ -54,6 +54,7 @@ Homescreen.
 | **Feldbuch** | Je Feld und Erntejahr: Kultur, Düngung, Kalk, Walzen, Unkraut, Mulchen und Erntemenge; Auswertung der Erträge; Anbauplanung der nächsten Saison | Dokumentation · Auswertung · Anbauplanung |
 | **Stall** | Tiere, Tierpfleger, Futterbilanz, Tierarzt, Viehhandel und Tierwohl | Ställe · Futter · Handel & Tierarzt |
 | **Werkstatt** | Wartung, Wartungsvertrag, Mechaniker, Gebraucht-, Leih- und Vorführmaschinen, Tankschloss | Wartung · Gebrauchtmaschinen · Leihen & Vorführen · Tankschlösser |
+| **Händler** | Neue Maschinen ausstatten, bestellen und liefern lassen | Katalog · Warenkorb · Bestellungen · Lieferorte |
 | **Handel** | Ware aus deinen Silos mit den Nachbarn handeln, Aufträge der Nachbarn, Tierhandel, Hofladen, Großaufträge, Ferien auf dem Hof, Genossenschaftsanteile | Nachbarn & Ware · Tierhandel · Hofladen · Großaufträge · Ferienwohnung · Genossenschaft |
 | **Tagebuch** | Die Chronik deines Hofs | – |
 | **Einstellungen** | Alle Einstellungen: KI, Hof, Ereignisse, Fragen und Helfer im Spiel, Tablet & Netzwerk, Experteneinstellungen | KI · Hof · Ereignisse · Im Spiel · Tablet & Netzwerk · Experte |
@@ -360,8 +361,10 @@ Ergebnis (ohne Beanstandung, Auflage oder Bußgeld) landet im Verlauf. Mehr als 
   geplante Summe (ab 10.000 €). Nach etwa 10 Tagen ist sie bewilligt (mit Bürokraft schneller). Erst dann kaufst du im
   Spiel – was du vorher kaufst, zählt nicht. Innerhalb von 6 Monaten reichst du mit *Nachweis einreichen* ein (sonst
   geschieht es zum Fristende von selbst): 30 % der Kosten, höchstens 50.000 €. Gebrauchtkäufe bei Nachbarn und
-  Leasing zählen nicht. Verkaufst du eine geförderte Maschine innerhalb von 24 Monaten, fordert das Amt anteilig
-  zurück – die **Rückforderung** bezahlst du wie einen Steuerbescheid.
+  Leasing zählen nicht. Neue Maschinen vom **Händler** zählen mit Anzahlung und Rest (nicht Lieferkosten, Express und
+  Aufpreise); eine stornierte Bestellung zählt nicht. Verkaufst du eine geförderte Maschine innerhalb von 24 Monaten
+  oder gibst sie beim Händler in Zahlung, fordert das Amt anteilig zurück – die **Rückforderung** bezahlst du wie
+  einen Steuerbescheid.
 - **Düngeverordnung:** Von November bis Januar ist Gülle und Mist auf Ackerland verboten (Grünland ausgenommen).
   Bringst du sie trotzdem aus, kündigt das Amt eine Kontrolle an: beim ersten Mal eine Verwarnung, danach 1.000 €
   Bußgeld, und das Dorf redet. Ist das Güllelager eines Stalls lange fast voll, warnt dein Tierpfleger (ohne ihn die
@@ -816,6 +819,55 @@ Mod-Version.
   Dorf redet darüber. Ein **Tankschloss** für 250 € je Maschine macht das bei dieser Maschine deutlich unwahrscheinlicher;
   die Liste zeigt den Dieselstand jeder Maschine und die bisherigen Diebstähle. Dieselklau ist unter **Einstellungen**
   abschaltbar und kommt im idyllischen Weltmodus nicht vor.
+
+## Händler
+
+Der **Landmaschinenhändler** gehört in neuen Spielständen zur Startbesetzung; in einem älteren Spielstand stellt er
+sich per Mail und Tagebuch vor, sobald du die App **Händler** zum ersten Mal öffnest. Er steht in den **Kontakten** und
+hat ein Vertrauen wie jede Rolle. Die App hat die Tabs **Katalog**, **Warenkorb**, **Bestellungen** und **Lieferorte**;
+jeder zeigt oben den Händler als Kontakt. Gebrauchte Maschinen, Leih- und Vorführmaschinen der Werkstatt bleiben in der
+**Werkstatt**.
+
+- **Katalog.** Der Händler führt den ganzen Fahrzeug-Katalog des Shops, auch Mod-Fahrzeuge („Mod“), Paletten und
+  Ballen. Du suchst nach Namen und filterst nach Kategorie, Marke und Preis; ein Klick auf Name, Grundpreis oder Leistung
+  sortiert um. Die Liste kommt mit dem ersten Spielstart nach dem Mod-Update.
+- **Konfigurieren.** Wie im Shop des Spiels wählst du je Ausstattung eine Option (Farben als Farbfelder); Aufpreis und
+  Tageskosten stehen an jeder Option, die Standardausstattung des Spiels ist vorbelegt. Legt eine Option eine andere
+  mit fest, steht das darunter. Passt deine Auswahl zu einem Ausstattungspaket des Herstellers, steht sein Name da,
+  sonst „individuell“. Laufend siehst du Listenpreis, Tageskosten und die voraussichtliche Lieferzeit mit und ohne
+  Express – sie richtet sich nach der Art der Maschine, wird mit jeder vom Standard abweichenden Ausstattung länger und
+  passt sich der Monatslänge deines Spielstands an; geliefert wird nie vor 9 Uhr am nächsten Spieltag.
+- **Lieferorte.** Geh im Spiel zu Fuß an die Stelle, an der neue Maschinen stehen sollen, schau in die Richtung, in die
+  sie zeigen sollen, und drücke **Alt+L** („FarmPulse: Lieferort hier festlegen“, in der Steuerung änderbar). Das geht
+  nur auf eigenem oder gepachtetem Land. Im Tab erscheint der Punkt mit Flurstück und Zeit; du benennst ihn, machst ihn
+  zum Standard oder löschst ihn. Der Shop-Platz des Spiels steht immer in der Liste. Gehört das Flurstück nicht mehr zu
+  deinem Hof, ist der Lieferort „ungültig“ und der Shop-Platz wird wieder Standard.
+- **Warenkorb.** Bis zu 10 Maschinen, auch dieselbe mehrfach mit anderer Ausstattung; je Position kannst du die
+  Ausstattung ändern oder sie entfernen. Darunter fragst du das **Angebot** an: eigene Maschinen **in Zahlung geben**
+  (mit Spielwert; keine Leih- oder Vorführmaschinen), **zusammen** oder **einzeln liefern**, den **Lieferort** (der
+  Shop-Platz des Spiels oder ein gültiger Lieferort, vorbelegt mit dem Standard) und **Express** (halbe Lieferzeit,
+  + 5 % vom Listenpreis). Danach ist der Warenkorb leer; der Händler antwortet am nächsten Spieltag. Sind die
+  Inzahlungsmaschinen mehr wert als die Bestellung, lehnt er die Anfrage ab.
+- **Bestellungen.** Das **Angebot** nennt je Maschine Listenpreis, Lieferzeit und Express-Aufpreis, die Lieferkosten
+  (250 € plus 2 € je km vom nächsten Shop-Platz), die Inzahlungnahme (90–100 % des Spielwerts, je nach Vertrauen), den
+  Angebotspreis und die Anzahlung (30 %); es gilt 7 Spieltage. Du bietest in bis zu drei Runden, nimmst zum
+  Angebotspreis an oder lehnst ab; nach „Keine Einigung“ oder „Abgelaufen“ bringt „Zurück in den Warenkorb“ die
+  Maschinen zurück. Bei der Einigung wird die Anzahlung gebucht und der **Liefertermin** steht fest (im Kalender, in
+  der Liquiditätsplanung und als Kachel „Nächste Lieferung“ auf dem Startbildschirm). Der Händler kann sich einmal
+  verspäten – dann zahlt eine Stornierung die ganze Anzahlung zurück, sonst die Hälfte. Bis zum Termin kannst du den
+  Lieferort ändern. Am Termin stehen die Maschinen am Lieferort (ist er belegt, auf dem Shop-Platz); gebucht werden
+  dann der Rest, die Lieferkosten und Express, die Inzahlungsmaschine ist weg. Ist sie stärker beschädigt als bei der
+  Einigung, steigt der Rest um den Mehrschaden; ist sie vorher verkauft, um ihren Wert aus dem Angebot. Klappt die
+  Lieferung nicht (Shop-Platz belegt, Inzahlungsmaschine angekoppelt oder in Benutzung, Geld fehlt), wartet sie beim
+  Händler – sie steht dann auch unter **Aufgaben** („Lieferung wartet: …“): jeden Spieltag ein neuer Versuch, oder
+  sofort mit **„Lieferung erneut versuchen“** für 500 € (nur bei Erfolg gebucht). **Finanzieren** öffnet den Kreditantrag der Bank mit Betrag und Verwendungszweck.
+- **Vorführung.** Im Katalog fragst du eine **Vorführung** an: Der Händler bringt die Maschine in
+  Standardausstattung kostenlos auf den Shop-Platz und holt sie nach 2 Tagen eines 30-Tage-Monats (umgerechnet auf
+  deinen Spielstand) wieder ab. Es gibt eine Vorführung zur Zeit und je Maschine eine je Spieljahr; die Werkstatt hat
+  ihre eigene. Ist die Maschine bei der Abholung angekoppelt oder in Benutzung, kostet jeder weitere Tag 500 €; ist sie
+  verschwunden, verlangt der Händler ihren Wert. In *Bestellungen* legt „In den Warenkorb“ sie direkt in den Warenkorb.
+- **Kauf im Spiel-Shop.** Der Spiel-Shop bleibt offen. Kaufst du dort eine Maschine, schreibt dir der Händler und
+  sein Vertrauen sinkt um 5.
 
 ## Handel
 

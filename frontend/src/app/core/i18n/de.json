@@ -35,6 +35,7 @@
     "insurance": "Versicherung",
     "stable": "Stall",
     "workshop": "Werkstatt",
+    "dealer": "Händler",
     "trade": "Handel",
     "newspaper": "Dorfblatt",
     "chat": "Dorfchat"
@@ -54,6 +55,7 @@
     "fieldbook": "Jedes Feld, jedes Erntejahr – was angebaut, gedüngt und geerntet wurde",
     "stable": "Tiere, Tierarzt, Viehhandel und Tierwohl",
     "workshop": "Wartungsvertrag, Reparaturen, Mechaniker und Gebrauchtmaschinen",
+    "dealer": "Neue Maschinen ausstatten, bestellen und liefern lassen",
     "diary": "Die Chronik deines Hofs",
     "settings": "KI, Spielstand und Fragen im Spiel",
     "trade": "Ware und Arbeit mit den Nachbarn",
@@ -154,6 +156,7 @@
       "ENERGY_SUPPLIER": "Energieversorger",
       "WORKSHOP": "Landmaschinenwerkstatt",
       "CONTRACTOR": "Lohnunternehmer:in",
+      "MACHINE_DEALER": "Landmaschinenhändler:in",
       "TAX_OFFICE": "Finanzamt",
       "TAX_ADVISOR": "Steuerberater:in",
       "FAMILY": "Familie",
@@ -619,7 +622,14 @@
       "INVESTOR_REPAYMENT": "Rückzahlung an Investor",
       "INVESTOR_PAYOUT": "Ausschüttung an Investor",
       "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor",
-      "OVERDRAFT_INTEREST": "Dispozinsen"
+      "OVERDRAFT_INTEREST": "Dispozinsen",
+      "VEHICLE_DEPOSIT": "Anzahlung Neumaschine",
+      "VEHICLE_NEW_PURCHASE": "Maschinenkauf (neu)",
+      "VEHICLE_DELIVERY_FEE": "Lieferkosten Neumaschine",
+      "VEHICLE_EXPRESS_FEE": "Expresslieferung",
+      "VEHICLE_REFUND": "Rückzahlung Anzahlung",
+      "VEHICLE_CANCELLATION_FEE": "Stornogebühr",
+      "VEHICLE_DEMO_LATE_FEE": "Verzögerung Vorführmaschine"
     },
     "cycleEvent": {
       "GameTimeAdvancedEvent": "Spielzeit",
@@ -637,7 +647,8 @@
     "instructionType": {
       "MONEY_TRANSACTION": "Buchung",
       "PRICE_EVENT": "Preis-Ereignis",
-      "FARMLAND_TRANSFER": "Feldübertragung"
+      "FARMLAND_TRANSFER": "Feldübertragung",
+      "VEHICLE_DELIVERY": "Lieferung Neumaschine"
     },
     "period": {
       "1": "März",
@@ -919,7 +930,14 @@
       "RPSIM_INVESTOR_REPAYMENT": "Rückzahlung an Investor",
       "RPSIM_INVESTOR_PAYOUT": "Ausschüttung an Investor",
       "RPSIM_INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor",
-      "RPSIM_OVERDRAFT_INTEREST": "Dispozinsen"
+      "RPSIM_OVERDRAFT_INTEREST": "Dispozinsen",
+      "RPSIM_VEHICLE_DEPOSIT": "Anzahlung Neumaschine",
+      "RPSIM_VEHICLE_NEW_PURCHASE": "Maschinenkauf (neu)",
+      "RPSIM_VEHICLE_DELIVERY_FEE": "Lieferkosten Neumaschine",
+      "RPSIM_VEHICLE_EXPRESS_FEE": "Expresslieferung",
+      "RPSIM_VEHICLE_REFUND": "Rückzahlung Anzahlung",
+      "RPSIM_VEHICLE_CANCELLATION_FEE": "Stornogebühr",
+      "RPSIM_VEHICLE_DEMO_LATE_FEE": "Verzögerung Vorführmaschine"
     },
     "financeClass": {
       "OPERATING_INCOME": "Einnahme",
@@ -998,7 +1016,8 @@
       "BULK_ORDER": "Großauftrag (erwartet)",
       "INVESTOR_REPAYMENT": "Rückzahlung an Investor",
       "INVESTOR_PAYOUT": "Ausschüttung an Investor",
-      "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor"
+      "INVESTOR_COMPENSATION": "Ausgleichszahlung an Investor",
+      "MACHINE_ORDER": "Restzahlung Neumaschine"
     },
     "fieldWork": {
       "PLOW": "Pflügen",
@@ -1780,6 +1799,7 @@
     }
   },
   "home": {
+    "nextDelivery": "Nächste Lieferung: {machine} am {time}",
     "welcomeTitle": "Willkommen bei FarmPulse",
     "welcomeText": "Noch ist kein Spielstand verknüpft. Erzähle im Onboarding die Vorgeschichte deines Hofs, lerne dein Dorf kennen und verknüpfe anschließend deinen FS25-Spielstand.",
     "result": "Monatsergebnis",
@@ -2041,6 +2061,7 @@
     "investorDue": "Lieferung an {name}",
     "feedDue": "Futter: {group} reicht noch {days} Tage",
     "sowDue": "Feld {field}: {crop} säen",
+    "deliveryWaiting": "Lieferung wartet: {machine} – {reason}",
     "sowHint": "Saatfenster laut Anbauplanung"
   },
   "calendar": {
@@ -2077,6 +2098,7 @@
       "bulkOrderEnd": "Liefermonat endet: {quantity} l {fillType} an {sellPoint}",
       "investorDelivery": "{name} wartet noch auf {remaining} {unit} {what}",
       "investorRepayment": "Rückzahlung an {name}: {amount}",
+      "machineDelivery": "Lieferung {machine}: {amount}",
       "feedEmpty": "Futter leer: {group} ({animal})",
       "sowWindowStart": "Saatfenster beginnt: Feld {field} ({crop})",
       "sowWindowEnd": "Saatfenster endet: Feld {field} ({crop})"
@@ -2197,6 +2219,151 @@
       "thefts": "Dieselklau",
       "theft": "{time}: {liters} l aus {vehicle} ({damage})",
       "paid": "Versicherung zahlte {amount}"
+    }
+  },
+  "dealer": {
+    "comingSoon": "Folgt mit dem nächsten Ausbau",
+    "catalog": {
+      "search": "Name suchen",
+      "category": "Kategorie",
+      "brand": "Marke",
+      "all": "Alle",
+      "priceFrom": "Preis von",
+      "priceTo": "bis",
+      "name": "Name",
+      "basePrice": "Grundpreis",
+      "power": "Leistung",
+      "dailyUpkeep": "Tageskosten",
+      "mod": "Mod",
+      "powerValue": "{power} PS",
+      "powerRange": "{min}–{max} PS",
+      "empty": "Kein Eintrag passt zu den Filtern.",
+      "missing": "Der Katalog kommt mit dem nächsten Spielstart (Mod ab Version mit Fahrzeughändler).",
+      "configure": "Konfigurieren",
+      "next": "Weiter",
+      "prev": "Zurück"
+    },
+    "config": {
+      "package": "Ausstattungspaket",
+      "individual": "individuell",
+      "surcharge": "+ {amount}",
+      "upkeep": "+ {amount}/Tag",
+      "standard": "(Standard)",
+      "setsAlso": "legt auch fest: {list}",
+      "listPrice": "Listenpreis",
+      "dailyUpkeep": "Tageskosten",
+      "delivery": "Voraussichtliche Lieferzeit",
+      "days": "{min}–{max} Spieltage",
+      "day": "{n} Spieltage",
+      "hours": "{min}–{max} Stunden",
+      "hour": "{n} Stunden",
+      "express": "Express: {span}",
+      "earliest": "frühestens morgen 9 Uhr",
+      "deliveryCostsLater": "Die Lieferkosten nennt das Angebot – je nach Lieferort.",
+      "addToCart": "In den Warenkorb",
+      "cancel": "Abbrechen",
+      "apply": "Übernehmen"
+    },
+    "configTypes": {
+      "baseColor": "Farbe",
+      "designColor": "Designfarbe",
+      "rimColor": "Felgenfarbe",
+      "wheel": "Bereifung",
+      "motor": "Motor",
+      "design": "Design",
+      "vehicleType": "Ausführung",
+      "fillUnit": "Volumen",
+      "multipleItemPurchaseAmount": "Menge"
+    },
+    "cart": {
+      "change": "Ändern",
+      "remove": "Entfernen",
+      "sum": "Summe Listenpreise",
+      "count": "{count} von {max} Positionen",
+      "full": "Der Warenkorb ist voll (höchstens {max} Positionen).",
+      "empty": "Der Warenkorb ist leer."
+    },
+    "demo": {
+      "request": "Vorführung anfragen",
+      "running": "Es läuft schon eine Vorführung.",
+      "thisYear": "Diese Maschine wurde in diesem Spieljahr schon vorgeführt.",
+      "title": "Vorführung",
+      "standsUntil": "{machine} steht bis {time} auf dem Shop-Platz",
+      "delivering": "Wird gebracht …",
+      "late": "Abholung verspätet – {reason}, + {fee} je Tag",
+      "toCart": "In den Warenkorb"
+    },
+    "orders": {
+      "status": {
+        "REQUESTED": "Angefragt",
+        "OFFERED": "Angebot",
+        "ORDERED": "Bestellt",
+        "WAITING": "Wartet beim Händler",
+        "COMPLETED": "Geliefert",
+        "CANCELLED": "Storniert",
+        "REJECTED": "Keine Einigung",
+        "EXPIRED": "Abgelaufen",
+        "FAILED": "Nicht zustande gekommen"
+      },
+      "listPrice": "Listenpreis",
+      "deliveryTime": "Lieferzeit {min}–{max} Spieltage",
+      "expressFee": "Express + {amount}",
+      "deliveryFee": "Lieferkosten {amount}",
+      "tradeIn": "Inzahlungnahme − {amount}",
+      "offerPrice": "Angebotspreis",
+      "depositAtAgreement": "Anzahlung bei Einigung ({percent} %)",
+      "validUntil": "Gültig bis {time}",
+      "yourBid": "Dein Gebot",
+      "bid": "Bieten",
+      "accept": "Zum Angebotspreis annehmen",
+      "decline": "Ablehnen",
+      "round": "Runde {round} von {max}",
+      "backToCart": "Zurück in den Warenkorb",
+      "agreed": "Vereinbart",
+      "depositPaid": "Anzahlung bezahlt",
+      "rest": "Rest bei Lieferung",
+      "dueAt": "Liefertermin {time}",
+      "express": "Express",
+      "delayed": "verzögert",
+      "finance": "Finanzieren",
+      "financePurpose": "Neumaschine: {machines}",
+      "cancel": "Stornieren",
+      "cancelQuestion": "Bestellung wirklich stornieren? Du bekommst {amount} der Anzahlung zurück.",
+      "lastAttempt": "Letzter Versuch: {reason}",
+      "retry": "Lieferung erneut versuchen (+ {fee})",
+      "nextDay": "Sonst neuer Versuch am nächsten Spieltag.",
+      "delivered": "Geliefert {time} – {place}",
+      "empty": "Noch keine Anfragen oder Bestellungen."
+    },
+    "request": {
+      "tradeIn": "Inzahlungnahme",
+      "giveInTrade": "In Zahlung geben",
+      "gameValue": "Spielwert {value}",
+      "noTradeIn": "Keine eigenen Maschinen zum In-Zahlung-Geben.",
+      "delivery": "Lieferung",
+      "together": "zusammen liefern",
+      "separately": "einzeln liefern",
+      "place": "Lieferort",
+      "express": "Express (halbe Lieferzeit, + 5 % vom Listenpreis)",
+      "ask": "Angebot anfragen",
+      "requested": "Angefragt – der Händler antwortet am nächsten Spieltag."
+    },
+    "places": {
+      "pointName": "Lieferort {seq}",
+      "farmland": "Flurstück {id}",
+      "setAt": "festgelegt Tag {day}, {time}",
+      "default": "Standard",
+      "unnamed": "neu – bitte benennen",
+      "invalid": "ungültig",
+      "invalidText": "Das Flurstück gehört nicht mehr zu deinem Hof – Lieferungen gehen auf den Shop-Platz.",
+      "rename": "Umbenennen",
+      "name": "Name",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "makeDefault": "Als Standard",
+      "delete": "Löschen",
+      "shopPlace": "Shop-Platz des Spiels",
+      "empty": "Noch keine Lieferorte. Geh im Spiel zu Fuß an die Stelle, schau in die Richtung, in die die Maschine zeigen soll, und drücke ‚FarmPulse: Lieferort hier festlegen‘ (Alt+L)."
     }
   },
   "authorities": {
@@ -2609,6 +2776,12 @@
       "leihen": "Leihen & Vorführen",
       "tankschloesser": "Tankschlösser"
     },
+    "dealer": {
+      "katalog": "Katalog",
+      "warenkorb": "Warenkorb",
+      "bestellungen": "Bestellungen",
+      "lieferorte": "Lieferorte"
+    },
     "trade": {
       "nachbarn": "Nachbarn & Ware",
       "tiere": "Tierhandel",
@@ -2633,7 +2806,8 @@
     "contacts": "Hier stehen die Menschen aus Dorf, Familie, Vereinen und deinem Personal. Im Profil siehst du Charakterzüge, Hintergrund und Felder, unter „Nachricht“ schreibst du ihnen oder rufst an – die Antwort kommt in Spielzeit. Vertrauen und Ansehen zeigt das Tablet nur als Stufe, nie als Zahl. Die Anfragen der Vereine stehen unter „Vereine & Sponsoring“.",
     "newspaper": "Das Dorfblatt erscheint zu Beginn jeder Periode mit Neuigkeiten aus dem Dorf, vom Hof und vom Markt, mit Amtlichem und Kleinanzeigen. Die neueste Ausgabe ist geöffnet, ältere Ausgaben bleiben in der Liste lesbar.",
     "calendar": "Der Kalender folgt dem FS25-Kalender. „Nächste Tage“ zeigt Fristen und Termine und was zum Monatsbeginn automatisch abgebucht wird. Unter „Einladungen“ antwortest du auf Dorffeste, Stammtisch und Versammlungen, „Jahr“ zeigt Dorffeste, Steuertermine, Familien- und Amtstermine im Überblick.",
-    "fieldbook": "Das Feldbuch führt für jedes eigene und gepachtete Feld eine laufende Saison und je Erntejahr einen Eintrag: Kultur, Ernteprodukt, 1. und 2. Düngung, Kalk, Walzen, Unkraut, Mulchen und die geernteten Liter. Fast alles erkennt FarmPulse aus dem Spiel; mit der Ernte endet der Eintrag, alles danach zählt zur nächsten Saison. Jeden Wert kannst du korrigieren („manuell“) und mit ↺ wieder der Erkennung überlassen. Ein abgeschlossenes Erntejahr ist gesperrt; was das Spiel danach noch meldet, erscheint als Hinweis und wird übernommen, wenn du das Jahr wieder öffnest."
+    "fieldbook": "Das Feldbuch führt für jedes eigene und gepachtete Feld eine laufende Saison und je Erntejahr einen Eintrag: Kultur, Ernteprodukt, 1. und 2. Düngung, Kalk, Walzen, Unkraut, Mulchen und die geernteten Liter. Fast alles erkennt FarmPulse aus dem Spiel; mit der Ernte endet der Eintrag, alles danach zählt zur nächsten Saison. Jeden Wert kannst du korrigieren („manuell“) und mit ↺ wieder der Erkennung überlassen. Ein abgeschlossenes Erntejahr ist gesperrt; was das Spiel danach noch meldet, erscheint als Hinweis und wird übernommen, wenn du das Jahr wieder öffnest.",
+    "dealer": "Beim Landmaschinenhändler stellst du neue Maschinen wie im Shop des Spiels zusammen, sammelst sie im Warenkorb und lässt sie an einen Lieferort bringen, den du im Spiel per Taste festlegst."
   },
   "investors": {
     "title": "Großinvestoren",

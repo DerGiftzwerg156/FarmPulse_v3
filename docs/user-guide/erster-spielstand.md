@@ -37,7 +37,7 @@ Bürokraft). Du kannst diesen Schritt auch leer lassen und später über Stellen
 
 ![Startbesetzung](../screenshots/03-onboarding-startbesetzung.png)
 
-FarmPulse stellt dir dein Dorf vor: Pflichtrollen (Bank, Genossenschaft, Amt), Dorfbewohner, deine
+FarmPulse stellt dir dein Dorf vor: Pflichtrollen (Bank, Genossenschaft, Amt, Landmaschinenhändler), Dorfbewohner, deine
 Mitarbeiter und deine Familie, jeweils mit Name, Rolle und Kurzbeschreibung. Gefällt dir jemand nicht, klickst du auf
 **Neu würfeln** – einzeln oder mit **Alle neu würfeln** für die ganze Besetzung. Ein neu gewürfeltes
 Familienmitglied bleibt in derselben Rolle (z. B. Elternteil) und trägt den Familiennamen.

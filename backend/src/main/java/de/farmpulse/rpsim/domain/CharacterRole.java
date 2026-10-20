@@ -38,5 +38,11 @@ public enum CharacterRole {
      */
     BULK_BUYER,
     /** Roadmap V3.2 R32-Q1: a large investor (R32-I1); created with the offer, not part of the starting cast. */
-    INVESTOR
+    INVESTOR,
+    /**
+     * Roadmap vehicle dealer RFH-H1: the agricultural machinery dealer (new machines). Part of the starting cast of a new
+     * savegame; an older savegame gets the dealer when the app "Händler" is opened for the first time (owner decision
+     * 2026-10-15).
+     */
+    MACHINE_DEALER
 }

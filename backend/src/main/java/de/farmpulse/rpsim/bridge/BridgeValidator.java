@@ -81,7 +81,21 @@ public final class BridgeValidator {
         validateRoadmapV31(f, e);
         validateRoadmapV33(f, e);
         validateRoadmapV4(f, e);
+        validateVehicleDealer(f, e);
         return e;
+    }
+
+    /** Roadmap vehicle dealer (RFH-Q2): the optional delivery points need seq >= 1 and a position with direction. */
+    private static void validateVehicleDealer(FarmFacts f, List<String> e) {
+        if (f.deliveryPoints() == null) {
+            return;
+        }
+        f.deliveryPoints().forEach(p -> {
+            if (p == null || p.seq() == null || p.seq() < 1
+                    || Stream.of(p.x(), p.y(), p.z(), p.ry()).anyMatch(v -> v == null || v.isNaN())) {
+                e.add("invalid delivery point " + p);
+            }
+        });
     }
 
     /** Roadmap V4 (R4-Q1 / R4-Q2): the optional consumption counter and feed stock are only checked when present. */
@@ -321,7 +335,68 @@ public final class BridgeValidator {
                 }
             });
         }
+        if (m.storePlaces() != null) { // Roadmap vehicle dealer (RFH-Q2 / RFH-L6)
+            m.storePlaces().forEach(p -> {
+                if (p == null || p.x() == null || p.z() == null) e.add("invalid store place " + p);
+            });
+        }
         return e;
+    }
+
+    /**
+     * Roadmap vehicle dealer (RFH-Q1): store_catalog.json needs the savegameId and the items. Broken entries do not
+     * skip the file - the mod writes it only once per mission start, a skipped file would never come again; they are
+     * left out by {@link #clean}.
+     */
+    public static List<String> validate(BridgeDtos.StoreCatalog c) {
+        List<String> e = new ArrayList<>();
+        if (blank(c.savegameId())) e.add("savegameId missing");
+        if (c.items() == null) e.add("items missing");
+        return e;
+    }
+
+    /** A catalog without its broken entries and what was left out. */
+    public record CleanCatalog(BridgeDtos.StoreCatalog catalog, List<String> dropped) {
+    }
+
+    /**
+     * Roadmap vehicle dealer (RFH-Q1): leaves out the catalog items without xmlFilename or with a price < 0 (or a daily
+     * upkeep < 0), the option types without name and the options without an index >= 1; a type without options left is
+     * left out. Options may cost less than nothing - the game adds the price of an option as it is (discount options of
+     * mods, VehicleConfigurationItem #price).
+     */
+    public static CleanCatalog clean(BridgeDtos.StoreCatalog c) {
+        List<String> dropped = new ArrayList<>();
+        List<BridgeDtos.CatalogItem> items = new ArrayList<>();
+        for (BridgeDtos.CatalogItem i : c.items() == null ? List.<BridgeDtos.CatalogItem>of() : c.items()) {
+            if (i == null || blank(i.xmlFilename()) || negativeOrNull(i.price())
+                    || (i.dailyUpkeep() != null && i.dailyUpkeep() < 0)) {
+                dropped.add("invalid catalog item " + (i == null ? null : i.xmlFilename()));
+                continue;
+            }
+            if (i.configurations() == null) {
+                items.add(i);
+                continue;
+            }
+            List<BridgeDtos.CatalogConfiguration> types = new ArrayList<>();
+            for (BridgeDtos.CatalogConfiguration t : i.configurations()) {
+                List<BridgeDtos.CatalogOption> options = t == null || blank(t.name()) || t.options() == null ? List.of()
+                        : t.options().stream().filter(o -> o != null && o.index() != null && o.index() >= 1).toList();
+                if (options.isEmpty()) {
+                    dropped.add("invalid configuration of " + i.xmlFilename() + ": " + (t == null ? null : t.name()));
+                    continue;
+                }
+                if (options.size() < t.options().size()) {
+                    dropped.add("invalid option of " + i.xmlFilename() + ": " + t.name());
+                }
+                types.add(new BridgeDtos.CatalogConfiguration(t.name(), t.title(), options));
+            }
+            items.add(new BridgeDtos.CatalogItem(i.xmlFilename(), i.name(), i.brand(), i.categoryName(), i.price(),
+                    i.dailyUpkeep(), i.lifetime(), i.isMod(), i.motorized(), i.isBundle(), i.multipleItemPurchase(), types,
+                    i.defaultConfigurations(), i.configurationSets(), i.brandTitle(), i.categoryTitle(), i.powerMin(),
+                    i.powerMax()));
+        }
+        return new CleanCatalog(new BridgeDtos.StoreCatalog(c.savegameId(), items), dropped);
     }
 
     /** Roadmap V4 (R4-Q1): seed use and base yield >= 0, sowing / harvest windows only periods 1..12. */

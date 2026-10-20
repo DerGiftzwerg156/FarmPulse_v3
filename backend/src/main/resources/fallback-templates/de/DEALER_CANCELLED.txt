@@ -1,0 +1,6 @@
+Stornierung bestätigt
+Hallo,
+
+die Bestellung von {{machines}} ist storniert. Ich erstatte Ihnen {{refund}} € der Anzahlung, {{fee}} € behalte ich als Stornogebühr ein.
+
+{{characterName}}

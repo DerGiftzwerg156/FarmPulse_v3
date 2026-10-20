@@ -309,6 +309,11 @@ Die Akzeptanz im echten Spiel prüft der manuelle Testplan, Abschnitte 21 (21.5,
   innerhalb einer Bindungsfrist verkauft (`SHOP_VEHICLE_SELL` im Journal), muss anteilig zurückzahlen (Rechnung wie
   `TAX_BILL`).
 
+Ergänzung 16.10.2026 (Roadmap Fahrzeughändler, Entscheidung des Projektinhabers): Anzahlung und Rest neuer Maschinen
+vom Händler zählen wie `SHOP_VEHICLE_BUY` (eine stornierte Bestellung nimmt ihre Anzahlung wieder heraus), und eine
+beim Händler in Zahlung gegebene geförderte Maschine gilt als verkauft (`InvestmentGrantService.onDealerPurchase`,
+`onDealerRefund`, `onTradeIn`).
+
 **Beleg:** – (Journal aus R2-B).
 
 ### R31-B3 Düngeverordnung

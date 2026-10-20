@@ -237,6 +237,17 @@ public class OutboxService {
         return enqueue(sg, InstructionType.VEHICLE_SPAWN, p, null, null, related);
     }
 
+    /**
+     * Roadmap vehicle dealer RFH-L5: new machines delivered (VEHICLE_DELIVERY, asynchronous like VEHICLE_SPAWN; the mod
+     * books the bookings itself after loading). Carries minBalance while the overdraft is on.
+     */
+    @Transactional
+    public OutboxInstruction vehicleDelivery(Savegame sg, Map<String, Object> payload, Related related) {
+        Map<String, Object> p = new LinkedHashMap<>(payload);
+        putMinBalance(sg, p);
+        return enqueue(sg, InstructionType.VEHICLE_DELIVERY, p, null, null, related);
+    }
+
     /** Roadmap V3.1 R31-A2: a borrowed or demo machine goes back (VEHICLE_REMOVE without money). */
     @Transactional
     public OutboxInstruction vehicleRemove(Savegame sg, String vehicleId, Related related) {

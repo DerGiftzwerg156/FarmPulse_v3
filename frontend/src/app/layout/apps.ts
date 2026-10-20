@@ -32,6 +32,8 @@ export const APPS: AppDef[] = [
   { id: 'fieldbook', label: 'nav.fieldBook', path: '/feldbuch', icon: 'clipboard', tone: 'farm' },
   { id: 'stable', label: 'nav.stable', path: '/stall', icon: 'barn', tone: 'farm' },
   { id: 'workshop', label: 'nav.workshop', path: '/werkstatt', icon: 'wrench', tone: 'farm' },
+  // Roadmap vehicle dealer RFH-H2 (owner decision 2026-10-15): own app right after the workshop
+  { id: 'dealer', label: 'nav.dealer', path: '/haendler', icon: 'tractor', tone: 'farm' },
   // Roadmap V3 R3-H (owner decision: own app): trade and contracts of the neighbours
   { id: 'trade', label: 'nav.trade', path: '/handel', icon: 'coins', tone: 'farm' },
   { id: 'diary', label: 'nav.diary', path: '/diary', icon: 'book', tone: 'sys' },

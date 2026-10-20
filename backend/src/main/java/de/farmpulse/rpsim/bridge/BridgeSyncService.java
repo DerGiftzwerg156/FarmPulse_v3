@@ -37,7 +37,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * One bridge cycle: read market_context.json, farm_facts.json, instructions_ack.json and player_responses.json, then
+ * One bridge cycle: read market_context.json, store_catalog.json (Roadmap vehicle dealer RFH-Q1), farm_facts.json,
+ * instructions_ack.json and player_responses.json, then
  * write instructions.json from the outbox. savegameId consistency is checked on every file (warning, no crash).
  * <p>
  * Technical review 10/2026, Phase 1.2/1.3 (R-1): there is no transaction around the cycle. Every read stores its data
@@ -73,6 +74,7 @@ public class BridgeSyncService {
     private List<String> lastResponseIds = List.of();
     private String lastResponsesSavegameId;
     private String lastContextRaw;
+    private String lastCatalogRaw;
     private String lastAckRaw;
     private String lastInstructionsWritten;
 
@@ -107,6 +109,7 @@ public class BridgeSyncService {
     public CycleResult runCycle() {
         drainAll(); // work left over by the previous cycle (or a restart) first
         boolean ctx = syncMarketContext();
+        syncStoreCatalog();
         FactsOutcome facts = syncFacts();
         int acks = syncAcks();
         syncResponses();
@@ -118,6 +121,7 @@ public class BridgeSyncService {
     public void resetCaches() {
         lastFactsRaw = null;
         lastContextRaw = null;
+        lastCatalogRaw = null;
         lastAckRaw = null;
         lastInstructionsWritten = null;
         lastResponsesRaw = null;
@@ -184,6 +188,33 @@ public class BridgeSyncService {
         });
         lastContextRaw = read.get().raw();
         drain(id);
+        return true;
+    }
+
+    /**
+     * Roadmap vehicle dealer RFH-Q1: export/store_catalog.json (written by the mod once per mission start) is stored raw
+     * at its linked savegame, like the market context. A file of an unlinked savegame is left alone until it is linked
+     * (the cache is reset then, {@link #resetCaches}). Returns true when stored.
+     */
+    boolean syncStoreCatalog() {
+        Optional<BridgeFiles.Read<BridgeDtos.StoreCatalog>> read = files.read(files.storeCatalog(),
+                BridgeDtos.StoreCatalog.class, BridgeValidator::validate);
+        if (read.isEmpty() || read.get().raw().equals(lastCatalogRaw)) {
+            return false;
+        }
+        Optional<Savegame> sg = activeByBridgeId(read.get().doc().savegameId());
+        if (sg.isEmpty()) {
+            lastCatalogRaw = read.get().raw(); // not parsed again every cycle; linking resets the cache
+            return false;
+        }
+        List<String> dropped = BridgeValidator.clean(read.get().doc()).dropped();
+        if (!dropped.isEmpty()) {
+            log.warn("Shop catalog of {} machines: {} broken entries left out, e.g. {}", read.get().doc().items().size(),
+                    dropped.size(), dropped.subList(0, Math.min(dropped.size(), 10)));
+        }
+        Long id = sg.get().getId();
+        tx.executeWithoutResult(t -> savegames.findById(id).orElseThrow().setStoreCatalogJson(read.get().raw()));
+        lastCatalogRaw = read.get().raw();
         return true;
     }
 

@@ -60,6 +60,7 @@ public class TaskService {
     private final de.farmpulse.rpsim.investor.InvestorService investors;
     private final de.farmpulse.rpsim.feed.FeedBalanceService feed;
     private final de.farmpulse.rpsim.planning.CropPlanService cropPlans;
+    private final de.farmpulse.rpsim.dealer.DealerOrderService dealerOrders;
 
     public TaskService(ServiceCaseRepository cases, ContractRepository contracts, CreditApplicationRepository applications,
                        CommunicationRepository communications, NegotiationRepository negotiations,
@@ -67,7 +68,9 @@ public class TaskService {
                        JobApplicationRepository jobApplications, GamePromptRepository prompts, ApiMapper mapper,
                        de.farmpulse.rpsim.investor.InvestorService investors,
                        de.farmpulse.rpsim.feed.FeedBalanceService feed,
-                       de.farmpulse.rpsim.planning.CropPlanService cropPlans) {
+                       de.farmpulse.rpsim.planning.CropPlanService cropPlans,
+                       de.farmpulse.rpsim.dealer.DealerOrderService dealerOrders) {
+        this.dealerOrders = dealerOrders;
         this.investors = investors;
         this.feed = feed;
         this.cropPlans = cropPlans;
@@ -141,6 +144,14 @@ public class TaskService {
                     sg.getCurrentGameTime()).feedDue(new de.farmpulse.rpsim.api.Views.FeedDueView(d.animalType(),
                     d.title(), d.kind(), d.reachDays(), d.fillTypes())).build());
         }
+        // Roadmap vehicle dealer RFH-L5 (owner decision 2026-10-16): a delivery waiting at the dealer needs the player
+        for (var d : dealerOrders.planned(sg)) {
+            if (de.farmpulse.rpsim.domain.DealerDelivery.WAITING.equals(d.getStatus())) {
+                items.add(task("delivery-" + d.getId(), "DEALER_DELIVERY", d.getLastFailure(), null, d.getDueGameTime())
+                        .deliveryWaiting(new de.farmpulse.rpsim.api.Views.DeliveryWaitingView(d.getId(), d.getOrderId(),
+                                dealerOrders.names(dealerOrders.itemsOf(d)), dealerOrders.reasonText(sg, d))).build());
+            }
+        }
         // Roadmap V4 R4-A5: planned fields in their sowing window, deadline = end of the window
         for (var d : cropPlans.due(sg)) {
             if (d.start() <= sg.getCurrentGameTime()) {
@@ -178,6 +189,7 @@ public class TaskService {
         private de.farmpulse.rpsim.api.Views.InvestorDueView investorDue;
         private de.farmpulse.rpsim.api.Views.FeedDueView feedDue;
         private de.farmpulse.rpsim.api.Views.SowDueView sowDue;
+        private de.farmpulse.rpsim.api.Views.DeliveryWaitingView deliveryWaiting;
 
         private Builder(String key, String type, String kind, Long deadline, long gameTime) {
             this.key = key;
@@ -237,6 +249,11 @@ public class TaskService {
             return this;
         }
 
+        Builder deliveryWaiting(de.farmpulse.rpsim.api.Views.DeliveryWaitingView v) {
+            this.deliveryWaiting = v;
+            return this;
+        }
+
         Builder pendingApplicants(int n) {
             this.pendingApplicants = n;
             return this;
@@ -244,7 +261,7 @@ public class TaskService {
 
         TaskView build() {
             return new TaskView(key, type, kind, deadline, gameTime, serviceCase, contract, application, call, negotiation,
-                    marketEvent, posting, pendingApplicants, investorDue, feedDue, sowDue);
+                    marketEvent, posting, pendingApplicants, investorDue, feedDue, sowDue, deliveryWaiting);
         }
     }
 }

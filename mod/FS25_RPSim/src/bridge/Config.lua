@@ -58,6 +58,12 @@ RPSimConfig.DEFAULTS = {
     storeCatalogExport = true,
     -- Roadmap V3 R3-V1: at most this many catalog entries; above that they are cut after sorting by xmlFilename
     storeCatalogMaxEntries = 2000,
+    -- Roadmap vehicle dealer RFH-O1 (owner decision 2026-10-15): the mod keeps the last 20 delivery points set by key
+    deliveryPointsMax = 20,
+    -- Roadmap vehicle dealer RFH-L5 (owner decision 2026-10-15): gap in metres between the machines of one delivery at an
+    -- own delivery point, and how far above the terrain the place check starts (so the ground is not hit; 31.8)
+    deliveryMachineGap = 2,
+    deliveryGroundClearance = 0.5,
     -- Roadmap V3.1 R31-K1 (contract R31-Q1): at most this many points per field outline in market_context.fieldShapes;
     -- longer outlines are thinned out evenly
     fieldShapeMaxPoints = 64,

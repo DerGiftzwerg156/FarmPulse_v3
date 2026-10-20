@@ -340,6 +340,33 @@ function RPSimFarmFacts.buildHarvests(raw)
     return list
 end
 
+--- Roadmap vehicle dealer (RFH-Q2, contract; set by the key of RFH-O1): delivery points the player set in the game -
+-- position (x, y, z in metres, 0.01), facing direction ry (radians, 0.001), the farmland at the place, game day and
+-- time of day. raw = { {seq, x, y, z, ry, farmlandId?, day?, dayTimeMs?} }; seq = whole number >= 1, entries without
+-- seq or a numeric position are dropped. Sorted by seq.
+function RPSimFarmFacts.buildDeliveryPoints(raw)
+    local function num(v) return type(v) == "number" and v == v end
+    local function r(v, f) return math.floor(v * f + 0.5) / f end
+    local list = RPSimJson.array({})
+    for _, p in ipairs(raw) do
+        if type(p) == "table" and num(p.seq) and p.seq >= 1 and num(p.x) and num(p.y) and num(p.z) and num(p.ry) then
+            local e = { seq = round(p.seq), x = r(p.x, 100), y = r(p.y, 100), z = r(p.z, 100), ry = r(p.ry, 1000) }
+            if num(p.farmlandId) then
+                e.farmlandId = p.farmlandId
+            end
+            if num(p.day) then
+                e.day = round(p.day)
+            end
+            if num(p.dayTimeMs) then
+                e.dayTimeMs = round(p.dayTimeMs)
+            end
+            list[#list + 1] = e
+        end
+    end
+    table.sort(list, function(a, b) return a.seq < b.seq end)
+    return list
+end
+
 --- Roadmap V4 (R4-Q1, contract; counted by the mod with R4-D1): consumption counter per own field and fill type =
 -- the litres sowing machines and sprayers used on that field (seed, fertiliser, lime, herbicide, slurry ...),
 -- cumulative and kept in the mod savegame. helperLiters = the part a helper bought while working (the game books it
@@ -442,7 +469,8 @@ end
 
 --- raw: {
 --   savegameId, gameTime, balance,
---   vehicles = { {uniqueId, value, damage, name?, xmlFilename?, category?, fuel?} }, placeables = { {uniqueId, value} },
+--   vehicles = { {uniqueId, value, damage, name?, xmlFilename?, category?, fuel?, repairPrice?} },
+--   placeables = { {uniqueId, value} },
 --   leasedVehicles = { {uniqueId, costPerPeriod?} },
 --   farmland = { {farmlandId, hectares, price} }, animals = { {husbandryUniqueId, type, count, estimatedValue} },
 --   silos = <see RPSimStorage.aggregate>, vanillaLoan = number,
@@ -454,7 +482,8 @@ end
 --   Roadmap V3 (R3-Q1), each optional: npcFields (R3-H1, same entries as fields), tradeStorage (R3-H2),
 --   Roadmap V3.1 (R31-Q1), optional: vehiclePositions (D5, see buildVehiclePositions),
 --   Roadmap V3.3 (R33-Q1), optional: harvests (F3, see buildHarvests),
---   Roadmap V4 (R4-Q1 / R4-Q2), optional: inputs (D1, see buildInputs), feedStock (F2, see buildFeedStock) }
+--   Roadmap V4 (R4-Q1 / R4-Q2), optional: inputs (D1, see buildInputs), feedStock (F2, see buildFeedStock),
+--   Roadmap vehicle dealer (RFH-Q2), optional: deliveryPoints (O1, see buildDeliveryPoints) }
 function RPSimFarmFacts.build(raw, cfg)
     cfg = cfg or RPSimConfig.new()
     local vehicles = RPSimJson.array({})
@@ -473,6 +502,10 @@ function RPSimFarmFacts.build(raw, cfg)
             e.category = string.upper(v.category)
         end
         e.fuel = RPSimFarmFacts.buildFuel(v.fuel)
+        -- Roadmap vehicle dealer RFH-B4 (owner decision 2026-10-15): repair price, whole euros, optional
+        if type(v.repairPrice) == "number" and v.repairPrice == v.repairPrice and v.repairPrice >= 0 then
+            e.repairPrice = round(v.repairPrice)
+        end
         vehicles[#vehicles + 1] = e
     end
     local placeables = RPSimJson.array({})
@@ -610,6 +643,10 @@ function RPSimFarmFacts.build(raw, cfg)
     -- Roadmap V4 (R4-Q2, F2): feed stock in own silos, silo extensions and bunker silos
     if type(raw.feedStock) == "table" then
         doc.feedStock = RPSimFarmFacts.buildFeedStock(raw.feedStock)
+    end
+    -- Roadmap vehicle dealer (RFH-Q2, O1): delivery points set in the game
+    if type(raw.deliveryPoints) == "table" then
+        doc.deliveryPoints = RPSimFarmFacts.buildDeliveryPoints(raw.deliveryPoints)
     end
     return doc
 end

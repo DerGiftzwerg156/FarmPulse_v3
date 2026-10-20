@@ -75,4 +75,8 @@ public class BookingEntry extends SavegameScoped {
 
     @Column(name = "match_exports", nullable = false)
     private int matchExports;
+
+    /** Roadmap vehicle dealer RFH-S2: the dealer reacted to this purchase in the game shop (mail, trust). */
+    @Column(name = "dealer_reacted", nullable = false)
+    private boolean dealerReacted;
 }

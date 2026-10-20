@@ -14,6 +14,7 @@ export const validators = {
   instructions: load('instructions.schema.json'),
   instructionsAck: load('instructions_ack.schema.json'),
   playerResponses: load('player_responses.schema.json'), // Roadmap V2 R2-F1
+  storeCatalog: load('store_catalog.schema.json'), // Roadmap vehicle dealer RFH-Q1
 };
 
 /** Returns null when valid, otherwise a readable error string. */
