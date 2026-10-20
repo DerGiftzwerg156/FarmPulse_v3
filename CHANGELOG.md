@@ -189,6 +189,12 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-M4 - wrong FS25 year while the clock catches up**: the clock processes skipped days one by one
+  at their own game time, but tax year and prepayments, the farm report, the social insurance bill, the area payment
+  form, the field margins, the crop plan reminders, the milestone "year without delay", the cooperative dividend, the
+  rotation budget, the village paper's crop year and the investor payment year took the year of the latest export.
+  They now use `GameTime.yearOf` - the year of the processed month, counted from the calendar anchor (the year changes
+  with period 1).
 - **Logic review LR-M3 - contractor harvest lost without room in the silos**: the mod cut the field (FIELD_WORK
   HARVEST) before the STORAGE_TRANSFER IN of the same batch found no room, so the crop disappeared and the backend
   cancelled the order. The batch pre-check of the mod (and the bridge simulator) now checks the room and stock of all

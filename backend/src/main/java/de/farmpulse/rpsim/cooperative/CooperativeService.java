@@ -321,7 +321,8 @@ public class CooperativeService {
     /** Year change: dividend of the year that ended and the board's reputation. */
     @Transactional
     public long dividend(Savegame sg) {
-        Integer ended = sg.getCalYear() == null ? null : sg.getCalYear() - 1;
+        Integer current = gameTime.yearOf(sg, sg.getCurrentGameTime(), null); // LR-M4: year of the processed month
+        Integer ended = current == null ? null : current - 1;
         double rate = dividendRate(sg, ended);
         sg.setCoopDividendBonus(0);
         if (sg.isCoopBoard()) {

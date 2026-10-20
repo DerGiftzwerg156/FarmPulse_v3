@@ -203,7 +203,7 @@ public class FarmReportService {
                 || gameTime.periodOfYear(sg, e.gameTime()) != 1) {
             return;
         }
-        int year = f.calendar().year() - 1;
+        int year = gameTime.yearOf(sg, e.gameTime(), f.calendar().year()) - 1; // LR-M4: the year that ended here
         if (reports.findBySavegameAndReportYear(sg, year).isPresent()) {
             return;
         }

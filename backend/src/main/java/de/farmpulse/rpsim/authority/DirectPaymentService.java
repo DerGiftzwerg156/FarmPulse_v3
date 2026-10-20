@@ -204,11 +204,12 @@ public class DirectPaymentService {
     /** The authority sends the form of the running FS25 year (once per year, needs the calendar of the mod). */
     Optional<DirectPaymentApplication> open(Savegame sg) {
         FarmFacts f = facts.latest(sg).orElse(null);
-        Integer year = f == null || f.calendar() == null ? null : f.calendar().year();
+        long now = sg.getCurrentGameTime();
+        // LR-M4: the year of the processed day (catch-up), not of the latest export
+        Integer year = gameTime.yearOf(sg, now, f == null || f.calendar() == null ? null : f.calendar().year());
         if (year == null || list(sg).stream().anyMatch(a -> a.getCropYear() == year)) {
             return Optional.empty();
         }
-        long now = sg.getCurrentGameTime();
         int period = gameTime.periodOfYear(sg, now);
         int months = Math.floorMod(cfg().getDeadlinePeriod() - period, GameTime.PERIODS_PER_YEAR) + 1;
         DirectPaymentApplication a = new DirectPaymentApplication();

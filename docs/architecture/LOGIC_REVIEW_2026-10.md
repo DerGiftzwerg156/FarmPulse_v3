@@ -611,7 +611,7 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | H1 | Ganzen Batch erneut senden | umgesetzt |
 | H2 | `CRITICAL` für alle | umgesetzt |
 | M3 | Vorprüfung der Kapazität im Mod-Batch (und im Simulator); das Backend storniert wie bisher | umgesetzt |
-| M4 | – (ohne Entscheidung) | offen |
+| M4 | – (ohne Entscheidung); `GameTime.yearOf` an allen Stellen, die im Tages- oder Monatslauf das Jahr lesen (12 statt der 7 genannten: zusätzlich Feldbilanz-Beratung, Anbauplan, Meilenstein, Dorfzeitung, Investor-Zahlungsjahr). Ansichten und `FactsIngested`-Handler lesen weiter das Jahr ihres Exports; `CooperativeService.samplePrices` ordnet laut Javadoc die Preise des neuesten Exports dessen Jahr zu und bleibt | umgesetzt |
 | M5 | – (ohne Entscheidung) | offen |
 | M6 | Leasing als Rate, aus dem Cashflow herausgerechnet | offen |
 | M7 | – (ohne Entscheidung) | offen |

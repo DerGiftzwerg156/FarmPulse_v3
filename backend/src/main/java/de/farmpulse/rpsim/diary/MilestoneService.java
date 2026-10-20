@@ -153,8 +153,10 @@ public class MilestoneService {
         Long watchFrom = sg.getMilestoneWatchFrom();
         if (cfg().isYearWithoutDelayEnabled() && watchFrom != null && watchFrom <= previousStart
                 && !delays.any(sg, previousStart, yearStart)) {
-            Integer year = facts.latest(sg).map(f -> f.calendar() == null || f.calendar().year() == null
-                    ? null : f.calendar().year() - 1).orElse(null);
+            // LR-M4: the year that ended with this period 1, not the year of the latest export
+            Integer latest = facts.latest(sg).map(f -> f.calendar() == null ? null : f.calendar().year()).orElse(null);
+            Integer current = gameTime.yearOf(sg, e.gameTime(), latest);
+            Integer year = current == null ? null : current - 1;
             reach(sg, MilestoneKey.YEAR_WITHOUT_DELAY, "Ein Jahr ohne Zahlungsverzug",
                     (year == null ? "Ein ganzes Jahr" : "Im Jahr " + year)
                             + " wurden alle Raten, Steuern, Vertragszahlungen und Gehälter pünktlich bezahlt.");

@@ -95,7 +95,8 @@ public class SocialInsuranceService {
     Optional<ServiceCase> bill(Savegame sg) {
         long now = sg.getCurrentGameTime();
         FarmFacts f = facts.latest(sg).orElse(null);
-        Integer year = f == null || f.calendar() == null ? null : f.calendar().year();
+        // LR-M4: the year of the processed day (catch-up), not of the latest export
+        Integer year = gameTime.yearOf(sg, now, f == null || f.calendar() == null ? null : f.calendar().year());
         long month = gameTime.monthIndex(sg, now);
         boolean sent = bills.bills(sg).stream().anyMatch(b -> b.getKind() == CaseKind.SOCIAL_INSURANCE_BILL
                 && (year != null ? year.equals(b.getQuantity()) : gameTime.monthIndex(sg, b.getGameTime()) == month));

@@ -183,7 +183,7 @@ public class VillageNewspaperService {
         issue.setMonthIndex(index);
         issue.setMidMonth(midMonth);
         issue.setPeriod(gameTime.periodOfYear(sg, now));
-        issue.setCropYear(sg.getCalYear());
+        issue.setCropYear(gameTime.yearOf(sg, now, sg.getCalYear())); // LR-M4: year of the issue's month
         issue.setFromGameTime(Math.max(0, from + 1));
         issue.setPublishedGameTime(now);
         issues.save(issue);

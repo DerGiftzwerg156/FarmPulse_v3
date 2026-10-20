@@ -99,6 +99,21 @@ public class GameTime {
         return a.periodOf(a.monthIndex(gameTime));
     }
 
+    /**
+     * Logic review LR-M4: FS25 year of the month containing {@code gameTime}. The calendar export gives the year of
+     * the anchor month ({@code calYear} with {@code calPeriod}, {@link CalendarService}); the year changes with
+     * period 1 (March), like {@code LiquidityPlanService}. While the clock catches up day by day, a handler must take the year
+     * of the day it processes, not the year of the latest export. {@code fallback} without a calendar year.
+     */
+    public Integer yearOf(Savegame sg, long gameTime, Integer fallback) {
+        if (sg == null || sg.getCalYear() == null || sg.getCalPeriod() == null) {
+            return fallback;
+        }
+        Anchor a = anchor(sg);
+        long months = a.period() - 1 + (a.monthIndex(gameTime) - a.monthIndex());
+        return (int) (sg.getCalYear() + Math.floorDiv(months, (long) PERIODS_PER_YEAR));
+    }
+
     /** Whether {@code gameTime} is exactly the start of a month. */
     public boolean isMonthStart(Savegame sg, long gameTime) {
         Anchor a = anchor(sg);

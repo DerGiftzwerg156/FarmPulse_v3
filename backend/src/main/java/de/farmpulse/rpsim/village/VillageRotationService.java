@@ -92,7 +92,9 @@ public class VillageRotationService {
      * export; before the first calendar, 12 months of the fallback calendar form a year.
      */
     public void resetBudgetOnYearChange(Savegame sg) {
-        int year = sg.getCalYear() != null ? sg.getCalYear()
+        // LR-M4: the year of the processed day (catch-up), not of the latest export
+        Integer calendarYear = gameTime.yearOf(sg, sg.getCurrentGameTime(), null);
+        int year = calendarYear != null ? calendarYear
                 : (int) Math.floorDiv(gameTime.monthIndex(sg, sg.getCurrentGameTime()), GameTime.PERIODS_PER_YEAR);
         if (year != sg.getRotationYearIndex()) {
             sg.setRotationYearIndex(year);
