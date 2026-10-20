@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L17 - refused installment of a called loan was never collected** (owner decision 2026-10-20): the
+  principal went back to the remaining debt of a `CALLED` loan that nobody collects. The loan is now `DEFAULTED` and the
+  bank collects the amount as soon as liquidity allows, like an uncollected call-back (T-03).
 - **Logic review LR-L16 - an old instruction could run twice** (mod): the mod forgets processed instructions after
   30 game days; with the backend not running, a stale `instructions.xml` still listing them executed them again. Entries
   still in the file are now kept (the bridge simulator follows).
