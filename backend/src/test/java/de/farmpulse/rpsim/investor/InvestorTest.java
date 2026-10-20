@@ -520,6 +520,28 @@ class InvestorTest {
         assertThat(investors.outstanding(sg, obs.get(1))).isEqualTo(5);
     }
 
+    /**
+     * Logic review LR-L15 (owner decision 2026-10-20): a counted milk delivery that is re-sent after a rewind and refused
+     * takes its quantity back from the period it went to (before only W1 was corrected).
+     */
+    @Test
+    void aRefusedResentDeliveryTakesItsQuantityBack() {
+        InvestorContract c = contract(InvestorContract.SILENT, 2, ob("W3", "MILK", 5_000L));
+        InvestorObligation milk = obligations.findByContractOrderByIdAsc(c).getFirst();
+        month(12);
+        investors.deliver(sg, milk.getId(), 5_000, "hus_1");
+        OutboxInstruction transfer = last(InstructionType.HUSBANDRY_TRANSFER);
+        ack(transfer);
+        assertThat(periods.findByObligationAndPeriodKey(milk, 12).orElseThrow().getDelivered()).isEqualTo(5_000);
+        // reload without saving: re-sent with the same id, now refused by the mod
+        transfer.setStatus(InstructionStatus.FAILED);
+        transfer.setAckMessage("NOT_ENOUGH_MILK");
+        failed.onAck(new BridgeEvents.InstructionAcked(sg.getId(), transfer.getInstructionId(), "FAILED",
+                transfer.getRelatedEntityType(), transfer.getRelatedEntityId()));
+        assertThat(periods.findByObligationAndPeriodKey(milk, 12).orElseThrow().getDelivered()).isZero();
+        assertThat(investors.outstanding(sg, milk)).isEqualTo(5_000);
+    }
+
     @Test
     void animalWelfareCropObligationAndGrowthTargetAreChecked() {
         InvestorObligation a2 = ob("A2", null, null);

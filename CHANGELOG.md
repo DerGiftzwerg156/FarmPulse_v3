@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L15 - refused re-sent investor deliveries stayed counted** (owner decision 2026-10-20): after a
+  rewind a counted delivery is sent again; when the mod refuses it now, it takes its quantities back from the periods it
+  went to for every kind (before only the W1 total); status, trust and reminders stay. Migration V57.
 - **Logic review LR-L14 - funded machine sold to a neighbour** (owner decision 2026-10-20): the sale (R3-V) books no
   `SHOP_VEHICLE_SELL`, so the repayment came only with a later, unrelated shop sale. It now counts as sold like a
   trade-in at the dealer: repaid pro rata at once in the binding period, before the payment it lowers the recognised sum.

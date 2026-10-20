@@ -46,4 +46,8 @@ public class InvestorDelivery extends SavegameScoped {
 
     @Column(name = "done_game_time")
     private Long doneGameTime;
+
+    /** Logic review LR-L15: "periodId:quantity,..." - where the counted quantity went (null before V57). */
+    @Column(name = "period_split", length = 1000)
+    private String periodSplit;
 }
