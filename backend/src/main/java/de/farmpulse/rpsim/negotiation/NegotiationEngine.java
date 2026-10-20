@@ -405,6 +405,7 @@ public class NegotiationEngine {
     @Transactional
     public OfferOutcome placeOffer(Savegame sg, Long negotiationId, long amount) {
         Negotiation n = get(sg, negotiationId);
+        expireIfDue(sg, n, sg.getCurrentGameTime()); // logic review LR-L18: the deadline counts at once, not at the day change
         if (n.getStatus() != NegotiationStatus.OPEN) {
             throw new BusinessRuleException("NEGOTIATION_CLOSED", "Diese Verhandlung ist bereits beendet.");
         }
@@ -643,20 +644,25 @@ public class NegotiationEngine {
     public void expireDeadlines(Savegame sg) {
         long now = sg.getCurrentGameTime();
         for (Negotiation n : negotiations.findBySavegameAndStatus(sg, NegotiationStatus.OPEN)) {
-            if (n.getClosesAtGameTime() == null || n.getClosesAtGameTime() > now) {
-                continue;
-            }
-            if (n.getKind() == NegotiationKind.AUCTION) {
-                Optional<NegotiationOffer> top = offers.findByNegotiationOrderByIdAsc(n).stream()
-                        .filter(o -> o.getHiddenMaxBid() != null).max(Comparator.comparing(NegotiationOffer::getHiddenMaxBid));
-                long price = n.getLastCounterOffer() != null ? n.getLastCounterOffer()
-                        : Math.round(n.getBasePrice() * cfg().getNpcBidMin());
-                closeLost(sg, n, top.map(NegotiationOffer::getCharacter).orElse(null),
-                        Math.min(price, top.map(NegotiationOffer::getHiddenMaxBid).orElse(price)));
-            } else {
-                n.setStatus(NegotiationStatus.EXPIRED);
-                n.setClosedAtGameTime(now);
-            }
+            expireIfDue(sg, n, now);
+        }
+    }
+
+    /** Closes one open negotiation whose deadline has passed (auction: the top bidder wins), as at the day change. */
+    private void expireIfDue(Savegame sg, Negotiation n, long now) {
+        if (n.getStatus() != NegotiationStatus.OPEN || n.getClosesAtGameTime() == null || n.getClosesAtGameTime() > now) {
+            return;
+        }
+        if (n.getKind() == NegotiationKind.AUCTION) {
+            Optional<NegotiationOffer> top = offers.findByNegotiationOrderByIdAsc(n).stream()
+                    .filter(o -> o.getHiddenMaxBid() != null).max(Comparator.comparing(NegotiationOffer::getHiddenMaxBid));
+            long price = n.getLastCounterOffer() != null ? n.getLastCounterOffer()
+                    : Math.round(n.getBasePrice() * cfg().getNpcBidMin());
+            closeLost(sg, n, top.map(NegotiationOffer::getCharacter).orElse(null),
+                    Math.min(price, top.map(NegotiationOffer::getHiddenMaxBid).orElse(price)));
+        } else {
+            n.setStatus(NegotiationStatus.EXPIRED);
+            n.setClosedAtGameTime(now);
         }
     }
 

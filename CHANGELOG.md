@@ -189,6 +189,9 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-L18 - deadlines counted only at the day change**: a bid in an ended negotiation or auction and the
+  acceptance of a special offer after its deadline were still taken until the next day change. Both now check the
+  deadline of the case itself first (the regular day run closes it as before).
 - **Logic review LR-L17 - refused installment of a called loan was never collected** (owner decision 2026-10-20): the
   principal went back to the remaining debt of a `CALLED` loan that nobody collects. The loan is now `DEFAULTED` and the
   bank collects the amount as soon as liquidity allows, like an uncollected call-back (T-03).

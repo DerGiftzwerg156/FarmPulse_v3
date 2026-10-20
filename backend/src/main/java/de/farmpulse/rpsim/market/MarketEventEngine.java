@@ -471,6 +471,12 @@ public class MarketEventEngine {
     public MarketEvent decideParticipation(Savegame sg, Long eventId, boolean participate) {
         MarketEvent ev = events.findById(eventId).filter(x -> x.getSavegame().getId().equals(sg.getId()))
                 .orElseThrow(() -> new NotFoundException("market event " + eventId));
+        if (ev.getStatus() == MarketEventStatus.OFFERED && ev.getDeadlineGameTime() != null
+                && ev.getDeadlineGameTime() <= sg.getCurrentGameTime()) {
+            // logic review LR-L18: the deadline counts at once, not only at the next day change (as updateLifecycle)
+            ev.setStatus(MarketEventStatus.ENDED);
+            ev.setEndReason("NOT_ACCEPTED");
+        }
         if (ev.getStatus() != MarketEventStatus.OFFERED) {
             throw new BusinessRuleException("NOT_OFFERED", "Dieses Angebot ist nicht mehr offen.");
         }

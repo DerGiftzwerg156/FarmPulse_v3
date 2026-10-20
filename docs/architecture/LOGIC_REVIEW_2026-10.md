@@ -626,7 +626,7 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | L15 | Menge wie bei W1 je Periode zurück (Nachfrage 2026-10-20), Aufteilung in `period_split` (V57) | umgesetzt |
 | L16 | – (Mod und Simulator) | umgesetzt |
 | L17 | Wie offene Restschuld (`DEFAULTED`, Einzug bei Deckung) | umgesetzt |
-| L18 | – | offen |
+| L18 | – (Verhandlung/Auktion und Sonderangebot) | umgesetzt |
 | L19 | – | offen |
 | L20 | Figuren mit laufender Pacht ziehen nicht weg | offen |
 | L21 | Nur dokumentieren | offen |

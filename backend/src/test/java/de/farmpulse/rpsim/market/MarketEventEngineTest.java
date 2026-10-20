@@ -164,6 +164,16 @@ class MarketEventEngineTest {
         assertThat(jobs.findBySavegameOrderByIdAsc(sg)).extracting(j -> j.getEventType()).contains("MARKET_CONTRACT_ENDED");
     }
 
+    /** Logic review LR-L18: accepting after the deadline is refused at once, not only after the day change. */
+    @Test
+    void aSpecialOfferCannotBeAcceptedAfterItsDeadline() {
+        MarketEvent ev = engine.spawnSpecialOffer(sg, ctx, farm).orElseThrow();
+        sg.setCurrentGameTime(ev.getDeadlineGameTime());
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> engine.decideParticipation(sg, ev.getId(), true))
+                .isInstanceOf(de.farmpulse.rpsim.common.BusinessRuleException.class);
+        assertThat(ev.getInstructionId()).isNull();
+    }
+
     @Test
     void declinedSpecialOfferCreatesNoInstruction() {
         MarketEvent ev = engine.spawnSpecialOffer(sg, ctx, farm).orElseThrow();
