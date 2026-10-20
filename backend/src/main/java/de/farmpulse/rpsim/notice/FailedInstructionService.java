@@ -264,6 +264,9 @@ public class FailedInstructionService {
         } else if (de.farmpulse.rpsim.market.ForwardContractService.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.PRICE_EVENT) {
             handled = forwardContracts.onPriceFailed(relatedId); // LR-L19: the contract did not come about
+        } else if (de.farmpulse.rpsim.market.BulkOrderService.ORDER_RELATED.equals(related) && relatedId != null
+                && ins.getType() == InstructionType.PRICE_EVENT) {
+            handled = bulkOrders.onPriceFailed(relatedId); // LR-N2: the order did not come about
         } else if (de.farmpulse.rpsim.market.MarketEventEngine.RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.PRICE_EVENT) {
             handled = marketEvents.onPriceFailed(relatedId, ins.getInstructionId()); // LR-L19: a special offer ends

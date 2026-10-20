@@ -196,6 +196,10 @@ versions or this changelog do not match.
   rotation released all fields of a departing character (also a leased one) while the lease ran on with a character no
   longer in the village. Characters with a running or offered lease (lease in or lease out) no longer move away, like
   the FS25 field owners (T-21).
+- **Logic review LR-N2 - a refused fixed price kept the bulk order open** (owner decision 2026-10-20): a bulk order
+  with a delivery month whose `PRICE_EVENT` the game refused stayed `OPEN`, blocked its month and counted against the
+  limit of open orders without ever settling. It now ends as `FAILED` ("nicht zustande gekommen", no penalty), the
+  month notice expires, the diary notes it and the buyer leaves, like after a settled order.
 - **Logic review LR-L19 - refused fixed prices kept contracts open** (owner decision 2026-10-20): a forward contract
   whose `PRICE_EVENT` the game refused stayed `OPEN` and blocked its sell point and fill type; an accepted special offer
   stayed active. The forward contract now ends as `FAILED` ("nicht zustande gekommen", no penalty), the special offer

@@ -628,5 +628,6 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | L17 | Wie offene Restschuld (`DEFAULTED`, Einzug bei Deckung) | umgesetzt |
 | L18 | – (Verhandlung/Auktion und Sonderangebot) | umgesetzt |
 | L19 | Vorkontrakt `FAILED` „nicht zustande gekommen“, Sonderkontrakt `ENDED` (Nachfrage 2026-10-20) | umgesetzt |
+| N2 | Neu (per Test bewiesen, beim Umsetzen von L19 gefunden): ein Großauftrag mit abgelehntem Festpreis blieb `OPEN`; jetzt `FAILED` „nicht zustande gekommen“ wie L19 (Entscheidung 2026-10-20) | umgesetzt |
 | L20 | Figuren mit laufender Pacht ziehen nicht weg | umgesetzt |
 | L21 | Nur dokumentieren (Code-Kommentar, Konfigurationsreferenz) | umgesetzt |

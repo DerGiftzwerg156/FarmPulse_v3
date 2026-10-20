@@ -1618,7 +1618,8 @@ export interface BulkOrderView {
   deliveryStartGameTime: number;
   deadlineGameTime: number;
   deliveryPeriod: number | null;
-  status: 'OPEN' | 'FULFILLED' | 'SHORTFALL' | string;
+  /** FAILED: the game refused the fixed price (logic review LR-N2). */
+  status: 'OPEN' | 'FULFILLED' | 'SHORTFALL' | 'FAILED' | string;
   deliveredQuantity: number | null;
   penalty: number | null;
 }

@@ -321,6 +321,32 @@ class BulkOrderTest {
         assertThatThrownBy(() -> actions.declineCase(sg, sc.getId())).isInstanceOf(BusinessRuleException.class);
     }
 
+    /** Logic review LR-N2 (owner decision 2026-10-20): a fixed price the game refused ends the bulk order. */
+    @Test
+    void aRefusedFixedPriceEndsTheBulkOrder() {
+        ServiceCase sc = request();
+        BulkOrder o = bulk.agree(sg, sc.getId(), 3);
+        OutboxInstruction price = outbox.findByInstructionId(o.getInstructionId()).orElseThrow();
+        price.setStatus(InstructionStatus.REJECTED);
+        price.setAckMessage("unknown sell point " + sc.getExternalId());
+        failed.onAck(new BridgeEvents.InstructionAcked(sg.getId(), price.getInstructionId(), "REJECTED",
+                price.getRelatedEntityType(), price.getRelatedEntityId()));
+        assertThat(o.getStatus()).isEqualTo(BulkOrder.FAILED);
+        assertThat(o.getEndReason()).isEqualTo("FAILED");
+        assertThat(o.getPenalty()).isNull();
+        assertThat(bulk.open(sg)).isEmpty();
+        assertThat(sc.getCharacter().getStatus()).isEqualTo(CharacterStatus.TERMINATED);
+        // the month notice no longer announces a delivery that cannot happen
+        OutboxInstruction notice = outbox.findByInstructionId(o.getNoticeInstructionId()).orElseThrow();
+        assertThat(json.readTree(notice.getPayloadJson()).get("expiresAtGameTime").asLong())
+                .isLessThan(sg.getCurrentGameTime());
+        // no settlement afterwards: a late contract report changes nothing
+        bulk.onContractReported(new BridgeEvents.ContractReported(sg.getId(), o.getInstructionId(), 0,
+                o.getQuantity(), "DEADLINE_REACHED"));
+        assertThat(o.getStatus()).isEqualTo(BulkOrder.FAILED);
+        assertThat(instructions()).noneMatch(i -> i.getPayloadJson().contains("CONTRACT_PENALTY"));
+    }
+
     @Test
     void oneFixedPricePerSellPointAndFillTypeAndMonth() {
         ServiceCase first = request();
