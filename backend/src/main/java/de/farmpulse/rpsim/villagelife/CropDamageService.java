@@ -27,6 +27,7 @@ import de.farmpulse.rpsim.domain.CropDamageEvent;
 import de.farmpulse.rpsim.domain.CropDamageStreak;
 import de.farmpulse.rpsim.domain.FarmlandOwnership;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.OwnerType;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
@@ -192,7 +193,8 @@ public class CropDamageService {
         long now = sg.getCurrentGameTime();
         if (!sg.isCropDamageHintSent()) {
             sg.setCropDamageHintSent(true);
-            outbox.notification(sg, cfg().getHintText(), "WARNING", now + GameTime.days(1), new Related(RELATED, null));
+            outbox.notification(sg, cfg().getHintText(), NotificationLevel.CRITICAL, now + GameTime.days(1),
+                    new Related(RELATED, null));
             return Optional.empty();
         }
         long day = GameTime.dayIndex(now);

@@ -37,6 +37,7 @@ import de.farmpulse.rpsim.domain.CreditDecision;
 import de.farmpulse.rpsim.domain.GamePrompt;
 import de.farmpulse.rpsim.domain.InstructionStatus;
 import de.farmpulse.rpsim.domain.InstructionType;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.OutboxInstruction;
 import de.farmpulse.rpsim.domain.PlayerResponse;
 import de.farmpulse.rpsim.domain.PromptKind;
@@ -439,9 +440,10 @@ public class PromptService {
         long expires = sg.getCurrentGameTime() + GameTime.hours(props.getBridge().getNotificationMaxAgeHours());
         if (!DONE.equals(result) && !NOTHING.equals(result)) {
             log.info("Answer to question {} not carried out: {}", p.getPromptId(), result);
-            outbox.notification(sg, shorten("FarmPulse: " + result, 120), "CRITICAL", expires, new Related(RELATED, p.getId()));
+            outbox.notification(sg, shorten("FarmPulse: " + result, 120), NotificationLevel.CRITICAL, expires,
+                    new Related(RELATED, p.getId()));
         } else if (p.getKind() == PromptKind.CALL && "YES".equals(p.getAnswer())) {
-            outbox.notification(sg, "FarmPulse: Das Gespräch ist im Browser bereit.", "OK", expires,
+            outbox.notification(sg, "FarmPulse: Das Gespräch ist im Browser bereit.", NotificationLevel.OK, expires,
                     new Related(RELATED, p.getId()));
         }
     }

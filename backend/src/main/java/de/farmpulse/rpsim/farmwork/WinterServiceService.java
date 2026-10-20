@@ -22,6 +22,7 @@ import de.farmpulse.rpsim.domain.Contract;
 import de.farmpulse.rpsim.domain.ContractKind;
 import de.farmpulse.rpsim.domain.ContractStatus;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.narration.NarrationEventType;
 import de.farmpulse.rpsim.narration.NarrationFacts;
@@ -251,7 +252,7 @@ public class WinterServiceService {
         c.setLastSnowDay(day);
         c.setSnowDays(c.getSnowDays() + 1);
         c.setSnowDaysTotal(c.getSnowDaysTotal() + 1);
-        outbox.notification(sg, cfg().getNotificationText(), "INFO", GameTime.days(day + 1),
+        outbox.notification(sg, cfg().getNotificationText(), NotificationLevel.INFO, GameTime.days(day + 1),
                 new Related(ContractBillingService.RELATED, c.getId()));
     }
 

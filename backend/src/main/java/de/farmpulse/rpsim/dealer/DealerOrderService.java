@@ -35,6 +35,7 @@ import de.farmpulse.rpsim.domain.InstructionType;
 import de.farmpulse.rpsim.domain.MoneyReason;
 import de.farmpulse.rpsim.domain.Negotiation;
 import de.farmpulse.rpsim.domain.NegotiationStatus;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.employee.AbsenceScale;
 import de.farmpulse.rpsim.farmwork.LoanedVehicles;
@@ -879,7 +880,7 @@ public class DealerOrderService {
     }
 
     private void hint(Savegame sg, DealerDelivery d, String text) {
-        outbox.notification(sg, text, "INFO", sg.getCurrentGameTime() + GameTime.days(1),
+        outbox.notification(sg, text, NotificationLevel.INFO, sg.getCurrentGameTime() + GameTime.days(1),
                 new Related(RELATED_DELIVERY, d.getId()));
     }
 

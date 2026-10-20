@@ -18,6 +18,7 @@ import de.farmpulse.rpsim.common.NotFoundException;
 import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.domain.CharacterRole;
 import de.farmpulse.rpsim.domain.CommunicationCategory;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.PriceAlarm;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.narration.FallbackTemplates;
@@ -182,7 +183,8 @@ public class PriceAlarmService {
         long price = Math.round(q.price());
         String fill = labels.label(a.getFillType());
         outbox.notification(sg, "FarmPulse: Preisalarm " + fill + " – " + sellPoint + " zahlt " + price + " € je 1.000 l",
-                "INFO", now + GameTime.days(cfg().getNotificationDays()), new Related(RELATED, a.getId()));
+                NotificationLevel.INFO, now + GameTime.days(cfg().getNotificationDays()),
+                new Related(RELATED, a.getId()));
         double stock = f == null || f.assets() == null || f.assets().storage() == null ? 0
                 : f.assets().storage().stream().filter(s -> a.getFillType().equals(s.fillType()) && s.amount() != null)
                         .mapToDouble(BridgeDtos.StorageEntry::amount).sum();

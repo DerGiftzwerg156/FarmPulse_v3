@@ -29,6 +29,7 @@ import de.farmpulse.rpsim.domain.Negotiation;
 import de.farmpulse.rpsim.domain.NegotiationDirection;
 import de.farmpulse.rpsim.domain.NegotiationKind;
 import de.farmpulse.rpsim.domain.NegotiationStatus;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.VehicleDeal;
 import de.farmpulse.rpsim.narration.NarrationEventType;
@@ -428,7 +429,8 @@ public class VehicleTradeService {
     }
 
     private void hint(Savegame sg, VehicleDeal d, String text) {
-        outbox.notification(sg, text, "WARNING", sg.getCurrentGameTime() + GameTime.days(cfg().getNotificationDays()),
+        outbox.notification(sg, text, NotificationLevel.CRITICAL,
+                sg.getCurrentGameTime() + GameTime.days(cfg().getNotificationDays()),
                 new Related(RELATED, d.getId()));
     }
 

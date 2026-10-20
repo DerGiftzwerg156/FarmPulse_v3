@@ -6,6 +6,7 @@ import de.farmpulse.rpsim.config.RpsimProperties;
 import de.farmpulse.rpsim.domain.CallStatus;
 import de.farmpulse.rpsim.domain.Channel;
 import de.farmpulse.rpsim.domain.Communication;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.repository.CommunicationRepository;
 import de.farmpulse.rpsim.time.GameTime;
@@ -49,7 +50,7 @@ public class IngameNotificationService {
             return;
         }
         Savegame sg = c.getSavegame();
-        outbox.notification(sg, text, "INFO",
+        outbox.notification(sg, text, NotificationLevel.INFO,
                 sg.getCurrentGameTime() + GameTime.hours(props.getBridge().getNotificationMaxAgeHours()),
                 new Related(RELATED, c.getId()));
     }

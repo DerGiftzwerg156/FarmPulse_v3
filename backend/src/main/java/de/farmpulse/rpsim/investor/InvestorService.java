@@ -38,6 +38,7 @@ import de.farmpulse.rpsim.domain.InvestorObligation;
 import de.farmpulse.rpsim.domain.InvestorPayment;
 import de.farmpulse.rpsim.domain.InvestorPeriod;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.PaymentDelay;
 import de.farmpulse.rpsim.domain.PublicActionType;
 import de.farmpulse.rpsim.domain.Savegame;
@@ -1293,7 +1294,8 @@ public class InvestorService {
                         .formLink("/bank/investoren").submit();
                 String text = "FarmPulse: " + c.getCharacter().getName() + " wartet noch auf " + remaining
                         + (o.getFillType() != null ? " " + labels.label(o.getFillType()) : "");
-                outbox.notification(sg, text.length() <= 120 ? text : text.substring(0, 119) + "…", "INFO", end,
+                outbox.notification(sg, text.length() <= 120 ? text : text.substring(0, 119) + "…",
+                        NotificationLevel.INFO, end,
                         new Related(OfferRelated.CONTRACT, c.getId()));
             }
         }

@@ -40,6 +40,7 @@ import de.farmpulse.rpsim.domain.MarketEvent;
 import de.farmpulse.rpsim.domain.MarketEventStatus;
 import de.farmpulse.rpsim.domain.MarketEventType;
 import de.farmpulse.rpsim.domain.MoneyReason;
+import de.farmpulse.rpsim.domain.NotificationLevel;
 import de.farmpulse.rpsim.domain.Savegame;
 import de.farmpulse.rpsim.domain.ServiceCase;
 import de.farmpulse.rpsim.domain.TerminationReason;
@@ -466,8 +467,8 @@ public class BulkOrderService {
         Related related = new Related(ORDER_RELATED, o.getId());
         o.setInstructionId(outbox.priceFixed(sg, o.getFillType(), o.getSellPoint(), o.getFixedPrice(), o.getQuantity(),
                 o.getDeadlineGameTime(), o.getDeliveryStartGameTime(), related).getInstructionId());
-        o.setNoticeInstructionId(outbox.notification(sg, noticeText(sc), "INFO", o.getDeadlineGameTime(),
-                o.getDeliveryStartGameTime(), related).getInstructionId());
+        o.setNoticeInstructionId(outbox.notification(sg, noticeText(sc), NotificationLevel.INFO,
+                o.getDeadlineGameTime(), o.getDeliveryStartGameTime(), related).getInstructionId());
         close(sc, CaseStatus.SETTLED, "TERM_AGREED");
         diary.addAuto(sg, "TRADE", "Großauftrag vereinbart", liters(o.getQuantity()) + " l "
                 + labels.label(o.getFillType()) + " an " + sc.getTitle() + " zu " + o.getFixedPrice()

@@ -189,6 +189,10 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-H2 - four in-game hints never appeared** (owner decision 2026-10-20): the hints of a borrowed
+  machine, a used machine deal, the crop damage warning and the dealer's demo machine were sent with level `WARNING`,
+  which the mod refuses (`INFO`, `OK`, `CRITICAL`). They now use `CRITICAL`; the level is an enum
+  (`NotificationLevel`) checked by a contract test against the mod and the simulator schema.
 - **Logic review LR-H1 - reload without saving lost the goods of a deal** (owner decision 2026-10-20): a goods deal
   (neighbour trade, farm shop, bulk order, investor P2 purchase) applied after the last save was re-sent with its money
   only - the player was paid again for goods back in the silo, or paid again without getting them. The whole batch

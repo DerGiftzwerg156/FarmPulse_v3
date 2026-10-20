@@ -609,7 +609,7 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | Nr. | Entscheidung | Stand |
 | --- | --- | --- |
 | H1 | Ganzen Batch erneut senden | umgesetzt |
-| H2 | `CRITICAL` für alle | offen |
+| H2 | `CRITICAL` für alle | umgesetzt |
 | M3 | Vorprüfung der Kapazität im Mod-Batch; danach wie heute storniert | offen |
 | M4 | – (ohne Entscheidung) | offen |
 | M5 | – (ohne Entscheidung) | offen |
