@@ -72,9 +72,14 @@ public class RewindService {
      * the backend counts a delivery once, with its first ack.
      */
     private static final String INVESTOR_DELIVERY = "INVESTOR_DELIVERY";
-    /** Roadmap V3.1: types whose whole batch is re-sent (e.g. the STORAGE_TRANSFER of a contractor harvest). */
+    /**
+     * Roadmap V3.1: types whose whole batch is re-sent (e.g. the STORAGE_TRANSFER of a contractor harvest). Logic
+     * review LR-H1 (owner decision 2026-10-20): a goods deal (STORAGE_TRANSFER + MONEY_TRANSACTION of
+     * {@link OutboxService#storageDeal}) goes again as a whole too - never only its money; a lone STORAGE_TRANSFER
+     * without a batch is not re-sent (apart from the investor deliveries).
+     */
     private static final Set<InstructionType> WHOLE_BATCH = EnumSet.of(InstructionType.FIELD_WORK,
-            InstructionType.ANIMAL_TRANSFER);
+            InstructionType.ANIMAL_TRANSFER, InstructionType.STORAGE_TRANSFER);
 
     private final BridgeRewindRepository rewinds;
     private final OutboxInstructionRepository outbox;
@@ -169,7 +174,7 @@ public class RewindService {
         List<OutboxInstruction> applied = outbox.findBySavegameAndStatusOrderByIdAsc(sg, InstructionStatus.APPLIED).stream()
                 .filter(o -> o.getAckedAtGameTime() != null && o.getAckedAtGameTime() > from)
                 .toList();
-        // Roadmap V3.1: every member of a batch with a FIELD_WORK / ANIMAL_TRANSFER goes again
+        // Roadmap V3.1 / LR-H1: every member of a batch with a FIELD_WORK / ANIMAL_TRANSFER / STORAGE_TRANSFER goes again
         Set<String> wholeBatches = new HashSet<>();
         for (OutboxInstruction o : applied) {
             if (WHOLE_BATCH.contains(o.getType()) && o.getBatchId() != null) {

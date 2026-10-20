@@ -174,6 +174,24 @@ class RewindIntegrationTest {
         assertThat(status(other)).isEqualTo(InstructionStatus.APPLIED);
     }
 
+    /** Logic review LR-H1 (owner decision 2026-10-20): a lost goods deal goes again with goods and money. */
+    @Test
+    void lostGoodsDealIsResentAsAWholeBatch() {
+        facts(10 * DAY - 2 * HOUR);
+        List<OutboxInstruction> deal = outboxService.storageDeal(sg, false, "WHEAT", 10_000, 2_500, MoneyReason.GOODS_SALE,
+                "Weizen an Nachbar", OutboxService.Related.none());
+        sync.runCycle();
+        ack(applied(deal.get(0), 10 * DAY + HOUR), applied(deal.get(1), 10 * DAY + HOUR));
+        facts(10 * DAY + 5 * HOUR);
+        facts(10 * DAY); // reloaded the save of day 10
+        ack();
+        assertThat(rewind().getStatus()).isEqualTo(RewindStatus.RESENT);
+        assertThat(deal).extracting(OutboxInstruction::getType)
+                .containsExactly(de.farmpulse.rpsim.domain.InstructionType.STORAGE_TRANSFER,
+                        de.farmpulse.rpsim.domain.InstructionType.MONEY_TRANSACTION);
+        assertThat(deal).allSatisfy(o -> assertThat(status(o)).isEqualTo(InstructionStatus.PENDING));
+    }
+
     @Test
     void deepRewindAsksThePlayerAndResendsOnDecision() {
         OutboxInstruction[] ins = playAndApply();

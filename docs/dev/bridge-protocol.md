@@ -960,6 +960,9 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
   `STORAGE_TRANSFER IN`), so the work and its payment happen again as one unit (owner decision). Roadmap V3.2 R32-I3 (owner
   decision 2026-10-08): the deliveries to an investor go again too - a missing `HUSBANDRY_TRANSFER`, an `ANIMAL_TRANSFER`
   without money (A1) and a `STORAGE_TRANSFER` of a W1 / W2 delivery (`relatedEntityType` `INVESTOR_DELIVERY`); the
-  backend counts a delivery only once, with its first ack. Rewinds up to
+  backend counts a delivery only once, with its first ack. Logic review LR-H1 (owner decision 2026-10-20): a goods
+  deal (`STORAGE_TRANSFER` + `MONEY_TRANSACTION` of one batch: neighbour trade, farm shop, bulk order, P2 purchase)
+  goes back as a whole batch, never only its money; the deal counts once (its case is closed with the first ack).
+  Rewinds up to
   `rpsim.bridge.rewind-auto-resend-max-hours` are handled automatically, deeper ones wait for the player's decision
   on the dashboard. All other tool state (mails, trust, negotiations) is not rolled back.

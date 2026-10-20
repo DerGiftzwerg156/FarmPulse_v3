@@ -189,6 +189,10 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-H1 - reload without saving lost the goods of a deal** (owner decision 2026-10-20): a goods deal
+  (neighbour trade, farm shop, bulk order, investor P2 purchase) applied after the last save was re-sent with its money
+  only - the player was paid again for goods back in the silo, or paid again without getting them. The whole batch
+  (`STORAGE_TRANSFER` + `MONEY_TRANSACTION`) now goes again; the deal still counts once.
 - **Vehicle dealer without catalog** (game log 2026-10-20): `store_catalog.json` reached the dealer only if every entry
   was valid - one discount option of a mod (negative price), one broken entry or one byte that is no UTF-8 skipped the
   whole file, and as the mod writes it only once per game start the tablet kept showing "Der Katalog kommt mit dem
