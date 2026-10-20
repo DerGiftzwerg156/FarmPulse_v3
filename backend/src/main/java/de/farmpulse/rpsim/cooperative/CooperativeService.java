@@ -171,6 +171,23 @@ public class CooperativeService {
         return sg;
     }
 
+    /**
+     * FailedInstructionService, logic review LR-M10 (owner decision 2026-10-20): the mod refused the payment of new
+     * shares - the shares credited at the subscription are taken back (count = amount / share price).
+     */
+    @Transactional
+    public boolean onPurchaseFailed(Savegame sg, long amount) {
+        long price = cfg().getSharePrice();
+        if (amount >= 0 || price <= 0) {
+            return false;
+        }
+        int count = (int) Math.min(sg.getCoopShares(), Math.round(-amount / (double) price));
+        sg.setCoopShares(sg.getCoopShares() - count);
+        diary.addAuto(sg, "TRADE", "Zeichnung nicht gebucht", count + " Genossenschaftsanteile für " + (-amount)
+                + " € konnten nicht abgebucht werden und sind nicht gezeichnet.", RELATED, sg.getId());
+        return true;
+    }
+
     /** Cancels shares; repaid at the nominal value after the notice period. */
     @Transactional
     public CoopShareNotice cancel(Savegame sg, int count) {

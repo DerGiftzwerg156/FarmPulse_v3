@@ -617,7 +617,7 @@ keine Annahme über geteilte Silos; die Frage entfällt für die Umsetzung.
 | M7 | – (ohne Entscheidung); `RPSIM_LEASE_INCOME` in `known-posting-categories`. Abgleich der übrigen Planbuchungen: Kredite und Investoren-Zahlungen sind `FINANCING` (nicht im Betriebsergebnis), der Winterdienst hat keinen `nextDueGameTime` und steht nicht im Plan | umgesetzt |
 | M8 | Kein zweiter Malus bei automatischer Teilzahlung | umgesetzt |
 | M9 | Sperrfrist je Figur für Antworten und Anrufe, gemeinsam mit „Nachricht verfassen“ (Nachfrage 2026-10-20) | umgesetzt |
-| M10 | Ausgleich bleibt offen; Schaden wird später erneut abgebucht | offen |
+| M10 | Ausgleich bleibt offen mit neuer Entscheidungsfrist; Schaden wird später erneut abgebucht; Genossenschaftsanteile werden zurückgenommen (Nachfragen 2026-10-20) | umgesetzt |
 | M11 | – (ohne Entscheidung) | offen |
 | L12 | – | offen |
 | L13 | – | offen |

@@ -12,6 +12,7 @@ import de.farmpulse.rpsim.bridge.BridgeDtos;
 import de.farmpulse.rpsim.bridge.BridgeDtos.FarmFacts;
 import de.farmpulse.rpsim.bridge.BridgeEvents;
 import de.farmpulse.rpsim.bridge.FactsService;
+import de.farmpulse.rpsim.bridge.LiquidityService;
 import de.farmpulse.rpsim.bridge.OutboxService;
 import de.farmpulse.rpsim.bridge.OutboxService.Related;
 import de.farmpulse.rpsim.common.BusinessRuleException;
@@ -80,10 +81,14 @@ public class CropDamageService {
     private final BurdeningEvents burdens;
     private final RpsimProperties props;
 
+    private final LiquidityService liquidity;
+
     public CropDamageService(CropDamageStreakRepository streaks, CropDamageEventRepository incidents,
                              ServiceCaseRepository cases, SavegameRepository savegames, FactsService facts,
                              FarmlandOwnershipService ownership, OutboxService outbox, NarrationRequestService narration,
-                             TrustScoreService trust, DiaryService diary, BurdeningEvents burdens, RpsimProperties props) {
+                             TrustScoreService trust, DiaryService diary, BurdeningEvents burdens, RpsimProperties props,
+                             LiquidityService liquidity) {
+        this.liquidity = liquidity;
         this.streaks = streaks;
         this.incidents = incidents;
         this.cases = cases;
@@ -255,6 +260,9 @@ public class CropDamageService {
     @Transactional
     public ServiceCase pay(Savegame sg, Long id) {
         ServiceCase sc = open(sg, id);
+        if (liquidity.available(sg) < sc.getOfferAmount()) { // LR-M10: like the other pay buttons
+            throw new BusinessRuleException("INSUFFICIENT_FUNDS", "Der Kontostand reicht für diese Entschädigung nicht.");
+        }
         sc.setStatus(CaseStatus.SETTLED);
         sc.setResolution("PAID");
         sc.setPayoutAmount(sc.getOfferAmount());
@@ -264,6 +272,25 @@ public class CropDamageService {
         diary.addAuto(sg, "NEGOTIATION", "Flurschaden bezahlt", sc.getOfferAmount() + " € an "
                 + sc.getCharacter().getName() + " für Fahrspuren auf Feld " + sc.getFarmlandId() + ".", RELATED, sc.getId());
         return sc;
+    }
+
+    /**
+     * FailedInstructionService, logic review LR-M10 (owner decisions 2026-10-20): the mod refused the COMPENSATION
+     * booking - the claim is open again and payable by button, with a new decision time from now on.
+     */
+    @Transactional
+    public boolean onPaymentFailed(Long caseId) {
+        ServiceCase sc = cases.findById(caseId).orElse(null);
+        if (sc == null || sc.getKind() != CaseKind.CROP_DAMAGE_CLAIM || sc.getStatus() != CaseStatus.SETTLED
+                || !"PAID".equals(sc.getResolution())) {
+            return false;
+        }
+        Savegame sg = sc.getSavegame();
+        sc.reopen(sg.getCurrentGameTime() + GameTime.days(cfg().getDecisionDays()));
+        diary.addAuto(sg, "NEGOTIATION", "Flurschaden nicht gebucht", "Die Entschädigung über " + sc.getOfferAmount()
+                + " € für Feld " + sc.getFarmlandId() + " konnte nicht abgebucht werden. Die Forderung ist wieder offen.",
+                RELATED, sc.getId());
+        return true;
     }
 
     /** "Ablehnen" (or no answer): trust loss. */

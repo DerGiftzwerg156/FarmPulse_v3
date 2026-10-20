@@ -92,6 +92,9 @@ public class FailedInstructionService {
     private final DieselTheftService dieselThefts;
     private final de.farmpulse.rpsim.repository.DealerDeliveryRepository dealerDeliveries;
     private final de.farmpulse.rpsim.dealer.DealerDemoService dealerDemos;
+    private final de.farmpulse.rpsim.bypass.VanillaBypassService vanillaBypass;
+    private final de.farmpulse.rpsim.villagelife.CropDamageService cropDamage;
+    private final de.farmpulse.rpsim.cooperative.CooperativeService cooperative;
 
     public FailedInstructionService(OutboxInstructionRepository outbox, SavegameRepository savegames, LoanService loans,
                                     PayrollScheduler payroll, NegotiationEngine negotiations, NoticeService notices,
@@ -108,7 +111,13 @@ public class FailedInstructionService {
                                     de.farmpulse.rpsim.market.BulkOrderService bulkOrders,
                                     de.farmpulse.rpsim.investor.InvestorService investors,
                                     de.farmpulse.rpsim.repository.DealerDeliveryRepository dealerDeliveries,
-                                    de.farmpulse.rpsim.dealer.DealerDemoService dealerDemos) {
+                                    de.farmpulse.rpsim.dealer.DealerDemoService dealerDemos,
+                                    de.farmpulse.rpsim.bypass.VanillaBypassService vanillaBypass,
+                                    de.farmpulse.rpsim.villagelife.CropDamageService cropDamage,
+                                    de.farmpulse.rpsim.cooperative.CooperativeService cooperative) {
+        this.vanillaBypass = vanillaBypass;
+        this.cropDamage = cropDamage;
+        this.cooperative = cooperative;
         this.dealerDeliveries = dealerDeliveries;
         this.dealerDemos = dealerDemos;
         this.bulkOrders = bulkOrders;
@@ -237,6 +246,18 @@ public class FailedInstructionService {
         } else if (LoanService.COLLATERAL_RELATED.equals(related) && relatedId != null
                 && ins.getType() == InstructionType.FARMLAND_TRANSFER) {
             handled = loans.onRealisationFailed(sg, relatedId); // R3-K1: realisation refused, the field stays
+        } else if (de.farmpulse.rpsim.bypass.VanillaBypassService.RELATED.equals(related) && relatedId != null
+                && "COMPENSATION".equals(reason)) {
+            handled = vanillaBypass.onPaymentFailed(relatedId); // LR-M10: the claim is open again
+        } else if (de.farmpulse.rpsim.villagelife.CropDamageService.RELATED.equals(related) && relatedId != null
+                && "COMPENSATION".equals(reason)) {
+            handled = cropDamage.onPaymentFailed(relatedId); // LR-M10: the claim is open again
+        } else if (de.farmpulse.rpsim.cooperative.CooperativeService.RELATED.equals(related)
+                && ins.getType() == InstructionType.MONEY_TRANSACTION && "COOP_SHARES".equals(reason)) {
+            handled = cooperative.onPurchaseFailed(sg, p.path("amount").asLong(0)); // LR-M10: shares taken back
+        } else if (ins.getType() == InstructionType.MONEY_TRANSACTION && "DAMAGE".equals(reason)
+                && "INSUFFICIENT_FUNDS".equals(ins.getAckMessage())) {
+            handled = true; // LR-M10: DamageDebitService books the damage again as soon as the money covers it
         } else if (de.farmpulse.rpsim.dealer.DealerDemoService.RELATED.equals(related) && relatedId != null) {
             handled = dealerDemos.onInstructionFailed(relatedId, ins.getType(), ins.getAckMessage()); // RFH-V1
         } else if (de.farmpulse.rpsim.dealer.DealerOrderService.RELATED_ORDER.equals(related) && relatedId != null

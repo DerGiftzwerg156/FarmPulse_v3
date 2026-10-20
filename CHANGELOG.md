@@ -189,6 +189,11 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-M10 - refused debits without a follow-up** (owner decisions 2026-10-20): the pay buttons of a
+  bypass compensation and of a crop damage claim now check the liquidity first; a booking the mod still refuses puts
+  the claim back to "waiting for the player" with a new decision time (before: "paid", money never flowed). Refused
+  cooperative shares are taken back. A refused damage (`DAMAGE`: hail, storm, wildlife) is booked again by the new
+  `DamageDebitService` as soon as the liquidity covers it; the payout runs as before.
 - **Logic review LR-M9 - trust could be farmed by replies and calls** (owner decisions 2026-10-20): the tone of every
   reply to a mail and of every sentence in a call changed the trust, without the pacing of "Nachricht verfassen". All
   three now share one cooldown per character (`messages.pacing-cooldown-days`, default 1 game day); the character always

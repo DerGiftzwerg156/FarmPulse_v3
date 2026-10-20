@@ -915,7 +915,10 @@ Whether an instruction was executed is decided solely by the mod's persisted `pr
 - **FAILED / REJECTED acks** (`FailedInstructionService`): loan installment → reversed and due again (escalation
   ladder), penalty → next escalation stage, call-back → loan `DEFAULTED` (collected as soon as liquidity allows),
   salary → stays due (salary delay logic), farmland deal → negotiation `FAILED`, ownership back to the previous
-  owner. Every refused instruction raises a dashboard notice. Roadmap V3 (R3-Q1): a refused `STORAGE_TRANSFER`,
+  owner. Logic review LR-M10 (owner decisions 2026-10-20): a refused `COMPENSATION` of a bypass or crop damage claim
+  puts the claim back to "waiting for the player" with a new decision time, refused `COOP_SHARES` take the shares
+  back, a `DAMAGE` refused with `INSUFFICIENT_FUNDS` is booked again by `DamageDebitService` as soon as the liquidity
+  covers it (same case, same note). Every refused instruction raises a dashboard notice. Roadmap V3 (R3-Q1): a refused `STORAGE_TRANSFER`,
   `MISSION_CREATE`, `VEHICLE_SPAWN` or `VEHICLE_REMOVE` with `unknown type …` or `NOT_SUPPORTED` sets
   `modOutdated = true` in the notice, which then says "Mod aktualisieren"; the money part of such a batch is reported
   together with its instruction (one notice per deal). Cancelling the deal itself is part of each feature. Roadmap V3.1
