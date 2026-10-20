@@ -189,6 +189,10 @@ versions or this changelog do not match.
 
 ### Fixed
 
+- **Logic review LR-M9 - trust could be farmed by replies and calls** (owner decisions 2026-10-20): the tone of every
+  reply to a mail and of every sentence in a call changed the trust, without the pacing of "Nachricht verfassen". All
+  three now share one cooldown per character (`messages.pacing-cooldown-days`, default 1 game day); the character always
+  answers.
 - **Logic review LR-M8 - second salary malus on an automatic partial payment** (owner decision 2026-10-20): when the
   month change paid only some overdue months, the employee got a second pay-fairness malus and a second payment delay.
   Like the button "Gehalt nachzahlen", months left unpaid now stay in the running overdue episode.

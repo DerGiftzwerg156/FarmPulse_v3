@@ -445,7 +445,7 @@ period is assumed (FS25 default).
 
 | Key | Default | Meaning | Concept |
 | --- | --- | --- | --- |
-| `rpsim.formulas.messages.pacing-cooldown-days` | `1` | Pacing: per character only one proactive message per n game days counts for trust (the answer always comes). | Proaktive Nachricht |
+| `rpsim.formulas.messages.pacing-cooldown-days` | `1` | Pacing: per character only one player message per n game days counts for trust (the answer always comes) - shared by "Nachricht verfassen", replies to mails and sentences in a call (logic review LR-M9). | Proaktive Nachricht |
 
 ## `rpsim.formulas.tone`
 

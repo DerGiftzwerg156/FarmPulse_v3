@@ -49,6 +49,34 @@ class CallStateMachineTest {
                 "Anruf", "Hallo?", CommunicationCategory.CREDIT, "REPLY", "LOAN", 7L, null, null, false, null));
     }
 
+    private long friendlyEvents() {
+        return trustEvents.findByCharacterOrderByGameTimeAscIdAsc(caller).stream()
+                .filter(e -> e.getReason() == de.farmpulse.rpsim.domain.TrustReason.TONE_FRIENDLY).count();
+    }
+
+    /**
+     * Logic review LR-M9 (owner decision 2026-10-20): sentences in a call and replies to mails share the pacing of
+     * "Nachricht verfassen" - the tone counts once per character within the cooldown, the character always answers.
+     */
+    @Test
+    void callsAndRepliesShareThePacingOfTrust() {
+        Communication c = ring();
+        calls.accept(sg, c.getId());
+        calls.say(sg, c.getId(), "Vielen Dank, das ist super!");
+        calls.say(sg, c.getId(), "Danke, wirklich toll!");
+        Communication mail = communications.create(new CommunicationService.Draft(sg, caller, Channel.MAIL,
+                CommunicationInitiator.CHARACTER, "Ihr Kredit", "Guten Tag", CommunicationCategory.CREDIT, "REPLY", null,
+                null, null, null, false, null));
+        conversations.reply(sg, mail.getId(), "Herzlichen Dank, sehr nett!");
+        assertThat(friendlyEvents()).isEqualTo(1);
+        assertThat(jobs.findBySavegameOrderByIdAsc(sg).stream()
+                .filter(j -> j.getEventType().equals("CALL_CONVERSATION") || j.getEventType().equals("REPLY")).count())
+                .as("the character answers every time").isEqualTo(3);
+        sg.setCurrentGameTime(sg.getCurrentGameTime() + GameTime.days(1));
+        conversations.reply(sg, mail.getId(), "Danke nochmal!");
+        assertThat(friendlyEvents()).isEqualTo(2);
+    }
+
     @Test
     void ringingAcceptedCompleted() {
         Communication c = ring();

@@ -117,7 +117,7 @@ public class CallService {
         Communication own = communicationService.create(new CommunicationService.Draft(sg, c.getCharacter(), Channel.CALL,
                 CommunicationInitiator.PLAYER, "Gespräch", text, CommunicationCategory.PLAYER_MESSAGE, null, null, null,
                 c.getThreadRootId(), null, false, tone));
-        toneTrust.apply(c.getCharacter(), tone);
+        toneTrust.applyPaced(c.getCharacter(), tone, sg.getCurrentGameTime()); // LR-M9: one pacing for every way to write
         narration.request(sg, NarrationEventType.CALL_CONVERSATION).from(c.getCharacter()).channel(Channel.CALL)
                 .playerMessage(text).thread(c.getThreadRootId())
                 .facts(NarrationFacts.builder().put("topic", c.getSubject()).build())
